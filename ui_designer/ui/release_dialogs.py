@@ -889,6 +889,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_manifest_button = QPushButton("Preview Manifest")
         self._preview_log_button = QPushButton("Preview Log")
         self._preview_version_button = QPushButton("Preview Version")
+        self._copy_summary_button = QPushButton("Copy Summary")
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
@@ -901,6 +902,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_manifest_button.clicked.connect(lambda: self._preview_selected_path("manifest_path", "Manifest", prefer_json=True))
         self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
         self._preview_version_button.clicked.connect(self._preview_selected_version)
+        self._copy_summary_button.clicked.connect(self._copy_entry_summary)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
@@ -914,6 +916,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_manifest_button,
             self._preview_log_button,
             self._preview_version_button,
+            self._copy_summary_button,
             self._copy_details_button,
             self._copy_preview_button,
             self._copy_entry_json_button,
@@ -1272,10 +1275,18 @@ class ReleaseHistoryDialog(QDialog):
             return
         self._copy_text(json.dumps(entry, indent=2, ensure_ascii=False) + "\n")
 
+    def _copy_entry_summary(self) -> None:
+        entry = self._current_entry()
+        if not entry:
+            self._copy_text("")
+            return
+        self._copy_text(_history_summary_line(entry) + "\n")
+
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._preview_version_button.setEnabled(bool(entry and _history_version_path(entry)))
+        self._copy_summary_button.setEnabled(bool(entry))
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))

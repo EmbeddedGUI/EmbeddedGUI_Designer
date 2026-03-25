@@ -468,6 +468,9 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     dialog._copy_details_button.click()
     assert "Build ID: 20260326T000000Z" in QApplication.clipboard().text()
 
+    dialog._copy_summary_button.click()
+    assert "20260326T000000Z | success | windows-pc" in QApplication.clipboard().text()
+
     dialog._copy_preview_button.click()
     assert '"status": "success"' in QApplication.clipboard().text()
 
