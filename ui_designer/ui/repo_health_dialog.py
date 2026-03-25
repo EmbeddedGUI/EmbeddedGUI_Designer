@@ -137,6 +137,9 @@ class RepositoryHealthDialog(QDialog):
             QMessageBox.warning(self, "Export Repository Health Failed", str(exc))
 
     def _default_export_filename(self) -> str:
+        parts = ["repo-health"]
+        if self._critical_only_check.isChecked():
+            parts.append("critical")
         if self._show_json_check.isChecked():
-            return "repo-health.json"
-        return "repo-health.txt"
+            return "-".join(parts) + ".json"
+        return "-".join(parts) + ".txt"

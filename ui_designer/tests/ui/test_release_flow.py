@@ -380,6 +380,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
     export_path = tmp_path / "release-history-summary.txt"
+    captured = {}
     dialog = ReleaseHistoryDialog(
         [
             {
@@ -402,12 +403,16 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     monkeypatch.setattr(
         "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
-        lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "Text Files (*.txt)",
+        ),
     )
 
     dialog._export_filtered_button.click()
 
     exported = export_path.read_text(encoding="utf-8")
+    assert captured["default_name"] == "release-history-summary-failed.txt"
     assert "matched_entries=1" in exported
     assert "filters: range=all, status=failed, profile=all, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported

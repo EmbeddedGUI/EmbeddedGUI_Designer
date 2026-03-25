@@ -175,6 +175,12 @@ def _write_text_file(path: str, content: str) -> None:
         f.write(content)
 
 
+def _safe_filename_part(text: str) -> str:
+    normalized = "".join(char.lower() if char.isalnum() else "-" for char in (text or "").strip())
+    collapsed = "-".join(part for part in normalized.split("-") if part)
+    return collapsed[:40]
+
+
 def _preview_file_text(path: str, *, prefer_json: bool = False, char_limit: int = _PREVIEW_CHAR_LIMIT) -> str:
     resolved_path = os.path.abspath(os.path.normpath(path))
     if not os.path.isfile(resolved_path):
@@ -761,7 +767,7 @@ class ReleaseHistoryDialog(QDialog):
         selected_path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Release History Summary",
-            "release-history-summary.txt",
+            self._default_filtered_export_filename(),
             "Text Files (*.txt);;All Files (*)",
         )
         if not selected_path:
@@ -780,6 +786,18 @@ class ReleaseHistoryDialog(QDialog):
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
             search_text=self._search_edit.text().strip(),
         )
+
+    def _default_filtered_export_filename(self) -> str:
+        parts = ["release-history-summary"]
+        for value in (
+            str(self._range_filter_combo.currentData() or ""),
+            str(self._status_filter_combo.currentData() or ""),
+            str(self._profile_filter_combo.currentData() or ""),
+        ):
+            safe_value = _safe_filename_part(value)
+            if safe_value:
+                parts.append(safe_value)
+        return "-".join(parts) + ".txt"
 
     def _copy_entry_json(self) -> None:
         entry = self._current_entry()
