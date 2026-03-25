@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ..model.config import get_config
 from ..model.release import ReleaseConfig, ReleaseProfile
 
 
@@ -510,6 +511,7 @@ class ReleaseHistoryDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Release History")
         self.resize(1040, 680)
+        self._config = get_config()
         self._open_path_callback = open_path_callback
         self._refresh_history_callback = refresh_history_callback
         self._all_history_entries: list[dict[str, object]] = []
@@ -638,6 +640,7 @@ class ReleaseHistoryDialog(QDialog):
         root_layout.addWidget(button_box)
 
         self._load_history_entries(history_entries)
+        self._restore_view_state()
 
     def _current_entry(self) -> dict[str, object] | None:
         item = self._history_list.currentItem()
@@ -815,6 +818,37 @@ class ReleaseHistoryDialog(QDialog):
             if safe_value:
                 parts.append(safe_value)
         return "-".join(parts) + ".txt"
+
+    def _restore_view_state(self) -> None:
+        state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
+        range_value = str(state.get("range_filter") or "")
+        status_value = str(state.get("status_filter") or "")
+        profile_value = str(state.get("profile_filter") or "")
+        search_text = str(state.get("search_text") or "")
+
+        index = self._range_filter_combo.findData(range_value)
+        self._range_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
+        index = self._status_filter_combo.findData(status_value)
+        self._status_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
+        index = self._profile_filter_combo.findData(profile_value)
+        self._profile_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
+        self._search_edit.setText(search_text)
+
+    def _save_view_state(self) -> None:
+        self._config.release_history_view = {
+            "range_filter": str(self._range_filter_combo.currentData() or ""),
+            "status_filter": str(self._status_filter_combo.currentData() or ""),
+            "profile_filter": str(self._profile_filter_combo.currentData() or ""),
+            "search_text": self._search_edit.text(),
+        }
+        self._config.save()
+
+    def done(self, result: int) -> None:
+        self._save_view_state()
+        super().done(result)
 
     def _copy_entry_json(self) -> None:
         entry = self._current_entry()

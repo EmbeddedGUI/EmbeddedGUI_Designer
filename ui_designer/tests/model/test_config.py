@@ -43,6 +43,8 @@ class TestDefaults:
         assert config.window_geometry == ""
         assert config.window_state == ""
         assert config.sdk_setup_prompted is False
+        assert config.release_history_view == {}
+        assert config.repo_health_view == {}
 
 
 class TestSaveLoad:
@@ -57,6 +59,8 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.sdk_setup_prompted = True
+        config.release_history_view = {"status_filter": "failed", "search_text": "sdk-fail"}
+        config.repo_health_view = {"critical_only": True, "show_json": True}
 
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
@@ -76,6 +80,8 @@ class TestSaveLoad:
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
         assert loaded.sdk_setup_prompted is True
+        assert loaded.release_history_view == {"status_filter": "failed", "search_text": "sdk-fail"}
+        assert loaded.repo_health_view == {"critical_only": True, "show_json": True}
 
     def test_load_nonexistent_file(self, config, tmp_path):
         config_path = tmp_path / "nonexistent.json"

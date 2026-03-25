@@ -7,6 +7,7 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
+from ..model.config import get_config
 from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_view_payload, summarize_repo_health
 
 
@@ -17,6 +18,7 @@ class RepositoryHealthDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Repository Health")
         self.resize(920, 520)
+        self._config = get_config()
         self._repo_root = str(Path(repo_root).resolve())
         self._open_path_callback = open_path_callback
         self._payload: dict[str, object] = {}
@@ -70,6 +72,7 @@ class RepositoryHealthDialog(QDialog):
         button_box.accepted.connect(self.accept)
         root_layout.addWidget(button_box)
 
+        self._restore_view_state()
         self.refresh()
 
     def refresh(self) -> None:
@@ -143,3 +146,19 @@ class RepositoryHealthDialog(QDialog):
         if self._show_json_check.isChecked():
             return "-".join(parts) + ".json"
         return "-".join(parts) + ".txt"
+
+    def _restore_view_state(self) -> None:
+        state = self._config.repo_health_view if isinstance(self._config.repo_health_view, dict) else {}
+        self._critical_only_check.setChecked(bool(state.get("critical_only", False)))
+        self._show_json_check.setChecked(bool(state.get("show_json", False)))
+
+    def _save_view_state(self) -> None:
+        self._config.repo_health_view = {
+            "critical_only": self._critical_only_check.isChecked(),
+            "show_json": self._show_json_check.isChecked(),
+        }
+        self._config.save()
+
+    def done(self, result: int) -> None:
+        self._save_view_state()
+        super().done(result)

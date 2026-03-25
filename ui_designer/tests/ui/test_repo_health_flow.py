@@ -251,3 +251,30 @@ def test_repository_health_dialog_export_filename_tracks_critical_json_state(qap
     dialog._show_json_check.setChecked(True)
 
     assert dialog._default_export_filename() == "repo-health-critical.json"
+
+
+@_skip_no_qt
+def test_repository_health_dialog_restores_saved_view_state(qapp, isolated_config, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._critical_only_check.setChecked(True)
+    dialog._show_json_check.setChecked(True)
+    dialog.done(QDialog.Accepted)
+
+    restored = RepositoryHealthDialog(str(tmp_path))
+
+    assert restored._critical_only_check.isChecked() is True
+    assert restored._show_json_check.isChecked() is True
+    assert '"critical_issues"' in restored._details_edit.toPlainText()

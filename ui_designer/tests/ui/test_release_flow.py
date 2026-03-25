@@ -545,3 +545,42 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
     assert callable(captured["refresh_history_callback"])
     assert captured["parent"] is window
     assert captured["shown"] is True
+
+
+@_skip_no_qt
+def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            }
+        ]
+    )
+    dialog._range_filter_combo.setCurrentIndex(dialog._range_filter_combo.findData("7d"))
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    dialog._profile_filter_combo.setCurrentIndex(dialog._profile_filter_combo.findData("esp32"))
+    dialog._search_edit.setText("sdk-fail")
+    dialog.done(QDialog.Accepted)
+
+    restored = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            }
+        ]
+    )
+
+    assert restored._range_filter_combo.currentData() == "7d"
+    assert restored._status_filter_combo.currentData() == "failed"
+    assert restored._profile_filter_combo.currentData() == "esp32"
+    assert restored._search_edit.text() == "sdk-fail"
