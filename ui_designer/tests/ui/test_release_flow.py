@@ -406,6 +406,44 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
 
 
 @_skip_no_qt
+def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
+    import json
+
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+                "zip_path": "/tmp/release.zip",
+            },
+        ]
+    )
+
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("package"))
+
+    QApplication.clipboard().clear()
+    dialog._copy_filtered_json_button.click()
+    copied = json.loads(QApplication.clipboard().text())
+
+    assert copied["matched_entries"] == 1
+    assert copied["filters"]["artifact"] == "package"
+    assert copied["entries"][0]["build_id"] == "20260326T000100Z"
+
+
+@_skip_no_qt
 def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path, monkeypatch):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

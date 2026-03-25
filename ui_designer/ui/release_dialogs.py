@@ -719,6 +719,10 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
         filter_row.addWidget(self._copy_filtered_button)
 
+        self._copy_filtered_json_button = QPushButton("Copy Filtered JSON")
+        self._copy_filtered_json_button.clicked.connect(self._copy_filtered_json)
+        filter_row.addWidget(self._copy_filtered_json_button)
+
         self._export_filtered_button = QPushButton("Export Filtered...")
         self._export_filtered_button.clicked.connect(self._export_filtered_summary)
         filter_row.addWidget(self._export_filtered_button)
@@ -907,6 +911,7 @@ class ReleaseHistoryDialog(QDialog):
             f"manifest {artifact_counts['manifest']} | log {artifact_counts['log']} | package {artifact_counts['package']}"
         )
         self._copy_filtered_button.setEnabled(bool(filtered_entries))
+        self._copy_filtered_json_button.setEnabled(bool(filtered_entries))
         self._export_filtered_button.setEnabled(bool(filtered_entries))
 
         self._history_list.blockSignals(True)
@@ -955,6 +960,9 @@ class ReleaseHistoryDialog(QDialog):
 
     def _copy_filtered_summary(self) -> None:
         self._copy_text(self._filtered_summary_text())
+
+    def _copy_filtered_json(self) -> None:
+        self._copy_text(self._filtered_entries_json_text())
 
     def _export_filtered_summary(self) -> None:
         if not self._filtered_history_entries:
