@@ -589,6 +589,7 @@ class MainWindow(QMainWindow):
         )
         can_release = self.project is not None and bool(self._project_dir) and self._has_valid_sdk_root()
         has_release_history = bool(self.project is not None and self._project_dir and latest_release_entry(self._project_dir, output_dir=self._release_output_root()))
+        can_browse_release_history = self.project is not None and bool(self._project_dir)
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
@@ -596,7 +597,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_release_build_action"):
             self._release_build_action.setEnabled(can_release)
             self._release_profiles_action.setEnabled(self.project is not None)
-            self._release_history_action.setEnabled(has_release_history)
+            self._release_history_action.setEnabled(can_browse_release_history)
             self._open_last_release_dir_action.setEnabled(has_release_history)
             self._open_last_release_manifest_action.setEnabled(has_release_history)
         self._update_edit_actions()
@@ -1565,9 +1566,6 @@ class MainWindow(QMainWindow):
         if not self._project_dir:
             return
         history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root())
-        if not history_entries:
-            self.statusBar().showMessage("No release history available", 4000)
-            return
         dialog = ReleaseHistoryDialog(
             history_entries,
             open_path_callback=self._open_path_in_shell,

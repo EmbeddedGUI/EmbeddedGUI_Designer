@@ -356,3 +356,56 @@ def test_release_history_dialog_refreshes_entries(qapp):
     assert dialog._history_list.count() == 1
     assert "20260326T000200Z" in dialog._history_list.item(0).text()
     assert dialog._profile_filter_combo.findData("linux-sdl") >= 0
+
+
+@_skip_no_qt
+def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_path, monkeypatch):
+    from ui_designer.model.project import Project
+    from ui_designer.ui.main_window import MainWindow
+
+    sdk_root = tmp_path / "sdk"
+    project_dir = sdk_root / "example" / "ReleaseDemo"
+    _create_sdk_root(sdk_root)
+    project_dir.mkdir(parents=True)
+
+    project = Project(app_name="ReleaseDemo")
+    project.sdk_root = str(sdk_root)
+    project.project_dir = str(project_dir)
+    project.create_new_page("main_page")
+    project.save(str(project_dir))
+
+    window = MainWindow(str(sdk_root))
+    monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+    monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+    window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+    captured = {}
+
+    def fake_load_release_history(project_dir_arg, output_dir=""):
+        captured["project_dir"] = project_dir_arg
+        captured["output_dir"] = output_dir
+        return []
+
+    class FakeHistoryDialog:
+        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, parent=None):
+            captured["history_entries"] = history_entries
+            captured["refresh_history_callback"] = refresh_history_callback
+            captured["parent"] = parent
+
+        def exec_(self):
+            captured["shown"] = True
+            return QDialog.Accepted
+
+    monkeypatch.setattr("ui_designer.ui.main_window.load_release_history", fake_load_release_history)
+    monkeypatch.setattr("ui_designer.ui.main_window.ReleaseHistoryDialog", FakeHistoryDialog)
+
+    window._update_compile_availability()
+    assert window._release_history_action.isEnabled() is True
+
+    window._show_release_history()
+
+    assert captured["project_dir"] == str(project_dir)
+    assert captured["history_entries"] == []
+    assert callable(captured["refresh_history_callback"])
+    assert captured["parent"] is window
+    assert captured["shown"] is True
