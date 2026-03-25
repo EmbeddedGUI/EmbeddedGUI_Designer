@@ -70,6 +70,7 @@ class RepositoryHealthDialog(QDialog):
         self._critical_only_check.toggled.connect(self._render_details)
         self._blocked_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
+        self._stale_dir_combo.currentIndexChanged.connect(self._on_stale_dir_selected)
         self._copy_summary_button.clicked.connect(self._copy_summary)
         self._copy_report_button.clicked.connect(self._copy_report)
         self._copy_json_button.clicked.connect(self._copy_json)
@@ -117,9 +118,14 @@ class RepositoryHealthDialog(QDialog):
         }
 
     def _reset_view(self) -> None:
+        self._preferred_stale_path = ""
         self._critical_only_check.setChecked(False)
         self._blocked_only_check.setChecked(False)
         self._show_json_check.setChecked(False)
+        if self._stale_dir_combo.count():
+            self._stale_dir_combo.setCurrentIndex(0)
+        else:
+            self._on_stale_dir_selected()
 
     def _render_details(self) -> None:
         view_options = self._view_options()
@@ -191,6 +197,11 @@ class RepositoryHealthDialog(QDialog):
 
     def _selected_stale_path(self) -> str:
         return str(self._stale_dir_combo.currentData() or "").strip()
+
+    def _on_stale_dir_selected(self) -> None:
+        self._preferred_stale_path = self._selected_stale_path()
+        stale_path = self._selected_stale_path()
+        self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
 
     def _sync_stale_dir_combo(self, stale_dirs: list[object], selected_path: str = "") -> None:
         self._stale_dir_combo.blockSignals(True)

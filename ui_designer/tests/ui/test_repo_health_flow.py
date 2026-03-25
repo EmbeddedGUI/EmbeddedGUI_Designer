@@ -195,6 +195,35 @@ def test_repository_health_dialog_can_open_selected_stale_dir(qapp, monkeypatch,
 
 
 @_skip_no_qt
+def test_repository_health_dialog_updates_open_button_for_selected_stale_dir(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    existing_stale_dir = tmp_path / ".pytest-tmp-codex"
+    missing_stale_dir = tmp_path / "tmpxtayw0f6"
+    existing_stale_dir.mkdir()
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [
+            {"path": str(existing_stale_dir), "accessible": True, "issue": ""},
+            {"path": str(missing_stale_dir), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    assert dialog._open_stale_button.isEnabled() is True
+    dialog._stale_dir_combo.setCurrentIndex(1)
+    assert dialog._stale_dir_combo.currentData() == str(missing_stale_dir)
+    assert dialog._open_stale_button.isEnabled() is False
+
+
+@_skip_no_qt
 def test_repository_health_dialog_blocked_only_filters_stale_dirs(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
@@ -347,12 +376,14 @@ def test_repository_health_dialog_can_reset_view(qapp, monkeypatch, tmp_path):
     dialog._critical_only_check.setChecked(True)
     dialog._blocked_only_check.setChecked(True)
     dialog._show_json_check.setChecked(True)
+    dialog._stale_dir_combo.setCurrentIndex(1)
 
     dialog._reset_view_button.click()
 
     assert dialog._critical_only_check.isChecked() is False
     assert dialog._blocked_only_check.isChecked() is False
     assert dialog._show_json_check.isChecked() is False
+    assert dialog._stale_dir_combo.currentIndex() == 0
     assert dialog._overview_label.text() == "critical 2 | suggestions 1 | stale 1 | blocked 1"
     assert "[view] critical_only=false blocked_only=false" in dialog._details_edit.toPlainText()
 
