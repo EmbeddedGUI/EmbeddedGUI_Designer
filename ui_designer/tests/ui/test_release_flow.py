@@ -181,9 +181,10 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
         return [history_entry]
 
     class FakeHistoryDialog:
-        def __init__(self, history_entries, open_path_callback=None, parent=None):
+        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, parent=None):
             captured["history_entries"] = history_entries
             captured["open_path_callback"] = open_path_callback
+            captured["refresh_history_callback"] = refresh_history_callback
             captured["parent"] = parent
 
         def exec_(self):
@@ -199,6 +200,7 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
     assert captured["output_dir"].endswith(os.path.join("output", "ui_designer_release"))
     assert captured["history_entries"][0]["sdk"]["revision"] == "v1.0.0-310-g416d576"
     assert captured["open_path_callback"] == window._open_path_in_shell
+    assert callable(captured["refresh_history_callback"])
     assert captured["parent"] is window
     assert captured["shown"] is True
 
@@ -280,3 +282,77 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
 
     dialog._copy_preview_button.click()
     assert '"status": "success"' in QApplication.clipboard().text()
+
+
+@_skip_no_qt
+def test_release_history_dialog_filters_entries(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            },
+        ]
+    )
+
+    assert dialog._history_list.count() == 2
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData(""))
+    dialog._profile_filter_combo.setCurrentIndex(dialog._profile_filter_combo.findData("windows-pc"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
+
+    dialog._profile_filter_combo.setCurrentIndex(dialog._profile_filter_combo.findData(""))
+    dialog._search_edit.setText("sdk-fail")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+
+@_skip_no_qt
+def test_release_history_dialog_refreshes_entries(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    refreshed = [
+        {
+            "build_id": "20260326T000200Z",
+            "status": "success",
+            "profile_id": "linux-sdl",
+            "message": "Release refreshed",
+            "sdk": {"revision": "sdk-new"},
+        }
+    ]
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-old"},
+            }
+        ],
+        refresh_history_callback=lambda: refreshed,
+    )
+
+    dialog._refresh_button.click()
+
+    assert dialog._history_list.count() == 1
+    assert "20260326T000200Z" in dialog._history_list.item(0).text()
+    assert dialog._profile_filter_combo.findData("linux-sdl") >= 0

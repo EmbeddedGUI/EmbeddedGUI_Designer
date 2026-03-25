@@ -429,13 +429,44 @@ class ReleaseProfilesDialog(QDialog):
 class ReleaseHistoryDialog(QDialog):
     """Browse recent release builds and open related artifacts."""
 
-    def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, parent=None):
+    def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, refresh_history_callback=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Release History")
         self.resize(1040, 680)
         self._open_path_callback = open_path_callback
+        self._refresh_history_callback = refresh_history_callback
+        self._all_history_entries: list[dict[str, object]] = []
 
         root_layout = QVBoxLayout(self)
+
+        filter_row = QHBoxLayout()
+        root_layout.addLayout(filter_row)
+
+        filter_row.addWidget(QLabel("Status"))
+        self._status_filter_combo = QComboBox()
+        self._status_filter_combo.addItem("All", "")
+        self._status_filter_combo.addItem("Success", "success")
+        self._status_filter_combo.addItem("Failed", "failed")
+        self._status_filter_combo.addItem("Unknown", "unknown")
+        self._status_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._status_filter_combo)
+
+        filter_row.addWidget(QLabel("Profile"))
+        self._profile_filter_combo = QComboBox()
+        self._profile_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._profile_filter_combo)
+
+        filter_row.addWidget(QLabel("Search"))
+        self._search_edit = QLineEdit()
+        self._search_edit.setPlaceholderText("build id, message, SDK revision...")
+        self._search_edit.textChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._search_edit, 1)
+
+        self._refresh_button = QPushButton("Refresh")
+        self._refresh_button.setEnabled(self._refresh_history_callback is not None)
+        self._refresh_button.clicked.connect(self._reload_history_entries)
+        filter_row.addWidget(self._refresh_button)
+
         content_layout = QHBoxLayout()
         root_layout.addLayout(content_layout, 1)
 
@@ -498,21 +529,7 @@ class ReleaseHistoryDialog(QDialog):
         button_box.accepted.connect(self.accept)
         root_layout.addWidget(button_box)
 
-        for entry in history_entries or []:
-            if not isinstance(entry, dict):
-                continue
-            item = QListWidgetItem(_history_list_label(entry))
-            item.setData(Qt.UserRole, entry)
-            self._history_list.addItem(item)
-
-        if self._history_list.count():
-            self._history_list.setCurrentRow(0)
-        else:
-            self._summary_label.setText("No release history available for this project.")
-            self._details_edit.setPlainText("Run Build -> Release Build... to create the first tracked release.")
-            self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("Select a release entry to preview its manifest or build log.")
-            self._set_open_buttons(None)
+        self._load_history_entries(history_entries)
 
     def _current_entry(self) -> dict[str, object] | None:
         item = self._history_list.currentItem()
@@ -520,6 +537,105 @@ class ReleaseHistoryDialog(QDialog):
             return None
         entry = item.data(Qt.UserRole)
         return entry if isinstance(entry, dict) else None
+
+    def _load_history_entries(self, history_entries: list[dict[str, object]] | None) -> None:
+        self._all_history_entries = [entry for entry in (history_entries or []) if isinstance(entry, dict)]
+        self._rebuild_profile_filter_options()
+        self._apply_history_filter()
+
+    def _rebuild_profile_filter_options(self) -> None:
+        current_profile = str(self._profile_filter_combo.currentData() or "")
+        profile_ids = []
+        seen = set()
+        for entry in self._all_history_entries:
+            profile_id = _history_string(entry, "profile_id")
+            if not profile_id or profile_id in seen:
+                continue
+            seen.add(profile_id)
+            profile_ids.append(profile_id)
+
+        self._profile_filter_combo.blockSignals(True)
+        self._profile_filter_combo.clear()
+        self._profile_filter_combo.addItem("All", "")
+        for profile_id in profile_ids:
+            self._profile_filter_combo.addItem(profile_id, profile_id)
+        index = self._profile_filter_combo.findData(current_profile)
+        self._profile_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+        self._profile_filter_combo.blockSignals(False)
+
+    def _matches_history_filter(self, entry: dict[str, object], status_filter: str, profile_filter: str, search_text: str) -> bool:
+        if status_filter and _history_status(entry) != status_filter:
+            return False
+        if profile_filter and _history_string(entry, "profile_id") != profile_filter:
+            return False
+        if search_text:
+            searchable = " ".join(
+                filter(
+                    None,
+                    (
+                        _history_string(entry, "build_id"),
+                        _history_string(entry, "profile_id"),
+                        _history_string(entry, "app_name"),
+                        _history_string(entry, "message"),
+                        _history_string(entry, "designer_revision"),
+                        _history_sdk_label(entry),
+                        _history_string(entry.get("sdk") if isinstance(entry.get("sdk"), dict) else {}, "commit"),
+                    ),
+                )
+            ).lower()
+            if search_text not in searchable:
+                return False
+        return True
+
+    def _apply_history_filter(self) -> None:
+        wanted_status = str(self._status_filter_combo.currentData() or "")
+        wanted_profile = str(self._profile_filter_combo.currentData() or "")
+        search_text = self._search_edit.text().strip().lower()
+        current_entry = self._current_entry()
+        current_build_id = _history_string(current_entry, "build_id") if current_entry else ""
+
+        filtered_entries = [
+            entry
+            for entry in self._all_history_entries
+            if self._matches_history_filter(entry, wanted_status, wanted_profile, search_text)
+        ]
+
+        self._history_list.blockSignals(True)
+        self._history_list.clear()
+        selected_row = -1
+        for row, entry in enumerate(filtered_entries):
+            item = QListWidgetItem(_history_list_label(entry))
+            item.setData(Qt.UserRole, entry)
+            self._history_list.addItem(item)
+            if current_build_id and _history_string(entry, "build_id") == current_build_id:
+                selected_row = row
+        self._history_list.blockSignals(False)
+
+        if self._history_list.count():
+            self._history_list.setCurrentRow(selected_row if selected_row >= 0 else 0)
+            return
+
+        if self._all_history_entries:
+            self._summary_label.setText("No release entries match the current filters.")
+            self._details_edit.setPlainText("Adjust Status, Profile, or Search to see matching release builds.")
+            self._preview_label.setText("Preview")
+            self._preview_edit.setPlainText("No manifest or build log is available because the filtered result set is empty.")
+        else:
+            self._summary_label.setText("No release history available for this project.")
+            self._details_edit.setPlainText("Run Build -> Release Build... to create the first tracked release.")
+            self._preview_label.setText("Preview")
+            self._preview_edit.setPlainText("Select a release entry to preview its manifest or build log.")
+        self._set_open_buttons(None)
+
+    def _reload_history_entries(self) -> None:
+        if self._refresh_history_callback is None:
+            return
+        try:
+            history_entries = self._refresh_history_callback()
+        except Exception as exc:
+            QMessageBox.warning(self, "Refresh Release History Failed", str(exc))
+            return
+        self._load_history_entries(history_entries)
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))

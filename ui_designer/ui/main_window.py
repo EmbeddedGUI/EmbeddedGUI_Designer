@@ -1568,7 +1568,12 @@ class MainWindow(QMainWindow):
         if not history_entries:
             self.statusBar().showMessage("No release history available", 4000)
             return
-        dialog = ReleaseHistoryDialog(history_entries, open_path_callback=self._open_path_in_shell, parent=self)
+        dialog = ReleaseHistoryDialog(
+            history_entries,
+            open_path_callback=self._open_path_in_shell,
+            refresh_history_callback=lambda: load_release_history(self._project_dir, output_dir=self._release_output_root()),
+            parent=self,
+        )
         dialog.exec_()
 
     def _show_repository_health(self):
