@@ -926,12 +926,16 @@ class ReleaseHistoryDialog(QDialog):
                     None,
                     (
                         _history_string(entry, "build_id"),
+                        _history_status(entry),
                         _history_string(entry, "profile_id"),
                         _history_string(entry, "app_name"),
                         _history_string(entry, "message"),
                         _history_string(entry, "designer_revision"),
                         _history_sdk_label(entry),
                         _history_string(entry.get("sdk") if isinstance(entry.get("sdk"), dict) else {}, "commit"),
+                        "manifest" if _history_string(entry, "manifest_path") else "",
+                        "log" if _history_string(entry, "log_path") else "",
+                        "package" if _history_string(entry, "zip_path") else "",
                     ),
                 )
             ).lower()
