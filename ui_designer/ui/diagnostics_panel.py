@@ -49,6 +49,8 @@ class DiagnosticsPanel(QWidget):
         self._severity_filter_combo.addItem("Warnings", "warning")
         self._severity_filter_combo.addItem("Info", "info")
         self._severity_filter_combo.currentIndexChanged.connect(self._apply_filter)
+        self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button.clicked.connect(self._reset_view)
         self._copy_button = QPushButton("Copy Summary")
         self._copy_button.clicked.connect(self.copy_requested.emit)
         self._copy_json_button = QPushButton("Copy JSON")
@@ -68,6 +70,7 @@ class DiagnosticsPanel(QWidget):
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(self._summary_label, 1)
         header_layout.addWidget(self._severity_filter_combo)
+        header_layout.addWidget(self._reset_view_button)
         header_layout.addWidget(self._copy_button)
         header_layout.addWidget(self._copy_json_button)
         header_layout.addWidget(self._export_button)
@@ -83,6 +86,7 @@ class DiagnosticsPanel(QWidget):
         self._activated_entry = None
         self._summary_label.setText("Diagnostics: no active issues")
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
+        self._reset_view_button.setEnabled(bool(self._current_filter_value()))
         self._copy_button.setEnabled(False)
         self._copy_json_button.setEnabled(False)
         self._export_button.setEnabled(False)
@@ -123,6 +127,7 @@ class DiagnosticsPanel(QWidget):
             entry for entry in self._entries
             if not self._current_filter_value() or entry.severity == self._current_filter_value()
         ]
+        self._reset_view_button.setEnabled(bool(self._current_filter_value()))
         self._copy_button.setEnabled(bool(self._visible_entries))
         self._copy_json_button.setEnabled(bool(self._visible_entries))
         self._export_button.setEnabled(bool(self._visible_entries))
@@ -147,6 +152,9 @@ class DiagnosticsPanel(QWidget):
             item.setData(Qt.UserRole, (entry.page_name, entry.widget_name))
             item.setData(Qt.UserRole + 1, entry)
             self._list.addItem(item)
+
+    def _reset_view(self):
+        self._severity_filter_combo.setCurrentIndex(0)
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)

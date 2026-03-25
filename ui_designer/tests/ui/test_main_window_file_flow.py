@@ -3276,6 +3276,62 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_diagnostics_panel_reset_view_clears_severity_filter(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsResetViewDemo"
+        project = _create_project(project_dir, "DiagnosticsResetViewDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
+        duplicate_b = WidgetModel("label", name="dup_name", x=230, y=40, width=30, height=20)
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=120, width=240, height=80)
+        managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
+        managed.designer_locked = True
+        managed.designer_hidden = True
+        layout_parent.add_child(managed)
+        missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(duplicate_a)
+        page.root_widget.add_child(duplicate_b)
+        page.root_widget.add_child(layout_parent)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selection_state.set_widgets([managed], primary=managed)
+        window._selected_widget = managed
+        window._update_diagnostics_panel()
+
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+        reset_button = window.diagnostics_panel._reset_view_button
+
+        assert reset_button.isEnabled() is False
+
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+
+        assert reset_button.isEnabled() is True
+        assert window.diagnostics_panel._list.count() == 2
+
+        reset_button.click()
+
+        assert filter_combo.currentData() == ""
+        assert reset_button.isEnabled() is False
+        assert window.diagnostics_panel._list.count() == 8
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
