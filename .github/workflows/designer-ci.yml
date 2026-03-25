@@ -35,7 +35,7 @@ jobs:
 
       - name: Run UI Designer tests
         working-directory: EmbeddedGUI_Designer
-        run: python -m pytest -c ui_designer/pyproject.toml ui_designer/tests -v --tb=short
+        run: python scripts/ui_designer/run_pytest.py
 
       - name: Run UI Designer live preview smoke
         working-directory: EmbeddedGUI_Designer

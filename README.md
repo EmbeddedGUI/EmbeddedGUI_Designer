@@ -26,7 +26,7 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 ## Common commands
 
 - Run tests:
-  `python -m pytest -c ui_designer/pyproject.toml ui_designer/tests -v --tb=short`
+  `python scripts/ui_designer/run_pytest.py`
 - Run preview smoke:
   `python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI`
 - Build package:

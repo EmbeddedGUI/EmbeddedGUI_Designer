@@ -95,7 +95,7 @@ class TestSdkBootstrap:
 
         text = describe_sdk_source_hint(str(sdk_root))
 
-        assert "Packaged with Designer from: D:/sdk/EmbeddedGUI" in text
+        assert f"Packaged with Designer from: {normalize_path('D:/sdk/EmbeddedGUI')}" in text
         assert "Bundled SDK revision: sdk-main-416d576" in text
 
     def test_default_cached_sdk_install_dir_uses_config_dir(self, tmp_path, monkeypatch):

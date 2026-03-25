@@ -71,6 +71,10 @@ jobs:
           --archive auto
           --package-suffix "${{ inputs.version }}"
 
+      - name: Inspect packaged metadata
+        working-directory: EmbeddedGUI_Designer
+        run: python scripts/ui_designer/inspect_release.py dist/EmbeddedGUI-Designer --json
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
