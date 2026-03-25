@@ -36,6 +36,7 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 - Inspect local repo health:
   `python scripts/ui_designer/repo_doctor.py`
   `python scripts/ui_designer/repo_doctor.py --strict`
+  `python scripts/ui_designer/repo_doctor.py --critical-only`
 
 ## Release workflow
 
