@@ -32,6 +32,23 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 - Build package:
   `python package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
 
+## Figma and HTML conversion tools
+
+This repository is now the maintenance home for the design-conversion toolchain.
+Run these commands from the repository root:
+
+- HTML or JSX layout analysis:
+  `python html2egui_helper.py extract-layout --input design.html`
+- Create a Designer project:
+  `python html2egui_helper.py scaffold --app MyApp --width 320 --height 480`
+- Generate code and resources:
+  `python html2egui_helper.py generate-code --app MyApp`
+  `python html2egui_helper.py gen-resource --app MyApp`
+- End-to-end Figma Make pipeline:
+  `python figmamake/figmamake2egui.py --project-dir figma_make_project --app MyApp`
+
+The SDK is resolved from `--sdk-root`, `EMBEDDEDGUI_SDK_ROOT`, the bundled `sdk/EmbeddedGUI` submodule, or a sibling `../EmbeddedGUI` checkout.
+
 ## Updating the SDK pin
 
 - Move the submodule to the SDK revision you want to verify:

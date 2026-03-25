@@ -9,14 +9,17 @@ import subprocess
 import sys
 import pytest
 
+from ui_designer.model.workspace import require_designer_sdk_root
+
 # Path to the helper script
 SCRIPT_PATH = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "html2egui_helper.py")
 )
-# EmbeddedGUI project root
-EGUI_ROOT = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+# EmbeddedGUI Designer repo root
+REPO_ROOT = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
 )
+SDK_ROOT = require_designer_sdk_root(repo_root=REPO_ROOT, cli_flag="EMBEDDEDGUI_SDK_ROOT")
 
 
 def _run_helper(*cmd_args, check=True):
@@ -28,7 +31,7 @@ def _run_helper(*cmd_args, check=True):
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
-        cwd=EGUI_ROOT,
+        cwd=REPO_ROOT,
         timeout=30,
     )
     if check and result.returncode != 0:
@@ -47,15 +50,12 @@ class TestScaffold:
         app_name = "TestScaffoldApp"
         app_dir = tmp_path / "example" / app_name
 
-        # Scaffold uses _find_egui_root() which needs Makefile + src/
-        # We run from the real EGUI_ROOT but use --force to create in example/
-        # Instead, test by calling scaffold on the real project root
         result = _run_helper(
             "scaffold", "--app", app_name,
             "--width", "320", "--height", "240", "--force",
         )
 
-        real_app_dir = os.path.join(EGUI_ROOT, "example", app_name)
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
         try:
             assert os.path.isdir(real_app_dir)
             assert os.path.isfile(os.path.join(real_app_dir, f"{app_name}.egui"))
@@ -79,7 +79,7 @@ class TestScaffold:
             "--pages", "home,settings,detail", "--force",
         )
 
-        real_app_dir = os.path.join(EGUI_ROOT, "example", app_name)
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
         try:
             layout_dir = os.path.join(real_app_dir, ".eguiproject", "layout")
             assert os.path.isfile(os.path.join(layout_dir, "home.xml"))
@@ -104,7 +104,7 @@ class TestGenerateCode:
             "--width", "240", "--height", "320", "--force",
         )
 
-        real_app_dir = os.path.join(EGUI_ROOT, "example", app_name)
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
         try:
             # Step 2: Generate code
             result = _run_helper("generate-code", "--app", app_name)
