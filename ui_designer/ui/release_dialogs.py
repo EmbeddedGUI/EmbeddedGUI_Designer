@@ -173,7 +173,7 @@ def _history_status_counts(entries: list[dict[str, object]]) -> dict[str, int]:
 
 
 def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]:
-    counts = {"manifest": 0, "log": 0, "package": 0}
+    counts = {"manifest": 0, "log": 0, "package": 0, "version": 0}
     for entry in entries:
         if _history_string(entry, "manifest_path"):
             counts["manifest"] += 1
@@ -181,6 +181,8 @@ def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]
             counts["log"] += 1
         if _history_string(entry, "zip_path"):
             counts["package"] += 1
+        if _history_version_path(entry):
+            counts["version"] += 1
     return counts
 
 
@@ -225,6 +227,9 @@ def _history_matches_diagnostics(entry: dict[str, object], diagnostics_filter: s
 def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> bool:
     missing = artifact_filter.startswith("missing_")
     normalized_filter = artifact_filter[8:] if missing else artifact_filter
+    if normalized_filter == "version":
+        has_artifact = bool(_history_version_path(entry))
+        return not has_artifact if missing else has_artifact
     artifact_key = {
         "manifest": "manifest_path",
         "log": "log_path",
@@ -352,7 +357,8 @@ def _build_filtered_history_summary(
             "artifact_counts: "
             f"manifest={artifact_counts['manifest']} "
             f"log={artifact_counts['log']} "
-            f"package={artifact_counts['package']}"
+            f"package={artifact_counts['package']} "
+            f"version={artifact_counts['version']}"
         ),
         (
             "diagnostics_counts: "
@@ -787,6 +793,8 @@ class ReleaseHistoryDialog(QDialog):
         self._artifact_filter_combo.addItem("Missing Log", "missing_log")
         self._artifact_filter_combo.addItem("Has Package", "package")
         self._artifact_filter_combo.addItem("Missing Package", "missing_package")
+        self._artifact_filter_combo.addItem("Has Version", "version")
+        self._artifact_filter_combo.addItem("Missing Version", "missing_version")
         self._artifact_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._artifact_filter_combo)
 
@@ -823,7 +831,7 @@ class ReleaseHistoryDialog(QDialog):
         self._status_breakdown_label = QLabel("success 0 | failed 0 | unknown 0")
         filter_row.addWidget(self._status_breakdown_label)
 
-        self._artifact_breakdown_label = QLabel("manifest 0 | log 0 | package 0")
+        self._artifact_breakdown_label = QLabel("manifest 0 | log 0 | package 0 | version 0")
         filter_row.addWidget(self._artifact_breakdown_label)
 
         self._diagnostics_breakdown_label = QLabel("clean 0 | warnings 0 | errors 0 | unknown 0")
@@ -1015,6 +1023,7 @@ class ReleaseHistoryDialog(QDialog):
                         "manifest" if _history_string(entry, "manifest_path") else "",
                         "log" if _history_string(entry, "log_path") else "",
                         "package" if _history_string(entry, "zip_path") else "",
+                        "version" if _history_version_path(entry) else "",
                     ),
                 )
             ).lower()
@@ -1058,7 +1067,12 @@ class ReleaseHistoryDialog(QDialog):
             f"success {status_counts['success']} | failed {status_counts['failed']} | unknown {status_counts['unknown']}"
         )
         self._artifact_breakdown_label.setText(
-            f"manifest {artifact_counts['manifest']} | log {artifact_counts['log']} | package {artifact_counts['package']}"
+            (
+                f"manifest {artifact_counts['manifest']} | "
+                f"log {artifact_counts['log']} | "
+                f"package {artifact_counts['package']} | "
+                f"version {artifact_counts['version']}"
+            )
         )
         self._diagnostics_breakdown_label.setText(
             (

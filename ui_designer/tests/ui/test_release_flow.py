@@ -383,6 +383,47 @@ def test_release_history_dialog_previews_version_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_filters_entries_by_version_artifact(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    version_path = dist_dir / "VERSION.txt"
+    version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "dist_dir": str(dist_dir),
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+            },
+        ]
+    )
+
+    assert dialog._artifact_breakdown_label.text() == "manifest 0 | log 0 | package 0 | version 1"
+
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("version"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
+
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("missing_version"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData(""))
+    dialog._search_edit.setText("version")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
+
+
+@_skip_no_qt
 def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -499,7 +540,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"
     assert dialog._status_breakdown_label.text() == "success 1 | failed 1 | unknown 0"
-    assert dialog._artifact_breakdown_label.text() == "manifest 1 | log 1 | package 1"
+    assert dialog._artifact_breakdown_label.text() == "manifest 1 | log 1 | package 1 | version 0"
     assert dialog._diagnostics_breakdown_label.text() == "clean 1 | warnings 1 | errors 1 | unknown 0"
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
     assert "warn 2" in dialog._history_list.item(0).text()
@@ -509,7 +550,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 1
     assert dialog._result_count_label.text() == "1 / 2"
     assert dialog._status_breakdown_label.text() == "success 0 | failed 1 | unknown 0"
-    assert dialog._artifact_breakdown_label.text() == "manifest 0 | log 1 | package 1"
+    assert dialog._artifact_breakdown_label.text() == "manifest 0 | log 1 | package 1 | version 0"
     assert dialog._diagnostics_breakdown_label.text() == "clean 0 | warnings 1 | errors 1 | unknown 0"
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
@@ -559,7 +600,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"
     assert dialog._status_breakdown_label.text() == "success 1 | failed 1 | unknown 0"
-    assert dialog._artifact_breakdown_label.text() == "manifest 1 | log 1 | package 1"
+    assert dialog._artifact_breakdown_label.text() == "manifest 1 | log 1 | package 1 | version 0"
     assert dialog._diagnostics_breakdown_label.text() == "clean 1 | warnings 1 | errors 1 | unknown 0"
     assert dialog._range_filter_combo.currentData() == ""
     assert dialog._status_filter_combo.currentData() == ""
@@ -607,7 +648,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
 
     assert "matched_entries=1" in copied
     assert "status_counts: success=0 failed=1 unknown=0" in copied
-    assert "artifact_counts: manifest=0 log=0 package=1" in copied
+    assert "artifact_counts: manifest=0 log=0 package=1 version=0" in copied
     assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in copied
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in copied
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
@@ -703,7 +744,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     assert captured["default_name"] == "release-history-summary-failed-package.txt"
     assert "matched_entries=1" in exported
     assert "status_counts: success=0 failed=1 unknown=0" in exported
-    assert "artifact_counts: manifest=0 log=0 package=1" in exported
+    assert "artifact_counts: manifest=0 log=0 package=1 version=0" in exported
     assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in exported
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
@@ -752,7 +793,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     exported = json.loads(export_path.read_text(encoding="utf-8"))
     assert exported["matched_entries"] == 1
     assert exported["status_counts"] == {"success": 0, "failed": 1, "unknown": 0}
-    assert exported["artifact_counts"] == {"manifest": 0, "log": 0, "package": 1}
+    assert exported["artifact_counts"] == {"manifest": 0, "log": 0, "package": 1, "version": 0}
     assert exported["diagnostics_counts"] == {"clean": 0, "warnings": 1, "errors": 1, "unknown": 0}
     assert exported["filters"]["artifact"] == "package"
     assert exported["filters"]["diagnostics"] == "all"
@@ -849,7 +890,7 @@ def test_release_history_dialog_filters_entries_by_time_range(qapp, monkeypatch)
 
     assert dialog._history_list.count() == 1
     assert dialog._result_count_label.text() == "1 / 2"
-    assert dialog._artifact_breakdown_label.text() == "manifest 0 | log 0 | package 0"
+    assert dialog._artifact_breakdown_label.text() == "manifest 0 | log 0 | package 0 | version 0"
     assert dialog._diagnostics_breakdown_label.text() == "clean 0 | warnings 0 | errors 0 | unknown 1"
     assert "20260326T000000Z" in dialog._history_list.item(0).text()
 
