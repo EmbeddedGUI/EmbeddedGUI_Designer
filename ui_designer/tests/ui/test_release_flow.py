@@ -545,6 +545,16 @@ def test_release_history_dialog_can_reset_view(qapp, tmp_path):
     dialog = ReleaseHistoryDialog(
         [
             {
+                "build_id": "20260326T000100Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Build succeeded",
+                "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
+                "manifest_path": str(manifest_path),
+            },
+            {
                 "build_id": "20260326T000000Z",
                 "status": "failed",
                 "profile_id": "esp32",
@@ -558,6 +568,7 @@ def test_release_history_dialog_can_reset_view(qapp, tmp_path):
         ]
     )
 
+    dialog._history_list.setCurrentRow(1)
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("manifest"))
     dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("errors"))
@@ -572,6 +583,7 @@ def test_release_history_dialog_can_reset_view(qapp, tmp_path):
     assert dialog._diagnostics_filter_combo.currentData() == ""
     assert dialog._sort_combo.currentData() == "newest"
     assert dialog._search_edit.text() == ""
+    assert dialog._current_entry()["build_id"] == "20260326T000100Z"
     assert dialog._preview_auto_button.isChecked() is True
     assert dialog._preview_log_button.isChecked() is False
     assert dialog._preview_label.text() == "Manifest Preview"

@@ -1183,6 +1183,8 @@ class ReleaseHistoryDialog(QDialog):
     def _reset_view(self) -> None:
         self._clear_filters()
         self._activate_preview_mode("auto")
+        if self._history_list.count():
+            self._history_list.setCurrentRow(0)
 
     def _copy_filtered_summary(self) -> None:
         self._copy_text(self._filtered_summary_text())
