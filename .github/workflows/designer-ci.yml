@@ -40,3 +40,12 @@ jobs:
       - name: Run UI Designer live preview smoke
         working-directory: EmbeddedGUI_Designer
         run: python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
+
+      - name: Run UI Designer release smoke
+        working-directory: EmbeddedGUI_Designer
+        run: >
+          python scripts/ui_designer/release_project.py
+          --project samples/release_smoke/ReleaseSmokeApp
+          --sdk-root sdk/EmbeddedGUI
+          --output-dir build/release-smoke
+          --json

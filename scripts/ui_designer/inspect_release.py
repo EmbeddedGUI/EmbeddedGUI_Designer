@@ -54,6 +54,19 @@ def _load_json_dict(path: Path) -> dict[str, object]:
     return content if isinstance(content, dict) else {}
 
 
+def _find_release_manifest_in_children(root_dir: Path) -> Path | None:
+    candidates = []
+    for child in root_dir.iterdir():
+        if not child.is_dir():
+            continue
+        manifest_path = child / "release-manifest.json"
+        if manifest_path.is_file():
+            candidates.append(manifest_path)
+    if not candidates:
+        return None
+    return sorted(candidates, key=lambda path: path.parent.name)[-1]
+
+
 def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
     resolved_path = Path(manifest_path).resolve()
     manifest = _load_json_dict(resolved_path)
@@ -143,6 +156,9 @@ def inspect_path(path: str | Path) -> dict[str, object]:
         manifest_path = resolved_path / "release-manifest.json"
         if manifest_path.is_file():
             return summarize_manifest(manifest_path)
+        nested_manifest_path = _find_release_manifest_in_children(resolved_path)
+        if nested_manifest_path is not None:
+            return summarize_manifest(nested_manifest_path)
         if (resolved_path / DESIGNER_BUILD_METADATA_NAME).is_file():
             return summarize_packaged_app(resolved_path)
         if (resolved_path / BUNDLED_SDK_METADATA_NAME).is_file():

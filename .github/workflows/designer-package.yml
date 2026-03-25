@@ -73,7 +73,11 @@ jobs:
 
       - name: Inspect packaged metadata
         working-directory: EmbeddedGUI_Designer
-        run: python scripts/ui_designer/inspect_release.py dist/EmbeddedGUI-Designer --json
+        run: >
+          python scripts/ui_designer/inspect_release.py
+          dist/EmbeddedGUI-Designer
+          --json
+          > dist/designer-package-metadata.json
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
@@ -82,4 +86,5 @@ jobs:
           path: |
             EmbeddedGUI_Designer/dist/*.zip
             EmbeddedGUI_Designer/dist/*.tar.gz
+            EmbeddedGUI_Designer/dist/designer-package-metadata.json
           retention-days: 7

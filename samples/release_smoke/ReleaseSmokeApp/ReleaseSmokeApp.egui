@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project app_name="ReleaseSmokeApp" screen_width="320" screen_height="240" page_mode="easy_page" startup="main_page" sdk_root="../../../sdk/EmbeddedGUI" egui_root="../../../sdk/EmbeddedGUI">
+    <Pages>
+        <PageRef file="layout/main_page.xml" />
+    </Pages>
+    <Resources catalog="resources.xml" />
+</Project>

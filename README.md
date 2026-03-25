@@ -31,6 +31,8 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
   `python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI`
 - Build package:
   `python package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
+- Run a real release smoke on the sample project:
+  `python scripts/ui_designer/release_project.py --project samples/release_smoke/ReleaseSmokeApp --sdk-root sdk/EmbeddedGUI --output-dir build/release-smoke --json`
 
 ## Release workflow
 
@@ -64,6 +66,7 @@ Packaged Designer builds also include:
 
 - `.designer_build_info.json` in the app root.
 - `sdk/EmbeddedGUI/.designer_sdk_bundle.json` when SDK bundling is enabled.
+- CI package builds also upload `dist/designer-package-metadata.json` for quick SDK/version inspection.
 
 ## Figma and HTML conversion tools
 

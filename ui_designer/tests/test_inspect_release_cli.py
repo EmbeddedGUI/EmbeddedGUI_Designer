@@ -110,3 +110,32 @@ def test_inspect_packaged_app_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["sdk_revision"] == "sdk-main-abcdef1"
     assert payload["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
     assert payload["file_count"] == 42
+
+
+def test_inspect_profile_directory_uses_latest_build(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+
+    profile_dir = tmp_path / "release" / "windows-pc"
+    build_a = profile_dir / "20260325T000000Z"
+    build_b = profile_dir / "20260325T000100Z"
+    build_a.mkdir(parents=True)
+    build_b.mkdir(parents=True)
+
+    (build_a / "release-manifest.json").write_text(
+        json.dumps({"build_id": "20260325T000000Z", "status": "success", "app_name": "DemoA"}, indent=2),
+        encoding="utf-8",
+    )
+    (build_b / "release-manifest.json").write_text(
+        json.dumps({"build_id": "20260325T000100Z", "status": "success", "app_name": "DemoB"}, indent=2),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"path": str(profile_dir), "json": True})())
+
+    exit_code = module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == module.EXIT_OK
+    assert payload["kind"] == "release_manifest"
+    assert payload["build_id"] == "20260325T000100Z"
+    assert payload["app_name"] == "DemoB"
