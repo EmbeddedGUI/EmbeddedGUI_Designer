@@ -1379,6 +1379,11 @@ class ReleaseHistoryDialog(QDialog):
             QMessageBox.warning(self, "Open Release History File Failed", str(exc))
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
+        release_root = _history_string(entry or {}, "release_root")
+        dist_dir = _history_string(entry or {}, "dist_dir")
+        manifest_path = _history_string(entry or {}, "manifest_path")
+        log_path = _history_string(entry or {}, "log_path")
+        package_path = _history_string(entry or {}, "zip_path")
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._preview_version_button.setEnabled(bool(entry and _history_version_path(entry)))
@@ -1387,12 +1392,12 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
         self._export_entry_json_button.setEnabled(bool(entry))
-        self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
-        self._open_dist_button.setEnabled(bool(entry and _history_string(entry, "dist_dir")))
+        self._open_folder_button.setEnabled(bool(release_root and os.path.isdir(release_root)))
+        self._open_dist_button.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
         self._open_version_button.setEnabled(bool(entry and _history_version_path(entry)))
-        self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
-        self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
-        self._open_package_button.setEnabled(bool(entry and _history_string(entry, "zip_path")))
+        self._open_manifest_button.setEnabled(bool(manifest_path and os.path.isfile(manifest_path)))
+        self._open_log_button.setEnabled(bool(log_path and os.path.isfile(log_path)))
+        self._open_package_button.setEnabled(bool(package_path and os.path.isfile(package_path)))
 
     def _update_current_entry(self, row: int) -> None:
         if row < 0:

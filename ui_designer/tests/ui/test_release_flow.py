@@ -626,6 +626,35 @@ def test_release_history_dialog_can_open_history_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "release_root": "/tmp/missing-release-root",
+                "dist_dir": "/tmp/missing-dist",
+                "manifest_path": "/tmp/missing-manifest.json",
+                "log_path": "/tmp/missing-build.log",
+                "zip_path": "/tmp/missing-package.zip",
+            }
+        ]
+    )
+
+    assert dialog._preview_manifest_button.isEnabled() is True
+    assert dialog._preview_log_button.isEnabled() is True
+    assert dialog._preview_version_button.isEnabled() is False
+    assert dialog._open_folder_button.isEnabled() is False
+    assert dialog._open_dist_button.isEnabled() is False
+    assert dialog._open_manifest_button.isEnabled() is False
+    assert dialog._open_log_button.isEnabled() is False
+    assert dialog._open_package_button.isEnabled() is False
+
+
+@_skip_no_qt
 def test_release_history_dialog_refresh_updates_history_file_button(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
