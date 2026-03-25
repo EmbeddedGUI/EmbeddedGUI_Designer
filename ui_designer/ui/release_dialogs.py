@@ -900,6 +900,7 @@ class ReleaseHistoryDialog(QDialog):
         action_row = QHBoxLayout()
         right_layout.addLayout(action_row)
 
+        self._preview_auto_button = QPushButton("Auto Preview")
         self._preview_manifest_button = QPushButton("Preview Manifest")
         self._preview_log_button = QPushButton("Preview Log")
         self._preview_version_button = QPushButton("Preview Version")
@@ -914,6 +915,7 @@ class ReleaseHistoryDialog(QDialog):
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
+        self._preview_auto_button.clicked.connect(lambda: self._activate_preview_mode("auto"))
         self._preview_manifest_button.clicked.connect(lambda: self._activate_preview_mode("manifest"))
         self._preview_log_button.clicked.connect(lambda: self._activate_preview_mode("log"))
         self._preview_version_button.clicked.connect(lambda: self._activate_preview_mode("version"))
@@ -929,6 +931,7 @@ class ReleaseHistoryDialog(QDialog):
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
         self._open_package_button.clicked.connect(lambda: self._open_selected_path("zip_path", "Release Package"))
         for button in (
+            self._preview_auto_button,
             self._preview_manifest_button,
             self._preview_log_button,
             self._preview_version_button,
@@ -1384,6 +1387,7 @@ class ReleaseHistoryDialog(QDialog):
         manifest_path = _history_string(entry or {}, "manifest_path")
         log_path = _history_string(entry or {}, "log_path")
         package_path = _history_string(entry or {}, "zip_path")
+        self._preview_auto_button.setEnabled(bool(entry))
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._preview_version_button.setEnabled(bool(entry and _history_version_path(entry)))

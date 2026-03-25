@@ -495,6 +495,38 @@ def test_release_history_dialog_keeps_selected_preview_mode_across_entries(qapp,
 
 
 @_skip_no_qt
+def test_release_history_dialog_can_restore_auto_preview_mode(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    log_path = tmp_path / "build.log"
+    manifest_path.write_text('{"status":"success","name":"manifest"}\n', encoding="utf-8")
+    log_path.write_text("log output\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+                "log_path": str(log_path),
+            }
+        ]
+    )
+
+    assert dialog._preview_label.text() == "Manifest Preview"
+
+    dialog._preview_log_button.click()
+    assert dialog._preview_label.text() == "Log Preview"
+    assert "log output" in dialog._preview_edit.toPlainText()
+
+    dialog._preview_auto_button.click()
+    assert dialog._preview_label.text() == "Manifest Preview"
+    assert '"name": "manifest"' in dialog._preview_edit.toPlainText()
+
+
+@_skip_no_qt
 def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     from PyQt5.QtWidgets import QApplication
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
