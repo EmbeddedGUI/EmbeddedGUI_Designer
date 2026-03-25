@@ -127,10 +127,14 @@ class RepositoryHealthDialog(QDialog):
         stale_dirs = view_payload.get("stale_temp_dirs") if isinstance(view_payload.get("stale_temp_dirs"), list) else []
         selected_stale_path = self._selected_stale_path()
         self._sync_stale_dir_combo(stale_dirs, selected_stale_path)
-        self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
-        self._open_sdk_button.setEnabled(bool(sdk.get("path")))
-        self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
-        self._open_stale_button.setEnabled(bool(self._selected_stale_path()))
+        repo_root = str(self._payload.get("repo_root") or "").strip()
+        sdk_path = str(sdk.get("path") or "").strip()
+        smoke_path = str(smoke.get("path") or "").strip()
+        stale_path = self._selected_stale_path()
+        self._open_repo_button.setEnabled(bool(repo_root and os.path.isdir(repo_root)))
+        self._open_sdk_button.setEnabled(bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path)))
+        self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path)))
+        self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
         if self._show_json_check.isChecked():
             self._details_edit.setPlainText(format_repo_health_json(view_payload, **view_options))
             return

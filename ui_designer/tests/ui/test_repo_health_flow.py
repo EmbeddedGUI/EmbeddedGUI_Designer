@@ -118,6 +118,7 @@ def test_repository_health_dialog_can_open_first_stale_dir(qapp, monkeypatch, tm
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
     stale_dir = tmp_path / ".pytest-tmp-codex"
+    stale_dir.mkdir()
     payload = {
         "repo_root": str(tmp_path),
         "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
@@ -140,11 +141,36 @@ def test_repository_health_dialog_can_open_first_stale_dir(qapp, monkeypatch, tm
 
 
 @_skip_no_qt
+def test_repository_health_dialog_open_buttons_require_existing_paths(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    assert dialog._open_repo_button.isEnabled() is True
+    assert dialog._open_sdk_button.isEnabled() is False
+    assert dialog._open_smoke_button.isEnabled() is False
+    assert dialog._open_stale_button.isEnabled() is False
+
+
+@_skip_no_qt
 def test_repository_health_dialog_can_open_selected_stale_dir(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
     first_stale_dir = tmp_path / ".pytest-tmp-codex"
     second_stale_dir = tmp_path / "tmpxtayw0f6"
+    first_stale_dir.mkdir()
+    second_stale_dir.mkdir()
     payload = {
         "repo_root": str(tmp_path),
         "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
@@ -174,6 +200,8 @@ def test_repository_health_dialog_blocked_only_filters_stale_dirs(qapp, monkeypa
 
     accessible_stale_dir = tmp_path / ".pytest-tmp-codex"
     blocked_stale_dir = tmp_path / "tmpxtayw0f6"
+    accessible_stale_dir.mkdir()
+    blocked_stale_dir.mkdir()
     payload = {
         "repo_root": str(tmp_path),
         "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
