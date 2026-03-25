@@ -184,6 +184,20 @@ def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]
     return counts
 
 
+def _history_diagnostics_counts(entries: list[dict[str, object]]) -> dict[str, int]:
+    counts = {"clean": 0, "warnings": 0, "errors": 0, "unknown": 0}
+    for entry in entries:
+        if _history_matches_diagnostics(entry, "unknown"):
+            counts["unknown"] += 1
+        if _history_matches_diagnostics(entry, "clean"):
+            counts["clean"] += 1
+        if _history_matches_diagnostics(entry, "warnings"):
+            counts["warnings"] += 1
+        if _history_matches_diagnostics(entry, "errors"):
+            counts["errors"] += 1
+    return counts
+
+
 def _history_timestamp_value(entry: dict[str, object]) -> float | None:
     timestamp = _history_timestamp(entry)
     return timestamp.timestamp() if timestamp is not None else None
@@ -781,6 +795,9 @@ class ReleaseHistoryDialog(QDialog):
         self._artifact_breakdown_label = QLabel("manifest 0 | log 0 | package 0")
         filter_row.addWidget(self._artifact_breakdown_label)
 
+        self._diagnostics_breakdown_label = QLabel("clean 0 | warnings 0 | errors 0 | unknown 0")
+        filter_row.addWidget(self._diagnostics_breakdown_label)
+
         self._clear_filters_button = QPushButton("Clear Filters")
         self._clear_filters_button.clicked.connect(self._clear_filters)
         filter_row.addWidget(self._clear_filters_button)
@@ -1005,11 +1022,20 @@ class ReleaseHistoryDialog(QDialog):
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
         status_counts = _history_status_counts(self._filtered_history_entries)
         artifact_counts = _history_artifact_counts(self._filtered_history_entries)
+        diagnostics_counts = _history_diagnostics_counts(self._filtered_history_entries)
         self._status_breakdown_label.setText(
             f"success {status_counts['success']} | failed {status_counts['failed']} | unknown {status_counts['unknown']}"
         )
         self._artifact_breakdown_label.setText(
             f"manifest {artifact_counts['manifest']} | log {artifact_counts['log']} | package {artifact_counts['package']}"
+        )
+        self._diagnostics_breakdown_label.setText(
+            (
+                f"clean {diagnostics_counts['clean']} | "
+                f"warnings {diagnostics_counts['warnings']} | "
+                f"errors {diagnostics_counts['errors']} | "
+                f"unknown {diagnostics_counts['unknown']}"
+            )
         )
         self._copy_filtered_button.setEnabled(bool(filtered_entries))
         self._copy_filtered_json_button.setEnabled(bool(filtered_entries))
