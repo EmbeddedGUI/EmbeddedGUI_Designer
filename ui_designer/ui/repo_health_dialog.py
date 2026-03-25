@@ -8,7 +8,7 @@ from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.config import get_config
-from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_view_payload, summarize_repo_health
+from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_counts, repo_health_view_payload, summarize_repo_health
 
 
 class RepositoryHealthDialog(QDialog):
@@ -28,6 +28,10 @@ class RepositoryHealthDialog(QDialog):
         self._summary_label = QLabel()
         self._summary_label.setWordWrap(True)
         root_layout.addWidget(self._summary_label)
+
+        self._overview_label = QLabel("critical 0 | suggestions 0 | stale 0")
+        self._overview_label.setWordWrap(True)
+        root_layout.addWidget(self._overview_label)
 
         self._details_edit = QTextEdit()
         self._details_edit.setReadOnly(True)
@@ -88,6 +92,10 @@ class RepositoryHealthDialog(QDialog):
 
     def _render_details(self) -> None:
         view_payload = repo_health_view_payload(self._payload, critical_only=self._critical_only_check.isChecked())
+        counts = repo_health_counts(view_payload)
+        self._overview_label.setText(
+            f"critical {counts['critical']} | suggestions {counts['suggestions']} | stale {counts['stale_dirs']}"
+        )
         if self._show_json_check.isChecked():
             self._details_edit.setPlainText(format_repo_health_json(view_payload))
             return

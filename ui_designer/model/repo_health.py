@@ -166,6 +166,17 @@ def repo_health_view_payload(payload: dict[str, object], *, critical_only: bool 
     }
 
 
+def repo_health_counts(payload: dict[str, object]) -> dict[str, int]:
+    stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
+    suggestions = payload.get("suggestions") if isinstance(payload.get("suggestions"), list) else []
+    critical_issues = payload.get("critical_issues") if isinstance(payload.get("critical_issues"), list) else critical_repo_health_issues(payload)
+    return {
+        "critical": len(critical_issues),
+        "suggestions": len(suggestions),
+        "stale_dirs": len(stale_dirs),
+    }
+
+
 def format_repo_health_text(payload: dict[str, object]) -> str:
     lines = [f"[repo] {payload.get('repo_root', '')}"]
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}

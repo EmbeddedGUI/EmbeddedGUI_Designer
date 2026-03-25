@@ -150,9 +150,11 @@ def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, t
     monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
 
     dialog = RepositoryHealthDialog(str(tmp_path))
+    assert dialog._overview_label.text() == "critical 2 | suggestions 2 | stale 1"
 
     dialog._critical_only_check.setChecked(True)
     focused_text = dialog._details_edit.toPlainText()
+    assert dialog._overview_label.text() == "critical 2 | suggestions 2 | stale 0"
     assert "critical: SDK submodule is not initialized" in focused_text
     assert "critical: release smoke sample is missing" in focused_text
     assert "stale_temp_dirs: 0" in focused_text
