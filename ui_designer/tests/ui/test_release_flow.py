@@ -339,6 +339,10 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 1
     assert "20260326T000000Z" in dialog._history_list.item(0).text()
 
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("missing_manifest"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
     dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData(""))
     dialog._search_edit.setText("sdk-fail")
     assert dialog._history_list.count() == 1

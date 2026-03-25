@@ -149,14 +149,17 @@ def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]
 
 
 def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> bool:
+    missing = artifact_filter.startswith("missing_")
+    normalized_filter = artifact_filter[8:] if missing else artifact_filter
     artifact_key = {
         "manifest": "manifest_path",
         "log": "log_path",
         "package": "zip_path",
-    }.get(artifact_filter)
+    }.get(normalized_filter)
     if not artifact_key:
         return True
-    return bool(_history_string(entry, artifact_key))
+    has_artifact = bool(_history_string(entry, artifact_key))
+    return not has_artifact if missing else has_artifact
 
 
 def _utc_now() -> datetime:
@@ -622,8 +625,11 @@ class ReleaseHistoryDialog(QDialog):
         self._artifact_filter_combo = QComboBox()
         self._artifact_filter_combo.addItem("Any", "")
         self._artifact_filter_combo.addItem("Has Manifest", "manifest")
+        self._artifact_filter_combo.addItem("Missing Manifest", "missing_manifest")
         self._artifact_filter_combo.addItem("Has Log", "log")
+        self._artifact_filter_combo.addItem("Missing Log", "missing_log")
         self._artifact_filter_combo.addItem("Has Package", "package")
+        self._artifact_filter_combo.addItem("Missing Package", "missing_package")
         self._artifact_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._artifact_filter_combo)
 
