@@ -749,6 +749,31 @@ def test_release_history_dialog_can_open_history_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_can_copy_history_file_path(qapp, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    history_path = tmp_path / "output" / "ui_designer_release" / "history.json"
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ],
+        history_path=str(history_path),
+    )
+
+    QApplication.clipboard().clear()
+    dialog._copy_history_file_button.click()
+
+    assert dialog._copy_history_file_button.isEnabled() is True
+    assert QApplication.clipboard().text() == str(history_path) + "\n"
+
+
+@_skip_no_qt
 def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
