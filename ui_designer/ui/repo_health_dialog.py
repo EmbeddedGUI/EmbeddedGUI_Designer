@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
-from ..model.repo_health import collect_repo_health, format_repo_health_text, summarize_repo_health
+from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, summarize_repo_health
 
 
 class RepositoryHealthDialog(QDialog):
@@ -34,18 +34,22 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addLayout(action_row)
 
         self._refresh_button = QPushButton("Refresh")
+        self._show_json_check = QCheckBox("Show JSON")
         self._copy_report_button = QPushButton("Copy Report")
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
 
         self._refresh_button.clicked.connect(self.refresh)
+        self._show_json_check.toggled.connect(self._render_details)
         self._copy_report_button.clicked.connect(self._copy_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
 
-        for button in (self._refresh_button, self._copy_report_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
+        action_row.addWidget(self._refresh_button)
+        action_row.addWidget(self._show_json_check)
+        for button in (self._copy_report_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
             action_row.addWidget(button)
         action_row.addStretch(1)
 
@@ -59,13 +63,19 @@ class RepositoryHealthDialog(QDialog):
     def refresh(self) -> None:
         self._payload = collect_repo_health(self._repo_root)
         self._summary_label.setText(summarize_repo_health(self._payload))
-        self._details_edit.setPlainText(format_repo_health_text(self._payload))
+        self._render_details()
 
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
         smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
         self._open_sdk_button.setEnabled(bool(sdk.get("path")))
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
+
+    def _render_details(self) -> None:
+        if self._show_json_check.isChecked():
+            self._details_edit.setPlainText(format_repo_health_json(self._payload))
+            return
+        self._details_edit.setPlainText(format_repo_health_text(self._payload))
 
     def _open_payload_path(self, key: str, label: str) -> None:
         path = str(self._payload.get(key) or "").strip()

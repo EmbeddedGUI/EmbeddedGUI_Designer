@@ -100,3 +100,32 @@ def test_repository_health_dialog_copy_report_writes_clipboard(qapp, monkeypatch
     copied = QApplication.clipboard().text()
     assert f"[repo] {tmp_path}" in copied
     assert "sdk_submodule.initialized: true" in copied
+
+
+@_skip_no_qt
+def test_repository_health_dialog_can_switch_to_json_view(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    dialog._show_json_check.setChecked(True)
+    assert '"repo_root"' in dialog._details_edit.toPlainText()
+    assert '"sdk_submodule"' in dialog._details_edit.toPlainText()
+
+    QApplication.clipboard().clear()
+    dialog._copy_report_button.click()
+    copied = QApplication.clipboard().text()
+    assert '"repo_root"' in copied
+    assert '"sdk_submodule"' in copied
