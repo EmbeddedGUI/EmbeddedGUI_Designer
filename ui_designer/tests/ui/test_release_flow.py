@@ -964,6 +964,31 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
 
 
 @_skip_no_qt
+def test_release_history_dialog_export_filename_includes_search_text(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
+                "zip_path": "/tmp/release.zip",
+            },
+        ]
+    )
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    dialog._search_edit.setText("sdk-fail package")
+
+    assert dialog._default_filtered_export_filename() == "release-history-summary-failed-sdk-fail-package.txt"
+
+
+@_skip_no_qt
 def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path, monkeypatch):
     import json
 

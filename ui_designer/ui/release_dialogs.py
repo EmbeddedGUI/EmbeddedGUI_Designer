@@ -1222,6 +1222,7 @@ class ReleaseHistoryDialog(QDialog):
             str(self._artifact_filter_combo.currentData() or ""),
             str(self._diagnostics_filter_combo.currentData() or ""),
             "" if str(self._sort_combo.currentData() or "newest") == "newest" else str(self._sort_combo.currentData() or ""),
+            self._search_edit.text().strip(),
         ):
             safe_value = _safe_filename_part(value)
             if safe_value:
