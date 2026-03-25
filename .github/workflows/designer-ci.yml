@@ -21,6 +21,13 @@ jobs:
           git -C sdk/EmbeddedGUI rev-parse HEAD
           git -C sdk/EmbeddedGUI config --get remote.origin.url
 
+      - name: Capture repository health
+        working-directory: EmbeddedGUI_Designer
+        run: >
+          python scripts/ui_designer/repo_doctor.py
+          --json
+          > build/repo-health.json
+
       - name: Setup C/C++ env
         uses: rlalik/setup-cpp-compiler@v1.2
 
@@ -64,6 +71,7 @@ jobs:
         with:
           name: designer-release-smoke
           path: |
+            EmbeddedGUI_Designer/build/repo-health.json
             EmbeddedGUI_Designer/build/release-smoke/**
             EmbeddedGUI_Designer/build/release-smoke-result.json
             EmbeddedGUI_Designer/build/release-smoke-metadata.json

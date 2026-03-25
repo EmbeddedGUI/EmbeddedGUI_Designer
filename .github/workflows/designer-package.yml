@@ -35,6 +35,13 @@ jobs:
           git -C sdk/EmbeddedGUI rev-parse HEAD
           git -C sdk/EmbeddedGUI config --get remote.origin.url
 
+      - name: Capture repository health
+        working-directory: EmbeddedGUI_Designer
+        run: >
+          python scripts/ui_designer/repo_doctor.py
+          --json
+          > build/repo-health.json
+
       - name: Setup C/C++ env (Windows)
         if: runner.os == 'Windows'
         uses: rlalik/setup-cpp-compiler@v1.2
@@ -84,6 +91,7 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
+            EmbeddedGUI_Designer/build/repo-health.json
             EmbeddedGUI_Designer/dist/*.zip
             EmbeddedGUI_Designer/dist/*.tar.gz
             EmbeddedGUI_Designer/dist/designer-package-metadata.json
