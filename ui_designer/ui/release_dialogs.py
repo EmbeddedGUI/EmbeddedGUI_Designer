@@ -958,7 +958,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_summary_button.clicked.connect(self._copy_entry_summary)
         self._export_summary_button.clicked.connect(self._export_entry_summary)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
-        self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
+        self._copy_preview_button.clicked.connect(self._copy_preview_text)
         self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
         self._export_preview_button.clicked.connect(self._export_preview)
         self._open_preview_button.clicked.connect(self._open_preview)
@@ -1520,11 +1520,18 @@ class ReleaseHistoryDialog(QDialog):
         label_part = _safe_filename_part(label or "preview")
         return f"{base}-{label_part}{suffix}"
 
-    def _preview_export_text(self) -> str:
+    def _current_preview_text(self, *, full_content: bool = False) -> str:
         _label, path, prefer_json, _suffix = self._current_preview_target_options()
         if not path:
-            return ""
-        return _preview_file_text(path, prefer_json=prefer_json, char_limit=None).rstrip() + "\n"
+            return self._preview_edit.toPlainText()
+        char_limit = None if full_content else _PREVIEW_CHAR_LIMIT
+        return _preview_file_text(path, prefer_json=prefer_json, char_limit=char_limit)
+
+    def _copy_preview_text(self) -> None:
+        self._copy_text(self._current_preview_text(full_content=True))
+
+    def _preview_export_text(self) -> str:
+        return self._current_preview_text(full_content=True).rstrip() + "\n"
 
     def _export_preview(self) -> None:
         label, path, _prefer_json, default_suffix = self._current_preview_target_options()

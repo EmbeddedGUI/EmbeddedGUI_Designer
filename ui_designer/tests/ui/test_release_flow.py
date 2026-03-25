@@ -448,6 +448,36 @@ def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_copy_preview_uses_full_log_content(qapp, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    log_path = tmp_path / "build.log"
+    log_path.write_text("x" * 70000, encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "windows-pc",
+                "log_path": str(log_path),
+            }
+        ]
+    )
+
+    assert "[truncated to first 65536 characters]" in dialog._preview_edit.toPlainText()
+
+    QApplication.clipboard().clear()
+    dialog._copy_preview_button.click()
+    copied = QApplication.clipboard().text()
+
+    assert len(copied) == 70000
+    assert copied == "x" * 70000
+    assert "[truncated to first 65536 characters]" not in copied
+
+
+@_skip_no_qt
 def test_release_history_dialog_keeps_selected_preview_mode_across_entries(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
