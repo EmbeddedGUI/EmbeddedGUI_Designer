@@ -44,8 +44,8 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 
 Use `Build -> Release Build...` to create a reproducible release for the current project.
 Use `Build -> Release Profiles...` to maintain project-local release profiles in `.eguiproject/release.json`.
-Use `Build -> Release History...` to inspect, time-filter, artifact-filter, diagnostics-filter, sort, refresh, copy, or export prior release summaries as text or JSON, preview manifests or build logs directly inside the Designer, and reopen with the last-used filters still applied per project.
-Use `Build -> Repository Health...` to inspect SDK submodule state, release smoke sample presence, stale workspace temp directories, filter to critical issues, switch between text or JSON reports with embedded summary/count metadata, export the current report view, and reopen with the previous view settings intact.
+Use `Build -> Release History...` to inspect, time-filter, artifact-filter, diagnostics-filter, sort, refresh, copy, or export prior release summaries as text or JSON, preview manifests, version files, or build logs directly inside the Designer, reopen release roots, dist folders, and tracked artifacts, and reopen with the last-used filters still applied per project.
+Use `Build -> Repository Health...` to inspect SDK submodule state, release smoke sample presence, stale workspace temp directories, filter to critical issues, switch between text or JSON reports with embedded summary/count metadata, copy short summaries for issue reports, open stale temp directories directly, export the current report view, and reopen with the previous view settings intact.
 The latest successful build can be reopened from `Build -> Open Last Release Folder` or `Build -> Open Last Release Manifest`.
 
 ### From the CLI
