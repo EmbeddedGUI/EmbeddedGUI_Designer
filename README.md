@@ -32,6 +32,39 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 - Build package:
   `python package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
 
+## Release workflow
+
+### From the GUI
+
+Use `Build -> Release Build...` to create a reproducible release for the current project.
+Use `Build -> Release Profiles...` to maintain project-local release profiles in `.eguiproject/release.json`.
+The latest successful build can be reopened from `Build -> Open Last Release Folder` or `Build -> Open Last Release Manifest`.
+
+### From the CLI
+
+- Create a release package for a project:
+  `python scripts/ui_designer/release_project.py --project path/to/Demo.egui --sdk-root sdk/EmbeddedGUI`
+- Emit release result as JSON for CI or wrappers:
+  `python scripts/ui_designer/release_project.py --project path/to/Demo.egui --sdk-root sdk/EmbeddedGUI --json`
+- Inspect a release root, manifest, packaged app, or bundled SDK directory:
+  `python scripts/ui_designer/inspect_release.py path/to/output/ui_designer_release/windows-pc/<build_id>`
+  `python scripts/ui_designer/inspect_release.py dist/EmbeddedGUI-Designer --json`
+
+### Release output
+
+A project release is written under `output/ui_designer_release/<profile>/<build_id>/` and includes:
+
+- `release-manifest.json`: build result, Designer revision, SDK revision, warnings/errors, artifacts.
+- `VERSION.txt`: compact human-readable version stamp.
+- `logs/build.log`: resource generation and build output.
+- `dist/`: copied executable, resources, `VERSION.txt`, and a manifest copy.
+- `history.json`: rolling release history for the project.
+
+Packaged Designer builds also include:
+
+- `.designer_build_info.json` in the app root.
+- `sdk/EmbeddedGUI/.designer_sdk_bundle.json` when SDK bundling is enabled.
+
 ## Figma and HTML conversion tools
 
 This repository is now the maintenance home for the design-conversion toolchain.
