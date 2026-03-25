@@ -730,6 +730,8 @@ def test_release_history_dialog_can_sort_entries(qapp):
                 "profile_id": "windows-pc",
                 "message": "Newest success",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
             },
             {
                 "build_id": "20260324T000000Z",
@@ -738,6 +740,8 @@ def test_release_history_dialog_can_sort_entries(qapp):
                 "profile_id": "esp32",
                 "message": "Older failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
             },
             {
                 "build_id": "20260320T000000Z",
@@ -746,6 +750,8 @@ def test_release_history_dialog_can_sort_entries(qapp):
                 "profile_id": "linux-sdl",
                 "message": "Oldest unknown",
                 "sdk": {"revision": "sdk-unknown"},
+                "warning_count": None,
+                "error_count": None,
             },
         ]
     )
@@ -756,6 +762,9 @@ def test_release_history_dialog_can_sort_entries(qapp):
     assert "20260320T000000Z" in dialog._history_list.item(0).text()
 
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("status"))
+    assert "20260324T000000Z" in dialog._history_list.item(0).text()
+
+    dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("diagnostics"))
     assert "20260324T000000Z" in dialog._history_list.item(0).text()
 
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("profile"))

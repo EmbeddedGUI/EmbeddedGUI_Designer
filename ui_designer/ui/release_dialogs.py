@@ -260,6 +260,27 @@ def _sorted_history_entries(entries: list[dict[str, object]], sort_mode: str) ->
             ),
         )
 
+    if sort_mode == "diagnostics":
+        def diagnostics_rank(entry: dict[str, object]) -> int:
+            if _history_matches_diagnostics(entry, "errors"):
+                return 0
+            if _history_matches_diagnostics(entry, "warnings"):
+                return 1
+            if _history_matches_diagnostics(entry, "unknown"):
+                return 2
+            return 3
+
+        return sorted(
+            entries,
+            key=lambda entry: (
+                diagnostics_rank(entry),
+                _history_string(entry, "profile_id").lower(),
+                _history_timestamp_value(entry) is None,
+                -(_history_timestamp_value(entry) or 0.0),
+                _history_string(entry, "build_id"),
+            ),
+        )
+
     if sort_mode == "profile":
         return sorted(
             entries,
@@ -785,6 +806,7 @@ class ReleaseHistoryDialog(QDialog):
         self._sort_combo.addItem("Newest First", "newest")
         self._sort_combo.addItem("Oldest First", "oldest")
         self._sort_combo.addItem("Status", "status")
+        self._sort_combo.addItem("Diagnostics", "diagnostics")
         self._sort_combo.addItem("Profile", "profile")
         self._sort_combo.currentIndexChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._sort_combo)
