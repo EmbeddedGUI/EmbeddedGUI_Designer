@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.config import get_config
 from ..model.repo_health import (
@@ -58,7 +58,9 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
+        self._stale_dir_combo = QComboBox()
         self._open_stale_button = QPushButton("Open Stale Dir")
+        self._stale_dir_combo.setMinimumContentsLength(28)
 
         self._refresh_button.clicked.connect(self.refresh)
         self._critical_only_check.toggled.connect(self._render_details)
@@ -70,7 +72,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
-        self._open_stale_button.clicked.connect(self._open_first_stale_dir)
+        self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
         action_row.addWidget(self._refresh_button)
         action_row.addWidget(self._critical_only_check)
@@ -83,9 +85,10 @@ class RepositoryHealthDialog(QDialog):
             self._open_repo_button,
             self._open_sdk_button,
             self._open_smoke_button,
-            self._open_stale_button,
         ):
             action_row.addWidget(button)
+        action_row.addWidget(self._stale_dir_combo, 1)
+        action_row.addWidget(self._open_stale_button)
         action_row.addStretch(1)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
@@ -122,10 +125,12 @@ class RepositoryHealthDialog(QDialog):
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
         smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         stale_dirs = view_payload.get("stale_temp_dirs") if isinstance(view_payload.get("stale_temp_dirs"), list) else []
+        selected_stale_path = self._selected_stale_path()
+        self._sync_stale_dir_combo(stale_dirs, selected_stale_path)
         self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
         self._open_sdk_button.setEnabled(bool(sdk.get("path")))
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
-        self._open_stale_button.setEnabled(bool(stale_dirs))
+        self._open_stale_button.setEnabled(bool(self._selected_stale_path()))
         if self._show_json_check.isChecked():
             self._details_edit.setPlainText(format_repo_health_json(view_payload, **view_options))
             return
@@ -162,14 +167,33 @@ class RepositoryHealthDialog(QDialog):
         view_payload = repo_health_view_payload(self._payload, **view_options)
         QApplication.clipboard().setText(format_repo_health_summary(view_payload, **view_options))
 
-    def _open_first_stale_dir(self) -> None:
-        stale_dirs = repo_health_view_payload(self._payload, **self._view_options()).get("stale_temp_dirs")
-        if not isinstance(stale_dirs, list) or not stale_dirs:
-            return
-        first_entry = stale_dirs[0]
-        if not isinstance(first_entry, dict):
-            return
-        path = str(first_entry.get("path") or "").strip()
+    def _selected_stale_path(self) -> str:
+        return str(self._stale_dir_combo.currentData() or "").strip()
+
+    def _sync_stale_dir_combo(self, stale_dirs: list[object], selected_path: str = "") -> None:
+        self._stale_dir_combo.blockSignals(True)
+        self._stale_dir_combo.clear()
+        for entry in stale_dirs:
+            if not isinstance(entry, dict):
+                continue
+            path = str(entry.get("path") or "").strip()
+            if not path:
+                continue
+            label = Path(path).name or path
+            if not bool(entry.get("accessible", False)):
+                issue = str(entry.get("issue") or "blocked")
+                label = f"{label} [{issue}]"
+            self._stale_dir_combo.addItem(label, path)
+        match_index = self._stale_dir_combo.findData(selected_path) if selected_path else -1
+        if match_index >= 0:
+            self._stale_dir_combo.setCurrentIndex(match_index)
+        elif self._stale_dir_combo.count():
+            self._stale_dir_combo.setCurrentIndex(0)
+        self._stale_dir_combo.setEnabled(self._stale_dir_combo.count() > 0)
+        self._stale_dir_combo.blockSignals(False)
+
+    def _open_selected_stale_dir(self) -> None:
+        path = self._selected_stale_path()
         if not path:
             return
         self._open_path(path, "Stale Temp Directory")
