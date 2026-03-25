@@ -57,6 +57,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
+        self._open_stale_button = QPushButton("Open Stale Dir")
 
         self._refresh_button.clicked.connect(self.refresh)
         self._critical_only_check.toggled.connect(self._render_details)
@@ -67,6 +68,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
+        self._open_stale_button.clicked.connect(self._open_first_stale_dir)
 
         action_row.addWidget(self._refresh_button)
         action_row.addWidget(self._critical_only_check)
@@ -78,6 +80,7 @@ class RepositoryHealthDialog(QDialog):
             self._open_repo_button,
             self._open_sdk_button,
             self._open_smoke_button,
+            self._open_stale_button,
         ):
             action_row.addWidget(button)
         action_row.addStretch(1)
@@ -97,9 +100,11 @@ class RepositoryHealthDialog(QDialog):
 
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
         smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
+        stale_dirs = self._payload.get("stale_temp_dirs") if isinstance(self._payload.get("stale_temp_dirs"), list) else []
         self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
         self._open_sdk_button.setEnabled(bool(sdk.get("path")))
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
+        self._open_stale_button.setEnabled(bool(stale_dirs))
 
     def _render_details(self) -> None:
         critical_only = self._critical_only_check.isChecked()
@@ -148,6 +153,18 @@ class RepositoryHealthDialog(QDialog):
         critical_only = self._critical_only_check.isChecked()
         view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
         QApplication.clipboard().setText(format_repo_health_summary(view_payload, critical_only=critical_only))
+
+    def _open_first_stale_dir(self) -> None:
+        stale_dirs = self._payload.get("stale_temp_dirs")
+        if not isinstance(stale_dirs, list) or not stale_dirs:
+            return
+        first_entry = stale_dirs[0]
+        if not isinstance(first_entry, dict):
+            return
+        path = str(first_entry.get("path") or "").strip()
+        if not path:
+            return
+        self._open_path(path, "Stale Temp Directory")
 
     def _export_report(self) -> None:
         default_name = self._default_export_filename()
