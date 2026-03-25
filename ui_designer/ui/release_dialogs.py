@@ -148,6 +148,11 @@ def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]
     return counts
 
 
+def _history_timestamp_value(entry: dict[str, object]) -> float | None:
+    timestamp = _history_timestamp(entry)
+    return timestamp.timestamp() if timestamp is not None else None
+
+
 def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> bool:
     missing = artifact_filter.startswith("missing_")
     normalized_filter = artifact_filter[8:] if missing else artifact_filter
@@ -160,6 +165,51 @@ def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> boo
         return True
     has_artifact = bool(_history_string(entry, artifact_key))
     return not has_artifact if missing else has_artifact
+
+
+def _sorted_history_entries(entries: list[dict[str, object]], sort_mode: str) -> list[dict[str, object]]:
+    if sort_mode == "oldest":
+        return sorted(
+            entries,
+            key=lambda entry: (
+                _history_timestamp_value(entry) is None,
+                _history_timestamp_value(entry) or 0.0,
+                _history_string(entry, "build_id"),
+            ),
+        )
+
+    if sort_mode == "status":
+        status_order = {"failed": 0, "unknown": 1, "success": 2}
+        return sorted(
+            entries,
+            key=lambda entry: (
+                status_order.get(_history_status(entry), 3),
+                _history_string(entry, "profile_id").lower(),
+                _history_timestamp_value(entry) is None,
+                -(_history_timestamp_value(entry) or 0.0),
+                _history_string(entry, "build_id"),
+            ),
+        )
+
+    if sort_mode == "profile":
+        return sorted(
+            entries,
+            key=lambda entry: (
+                _history_string(entry, "profile_id").lower(),
+                _history_timestamp_value(entry) is None,
+                -(_history_timestamp_value(entry) or 0.0),
+                _history_string(entry, "build_id"),
+            ),
+        )
+
+    return sorted(
+        entries,
+        key=lambda entry: (
+            _history_timestamp_value(entry) is None,
+            -(_history_timestamp_value(entry) or 0.0),
+            _history_string(entry, "build_id"),
+        ),
+    )
 
 
 def _utc_now() -> datetime:
@@ -191,6 +241,7 @@ def _build_filtered_history_summary(
     status_filter: str,
     profile_filter: str,
     artifact_filter: str,
+    sort_mode: str,
     search_text: str,
 ) -> str:
     status_counts = _history_status_counts(filtered_entries)
@@ -217,6 +268,7 @@ def _build_filtered_history_summary(
             f"status={status_filter or 'all'}, "
             f"profile={profile_filter or 'all'}, "
             f"artifact={artifact_filter or 'all'}, "
+            f"sort={sort_mode or 'newest'}, "
             f"search={search_text or '-'}"
         ),
         "",
@@ -233,6 +285,7 @@ def _build_filtered_history_json(
     status_filter: str,
     profile_filter: str,
     artifact_filter: str,
+    sort_mode: str,
     search_text: str,
 ) -> str:
     payload = {
@@ -245,6 +298,7 @@ def _build_filtered_history_json(
             "status": status_filter or "all",
             "profile": profile_filter or "all",
             "artifact": artifact_filter or "all",
+            "sort": sort_mode or "newest",
             "search": search_text or "-",
         },
         "entries": filtered_entries,
@@ -633,6 +687,15 @@ class ReleaseHistoryDialog(QDialog):
         self._artifact_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._artifact_filter_combo)
 
+        filter_row.addWidget(QLabel("Sort"))
+        self._sort_combo = QComboBox()
+        self._sort_combo.addItem("Newest First", "newest")
+        self._sort_combo.addItem("Oldest First", "oldest")
+        self._sort_combo.addItem("Status", "status")
+        self._sort_combo.addItem("Profile", "profile")
+        self._sort_combo.currentIndexChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._sort_combo)
+
         filter_row.addWidget(QLabel("Search"))
         self._search_edit = QLineEdit()
         self._search_edit.setPlaceholderText("build id, message, SDK revision...")
@@ -819,15 +882,19 @@ class ReleaseHistoryDialog(QDialog):
         wanted_status = str(self._status_filter_combo.currentData() or "")
         wanted_profile = str(self._profile_filter_combo.currentData() or "")
         wanted_artifact = str(self._artifact_filter_combo.currentData() or "")
+        sort_mode = str(self._sort_combo.currentData() or "newest")
         search_text = self._search_edit.text().strip().lower()
         current_entry = self._current_entry()
         current_build_id = _history_string(current_entry, "build_id") if current_entry else ""
 
-        filtered_entries = [
-            entry
-            for entry in self._all_history_entries
-            if self._matches_history_filter(entry, wanted_range, wanted_status, wanted_profile, wanted_artifact, search_text)
-        ]
+        filtered_entries = _sorted_history_entries(
+            [
+                entry
+                for entry in self._all_history_entries
+                if self._matches_history_filter(entry, wanted_range, wanted_status, wanted_profile, wanted_artifact, search_text)
+            ],
+            sort_mode,
+        )
         self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
         status_counts = _history_status_counts(self._filtered_history_entries)
@@ -913,6 +980,7 @@ class ReleaseHistoryDialog(QDialog):
             status_filter=str(self._status_filter_combo.currentData() or ""),
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
             artifact_filter=str(self._artifact_filter_combo.currentData() or ""),
+            sort_mode=str(self._sort_combo.currentData() or "newest"),
             search_text=self._search_edit.text().strip(),
         )
 
@@ -924,6 +992,7 @@ class ReleaseHistoryDialog(QDialog):
             status_filter=str(self._status_filter_combo.currentData() or ""),
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
             artifact_filter=str(self._artifact_filter_combo.currentData() or ""),
+            sort_mode=str(self._sort_combo.currentData() or "newest"),
             search_text=self._search_edit.text().strip(),
         )
 
@@ -939,6 +1008,7 @@ class ReleaseHistoryDialog(QDialog):
             str(self._status_filter_combo.currentData() or ""),
             str(self._profile_filter_combo.currentData() or ""),
             str(self._artifact_filter_combo.currentData() or ""),
+            "" if str(self._sort_combo.currentData() or "newest") == "newest" else str(self._sort_combo.currentData() or ""),
         ):
             safe_value = _safe_filename_part(value)
             if safe_value:
@@ -954,6 +1024,7 @@ class ReleaseHistoryDialog(QDialog):
         status_value = str(state.get("status_filter") or "")
         profile_value = str(state.get("profile_filter") or "")
         artifact_value = str(state.get("artifact_filter") or "")
+        sort_value = str(state.get("sort_mode") or "newest")
         search_text = str(state.get("search_text") or "")
 
         index = self._range_filter_combo.findData(range_value)
@@ -968,6 +1039,9 @@ class ReleaseHistoryDialog(QDialog):
         index = self._artifact_filter_combo.findData(artifact_value)
         self._artifact_filter_combo.setCurrentIndex(index if index >= 0 else 0)
 
+        index = self._sort_combo.findData(sort_value)
+        self._sort_combo.setCurrentIndex(index if index >= 0 else 0)
+
         self._search_edit.setText(search_text)
 
     def _save_view_state(self) -> None:
@@ -976,6 +1050,7 @@ class ReleaseHistoryDialog(QDialog):
             "status_filter": str(self._status_filter_combo.currentData() or ""),
             "profile_filter": str(self._profile_filter_combo.currentData() or ""),
             "artifact_filter": str(self._artifact_filter_combo.currentData() or ""),
+            "sort_mode": str(self._sort_combo.currentData() or "newest"),
             "search_text": self._search_edit.text(),
         }
         current_state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
