@@ -67,6 +67,7 @@ Packaged Designer builds also include:
 - `.designer_build_info.json` in the app root.
 - `sdk/EmbeddedGUI/.designer_sdk_bundle.json` when SDK bundling is enabled.
 - CI package builds also upload `dist/designer-package-metadata.json` for quick SDK/version inspection.
+- CI release smoke builds also upload `build/release-smoke/` plus JSON summaries for manifest and SDK traceability.
 
 ## Figma and HTML conversion tools
 

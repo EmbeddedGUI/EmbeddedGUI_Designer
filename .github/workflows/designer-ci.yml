@@ -49,3 +49,22 @@ jobs:
           --sdk-root sdk/EmbeddedGUI
           --output-dir build/release-smoke
           --json
+          > build/release-smoke-result.json
+
+      - name: Inspect UI Designer release smoke metadata
+        working-directory: EmbeddedGUI_Designer
+        run: >
+          python scripts/ui_designer/inspect_release.py
+          build/release-smoke/windows-pc
+          --json
+          > build/release-smoke-metadata.json
+
+      - name: Upload UI Designer release smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: designer-release-smoke
+          path: |
+            EmbeddedGUI_Designer/build/release-smoke/**
+            EmbeddedGUI_Designer/build/release-smoke-result.json
+            EmbeddedGUI_Designer/build/release-smoke-metadata.json
+          retention-days: 7
