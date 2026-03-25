@@ -57,12 +57,12 @@ def test_format_repo_health_text_includes_expected_sections(tmp_path):
     rendered = repo_health.format_repo_health_text(payload)
 
     assert "[summary] 1 stale temp dir(s) detected" in rendered
-    assert "[counts] critical=0 suggestions=1 stale=1" in rendered
+    assert "[counts] critical=0 suggestions=1 stale=1 blocked=1" in rendered
     assert "[view] critical_only=false" in rendered
     assert f"[repo] {tmp_path}" in rendered
     assert "sdk_submodule.initialized: true" in rendered
     assert "release_smoke.present: true" in rendered
-    assert "stale_temp_dirs: 1" in rendered
+    assert "stale_temp_dirs: 1 (blocked 1)" in rendered
     assert "suggestion: If git status is noisy, use: git status -uno" in rendered
 
 
@@ -120,7 +120,7 @@ def test_repo_health_counts_reports_current_payload_sizes(tmp_path):
 
     counts = repo_health.repo_health_counts(payload)
 
-    assert counts == {"critical": 2, "suggestions": 1, "stale_dirs": 1}
+    assert counts == {"critical": 2, "suggestions": 1, "stale_dirs": 1, "blocked_stale_dirs": 1}
 
 
 def test_format_repo_health_json_includes_metadata(tmp_path):
@@ -138,6 +138,6 @@ def test_format_repo_health_json_includes_metadata(tmp_path):
     rendered = json.loads(repo_health.format_repo_health_json(payload, critical_only=True))
 
     assert rendered["_summary"] == "SDK submodule is not initialized; release smoke sample is missing"
-    assert rendered["_counts"] == {"critical": 2, "suggestions": 1, "stale_dirs": 0}
+    assert rendered["_counts"] == {"critical": 2, "suggestions": 1, "stale_dirs": 0, "blocked_stale_dirs": 0}
     assert rendered["_view"] == {"critical_only": True}
     assert rendered["repo_root"] == str(tmp_path)

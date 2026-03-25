@@ -170,10 +170,12 @@ def repo_health_counts(payload: dict[str, object]) -> dict[str, int]:
     stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
     suggestions = payload.get("suggestions") if isinstance(payload.get("suggestions"), list) else []
     critical_issues = payload.get("critical_issues") if isinstance(payload.get("critical_issues"), list) else critical_repo_health_issues(payload)
+    blocked_stale_dirs = sum(1 for entry in stale_dirs if not bool(entry.get("accessible", False)))
     return {
         "critical": len(critical_issues),
         "suggestions": len(suggestions),
         "stale_dirs": len(stale_dirs),
+        "blocked_stale_dirs": blocked_stale_dirs,
     }
 
 
@@ -181,7 +183,13 @@ def format_repo_health_text(payload: dict[str, object], *, critical_only: bool =
     counts = repo_health_counts(payload)
     lines = [
         f"[summary] {summarize_repo_health(payload)}",
-        f"[counts] critical={counts['critical']} suggestions={counts['suggestions']} stale={counts['stale_dirs']}",
+        (
+            "[counts] "
+            f"critical={counts['critical']} "
+            f"suggestions={counts['suggestions']} "
+            f"stale={counts['stale_dirs']} "
+            f"blocked={counts['blocked_stale_dirs']}"
+        ),
         f"[view] critical_only={str(bool(critical_only)).lower()}",
         "",
         f"[repo] {payload.get('repo_root', '')}",
@@ -195,7 +203,7 @@ def format_repo_health_text(payload: dict[str, object], *, critical_only: bool =
     lines.append(f"release_smoke.present: {str(bool(smoke.get('present', False))).lower()}")
     lines.append(f"git_status_show_untracked: {payload.get('git_status_show_untracked', 'default')}")
     stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
-    lines.append(f"stale_temp_dirs: {len(stale_dirs)}")
+    lines.append(f"stale_temp_dirs: {len(stale_dirs)} (blocked {counts['blocked_stale_dirs']})")
     for entry in stale_dirs:
         line = f"  - {entry['path']}"
         if not entry["accessible"]:

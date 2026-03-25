@@ -29,7 +29,7 @@ class RepositoryHealthDialog(QDialog):
         self._summary_label.setWordWrap(True)
         root_layout.addWidget(self._summary_label)
 
-        self._overview_label = QLabel("critical 0 | suggestions 0 | stale 0")
+        self._overview_label = QLabel("critical 0 | suggestions 0 | stale 0 | blocked 0")
         self._overview_label.setWordWrap(True)
         root_layout.addWidget(self._overview_label)
 
@@ -95,7 +95,12 @@ class RepositoryHealthDialog(QDialog):
         view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
         counts = repo_health_counts(view_payload)
         self._overview_label.setText(
-            f"critical {counts['critical']} | suggestions {counts['suggestions']} | stale {counts['stale_dirs']}"
+            (
+                f"critical {counts['critical']} | "
+                f"suggestions {counts['suggestions']} | "
+                f"stale {counts['stale_dirs']} | "
+                f"blocked {counts['blocked_stale_dirs']}"
+            )
         )
         if self._show_json_check.isChecked():
             self._details_edit.setPlainText(format_repo_health_json(view_payload, critical_only=critical_only))
