@@ -83,6 +83,15 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert manifest["workspace"]["generated_digest"]
     assert any(artifact["path"].endswith("ReleaseDemo.exe") for artifact in manifest["artifacts"])
 
+    history = json.loads(Path(result.history_path).read_text(encoding="utf-8"))
+    assert history[0]["status"] == "success"
+    assert "designer_revision" in history[0]
+    assert history[0]["manifest_path"].endswith("release-manifest.json")
+    assert history[0]["log_path"].endswith("build.log")
+    assert history[0]["dist_dir"].endswith("dist")
+    assert "sdk" in history[0]
+    assert "revision" in history[0]["sdk"]
+
 
 def test_release_project_blocks_on_diagnostics(tmp_path, monkeypatch):
     sdk_root = tmp_path / "sdk"

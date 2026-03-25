@@ -475,12 +475,19 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
 
         history_entry = {
             "build_id": build_id,
+            "status": manifest["status"],
             "success": success,
             "app_name": getattr(project, "app_name", ""),
             "profile_id": profile.id,
             "created_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "designer_revision": manifest["designer_revision"],
+            "sdk": sdk_fingerprint.to_dict(),
+            "warning_count": len(warnings),
+            "error_count": len(errors),
             "release_root": release_root,
+            "dist_dir": dist_dir,
             "manifest_path": manifest_path_local,
+            "log_path": log_path,
             "zip_path": zip_path,
             "message": message,
         }

@@ -42,6 +42,7 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
 
 Use `Build -> Release Build...` to create a reproducible release for the current project.
 Use `Build -> Release Profiles...` to maintain project-local release profiles in `.eguiproject/release.json`.
+Use `Build -> Release History...` to inspect prior release metadata, SDK revisions, logs, manifests, and packaged outputs.
 The latest successful build can be reopened from `Build -> Open Last Release Folder` or `Build -> Open Last Release Manifest`.
 
 ### From the CLI
@@ -62,7 +63,7 @@ A project release is written under `output/ui_designer_release/<profile>/<build_
 - `VERSION.txt`: compact human-readable version stamp.
 - `logs/build.log`: resource generation and build output.
 - `dist/`: copied executable, resources, `VERSION.txt`, and a manifest copy.
-- `history.json`: rolling release history for the project.
+- `history.json`: rolling release history for the project, including SDK/Designer revisions, diagnostics counts, and artifact paths.
 
 Packaged Designer builds also include:
 
