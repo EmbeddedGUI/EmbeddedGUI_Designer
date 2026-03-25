@@ -220,6 +220,7 @@ def test_repository_health_dialog_updates_open_button_for_selected_stale_dir(qap
     assert dialog._open_stale_button.isEnabled() is True
     dialog._stale_dir_combo.setCurrentIndex(1)
     assert dialog._stale_dir_combo.currentData() == str(missing_stale_dir)
+    assert dialog._copy_stale_path_button.isEnabled() is True
     assert dialog._open_stale_button.isEnabled() is False
 
 
@@ -260,6 +261,37 @@ def test_repository_health_dialog_blocked_only_filters_stale_dirs(qapp, monkeypa
 
     dialog._open_stale_button.click()
     assert opened_paths == [str(blocked_stale_dir)]
+
+
+@_skip_no_qt
+def test_repository_health_dialog_can_copy_selected_stale_path(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    first_stale_dir = tmp_path / ".pytest-tmp-codex"
+    missing_stale_dir = tmp_path / "tmpxtayw0f6"
+    first_stale_dir.mkdir()
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [
+            {"path": str(first_stale_dir), "accessible": True, "issue": ""},
+            {"path": str(missing_stale_dir), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._stale_dir_combo.setCurrentIndex(1)
+
+    QApplication.clipboard().clear()
+    dialog._copy_stale_path_button.click()
+
+    assert QApplication.clipboard().text() == str(missing_stale_dir)
 
 
 @_skip_no_qt

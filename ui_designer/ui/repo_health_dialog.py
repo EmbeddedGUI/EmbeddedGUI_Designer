@@ -62,6 +62,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
         self._stale_dir_combo = QComboBox()
+        self._copy_stale_path_button = QPushButton("Copy Stale Path")
         self._open_stale_button = QPushButton("Open Stale Dir")
         self._stale_dir_combo.setMinimumContentsLength(28)
 
@@ -78,6 +79,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
+        self._copy_stale_path_button.clicked.connect(self._copy_selected_stale_path)
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
         action_row.addWidget(self._refresh_button)
@@ -96,6 +98,7 @@ class RepositoryHealthDialog(QDialog):
         ):
             action_row.addWidget(button)
         action_row.addWidget(self._stale_dir_combo, 1)
+        action_row.addWidget(self._copy_stale_path_button)
         action_row.addWidget(self._open_stale_button)
         action_row.addStretch(1)
 
@@ -153,6 +156,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.setEnabled(bool(repo_root and os.path.isdir(repo_root)))
         self._open_sdk_button.setEnabled(bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path)))
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path)))
+        self._copy_stale_path_button.setEnabled(bool(stale_path))
         self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
         if self._show_json_check.isChecked():
             self._details_edit.setPlainText(format_repo_health_json(view_payload, **view_options))
@@ -202,12 +206,16 @@ class RepositoryHealthDialog(QDialog):
         view_options = self._view_options()
         QApplication.clipboard().setText(format_repo_health_summary(self._current_view_payload(), **view_options))
 
+    def _copy_selected_stale_path(self) -> None:
+        QApplication.clipboard().setText(self._selected_stale_path())
+
     def _selected_stale_path(self) -> str:
         return str(self._stale_dir_combo.currentData() or "").strip()
 
     def _on_stale_dir_selected(self) -> None:
         self._preferred_stale_path = self._selected_stale_path()
         stale_path = self._selected_stale_path()
+        self._copy_stale_path_button.setEnabled(bool(stale_path))
         self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
 
     def _sync_stale_dir_combo(self, stale_dirs: list[object], selected_path: str = "") -> None:
