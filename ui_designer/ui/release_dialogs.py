@@ -930,6 +930,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_preview_path_button = QPushButton("Copy Preview Path")
         self._export_preview_button = QPushButton("Export Preview...")
+        self._open_preview_button = QPushButton("Open Preview")
         self._copy_folder_path_button = QPushButton("Copy Folder Path")
         self._copy_dist_path_button = QPushButton("Copy Dist Path")
         self._copy_package_path_button = QPushButton("Copy Package Path")
@@ -958,6 +959,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
         self._export_preview_button.clicked.connect(self._export_preview)
+        self._open_preview_button.clicked.connect(self._open_preview)
         self._copy_folder_path_button.clicked.connect(lambda: self._copy_selected_path("release_root"))
         self._copy_dist_path_button.clicked.connect(lambda: self._copy_selected_path("dist_dir"))
         self._copy_package_path_button.clicked.connect(self._copy_package_path)
@@ -980,6 +982,7 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_preview_button,
             self._copy_preview_path_button,
             self._export_preview_button,
+            self._open_preview_button,
             self._copy_folder_path_button,
             self._copy_dist_path_button,
             self._copy_package_path_button,
@@ -1471,9 +1474,15 @@ class ReleaseHistoryDialog(QDialog):
         self._export_preview_button.setText(f"Export {label}...")
         self._export_preview_button.setEnabled(bool(path and os.path.isfile(path)))
 
+    def _update_preview_open_button(self, entry: dict[str, object] | None = None) -> None:
+        label, path, _prefer_json, _suffix = self._current_preview_target_options(entry)
+        self._open_preview_button.setText(f"Open {label}")
+        self._open_preview_button.setEnabled(bool(self._open_path_callback and path and os.path.isfile(path)))
+
     def _update_preview_target_buttons(self, entry: dict[str, object] | None = None) -> None:
         self._update_preview_path_button(entry)
         self._update_preview_export_button(entry)
+        self._update_preview_open_button(entry)
 
     def _copy_preview_path(self) -> None:
         _, path = self._current_preview_target()
@@ -1515,6 +1524,15 @@ class ReleaseHistoryDialog(QDialog):
             _write_text_file(selected_path, self._preview_export_text())
         except OSError as exc:
             QMessageBox.warning(self, "Export Release Preview Failed", str(exc))
+
+    def _open_preview(self) -> None:
+        label, path, _prefer_json, _suffix = self._current_preview_target_options()
+        if self._open_path_callback is None or not path or not os.path.isfile(path):
+            return
+        try:
+            self._open_path_callback(path)
+        except Exception as exc:
+            QMessageBox.warning(self, f"Open {label} Failed", str(exc))
 
     def _copy_package_path(self) -> None:
         entry = self._current_entry()

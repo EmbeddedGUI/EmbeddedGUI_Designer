@@ -672,6 +672,7 @@ def test_release_history_dialog_copy_preview_path_tracks_preview_mode(qapp, tmp_
 
     assert dialog._copy_preview_path_button.text() == "Copy Manifest Path"
     assert dialog._export_preview_button.text() == "Export Manifest..."
+    assert dialog._open_preview_button.text() == "Open Manifest"
     QApplication.clipboard().clear()
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(manifest_path) + "\n"
@@ -679,12 +680,14 @@ def test_release_history_dialog_copy_preview_path_tracks_preview_mode(qapp, tmp_
     dialog._preview_log_button.click()
     assert dialog._copy_preview_path_button.text() == "Copy Log Path"
     assert dialog._export_preview_button.text() == "Export Log..."
+    assert dialog._open_preview_button.text() == "Open Log"
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(log_path) + "\n"
 
     dialog._preview_version_button.click()
     assert dialog._copy_preview_path_button.text() == "Copy Version Path"
     assert dialog._export_preview_button.text() == "Export Version..."
+    assert dialog._open_preview_button.text() == "Open Version"
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(version_path) + "\n"
 
@@ -837,6 +840,48 @@ def test_release_history_dialog_export_preview_appends_log_suffix(qapp, tmp_path
 
 
 @_skip_no_qt
+def test_release_history_dialog_open_preview_tracks_preview_mode(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    opened_paths = []
+    manifest_path = tmp_path / "release-manifest.json"
+    log_path = tmp_path / "build.log"
+    dist_dir = tmp_path / "dist"
+    version_path = dist_dir / "VERSION.txt"
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+    log_path.write_text("build ok\n", encoding="utf-8")
+    dist_dir.mkdir()
+    version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+                "log_path": str(log_path),
+                "dist_dir": str(dist_dir),
+            }
+        ],
+        open_path_callback=lambda path: opened_paths.append(path),
+    )
+
+    assert dialog._open_preview_button.isEnabled() is True
+    dialog._open_preview_button.click()
+
+    dialog._preview_log_button.click()
+    assert dialog._open_preview_button.isEnabled() is True
+    dialog._open_preview_button.click()
+
+    dialog._preview_version_button.click()
+    assert dialog._open_preview_button.isEnabled() is True
+    dialog._open_preview_button.click()
+
+    assert opened_paths == [str(manifest_path), str(log_path), str(version_path)]
+
+
+@_skip_no_qt
 def test_release_history_dialog_export_entry_json_appends_json_suffix(qapp, tmp_path, monkeypatch):
     import json
 
@@ -969,6 +1014,7 @@ def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     assert dialog._preview_log_button.isEnabled() is True
     assert dialog._preview_version_button.isEnabled() is False
     assert dialog._export_preview_button.isEnabled() is False
+    assert dialog._open_preview_button.isEnabled() is False
     assert dialog._copy_folder_path_button.isEnabled() is True
     assert dialog._copy_dist_path_button.isEnabled() is True
     assert dialog._copy_package_path_button.isEnabled() is True
