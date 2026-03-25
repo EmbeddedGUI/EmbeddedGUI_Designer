@@ -185,15 +185,22 @@ class RepositoryHealthDialog(QDialog):
     def _copy_report(self) -> None:
         QApplication.clipboard().setText(self._details_edit.toPlainText())
 
-    def _copy_json(self) -> None:
+    def _current_view_payload(self) -> dict[str, object]:
+        return repo_health_view_payload(self._payload, **self._view_options())
+
+    def _report_text(self, *, show_json: bool) -> str:
         view_options = self._view_options()
-        view_payload = repo_health_view_payload(self._payload, **view_options)
-        QApplication.clipboard().setText(format_repo_health_json(view_payload, **view_options))
+        view_payload = self._current_view_payload()
+        if show_json:
+            return format_repo_health_json(view_payload, **view_options)
+        return format_repo_health_text(view_payload, **view_options)
+
+    def _copy_json(self) -> None:
+        QApplication.clipboard().setText(self._report_text(show_json=True))
 
     def _copy_summary(self) -> None:
         view_options = self._view_options()
-        view_payload = repo_health_view_payload(self._payload, **view_options)
-        QApplication.clipboard().setText(format_repo_health_summary(view_payload, **view_options))
+        QApplication.clipboard().setText(format_repo_health_summary(self._current_view_payload(), **view_options))
 
     def _selected_stale_path(self) -> str:
         return str(self._stale_dir_combo.currentData() or "").strip()
@@ -242,16 +249,19 @@ class RepositoryHealthDialog(QDialog):
         if not selected_path:
             return
         try:
+            export_json = self._show_json_check.isChecked()
             if "JSON" in str(selected_filter):
                 selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".json"
+                export_json = True
             elif "Text" in str(selected_filter):
                 selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".txt"
+                export_json = False
             resolved_path = os.path.abspath(os.path.normpath(selected_path))
             parent_dir = os.path.dirname(resolved_path)
             if parent_dir:
                 os.makedirs(parent_dir, exist_ok=True)
             with open(resolved_path, "w", encoding="utf-8") as f:
-                f.write(self._details_edit.toPlainText().rstrip() + "\n")
+                f.write(self._report_text(show_json=export_json).rstrip() + "\n")
         except OSError as exc:
             QMessageBox.warning(self, "Export Repository Health Failed", str(exc))
 
