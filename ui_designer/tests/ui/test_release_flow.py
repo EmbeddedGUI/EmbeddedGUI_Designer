@@ -238,6 +238,32 @@ def test_release_history_dialog_previews_manifest_and_log(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_previews_version_file(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    version_path = dist_dir / "VERSION.txt"
+    version_path.write_text("app=ReleaseDemo\nbuild_id=20260326T000000Z\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "dist_dir": str(dist_dir),
+            }
+        ]
+    )
+
+    dialog._preview_selected_version()
+
+    assert dialog._preview_label.text() == "Version Preview"
+    assert "app=ReleaseDemo" in dialog._preview_edit.toPlainText()
+
+
+@_skip_no_qt
 def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -298,6 +324,8 @@ def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
     opened_paths = []
     dist_dir = tmp_path / "dist"
     dist_dir.mkdir()
+    version_path = dist_dir / "VERSION.txt"
+    version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
 
     dialog = ReleaseHistoryDialog(
         [
@@ -314,8 +342,9 @@ def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
 
     dialog._open_folder_button.click()
     dialog._open_dist_button.click()
+    dialog._open_version_button.click()
 
-    assert opened_paths == [str(tmp_path), str(dist_dir)]
+    assert opened_paths == [str(tmp_path), str(dist_dir), str(version_path)]
 
 
 @_skip_no_qt

@@ -134,6 +134,21 @@ def _history_detail_text(entry: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _history_version_path(entry: dict[str, object]) -> str:
+    dist_dir = _history_string(entry, "dist_dir")
+    if dist_dir:
+        candidate = os.path.join(dist_dir, "VERSION.txt")
+        if os.path.isfile(candidate):
+            return candidate
+
+    release_root = _history_string(entry, "release_root")
+    if release_root:
+        candidate = os.path.join(release_root, "VERSION.txt")
+        if os.path.isfile(candidate):
+            return candidate
+    return ""
+
+
 def _history_summary_line(entry: dict[str, object]) -> str:
     build_id = _history_string(entry, "build_id") or "unknown-build"
     status = _history_status(entry)
@@ -813,32 +828,38 @@ class ReleaseHistoryDialog(QDialog):
 
         self._preview_manifest_button = QPushButton("Preview Manifest")
         self._preview_log_button = QPushButton("Preview Log")
+        self._preview_version_button = QPushButton("Preview Version")
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_dist_button = QPushButton("Open Dist")
+        self._open_version_button = QPushButton("Open Version")
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
         self._preview_manifest_button.clicked.connect(lambda: self._preview_selected_path("manifest_path", "Manifest", prefer_json=True))
         self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
+        self._preview_version_button.clicked.connect(self._preview_selected_version)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
         self._open_dist_button.clicked.connect(lambda: self._open_selected_path("dist_dir", "Release Dist"))
+        self._open_version_button.clicked.connect(self._open_selected_version)
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
         self._open_package_button.clicked.connect(lambda: self._open_selected_path("zip_path", "Release Package"))
         for button in (
             self._preview_manifest_button,
             self._preview_log_button,
+            self._preview_version_button,
             self._copy_details_button,
             self._copy_preview_button,
             self._copy_entry_json_button,
             self._open_folder_button,
             self._open_dist_button,
+            self._open_version_button,
             self._open_manifest_button,
             self._open_log_button,
             self._open_package_button,
@@ -1173,11 +1194,13 @@ class ReleaseHistoryDialog(QDialog):
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
+        self._preview_version_button.setEnabled(bool(entry and _history_version_path(entry)))
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
         self._open_dist_button.setEnabled(bool(entry and _history_string(entry, "dist_dir")))
+        self._open_version_button.setEnabled(bool(entry and _history_version_path(entry)))
         self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._open_package_button.setEnabled(bool(entry and _history_string(entry, "zip_path")))
@@ -1221,6 +1244,18 @@ class ReleaseHistoryDialog(QDialog):
         except Exception as exc:
             QMessageBox.warning(self, f"Open {label} Failed", str(exc))
 
+    def _open_selected_version(self) -> None:
+        if self._open_path_callback is None:
+            return
+        entry = self._current_entry()
+        path = _history_version_path(entry or {})
+        if not path:
+            return
+        try:
+            self._open_path_callback(path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Version Failed", str(exc))
+
     def _preview_selected_path(self, key: str, label: str, *, prefer_json: bool = False) -> None:
         entry = self._current_entry()
         path = _history_string(entry or {}, key)
@@ -1229,6 +1264,15 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
             return
         self._preview_edit.setPlainText(_preview_file_text(path, prefer_json=prefer_json))
+
+    def _preview_selected_version(self) -> None:
+        entry = self._current_entry()
+        path = _history_version_path(entry or {})
+        self._preview_label.setText("Version Preview")
+        if not path:
+            self._preview_edit.setPlainText("No version file is available for this release entry.")
+            return
+        self._preview_edit.setPlainText(_preview_file_text(path))
 
     def _copy_text(self, text: str) -> None:
         QApplication.clipboard().setText(text or "")
