@@ -283,6 +283,11 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     dialog._copy_preview_button.click()
     assert '"status": "success"' in QApplication.clipboard().text()
 
+    dialog._copy_entry_json_button.click()
+    copied_json = QApplication.clipboard().text()
+    assert '"build_id": "20260326T000000Z"' in copied_json
+    assert '"manifest_path":' in copied_json
+
 
 @_skip_no_qt
 def test_release_history_dialog_filters_entries(qapp):

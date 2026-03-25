@@ -520,6 +520,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_log_button = QPushButton("Preview Log")
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
+        self._copy_entry_json_button = QPushButton("Copy Entry JSON")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
@@ -528,6 +529,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
+        self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
@@ -537,6 +539,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_log_button,
             self._copy_details_button,
             self._copy_preview_button,
+            self._copy_entry_json_button,
             self._open_folder_button,
             self._open_manifest_button,
             self._open_log_button,
@@ -680,11 +683,19 @@ class ReleaseHistoryDialog(QDialog):
         lines.extend(_history_summary_line(entry) for entry in self._filtered_history_entries)
         self._copy_text("\n".join(lines).rstrip() + "\n")
 
+    def _copy_entry_json(self) -> None:
+        entry = self._current_entry()
+        if not entry:
+            self._copy_text("")
+            return
+        self._copy_text(json.dumps(entry, indent=2, ensure_ascii=False) + "\n")
+
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
+        self._copy_entry_json_button.setEnabled(bool(entry))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
         self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
