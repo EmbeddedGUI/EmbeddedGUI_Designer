@@ -49,6 +49,7 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addLayout(action_row)
 
         self._refresh_button = QPushButton("Refresh")
+        self._reset_view_button = QPushButton("Reset View")
         self._critical_only_check = QCheckBox("Critical Only")
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
@@ -63,6 +64,7 @@ class RepositoryHealthDialog(QDialog):
         self._stale_dir_combo.setMinimumContentsLength(28)
 
         self._refresh_button.clicked.connect(self.refresh)
+        self._reset_view_button.clicked.connect(self._reset_view)
         self._critical_only_check.toggled.connect(self._render_details)
         self._blocked_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
@@ -75,6 +77,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
         action_row.addWidget(self._refresh_button)
+        action_row.addWidget(self._reset_view_button)
         action_row.addWidget(self._critical_only_check)
         action_row.addWidget(self._blocked_only_check)
         action_row.addWidget(self._show_json_check)
@@ -108,6 +111,11 @@ class RepositoryHealthDialog(QDialog):
             "critical_only": self._critical_only_check.isChecked(),
             "blocked_only": self._blocked_only_check.isChecked(),
         }
+
+    def _reset_view(self) -> None:
+        self._critical_only_check.setChecked(False)
+        self._blocked_only_check.setChecked(False)
+        self._show_json_check.setChecked(False)
 
     def _render_details(self) -> None:
         view_options = self._view_options()

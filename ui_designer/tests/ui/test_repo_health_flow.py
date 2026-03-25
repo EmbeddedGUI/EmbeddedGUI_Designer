@@ -294,6 +294,35 @@ def test_repository_health_dialog_can_switch_to_json_view(qapp, monkeypatch, tmp
 
 
 @_skip_no_qt
+def test_repository_health_dialog_can_reset_view(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._critical_only_check.setChecked(True)
+    dialog._blocked_only_check.setChecked(True)
+    dialog._show_json_check.setChecked(True)
+
+    dialog._reset_view_button.click()
+
+    assert dialog._critical_only_check.isChecked() is False
+    assert dialog._blocked_only_check.isChecked() is False
+    assert dialog._show_json_check.isChecked() is False
+    assert dialog._overview_label.text() == "critical 2 | suggestions 1 | stale 1 | blocked 1"
+    assert "[view] critical_only=false blocked_only=false" in dialog._details_edit.toPlainText()
+
+
+@_skip_no_qt
 def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
