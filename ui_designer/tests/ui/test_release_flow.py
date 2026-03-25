@@ -423,6 +423,46 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
 
 
 @_skip_no_qt
+def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path, monkeypatch):
+    import json
+
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    export_path = tmp_path / "release-history-summary.json"
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            },
+        ]
+    )
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+    )
+
+    dialog._export_filtered_button.click()
+
+    exported = json.loads(export_path.read_text(encoding="utf-8"))
+    assert exported["matched_entries"] == 1
+    assert exported["filters"]["status"] == "failed"
+    assert exported["entries"][0]["build_id"] == "20260326T000100Z"
+
+
+@_skip_no_qt
 def test_release_history_dialog_filters_entries_by_time_range(qapp, monkeypatch):
     from datetime import datetime, timezone
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog

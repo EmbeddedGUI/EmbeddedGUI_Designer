@@ -177,6 +177,29 @@ def _build_filtered_history_summary(
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _build_filtered_history_json(
+    filtered_entries: list[dict[str, object]],
+    all_entries: list[dict[str, object]],
+    *,
+    range_filter: str,
+    status_filter: str,
+    profile_filter: str,
+    search_text: str,
+) -> str:
+    payload = {
+        "matched_entries": len(filtered_entries),
+        "total_entries": len(all_entries),
+        "filters": {
+            "range": range_filter or "all",
+            "status": status_filter or "all",
+            "profile": profile_filter or "all",
+            "search": search_text or "-",
+        },
+        "entries": filtered_entries,
+    }
+    return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+
 def _write_text_file(path: str, content: str) -> None:
     resolved_path = os.path.abspath(os.path.normpath(path))
     parent_dir = os.path.dirname(resolved_path)
@@ -788,12 +811,13 @@ class ReleaseHistoryDialog(QDialog):
             self,
             "Export Release History Summary",
             self._default_filtered_export_filename(),
-            "Text Files (*.txt);;All Files (*)",
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
         )
         if not selected_path:
             return
         try:
-            _write_text_file(selected_path, self._filtered_summary_text())
+            content = self._filtered_export_text(selected_path)
+            _write_text_file(selected_path, content)
         except OSError as exc:
             QMessageBox.warning(self, "Export Release History Failed", str(exc))
 
@@ -806,6 +830,21 @@ class ReleaseHistoryDialog(QDialog):
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
             search_text=self._search_edit.text().strip(),
         )
+
+    def _filtered_entries_json_text(self) -> str:
+        return _build_filtered_history_json(
+            self._filtered_history_entries,
+            self._all_history_entries,
+            range_filter=str(self._range_filter_combo.currentData() or ""),
+            status_filter=str(self._status_filter_combo.currentData() or ""),
+            profile_filter=str(self._profile_filter_combo.currentData() or ""),
+            search_text=self._search_edit.text().strip(),
+        )
+
+    def _filtered_export_text(self, selected_path: str) -> str:
+        if str(selected_path).lower().endswith(".json"):
+            return self._filtered_entries_json_text()
+        return self._filtered_summary_text()
 
     def _default_filtered_export_filename(self) -> str:
         parts = ["release-history-summary"]
