@@ -261,6 +261,7 @@ def test_release_history_dialog_previews_version_file(qapp, tmp_path):
 
     assert dialog._preview_label.text() == "Version Preview"
     assert "app=ReleaseDemo" in dialog._preview_edit.toPlainText()
+    assert f"Version: {version_path}" in dialog._details_edit.toPlainText()
 
 
 @_skip_no_qt

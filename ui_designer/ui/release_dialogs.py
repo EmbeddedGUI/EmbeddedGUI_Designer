@@ -126,6 +126,10 @@ def _history_detail_text(entry: dict[str, object]) -> str:
         if value:
             lines.append(f"{label}: {value}")
 
+    version_path = _history_version_path(entry)
+    if version_path:
+        lines.append(f"Version: {version_path}")
+
     message = _history_string(entry, "message")
     if message:
         lines.append("")
