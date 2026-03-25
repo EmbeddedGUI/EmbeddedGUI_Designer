@@ -162,3 +162,60 @@ def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, t
     focused_json = dialog._details_edit.toPlainText()
     assert '"critical_issues"' in focused_json
     assert '"stale_temp_dirs": []' in focused_json
+
+
+@_skip_no_qt
+def test_repository_health_dialog_exports_current_text_view(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+    export_path = tmp_path / "repo-health.txt"
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+    monkeypatch.setattr(
+        "ui_designer.ui.repo_health_dialog.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
+    )
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._export_report_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert f"[repo] {tmp_path}" in exported
+    assert "sdk_submodule.initialized: true" in exported
+
+
+@_skip_no_qt
+def test_repository_health_dialog_exports_current_json_view(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+    export_path = tmp_path / "repo-health.json"
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+    monkeypatch.setattr(
+        "ui_designer.ui.repo_health_dialog.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+    )
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._show_json_check.setChecked(True)
+    dialog._export_report_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert '"repo_root"' in exported
+    assert '"sdk_submodule"' in exported

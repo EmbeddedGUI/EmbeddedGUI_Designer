@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_view_payload, summarize_repo_health
 
@@ -37,6 +38,7 @@ class RepositoryHealthDialog(QDialog):
         self._critical_only_check = QCheckBox("Critical Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_report_button = QPushButton("Copy Report")
+        self._export_report_button = QPushButton("Export Report...")
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
@@ -45,6 +47,7 @@ class RepositoryHealthDialog(QDialog):
         self._critical_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
         self._copy_report_button.clicked.connect(self._copy_report)
+        self._export_report_button.clicked.connect(self._export_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
@@ -52,7 +55,13 @@ class RepositoryHealthDialog(QDialog):
         action_row.addWidget(self._refresh_button)
         action_row.addWidget(self._critical_only_check)
         action_row.addWidget(self._show_json_check)
-        for button in (self._copy_report_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
+        for button in (
+            self._copy_report_button,
+            self._export_report_button,
+            self._open_repo_button,
+            self._open_sdk_button,
+            self._open_smoke_button,
+        ):
             action_row.addWidget(button)
         action_row.addStretch(1)
 
@@ -106,3 +115,28 @@ class RepositoryHealthDialog(QDialog):
 
     def _copy_report(self) -> None:
         QApplication.clipboard().setText(self._details_edit.toPlainText())
+
+    def _export_report(self) -> None:
+        default_name = self._default_export_filename()
+        selected_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Repository Health Report",
+            default_name,
+            "JSON Files (*.json);;Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            resolved_path = os.path.abspath(os.path.normpath(selected_path))
+            parent_dir = os.path.dirname(resolved_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            with open(resolved_path, "w", encoding="utf-8") as f:
+                f.write(self._details_edit.toPlainText().rstrip() + "\n")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Repository Health Failed", str(exc))
+
+    def _default_export_filename(self) -> str:
+        if self._show_json_check.isChecked():
+            return "repo-health.json"
+        return "repo-health.txt"
