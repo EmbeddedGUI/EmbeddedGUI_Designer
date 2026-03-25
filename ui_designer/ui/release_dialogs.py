@@ -551,13 +551,14 @@ class ReleaseProfilesDialog(QDialog):
 class ReleaseHistoryDialog(QDialog):
     """Browse recent release builds and open related artifacts."""
 
-    def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, refresh_history_callback=None, parent=None):
+    def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, refresh_history_callback=None, project_key: str = "", parent=None):
         super().__init__(parent)
         self.setWindowTitle("Release History")
         self.resize(1040, 680)
         self._config = get_config()
         self._open_path_callback = open_path_callback
         self._refresh_history_callback = refresh_history_callback
+        self._project_key = str(project_key or "").strip()
         self._all_history_entries: list[dict[str, object]] = []
         self._filtered_history_entries: list[dict[str, object]] = []
 
@@ -905,6 +906,9 @@ class ReleaseHistoryDialog(QDialog):
 
     def _restore_view_state(self) -> None:
         state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
+        if self._project_key:
+            projects = state.get("projects", {}) if isinstance(state.get("projects", {}), dict) else {}
+            state = projects.get(self._project_key, {}) if isinstance(projects.get(self._project_key, {}), dict) else {}
         range_value = str(state.get("range_filter") or "")
         status_value = str(state.get("status_filter") or "")
         profile_value = str(state.get("profile_filter") or "")
@@ -926,13 +930,27 @@ class ReleaseHistoryDialog(QDialog):
         self._search_edit.setText(search_text)
 
     def _save_view_state(self) -> None:
-        self._config.release_history_view = {
+        view_state = {
             "range_filter": str(self._range_filter_combo.currentData() or ""),
             "status_filter": str(self._status_filter_combo.currentData() or ""),
             "profile_filter": str(self._profile_filter_combo.currentData() or ""),
             "artifact_filter": str(self._artifact_filter_combo.currentData() or ""),
             "search_text": self._search_edit.text(),
         }
+        current_state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
+        if self._project_key:
+            next_state = dict(current_state)
+            projects = current_state.get("projects", {}) if isinstance(current_state.get("projects", {}), dict) else {}
+            next_projects = dict(projects)
+            next_projects[self._project_key] = dict(view_state)
+            next_state["projects"] = next_projects
+            self._config.release_history_view = next_state
+        else:
+            next_state = dict(view_state)
+            projects = current_state.get("projects", {}) if isinstance(current_state.get("projects", {}), dict) else {}
+            if projects:
+                next_state["projects"] = dict(projects)
+            self._config.release_history_view = next_state
         self._config.save()
 
     def done(self, result: int) -> None:

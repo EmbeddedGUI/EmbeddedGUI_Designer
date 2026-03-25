@@ -181,10 +181,11 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
         return [history_entry]
 
     class FakeHistoryDialog:
-        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, parent=None):
+        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, project_key="", parent=None):
             captured["history_entries"] = history_entries
             captured["open_path_callback"] = open_path_callback
             captured["refresh_history_callback"] = refresh_history_callback
+            captured["project_key"] = project_key
             captured["parent"] = parent
 
         def exec_(self):
@@ -201,6 +202,7 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
     assert captured["history_entries"][0]["sdk"]["revision"] == "v1.0.0-310-g416d576"
     assert captured["open_path_callback"] == window._open_path_in_shell
     assert callable(captured["refresh_history_callback"])
+    assert captured["project_key"] == str(project_dir)
     assert captured["parent"] is window
     assert captured["shown"] is True
 
@@ -577,9 +579,10 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
         return []
 
     class FakeHistoryDialog:
-        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, parent=None):
+        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, project_key="", parent=None):
             captured["history_entries"] = history_entries
             captured["refresh_history_callback"] = refresh_history_callback
+            captured["project_key"] = project_key
             captured["parent"] = parent
 
         def exec_(self):
@@ -597,6 +600,7 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
     assert captured["project_dir"] == str(project_dir)
     assert captured["history_entries"] == []
     assert callable(captured["refresh_history_callback"])
+    assert captured["project_key"] == str(project_dir)
     assert captured["parent"] is window
     assert captured["shown"] is True
 
@@ -638,5 +642,45 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     assert restored._range_filter_combo.currentData() == "7d"
     assert restored._status_filter_combo.currentData() == "failed"
     assert restored._profile_filter_combo.currentData() == "esp32"
+    assert restored._artifact_filter_combo.currentData() == "package"
+    assert restored._search_edit.text() == "sdk-fail"
+
+
+@_skip_no_qt
+def test_release_history_dialog_restores_project_specific_view_state(qapp, isolated_config):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    entries = [
+        {
+            "build_id": "20260326T000000Z",
+            "status": "success",
+            "profile_id": "windows-pc",
+            "message": "Release created",
+            "sdk": {"revision": "sdk-good"},
+            "manifest_path": "/tmp/release-manifest.json",
+        },
+        {
+            "build_id": "20260326T000100Z",
+            "status": "failed",
+            "profile_id": "esp32",
+            "message": "Build failed",
+            "sdk": {"revision": "sdk-fail"},
+            "zip_path": "/tmp/release.zip",
+        },
+    ]
+
+    dialog = ReleaseHistoryDialog(entries, project_key="project-a")
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("package"))
+    dialog._search_edit.setText("sdk-fail")
+    dialog.done(QDialog.Accepted)
+
+    other_project = ReleaseHistoryDialog(entries, project_key="project-b")
+    assert other_project._status_filter_combo.currentData() == ""
+    assert other_project._artifact_filter_combo.currentData() == ""
+    assert other_project._search_edit.text() == ""
+
+    restored = ReleaseHistoryDialog(entries, project_key="project-a")
+    assert restored._status_filter_combo.currentData() == "failed"
     assert restored._artifact_filter_combo.currentData() == "package"
     assert restored._search_edit.text() == "sdk-fail"
