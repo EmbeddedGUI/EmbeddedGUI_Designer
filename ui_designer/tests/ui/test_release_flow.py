@@ -579,6 +579,37 @@ def test_release_history_dialog_can_open_history_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_refresh_updates_history_file_button(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    history_path = tmp_path / "output" / "ui_designer_release" / "history.json"
+
+    def refresh_history():
+        history_path.parent.mkdir(parents=True, exist_ok=True)
+        history_path.write_text("[]\n", encoding="utf-8")
+        return [
+            {
+                "build_id": "20260326T000100Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ]
+
+    dialog = ReleaseHistoryDialog(
+        [],
+        open_path_callback=lambda path: None,
+        history_path=str(history_path),
+        refresh_history_callback=refresh_history,
+    )
+
+    assert dialog._open_history_file_button.isEnabled() is False
+
+    dialog._refresh_button.click()
+
+    assert dialog._open_history_file_button.isEnabled() is True
+
+
+@_skip_no_qt
 def test_release_history_dialog_filters_entries(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

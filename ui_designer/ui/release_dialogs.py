@@ -863,7 +863,6 @@ class ReleaseHistoryDialog(QDialog):
         filter_row.addWidget(self._export_filtered_button)
 
         self._open_history_file_button = QPushButton("Open History File")
-        self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
         self._open_history_file_button.clicked.connect(self._open_history_file)
         filter_row.addWidget(self._open_history_file_button)
 
@@ -954,6 +953,7 @@ class ReleaseHistoryDialog(QDialog):
 
         self._load_history_entries(history_entries)
         self._restore_view_state()
+        self._update_history_file_button()
 
     def _current_entry(self) -> dict[str, object] | None:
         item = self._history_list.currentItem()
@@ -966,6 +966,7 @@ class ReleaseHistoryDialog(QDialog):
         self._all_history_entries = [entry for entry in (history_entries or []) if isinstance(entry, dict)]
         self._rebuild_profile_filter_options()
         self._apply_history_filter()
+        self._update_history_file_button()
 
     def _rebuild_profile_filter_options(self) -> None:
         current_profile = str(self._profile_filter_combo.currentData() or "")
@@ -1328,6 +1329,9 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_text("")
             return
         self._copy_text(_history_summary_line(entry) + "\n")
+
+    def _update_history_file_button(self) -> None:
+        self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
 
     def _open_history_file(self) -> None:
         if self._open_path_callback is None or not self._history_path or not os.path.isfile(self._history_path):
