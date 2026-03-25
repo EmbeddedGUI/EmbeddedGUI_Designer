@@ -3215,6 +3215,67 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_diagnostics_panel_filters_visible_entries_by_severity(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsFilterDemo"
+        project = _create_project(project_dir, "DiagnosticsFilterDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
+        duplicate_b = WidgetModel("label", name="dup_name", x=230, y=40, width=30, height=20)
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=120, width=240, height=80)
+        managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
+        managed.designer_locked = True
+        managed.designer_hidden = True
+        layout_parent.add_child(managed)
+        missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(duplicate_a)
+        page.root_widget.add_child(duplicate_b)
+        page.root_widget.add_child(layout_parent)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selection_state.set_widgets([managed], primary=managed)
+        window._selected_widget = managed
+        window._update_diagnostics_panel()
+
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+        warning_items = [window.diagnostics_panel._list.item(i).text() for i in range(window.diagnostics_panel._list.count())]
+
+        assert window.diagnostics_panel._summary_label.text() == "Diagnostics: 3 error(s), 2 warning(s), 3 info item(s)"
+        assert len(warning_items) == 2
+        assert all(item.startswith("[Warning]") for item in warning_items)
+        assert window.diagnostics_panel._copy_button.isEnabled() is True
+        assert window.diagnostics_panel._copy_json_button.isEnabled() is True
+
+        filter_combo.setCurrentIndex(filter_combo.findData("info"))
+        info_items = [window.diagnostics_panel._list.item(i).text() for i in range(window.diagnostics_panel._list.count())]
+
+        assert len(info_items) == 3
+        assert all(item.startswith("[Info]") for item in info_items)
+
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+        layout_warning_items = [window.diagnostics_panel._list.item(i).text() for i in range(window.diagnostics_panel._list.count())]
+        assert any("geometry issues" in item for item in layout_warning_items)
+        assert any("missing from the resource catalog" in item for item in layout_warning_items)
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -3248,6 +3309,45 @@ class TestMainWindowFileFlow:
         assert copied.startswith("Diagnostics: ")
         assert "bad-name" in copied
         assert "missing_image" in copied
+        assert window.statusBar().currentMessage() == "Copied diagnostics summary."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_copy_diagnostics_summary_respects_severity_filter(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsCopyFilteredDemo"
+        project = _create_project(project_dir, "DiagnosticsCopyFilteredDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+
+        QApplication.clipboard().clear()
+        window.diagnostics_panel._copy_button.click()
+
+        copied = QApplication.clipboard().text()
+        assert copied.startswith("Diagnostics: ")
+        assert "Filter: warnings (1 item(s))" in copied
+        assert "missing_image" in copied
+        assert "bad-name" not in copied
         assert window.statusBar().currentMessage() == "Copied diagnostics summary."
 
         window._undo_manager.mark_all_saved()
