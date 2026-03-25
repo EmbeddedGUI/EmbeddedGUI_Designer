@@ -8,7 +8,15 @@ from pathlib import Path
 from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.config import get_config
-from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_counts, repo_health_view_payload, summarize_repo_health
+from ..model.repo_health import (
+    collect_repo_health,
+    format_repo_health_json,
+    format_repo_health_summary,
+    format_repo_health_text,
+    repo_health_counts,
+    repo_health_view_payload,
+    summarize_repo_health,
+)
 
 
 class RepositoryHealthDialog(QDialog):
@@ -43,6 +51,7 @@ class RepositoryHealthDialog(QDialog):
         self._refresh_button = QPushButton("Refresh")
         self._critical_only_check = QCheckBox("Critical Only")
         self._show_json_check = QCheckBox("Show JSON")
+        self._copy_summary_button = QPushButton("Copy Summary")
         self._copy_report_button = QPushButton("Copy Report")
         self._export_report_button = QPushButton("Export Report...")
         self._open_repo_button = QPushButton("Open Repo")
@@ -52,6 +61,7 @@ class RepositoryHealthDialog(QDialog):
         self._refresh_button.clicked.connect(self.refresh)
         self._critical_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
+        self._copy_summary_button.clicked.connect(self._copy_summary)
         self._copy_report_button.clicked.connect(self._copy_report)
         self._export_report_button.clicked.connect(self._export_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
@@ -62,6 +72,7 @@ class RepositoryHealthDialog(QDialog):
         action_row.addWidget(self._critical_only_check)
         action_row.addWidget(self._show_json_check)
         for button in (
+            self._copy_summary_button,
             self._copy_report_button,
             self._export_report_button,
             self._open_repo_button,
@@ -132,6 +143,11 @@ class RepositoryHealthDialog(QDialog):
 
     def _copy_report(self) -> None:
         QApplication.clipboard().setText(self._details_edit.toPlainText())
+
+    def _copy_summary(self) -> None:
+        critical_only = self._critical_only_check.isChecked()
+        view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
+        QApplication.clipboard().setText(format_repo_health_summary(view_payload, critical_only=critical_only))
 
     def _export_report(self) -> None:
         default_name = self._default_export_filename()

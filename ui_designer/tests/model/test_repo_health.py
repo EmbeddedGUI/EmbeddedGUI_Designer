@@ -141,3 +141,23 @@ def test_format_repo_health_json_includes_metadata(tmp_path):
     assert rendered["_counts"] == {"critical": 2, "suggestions": 1, "stale_dirs": 0, "blocked_stale_dirs": 0}
     assert rendered["_view"] == {"critical_only": True}
     assert rendered["repo_root"] == str(tmp_path)
+
+
+def test_format_repo_health_summary_includes_counts(tmp_path):
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    rendered = repo_health.format_repo_health_summary(payload, critical_only=True)
+
+    assert "SDK submodule is not initialized; release smoke sample is missing; 1 stale temp dir(s) detected" in rendered
+    assert "critical=2" in rendered
+    assert "suggestions=1" in rendered
+    assert "stale=1" in rendered
+    assert "blocked=1" in rendered
+    assert "critical_only=true" in rendered

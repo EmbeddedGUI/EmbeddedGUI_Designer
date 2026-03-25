@@ -179,6 +179,18 @@ def repo_health_counts(payload: dict[str, object]) -> dict[str, int]:
     }
 
 
+def format_repo_health_summary(payload: dict[str, object], *, critical_only: bool = False) -> str:
+    counts = repo_health_counts(payload)
+    return (
+        f"{summarize_repo_health(payload)} | "
+        f"critical={counts['critical']} "
+        f"suggestions={counts['suggestions']} "
+        f"stale={counts['stale_dirs']} "
+        f"blocked={counts['blocked_stale_dirs']} "
+        f"critical_only={str(bool(critical_only)).lower()}"
+    )
+
+
 def format_repo_health_text(payload: dict[str, object], *, critical_only: bool = False) -> str:
     counts = repo_health_counts(payload)
     lines = [

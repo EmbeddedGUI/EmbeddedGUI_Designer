@@ -77,6 +77,41 @@ def test_repository_health_action_opens_dialog(qapp, isolated_config, monkeypatc
 
 
 @_skip_no_qt
+def test_repository_health_dialog_copy_summary_writes_clipboard(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    QApplication.clipboard().clear()
+    dialog._copy_summary_button.click()
+
+    copied = QApplication.clipboard().text()
+    assert "SDK submodule is not initialized; release smoke sample is missing; 1 stale temp dir(s) detected" in copied
+    assert "critical=2" in copied
+    assert "blocked=1" in copied
+    assert "critical_only=false" in copied
+
+    dialog._critical_only_check.setChecked(True)
+    dialog._copy_summary_button.click()
+    copied = QApplication.clipboard().text()
+    assert "critical_only=true" in copied
+    assert "stale=0" in copied
+    assert "blocked=0" in copied
+
+
+@_skip_no_qt
 def test_repository_health_dialog_copy_report_writes_clipboard(qapp, monkeypatch, tmp_path):
     from PyQt5.QtWidgets import QApplication
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
