@@ -349,6 +349,10 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 1
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
+    dialog._search_edit.setText("esp32 fail")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
     dialog._clear_filters_button.click()
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"

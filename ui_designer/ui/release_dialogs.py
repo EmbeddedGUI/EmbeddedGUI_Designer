@@ -859,6 +859,7 @@ class ReleaseHistoryDialog(QDialog):
         if artifact_filter and not _history_has_artifact(entry, artifact_filter):
             return False
         if search_text:
+            search_tokens = [token for token in search_text.split() if token]
             searchable = " ".join(
                 filter(
                     None,
@@ -873,7 +874,7 @@ class ReleaseHistoryDialog(QDialog):
                     ),
                 )
             ).lower()
-            if search_text not in searchable:
+            if any(token not in searchable for token in search_tokens):
                 return False
         return True
 
