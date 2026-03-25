@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -121,6 +122,34 @@ def _history_summary_line(entry: dict[str, object]) -> str:
     sdk_label = _history_sdk_label(entry)
     message = _history_string(entry, "message") or "-"
     return f"{build_id} | {status} | {profile_id} | sdk {sdk_label} | {message}"
+
+
+def _build_filtered_history_summary(
+    filtered_entries: list[dict[str, object]],
+    all_entries: list[dict[str, object]],
+    *,
+    status_filter: str,
+    profile_filter: str,
+    search_text: str,
+) -> str:
+    lines = [
+        "Release History Summary",
+        f"matched_entries={len(filtered_entries)}",
+        f"total_entries={len(all_entries)}",
+        f"filters: status={status_filter or 'all'}, profile={profile_filter or 'all'}, search={search_text or '-'}",
+        "",
+    ]
+    lines.extend(_history_summary_line(entry) for entry in filtered_entries)
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _write_text_file(path: str, content: str) -> None:
+    resolved_path = os.path.abspath(os.path.normpath(path))
+    parent_dir = os.path.dirname(resolved_path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    with open(resolved_path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 
 def _preview_file_text(path: str, *, prefer_json: bool = False, char_limit: int = _PREVIEW_CHAR_LIMIT) -> str:
@@ -483,6 +512,10 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
         filter_row.addWidget(self._copy_filtered_button)
 
+        self._export_filtered_button = QPushButton("Export Filtered...")
+        self._export_filtered_button.clicked.connect(self._export_filtered_summary)
+        filter_row.addWidget(self._export_filtered_button)
+
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
         self._refresh_button.clicked.connect(self._reload_history_entries)
@@ -626,6 +659,7 @@ class ReleaseHistoryDialog(QDialog):
         self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
         self._copy_filtered_button.setEnabled(bool(filtered_entries))
+        self._export_filtered_button.setEnabled(bool(filtered_entries))
 
         self._history_list.blockSignals(True)
         self._history_list.clear()
@@ -670,18 +704,32 @@ class ReleaseHistoryDialog(QDialog):
         self._search_edit.clear()
 
     def _copy_filtered_summary(self) -> None:
-        wanted_status = str(self._status_filter_combo.currentData() or "") or "all"
-        wanted_profile = str(self._profile_filter_combo.currentData() or "") or "all"
-        search_text = self._search_edit.text().strip() or "-"
-        lines = [
-            "Release History Summary",
-            f"matched_entries={len(self._filtered_history_entries)}",
-            f"total_entries={len(self._all_history_entries)}",
-            f"filters: status={wanted_status}, profile={wanted_profile}, search={search_text}",
-            "",
-        ]
-        lines.extend(_history_summary_line(entry) for entry in self._filtered_history_entries)
-        self._copy_text("\n".join(lines).rstrip() + "\n")
+        self._copy_text(self._filtered_summary_text())
+
+    def _export_filtered_summary(self) -> None:
+        if not self._filtered_history_entries:
+            return
+        selected_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Release History Summary",
+            "release-history-summary.txt",
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            _write_text_file(selected_path, self._filtered_summary_text())
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Release History Failed", str(exc))
+
+    def _filtered_summary_text(self) -> str:
+        return _build_filtered_history_summary(
+            self._filtered_history_entries,
+            self._all_history_entries,
+            status_filter=str(self._status_filter_combo.currentData() or ""),
+            profile_filter=str(self._profile_filter_combo.currentData() or ""),
+            search_text=self._search_edit.text().strip(),
+        )
 
     def _copy_entry_json(self) -> None:
         entry = self._current_entry()

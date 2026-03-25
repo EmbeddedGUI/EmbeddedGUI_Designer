@@ -375,6 +375,45 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
 
 
 @_skip_no_qt
+def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path, monkeypatch):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    export_path = tmp_path / "release-history-summary.txt"
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            },
+        ]
+    )
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
+    )
+
+    dialog._export_filtered_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert "matched_entries=1" in exported
+    assert "filters: status=failed, profile=all, search=-" in exported
+    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
+    assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
+
+
+@_skip_no_qt
 def test_release_history_dialog_refreshes_entries(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
