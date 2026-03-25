@@ -527,6 +527,69 @@ def test_repository_health_dialog_exports_current_text_view(qapp, monkeypatch, t
 
 
 @_skip_no_qt
+def test_repository_health_dialog_exports_summary(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+    export_path = tmp_path / "repo-health-summary.txt"
+    captured = {}
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+    monkeypatch.setattr(
+        "ui_designer.ui.repo_health_dialog.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "Text Files (*.txt)",
+        ),
+    )
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._critical_only_check.setChecked(True)
+    dialog._export_summary_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert captured["default_name"] == "repo-health-summary-critical.txt"
+    assert "SDK submodule is not initialized; release smoke sample is missing" in exported
+    assert "critical=2" in exported
+    assert "blocked_only=false" in exported
+
+
+@_skip_no_qt
+def test_repository_health_dialog_export_summary_appends_txt_suffix(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+    export_path = tmp_path / "repo-health-summary"
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+    monkeypatch.setattr(
+        "ui_designer.ui.repo_health_dialog.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
+    )
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._export_summary_button.click()
+
+    exported = (tmp_path / "repo-health-summary.txt").read_text(encoding="utf-8")
+    assert "Repository health looks good." in exported
+    assert "critical=0" in exported
+
+
+@_skip_no_qt
 def test_repository_health_dialog_export_uses_selected_json_format(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 

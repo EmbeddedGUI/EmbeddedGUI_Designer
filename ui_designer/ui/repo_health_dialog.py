@@ -55,6 +55,7 @@ class RepositoryHealthDialog(QDialog):
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_summary_button = QPushButton("Copy Summary")
+        self._export_summary_button = QPushButton("Export Summary...")
         self._copy_report_button = QPushButton("Copy Report")
         self._copy_json_button = QPushButton("Copy JSON")
         self._export_report_button = QPushButton("Export Report...")
@@ -76,6 +77,7 @@ class RepositoryHealthDialog(QDialog):
         self._show_json_check.toggled.connect(self._render_details)
         self._stale_dir_combo.currentIndexChanged.connect(self._on_stale_dir_selected)
         self._copy_summary_button.clicked.connect(self._copy_summary)
+        self._export_summary_button.clicked.connect(self._export_summary)
         self._copy_report_button.clicked.connect(self._copy_report)
         self._copy_json_button.clicked.connect(self._copy_json)
         self._export_report_button.clicked.connect(self._export_report)
@@ -95,6 +97,7 @@ class RepositoryHealthDialog(QDialog):
         action_row.addWidget(self._show_json_check)
         for button in (
             self._copy_summary_button,
+            self._export_summary_button,
             self._copy_report_button,
             self._copy_json_button,
             self._export_report_button,
@@ -228,6 +231,31 @@ class RepositoryHealthDialog(QDialog):
         view_options = self._view_options()
         self._copy_text(format_repo_health_summary(self._current_view_payload(), **view_options))
 
+    def _summary_text(self) -> str:
+        view_options = self._view_options()
+        return format_repo_health_summary(self._current_view_payload(), **view_options).rstrip() + "\n"
+
+    def _export_summary(self) -> None:
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Repository Health Summary",
+            self._default_summary_export_filename(),
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            if "Text" in str(selected_filter):
+                selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".txt"
+            resolved_path = os.path.abspath(os.path.normpath(selected_path))
+            parent_dir = os.path.dirname(resolved_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            with open(resolved_path, "w", encoding="utf-8") as f:
+                f.write(self._summary_text())
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Repository Health Failed", str(exc))
+
     def _copy_selected_stale_path(self) -> None:
         self._copy_text(self._selected_stale_path())
 
@@ -303,6 +331,14 @@ class RepositoryHealthDialog(QDialog):
             parts.append("blocked")
         if self._show_json_check.isChecked():
             return "-".join(parts) + ".json"
+        return "-".join(parts) + ".txt"
+
+    def _default_summary_export_filename(self) -> str:
+        parts = ["repo-health-summary"]
+        if self._critical_only_check.isChecked():
+            parts.append("critical")
+        if self._blocked_only_check.isChecked():
+            parts.append("blocked")
         return "-".join(parts) + ".txt"
 
     def _restore_view_state(self) -> None:
