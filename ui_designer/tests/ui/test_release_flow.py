@@ -1056,6 +1056,35 @@ def test_release_history_dialog_can_copy_history_file_path(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_can_copy_history_file_json(qapp, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    history_path = tmp_path / "output" / "ui_designer_release" / "history.json"
+    history_path.parent.mkdir(parents=True)
+    history_path.write_text('[{"build_id":"20260326T000000Z","status":"success"}]\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ],
+        history_path=str(history_path),
+    )
+
+    QApplication.clipboard().clear()
+    dialog._copy_history_json_button.click()
+
+    copied = QApplication.clipboard().text()
+    assert dialog._copy_history_json_button.isEnabled() is True
+    assert '"build_id": "20260326T000000Z"' in copied
+    assert '"status": "success"' in copied
+
+
+@_skip_no_qt
 def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -1077,6 +1106,7 @@ def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     assert dialog._preview_manifest_button.isEnabled() is True
     assert dialog._preview_log_button.isEnabled() is True
     assert dialog._preview_version_button.isEnabled() is False
+    assert dialog._copy_history_json_button.isEnabled() is False
     assert dialog._export_preview_button.isEnabled() is False
     assert dialog._open_preview_button.isEnabled() is False
     assert dialog._copy_folder_path_button.isEnabled() is True
