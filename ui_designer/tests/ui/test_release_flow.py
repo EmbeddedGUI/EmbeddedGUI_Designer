@@ -716,6 +716,47 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
 
 
 @_skip_no_qt
+def test_release_history_dialog_exports_selected_entry_details(qapp, tmp_path, monkeypatch):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    export_path = tmp_path / "release-entry-details.txt"
+    captured = {}
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "app_name": "ReleaseDemo",
+                "manifest_path": str(manifest_path),
+                "message": "Release created",
+            }
+        ]
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "Text Files (*.txt)",
+        ),
+    )
+
+    dialog._export_details_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert captured["default_name"] == "release-entry-20260326t000000z-windows-pc-success.txt"
+    assert "Build ID: 20260326T000000Z" in exported
+    assert "App: ReleaseDemo" in exported
+    assert f"Manifest: {manifest_path}" in exported
+    assert "Message:" in exported
+    assert "Release created" in exported
+
+
+@_skip_no_qt
 def test_release_history_dialog_export_entry_json_appends_json_suffix(qapp, tmp_path, monkeypatch):
     import json
 

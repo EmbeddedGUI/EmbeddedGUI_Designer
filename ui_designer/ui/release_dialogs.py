@@ -926,6 +926,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_preview_path_button = QPushButton("Copy Preview Path")
         self._copy_package_path_button = QPushButton("Copy Package Path")
+        self._export_details_button = QPushButton("Export Details...")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
         self._export_entry_json_button = QPushButton("Export Entry JSON...")
         self._open_folder_button = QPushButton("Open Folder")
@@ -950,6 +951,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
         self._copy_package_path_button.clicked.connect(self._copy_package_path)
+        self._export_details_button.clicked.connect(self._export_entry_details)
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
         self._export_entry_json_button.clicked.connect(self._export_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
@@ -968,6 +970,7 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_preview_button,
             self._copy_preview_path_button,
             self._copy_package_path_button,
+            self._export_details_button,
             self._copy_entry_json_button,
             self._export_entry_json_button,
             self._open_folder_button,
@@ -1370,6 +1373,24 @@ class ReleaseHistoryDialog(QDialog):
         except OSError as exc:
             QMessageBox.warning(self, "Export Release Entry Failed", str(exc))
 
+    def _export_entry_details(self) -> None:
+        if not self._current_entry():
+            return
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Release Entry Details",
+            self._default_entry_text_export_filename(),
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            if "Text" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".txt")
+            _write_text_file(selected_path, self._entry_details_text())
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Release Entry Failed", str(exc))
+
     def _default_entry_export_filename(self) -> str:
         entry = self._current_entry() or {}
         parts = [
@@ -1382,12 +1403,21 @@ class ReleaseHistoryDialog(QDialog):
             parts.append(status_part)
         return "-".join(part for part in parts if part) + ".json"
 
+    def _default_entry_text_export_filename(self) -> str:
+        return os.path.splitext(self._default_entry_export_filename())[0] + ".txt"
+
     def _copy_entry_summary(self) -> None:
         entry = self._current_entry()
         if not entry:
             self._copy_text("")
             return
         self._copy_text(_history_summary_line(entry) + "\n")
+
+    def _entry_details_text(self) -> str:
+        entry = self._current_entry()
+        if not entry:
+            return ""
+        return _history_detail_text(entry).rstrip() + "\n"
 
     def _current_preview_target(self, entry: dict[str, object] | None = None) -> tuple[str, str]:
         selected_entry = entry if entry is not None else self._current_entry()
@@ -1508,6 +1538,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_package_path_button.setEnabled(bool(package_path))
+        self._export_details_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
         self._export_entry_json_button.setEnabled(bool(entry))
         self._update_preview_path_button(entry)
