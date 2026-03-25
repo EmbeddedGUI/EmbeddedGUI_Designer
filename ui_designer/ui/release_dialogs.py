@@ -860,6 +860,10 @@ class ReleaseHistoryDialog(QDialog):
         self._clear_filters_button.clicked.connect(self._clear_filters)
         filter_row.addWidget(self._clear_filters_button)
 
+        self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button.clicked.connect(self._reset_view)
+        filter_row.addWidget(self._reset_view_button)
+
         self._copy_filtered_button = QPushButton("Copy Filtered")
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
         filter_row.addWidget(self._copy_filtered_button)
@@ -1175,6 +1179,10 @@ class ReleaseHistoryDialog(QDialog):
         self._diagnostics_filter_combo.setCurrentIndex(0)
         self._sort_combo.setCurrentIndex(self._sort_combo.findData("newest"))
         self._search_edit.clear()
+
+    def _reset_view(self) -> None:
+        self._clear_filters()
+        self._activate_preview_mode("auto")
 
     def _copy_filtered_summary(self) -> None:
         self._copy_text(self._filtered_summary_text())
