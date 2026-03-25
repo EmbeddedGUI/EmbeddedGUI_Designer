@@ -45,6 +45,7 @@ from .new_project_dialog import NewProjectDialog
 from .welcome_page import WelcomePage
 from .debug_panel import DebugPanel
 from .release_dialogs import ReleaseBuildDialog, ReleaseHistoryDialog, ReleaseProfilesDialog
+from .repo_health_dialog import RepositoryHealthDialog
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
@@ -1220,6 +1221,10 @@ class MainWindow(QMainWindow):
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
 
+        self._repo_health_action = QAction("Repository Health...", self)
+        self._repo_health_action.triggered.connect(self._show_repository_health)
+        build_menu.addAction(self._repo_health_action)
+
         build_menu.addSeparator()
 
         gen_res_action = QAction("Generate Resources", self)
@@ -1564,6 +1569,10 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("No release history available", 4000)
             return
         dialog = ReleaseHistoryDialog(history_entries, open_path_callback=self._open_path_in_shell, parent=self)
+        dialog.exec_()
+
+    def _show_repository_health(self):
+        dialog = RepositoryHealthDialog(_DESIGNER_REPO_ROOT, open_path_callback=self._open_path_in_shell, parent=self)
         dialog.exec_()
 
     def _release_build(self):
