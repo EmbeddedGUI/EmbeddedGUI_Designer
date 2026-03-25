@@ -121,6 +121,18 @@ def summarize_repo_health(payload: dict[str, object]) -> str:
     return "; ".join(issues)
 
 
+def critical_repo_health_issues(payload: dict[str, object]) -> list[str]:
+    sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
+    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
+
+    issues = []
+    if not sdk.get("initialized", False):
+        issues.append("SDK submodule is not initialized")
+    if not smoke.get("present", False):
+        issues.append("release smoke sample is missing")
+    return issues
+
+
 def format_repo_health_text(payload: dict[str, object]) -> str:
     lines = [f"[repo] {payload['repo_root']}"]
     sdk = payload["sdk_submodule"]
@@ -139,6 +151,11 @@ def format_repo_health_text(payload: dict[str, object]) -> str:
         lines.append(line)
     for suggestion in payload["suggestions"]:
         lines.append(f"suggestion: {suggestion}")
+    critical_issues = critical_repo_health_issues(payload)
+    if critical_issues:
+        lines.append(f"critical_issues: {len(critical_issues)}")
+        for issue in critical_issues:
+            lines.append(f"critical: {issue}")
     return "\n".join(lines)
 
 

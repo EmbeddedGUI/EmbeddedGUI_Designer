@@ -39,6 +39,7 @@ jobs:
         working-directory: EmbeddedGUI_Designer
         run: >
           python scripts/ui_designer/repo_doctor.py
+          --strict
           --json
           > build/repo-health.json
 

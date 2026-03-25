@@ -35,6 +35,7 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
   `python scripts/ui_designer/release_project.py --project samples/release_smoke/ReleaseSmokeApp --sdk-root sdk/EmbeddedGUI --output-dir build/release-smoke --json`
 - Inspect local repo health:
   `python scripts/ui_designer/repo_doctor.py`
+  `python scripts/ui_designer/repo_doctor.py --strict`
 
 ## Release workflow
 

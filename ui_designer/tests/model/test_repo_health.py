@@ -30,6 +30,10 @@ def test_collect_repo_health_reports_missing_submodule_and_stale_dirs(tmp_path, 
     assert payload["stale_temp_dirs"][0]["issue"] == "permission_denied"
     assert any("git submodule update --init --recursive" in item for item in payload["suggestions"])
     assert "stale temp dir" in repo_health.summarize_repo_health(payload)
+    assert repo_health.critical_repo_health_issues(payload) == [
+        "SDK submodule is not initialized",
+        "release smoke sample is missing",
+    ]
 
 
 def test_format_repo_health_text_includes_expected_sections(tmp_path):
@@ -57,3 +61,16 @@ def test_format_repo_health_text_includes_expected_sections(tmp_path):
     assert "release_smoke.present: true" in rendered
     assert "stale_temp_dirs: 1" in rendered
     assert "suggestion: If git status is noisy, use: git status -uno" in rendered
+
+
+def test_critical_repo_health_issues_empty_for_healthy_payload(tmp_path):
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    assert repo_health.critical_repo_health_issues(payload) == []
