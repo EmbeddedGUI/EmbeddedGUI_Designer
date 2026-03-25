@@ -77,7 +77,14 @@ def _history_sdk_label(entry: dict[str, object]) -> str:
 def _history_list_label(entry: dict[str, object]) -> str:
     build_id = _history_string(entry, "build_id") or _history_string(entry, "created_at_utc") or "unknown-build"
     profile_id = _history_string(entry, "profile_id") or "unknown-profile"
-    return f"{build_id} [{profile_id}] {_history_status(entry)} sdk {_history_sdk_label(entry)}"
+    parts = [f"{build_id} [{profile_id}] {_history_status(entry)} sdk {_history_sdk_label(entry)}"]
+    warning_count = _history_int(entry, "warning_count")
+    error_count = _history_int(entry, "error_count")
+    if (warning_count or 0) > 0:
+        parts.append(f"warn {warning_count}")
+    if (error_count or 0) > 0:
+        parts.append(f"err {error_count}")
+    return " ".join(parts)
 
 
 def _history_detail_text(entry: dict[str, object]) -> str:

@@ -353,6 +353,8 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._status_breakdown_label.text() == "success 1 | failed 1 | unknown 0"
     assert dialog._artifact_breakdown_label.text() == "manifest 1 | log 1 | package 1"
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
+    assert "warn 2" in dialog._history_list.item(0).text()
+    assert "err 1" in dialog._history_list.item(0).text()
 
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     assert dialog._history_list.count() == 1
