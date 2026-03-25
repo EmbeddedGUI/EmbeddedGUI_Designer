@@ -118,6 +118,15 @@ class DiagnosticsPanel(QWidget):
     def entries(self):
         return list(self._visible_entries)
 
+    def view_state(self):
+        return {"severity_filter": self._current_filter_value()}
+
+    def restore_view_state(self, state):
+        view_state = state if isinstance(state, dict) else {}
+        severity_value = str(view_state.get("severity_filter") or "")
+        index = self._severity_filter_combo.findData(severity_value)
+        self._severity_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
     def _current_filter_value(self):
         return str(self._severity_filter_combo.currentData() or "")
 

@@ -200,6 +200,7 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._init_menus()
         self._init_toolbar()
+        self._restore_diagnostics_view_state()
         self._apply_saved_window_state()
         # Start with welcome page (don't auto-create project)
         self._show_welcome_page()
@@ -443,6 +444,18 @@ class MainWindow(QMainWindow):
         except Exception:
             self._config.window_geometry = ""
             self._config.window_state = ""
+
+    def _restore_diagnostics_view_state(self):
+        if not hasattr(self, "diagnostics_panel"):
+            return
+        view_state = self._config.diagnostics_view if isinstance(self._config.diagnostics_view, dict) else {}
+        self.diagnostics_panel.restore_view_state(view_state)
+
+    def _save_diagnostics_view_state(self):
+        if not hasattr(self, "diagnostics_panel"):
+            self._config.diagnostics_view = {}
+            return
+        self._config.diagnostics_view = self.diagnostics_panel.view_state()
 
     def _bump_async_generation(self):
         self._async_generation += 1
@@ -4300,6 +4313,7 @@ class MainWindow(QMainWindow):
         self._config.overlay_mode = self.preview_panel._mode
         self._config.overlay_flipped = self.preview_panel._flipped
         self._save_window_state_to_config()
+        self._save_diagnostics_view_state()
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
             self._config.egui_root = self.project_root

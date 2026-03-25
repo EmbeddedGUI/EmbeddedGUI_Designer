@@ -45,6 +45,7 @@ class TestDefaults:
         assert config.sdk_setup_prompted is False
         assert config.release_history_view == {}
         assert config.repo_health_view == {}
+        assert config.diagnostics_view == {}
 
 
 class TestSaveLoad:
@@ -80,6 +81,7 @@ class TestSaveLoad:
             },
         }
         config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
+        config.diagnostics_view = {"severity_filter": "warning"}
 
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
@@ -120,6 +122,7 @@ class TestSaveLoad:
             },
         }
         assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
+        assert loaded.diagnostics_view == {"severity_filter": "warning"}
 
     def test_load_nonexistent_file(self, config, tmp_path):
         config_path = tmp_path / "nonexistent.json"

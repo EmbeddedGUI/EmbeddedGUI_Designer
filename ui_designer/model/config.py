@@ -54,6 +54,7 @@ class DesignerConfig:
         self.sdk_setup_prompted = False
         self.release_history_view = {}
         self.repo_health_view = {}
+        self.diagnostics_view = {}
 
     @property
     def egui_root(self):
@@ -169,6 +170,7 @@ class DesignerConfig:
             self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
             self.release_history_view = data.get("release_history_view", {}) if isinstance(data.get("release_history_view", {}), dict) else {}
             self.repo_health_view = data.get("repo_health_view", {}) if isinstance(data.get("repo_health_view", {}), dict) else {}
+            self.diagnostics_view = data.get("diagnostics_view", {}) if isinstance(data.get("diagnostics_view", {}), dict) else {}
         except Exception as e:
             print(f"Warning: Failed to load config: {e}")
 
@@ -199,6 +201,7 @@ class DesignerConfig:
                 "sdk_setup_prompted": self.sdk_setup_prompted,
                 "release_history_view": self.release_history_view,
                 "repo_health_view": self.repo_health_view,
+                "diagnostics_view": self.diagnostics_view,
             }
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)

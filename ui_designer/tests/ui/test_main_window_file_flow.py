@@ -3332,6 +3332,50 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_diagnostics_panel_restores_saved_severity_filter(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsRestoreFilterDemo"
+        project = _create_project(project_dir, "DiagnosticsRestoreFilterDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+
+        _close_window(window)
+
+        assert isolated_config.diagnostics_view == {"severity_filter": "warning"}
+
+        restored = MainWindow(str(sdk_root))
+        monkeypatch.setattr(restored, "_recreate_compiler", lambda: setattr(restored, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(restored, "_trigger_compile", lambda: None)
+
+        restored._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        restored._update_diagnostics_panel()
+
+        assert restored.diagnostics_panel._severity_filter_combo.currentData() == "warning"
+        assert restored.diagnostics_panel._list.count() == 1
+        assert "missing_image" in restored.diagnostics_panel._list.item(0).text()
+
+        restored._undo_manager.mark_all_saved()
+        _close_window(restored)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
