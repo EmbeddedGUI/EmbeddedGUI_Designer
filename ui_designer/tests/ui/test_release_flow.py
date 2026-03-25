@@ -292,6 +292,33 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    opened_paths = []
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "release_root": str(tmp_path),
+                "dist_dir": str(dist_dir),
+            }
+        ],
+        open_path_callback=lambda path: opened_paths.append(path),
+    )
+
+    dialog._open_folder_button.click()
+    dialog._open_dist_button.click()
+
+    assert opened_paths == [str(tmp_path), str(dist_dir)]
+
+
+@_skip_no_qt
 def test_release_history_dialog_filters_entries(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

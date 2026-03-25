@@ -810,6 +810,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
         self._open_folder_button = QPushButton("Open Folder")
+        self._open_dist_button = QPushButton("Open Dist")
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
@@ -819,6 +820,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
+        self._open_dist_button.clicked.connect(lambda: self._open_selected_path("dist_dir", "Release Dist"))
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
         self._open_package_button.clicked.connect(lambda: self._open_selected_path("zip_path", "Release Package"))
@@ -829,6 +831,7 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_preview_button,
             self._copy_entry_json_button,
             self._open_folder_button,
+            self._open_dist_button,
             self._open_manifest_button,
             self._open_log_button,
             self._open_package_button,
@@ -1163,6 +1166,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
+        self._open_dist_button.setEnabled(bool(entry and _history_string(entry, "dist_dir")))
         self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._open_package_button.setEnabled(bool(entry and _history_string(entry, "zip_path")))
