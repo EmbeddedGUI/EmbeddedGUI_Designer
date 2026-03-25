@@ -925,6 +925,8 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_preview_path_button = QPushButton("Copy Preview Path")
+        self._copy_folder_path_button = QPushButton("Copy Folder Path")
+        self._copy_dist_path_button = QPushButton("Copy Dist Path")
         self._copy_package_path_button = QPushButton("Copy Package Path")
         self._export_details_button = QPushButton("Export Details...")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
@@ -950,6 +952,8 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
+        self._copy_folder_path_button.clicked.connect(lambda: self._copy_selected_path("release_root"))
+        self._copy_dist_path_button.clicked.connect(lambda: self._copy_selected_path("dist_dir"))
         self._copy_package_path_button.clicked.connect(self._copy_package_path)
         self._export_details_button.clicked.connect(self._export_entry_details)
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
@@ -969,6 +973,8 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_details_button,
             self._copy_preview_button,
             self._copy_preview_path_button,
+            self._copy_folder_path_button,
+            self._copy_dist_path_button,
             self._copy_package_path_button,
             self._export_details_button,
             self._copy_entry_json_button,
@@ -1458,6 +1464,11 @@ class ReleaseHistoryDialog(QDialog):
         path = _history_string(entry or {}, "zip_path")
         self._copy_text(path + "\n" if path else "")
 
+    def _copy_selected_path(self, key: str) -> None:
+        entry = self._current_entry()
+        path = _history_string(entry or {}, key)
+        self._copy_text(path + "\n" if path else "")
+
     def _activate_preview_mode(self, mode: str) -> None:
         self._preview_mode = mode if mode in {"auto", "manifest", "log", "version"} else "auto"
         self._sync_preview_mode_buttons()
@@ -1537,6 +1548,8 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_summary_button.setEnabled(bool(entry))
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
+        self._copy_folder_path_button.setEnabled(bool(release_root))
+        self._copy_dist_path_button.setEnabled(bool(dist_dir))
         self._copy_package_path_button.setEnabled(bool(package_path))
         self._export_details_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))

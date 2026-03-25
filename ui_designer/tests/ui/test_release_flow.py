@@ -595,7 +595,9 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
     manifest_path = tmp_path / "release-manifest.json"
+    dist_dir = tmp_path / "dist"
     package_path = tmp_path / "ReleaseDemo.zip"
+    dist_dir.mkdir()
     manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
     package_path.write_text("zip\n", encoding="utf-8")
 
@@ -605,6 +607,8 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
                 "build_id": "20260326T000000Z",
                 "status": "success",
                 "profile_id": "windows-pc",
+                "release_root": str(tmp_path),
+                "dist_dir": str(dist_dir),
                 "manifest_path": str(manifest_path),
                 "zip_path": str(package_path),
             }
@@ -623,6 +627,12 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
 
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(manifest_path) + "\n"
+
+    dialog._copy_folder_path_button.click()
+    assert QApplication.clipboard().text() == str(tmp_path) + "\n"
+
+    dialog._copy_dist_path_button.click()
+    assert QApplication.clipboard().text() == str(dist_dir) + "\n"
 
     dialog._copy_package_path_button.click()
     assert QApplication.clipboard().text() == str(package_path) + "\n"
@@ -888,6 +898,8 @@ def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     assert dialog._preview_manifest_button.isEnabled() is True
     assert dialog._preview_log_button.isEnabled() is True
     assert dialog._preview_version_button.isEnabled() is False
+    assert dialog._copy_folder_path_button.isEnabled() is True
+    assert dialog._copy_dist_path_button.isEnabled() is True
     assert dialog._copy_package_path_button.isEnabled() is True
     assert dialog._open_folder_button.isEnabled() is False
     assert dialog._open_dist_button.isEnabled() is False
