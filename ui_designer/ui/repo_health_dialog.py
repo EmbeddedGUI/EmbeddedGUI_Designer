@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import QApplication, QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
-from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, summarize_repo_health
+from ..model.repo_health import collect_repo_health, format_repo_health_json, format_repo_health_text, repo_health_view_payload, summarize_repo_health
 
 
 class RepositoryHealthDialog(QDialog):
@@ -34,6 +34,7 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addLayout(action_row)
 
         self._refresh_button = QPushButton("Refresh")
+        self._critical_only_check = QCheckBox("Critical Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_report_button = QPushButton("Copy Report")
         self._open_repo_button = QPushButton("Open Repo")
@@ -41,6 +42,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_smoke_button = QPushButton("Open Smoke Sample")
 
         self._refresh_button.clicked.connect(self.refresh)
+        self._critical_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
         self._copy_report_button.clicked.connect(self._copy_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
@@ -48,6 +50,7 @@ class RepositoryHealthDialog(QDialog):
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
 
         action_row.addWidget(self._refresh_button)
+        action_row.addWidget(self._critical_only_check)
         action_row.addWidget(self._show_json_check)
         for button in (self._copy_report_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
             action_row.addWidget(button)
@@ -72,10 +75,11 @@ class RepositoryHealthDialog(QDialog):
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
 
     def _render_details(self) -> None:
+        view_payload = repo_health_view_payload(self._payload, critical_only=self._critical_only_check.isChecked())
         if self._show_json_check.isChecked():
-            self._details_edit.setPlainText(format_repo_health_json(self._payload))
+            self._details_edit.setPlainText(format_repo_health_json(view_payload))
             return
-        self._details_edit.setPlainText(format_repo_health_text(self._payload))
+        self._details_edit.setPlainText(format_repo_health_text(view_payload))
 
     def _open_payload_path(self, key: str, label: str) -> None:
         path = str(self._payload.get(key) or "").strip()

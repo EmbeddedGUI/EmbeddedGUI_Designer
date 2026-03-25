@@ -133,25 +133,59 @@ def critical_repo_health_issues(payload: dict[str, object]) -> list[str]:
     return issues
 
 
+def repo_health_view_payload(payload: dict[str, object], *, critical_only: bool = False) -> dict[str, object]:
+    if not critical_only:
+        return payload
+
+    sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
+    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
+    critical_issues = critical_repo_health_issues(payload)
+
+    suggestions = []
+    if not sdk.get("initialized", False):
+        suggestions.append("Run: git submodule update --init --recursive")
+    if not smoke.get("present", False):
+        suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
+
+    return {
+        "repo_root": str(payload.get("repo_root") or ""),
+        "sdk_submodule": {
+            "path": str(sdk.get("path") or ""),
+            "present": bool(sdk.get("present", False)),
+            "initialized": bool(sdk.get("initialized", False)),
+            "status": str(sdk.get("status") or ""),
+        },
+        "release_smoke_project": {
+            "path": str(smoke.get("path") or ""),
+            "present": bool(smoke.get("present", False)),
+        },
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": str(payload.get("git_status_show_untracked") or "default"),
+        "suggestions": suggestions,
+        "critical_issues": critical_issues,
+    }
+
+
 def format_repo_health_text(payload: dict[str, object]) -> str:
-    lines = [f"[repo] {payload['repo_root']}"]
-    sdk = payload["sdk_submodule"]
-    smoke = payload["release_smoke_project"]
-    lines.append(f"sdk_submodule.initialized: {str(sdk['initialized']).lower()}")
-    if sdk["status"]:
-        lines.append(f"sdk_submodule.status: {sdk['status']}")
-    lines.append(f"release_smoke.present: {str(smoke['present']).lower()}")
-    lines.append(f"git_status_show_untracked: {payload['git_status_show_untracked']}")
-    stale_dirs = payload["stale_temp_dirs"]
+    lines = [f"[repo] {payload.get('repo_root', '')}"]
+    sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
+    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
+    lines.append(f"sdk_submodule.initialized: {str(bool(sdk.get('initialized', False))).lower()}")
+    sdk_status = str(sdk.get("status") or "")
+    if sdk_status:
+        lines.append(f"sdk_submodule.status: {sdk_status}")
+    lines.append(f"release_smoke.present: {str(bool(smoke.get('present', False))).lower()}")
+    lines.append(f"git_status_show_untracked: {payload.get('git_status_show_untracked', 'default')}")
+    stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
     lines.append(f"stale_temp_dirs: {len(stale_dirs)}")
     for entry in stale_dirs:
         line = f"  - {entry['path']}"
         if not entry["accessible"]:
             line += f" [{entry['issue']}]"
         lines.append(line)
-    for suggestion in payload["suggestions"]:
+    for suggestion in payload.get("suggestions", []):
         lines.append(f"suggestion: {suggestion}")
-    critical_issues = critical_repo_health_issues(payload)
+    critical_issues = payload.get("critical_issues") if isinstance(payload.get("critical_issues"), list) else critical_repo_health_issues(payload)
     if critical_issues:
         lines.append(f"critical_issues: {len(critical_issues)}")
         for issue in critical_issues:

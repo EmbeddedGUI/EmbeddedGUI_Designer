@@ -74,3 +74,32 @@ def test_critical_repo_health_issues_empty_for_healthy_payload(tmp_path):
     }
 
     assert repo_health.critical_repo_health_issues(payload) == []
+
+
+def test_repo_health_view_payload_can_focus_critical_issues(tmp_path):
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": [
+            "Run: git submodule update --init --recursive",
+            "If git status is noisy, use: git status -uno",
+        ],
+    }
+
+    focused = repo_health.repo_health_view_payload(payload, critical_only=True)
+
+    assert focused["repo_root"] == str(tmp_path)
+    assert focused["sdk_submodule"]["initialized"] is False
+    assert focused["release_smoke_project"]["present"] is False
+    assert focused["stale_temp_dirs"] == []
+    assert focused["critical_issues"] == [
+        "SDK submodule is not initialized",
+        "release smoke sample is missing",
+    ]
+    assert focused["suggestions"] == [
+        "Run: git submodule update --init --recursive",
+        "Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks",
+    ]
