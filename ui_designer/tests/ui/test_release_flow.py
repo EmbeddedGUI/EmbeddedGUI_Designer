@@ -253,3 +253,30 @@ def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
 
     assert dialog._preview_label.text() == "Log Preview"
     assert "[truncated to first 65536 characters]" in dialog._preview_edit.toPlainText()
+
+
+@_skip_no_qt
+def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+            }
+        ]
+    )
+
+    QApplication.clipboard().clear()
+    dialog._copy_details_button.click()
+    assert "Build ID: 20260326T000000Z" in QApplication.clipboard().text()
+
+    dialog._copy_preview_button.click()
+    assert '"status": "success"' in QApplication.clipboard().text()

@@ -8,6 +8,7 @@ import shlex
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -465,12 +466,16 @@ class ReleaseHistoryDialog(QDialog):
 
         self._preview_manifest_button = QPushButton("Preview Manifest")
         self._preview_log_button = QPushButton("Preview Log")
+        self._copy_details_button = QPushButton("Copy Details")
+        self._copy_preview_button = QPushButton("Copy Preview")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
         self._preview_manifest_button.clicked.connect(lambda: self._preview_selected_path("manifest_path", "Manifest", prefer_json=True))
         self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
+        self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
+        self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
@@ -478,6 +483,8 @@ class ReleaseHistoryDialog(QDialog):
         for button in (
             self._preview_manifest_button,
             self._preview_log_button,
+            self._copy_details_button,
+            self._copy_preview_button,
             self._open_folder_button,
             self._open_manifest_button,
             self._open_log_button,
@@ -517,6 +524,8 @@ class ReleaseHistoryDialog(QDialog):
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
+        self._copy_details_button.setEnabled(bool(entry))
+        self._copy_preview_button.setEnabled(bool(entry))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
         self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
@@ -569,3 +578,6 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
             return
         self._preview_edit.setPlainText(_preview_file_text(path, prefer_json=prefer_json))
+
+    def _copy_text(self, text: str) -> None:
+        QApplication.clipboard().setText(text or "")

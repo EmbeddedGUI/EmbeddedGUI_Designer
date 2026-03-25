@@ -74,3 +74,29 @@ def test_repository_health_action_opens_dialog(qapp, isolated_config, monkeypatc
     assert captured["open_path_callback"] == window._open_path_in_shell
     assert captured["parent"] is window
     assert captured["shown"] is True
+
+
+@_skip_no_qt
+def test_repository_health_dialog_copy_report_writes_clipboard(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    QApplication.clipboard().clear()
+    dialog._copy_report_button.click()
+
+    copied = QApplication.clipboard().text()
+    assert f"[repo] {tmp_path}" in copied
+    assert "sdk_submodule.initialized: true" in copied

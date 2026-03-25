@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.repo_health import collect_repo_health, format_repo_health_text, summarize_repo_health
 
@@ -34,16 +34,18 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addLayout(action_row)
 
         self._refresh_button = QPushButton("Refresh")
+        self._copy_report_button = QPushButton("Copy Report")
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
 
         self._refresh_button.clicked.connect(self.refresh)
+        self._copy_report_button.clicked.connect(self._copy_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
 
-        for button in (self._refresh_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
+        for button in (self._refresh_button, self._copy_report_button, self._open_repo_button, self._open_sdk_button, self._open_smoke_button):
             action_row.addWidget(button)
         action_row.addStretch(1)
 
@@ -87,3 +89,6 @@ class RepositoryHealthDialog(QDialog):
             self._open_path_callback(path)
         except Exception as exc:
             QMessageBox.warning(self, f"Open {label} Failed", str(exc))
+
+    def _copy_report(self) -> None:
+        QApplication.clipboard().setText(self._details_edit.toPlainText())
