@@ -1270,6 +1270,7 @@ class ReleaseHistoryDialog(QDialog):
         diagnostics_value = str(state.get("diagnostics_filter") or "")
         sort_value = str(state.get("sort_mode") or "newest")
         search_text = str(state.get("search_text") or "")
+        selected_build_id = str(state.get("selected_build_id") or "")
         self._preview_mode = str(state.get("preview_mode") or "auto").strip().lower()
         if self._preview_mode not in {"auto", "manifest", "log", "version"}:
             self._preview_mode = "auto"
@@ -1293,10 +1294,12 @@ class ReleaseHistoryDialog(QDialog):
         self._sort_combo.setCurrentIndex(index if index >= 0 else 0)
 
         self._search_edit.setText(search_text)
+        self._select_history_entry_by_build_id(selected_build_id)
         if self._current_entry():
             self._refresh_selected_preview()
 
     def _save_view_state(self) -> None:
+        current_entry = self._current_entry()
         view_state = {
             "range_filter": str(self._range_filter_combo.currentData() or ""),
             "status_filter": str(self._status_filter_combo.currentData() or ""),
@@ -1306,6 +1309,7 @@ class ReleaseHistoryDialog(QDialog):
             "sort_mode": str(self._sort_combo.currentData() or "newest"),
             "search_text": self._search_edit.text(),
             "preview_mode": self._preview_mode,
+            "selected_build_id": _history_string(current_entry or {}, "build_id"),
         }
         current_state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
         if self._project_key:
@@ -1377,6 +1381,19 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_mode = mode if mode in {"auto", "manifest", "log", "version"} else "auto"
         self._sync_preview_mode_buttons()
         self._refresh_selected_preview()
+
+    def _select_history_entry_by_build_id(self, build_id: str) -> None:
+        wanted_build_id = str(build_id or "").strip()
+        if not wanted_build_id:
+            return
+        for row in range(self._history_list.count()):
+            item = self._history_list.item(row)
+            if item is None:
+                continue
+            entry = item.data(Qt.UserRole)
+            if isinstance(entry, dict) and _history_string(entry, "build_id") == wanted_build_id:
+                self._history_list.setCurrentRow(row)
+                return
 
     def _refresh_selected_preview(self) -> None:
         entry = self._current_entry()

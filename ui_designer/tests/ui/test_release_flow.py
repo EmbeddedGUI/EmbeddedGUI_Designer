@@ -1342,6 +1342,16 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     dialog = ReleaseHistoryDialog(
         [
             {
+                "build_id": "20260325T235900Z",
+                "status": "success",
+                "profile_id": "esp32",
+                "message": "Build recovered",
+                "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
+                "manifest_path": "/tmp/release-manifest.json",
+            },
+            {
                 "build_id": "20260326T000000Z",
                 "status": "failed",
                 "profile_id": "esp32",
@@ -1354,6 +1364,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
             }
         ]
     )
+    dialog._history_list.setCurrentRow(1)
     dialog._range_filter_combo.setCurrentIndex(dialog._range_filter_combo.findData("7d"))
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     dialog._profile_filter_combo.setCurrentIndex(dialog._profile_filter_combo.findData("esp32"))
@@ -1366,6 +1377,16 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
 
     restored = ReleaseHistoryDialog(
         [
+            {
+                "build_id": "20260325T235900Z",
+                "status": "success",
+                "profile_id": "esp32",
+                "message": "Build recovered",
+                "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
+                "manifest_path": "/tmp/release-manifest.json",
+            },
             {
                 "build_id": "20260326T000000Z",
                 "status": "failed",
@@ -1387,6 +1408,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     assert restored._diagnostics_filter_combo.currentData() == "errors"
     assert restored._sort_combo.currentData() == "status"
     assert restored._search_edit.text() == "sdk-fail"
+    assert restored._current_entry()["build_id"] == "20260326T000000Z"
     assert restored._preview_label.text() == "Log Preview"
     assert "File not found:" in restored._preview_edit.toPlainText()
 
@@ -1424,6 +1446,7 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
     dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("issues"))
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("oldest"))
     dialog._search_edit.setText("sdk-fail")
+    dialog._history_list.setCurrentRow(0)
     dialog.done(QDialog.Accepted)
 
     other_project = ReleaseHistoryDialog(entries, project_key="project-b")
@@ -1432,6 +1455,7 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
     assert other_project._diagnostics_filter_combo.currentData() == ""
     assert other_project._sort_combo.currentData() == "newest"
     assert other_project._search_edit.text() == ""
+    assert other_project._current_entry()["build_id"] == "20260326T000100Z"
 
     restored = ReleaseHistoryDialog(entries, project_key="project-a")
     assert restored._status_filter_combo.currentData() == "failed"
@@ -1439,3 +1463,4 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
     assert restored._diagnostics_filter_combo.currentData() == "issues"
     assert restored._sort_combo.currentData() == "oldest"
     assert restored._search_edit.text() == "sdk-fail"
+    assert restored._current_entry()["build_id"] == "20260326T000100Z"
