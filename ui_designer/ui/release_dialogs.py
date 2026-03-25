@@ -924,6 +924,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_summary_button = QPushButton("Copy Summary")
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
+        self._copy_preview_path_button = QPushButton("Copy Preview Path")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
         self._export_entry_json_button = QPushButton("Export Entry JSON...")
         self._open_folder_button = QPushButton("Open Folder")
@@ -946,6 +947,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_summary_button.clicked.connect(self._copy_entry_summary)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
+        self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
         self._export_entry_json_button.clicked.connect(self._export_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
@@ -962,6 +964,7 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_summary_button,
             self._copy_details_button,
             self._copy_preview_button,
+            self._copy_preview_path_button,
             self._copy_entry_json_button,
             self._export_entry_json_button,
             self._open_folder_button,
@@ -1383,6 +1386,40 @@ class ReleaseHistoryDialog(QDialog):
             return
         self._copy_text(_history_summary_line(entry) + "\n")
 
+    def _current_preview_target(self, entry: dict[str, object] | None = None) -> tuple[str, str]:
+        selected_entry = entry if entry is not None else self._current_entry()
+        if selected_entry is None:
+            return "Preview", ""
+
+        if self._preview_mode == "manifest":
+            return "Manifest", _history_string(selected_entry, "manifest_path")
+        if self._preview_mode == "log":
+            return "Log", _history_string(selected_entry, "log_path")
+        if self._preview_mode == "version":
+            return "Version", _history_version_path(selected_entry)
+
+        manifest_path = _history_string(selected_entry, "manifest_path")
+        if manifest_path:
+            return "Manifest", manifest_path
+
+        log_path = _history_string(selected_entry, "log_path")
+        if log_path:
+            return "Log", log_path
+
+        version_path = _history_version_path(selected_entry)
+        if version_path:
+            return "Version", version_path
+        return "Preview", ""
+
+    def _update_preview_path_button(self, entry: dict[str, object] | None = None) -> None:
+        label, path = self._current_preview_target(entry)
+        self._copy_preview_path_button.setText(f"Copy {label} Path")
+        self._copy_preview_path_button.setEnabled(bool(path))
+
+    def _copy_preview_path(self) -> None:
+        _, path = self._current_preview_target()
+        self._copy_text(path + "\n" if path else "")
+
     def _activate_preview_mode(self, mode: str) -> None:
         self._preview_mode = mode if mode in {"auto", "manifest", "log", "version"} else "auto"
         self._sync_preview_mode_buttons()
@@ -1406,6 +1443,7 @@ class ReleaseHistoryDialog(QDialog):
         if entry is None:
             self._preview_label.setText("Preview")
             self._preview_edit.clear()
+            self._update_preview_path_button(None)
             return
         if self._preview_mode == "manifest":
             self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
@@ -1425,6 +1463,7 @@ class ReleaseHistoryDialog(QDialog):
         else:
             self._preview_label.setText("Preview")
             self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
+            self._update_preview_path_button(entry)
 
     def _sync_preview_mode_buttons(self) -> None:
         self._preview_auto_button.setChecked(self._preview_mode == "auto")
@@ -1462,6 +1501,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
         self._export_entry_json_button.setEnabled(bool(entry))
+        self._update_preview_path_button(entry)
         self._open_folder_button.setEnabled(bool(release_root and os.path.isdir(release_root)))
         self._open_dist_button.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
         self._open_version_button.setEnabled(bool(entry and _history_version_path(entry)))
@@ -1520,8 +1560,10 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_label.setText(f"{label} Preview")
         if not path:
             self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
+            self._update_preview_path_button(entry)
             return
         self._preview_edit.setPlainText(_preview_file_text(path, prefer_json=prefer_json))
+        self._update_preview_path_button(entry)
 
     def _preview_selected_version(self) -> None:
         entry = self._current_entry()
@@ -1529,8 +1571,10 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_label.setText("Version Preview")
         if not path:
             self._preview_edit.setPlainText("No version file is available for this release entry.")
+            self._update_preview_path_button(entry)
             return
         self._preview_edit.setPlainText(_preview_file_text(path))
+        self._update_preview_path_button(entry)
 
     def _copy_text(self, text: str) -> None:
         QApplication.clipboard().setText(text or "")

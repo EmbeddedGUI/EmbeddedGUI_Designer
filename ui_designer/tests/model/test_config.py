@@ -59,7 +59,26 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.sdk_setup_prompted = True
-        config.release_history_view = {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
+        config.release_history_view = {
+            "status_filter": "failed",
+            "artifact_filter": "package",
+            "search_text": "sdk-fail",
+            "preview_mode": "log",
+            "selected_build_id": "20260326T000000Z",
+            "projects": {
+                "project-a": {
+                    "range_filter": "7d",
+                    "status_filter": "failed",
+                    "profile_filter": "esp32",
+                    "artifact_filter": "package",
+                    "diagnostics_filter": "errors",
+                    "sort_mode": "status",
+                    "search_text": "sdk-fail",
+                    "preview_mode": "log",
+                    "selected_build_id": "20260326T000000Z",
+                }
+            },
+        }
         config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
 
         config_path = tmp_path / "config.json"
@@ -80,7 +99,26 @@ class TestSaveLoad:
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
         assert loaded.sdk_setup_prompted is True
-        assert loaded.release_history_view == {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
+        assert loaded.release_history_view == {
+            "status_filter": "failed",
+            "artifact_filter": "package",
+            "search_text": "sdk-fail",
+            "preview_mode": "log",
+            "selected_build_id": "20260326T000000Z",
+            "projects": {
+                "project-a": {
+                    "range_filter": "7d",
+                    "status_filter": "failed",
+                    "profile_filter": "esp32",
+                    "artifact_filter": "package",
+                    "diagnostics_filter": "errors",
+                    "sort_mode": "status",
+                    "search_text": "sdk-fail",
+                    "preview_mode": "log",
+                    "selected_build_id": "20260326T000000Z",
+                }
+            },
+        }
         assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
 
     def test_load_nonexistent_file(self, config, tmp_path):

@@ -618,10 +618,56 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     dialog._copy_preview_button.click()
     assert '"status": "success"' in QApplication.clipboard().text()
 
+    dialog._copy_preview_path_button.click()
+    assert QApplication.clipboard().text() == str(manifest_path) + "\n"
+
     dialog._copy_entry_json_button.click()
     copied_json = QApplication.clipboard().text()
     assert '"build_id": "20260326T000000Z"' in copied_json
     assert '"manifest_path":' in copied_json
+
+
+@_skip_no_qt
+def test_release_history_dialog_copy_preview_path_tracks_preview_mode(qapp, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    log_path = tmp_path / "build.log"
+    dist_dir = tmp_path / "dist"
+    version_path = dist_dir / "VERSION.txt"
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+    log_path.write_text("build ok\n", encoding="utf-8")
+    dist_dir.mkdir()
+    version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+                "log_path": str(log_path),
+                "dist_dir": str(dist_dir),
+            }
+        ]
+    )
+
+    assert dialog._copy_preview_path_button.text() == "Copy Manifest Path"
+    QApplication.clipboard().clear()
+    dialog._copy_preview_path_button.click()
+    assert QApplication.clipboard().text() == str(manifest_path) + "\n"
+
+    dialog._preview_log_button.click()
+    assert dialog._copy_preview_path_button.text() == "Copy Log Path"
+    dialog._copy_preview_path_button.click()
+    assert QApplication.clipboard().text() == str(log_path) + "\n"
+
+    dialog._preview_version_button.click()
+    assert dialog._copy_preview_path_button.text() == "Copy Version Path"
+    dialog._copy_preview_path_button.click()
+    assert QApplication.clipboard().text() == str(version_path) + "\n"
 
 
 @_skip_no_qt
