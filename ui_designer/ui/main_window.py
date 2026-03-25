@@ -403,6 +403,7 @@ class MainWindow(QMainWindow):
         self.res_panel.string_key_deleted.connect(self._on_string_key_deleted)
         self.diagnostics_panel.diagnostic_activated.connect(self._on_diagnostic_requested)
         self.diagnostics_panel.copy_requested.connect(self._copy_diagnostics_summary)
+        self.diagnostics_panel.export_requested.connect(self._export_diagnostics_summary)
         self.animations_panel.animations_changed.connect(self._on_widget_animations_changed)
         self.page_fields_panel.fields_changed.connect(self._on_page_fields_changed)
         self.page_fields_panel.validation_message.connect(self._on_property_validation_message)
@@ -1955,6 +1956,41 @@ class MainWindow(QMainWindow):
 
         QApplication.clipboard().setText(self.diagnostics_panel.summary_text())
         self.statusBar().showMessage("Copied diagnostics summary.", 3000)
+
+    def _default_diagnostics_summary_export_path(self):
+        default_dir = self._default_export_code_dir()
+        if default_dir:
+            return os.path.join(default_dir, "diagnostics-summary.txt")
+        return "diagnostics-summary.txt"
+
+    def _export_diagnostics_summary(self):
+        if not hasattr(self, "diagnostics_panel") or not self.diagnostics_panel.has_entries():
+            self.statusBar().showMessage("No diagnostics to export.", 3000)
+            return
+
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Diagnostics Summary",
+            self._default_diagnostics_summary_export_path(),
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+
+        try:
+            if "Text" in str(selected_filter):
+                selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".txt"
+            resolved_path = os.path.abspath(os.path.normpath(selected_path))
+            parent_dir = os.path.dirname(resolved_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            with open(resolved_path, "w", encoding="utf-8") as f:
+                f.write(self.diagnostics_panel.summary_text().rstrip() + "\n")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Diagnostics Summary Failed", str(exc))
+            return
+
+        self.statusBar().showMessage(f"Exported diagnostics summary to {resolved_path}", 3000)
 
     def _update_resource_usage_panel(self):
         if not hasattr(self, "res_panel"):

@@ -3278,6 +3278,80 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_export_diagnostics_summary_writes_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsExportDemo"
+        project = _create_project(project_dir, "DiagnosticsExportDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        export_path = tmp_path / "exports" / "diagnostics-summary"
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QFileDialog.getSaveFileName",
+            lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._export_button.isEnabled() is True
+
+        window.diagnostics_panel._export_button.click()
+
+        resolved_export_path = export_path.with_suffix(".txt")
+        exported = resolved_export_path.read_text(encoding="utf-8")
+        assert exported.startswith("Diagnostics: ")
+        assert "bad-name" in exported
+        assert "missing_image" in exported
+        assert exported.endswith("\n")
+        assert window.statusBar().currentMessage() == f"Exported diagnostics summary to {resolved_export_path}"
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_export_diagnostics_summary_without_entries_reports_empty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsExportEmptyDemo"
+        project = _create_project(project_dir, "DiagnosticsExportEmptyDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def unexpected_get_save_file_name(*args, **kwargs):
+            raise AssertionError("getSaveFileName should not be called without diagnostics")
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getSaveFileName", unexpected_get_save_file_name)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._export_button.isEnabled() is False
+
+        window._export_diagnostics_summary()
+
+        assert window.statusBar().currentMessage() == "No diagnostics to export."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_diagnostic_request_switches_page_and_selects_widget(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
