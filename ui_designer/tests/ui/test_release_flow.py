@@ -333,6 +333,7 @@ def test_release_history_dialog_filters_entries(qapp):
     dialog._clear_filters_button.click()
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"
+    assert dialog._range_filter_combo.currentData() == ""
     assert dialog._status_filter_combo.currentData() == ""
     assert dialog._profile_filter_combo.currentData() == ""
     assert dialog._search_edit.text() == ""
@@ -369,7 +370,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
     copied = QApplication.clipboard().text()
 
     assert "matched_entries=1" in copied
-    assert "filters: status=failed, profile=all, search=-" in copied
+    assert "filters: range=all, status=failed, profile=all, search=-" in copied
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
 
@@ -408,9 +409,47 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
 
     exported = export_path.read_text(encoding="utf-8")
     assert "matched_entries=1" in exported
-    assert "filters: status=failed, profile=all, search=-" in exported
+    assert "filters: range=all, status=failed, profile=all, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
+
+
+@_skip_no_qt
+def test_release_history_dialog_filters_entries_by_time_range(qapp, monkeypatch):
+    from datetime import datetime, timezone
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs._utc_now",
+        lambda: datetime(2026, 3, 26, 12, 0, 0, tzinfo=timezone.utc),
+    )
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "created_at_utc": "2026-03-26T00:00:00Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Recent release",
+                "sdk": {"revision": "sdk-recent"},
+            },
+            {
+                "build_id": "20260310T000000Z",
+                "created_at_utc": "2026-03-10T00:00:00Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Old release",
+                "sdk": {"revision": "sdk-old"},
+            },
+        ]
+    )
+
+    dialog._range_filter_combo.setCurrentIndex(dialog._range_filter_combo.findData("7d"))
+
+    assert dialog._history_list.count() == 1
+    assert dialog._result_count_label.text() == "1 / 2"
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
 
 
 @_skip_no_qt

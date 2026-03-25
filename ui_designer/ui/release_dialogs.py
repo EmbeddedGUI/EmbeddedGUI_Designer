@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import shlex
@@ -124,10 +125,32 @@ def _history_summary_line(entry: dict[str, object]) -> str:
     return f"{build_id} | {status} | {profile_id} | sdk {sdk_label} | {message}"
 
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _history_timestamp(entry: dict[str, object]) -> datetime | None:
+    created_at = _history_string(entry, "created_at_utc")
+    if created_at:
+        try:
+            return datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+
+    build_id = _history_string(entry, "build_id")
+    if build_id:
+        try:
+            return datetime.strptime(build_id, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            pass
+    return None
+
+
 def _build_filtered_history_summary(
     filtered_entries: list[dict[str, object]],
     all_entries: list[dict[str, object]],
     *,
+    range_filter: str,
     status_filter: str,
     profile_filter: str,
     search_text: str,
@@ -136,7 +159,7 @@ def _build_filtered_history_summary(
         "Release History Summary",
         f"matched_entries={len(filtered_entries)}",
         f"total_entries={len(all_entries)}",
-        f"filters: status={status_filter or 'all'}, profile={profile_filter or 'all'}, search={search_text or '-'}",
+        f"filters: range={range_filter or 'all'}, status={status_filter or 'all'}, profile={profile_filter or 'all'}, search={search_text or '-'}",
         "",
     ]
     lines.extend(_history_summary_line(entry) for entry in filtered_entries)
@@ -481,6 +504,15 @@ class ReleaseHistoryDialog(QDialog):
         filter_row = QHBoxLayout()
         root_layout.addLayout(filter_row)
 
+        filter_row.addWidget(QLabel("Range"))
+        self._range_filter_combo = QComboBox()
+        self._range_filter_combo.addItem("Any", "")
+        self._range_filter_combo.addItem("Last 24h", "24h")
+        self._range_filter_combo.addItem("Last 7d", "7d")
+        self._range_filter_combo.addItem("Last 30d", "30d")
+        self._range_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._range_filter_combo)
+
         filter_row.addWidget(QLabel("Status"))
         self._status_filter_combo = QComboBox()
         self._status_filter_combo.addItem("All", "")
@@ -620,7 +652,22 @@ class ReleaseHistoryDialog(QDialog):
         self._profile_filter_combo.setCurrentIndex(index if index >= 0 else 0)
         self._profile_filter_combo.blockSignals(False)
 
-    def _matches_history_filter(self, entry: dict[str, object], status_filter: str, profile_filter: str, search_text: str) -> bool:
+    def _matches_history_filter(self, entry: dict[str, object], range_filter: str, status_filter: str, profile_filter: str, search_text: str) -> bool:
+        if range_filter:
+            entry_timestamp = _history_timestamp(entry)
+            if entry_timestamp is None:
+                return False
+            now = _utc_now()
+            if range_filter == "24h":
+                cutoff = now - timedelta(hours=24)
+            elif range_filter == "7d":
+                cutoff = now - timedelta(days=7)
+            elif range_filter == "30d":
+                cutoff = now - timedelta(days=30)
+            else:
+                cutoff = None
+            if cutoff is not None and entry_timestamp < cutoff:
+                return False
         if status_filter and _history_status(entry) != status_filter:
             return False
         if profile_filter and _history_string(entry, "profile_id") != profile_filter:
@@ -645,6 +692,7 @@ class ReleaseHistoryDialog(QDialog):
         return True
 
     def _apply_history_filter(self) -> None:
+        wanted_range = str(self._range_filter_combo.currentData() or "")
         wanted_status = str(self._status_filter_combo.currentData() or "")
         wanted_profile = str(self._profile_filter_combo.currentData() or "")
         search_text = self._search_edit.text().strip().lower()
@@ -654,7 +702,7 @@ class ReleaseHistoryDialog(QDialog):
         filtered_entries = [
             entry
             for entry in self._all_history_entries
-            if self._matches_history_filter(entry, wanted_status, wanted_profile, search_text)
+            if self._matches_history_filter(entry, wanted_range, wanted_status, wanted_profile, search_text)
         ]
         self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
@@ -699,6 +747,7 @@ class ReleaseHistoryDialog(QDialog):
         self._load_history_entries(history_entries)
 
     def _clear_filters(self) -> None:
+        self._range_filter_combo.setCurrentIndex(0)
         self._status_filter_combo.setCurrentIndex(0)
         self._profile_filter_combo.setCurrentIndex(0)
         self._search_edit.clear()
@@ -726,6 +775,7 @@ class ReleaseHistoryDialog(QDialog):
         return _build_filtered_history_summary(
             self._filtered_history_entries,
             self._all_history_entries,
+            range_filter=str(self._range_filter_combo.currentData() or ""),
             status_filter=str(self._status_filter_combo.currentData() or ""),
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
             search_text=self._search_edit.text().strip(),
