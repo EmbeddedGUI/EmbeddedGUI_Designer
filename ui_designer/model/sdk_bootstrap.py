@@ -1,4 +1,4 @@
-"""SDK bootstrap helpers for packaged UI Designer flows."""
+﻿"""SDK bootstrap helpers for packaged UI Designer flows."""
 
 from __future__ import annotations
 
@@ -126,6 +126,15 @@ def load_bundled_sdk_metadata(path: str | None) -> dict[str, object]:
     return data
 
 
+def bundled_sdk_revision(metadata: dict[str, object]) -> str:
+    """Return the most useful bundled SDK revision label."""
+    for key in ("git_describe", "git_commit_short", "git_commit"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
 def is_cached_sdk_root(path: str | None) -> bool:
     """Return True when *path* points at the default per-user SDK cache."""
     sdk_root = resolve_sdk_root_candidate(path)
@@ -169,9 +178,16 @@ def describe_sdk_source_hint(path: str | None) -> str:
     if source_kind == "bundled":
         metadata = load_bundled_sdk_metadata(path)
         source_root = normalize_path(metadata.get("source_root")) if isinstance(metadata.get("source_root"), str) else ""
+        revision = bundled_sdk_revision(metadata)
+        lines = []
         if source_root:
-            return f"Packaged with Designer from: {source_root}\nYou can switch to another SDK root at any time."
-        return "Packaged with Designer. You can switch to another SDK root at any time."
+            lines.append(f"Packaged with Designer from: {source_root}")
+        else:
+            lines.append("Packaged with Designer.")
+        if revision:
+            lines.append(f"Bundled SDK revision: {revision}")
+        lines.append("You can switch to another SDK root at any time.")
+        return "\n".join(lines)
     if source_kind == "runtime_local":
         return "Stored beside the application directory. This usually means the SDK was downloaded after first launch."
     if source_kind == "cached":
@@ -356,3 +372,4 @@ def ensure_sdk_downloaded(destination_dir: str | None = None, progress_callback=
             errors.append(f"{label}: {exc}")
 
     raise RuntimeError("Automatic SDK setup failed:\n- " + "\n- ".join(errors))
+

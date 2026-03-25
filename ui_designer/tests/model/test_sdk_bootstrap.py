@@ -1,4 +1,4 @@
-"""Tests for ui_designer.model.sdk_bootstrap."""
+﻿"""Tests for ui_designer.model.sdk_bootstrap."""
 
 from pathlib import Path
 import subprocess
@@ -13,6 +13,7 @@ from ui_designer.model.sdk_bootstrap import (
     default_sdk_install_dir,
     describe_auto_download_plan,
     describe_sdk_source,
+    describe_sdk_source_hint,
     download_and_extract_sdk,
     ensure_sdk_downloaded,
     is_bundled_sdk_root,
@@ -79,6 +80,23 @@ class TestSdkBootstrap:
 
         assert is_runtime_local_sdk_root(str(sdk_root)) is True
         assert is_bundled_sdk_root(str(sdk_root)) is False
+
+    def test_describe_sdk_source_hint_includes_bundled_revision(self, tmp_path, monkeypatch):
+        runtime_dir = tmp_path / "EmbeddedGUI-Designer"
+        sdk_root = runtime_dir / "sdk" / "EmbeddedGUI"
+        _create_sdk_root(sdk_root)
+        (sdk_root / BUNDLED_SDK_METADATA_NAME).write_text(
+            '{"source_root": "D:/sdk/EmbeddedGUI", "git_describe": "sdk-main-416d576"}\n',
+            encoding="utf-8",
+        )
+
+        monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.frozen", True, raising=False)
+        monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))
+
+        text = describe_sdk_source_hint(str(sdk_root))
+
+        assert "Packaged with Designer from: D:/sdk/EmbeddedGUI" in text
+        assert "Bundled SDK revision: sdk-main-416d576" in text
 
     def test_default_cached_sdk_install_dir_uses_config_dir(self, tmp_path, monkeypatch):
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap._get_config_dir", lambda: str(tmp_path / "config"))
@@ -218,3 +236,5 @@ class TestSdkBootstrap:
             module.clone_sdk_from_git("https://gitee.example/repo.git", str(tmp_path / "sdk"), progress_callback=canceling_progress)
 
         assert fake_process.killed is True
+
+

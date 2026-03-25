@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--sdk-root",
         default="",
-        help="EmbeddedGUI SDK root. Defaults to EMBEDDEDGUI_SDK_ROOT or ../EmbeddedGUI beside this repo.",
+        help="EmbeddedGUI SDK root. Defaults to EMBEDDEDGUI_SDK_ROOT, sdk/EmbeddedGUI, or ../EmbeddedGUI beside this repo.",
     )
     parser.add_argument(
         "--keep-temp",
@@ -358,3 +358,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -84,6 +86,69 @@ def test_iter_filtered_build_output_strips_qfluentwidgets_promotion():
     ]
 
     assert list(module.iter_filtered_build_output(lines)) == ["123 INFO: Building EXE\n"]
+
+
+def test_collect_sdk_git_metadata_reads_revision_fields(tmp_path, monkeypatch):
+    module = _load_module()
+    sdk_root = tmp_path / "sdk_root"
+    sdk_root.mkdir()
+
+    responses = {
+        ("rev-parse", "HEAD"): "416d5766100ab935e7d5197ce296370a6ad966a7",
+        ("rev-parse", "--short", "HEAD"): "416d576",
+        ("describe", "--tags", "--always", "--dirty"): "416d576",
+        ("rev-parse", "--abbrev-ref", "HEAD"): "HEAD",
+        ("config", "--get", "remote.origin.url"): "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+    }
+
+    monkeypatch.setattr(module.shutil, "which", lambda name: "git" if name == "git" else "")
+
+    def fake_run(cmd, capture_output, text, check):
+        git_args = tuple(cmd[5:])
+        if git_args not in responses:
+            return SimpleNamespace(returncode=1, stdout="", stderr="git failed")
+        return SimpleNamespace(returncode=0, stdout=responses[git_args] + "\n", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    metadata = module.collect_sdk_git_metadata(sdk_root)
+
+    assert metadata == {
+        "git_branch": "HEAD",
+        "git_commit": "416d5766100ab935e7d5197ce296370a6ad966a7",
+        "git_commit_short": "416d576",
+        "git_describe": "416d576",
+        "git_remote_url": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+    }
+    assert module.describe_sdk_git_revision(metadata) == "416d576"
+
+
+def test_write_sdk_bundle_metadata_includes_git_revision(tmp_path, monkeypatch):
+    module = _load_module()
+    bundle_root = tmp_path / "bundle"
+    source_root = tmp_path / "sdk_root"
+    bundle_root.mkdir()
+    source_root.mkdir()
+    (bundle_root / "file.txt").write_text("ok", encoding="utf-8")
+
+    monkeypatch.setattr(
+        module,
+        "collect_sdk_git_metadata",
+        lambda _source_root: {
+            "git_commit": "416d5766100ab935e7d5197ce296370a6ad966a7",
+            "git_commit_short": "416d576",
+            "git_describe": "sdk-main-416d576",
+            "git_remote_url": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+        },
+    )
+
+    metadata_path = module.write_sdk_bundle_metadata(bundle_root, source_root)
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+    assert metadata["source_root"] == str(source_root.resolve())
+    assert metadata["git_commit"] == "416d5766100ab935e7d5197ce296370a6ad966a7"
+    assert metadata["git_describe"] == "sdk-main-416d576"
+    assert module.describe_sdk_git_revision(metadata) == "sdk-main-416d576"
 
 
 def test_package_ui_designer_creates_archive_without_running_pyinstaller(tmp_path, monkeypatch):
@@ -322,6 +387,16 @@ def test_package_ui_designer_can_bundle_sdk(tmp_path, monkeypatch):
         (app_dir / "designer.txt").write_text("ok", encoding="utf-8")
 
     monkeypatch.setattr(module, "run_pyinstaller", fake_run_pyinstaller)
+    monkeypatch.setattr(
+        module,
+        "collect_sdk_git_metadata",
+        lambda _source_root: {
+            "git_commit": "416d5766100ab935e7d5197ce296370a6ad966a7",
+            "git_commit_short": "416d576",
+            "git_describe": "sdk-main-416d576",
+            "git_remote_url": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+        },
+    )
 
     result = module.package_ui_designer(
         output_dir=dist_dir,
@@ -336,6 +411,9 @@ def test_package_ui_designer_can_bundle_sdk(tmp_path, monkeypatch):
     assert result["bundled_sdk_dir"] == str(bundled_dir)
     assert (bundled_dir / "Makefile").is_file()
     assert result["bundled_sdk_source"] == str(sdk_root.resolve())
+    assert result["bundled_sdk_git_commit"] == "416d5766100ab935e7d5197ce296370a6ad966a7"
+    assert result["bundled_sdk_git_revision"] == "sdk-main-416d576"
+    assert result["bundled_sdk_git_remote_url"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
     assert result["bundled_sdk_file_count"] >= 1
     assert result["bundled_sdk_total_size_bytes"] > 0
     assert Path(result["bundled_sdk_metadata_path"]).is_file()
@@ -398,4 +476,5 @@ def test_format_byte_count_uses_compact_units():
 
     assert module.format_byte_count(512) == "512 B"
     assert module.format_byte_count(2048) == "2.0 KB"
+
 

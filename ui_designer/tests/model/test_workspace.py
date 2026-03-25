@@ -10,6 +10,7 @@ from ui_designer.model.workspace import (
     SDK_ROOT_ENV_VAR,
     compute_make_app_root_arg,
     default_designer_sdk_root,
+    fallback_designer_sdk_root,
     describe_designer_sdk_root_help,
     describe_sdk_root,
     find_sdk_root,
@@ -182,11 +183,18 @@ class TestWorkspaceHelpers:
         monkeypatch.setattr(workspace_module.sys, "executable", str(designer_dir / "EmbeddedGUI-Designer.exe"))
 
         assert find_sdk_root(env={}) == normalize_path(str(sdk_root))
-    def test_default_designer_sdk_root_points_to_embeddedgui_sibling(self, tmp_path):
+
+    def test_default_designer_sdk_root_points_to_repo_submodule(self, tmp_path):
         repo_root = tmp_path / "EmbeddedGUI_Designer"
         repo_root.mkdir()
 
-        assert default_designer_sdk_root(str(repo_root)) == normalize_path(str(tmp_path / "EmbeddedGUI"))
+        assert default_designer_sdk_root(str(repo_root)) == normalize_path(str(repo_root / "sdk" / "EmbeddedGUI"))
+
+    def test_fallback_designer_sdk_root_points_to_embeddedgui_sibling(self, tmp_path):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        repo_root.mkdir()
+
+        assert fallback_designer_sdk_root(str(repo_root)) == normalize_path(str(tmp_path / "EmbeddedGUI"))
 
     def test_resolve_designer_sdk_root_prefers_cli_root(self, tmp_path, monkeypatch):
         repo_root = tmp_path / "EmbeddedGUI_Designer"
@@ -221,13 +229,31 @@ class TestWorkspaceHelpers:
                 repo_root=str(repo_root),
             )
 
-    def test_resolve_designer_sdk_root_uses_sibling_sdk_by_default(self, tmp_path):
+    def test_resolve_designer_sdk_root_uses_submodule_sdk_by_default(self, tmp_path):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        sdk_root = repo_root / "sdk" / "EmbeddedGUI"
+        repo_root.mkdir()
+        _create_sdk_root(sdk_root)
+
+        assert resolve_designer_sdk_root(repo_root=str(repo_root), env={}) == normalize_path(str(sdk_root))
+
+    def test_resolve_designer_sdk_root_falls_back_to_sibling_sdk(self, tmp_path):
         repo_root = tmp_path / "EmbeddedGUI_Designer"
         sdk_root = tmp_path / "EmbeddedGUI"
         repo_root.mkdir()
         _create_sdk_root(sdk_root)
 
         assert resolve_designer_sdk_root(repo_root=str(repo_root), env={}) == normalize_path(str(sdk_root))
+
+    def test_resolve_designer_sdk_root_prefers_submodule_over_sibling(self, tmp_path):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        submodule_sdk_root = repo_root / "sdk" / "EmbeddedGUI"
+        sibling_sdk_root = tmp_path / "EmbeddedGUI"
+        repo_root.mkdir()
+        _create_sdk_root(submodule_sdk_root)
+        _create_sdk_root(sibling_sdk_root)
+
+        assert resolve_designer_sdk_root(repo_root=str(repo_root), env={}) == normalize_path(str(submodule_sdk_root))
 
     def test_require_designer_sdk_root_reports_help_when_missing(self, tmp_path):
         repo_root = tmp_path / "EmbeddedGUI_Designer"
@@ -239,9 +265,10 @@ class TestWorkspaceHelpers:
         message = str(exc_info.value)
         assert "--sdk-root" in message
         assert SDK_ROOT_ENV_VAR in message
+        assert normalize_path(str(repo_root / "sdk" / "EmbeddedGUI")) in message
         assert normalize_path(str(tmp_path / "EmbeddedGUI")) in message
 
-    def test_describe_designer_sdk_root_help_mentions_flag_env_and_sibling(self, tmp_path):
+    def test_describe_designer_sdk_root_help_mentions_flag_env_submodule_and_sibling(self, tmp_path):
         repo_root = tmp_path / "EmbeddedGUI_Designer"
         repo_root.mkdir()
 
@@ -249,5 +276,8 @@ class TestWorkspaceHelpers:
 
         assert "--sdk-root" in text
         assert SDK_ROOT_ENV_VAR in text
+        assert normalize_path(str(repo_root / "sdk" / "EmbeddedGUI")) in text
         assert normalize_path(str(tmp_path / "EmbeddedGUI")) in text
+
+
 

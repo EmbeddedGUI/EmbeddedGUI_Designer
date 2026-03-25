@@ -9,6 +9,7 @@ from typing import Iterable
 
 _COMMON_SDK_CONTAINER_NAMES = ("sdk", "SDK")
 SDK_ROOT_ENV_VAR = "EMBEDDEDGUI_SDK_ROOT"
+DEFAULT_DESIGNER_SDK_CONTAINER = "sdk"
 DEFAULT_DESIGNER_SDK_DIRNAME = "EmbeddedGUI"
 
 
@@ -261,8 +262,20 @@ def describe_sdk_root(path: str | None) -> str:
     return "invalid"
 
 
-def default_designer_sdk_root(repo_root: str | None, dirname: str = DEFAULT_DESIGNER_SDK_DIRNAME) -> str:
-    """Return the default sibling SDK root for the standalone Designer repo."""
+def default_designer_sdk_root(
+    repo_root: str | None,
+    container_dirname: str = DEFAULT_DESIGNER_SDK_CONTAINER,
+    dirname: str = DEFAULT_DESIGNER_SDK_DIRNAME,
+) -> str:
+    """Return the default SDK submodule root for the standalone Designer repo."""
+    repo_root = normalize_path(repo_root)
+    if not repo_root:
+        return ""
+    return normalize_path(os.path.join(repo_root, container_dirname, dirname))
+
+
+def fallback_designer_sdk_root(repo_root: str | None, dirname: str = DEFAULT_DESIGNER_SDK_DIRNAME) -> str:
+    """Return the fallback sibling SDK root for the standalone Designer repo."""
     repo_root = normalize_path(repo_root)
     if not repo_root:
         return ""
@@ -271,9 +284,11 @@ def default_designer_sdk_root(repo_root: str | None, dirname: str = DEFAULT_DESI
 
 def describe_designer_sdk_root_help(repo_root: str | None, cli_flag: str = "--sdk-root") -> str:
     """Return a user-facing hint for resolving the external SDK root."""
-    sibling_sdk_root = default_designer_sdk_root(repo_root)
+    submodule_sdk_root = default_designer_sdk_root(repo_root)
+    sibling_sdk_root = fallback_designer_sdk_root(repo_root)
     return (
         f"Provide {cli_flag} <path>, or set {SDK_ROOT_ENV_VAR}, "
+        f"or initialize the SDK submodule at {submodule_sdk_root}, "
         f"or place the SDK at {sibling_sdk_root}"
     )
 
@@ -289,7 +304,8 @@ def resolve_designer_sdk_root(
     Resolution order is strict:
     1. ``cli_sdk_root`` when provided
     2. ``EMBEDDEDGUI_SDK_ROOT`` when set
-    3. Sibling ``../EmbeddedGUI`` beside ``repo_root``
+    3. Repo submodule ``sdk/EmbeddedGUI`` under ``repo_root``
+    4. Sibling ``../EmbeddedGUI`` beside ``repo_root``
 
     Explicit CLI and environment values are validated strictly. If either is
     provided but invalid, ``ValueError`` is raised instead of silently falling
@@ -311,7 +327,13 @@ def resolve_designer_sdk_root(
             return resolved
         raise ValueError(f"invalid EmbeddedGUI SDK root from {SDK_ROOT_ENV_VAR}: {env_sdk_root}")
 
-    sibling_sdk_root = default_designer_sdk_root(repo_root)
+    submodule_sdk_root = default_designer_sdk_root(repo_root)
+    if submodule_sdk_root:
+        resolved = resolve_sdk_root_candidate(submodule_sdk_root)
+        if resolved:
+            return resolved
+
+    sibling_sdk_root = fallback_designer_sdk_root(repo_root)
     if sibling_sdk_root:
         resolved = resolve_sdk_root_candidate(sibling_sdk_root)
         if resolved:
@@ -346,4 +368,6 @@ def require_designer_sdk_root(
         "EmbeddedGUI SDK root not found.\n"
         f"{describe_designer_sdk_root_help(repo_root, cli_flag=cli_flag)}"
     )
+
+
 

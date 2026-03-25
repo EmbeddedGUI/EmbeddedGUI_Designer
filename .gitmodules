@@ -1,0 +1,4 @@
+﻿[submodule "sdk/EmbeddedGUI"]
+	path = sdk/EmbeddedGUI
+	url = https://github.com/EmbeddedGUI/EmbeddedGUI.git
+	branch = main

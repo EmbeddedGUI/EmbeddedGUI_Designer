@@ -12,13 +12,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: EmbeddedGUI_Designer
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: Check out EmbeddedGUI SDK
-        uses: actions/checkout@v4
-        with:
-          repository: EmbeddedGUI/EmbeddedGUI
-          ref: main
-          path: EmbeddedGUI
+      - name: Show pinned SDK revision
+        working-directory: EmbeddedGUI_Designer
+        run: |
+          git -C sdk/EmbeddedGUI rev-parse HEAD
+          git -C sdk/EmbeddedGUI config --get remote.origin.url
 
       - name: Setup C/C++ env
         uses: rlalik/setup-cpp-compiler@v1.2
@@ -38,4 +39,4 @@ jobs:
 
       - name: Run UI Designer live preview smoke
         working-directory: EmbeddedGUI_Designer
-        run: python ui_designer_preview_smoke.py --sdk-root ../EmbeddedGUI
+        run: python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI

@@ -256,6 +256,7 @@ def write_sdk_bundle_metadata(bundle_root: str | Path, source_root: str | Path) 
         "source_root": str(resolved_source_root),
         "total_size_bytes": summary["total_size_bytes"],
     }
+    metadata.update(collect_sdk_git_metadata(resolved_source_root))
     metadata_path = resolved_bundle_root / SDK_BUNDLE_METADATA_NAME
     metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return metadata_path
@@ -275,6 +276,62 @@ def load_sdk_bundle_metadata(bundle_root: str | Path) -> dict[str, object]:
     if not isinstance(content, dict):
         return {}
     return content
+
+
+def _run_git_text(repo_root: str | Path, *args: str) -> str:
+    """Return stdout for a git command, or an empty string on failure."""
+    resolved_repo_root = Path(repo_root).resolve()
+    git_exe = shutil.which("git")
+    if not git_exe or not resolved_repo_root.is_dir():
+        return ""
+
+    result = subprocess.run(
+        [git_exe, "-c", f"safe.directory={resolved_repo_root}", "-C", str(resolved_repo_root), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def collect_sdk_git_metadata(source_root: str | Path) -> dict[str, object]:
+    """Collect git revision metadata for a bundled SDK source tree."""
+    resolved_source_root = Path(source_root).resolve()
+    commit = _run_git_text(resolved_source_root, "rev-parse", "HEAD")
+    if not commit:
+        return {}
+
+    metadata: dict[str, object] = {
+        "git_commit": commit,
+    }
+    commit_short = _run_git_text(resolved_source_root, "rev-parse", "--short", "HEAD")
+    if commit_short:
+        metadata["git_commit_short"] = commit_short
+
+    describe = _run_git_text(resolved_source_root, "describe", "--tags", "--always", "--dirty")
+    if describe:
+        metadata["git_describe"] = describe
+
+    branch = _run_git_text(resolved_source_root, "rev-parse", "--abbrev-ref", "HEAD")
+    if branch:
+        metadata["git_branch"] = branch
+
+    remote_url = _run_git_text(resolved_source_root, "config", "--get", "remote.origin.url")
+    if remote_url:
+        metadata["git_remote_url"] = remote_url
+
+    return metadata
+
+
+def describe_sdk_git_revision(metadata: dict[str, object]) -> str:
+    """Return the most useful SDK revision label from bundle metadata."""
+    for key in ("git_describe", "git_commit_short", "git_commit"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 def format_byte_count(size_bytes: int) -> str:
@@ -405,6 +462,9 @@ def package_ui_designer(
         "archive_path": str(archive_path) if archive_path else "",
         "bundled_sdk_dir": str(bundled_sdk_dir) if bundled_sdk_dir else "",
         "bundled_sdk_file_count": int(bundled_sdk_metadata.get("file_count", 0)),
+        "bundled_sdk_git_commit": str(bundled_sdk_metadata.get("git_commit", "")),
+        "bundled_sdk_git_remote_url": str(bundled_sdk_metadata.get("git_remote_url", "")),
+        "bundled_sdk_git_revision": describe_sdk_git_revision(bundled_sdk_metadata),
         "bundled_sdk_metadata_path": (
             str(Path(bundled_sdk_dir) / SDK_BUNDLE_METADATA_NAME) if bundled_sdk_dir else ""
         ),
@@ -462,7 +522,7 @@ def parse_args():
     parser.add_argument(
         "--sdk-root",
         default="",
-        help="EmbeddedGUI SDK root (default: EMBEDDEDGUI_SDK_ROOT or ../EmbeddedGUI beside this repo)",
+        help="EmbeddedGUI SDK root (default: EMBEDDEDGUI_SDK_ROOT, sdk/EmbeddedGUI, or ../EmbeddedGUI beside this repo)",
     )
     parser.set_defaults(bundle_sdk=True)
     return parser.parse_args()
@@ -489,6 +549,12 @@ def main():
     if result["bundled_sdk_dir"]:
         print(f"[OK] bundled_sdk: {result['bundled_sdk_dir']}")
         print(f"[OK] bundled_sdk_source: {result['bundled_sdk_source'] or 'unknown'}")
+        if result["bundled_sdk_git_revision"]:
+            print(f"[OK] bundled_sdk_revision: {result['bundled_sdk_git_revision']}")
+        if result["bundled_sdk_git_commit"]:
+            print(f"[OK] bundled_sdk_commit: {result['bundled_sdk_git_commit']}")
+        if result["bundled_sdk_git_remote_url"]:
+            print(f"[OK] bundled_sdk_remote: {result['bundled_sdk_git_remote_url']}")
         print(
             "[OK] bundled_sdk_summary: "
             f"{result['bundled_sdk_file_count']} files, "
@@ -503,4 +569,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
