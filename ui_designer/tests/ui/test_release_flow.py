@@ -389,6 +389,8 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
     copied = QApplication.clipboard().text()
 
     assert "matched_entries=1" in copied
+    assert "status_counts: success=0 failed=1 unknown=0" in copied
+    assert "artifact_counts: manifest=0 log=0 package=1" in copied
     assert "filters: range=all, status=failed, profile=all, artifact=package, search=-" in copied
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
@@ -435,6 +437,8 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     exported = export_path.read_text(encoding="utf-8")
     assert captured["default_name"] == "release-history-summary-failed-package.txt"
     assert "matched_entries=1" in exported
+    assert "status_counts: success=0 failed=1 unknown=0" in exported
+    assert "artifact_counts: manifest=0 log=0 package=1" in exported
     assert "filters: range=all, status=failed, profile=all, artifact=package, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
@@ -477,6 +481,8 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
 
     exported = json.loads(export_path.read_text(encoding="utf-8"))
     assert exported["matched_entries"] == 1
+    assert exported["status_counts"] == {"success": 0, "failed": 1, "unknown": 0}
+    assert exported["artifact_counts"] == {"manifest": 0, "log": 0, "package": 1}
     assert exported["filters"]["artifact"] == "package"
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
 

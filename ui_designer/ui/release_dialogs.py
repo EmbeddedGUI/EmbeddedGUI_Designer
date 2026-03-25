@@ -190,10 +190,24 @@ def _build_filtered_history_summary(
     artifact_filter: str,
     search_text: str,
 ) -> str:
+    status_counts = _history_status_counts(filtered_entries)
+    artifact_counts = _history_artifact_counts(filtered_entries)
     lines = [
         "Release History Summary",
         f"matched_entries={len(filtered_entries)}",
         f"total_entries={len(all_entries)}",
+        (
+            "status_counts: "
+            f"success={status_counts['success']} "
+            f"failed={status_counts['failed']} "
+            f"unknown={status_counts['unknown']}"
+        ),
+        (
+            "artifact_counts: "
+            f"manifest={artifact_counts['manifest']} "
+            f"log={artifact_counts['log']} "
+            f"package={artifact_counts['package']}"
+        ),
         (
             "filters: "
             f"range={range_filter or 'all'}, "
@@ -221,6 +235,8 @@ def _build_filtered_history_json(
     payload = {
         "matched_entries": len(filtered_entries),
         "total_entries": len(all_entries),
+        "status_counts": _history_status_counts(filtered_entries),
+        "artifact_counts": _history_artifact_counts(filtered_entries),
         "filters": {
             "range": range_filter or "all",
             "status": status_filter or "all",
