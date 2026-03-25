@@ -484,13 +484,17 @@ def test_release_history_dialog_keeps_selected_preview_mode_across_entries(qapp,
     dialog._history_list.setCurrentRow(first_row)
 
     assert dialog._preview_label.text() == "Manifest Preview"
+    assert dialog._preview_auto_button.isChecked() is True
 
     dialog._preview_log_button.click()
     assert dialog._preview_label.text() == "Log Preview"
+    assert dialog._preview_log_button.isChecked() is True
+    assert dialog._preview_auto_button.isChecked() is False
     assert "log a" in dialog._preview_edit.toPlainText()
 
     dialog._history_list.setCurrentRow(second_row)
     assert dialog._preview_label.text() == "Log Preview"
+    assert dialog._preview_log_button.isChecked() is True
     assert "log b" in dialog._preview_edit.toPlainText()
 
 
@@ -519,10 +523,13 @@ def test_release_history_dialog_can_restore_auto_preview_mode(qapp, tmp_path):
 
     dialog._preview_log_button.click()
     assert dialog._preview_label.text() == "Log Preview"
+    assert dialog._preview_log_button.isChecked() is True
     assert "log output" in dialog._preview_edit.toPlainText()
 
     dialog._preview_auto_button.click()
     assert dialog._preview_label.text() == "Manifest Preview"
+    assert dialog._preview_auto_button.isChecked() is True
+    assert dialog._preview_log_button.isChecked() is False
     assert '"name": "manifest"' in dialog._preview_edit.toPlainText()
 
 

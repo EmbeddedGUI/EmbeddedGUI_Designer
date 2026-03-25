@@ -915,6 +915,13 @@ class ReleaseHistoryDialog(QDialog):
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
+        for button in (
+            self._preview_auto_button,
+            self._preview_manifest_button,
+            self._preview_log_button,
+            self._preview_version_button,
+        ):
+            button.setCheckable(True)
         self._preview_auto_button.clicked.connect(lambda: self._activate_preview_mode("auto"))
         self._preview_manifest_button.clicked.connect(lambda: self._activate_preview_mode("manifest"))
         self._preview_log_button.clicked.connect(lambda: self._activate_preview_mode("log"))
@@ -958,6 +965,7 @@ class ReleaseHistoryDialog(QDialog):
         self._load_history_entries(history_entries)
         self._restore_view_state()
         self._update_history_file_button()
+        self._sync_preview_mode_buttons()
 
     def _current_entry(self) -> dict[str, object] | None:
         item = self._history_list.currentItem()
@@ -1344,6 +1352,7 @@ class ReleaseHistoryDialog(QDialog):
 
     def _activate_preview_mode(self, mode: str) -> None:
         self._preview_mode = mode if mode in {"auto", "manifest", "log", "version"} else "auto"
+        self._sync_preview_mode_buttons()
         self._refresh_selected_preview()
 
     def _refresh_selected_preview(self) -> None:
@@ -1370,6 +1379,12 @@ class ReleaseHistoryDialog(QDialog):
         else:
             self._preview_label.setText("Preview")
             self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
+
+    def _sync_preview_mode_buttons(self) -> None:
+        self._preview_auto_button.setChecked(self._preview_mode == "auto")
+        self._preview_manifest_button.setChecked(self._preview_mode == "manifest")
+        self._preview_log_button.setChecked(self._preview_mode == "log")
+        self._preview_version_button.setChecked(self._preview_mode == "version")
 
     def _update_history_file_button(self) -> None:
         self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
