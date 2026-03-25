@@ -23,6 +23,7 @@ class DiagnosticsPanel(QWidget):
 
     diagnostic_activated = pyqtSignal(str, str)  # page_name, widget_name
     copy_requested = pyqtSignal()
+    copy_json_requested = pyqtSignal()
     export_requested = pyqtSignal()
     export_json_requested = pyqtSignal()
 
@@ -41,6 +42,8 @@ class DiagnosticsPanel(QWidget):
         self._summary_label = QLabel("")
         self._copy_button = QPushButton("Copy Summary")
         self._copy_button.clicked.connect(self.copy_requested.emit)
+        self._copy_json_button = QPushButton("Copy JSON")
+        self._copy_json_button.clicked.connect(self.copy_json_requested.emit)
         self._export_button = QPushButton("Export Summary...")
         self._export_button.clicked.connect(self.export_requested.emit)
         self._export_json_button = QPushButton("Export JSON...")
@@ -56,6 +59,7 @@ class DiagnosticsPanel(QWidget):
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(self._summary_label, 1)
         header_layout.addWidget(self._copy_button)
+        header_layout.addWidget(self._copy_json_button)
         header_layout.addWidget(self._export_button)
         header_layout.addWidget(self._export_json_button)
 
@@ -68,6 +72,7 @@ class DiagnosticsPanel(QWidget):
         self._activated_entry = None
         self._summary_label.setText("Diagnostics: no active issues")
         self._copy_button.setEnabled(False)
+        self._copy_json_button.setEnabled(False)
         self._export_button.setEnabled(False)
         self._export_json_button.setEnabled(False)
         self._list.clear()
@@ -76,6 +81,7 @@ class DiagnosticsPanel(QWidget):
         self._entries = list(entries or [])
         self._list.clear()
         self._copy_button.setEnabled(bool(self._entries))
+        self._copy_json_button.setEnabled(bool(self._entries))
         self._export_button.setEnabled(bool(self._entries))
         self._export_json_button.setEnabled(bool(self._entries))
 

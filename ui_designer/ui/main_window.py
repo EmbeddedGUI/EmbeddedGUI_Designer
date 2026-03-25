@@ -404,6 +404,7 @@ class MainWindow(QMainWindow):
         self.res_panel.string_key_deleted.connect(self._on_string_key_deleted)
         self.diagnostics_panel.diagnostic_activated.connect(self._on_diagnostic_requested)
         self.diagnostics_panel.copy_requested.connect(self._copy_diagnostics_summary)
+        self.diagnostics_panel.copy_json_requested.connect(self._copy_diagnostics_json)
         self.diagnostics_panel.export_requested.connect(self._export_diagnostics_summary)
         self.diagnostics_panel.export_json_requested.connect(self._export_diagnostics_json)
         self.animations_panel.animations_changed.connect(self._on_widget_animations_changed)
@@ -1958,6 +1959,14 @@ class MainWindow(QMainWindow):
 
         QApplication.clipboard().setText(self.diagnostics_panel.summary_text())
         self.statusBar().showMessage("Copied diagnostics summary.", 3000)
+
+    def _copy_diagnostics_json(self):
+        if not hasattr(self, "diagnostics_panel") or not self.diagnostics_panel.has_entries():
+            self.statusBar().showMessage("No diagnostics JSON to copy.", 3000)
+            return
+
+        QApplication.clipboard().setText(self._diagnostics_json_text())
+        self.statusBar().showMessage("Copied diagnostics JSON.", 3000)
 
     def _default_diagnostics_summary_export_path(self):
         default_dir = self._default_export_code_dir()
