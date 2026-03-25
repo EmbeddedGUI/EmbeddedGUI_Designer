@@ -218,10 +218,12 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     dist_dir = release_root / "dist"
     manifest_path = release_root / "release-manifest.json"
     version_path = dist_dir / "VERSION.txt"
+    zip_path = release_root / "ReleaseDemo.zip"
     _create_sdk_root(sdk_root)
     dist_dir.mkdir(parents=True)
     manifest_path.write_text("{}\n", encoding="utf-8")
     version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
+    zip_path.write_text("zip\n", encoding="utf-8")
 
     project = Project(app_name="ReleaseDemo")
     project.sdk_root = str(sdk_root)
@@ -240,6 +242,7 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
             "release_root": str(release_root),
             "dist_dir": str(dist_dir),
             "manifest_path": str(manifest_path),
+            "zip_path": str(zip_path),
         },
     )
 
@@ -251,17 +254,20 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     assert window._open_last_release_dist_action.isEnabled() is True
     assert window._open_last_release_manifest_action.isEnabled() is True
     assert window._open_last_release_version_action.isEnabled() is True
+    assert window._open_last_release_package_action.isEnabled() is True
 
     window._open_last_release_folder()
     window._open_last_release_dist()
     window._open_last_release_manifest()
     window._open_last_release_version()
+    window._open_last_release_package()
 
     assert opened_paths == [
         str(release_root),
         str(dist_dir),
         str(manifest_path),
         str(version_path),
+        str(zip_path),
     ]
 
 

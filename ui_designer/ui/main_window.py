@@ -602,6 +602,7 @@ class MainWindow(QMainWindow):
             self._open_last_release_dist_action.setEnabled(has_release_history)
             self._open_last_release_manifest_action.setEnabled(has_release_history)
             self._open_last_release_version_action.setEnabled(has_release_history)
+            self._open_last_release_package_action.setEnabled(has_release_history)
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
@@ -1228,6 +1229,10 @@ class MainWindow(QMainWindow):
         self._open_last_release_version_action.triggered.connect(self._open_last_release_version)
         build_menu.addAction(self._open_last_release_version_action)
 
+        self._open_last_release_package_action = QAction("Open Last Release Package", self)
+        self._open_last_release_package_action.triggered.connect(self._open_last_release_package)
+        build_menu.addAction(self._open_last_release_package_action)
+
         self._release_history_action = QAction("Release History...", self)
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
@@ -1607,6 +1612,19 @@ class MainWindow(QMainWindow):
             self._open_path_in_shell(version_path)
         except Exception as exc:
             QMessageBox.warning(self, "Open Release Version Failed", str(exc))
+
+    def _open_last_release_package(self):
+        if not self._project_dir:
+            return
+        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        zip_path = normalize_path(entry.get("zip_path", "")) if isinstance(entry, dict) else ""
+        if not zip_path:
+            self.statusBar().showMessage("No release package available", 4000)
+            return
+        try:
+            self._open_path_in_shell(zip_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Package Failed", str(exc))
 
     def _show_release_history(self):
         if not self._project_dir:
