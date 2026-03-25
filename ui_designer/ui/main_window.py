@@ -588,7 +588,15 @@ class MainWindow(QMainWindow):
             and self.compiler.can_build()
         )
         can_release = self.project is not None and bool(self._project_dir) and self._has_valid_sdk_root()
-        has_release_history = bool(self.project is not None and self._project_dir and latest_release_entry(self._project_dir, output_dir=self._release_output_root()))
+        latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root()) if self.project is not None and self._project_dir else {}
+        has_release_history = bool(latest_entry)
+        release_root = normalize_path(latest_entry.get("release_root", "")) if isinstance(latest_entry, dict) else ""
+        dist_dir = normalize_path(latest_entry.get("dist_dir", "")) if isinstance(latest_entry, dict) else ""
+        manifest_path = normalize_path(latest_entry.get("manifest_path", "")) if isinstance(latest_entry, dict) else ""
+        zip_path = normalize_path(latest_entry.get("zip_path", "")) if isinstance(latest_entry, dict) else ""
+        log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
+        version_path = self._latest_release_version_path(latest_entry)
+        history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
         can_browse_release_history = self.project is not None and bool(self._project_dir)
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
@@ -598,13 +606,13 @@ class MainWindow(QMainWindow):
             self._release_build_action.setEnabled(can_release)
             self._release_profiles_action.setEnabled(self.project is not None)
             self._release_history_action.setEnabled(can_browse_release_history)
-            self._open_last_release_dir_action.setEnabled(has_release_history)
-            self._open_last_release_dist_action.setEnabled(has_release_history)
-            self._open_last_release_manifest_action.setEnabled(has_release_history)
-            self._open_last_release_version_action.setEnabled(has_release_history)
-            self._open_last_release_package_action.setEnabled(has_release_history)
-            self._open_last_release_log_action.setEnabled(has_release_history)
-            self._open_release_history_file_action.setEnabled(has_release_history)
+            self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
+            self._open_last_release_dist_action.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
+            self._open_last_release_manifest_action.setEnabled(bool(manifest_path and os.path.isfile(manifest_path)))
+            self._open_last_release_version_action.setEnabled(bool(version_path))
+            self._open_last_release_package_action.setEnabled(bool(zip_path and os.path.isfile(zip_path)))
+            self._open_last_release_log_action.setEnabled(bool(log_path and os.path.isfile(log_path)))
+            self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
@@ -1531,6 +1539,19 @@ class MainWindow(QMainWindow):
             return ""
         return os.path.join(self._project_dir, "output", "ui_designer_release")
 
+    def _latest_release_version_path(self, entry):
+        if not isinstance(entry, dict):
+            return ""
+        dist_dir = normalize_path(entry.get("dist_dir", ""))
+        release_root = normalize_path(entry.get("release_root", ""))
+        for base_dir in (dist_dir, release_root):
+            if not base_dir:
+                continue
+            candidate = normalize_path(os.path.join(base_dir, "VERSION.txt"))
+            if candidate and os.path.isfile(candidate):
+                return candidate
+        return ""
+
     def _update_sdk_status_label(self):
         if not hasattr(self, "_sdk_status_label"):
             return
@@ -1604,17 +1625,7 @@ class MainWindow(QMainWindow):
         if not self._project_dir:
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        version_path = ""
-        if isinstance(entry, dict):
-            dist_dir = normalize_path(entry.get("dist_dir", ""))
-            release_root = normalize_path(entry.get("release_root", ""))
-            for base_dir in (dist_dir, release_root):
-                if not base_dir:
-                    continue
-                candidate = normalize_path(os.path.join(base_dir, "VERSION.txt"))
-                if candidate and os.path.isfile(candidate):
-                    version_path = candidate
-                    break
+        version_path = self._latest_release_version_path(entry)
         if not version_path:
             self.statusBar().showMessage("No release version file available", 4000)
             return

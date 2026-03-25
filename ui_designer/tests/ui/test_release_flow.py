@@ -285,6 +285,49 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
 
 
 @_skip_no_qt
+def test_open_last_release_actions_reflect_available_artifacts(qapp, isolated_config, tmp_path, monkeypatch):
+    from ui_designer.model.project import Project
+    from ui_designer.ui.main_window import MainWindow
+
+    sdk_root = tmp_path / "sdk"
+    project_dir = sdk_root / "example" / "ReleaseDemo"
+    release_root = project_dir / "output" / "ui_designer_release" / "windows-pc" / "20260326T000000Z"
+    history_path = project_dir / "output" / "ui_designer_release" / "history.json"
+    _create_sdk_root(sdk_root)
+    release_root.mkdir(parents=True)
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    history_path.write_text("[]\n", encoding="utf-8")
+
+    project = Project(app_name="ReleaseDemo")
+    project.sdk_root = str(sdk_root)
+    project.project_dir = str(project_dir)
+    project.create_new_page("main_page")
+    project.save(str(project_dir))
+
+    window = MainWindow(str(sdk_root))
+    monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+    monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+    window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+    monkeypatch.setattr(
+        "ui_designer.ui.main_window.latest_release_entry",
+        lambda project_dir_arg, output_dir="": {
+            "release_root": str(release_root),
+        },
+    )
+
+    window._update_compile_availability()
+
+    assert window._open_last_release_dir_action.isEnabled() is True
+    assert window._open_last_release_dist_action.isEnabled() is False
+    assert window._open_last_release_manifest_action.isEnabled() is False
+    assert window._open_last_release_version_action.isEnabled() is False
+    assert window._open_last_release_package_action.isEnabled() is False
+    assert window._open_last_release_log_action.isEnabled() is False
+    assert window._open_release_history_file_action.isEnabled() is True
+
+
+@_skip_no_qt
 def test_release_history_dialog_previews_manifest_and_log(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
