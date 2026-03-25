@@ -926,6 +926,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_log_button = QPushButton("Preview Log")
         self._preview_version_button = QPushButton("Preview Version")
         self._copy_summary_button = QPushButton("Copy Summary")
+        self._export_summary_button = QPushButton("Export Summary...")
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_preview_path_button = QPushButton("Copy Preview Path")
@@ -955,6 +956,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_log_button.clicked.connect(lambda: self._activate_preview_mode("log"))
         self._preview_version_button.clicked.connect(lambda: self._activate_preview_mode("version"))
         self._copy_summary_button.clicked.connect(self._copy_entry_summary)
+        self._export_summary_button.clicked.connect(self._export_entry_summary)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_preview_path_button.clicked.connect(self._copy_preview_path)
@@ -978,6 +980,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_log_button,
             self._preview_version_button,
             self._copy_summary_button,
+            self._export_summary_button,
             self._copy_details_button,
             self._copy_preview_button,
             self._copy_preview_path_button,
@@ -1423,11 +1426,34 @@ class ReleaseHistoryDialog(QDialog):
         return os.path.splitext(self._default_entry_export_filename())[0] + ".txt"
 
     def _copy_entry_summary(self) -> None:
+        self._copy_text(self._entry_summary_text())
+
+    def _entry_summary_text(self) -> str:
         entry = self._current_entry()
         if not entry:
-            self._copy_text("")
+            return ""
+        return _history_summary_line(entry) + "\n"
+
+    def _default_entry_summary_export_filename(self) -> str:
+        return os.path.splitext(self._default_entry_export_filename())[0] + "-summary.txt"
+
+    def _export_entry_summary(self) -> None:
+        if not self._current_entry():
             return
-        self._copy_text(_history_summary_line(entry) + "\n")
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Release Entry Summary",
+            self._default_entry_summary_export_filename(),
+            "Text Files (*.txt);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            if "Text" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".txt")
+            _write_text_file(selected_path, self._entry_summary_text())
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Release Entry Failed", str(exc))
 
     def _entry_details_text(self) -> str:
         entry = self._current_entry()
@@ -1621,6 +1647,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._preview_version_button.setEnabled(bool(entry and _history_version_path(entry)))
         self._copy_summary_button.setEnabled(bool(entry))
+        self._export_summary_button.setEnabled(bool(entry))
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_folder_path_button.setEnabled(bool(release_root))

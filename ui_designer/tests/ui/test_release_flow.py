@@ -773,6 +773,40 @@ def test_release_history_dialog_exports_selected_entry_details(qapp, tmp_path, m
 
 
 @_skip_no_qt
+def test_release_history_dialog_exports_selected_entry_summary(qapp, tmp_path, monkeypatch):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    export_path = tmp_path / "release-entry-summary.txt"
+    captured = {}
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            }
+        ]
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "Text Files (*.txt)",
+        ),
+    )
+
+    dialog._export_summary_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert captured["default_name"] == "release-entry-20260326t000000z-windows-pc-success-summary.txt"
+    assert exported == "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created\n"
+
+
+@_skip_no_qt
 def test_release_history_dialog_exports_selected_preview(qapp, tmp_path, monkeypatch):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
