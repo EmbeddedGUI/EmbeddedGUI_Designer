@@ -13,6 +13,7 @@ Layout (default):
 """
 
 import copy
+import json
 import os
 import re
 import shutil
@@ -404,6 +405,7 @@ class MainWindow(QMainWindow):
         self.diagnostics_panel.diagnostic_activated.connect(self._on_diagnostic_requested)
         self.diagnostics_panel.copy_requested.connect(self._copy_diagnostics_summary)
         self.diagnostics_panel.export_requested.connect(self._export_diagnostics_summary)
+        self.diagnostics_panel.export_json_requested.connect(self._export_diagnostics_json)
         self.animations_panel.animations_changed.connect(self._on_widget_animations_changed)
         self.page_fields_panel.fields_changed.connect(self._on_page_fields_changed)
         self.page_fields_panel.validation_message.connect(self._on_property_validation_message)
@@ -1963,6 +1965,45 @@ class MainWindow(QMainWindow):
             return os.path.join(default_dir, "diagnostics-summary.txt")
         return "diagnostics-summary.txt"
 
+    def _default_diagnostics_json_export_path(self):
+        default_dir = self._default_export_code_dir()
+        if default_dir:
+            return os.path.join(default_dir, "diagnostics.json")
+        return "diagnostics.json"
+
+    def _diagnostics_json_text(self):
+        entries = self.diagnostics_panel.entries() if hasattr(self, "diagnostics_panel") else []
+        errors = sum(1 for entry in entries if entry.severity == "error")
+        warnings = sum(1 for entry in entries if entry.severity == "warning")
+        infos = sum(1 for entry in entries if entry.severity == "info")
+        payload = {
+            "project": {
+                "app_name": self.project.app_name if self.project is not None else "",
+                "project_dir": self._project_dir or "",
+                "current_page": self._current_page.name if self._current_page is not None else "",
+            },
+            "summary": {
+                "errors": errors,
+                "warnings": warnings,
+                "info": infos,
+                "total": len(entries),
+            },
+            "entries": [
+                {
+                    "severity": entry.severity,
+                    "code": entry.code,
+                    "message": entry.message,
+                    "page_name": entry.page_name,
+                    "widget_name": entry.widget_name,
+                    "resource_type": entry.resource_type,
+                    "resource_name": entry.resource_name,
+                    "property_name": entry.property_name,
+                }
+                for entry in entries
+            ],
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False)
+
     def _export_diagnostics_summary(self):
         if not hasattr(self, "diagnostics_panel") or not self.diagnostics_panel.has_entries():
             self.statusBar().showMessage("No diagnostics to export.", 3000)
@@ -1991,6 +2032,35 @@ class MainWindow(QMainWindow):
             return
 
         self.statusBar().showMessage(f"Exported diagnostics summary to {resolved_path}", 3000)
+
+    def _export_diagnostics_json(self):
+        if not hasattr(self, "diagnostics_panel") or not self.diagnostics_panel.has_entries():
+            self.statusBar().showMessage("No diagnostics JSON to export.", 3000)
+            return
+
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Diagnostics JSON",
+            self._default_diagnostics_json_export_path(),
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not selected_path:
+            return
+
+        try:
+            if "JSON" in str(selected_filter):
+                selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".json"
+            resolved_path = os.path.abspath(os.path.normpath(selected_path))
+            parent_dir = os.path.dirname(resolved_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+            with open(resolved_path, "w", encoding="utf-8") as f:
+                f.write(self._diagnostics_json_text().rstrip() + "\n")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Diagnostics JSON Failed", str(exc))
+            return
+
+        self.statusBar().showMessage(f"Exported diagnostics JSON to {resolved_path}", 3000)
 
     def _update_resource_usage_panel(self):
         if not hasattr(self, "res_panel"):

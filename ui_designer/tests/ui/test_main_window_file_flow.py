@@ -1,5 +1,6 @@
 """Qt UI tests for MainWindow project file flows."""
 
+import json
 import os
 import subprocess
 import sys
@@ -3348,6 +3349,85 @@ class TestMainWindowFileFlow:
         window._export_diagnostics_summary()
 
         assert window.statusBar().currentMessage() == "No diagnostics to export."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_export_diagnostics_json_writes_structured_payload(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsJsonDemo"
+        project = _create_project(project_dir, "DiagnosticsJsonDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        export_path = tmp_path / "exports" / "diagnostics"
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QFileDialog.getSaveFileName",
+            lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._export_json_button.isEnabled() is True
+
+        window.diagnostics_panel._export_json_button.click()
+
+        resolved_export_path = export_path.with_suffix(".json")
+        exported = json.loads(resolved_export_path.read_text(encoding="utf-8"))
+        assert exported["project"]["app_name"] == "DiagnosticsJsonDemo"
+        assert Path(exported["project"]["project_dir"]) == project_dir
+        assert exported["project"]["current_page"] == "main_page"
+        assert exported["summary"]["errors"] == 1
+        assert exported["summary"]["warnings"] == 1
+        assert exported["summary"]["info"] == 0
+        assert exported["summary"]["total"] == 2
+        assert any(entry["code"] == "invalid_name" and entry["widget_name"] == "bad-name" for entry in exported["entries"])
+        assert any(entry["code"] == "missing_resource" and entry["resource_name"] == "missing.png" for entry in exported["entries"])
+        assert window.statusBar().currentMessage() == f"Exported diagnostics JSON to {resolved_export_path}"
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_export_diagnostics_json_without_entries_reports_empty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsJsonEmptyDemo"
+        project = _create_project(project_dir, "DiagnosticsJsonEmptyDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def unexpected_get_save_file_name(*args, **kwargs):
+            raise AssertionError("getSaveFileName should not be called without diagnostics")
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getSaveFileName", unexpected_get_save_file_name)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._export_json_button.isEnabled() is False
+
+        window._export_diagnostics_json()
+
+        assert window.statusBar().currentMessage() == "No diagnostics JSON to export."
 
         window._undo_manager.mark_all_saved()
         _close_window(window)

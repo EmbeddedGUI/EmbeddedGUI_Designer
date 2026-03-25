@@ -24,6 +24,7 @@ class DiagnosticsPanel(QWidget):
     diagnostic_activated = pyqtSignal(str, str)  # page_name, widget_name
     copy_requested = pyqtSignal()
     export_requested = pyqtSignal()
+    export_json_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -42,6 +43,8 @@ class DiagnosticsPanel(QWidget):
         self._copy_button.clicked.connect(self.copy_requested.emit)
         self._export_button = QPushButton("Export Summary...")
         self._export_button.clicked.connect(self.export_requested.emit)
+        self._export_json_button = QPushButton("Export JSON...")
+        self._export_json_button.clicked.connect(self.export_json_requested.emit)
         self._hint_label = QLabel("Double-click a diagnostic to switch page or focus the widget.")
         self._hint_label.setWordWrap(True)
 
@@ -54,6 +57,7 @@ class DiagnosticsPanel(QWidget):
         header_layout.addWidget(self._summary_label, 1)
         header_layout.addWidget(self._copy_button)
         header_layout.addWidget(self._export_button)
+        header_layout.addWidget(self._export_json_button)
 
         layout.addLayout(header_layout)
         layout.addWidget(self._hint_label)
@@ -65,6 +69,7 @@ class DiagnosticsPanel(QWidget):
         self._summary_label.setText("Diagnostics: no active issues")
         self._copy_button.setEnabled(False)
         self._export_button.setEnabled(False)
+        self._export_json_button.setEnabled(False)
         self._list.clear()
 
     def set_entries(self, entries):
@@ -72,6 +77,7 @@ class DiagnosticsPanel(QWidget):
         self._list.clear()
         self._copy_button.setEnabled(bool(self._entries))
         self._export_button.setEnabled(bool(self._entries))
+        self._export_json_button.setEnabled(bool(self._entries))
 
         if not self._entries:
             self._summary_label.setText("Diagnostics: no active issues")
@@ -98,6 +104,9 @@ class DiagnosticsPanel(QWidget):
 
     def current_activated_entry(self):
         return self._activated_entry
+
+    def entries(self):
+        return list(self._entries)
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)
