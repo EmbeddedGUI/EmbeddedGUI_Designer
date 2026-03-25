@@ -133,19 +133,63 @@ def critical_repo_health_issues(payload: dict[str, object]) -> list[str]:
     return issues
 
 
-def repo_health_view_payload(payload: dict[str, object], *, critical_only: bool = False) -> dict[str, object]:
-    if not critical_only:
+def blocked_repo_health_stale_dirs(payload: dict[str, object]) -> list[dict[str, object]]:
+    stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
+    blocked_dirs: list[dict[str, object]] = []
+    for entry in stale_dirs:
+        if not isinstance(entry, dict):
+            continue
+        if bool(entry.get("accessible", False)):
+            continue
+        blocked_dirs.append(dict(entry))
+    return blocked_dirs
+
+
+def repo_health_view_suggestions(
+    payload: dict[str, object],
+    *,
+    include_critical: bool,
+    stale_dirs: list[dict[str, object]],
+) -> list[str]:
+    sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
+    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
+
+    suggestions: list[str] = []
+    if include_critical and not sdk.get("initialized", False):
+        suggestions.append("Run: git submodule update --init --recursive")
+    if stale_dirs:
+        suggestions.append("If git status is noisy, use: git status -uno")
+        suggestions.append("To hide untracked noise locally, use: git config status.showUntrackedFiles no")
+        if any(not bool(entry.get("accessible", False)) for entry in stale_dirs):
+            suggestions.append("Remove stale ACL-broken temp dirs from an elevated shell if they keep reappearing")
+    if include_critical and not smoke.get("present", False):
+        suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
+    return suggestions
+
+
+def repo_health_view_payload(
+    payload: dict[str, object],
+    *,
+    critical_only: bool = False,
+    blocked_only: bool = False,
+) -> dict[str, object]:
+    if not critical_only and not blocked_only:
         return payload
 
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
     smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
     critical_issues = critical_repo_health_issues(payload)
+    blocked_stale_dirs = blocked_repo_health_stale_dirs(payload)
 
-    suggestions = []
-    if not sdk.get("initialized", False):
-        suggestions.append("Run: git submodule update --init --recursive")
-    if not smoke.get("present", False):
-        suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
+    if not critical_only:
+        view_payload = dict(payload)
+        view_payload["stale_temp_dirs"] = blocked_stale_dirs
+        view_payload["suggestions"] = repo_health_view_suggestions(
+            payload,
+            include_critical=True,
+            stale_dirs=blocked_stale_dirs,
+        )
+        return view_payload
 
     return {
         "repo_root": str(payload.get("repo_root") or ""),
@@ -159,9 +203,13 @@ def repo_health_view_payload(payload: dict[str, object], *, critical_only: bool 
             "path": str(smoke.get("path") or ""),
             "present": bool(smoke.get("present", False)),
         },
-        "stale_temp_dirs": [],
+        "stale_temp_dirs": blocked_stale_dirs if blocked_only else [],
         "git_status_show_untracked": str(payload.get("git_status_show_untracked") or "default"),
-        "suggestions": suggestions,
+        "suggestions": repo_health_view_suggestions(
+            payload,
+            include_critical=True,
+            stale_dirs=blocked_stale_dirs if blocked_only else [],
+        ),
         "critical_issues": critical_issues,
     }
 
@@ -179,7 +227,12 @@ def repo_health_counts(payload: dict[str, object]) -> dict[str, int]:
     }
 
 
-def format_repo_health_summary(payload: dict[str, object], *, critical_only: bool = False) -> str:
+def format_repo_health_summary(
+    payload: dict[str, object],
+    *,
+    critical_only: bool = False,
+    blocked_only: bool = False,
+) -> str:
     counts = repo_health_counts(payload)
     return (
         f"{summarize_repo_health(payload)} | "
@@ -187,11 +240,17 @@ def format_repo_health_summary(payload: dict[str, object], *, critical_only: boo
         f"suggestions={counts['suggestions']} "
         f"stale={counts['stale_dirs']} "
         f"blocked={counts['blocked_stale_dirs']} "
-        f"critical_only={str(bool(critical_only)).lower()}"
+        f"critical_only={str(bool(critical_only)).lower()} "
+        f"blocked_only={str(bool(blocked_only)).lower()}"
     )
 
 
-def format_repo_health_text(payload: dict[str, object], *, critical_only: bool = False) -> str:
+def format_repo_health_text(
+    payload: dict[str, object],
+    *,
+    critical_only: bool = False,
+    blocked_only: bool = False,
+) -> str:
     counts = repo_health_counts(payload)
     lines = [
         f"[summary] {summarize_repo_health(payload)}",
@@ -202,7 +261,11 @@ def format_repo_health_text(payload: dict[str, object], *, critical_only: bool =
             f"stale={counts['stale_dirs']} "
             f"blocked={counts['blocked_stale_dirs']}"
         ),
-        f"[view] critical_only={str(bool(critical_only)).lower()}",
+        (
+            "[view] "
+            f"critical_only={str(bool(critical_only)).lower()} "
+            f"blocked_only={str(bool(blocked_only)).lower()}"
+        ),
         "",
         f"[repo] {payload.get('repo_root', '')}",
     ]
@@ -231,11 +294,17 @@ def format_repo_health_text(payload: dict[str, object], *, critical_only: bool =
     return "\n".join(lines)
 
 
-def format_repo_health_json(payload: dict[str, object], *, critical_only: bool = False) -> str:
+def format_repo_health_json(
+    payload: dict[str, object],
+    *,
+    critical_only: bool = False,
+    blocked_only: bool = False,
+) -> str:
     report = dict(payload)
     report["_summary"] = summarize_repo_health(payload)
     report["_counts"] = repo_health_counts(payload)
     report["_view"] = {
         "critical_only": bool(critical_only),
+        "blocked_only": bool(blocked_only),
     }
     return json.dumps(report, indent=2, ensure_ascii=False)

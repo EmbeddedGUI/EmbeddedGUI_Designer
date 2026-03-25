@@ -58,7 +58,7 @@ def test_format_repo_health_text_includes_expected_sections(tmp_path):
 
     assert "[summary] 1 stale temp dir(s) detected" in rendered
     assert "[counts] critical=0 suggestions=1 stale=1 blocked=1" in rendered
-    assert "[view] critical_only=false" in rendered
+    assert "[view] critical_only=false blocked_only=false" in rendered
     assert f"[repo] {tmp_path}" in rendered
     assert "sdk_submodule.initialized: true" in rendered
     assert "release_smoke.present: true" in rendered
@@ -108,6 +108,40 @@ def test_repo_health_view_payload_can_focus_critical_issues(tmp_path):
     ]
 
 
+def test_repo_health_view_payload_can_focus_blocked_stale_dirs(tmp_path):
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [
+            {"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": True, "issue": ""},
+            {"path": str(tmp_path / "tmpxtayw0f6"), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": [
+            "Run: git submodule update --init --recursive",
+            "If git status is noisy, use: git status -uno",
+            "Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks",
+        ],
+    }
+
+    focused = repo_health.repo_health_view_payload(payload, blocked_only=True)
+
+    assert focused["repo_root"] == str(tmp_path)
+    assert focused["sdk_submodule"]["initialized"] is False
+    assert focused["release_smoke_project"]["present"] is False
+    assert focused["stale_temp_dirs"] == [
+        {"path": str(tmp_path / "tmpxtayw0f6"), "accessible": False, "issue": "permission_denied"},
+    ]
+    assert focused["suggestions"] == [
+        "Run: git submodule update --init --recursive",
+        "If git status is noisy, use: git status -uno",
+        "To hide untracked noise locally, use: git config status.showUntrackedFiles no",
+        "Remove stale ACL-broken temp dirs from an elevated shell if they keep reappearing",
+        "Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks",
+    ]
+
+
 def test_repo_health_counts_reports_current_payload_sizes(tmp_path):
     payload = {
         "repo_root": str(tmp_path),
@@ -139,7 +173,7 @@ def test_format_repo_health_json_includes_metadata(tmp_path):
 
     assert rendered["_summary"] == "SDK submodule is not initialized; release smoke sample is missing"
     assert rendered["_counts"] == {"critical": 2, "suggestions": 1, "stale_dirs": 0, "blocked_stale_dirs": 0}
-    assert rendered["_view"] == {"critical_only": True}
+    assert rendered["_view"] == {"critical_only": True, "blocked_only": False}
     assert rendered["repo_root"] == str(tmp_path)
 
 
@@ -161,3 +195,4 @@ def test_format_repo_health_summary_includes_counts(tmp_path):
     assert "stale=1" in rendered
     assert "blocked=1" in rendered
     assert "critical_only=true" in rendered
+    assert "blocked_only=false" in rendered

@@ -102,11 +102,13 @@ def test_repository_health_dialog_copy_summary_writes_clipboard(qapp, monkeypatc
     assert "critical=2" in copied
     assert "blocked=1" in copied
     assert "critical_only=false" in copied
+    assert "blocked_only=false" in copied
 
     dialog._critical_only_check.setChecked(True)
     dialog._copy_summary_button.click()
     copied = QApplication.clipboard().text()
     assert "critical_only=true" in copied
+    assert "blocked_only=false" in copied
     assert "stale=0" in copied
     assert "blocked=0" in copied
 
@@ -134,6 +136,41 @@ def test_repository_health_dialog_can_open_first_stale_dir(qapp, monkeypatch, tm
     dialog._open_stale_button.click()
 
     assert opened_paths == [str(stale_dir)]
+
+
+@_skip_no_qt
+def test_repository_health_dialog_blocked_only_filters_stale_dirs(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    accessible_stale_dir = tmp_path / ".pytest-tmp-codex"
+    blocked_stale_dir = tmp_path / "tmpxtayw0f6"
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [
+            {"path": str(accessible_stale_dir), "accessible": True, "issue": ""},
+            {"path": str(blocked_stale_dir), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+    opened_paths = []
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path), open_path_callback=lambda path: opened_paths.append(path))
+    dialog._blocked_only_check.setChecked(True)
+    filtered_text = dialog._details_edit.toPlainText()
+
+    assert "[view] critical_only=false blocked_only=true" in filtered_text
+    assert dialog._summary_label.text() == "1 stale temp dir(s) detected"
+    assert dialog._overview_label.text() == "critical 0 | suggestions 3 | stale 1 | blocked 1"
+    assert str(accessible_stale_dir) not in filtered_text
+    assert str(blocked_stale_dir) in filtered_text
+
+    dialog._open_stale_button.click()
+    assert opened_paths == [str(blocked_stale_dir)]
 
 
 @_skip_no_qt
@@ -219,8 +256,9 @@ def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, t
 
     dialog._critical_only_check.setChecked(True)
     focused_text = dialog._details_edit.toPlainText()
-    assert "[view] critical_only=true" in focused_text
+    assert "[view] critical_only=true blocked_only=false" in focused_text
     assert dialog._overview_label.text() == "critical 2 | suggestions 2 | stale 0 | blocked 0"
+    assert dialog._summary_label.text() == "SDK submodule is not initialized; release smoke sample is missing"
     assert "critical: SDK submodule is not initialized" in focused_text
     assert "critical: release smoke sample is missing" in focused_text
     assert "stale_temp_dirs: 0 (blocked 0)" in focused_text
@@ -319,9 +357,10 @@ def test_repository_health_dialog_export_filename_tracks_critical_json_state(qap
 
     dialog = RepositoryHealthDialog(str(tmp_path))
     dialog._critical_only_check.setChecked(True)
+    dialog._blocked_only_check.setChecked(True)
     dialog._show_json_check.setChecked(True)
 
-    assert dialog._default_export_filename() == "repo-health-critical.json"
+    assert dialog._default_export_filename() == "repo-health-critical-blocked.json"
 
 
 @_skip_no_qt
@@ -341,11 +380,13 @@ def test_repository_health_dialog_restores_saved_view_state(qapp, isolated_confi
 
     dialog = RepositoryHealthDialog(str(tmp_path))
     dialog._critical_only_check.setChecked(True)
+    dialog._blocked_only_check.setChecked(True)
     dialog._show_json_check.setChecked(True)
     dialog.done(QDialog.Accepted)
 
     restored = RepositoryHealthDialog(str(tmp_path))
 
     assert restored._critical_only_check.isChecked() is True
+    assert restored._blocked_only_check.isChecked() is True
     assert restored._show_json_check.isChecked() is True
     assert '"critical_issues"' in restored._details_edit.toPlainText()

@@ -50,6 +50,7 @@ class RepositoryHealthDialog(QDialog):
 
         self._refresh_button = QPushButton("Refresh")
         self._critical_only_check = QCheckBox("Critical Only")
+        self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_summary_button = QPushButton("Copy Summary")
         self._copy_report_button = QPushButton("Copy Report")
@@ -61,6 +62,7 @@ class RepositoryHealthDialog(QDialog):
 
         self._refresh_button.clicked.connect(self.refresh)
         self._critical_only_check.toggled.connect(self._render_details)
+        self._blocked_only_check.toggled.connect(self._render_details)
         self._show_json_check.toggled.connect(self._render_details)
         self._copy_summary_button.clicked.connect(self._copy_summary)
         self._copy_report_button.clicked.connect(self._copy_report)
@@ -72,6 +74,7 @@ class RepositoryHealthDialog(QDialog):
 
         action_row.addWidget(self._refresh_button)
         action_row.addWidget(self._critical_only_check)
+        action_row.addWidget(self._blocked_only_check)
         action_row.addWidget(self._show_json_check)
         for button in (
             self._copy_summary_button,
@@ -95,21 +98,19 @@ class RepositoryHealthDialog(QDialog):
 
     def refresh(self) -> None:
         self._payload = collect_repo_health(self._repo_root)
-        self._summary_label.setText(summarize_repo_health(self._payload))
         self._render_details()
 
-        sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
-        smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
-        stale_dirs = self._payload.get("stale_temp_dirs") if isinstance(self._payload.get("stale_temp_dirs"), list) else []
-        self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
-        self._open_sdk_button.setEnabled(bool(sdk.get("path")))
-        self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
-        self._open_stale_button.setEnabled(bool(stale_dirs))
+    def _view_options(self) -> dict[str, bool]:
+        return {
+            "critical_only": self._critical_only_check.isChecked(),
+            "blocked_only": self._blocked_only_check.isChecked(),
+        }
 
     def _render_details(self) -> None:
-        critical_only = self._critical_only_check.isChecked()
-        view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
+        view_options = self._view_options()
+        view_payload = repo_health_view_payload(self._payload, **view_options)
         counts = repo_health_counts(view_payload)
+        self._summary_label.setText(summarize_repo_health(view_payload))
         self._overview_label.setText(
             (
                 f"critical {counts['critical']} | "
@@ -118,10 +119,17 @@ class RepositoryHealthDialog(QDialog):
                 f"blocked {counts['blocked_stale_dirs']}"
             )
         )
+        sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
+        smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
+        stale_dirs = view_payload.get("stale_temp_dirs") if isinstance(view_payload.get("stale_temp_dirs"), list) else []
+        self._open_repo_button.setEnabled(bool(self._payload.get("repo_root")))
+        self._open_sdk_button.setEnabled(bool(sdk.get("path")))
+        self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
+        self._open_stale_button.setEnabled(bool(stale_dirs))
         if self._show_json_check.isChecked():
-            self._details_edit.setPlainText(format_repo_health_json(view_payload, critical_only=critical_only))
+            self._details_edit.setPlainText(format_repo_health_json(view_payload, **view_options))
             return
-        self._details_edit.setPlainText(format_repo_health_text(view_payload, critical_only=critical_only))
+        self._details_edit.setPlainText(format_repo_health_text(view_payload, **view_options))
 
     def _open_payload_path(self, key: str, label: str) -> None:
         path = str(self._payload.get(key) or "").strip()
@@ -150,12 +158,12 @@ class RepositoryHealthDialog(QDialog):
         QApplication.clipboard().setText(self._details_edit.toPlainText())
 
     def _copy_summary(self) -> None:
-        critical_only = self._critical_only_check.isChecked()
-        view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
-        QApplication.clipboard().setText(format_repo_health_summary(view_payload, critical_only=critical_only))
+        view_options = self._view_options()
+        view_payload = repo_health_view_payload(self._payload, **view_options)
+        QApplication.clipboard().setText(format_repo_health_summary(view_payload, **view_options))
 
     def _open_first_stale_dir(self) -> None:
-        stale_dirs = self._payload.get("stale_temp_dirs")
+        stale_dirs = repo_health_view_payload(self._payload, **self._view_options()).get("stale_temp_dirs")
         if not isinstance(stale_dirs, list) or not stale_dirs:
             return
         first_entry = stale_dirs[0]
@@ -190,6 +198,8 @@ class RepositoryHealthDialog(QDialog):
         parts = ["repo-health"]
         if self._critical_only_check.isChecked():
             parts.append("critical")
+        if self._blocked_only_check.isChecked():
+            parts.append("blocked")
         if self._show_json_check.isChecked():
             return "-".join(parts) + ".json"
         return "-".join(parts) + ".txt"
@@ -197,11 +207,13 @@ class RepositoryHealthDialog(QDialog):
     def _restore_view_state(self) -> None:
         state = self._config.repo_health_view if isinstance(self._config.repo_health_view, dict) else {}
         self._critical_only_check.setChecked(bool(state.get("critical_only", False)))
+        self._blocked_only_check.setChecked(bool(state.get("blocked_only", False)))
         self._show_json_check.setChecked(bool(state.get("show_json", False)))
 
     def _save_view_state(self) -> None:
         self._config.repo_health_view = {
             "critical_only": self._critical_only_check.isChecked(),
+            "blocked_only": self._blocked_only_check.isChecked(),
             "show_json": self._show_json_check.isChecked(),
         }
         self._config.save()
