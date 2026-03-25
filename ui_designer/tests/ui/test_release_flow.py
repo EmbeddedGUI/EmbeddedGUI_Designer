@@ -481,6 +481,45 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monkeypatch):
+    import json
+
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+    export_path = tmp_path / "release-entry.json"
+    captured = {}
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+            }
+        ]
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "JSON Files (*.json)",
+        ),
+    )
+
+    dialog._export_entry_json_button.click()
+
+    exported = json.loads(export_path.read_text(encoding="utf-8"))
+    assert captured["default_name"] == "release-entry-20260326t000000z-windows-pc-success.json"
+    assert exported["build_id"] == "20260326T000000Z"
+    assert exported["profile_id"] == "windows-pc"
+    assert exported["manifest_path"] == str(manifest_path)
+
+
+@_skip_no_qt
 def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

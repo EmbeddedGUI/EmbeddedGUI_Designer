@@ -893,6 +893,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button = QPushButton("Copy Details")
         self._copy_preview_button = QPushButton("Copy Preview")
         self._copy_entry_json_button = QPushButton("Copy Entry JSON")
+        self._export_entry_json_button = QPushButton("Export Entry JSON...")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_dist_button = QPushButton("Open Dist")
         self._open_version_button = QPushButton("Open Version")
@@ -906,6 +907,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
         self._copy_entry_json_button.clicked.connect(self._copy_entry_json)
+        self._export_entry_json_button.clicked.connect(self._export_entry_json)
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
         self._open_dist_button.clicked.connect(lambda: self._open_selected_path("dist_dir", "Release Dist"))
         self._open_version_button.clicked.connect(self._open_selected_version)
@@ -920,6 +922,7 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_details_button,
             self._copy_preview_button,
             self._copy_entry_json_button,
+            self._export_entry_json_button,
             self._open_folder_button,
             self._open_dist_button,
             self._open_version_button,
@@ -1269,11 +1272,41 @@ class ReleaseHistoryDialog(QDialog):
         super().done(result)
 
     def _copy_entry_json(self) -> None:
+        self._copy_text(self._entry_json_text())
+
+    def _entry_json_text(self) -> str:
         entry = self._current_entry()
         if not entry:
-            self._copy_text("")
+            return ""
+        return json.dumps(entry, indent=2, ensure_ascii=False) + "\n"
+
+    def _export_entry_json(self) -> None:
+        if not self._current_entry():
             return
-        self._copy_text(json.dumps(entry, indent=2, ensure_ascii=False) + "\n")
+        selected_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Release Entry JSON",
+            self._default_entry_export_filename(),
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            _write_text_file(selected_path, self._entry_json_text())
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Release Entry Failed", str(exc))
+
+    def _default_entry_export_filename(self) -> str:
+        entry = self._current_entry() or {}
+        parts = [
+            "release-entry",
+            _safe_filename_part(_history_string(entry, "build_id") or "unknown-build"),
+            _safe_filename_part(_history_string(entry, "profile_id") or "unknown-profile"),
+        ]
+        status_part = _safe_filename_part(_history_status(entry))
+        if status_part:
+            parts.append(status_part)
+        return "-".join(part for part in parts if part) + ".json"
 
     def _copy_entry_summary(self) -> None:
         entry = self._current_entry()
@@ -1290,6 +1323,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_details_button.setEnabled(bool(entry))
         self._copy_preview_button.setEnabled(bool(entry))
         self._copy_entry_json_button.setEnabled(bool(entry))
+        self._export_entry_json_button.setEnabled(bool(entry))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
         self._open_dist_button.setEnabled(bool(entry and _history_string(entry, "dist_dir")))
         self._open_version_button.setEnabled(bool(entry and _history_version_path(entry)))
