@@ -448,6 +448,53 @@ def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_keeps_selected_preview_mode_across_entries(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_a = tmp_path / "release-a.json"
+    manifest_b = tmp_path / "release-b.json"
+    log_a = tmp_path / "build-a.log"
+    log_b = tmp_path / "build-b.log"
+    manifest_a.write_text('{"status":"success","name":"a"}\n', encoding="utf-8")
+    manifest_b.write_text('{"status":"success","name":"b"}\n', encoding="utf-8")
+    log_a.write_text("log a\n", encoding="utf-8")
+    log_b.write_text("log b\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_a),
+                "log_path": str(log_a),
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_b),
+                "log_path": str(log_b),
+            },
+        ]
+    )
+
+    first_row = next(row for row in range(dialog._history_list.count()) if "20260326T000000Z" in dialog._history_list.item(row).text())
+    second_row = next(row for row in range(dialog._history_list.count()) if "20260326T000100Z" in dialog._history_list.item(row).text())
+    dialog._history_list.setCurrentRow(first_row)
+
+    assert dialog._preview_label.text() == "Manifest Preview"
+
+    dialog._preview_log_button.click()
+    assert dialog._preview_label.text() == "Log Preview"
+    assert "log a" in dialog._preview_edit.toPlainText()
+
+    dialog._history_list.setCurrentRow(second_row)
+    assert dialog._preview_label.text() == "Log Preview"
+    assert "log b" in dialog._preview_edit.toPlainText()
+
+
+@_skip_no_qt
 def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     from PyQt5.QtWidgets import QApplication
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
@@ -1104,6 +1151,8 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "log_path": "/tmp/build.log",
+                "zip_path": "/tmp/release.zip",
             }
         ]
     )
@@ -1114,6 +1163,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("errors"))
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("status"))
     dialog._search_edit.setText("sdk-fail")
+    dialog._preview_log_button.click()
     dialog.done(QDialog.Accepted)
 
     restored = ReleaseHistoryDialog(
@@ -1126,6 +1176,8 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "log_path": "/tmp/build.log",
+                "zip_path": "/tmp/release.zip",
             }
         ]
     )
@@ -1137,6 +1189,8 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     assert restored._diagnostics_filter_combo.currentData() == "errors"
     assert restored._sort_combo.currentData() == "status"
     assert restored._search_edit.text() == "sdk-fail"
+    assert restored._preview_label.text() == "Log Preview"
+    assert "File not found:" in restored._preview_edit.toPlainText()
 
 
 @_skip_no_qt

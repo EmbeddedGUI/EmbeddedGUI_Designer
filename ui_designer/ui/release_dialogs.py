@@ -762,6 +762,7 @@ class ReleaseHistoryDialog(QDialog):
         self._history_path = os.path.abspath(os.path.normpath(history_path)) if history_path else ""
         self._refresh_history_callback = refresh_history_callback
         self._project_key = str(project_key or "").strip()
+        self._preview_mode = "auto"
         self._all_history_entries: list[dict[str, object]] = []
         self._filtered_history_entries: list[dict[str, object]] = []
 
@@ -913,9 +914,9 @@ class ReleaseHistoryDialog(QDialog):
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
-        self._preview_manifest_button.clicked.connect(lambda: self._preview_selected_path("manifest_path", "Manifest", prefer_json=True))
-        self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
-        self._preview_version_button.clicked.connect(self._preview_selected_version)
+        self._preview_manifest_button.clicked.connect(lambda: self._activate_preview_mode("manifest"))
+        self._preview_log_button.clicked.connect(lambda: self._activate_preview_mode("log"))
+        self._preview_version_button.clicked.connect(lambda: self._activate_preview_mode("version"))
         self._copy_summary_button.clicked.connect(self._copy_entry_summary)
         self._copy_details_button.clicked.connect(lambda: self._copy_text(self._details_edit.toPlainText()))
         self._copy_preview_button.clicked.connect(lambda: self._copy_text(self._preview_edit.toPlainText()))
@@ -1236,6 +1237,9 @@ class ReleaseHistoryDialog(QDialog):
         diagnostics_value = str(state.get("diagnostics_filter") or "")
         sort_value = str(state.get("sort_mode") or "newest")
         search_text = str(state.get("search_text") or "")
+        self._preview_mode = str(state.get("preview_mode") or "auto").strip().lower()
+        if self._preview_mode not in {"auto", "manifest", "log", "version"}:
+            self._preview_mode = "auto"
 
         index = self._range_filter_combo.findData(range_value)
         self._range_filter_combo.setCurrentIndex(index if index >= 0 else 0)
@@ -1256,6 +1260,8 @@ class ReleaseHistoryDialog(QDialog):
         self._sort_combo.setCurrentIndex(index if index >= 0 else 0)
 
         self._search_edit.setText(search_text)
+        if self._current_entry():
+            self._refresh_selected_preview()
 
     def _save_view_state(self) -> None:
         view_state = {
@@ -1266,6 +1272,7 @@ class ReleaseHistoryDialog(QDialog):
             "diagnostics_filter": str(self._diagnostics_filter_combo.currentData() or ""),
             "sort_mode": str(self._sort_combo.currentData() or "newest"),
             "search_text": self._search_edit.text(),
+            "preview_mode": self._preview_mode,
         }
         current_state = self._config.release_history_view if isinstance(self._config.release_history_view, dict) else {}
         if self._project_key:
@@ -1331,6 +1338,35 @@ class ReleaseHistoryDialog(QDialog):
             return
         self._copy_text(_history_summary_line(entry) + "\n")
 
+    def _activate_preview_mode(self, mode: str) -> None:
+        self._preview_mode = mode if mode in {"auto", "manifest", "log", "version"} else "auto"
+        self._refresh_selected_preview()
+
+    def _refresh_selected_preview(self) -> None:
+        entry = self._current_entry()
+        if entry is None:
+            self._preview_label.setText("Preview")
+            self._preview_edit.clear()
+            return
+        if self._preview_mode == "manifest":
+            self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
+            return
+        if self._preview_mode == "log":
+            self._preview_selected_path("log_path", "Log")
+            return
+        if self._preview_mode == "version":
+            self._preview_selected_version()
+            return
+        if _history_string(entry, "manifest_path"):
+            self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
+        elif _history_string(entry, "log_path"):
+            self._preview_selected_path("log_path", "Log")
+        elif _history_version_path(entry):
+            self._preview_selected_version()
+        else:
+            self._preview_label.setText("Preview")
+            self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
+
     def _update_history_file_button(self) -> None:
         self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
 
@@ -1377,15 +1413,7 @@ class ReleaseHistoryDialog(QDialog):
         self._summary_label.setText(_history_list_label(entry))
         self._details_edit.setPlainText(_history_detail_text(entry))
         self._set_open_buttons(entry)
-        if _history_string(entry, "manifest_path"):
-            self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
-        elif _history_string(entry, "log_path"):
-            self._preview_selected_path("log_path", "Log")
-        elif _history_version_path(entry):
-            self._preview_selected_version()
-        else:
-            self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
+        self._refresh_selected_preview()
 
     def _open_selected_path(self, key: str, label: str) -> None:
         if self._open_path_callback is None:
