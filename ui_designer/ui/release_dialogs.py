@@ -114,6 +114,15 @@ def _history_detail_text(entry: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _history_summary_line(entry: dict[str, object]) -> str:
+    build_id = _history_string(entry, "build_id") or "unknown-build"
+    status = _history_status(entry)
+    profile_id = _history_string(entry, "profile_id") or "unknown-profile"
+    sdk_label = _history_sdk_label(entry)
+    message = _history_string(entry, "message") or "-"
+    return f"{build_id} | {status} | {profile_id} | sdk {sdk_label} | {message}"
+
+
 def _preview_file_text(path: str, *, prefer_json: bool = False, char_limit: int = _PREVIEW_CHAR_LIMIT) -> str:
     resolved_path = os.path.abspath(os.path.normpath(path))
     if not os.path.isfile(resolved_path):
@@ -436,6 +445,7 @@ class ReleaseHistoryDialog(QDialog):
         self._open_path_callback = open_path_callback
         self._refresh_history_callback = refresh_history_callback
         self._all_history_entries: list[dict[str, object]] = []
+        self._filtered_history_entries: list[dict[str, object]] = []
 
         root_layout = QVBoxLayout(self)
 
@@ -468,6 +478,10 @@ class ReleaseHistoryDialog(QDialog):
         self._clear_filters_button = QPushButton("Clear Filters")
         self._clear_filters_button.clicked.connect(self._clear_filters)
         filter_row.addWidget(self._clear_filters_button)
+
+        self._copy_filtered_button = QPushButton("Copy Filtered")
+        self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
+        filter_row.addWidget(self._copy_filtered_button)
 
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
@@ -606,7 +620,9 @@ class ReleaseHistoryDialog(QDialog):
             for entry in self._all_history_entries
             if self._matches_history_filter(entry, wanted_status, wanted_profile, search_text)
         ]
+        self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
+        self._copy_filtered_button.setEnabled(bool(filtered_entries))
 
         self._history_list.blockSignals(True)
         self._history_list.clear()
@@ -649,6 +665,20 @@ class ReleaseHistoryDialog(QDialog):
         self._status_filter_combo.setCurrentIndex(0)
         self._profile_filter_combo.setCurrentIndex(0)
         self._search_edit.clear()
+
+    def _copy_filtered_summary(self) -> None:
+        wanted_status = str(self._status_filter_combo.currentData() or "") or "all"
+        wanted_profile = str(self._profile_filter_combo.currentData() or "") or "all"
+        search_text = self._search_edit.text().strip() or "-"
+        lines = [
+            "Release History Summary",
+            f"matched_entries={len(self._filtered_history_entries)}",
+            f"total_entries={len(self._all_history_entries)}",
+            f"filters: status={wanted_status}, profile={wanted_profile}, search={search_text}",
+            "",
+        ]
+        lines.extend(_history_summary_line(entry) for entry in self._filtered_history_entries)
+        self._copy_text("\n".join(lines).rstrip() + "\n")
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))

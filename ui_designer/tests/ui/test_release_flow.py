@@ -334,6 +334,42 @@ def test_release_history_dialog_filters_entries(qapp):
 
 
 @_skip_no_qt
+def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+            },
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+            },
+        ]
+    )
+
+    dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
+
+    QApplication.clipboard().clear()
+    dialog._copy_filtered_button.click()
+    copied = QApplication.clipboard().text()
+
+    assert "matched_entries=1" in copied
+    assert "filters: status=failed, profile=all, search=-" in copied
+    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
+    assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
+
+
+@_skip_no_qt
 def test_release_history_dialog_refreshes_entries(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
