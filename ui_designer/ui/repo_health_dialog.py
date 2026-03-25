@@ -56,6 +56,7 @@ class RepositoryHealthDialog(QDialog):
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_summary_button = QPushButton("Copy Summary")
         self._copy_report_button = QPushButton("Copy Report")
+        self._copy_json_button = QPushButton("Copy JSON")
         self._export_report_button = QPushButton("Export Report...")
         self._open_repo_button = QPushButton("Open Repo")
         self._open_sdk_button = QPushButton("Open SDK")
@@ -71,6 +72,7 @@ class RepositoryHealthDialog(QDialog):
         self._show_json_check.toggled.connect(self._render_details)
         self._copy_summary_button.clicked.connect(self._copy_summary)
         self._copy_report_button.clicked.connect(self._copy_report)
+        self._copy_json_button.clicked.connect(self._copy_json)
         self._export_report_button.clicked.connect(self._export_report)
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
@@ -85,6 +87,7 @@ class RepositoryHealthDialog(QDialog):
         for button in (
             self._copy_summary_button,
             self._copy_report_button,
+            self._copy_json_button,
             self._export_report_button,
             self._open_repo_button,
             self._open_sdk_button,
@@ -175,6 +178,11 @@ class RepositoryHealthDialog(QDialog):
 
     def _copy_report(self) -> None:
         QApplication.clipboard().setText(self._details_edit.toPlainText())
+
+    def _copy_json(self) -> None:
+        view_options = self._view_options()
+        view_payload = repo_health_view_payload(self._payload, **view_options)
+        QApplication.clipboard().setText(format_repo_health_json(view_payload, **view_options))
 
     def _copy_summary(self) -> None:
         view_options = self._view_options()

@@ -262,6 +262,41 @@ def test_repository_health_dialog_copy_report_writes_clipboard(qapp, monkeypatch
 
 
 @_skip_no_qt
+def test_repository_health_dialog_copy_json_writes_json_clipboard(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    QApplication.clipboard().clear()
+    dialog._copy_json_button.click()
+
+    copied = QApplication.clipboard().text()
+    assert '"repo_root"' in copied
+    assert '"sdk_submodule"' in copied
+    assert '"_view": {' in copied
+    assert '"critical_only": false' in copied
+
+    dialog._critical_only_check.setChecked(True)
+    dialog._copy_json_button.click()
+    copied = QApplication.clipboard().text()
+    assert '"critical_only": true' in copied
+    assert '"blocked_only": false' in copied
+    assert '"stale_temp_dirs": []' in copied
+
+
+@_skip_no_qt
 def test_repository_health_dialog_can_switch_to_json_view(qapp, monkeypatch, tmp_path):
     from PyQt5.QtWidgets import QApplication
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
