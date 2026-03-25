@@ -308,9 +308,11 @@ def test_release_history_dialog_filters_entries(qapp):
     )
 
     assert dialog._history_list.count() == 2
+    assert dialog._result_count_label.text() == "2 / 2"
 
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     assert dialog._history_list.count() == 1
+    assert dialog._result_count_label.text() == "1 / 2"
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData(""))
@@ -322,6 +324,13 @@ def test_release_history_dialog_filters_entries(qapp):
     dialog._search_edit.setText("sdk-fail")
     assert dialog._history_list.count() == 1
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._clear_filters_button.click()
+    assert dialog._history_list.count() == 2
+    assert dialog._result_count_label.text() == "2 / 2"
+    assert dialog._status_filter_combo.currentData() == ""
+    assert dialog._profile_filter_combo.currentData() == ""
+    assert dialog._search_edit.text() == ""
 
 
 @_skip_no_qt

@@ -462,6 +462,13 @@ class ReleaseHistoryDialog(QDialog):
         self._search_edit.textChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._search_edit, 1)
 
+        self._result_count_label = QLabel("0 / 0")
+        filter_row.addWidget(self._result_count_label)
+
+        self._clear_filters_button = QPushButton("Clear Filters")
+        self._clear_filters_button.clicked.connect(self._clear_filters)
+        filter_row.addWidget(self._clear_filters_button)
+
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
         self._refresh_button.clicked.connect(self._reload_history_entries)
@@ -599,6 +606,7 @@ class ReleaseHistoryDialog(QDialog):
             for entry in self._all_history_entries
             if self._matches_history_filter(entry, wanted_status, wanted_profile, search_text)
         ]
+        self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
 
         self._history_list.blockSignals(True)
         self._history_list.clear()
@@ -636,6 +644,11 @@ class ReleaseHistoryDialog(QDialog):
             QMessageBox.warning(self, "Refresh Release History Failed", str(exc))
             return
         self._load_history_entries(history_entries)
+
+    def _clear_filters(self) -> None:
+        self._status_filter_combo.setCurrentIndex(0)
+        self._profile_filter_combo.setCurrentIndex(0)
+        self._search_edit.clear()
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
