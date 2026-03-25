@@ -208,6 +208,64 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
 
 
 @_skip_no_qt
+def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_path, monkeypatch):
+    from ui_designer.model.project import Project
+    from ui_designer.ui.main_window import MainWindow
+
+    sdk_root = tmp_path / "sdk"
+    project_dir = sdk_root / "example" / "ReleaseDemo"
+    release_root = project_dir / "output" / "ui_designer_release" / "windows-pc" / "20260326T000000Z"
+    dist_dir = release_root / "dist"
+    manifest_path = release_root / "release-manifest.json"
+    version_path = dist_dir / "VERSION.txt"
+    _create_sdk_root(sdk_root)
+    dist_dir.mkdir(parents=True)
+    manifest_path.write_text("{}\n", encoding="utf-8")
+    version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
+
+    project = Project(app_name="ReleaseDemo")
+    project.sdk_root = str(sdk_root)
+    project.project_dir = str(project_dir)
+    project.create_new_page("main_page")
+    project.save(str(project_dir))
+
+    window = MainWindow(str(sdk_root))
+    monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+    monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+    window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+    monkeypatch.setattr(
+        "ui_designer.ui.main_window.latest_release_entry",
+        lambda project_dir_arg, output_dir="": {
+            "release_root": str(release_root),
+            "dist_dir": str(dist_dir),
+            "manifest_path": str(manifest_path),
+        },
+    )
+
+    opened_paths = []
+    monkeypatch.setattr(window, "_open_path_in_shell", lambda path: opened_paths.append(path))
+
+    window._update_compile_availability()
+    assert window._open_last_release_dir_action.isEnabled() is True
+    assert window._open_last_release_dist_action.isEnabled() is True
+    assert window._open_last_release_manifest_action.isEnabled() is True
+    assert window._open_last_release_version_action.isEnabled() is True
+
+    window._open_last_release_folder()
+    window._open_last_release_dist()
+    window._open_last_release_manifest()
+    window._open_last_release_version()
+
+    assert opened_paths == [
+        str(release_root),
+        str(dist_dir),
+        str(manifest_path),
+        str(version_path),
+    ]
+
+
+@_skip_no_qt
 def test_release_history_dialog_previews_manifest_and_log(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

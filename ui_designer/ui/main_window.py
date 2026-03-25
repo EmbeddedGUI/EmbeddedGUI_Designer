@@ -599,7 +599,9 @@ class MainWindow(QMainWindow):
             self._release_profiles_action.setEnabled(self.project is not None)
             self._release_history_action.setEnabled(can_browse_release_history)
             self._open_last_release_dir_action.setEnabled(has_release_history)
+            self._open_last_release_dist_action.setEnabled(has_release_history)
             self._open_last_release_manifest_action.setEnabled(has_release_history)
+            self._open_last_release_version_action.setEnabled(has_release_history)
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
@@ -1214,9 +1216,17 @@ class MainWindow(QMainWindow):
         self._open_last_release_dir_action.triggered.connect(self._open_last_release_folder)
         build_menu.addAction(self._open_last_release_dir_action)
 
+        self._open_last_release_dist_action = QAction("Open Last Release Dist", self)
+        self._open_last_release_dist_action.triggered.connect(self._open_last_release_dist)
+        build_menu.addAction(self._open_last_release_dist_action)
+
         self._open_last_release_manifest_action = QAction("Open Last Release Manifest", self)
         self._open_last_release_manifest_action.triggered.connect(self._open_last_release_manifest)
         build_menu.addAction(self._open_last_release_manifest_action)
+
+        self._open_last_release_version_action = QAction("Open Last Release Version", self)
+        self._open_last_release_version_action.triggered.connect(self._open_last_release_version)
+        build_menu.addAction(self._open_last_release_version_action)
 
         self._release_history_action = QAction("Release History...", self)
         self._release_history_action.triggered.connect(self._show_release_history)
@@ -1549,6 +1559,19 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             QMessageBox.warning(self, "Open Release Folder Failed", str(exc))
 
+    def _open_last_release_dist(self):
+        if not self._project_dir:
+            return
+        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        dist_dir = normalize_path(entry.get("dist_dir", "")) if isinstance(entry, dict) else ""
+        if not dist_dir:
+            self.statusBar().showMessage("No release dist directory available", 4000)
+            return
+        try:
+            self._open_path_in_shell(dist_dir)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Dist Failed", str(exc))
+
     def _open_last_release_manifest(self):
         if not self._project_dir:
             return
@@ -1561,6 +1584,29 @@ class MainWindow(QMainWindow):
             self._open_path_in_shell(manifest_path)
         except Exception as exc:
             QMessageBox.warning(self, "Open Release Manifest Failed", str(exc))
+
+    def _open_last_release_version(self):
+        if not self._project_dir:
+            return
+        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        version_path = ""
+        if isinstance(entry, dict):
+            dist_dir = normalize_path(entry.get("dist_dir", ""))
+            release_root = normalize_path(entry.get("release_root", ""))
+            for base_dir in (dist_dir, release_root):
+                if not base_dir:
+                    continue
+                candidate = normalize_path(os.path.join(base_dir, "VERSION.txt"))
+                if candidate and os.path.isfile(candidate):
+                    version_path = candidate
+                    break
+        if not version_path:
+            self.statusBar().showMessage("No release version file available", 4000)
+            return
+        try:
+            self._open_path_in_shell(version_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Version Failed", str(exc))
 
     def _show_release_history(self):
         if not self._project_dir:
