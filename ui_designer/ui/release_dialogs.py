@@ -136,6 +136,18 @@ def _history_status_counts(entries: list[dict[str, object]]) -> dict[str, int]:
     return counts
 
 
+def _history_artifact_counts(entries: list[dict[str, object]]) -> dict[str, int]:
+    counts = {"manifest": 0, "log": 0, "package": 0}
+    for entry in entries:
+        if _history_string(entry, "manifest_path"):
+            counts["manifest"] += 1
+        if _history_string(entry, "log_path"):
+            counts["log"] += 1
+        if _history_string(entry, "zip_path"):
+            counts["package"] += 1
+    return counts
+
+
 def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> bool:
     artifact_key = {
         "manifest": "manifest_path",
@@ -611,6 +623,9 @@ class ReleaseHistoryDialog(QDialog):
         self._status_breakdown_label = QLabel("success 0 | failed 0 | unknown 0")
         filter_row.addWidget(self._status_breakdown_label)
 
+        self._artifact_breakdown_label = QLabel("manifest 0 | log 0 | package 0")
+        filter_row.addWidget(self._artifact_breakdown_label)
+
         self._clear_filters_button = QPushButton("Clear Filters")
         self._clear_filters_button.clicked.connect(self._clear_filters)
         filter_row.addWidget(self._clear_filters_button)
@@ -794,8 +809,12 @@ class ReleaseHistoryDialog(QDialog):
         self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
         status_counts = _history_status_counts(self._filtered_history_entries)
+        artifact_counts = _history_artifact_counts(self._filtered_history_entries)
         self._status_breakdown_label.setText(
             f"success {status_counts['success']} | failed {status_counts['failed']} | unknown {status_counts['unknown']}"
+        )
+        self._artifact_breakdown_label.setText(
+            f"manifest {artifact_counts['manifest']} | log {artifact_counts['log']} | package {artifact_counts['package']}"
         )
         self._copy_filtered_button.setEnabled(bool(filtered_entries))
         self._export_filtered_button.setEnabled(bool(filtered_entries))
