@@ -745,12 +745,21 @@ class ReleaseProfilesDialog(QDialog):
 class ReleaseHistoryDialog(QDialog):
     """Browse recent release builds and open related artifacts."""
 
-    def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, refresh_history_callback=None, project_key: str = "", parent=None):
+    def __init__(
+        self,
+        history_entries: list[dict[str, object]],
+        open_path_callback=None,
+        history_path: str = "",
+        refresh_history_callback=None,
+        project_key: str = "",
+        parent=None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("Release History")
         self.resize(1040, 680)
         self._config = get_config()
         self._open_path_callback = open_path_callback
+        self._history_path = os.path.abspath(os.path.normpath(history_path)) if history_path else ""
         self._refresh_history_callback = refresh_history_callback
         self._project_key = str(project_key or "").strip()
         self._all_history_entries: list[dict[str, object]] = []
@@ -852,6 +861,11 @@ class ReleaseHistoryDialog(QDialog):
         self._export_filtered_button = QPushButton("Export Filtered...")
         self._export_filtered_button.clicked.connect(self._export_filtered_summary)
         filter_row.addWidget(self._export_filtered_button)
+
+        self._open_history_file_button = QPushButton("Open History File")
+        self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
+        self._open_history_file_button.clicked.connect(self._open_history_file)
+        filter_row.addWidget(self._open_history_file_button)
 
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
@@ -1314,6 +1328,14 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_text("")
             return
         self._copy_text(_history_summary_line(entry) + "\n")
+
+    def _open_history_file(self) -> None:
+        if self._open_path_callback is None or not self._history_path or not os.path.isfile(self._history_path):
+            return
+        try:
+            self._open_path_callback(self._history_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release History File Failed", str(exc))
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
         self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))

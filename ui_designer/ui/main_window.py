@@ -1679,6 +1679,7 @@ class MainWindow(QMainWindow):
         dialog = ReleaseHistoryDialog(
             history_entries,
             open_path_callback=self._open_path_in_shell,
+            history_path=release_history_path(self._project_dir, output_dir=self._release_output_root()),
             refresh_history_callback=lambda: load_release_history(self._project_dir, output_dir=self._release_output_root()),
             project_key=self._project_dir,
             parent=self,

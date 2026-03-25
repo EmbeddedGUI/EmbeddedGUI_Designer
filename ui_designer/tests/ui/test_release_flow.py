@@ -181,9 +181,10 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
         return [history_entry]
 
     class FakeHistoryDialog:
-        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, project_key="", parent=None):
+        def __init__(self, history_entries, open_path_callback=None, history_path="", refresh_history_callback=None, project_key="", parent=None):
             captured["history_entries"] = history_entries
             captured["open_path_callback"] = open_path_callback
+            captured["history_path"] = history_path
             captured["refresh_history_callback"] = refresh_history_callback
             captured["project_key"] = project_key
             captured["parent"] = parent
@@ -201,6 +202,7 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
     assert captured["output_dir"].endswith(os.path.join("output", "ui_designer_release"))
     assert captured["history_entries"][0]["sdk"]["revision"] == "v1.0.0-310-g416d576"
     assert captured["open_path_callback"] == window._open_path_in_shell
+    assert captured["history_path"].endswith(os.path.join("output", "ui_designer_release", "history.json"))
     assert callable(captured["refresh_history_callback"])
     assert captured["project_key"] == str(project_dir)
     assert captured["parent"] is window
@@ -547,6 +549,33 @@ def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
     dialog._open_version_button.click()
 
     assert opened_paths == [str(tmp_path), str(dist_dir), str(version_path)]
+
+
+@_skip_no_qt
+def test_release_history_dialog_can_open_history_file(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    opened_paths = []
+    history_path = tmp_path / "output" / "ui_designer_release" / "history.json"
+    history_path.parent.mkdir(parents=True)
+    history_path.write_text("[]\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ],
+        open_path_callback=lambda path: opened_paths.append(path),
+        history_path=str(history_path),
+    )
+
+    assert dialog._open_history_file_button.isEnabled() is True
+    dialog._open_history_file_button.click()
+
+    assert opened_paths == [str(history_path)]
 
 
 @_skip_no_qt
@@ -1000,8 +1029,9 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
         return []
 
     class FakeHistoryDialog:
-        def __init__(self, history_entries, open_path_callback=None, refresh_history_callback=None, project_key="", parent=None):
+        def __init__(self, history_entries, open_path_callback=None, history_path="", refresh_history_callback=None, project_key="", parent=None):
             captured["history_entries"] = history_entries
+            captured["history_path"] = history_path
             captured["refresh_history_callback"] = refresh_history_callback
             captured["project_key"] = project_key
             captured["parent"] = parent
@@ -1019,6 +1049,7 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
     window._show_release_history()
 
     assert captured["project_dir"] == str(project_dir)
+    assert captured["history_path"].endswith(os.path.join("output", "ui_designer_release", "history.json"))
     assert captured["history_entries"] == []
     assert callable(captured["refresh_history_callback"])
     assert captured["project_key"] == str(project_dir)
