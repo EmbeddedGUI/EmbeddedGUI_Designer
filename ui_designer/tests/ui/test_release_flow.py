@@ -595,7 +595,9 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
     manifest_path = tmp_path / "release-manifest.json"
+    package_path = tmp_path / "ReleaseDemo.zip"
     manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+    package_path.write_text("zip\n", encoding="utf-8")
 
     dialog = ReleaseHistoryDialog(
         [
@@ -604,6 +606,7 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
                 "status": "success",
                 "profile_id": "windows-pc",
                 "manifest_path": str(manifest_path),
+                "zip_path": str(package_path),
             }
         ]
     )
@@ -620,6 +623,9 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
 
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(manifest_path) + "\n"
+
+    dialog._copy_package_path_button.click()
+    assert QApplication.clipboard().text() == str(package_path) + "\n"
 
     dialog._copy_entry_json_button.click()
     copied_json = QApplication.clipboard().text()
@@ -841,6 +847,7 @@ def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     assert dialog._preview_manifest_button.isEnabled() is True
     assert dialog._preview_log_button.isEnabled() is True
     assert dialog._preview_version_button.isEnabled() is False
+    assert dialog._copy_package_path_button.isEnabled() is True
     assert dialog._open_folder_button.isEnabled() is False
     assert dialog._open_dist_button.isEnabled() is False
     assert dialog._open_manifest_button.isEnabled() is False
