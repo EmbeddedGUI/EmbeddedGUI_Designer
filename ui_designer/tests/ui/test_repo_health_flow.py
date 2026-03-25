@@ -98,6 +98,8 @@ def test_repository_health_dialog_copy_report_writes_clipboard(qapp, monkeypatch
     dialog._copy_report_button.click()
 
     copied = QApplication.clipboard().text()
+    assert "[summary] Repository health looks good." in copied
+    assert "[counts] critical=0 suggestions=0 stale=0" in copied
     assert f"[repo] {tmp_path}" in copied
     assert "sdk_submodule.initialized: true" in copied
 
@@ -121,12 +123,15 @@ def test_repository_health_dialog_can_switch_to_json_view(qapp, monkeypatch, tmp
     dialog = RepositoryHealthDialog(str(tmp_path))
 
     dialog._show_json_check.setChecked(True)
+    assert '"_summary": "Repository health looks good."' in dialog._details_edit.toPlainText()
+    assert '"_counts": {' in dialog._details_edit.toPlainText()
     assert '"repo_root"' in dialog._details_edit.toPlainText()
     assert '"sdk_submodule"' in dialog._details_edit.toPlainText()
 
     QApplication.clipboard().clear()
     dialog._copy_report_button.click()
     copied = QApplication.clipboard().text()
+    assert '"_view": {' in copied
     assert '"repo_root"' in copied
     assert '"sdk_submodule"' in copied
 
@@ -154,6 +159,7 @@ def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, t
 
     dialog._critical_only_check.setChecked(True)
     focused_text = dialog._details_edit.toPlainText()
+    assert "[view] critical_only=true" in focused_text
     assert dialog._overview_label.text() == "critical 2 | suggestions 2 | stale 0"
     assert "critical: SDK submodule is not initialized" in focused_text
     assert "critical: release smoke sample is missing" in focused_text
@@ -162,6 +168,7 @@ def test_repository_health_dialog_can_focus_critical_issues(qapp, monkeypatch, t
 
     dialog._show_json_check.setChecked(True)
     focused_json = dialog._details_edit.toPlainText()
+    assert '"_view": {' in focused_json
     assert '"critical_issues"' in focused_json
     assert '"stale_temp_dirs": []' in focused_json
 
@@ -195,6 +202,7 @@ def test_repository_health_dialog_exports_current_text_view(qapp, monkeypatch, t
 
     exported = export_path.read_text(encoding="utf-8")
     assert captured["default_name"] == "repo-health.txt"
+    assert "[summary] Repository health looks good." in exported
     assert f"[repo] {tmp_path}" in exported
     assert "sdk_submodule.initialized: true" in exported
 
@@ -229,6 +237,7 @@ def test_repository_health_dialog_exports_current_json_view(qapp, monkeypatch, t
 
     exported = export_path.read_text(encoding="utf-8")
     assert captured["default_name"] == "repo-health.json"
+    assert '"_summary": "Repository health looks good."' in exported
     assert '"repo_root"' in exported
     assert '"sdk_submodule"' in exported
 

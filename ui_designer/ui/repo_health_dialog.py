@@ -91,15 +91,16 @@ class RepositoryHealthDialog(QDialog):
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke.get("path")))
 
     def _render_details(self) -> None:
-        view_payload = repo_health_view_payload(self._payload, critical_only=self._critical_only_check.isChecked())
+        critical_only = self._critical_only_check.isChecked()
+        view_payload = repo_health_view_payload(self._payload, critical_only=critical_only)
         counts = repo_health_counts(view_payload)
         self._overview_label.setText(
             f"critical {counts['critical']} | suggestions {counts['suggestions']} | stale {counts['stale_dirs']}"
         )
         if self._show_json_check.isChecked():
-            self._details_edit.setPlainText(format_repo_health_json(view_payload))
+            self._details_edit.setPlainText(format_repo_health_json(view_payload, critical_only=critical_only))
             return
-        self._details_edit.setPlainText(format_repo_health_text(view_payload))
+        self._details_edit.setPlainText(format_repo_health_text(view_payload, critical_only=critical_only))
 
     def _open_payload_path(self, key: str, label: str) -> None:
         path = str(self._payload.get(key) or "").strip()

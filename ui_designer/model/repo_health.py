@@ -177,8 +177,15 @@ def repo_health_counts(payload: dict[str, object]) -> dict[str, int]:
     }
 
 
-def format_repo_health_text(payload: dict[str, object]) -> str:
-    lines = [f"[repo] {payload.get('repo_root', '')}"]
+def format_repo_health_text(payload: dict[str, object], *, critical_only: bool = False) -> str:
+    counts = repo_health_counts(payload)
+    lines = [
+        f"[summary] {summarize_repo_health(payload)}",
+        f"[counts] critical={counts['critical']} suggestions={counts['suggestions']} stale={counts['stale_dirs']}",
+        f"[view] critical_only={str(bool(critical_only)).lower()}",
+        "",
+        f"[repo] {payload.get('repo_root', '')}",
+    ]
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
     smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
     lines.append(f"sdk_submodule.initialized: {str(bool(sdk.get('initialized', False))).lower()}")
@@ -204,5 +211,11 @@ def format_repo_health_text(payload: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def format_repo_health_json(payload: dict[str, object]) -> str:
-    return json.dumps(payload, indent=2, ensure_ascii=False)
+def format_repo_health_json(payload: dict[str, object], *, critical_only: bool = False) -> str:
+    report = dict(payload)
+    report["_summary"] = summarize_repo_health(payload)
+    report["_counts"] = repo_health_counts(payload)
+    report["_view"] = {
+        "critical_only": bool(critical_only),
+    }
+    return json.dumps(report, indent=2, ensure_ascii=False)
