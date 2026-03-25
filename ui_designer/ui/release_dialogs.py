@@ -888,6 +888,10 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_history_json_button.clicked.connect(self._copy_history_file_json)
         filter_row.addWidget(self._copy_history_json_button)
 
+        self._export_history_json_button = QPushButton("Export History JSON...")
+        self._export_history_json_button.clicked.connect(self._export_history_file_json)
+        filter_row.addWidget(self._export_history_json_button)
+
         self._open_history_file_button = QPushButton("Open History File")
         self._open_history_file_button.clicked.connect(self._open_history_file)
         filter_row.addWidget(self._open_history_file_button)
@@ -1634,8 +1638,10 @@ class ReleaseHistoryDialog(QDialog):
 
     def _update_history_file_button(self) -> None:
         self._copy_history_file_button.setEnabled(bool(self._history_path))
-        self._copy_history_json_button.setEnabled(bool(self._history_path and os.path.isfile(self._history_path)))
-        self._open_history_file_button.setEnabled(bool(self._open_path_callback and self._history_path and os.path.isfile(self._history_path)))
+        history_exists = bool(self._history_path and os.path.isfile(self._history_path))
+        self._copy_history_json_button.setEnabled(history_exists)
+        self._export_history_json_button.setEnabled(history_exists)
+        self._open_history_file_button.setEnabled(bool(self._open_path_callback and history_exists))
 
     def _copy_history_file_path(self) -> None:
         self._copy_text(self._history_path + "\n" if self._history_path else "")
@@ -1645,6 +1651,31 @@ class ReleaseHistoryDialog(QDialog):
             self._copy_text("")
             return
         self._copy_text(_preview_file_text(self._history_path, prefer_json=True, char_limit=None).rstrip() + "\n")
+
+    def _default_history_json_export_filename(self) -> str:
+        if self._history_path:
+            basename = os.path.basename(self._history_path).strip()
+            if basename:
+                return basename
+        return "history.json"
+
+    def _export_history_file_json(self) -> None:
+        if not self._history_path or not os.path.isfile(self._history_path):
+            return
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Release History JSON",
+            self._default_history_json_export_filename(),
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not selected_path:
+            return
+        try:
+            if "JSON" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".json")
+            _write_text_file(selected_path, _preview_file_text(self._history_path, prefer_json=True, char_limit=None).rstrip() + "\n")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Release History Failed", str(exc))
 
     def _open_history_file(self) -> None:
         if self._open_path_callback is None or not self._history_path or not os.path.isfile(self._history_path):

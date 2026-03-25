@@ -1085,6 +1085,43 @@ def test_release_history_dialog_can_copy_history_file_json(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_can_export_history_file_json(qapp, tmp_path, monkeypatch):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    history_path = tmp_path / "output" / "ui_designer_release" / "history.json"
+    export_path = tmp_path / "history-export.json"
+    captured = {}
+    history_path.parent.mkdir(parents=True)
+    history_path.write_text('[{"build_id":"20260326T000000Z","status":"success"}]\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ],
+        history_path=str(history_path),
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (
+            captured.setdefault("default_name", args[2]) and str(export_path),
+            "JSON Files (*.json)",
+        ),
+    )
+
+    dialog._export_history_json_button.click()
+
+    exported = export_path.read_text(encoding="utf-8")
+    assert captured["default_name"] == "history.json"
+    assert '"build_id": "20260326T000000Z"' in exported
+    assert '"status": "success"' in exported
+
+
+@_skip_no_qt
 def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -1106,6 +1143,7 @@ def test_release_history_dialog_open_buttons_require_existing_paths(qapp):
     assert dialog._preview_manifest_button.isEnabled() is True
     assert dialog._preview_log_button.isEnabled() is True
     assert dialog._preview_version_button.isEnabled() is False
+    assert dialog._export_history_json_button.isEnabled() is False
     assert dialog._copy_history_json_button.isEnabled() is False
     assert dialog._export_preview_button.isEnabled() is False
     assert dialog._open_preview_button.isEnabled() is False
