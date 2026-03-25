@@ -303,6 +303,8 @@ def test_release_history_dialog_filters_entries(qapp):
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
                 "manifest_path": "/tmp/release-manifest.json",
             },
             {
@@ -311,6 +313,8 @@ def test_release_history_dialog_filters_entries(qapp):
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
                 "log_path": "/tmp/build.log",
                 "zip_path": "/tmp/release.zip",
             },
@@ -353,6 +357,15 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 1
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
+    dialog._search_edit.clear()
+    dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("errors"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("clean"))
+    assert dialog._history_list.count() == 1
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
+
     dialog._clear_filters_button.click()
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"
@@ -362,6 +375,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._status_filter_combo.currentData() == ""
     assert dialog._profile_filter_combo.currentData() == ""
     assert dialog._artifact_filter_combo.currentData() == ""
+    assert dialog._diagnostics_filter_combo.currentData() == ""
     assert dialog._search_edit.text() == ""
 
 
@@ -378,6 +392,8 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
             },
             {
                 "build_id": "20260326T000100Z",
@@ -385,6 +401,8 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -400,7 +418,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
     assert "matched_entries=1" in copied
     assert "status_counts: success=0 failed=1 unknown=0" in copied
     assert "artifact_counts: manifest=0 log=0 package=1" in copied
-    assert "filters: range=all, status=failed, profile=all, artifact=package, sort=newest, search=-" in copied
+    assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in copied
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
 
@@ -420,6 +438,8 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
             },
             {
                 "build_id": "20260326T000100Z",
@@ -427,6 +447,8 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -440,6 +462,7 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
 
     assert copied["matched_entries"] == 1
     assert copied["filters"]["artifact"] == "package"
+    assert copied["filters"]["diagnostics"] == "all"
     assert copied["entries"][0]["build_id"] == "20260326T000100Z"
 
 
@@ -457,6 +480,8 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
             },
             {
                 "build_id": "20260326T000100Z",
@@ -464,6 +489,8 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -486,7 +513,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     assert "matched_entries=1" in exported
     assert "status_counts: success=0 failed=1 unknown=0" in exported
     assert "artifact_counts: manifest=0 log=0 package=1" in exported
-    assert "filters: range=all, status=failed, profile=all, artifact=package, sort=newest, search=-" in exported
+    assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
 
@@ -506,6 +533,8 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "warning_count": 0,
+                "error_count": 0,
             },
             {
                 "build_id": "20260326T000100Z",
@@ -513,6 +542,8 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -531,6 +562,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     assert exported["status_counts"] == {"success": 0, "failed": 1, "unknown": 0}
     assert exported["artifact_counts"] == {"manifest": 0, "log": 0, "package": 1}
     assert exported["filters"]["artifact"] == "package"
+    assert exported["filters"]["diagnostics"] == "all"
     assert exported["filters"]["sort"] == "newest"
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
 
@@ -720,6 +752,8 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
             }
         ]
     )
@@ -727,6 +761,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     dialog._profile_filter_combo.setCurrentIndex(dialog._profile_filter_combo.findData("esp32"))
     dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("package"))
+    dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("errors"))
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("status"))
     dialog._search_edit.setText("sdk-fail")
     dialog.done(QDialog.Accepted)
@@ -739,6 +774,8 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
             }
         ]
     )
@@ -747,6 +784,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     assert restored._status_filter_combo.currentData() == "failed"
     assert restored._profile_filter_combo.currentData() == "esp32"
     assert restored._artifact_filter_combo.currentData() == "package"
+    assert restored._diagnostics_filter_combo.currentData() == "errors"
     assert restored._sort_combo.currentData() == "status"
     assert restored._search_edit.text() == "sdk-fail"
 
@@ -762,6 +800,8 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
             "profile_id": "windows-pc",
             "message": "Release created",
             "sdk": {"revision": "sdk-good"},
+            "warning_count": 0,
+            "error_count": 0,
             "manifest_path": "/tmp/release-manifest.json",
         },
         {
@@ -770,6 +810,8 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
             "profile_id": "esp32",
             "message": "Build failed",
             "sdk": {"revision": "sdk-fail"},
+            "warning_count": 2,
+            "error_count": 1,
             "zip_path": "/tmp/release.zip",
         },
     ]
@@ -777,6 +819,7 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
     dialog = ReleaseHistoryDialog(entries, project_key="project-a")
     dialog._status_filter_combo.setCurrentIndex(dialog._status_filter_combo.findData("failed"))
     dialog._artifact_filter_combo.setCurrentIndex(dialog._artifact_filter_combo.findData("package"))
+    dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("issues"))
     dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("oldest"))
     dialog._search_edit.setText("sdk-fail")
     dialog.done(QDialog.Accepted)
@@ -784,11 +827,13 @@ def test_release_history_dialog_restores_project_specific_view_state(qapp, isola
     other_project = ReleaseHistoryDialog(entries, project_key="project-b")
     assert other_project._status_filter_combo.currentData() == ""
     assert other_project._artifact_filter_combo.currentData() == ""
+    assert other_project._diagnostics_filter_combo.currentData() == ""
     assert other_project._sort_combo.currentData() == "newest"
     assert other_project._search_edit.text() == ""
 
     restored = ReleaseHistoryDialog(entries, project_key="project-a")
     assert restored._status_filter_combo.currentData() == "failed"
     assert restored._artifact_filter_combo.currentData() == "package"
+    assert restored._diagnostics_filter_combo.currentData() == "issues"
     assert restored._sort_combo.currentData() == "oldest"
     assert restored._search_edit.text() == "sdk-fail"
