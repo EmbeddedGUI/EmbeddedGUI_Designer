@@ -58,8 +58,11 @@ class RepositoryHealthDialog(QDialog):
         self._copy_report_button = QPushButton("Copy Report")
         self._copy_json_button = QPushButton("Copy JSON")
         self._export_report_button = QPushButton("Export Report...")
+        self._copy_repo_button = QPushButton("Copy Repo")
         self._open_repo_button = QPushButton("Open Repo")
+        self._copy_sdk_button = QPushButton("Copy SDK")
         self._open_sdk_button = QPushButton("Open SDK")
+        self._copy_smoke_button = QPushButton("Copy Smoke")
         self._open_smoke_button = QPushButton("Open Smoke Sample")
         self._stale_dir_combo = QComboBox()
         self._copy_stale_path_button = QPushButton("Copy Stale Path")
@@ -76,8 +79,11 @@ class RepositoryHealthDialog(QDialog):
         self._copy_report_button.clicked.connect(self._copy_report)
         self._copy_json_button.clicked.connect(self._copy_json)
         self._export_report_button.clicked.connect(self._export_report)
+        self._copy_repo_button.clicked.connect(lambda: self._copy_payload_path("repo_root"))
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
+        self._copy_sdk_button.clicked.connect(lambda: self._copy_nested_payload_path("sdk_submodule", "path"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
+        self._copy_smoke_button.clicked.connect(lambda: self._copy_nested_payload_path("release_smoke_project", "path"))
         self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
         self._copy_stale_path_button.clicked.connect(self._copy_selected_stale_path)
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
@@ -92,8 +98,11 @@ class RepositoryHealthDialog(QDialog):
             self._copy_report_button,
             self._copy_json_button,
             self._export_report_button,
+            self._copy_repo_button,
             self._open_repo_button,
+            self._copy_sdk_button,
             self._open_sdk_button,
+            self._copy_smoke_button,
             self._open_smoke_button,
         ):
             action_row.addWidget(button)
@@ -153,6 +162,9 @@ class RepositoryHealthDialog(QDialog):
         sdk_path = str(sdk.get("path") or "").strip()
         smoke_path = str(smoke.get("path") or "").strip()
         stale_path = self._selected_stale_path()
+        self._copy_repo_button.setEnabled(bool(repo_root))
+        self._copy_sdk_button.setEnabled(bool(sdk_path))
+        self._copy_smoke_button.setEnabled(bool(smoke_path))
         self._open_repo_button.setEnabled(bool(repo_root and os.path.isdir(repo_root)))
         self._open_sdk_button.setEnabled(bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path)))
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path)))
@@ -169,6 +181,9 @@ class RepositoryHealthDialog(QDialog):
             return
         self._open_path(path, label)
 
+    def _copy_payload_path(self, key: str) -> None:
+        self._copy_text(str(self._payload.get(key) or "").strip())
+
     def _open_nested_payload_path(self, section_key: str, key: str, label: str) -> None:
         section = self._payload.get(section_key)
         if not isinstance(section, dict):
@@ -177,6 +192,13 @@ class RepositoryHealthDialog(QDialog):
         if not path:
             return
         self._open_path(path, label)
+
+    def _copy_nested_payload_path(self, section_key: str, key: str) -> None:
+        section = self._payload.get(section_key)
+        if not isinstance(section, dict):
+            self._copy_text("")
+            return
+        self._copy_text(str(section.get(key) or "").strip())
 
     def _open_path(self, path: str, label: str) -> None:
         if self._open_path_callback is None:
@@ -187,7 +209,7 @@ class RepositoryHealthDialog(QDialog):
             QMessageBox.warning(self, f"Open {label} Failed", str(exc))
 
     def _copy_report(self) -> None:
-        QApplication.clipboard().setText(self._details_edit.toPlainText())
+        self._copy_text(self._details_edit.toPlainText())
 
     def _current_view_payload(self) -> dict[str, object]:
         return repo_health_view_payload(self._payload, **self._view_options())
@@ -200,14 +222,14 @@ class RepositoryHealthDialog(QDialog):
         return format_repo_health_text(view_payload, **view_options)
 
     def _copy_json(self) -> None:
-        QApplication.clipboard().setText(self._report_text(show_json=True))
+        self._copy_text(self._report_text(show_json=True))
 
     def _copy_summary(self) -> None:
         view_options = self._view_options()
-        QApplication.clipboard().setText(format_repo_health_summary(self._current_view_payload(), **view_options))
+        self._copy_text(format_repo_health_summary(self._current_view_payload(), **view_options))
 
     def _copy_selected_stale_path(self) -> None:
-        QApplication.clipboard().setText(self._selected_stale_path())
+        self._copy_text(self._selected_stale_path())
 
     def _selected_stale_path(self) -> str:
         return str(self._stale_dir_combo.currentData() or "").strip()
@@ -302,3 +324,6 @@ class RepositoryHealthDialog(QDialog):
     def done(self, result: int) -> None:
         self._save_view_state()
         super().done(result)
+
+    def _copy_text(self, text: str) -> None:
+        QApplication.clipboard().setText(text or "")

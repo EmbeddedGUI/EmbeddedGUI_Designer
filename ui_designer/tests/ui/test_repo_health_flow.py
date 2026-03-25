@@ -157,6 +157,9 @@ def test_repository_health_dialog_open_buttons_require_existing_paths(qapp, monk
 
     dialog = RepositoryHealthDialog(str(tmp_path))
 
+    assert dialog._copy_repo_button.isEnabled() is True
+    assert dialog._copy_sdk_button.isEnabled() is True
+    assert dialog._copy_smoke_button.isEnabled() is True
     assert dialog._open_repo_button.isEnabled() is True
     assert dialog._open_sdk_button.isEnabled() is False
     assert dialog._open_smoke_button.isEnabled() is False
@@ -292,6 +295,37 @@ def test_repository_health_dialog_can_copy_selected_stale_path(qapp, monkeypatch
     dialog._copy_stale_path_button.click()
 
     assert QApplication.clipboard().text() == str(missing_stale_dir)
+
+
+@_skip_no_qt
+def test_repository_health_dialog_can_copy_repo_sdk_and_smoke_paths(qapp, monkeypatch, tmp_path):
+    from PyQt5.QtWidgets import QApplication
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    sdk_path = tmp_path / "sdk" / "EmbeddedGUI"
+    smoke_path = tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(sdk_path), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(smoke_path), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    QApplication.clipboard().clear()
+    dialog._copy_repo_button.click()
+    assert QApplication.clipboard().text() == str(tmp_path)
+
+    dialog._copy_sdk_button.click()
+    assert QApplication.clipboard().text() == str(sdk_path)
+
+    dialog._copy_smoke_button.click()
+    assert QApplication.clipboard().text() == str(smoke_path)
 
 
 @_skip_no_qt
