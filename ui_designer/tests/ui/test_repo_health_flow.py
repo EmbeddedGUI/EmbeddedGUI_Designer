@@ -430,6 +430,34 @@ def test_repository_health_dialog_exports_current_json_view(qapp, monkeypatch, t
 
 
 @_skip_no_qt
+def test_repository_health_dialog_export_appends_selected_suffix(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+    export_path = tmp_path / "repo-health"
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+    monkeypatch.setattr(
+        "ui_designer.ui.repo_health_dialog.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+    )
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._show_json_check.setChecked(True)
+    dialog._export_report_button.click()
+
+    exported = (tmp_path / "repo-health.json").read_text(encoding="utf-8")
+    assert '"_summary": "Repository health looks good."' in exported
+
+
+@_skip_no_qt
 def test_repository_health_dialog_export_filename_tracks_critical_json_state(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 

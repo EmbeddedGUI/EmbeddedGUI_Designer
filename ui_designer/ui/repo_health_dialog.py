@@ -212,7 +212,7 @@ class RepositoryHealthDialog(QDialog):
 
     def _export_report(self) -> None:
         default_name = self._default_export_filename()
-        selected_path, _ = QFileDialog.getSaveFileName(
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Repository Health Report",
             default_name,
@@ -221,6 +221,10 @@ class RepositoryHealthDialog(QDialog):
         if not selected_path:
             return
         try:
+            if "JSON" in str(selected_filter):
+                selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".json"
+            elif "Text" in str(selected_filter):
+                selected_path = selected_path if os.path.splitext(selected_path)[1] else selected_path + ".txt"
             resolved_path = os.path.abspath(os.path.normpath(selected_path))
             parent_dir = os.path.dirname(resolved_path)
             if parent_dir:

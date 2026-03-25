@@ -608,6 +608,34 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
 
 
 @_skip_no_qt
+def test_release_history_dialog_export_entry_json_appends_json_suffix(qapp, tmp_path, monkeypatch):
+    import json
+
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    export_path = tmp_path / "release-entry"
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ]
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+    )
+
+    dialog._export_entry_json_button.click()
+
+    exported = json.loads((tmp_path / "release-entry.json").read_text(encoding="utf-8"))
+    assert exported["build_id"] == "20260326T000000Z"
+
+
+@_skip_no_qt
 def test_release_history_dialog_open_buttons_use_selected_paths(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -1042,6 +1070,39 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     assert exported["filters"]["artifact"] == "package"
     assert exported["filters"]["diagnostics"] == "all"
     assert exported["filters"]["sort"] == "newest"
+    assert exported["entries"][0]["build_id"] == "20260326T000100Z"
+
+
+@_skip_no_qt
+def test_release_history_dialog_filtered_export_appends_selected_suffix(qapp, tmp_path, monkeypatch):
+    import json
+
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    export_path = tmp_path / "release-history-summary"
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
+                "zip_path": "/tmp/release.zip",
+            },
+        ]
+    )
+
+    monkeypatch.setattr(
+        "ui_designer.ui.release_dialogs.QFileDialog.getSaveFileName",
+        lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
+    )
+
+    dialog._export_filtered_button.click()
+
+    exported = json.loads((tmp_path / "release-history-summary.json").read_text(encoding="utf-8"))
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
 
 

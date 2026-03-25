@@ -424,6 +424,15 @@ def _write_text_file(path: str, content: str) -> None:
         f.write(content)
 
 
+def _append_suffix_if_missing(path: str, suffix: str) -> str:
+    if not path:
+        return ""
+    root, ext = os.path.splitext(path)
+    if ext:
+        return path
+    return root + suffix
+
+
 def _safe_filename_part(text: str) -> str:
     normalized = "".join(char.lower() if char.isalnum() else "-" for char in (text or "").strip())
     collapsed = "-".join(part for part in normalized.split("-") if part)
@@ -1176,7 +1185,7 @@ class ReleaseHistoryDialog(QDialog):
     def _export_filtered_summary(self) -> None:
         if not self._filtered_history_entries:
             return
-        selected_path, _ = QFileDialog.getSaveFileName(
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Release History Summary",
             self._default_filtered_export_filename(),
@@ -1185,6 +1194,10 @@ class ReleaseHistoryDialog(QDialog):
         if not selected_path:
             return
         try:
+            if "JSON" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".json")
+            elif "Text" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".txt")
             content = self._filtered_export_text(selected_path)
             _write_text_file(selected_path, content)
         except OSError as exc:
@@ -1318,7 +1331,7 @@ class ReleaseHistoryDialog(QDialog):
     def _export_entry_json(self) -> None:
         if not self._current_entry():
             return
-        selected_path, _ = QFileDialog.getSaveFileName(
+        selected_path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Release Entry JSON",
             self._default_entry_export_filename(),
@@ -1327,6 +1340,8 @@ class ReleaseHistoryDialog(QDialog):
         if not selected_path:
             return
         try:
+            if "JSON" in str(selected_filter):
+                selected_path = _append_suffix_if_missing(selected_path, ".json")
             _write_text_file(selected_path, self._entry_json_text())
         except OSError as exc:
             QMessageBox.warning(self, "Export Release Entry Failed", str(exc))
