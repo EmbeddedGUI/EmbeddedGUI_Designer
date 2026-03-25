@@ -316,6 +316,7 @@ def _build_filtered_history_summary(
 ) -> str:
     status_counts = _history_status_counts(filtered_entries)
     artifact_counts = _history_artifact_counts(filtered_entries)
+    diagnostics_counts = _history_diagnostics_counts(filtered_entries)
     lines = [
         "Release History Summary",
         f"matched_entries={len(filtered_entries)}",
@@ -331,6 +332,13 @@ def _build_filtered_history_summary(
             f"manifest={artifact_counts['manifest']} "
             f"log={artifact_counts['log']} "
             f"package={artifact_counts['package']}"
+        ),
+        (
+            "diagnostics_counts: "
+            f"clean={diagnostics_counts['clean']} "
+            f"warnings={diagnostics_counts['warnings']} "
+            f"errors={diagnostics_counts['errors']} "
+            f"unknown={diagnostics_counts['unknown']}"
         ),
         (
             "filters: "
@@ -365,6 +373,7 @@ def _build_filtered_history_json(
         "total_entries": len(all_entries),
         "status_counts": _history_status_counts(filtered_entries),
         "artifact_counts": _history_artifact_counts(filtered_entries),
+        "diagnostics_counts": _history_diagnostics_counts(filtered_entries),
         "filters": {
             "range": range_filter or "all",
             "status": status_filter or "all",
@@ -1264,9 +1273,11 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
         elif _history_string(entry, "log_path"):
             self._preview_selected_path("log_path", "Log")
+        elif _history_version_path(entry):
+            self._preview_selected_version()
         else:
             self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("No manifest or build log is recorded for this release entry.")
+            self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
 
     def _open_selected_path(self, key: str, label: str) -> None:
         if self._open_path_callback is None:

@@ -220,13 +220,16 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     version_path = dist_dir / "VERSION.txt"
     zip_path = release_root / "ReleaseDemo.zip"
     log_path = release_root / "logs" / "build.log"
+    history_path = project_dir / "output" / "ui_designer_release" / "history.json"
     _create_sdk_root(sdk_root)
     dist_dir.mkdir(parents=True)
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    history_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text("{}\n", encoding="utf-8")
     version_path.write_text("app=ReleaseDemo\n", encoding="utf-8")
     zip_path.write_text("zip\n", encoding="utf-8")
     log_path.write_text("build ok\n", encoding="utf-8")
+    history_path.write_text("[]\n", encoding="utf-8")
 
     project = Project(app_name="ReleaseDemo")
     project.sdk_root = str(sdk_root)
@@ -260,6 +263,7 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     assert window._open_last_release_version_action.isEnabled() is True
     assert window._open_last_release_package_action.isEnabled() is True
     assert window._open_last_release_log_action.isEnabled() is True
+    assert window._open_release_history_file_action.isEnabled() is True
 
     window._open_last_release_folder()
     window._open_last_release_dist()
@@ -267,6 +271,7 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     window._open_last_release_version()
     window._open_last_release_package()
     window._open_last_release_log()
+    window._open_release_history_file()
 
     assert opened_paths == [
         str(release_root),
@@ -275,6 +280,7 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
         str(version_path),
         str(zip_path),
         str(log_path),
+        str(history_path),
     ]
 
 
@@ -327,8 +333,6 @@ def test_release_history_dialog_previews_version_file(qapp, tmp_path):
             }
         ]
     )
-
-    dialog._preview_selected_version()
 
     assert dialog._preview_label.text() == "Version Preview"
     assert "app=ReleaseDemo" in dialog._preview_edit.toPlainText()
@@ -561,6 +565,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
     assert "matched_entries=1" in copied
     assert "status_counts: success=0 failed=1 unknown=0" in copied
     assert "artifact_counts: manifest=0 log=0 package=1" in copied
+    assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in copied
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in copied
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
@@ -656,6 +661,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     assert "matched_entries=1" in exported
     assert "status_counts: success=0 failed=1 unknown=0" in exported
     assert "artifact_counts: manifest=0 log=0 package=1" in exported
+    assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in exported
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in exported
     assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
@@ -704,6 +710,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     assert exported["matched_entries"] == 1
     assert exported["status_counts"] == {"success": 0, "failed": 1, "unknown": 0}
     assert exported["artifact_counts"] == {"manifest": 0, "log": 0, "package": 1}
+    assert exported["diagnostics_counts"] == {"clean": 0, "warnings": 1, "errors": 1, "unknown": 0}
     assert exported["filters"]["artifact"] == "package"
     assert exported["filters"]["diagnostics"] == "all"
     assert exported["filters"]["sort"] == "newest"

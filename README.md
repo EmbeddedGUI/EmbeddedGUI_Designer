@@ -48,6 +48,7 @@ Use `Build -> Release Profiles...` to maintain project-local release profiles in
 Use `Build -> Release History...` to inspect, time-filter, artifact-filter, diagnostics-filter, sort, refresh, copy, or export prior release summaries as text or JSON, preview manifests, version files, or build logs directly inside the Designer, reopen release roots, dist folders, and tracked artifacts, and reopen with the last-used filters still applied per project.
 Use `Build -> Repository Health...` to inspect SDK submodule state, release smoke sample presence, stale workspace temp directories, filter to critical issues, switch between text or JSON reports with embedded summary/count metadata, copy short summaries for issue reports, open stale temp directories directly, export the current report view, and reopen with the previous view settings intact.
 The latest successful build can be reopened from `Build -> Open Last Release Folder`, `Build -> Open Last Release Dist`, `Build -> Open Last Release Manifest`, `Build -> Open Last Release Version`, `Build -> Open Last Release Package`, or `Build -> Open Last Release Log`.
+The project-wide release history ledger can be reopened from `Build -> Open Release History File`.
 
 ### From the CLI
 

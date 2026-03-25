@@ -80,7 +80,7 @@ from ..generator.code_generator import (
 from ..generator.user_code_preserver import compute_source_hash, embed_source_hash, read_existing_file
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
-from ..engine.release_engine import collect_release_diagnostics, latest_release_entry, load_release_history, release_project
+from ..engine.release_engine import collect_release_diagnostics, latest_release_entry, load_release_history, release_history_path, release_project
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme
@@ -604,6 +604,7 @@ class MainWindow(QMainWindow):
             self._open_last_release_version_action.setEnabled(has_release_history)
             self._open_last_release_package_action.setEnabled(has_release_history)
             self._open_last_release_log_action.setEnabled(has_release_history)
+            self._open_release_history_file_action.setEnabled(has_release_history)
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
@@ -1238,6 +1239,10 @@ class MainWindow(QMainWindow):
         self._open_last_release_log_action.triggered.connect(self._open_last_release_log)
         build_menu.addAction(self._open_last_release_log_action)
 
+        self._open_release_history_file_action = QAction("Open Release History File", self)
+        self._open_release_history_file_action.triggered.connect(self._open_release_history_file)
+        build_menu.addAction(self._open_release_history_file_action)
+
         self._release_history_action = QAction("Release History...", self)
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
@@ -1643,6 +1648,18 @@ class MainWindow(QMainWindow):
             self._open_path_in_shell(log_path)
         except Exception as exc:
             QMessageBox.warning(self, "Open Release Log Failed", str(exc))
+
+    def _open_release_history_file(self):
+        if not self._project_dir:
+            return
+        history_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
+        if not history_path or not os.path.isfile(history_path):
+            self.statusBar().showMessage("No release history file available", 4000)
+            return
+        try:
+            self._open_path_in_shell(history_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release History File Failed", str(exc))
 
     def _show_release_history(self):
         if not self._project_dir:
