@@ -59,7 +59,7 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.sdk_setup_prompted = True
-        config.release_history_view = {"status_filter": "failed", "search_text": "sdk-fail"}
+        config.release_history_view = {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
         config.repo_health_view = {"critical_only": True, "show_json": True}
 
         config_path = tmp_path / "config.json"
@@ -80,7 +80,7 @@ class TestSaveLoad:
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
         assert loaded.sdk_setup_prompted is True
-        assert loaded.release_history_view == {"status_filter": "failed", "search_text": "sdk-fail"}
+        assert loaded.release_history_view == {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
         assert loaded.repo_health_view == {"critical_only": True, "show_json": True}
 
     def test_load_nonexistent_file(self, config, tmp_path):

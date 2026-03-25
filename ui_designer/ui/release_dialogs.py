@@ -136,6 +136,17 @@ def _history_status_counts(entries: list[dict[str, object]]) -> dict[str, int]:
     return counts
 
 
+def _history_has_artifact(entry: dict[str, object], artifact_filter: str) -> bool:
+    artifact_key = {
+        "manifest": "manifest_path",
+        "log": "log_path",
+        "package": "zip_path",
+    }.get(artifact_filter)
+    if not artifact_key:
+        return True
+    return bool(_history_string(entry, artifact_key))
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -164,13 +175,21 @@ def _build_filtered_history_summary(
     range_filter: str,
     status_filter: str,
     profile_filter: str,
+    artifact_filter: str,
     search_text: str,
 ) -> str:
     lines = [
         "Release History Summary",
         f"matched_entries={len(filtered_entries)}",
         f"total_entries={len(all_entries)}",
-        f"filters: range={range_filter or 'all'}, status={status_filter or 'all'}, profile={profile_filter or 'all'}, search={search_text or '-'}",
+        (
+            "filters: "
+            f"range={range_filter or 'all'}, "
+            f"status={status_filter or 'all'}, "
+            f"profile={profile_filter or 'all'}, "
+            f"artifact={artifact_filter or 'all'}, "
+            f"search={search_text or '-'}"
+        ),
         "",
     ]
     lines.extend(_history_summary_line(entry) for entry in filtered_entries)
@@ -184,6 +203,7 @@ def _build_filtered_history_json(
     range_filter: str,
     status_filter: str,
     profile_filter: str,
+    artifact_filter: str,
     search_text: str,
 ) -> str:
     payload = {
@@ -193,6 +213,7 @@ def _build_filtered_history_json(
             "range": range_filter or "all",
             "status": status_filter or "all",
             "profile": profile_filter or "all",
+            "artifact": artifact_filter or "all",
             "search": search_text or "-",
         },
         "entries": filtered_entries,
@@ -568,6 +589,15 @@ class ReleaseHistoryDialog(QDialog):
         self._profile_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
         filter_row.addWidget(self._profile_filter_combo)
 
+        filter_row.addWidget(QLabel("Artifact"))
+        self._artifact_filter_combo = QComboBox()
+        self._artifact_filter_combo.addItem("Any", "")
+        self._artifact_filter_combo.addItem("Has Manifest", "manifest")
+        self._artifact_filter_combo.addItem("Has Log", "log")
+        self._artifact_filter_combo.addItem("Has Package", "package")
+        self._artifact_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
+        filter_row.addWidget(self._artifact_filter_combo)
+
         filter_row.addWidget(QLabel("Search"))
         self._search_edit = QLineEdit()
         self._search_edit.setPlaceholderText("build id, message, SDK revision...")
@@ -697,7 +727,15 @@ class ReleaseHistoryDialog(QDialog):
         self._profile_filter_combo.setCurrentIndex(index if index >= 0 else 0)
         self._profile_filter_combo.blockSignals(False)
 
-    def _matches_history_filter(self, entry: dict[str, object], range_filter: str, status_filter: str, profile_filter: str, search_text: str) -> bool:
+    def _matches_history_filter(
+        self,
+        entry: dict[str, object],
+        range_filter: str,
+        status_filter: str,
+        profile_filter: str,
+        artifact_filter: str,
+        search_text: str,
+    ) -> bool:
         if range_filter:
             entry_timestamp = _history_timestamp(entry)
             if entry_timestamp is None:
@@ -716,6 +754,8 @@ class ReleaseHistoryDialog(QDialog):
         if status_filter and _history_status(entry) != status_filter:
             return False
         if profile_filter and _history_string(entry, "profile_id") != profile_filter:
+            return False
+        if artifact_filter and not _history_has_artifact(entry, artifact_filter):
             return False
         if search_text:
             searchable = " ".join(
@@ -740,6 +780,7 @@ class ReleaseHistoryDialog(QDialog):
         wanted_range = str(self._range_filter_combo.currentData() or "")
         wanted_status = str(self._status_filter_combo.currentData() or "")
         wanted_profile = str(self._profile_filter_combo.currentData() or "")
+        wanted_artifact = str(self._artifact_filter_combo.currentData() or "")
         search_text = self._search_edit.text().strip().lower()
         current_entry = self._current_entry()
         current_build_id = _history_string(current_entry, "build_id") if current_entry else ""
@@ -747,7 +788,7 @@ class ReleaseHistoryDialog(QDialog):
         filtered_entries = [
             entry
             for entry in self._all_history_entries
-            if self._matches_history_filter(entry, wanted_range, wanted_status, wanted_profile, search_text)
+            if self._matches_history_filter(entry, wanted_range, wanted_status, wanted_profile, wanted_artifact, search_text)
         ]
         self._filtered_history_entries = list(filtered_entries)
         self._result_count_label.setText(f"{len(filtered_entries)} / {len(self._all_history_entries)}")
@@ -775,7 +816,7 @@ class ReleaseHistoryDialog(QDialog):
 
         if self._all_history_entries:
             self._summary_label.setText("No release entries match the current filters.")
-            self._details_edit.setPlainText("Adjust Status, Profile, or Search to see matching release builds.")
+            self._details_edit.setPlainText("Adjust Range, Status, Profile, Artifact, or Search to see matching release builds.")
             self._preview_label.setText("Preview")
             self._preview_edit.setPlainText("No manifest or build log is available because the filtered result set is empty.")
         else:
@@ -799,6 +840,7 @@ class ReleaseHistoryDialog(QDialog):
         self._range_filter_combo.setCurrentIndex(0)
         self._status_filter_combo.setCurrentIndex(0)
         self._profile_filter_combo.setCurrentIndex(0)
+        self._artifact_filter_combo.setCurrentIndex(0)
         self._search_edit.clear()
 
     def _copy_filtered_summary(self) -> None:
@@ -828,6 +870,7 @@ class ReleaseHistoryDialog(QDialog):
             range_filter=str(self._range_filter_combo.currentData() or ""),
             status_filter=str(self._status_filter_combo.currentData() or ""),
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
+            artifact_filter=str(self._artifact_filter_combo.currentData() or ""),
             search_text=self._search_edit.text().strip(),
         )
 
@@ -838,6 +881,7 @@ class ReleaseHistoryDialog(QDialog):
             range_filter=str(self._range_filter_combo.currentData() or ""),
             status_filter=str(self._status_filter_combo.currentData() or ""),
             profile_filter=str(self._profile_filter_combo.currentData() or ""),
+            artifact_filter=str(self._artifact_filter_combo.currentData() or ""),
             search_text=self._search_edit.text().strip(),
         )
 
@@ -852,6 +896,7 @@ class ReleaseHistoryDialog(QDialog):
             str(self._range_filter_combo.currentData() or ""),
             str(self._status_filter_combo.currentData() or ""),
             str(self._profile_filter_combo.currentData() or ""),
+            str(self._artifact_filter_combo.currentData() or ""),
         ):
             safe_value = _safe_filename_part(value)
             if safe_value:
@@ -863,6 +908,7 @@ class ReleaseHistoryDialog(QDialog):
         range_value = str(state.get("range_filter") or "")
         status_value = str(state.get("status_filter") or "")
         profile_value = str(state.get("profile_filter") or "")
+        artifact_value = str(state.get("artifact_filter") or "")
         search_text = str(state.get("search_text") or "")
 
         index = self._range_filter_combo.findData(range_value)
@@ -874,6 +920,9 @@ class ReleaseHistoryDialog(QDialog):
         index = self._profile_filter_combo.findData(profile_value)
         self._profile_filter_combo.setCurrentIndex(index if index >= 0 else 0)
 
+        index = self._artifact_filter_combo.findData(artifact_value)
+        self._artifact_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
         self._search_edit.setText(search_text)
 
     def _save_view_state(self) -> None:
@@ -881,6 +930,7 @@ class ReleaseHistoryDialog(QDialog):
             "range_filter": str(self._range_filter_combo.currentData() or ""),
             "status_filter": str(self._status_filter_combo.currentData() or ""),
             "profile_filter": str(self._profile_filter_combo.currentData() or ""),
+            "artifact_filter": str(self._artifact_filter_combo.currentData() or ""),
             "search_text": self._search_edit.text(),
         }
         self._config.save()
