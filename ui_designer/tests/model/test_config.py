@@ -60,7 +60,7 @@ class TestSaveLoad:
         config.font_size_px = 14
         config.sdk_setup_prompted = True
         config.release_history_view = {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
-        config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True}
+        config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
 
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
@@ -81,7 +81,7 @@ class TestSaveLoad:
         assert loaded.font_size_px == 14
         assert loaded.sdk_setup_prompted is True
         assert loaded.release_history_view == {"status_filter": "failed", "artifact_filter": "package", "search_text": "sdk-fail"}
-        assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True}
+        assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
 
     def test_load_nonexistent_file(self, config, tmp_path):
         config_path = tmp_path / "nonexistent.json"

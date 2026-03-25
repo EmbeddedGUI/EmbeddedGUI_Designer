@@ -29,6 +29,7 @@ class RepositoryHealthDialog(QDialog):
         self._config = get_config()
         self._repo_root = str(Path(repo_root).resolve())
         self._open_path_callback = open_path_callback
+        self._preferred_stale_path = ""
         self._payload: dict[str, object] = {}
 
         root_layout = QVBoxLayout(self)
@@ -133,8 +134,9 @@ class RepositoryHealthDialog(QDialog):
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
         smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         stale_dirs = view_payload.get("stale_temp_dirs") if isinstance(view_payload.get("stale_temp_dirs"), list) else []
-        selected_stale_path = self._selected_stale_path()
+        selected_stale_path = self._selected_stale_path() or self._preferred_stale_path
         self._sync_stale_dir_combo(stale_dirs, selected_stale_path)
+        self._preferred_stale_path = self._selected_stale_path()
         repo_root = str(self._payload.get("repo_root") or "").strip()
         sdk_path = str(sdk.get("path") or "").strip()
         smoke_path = str(smoke.get("path") or "").strip()
@@ -249,12 +251,14 @@ class RepositoryHealthDialog(QDialog):
         self._critical_only_check.setChecked(bool(state.get("critical_only", False)))
         self._blocked_only_check.setChecked(bool(state.get("blocked_only", False)))
         self._show_json_check.setChecked(bool(state.get("show_json", False)))
+        self._preferred_stale_path = str(state.get("selected_stale_path") or "")
 
     def _save_view_state(self) -> None:
         self._config.repo_health_view = {
             "critical_only": self._critical_only_check.isChecked(),
             "blocked_only": self._blocked_only_check.isChecked(),
             "show_json": self._show_json_check.isChecked(),
+            "selected_stale_path": self._selected_stale_path(),
         }
         self._config.save()
 

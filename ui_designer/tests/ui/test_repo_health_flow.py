@@ -507,3 +507,34 @@ def test_repository_health_dialog_restores_saved_view_state(qapp, isolated_confi
     assert restored._blocked_only_check.isChecked() is True
     assert restored._show_json_check.isChecked() is True
     assert '"critical_issues"' in restored._details_edit.toPlainText()
+
+
+@_skip_no_qt
+def test_repository_health_dialog_restores_selected_stale_dir(qapp, isolated_config, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    first_stale_dir = tmp_path / ".pytest-tmp-codex"
+    second_stale_dir = tmp_path / "tmpxtayw0f6"
+    first_stale_dir.mkdir()
+    second_stale_dir.mkdir()
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": True},
+        "stale_temp_dirs": [
+            {"path": str(first_stale_dir), "accessible": True, "issue": ""},
+            {"path": str(second_stale_dir), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._stale_dir_combo.setCurrentIndex(1)
+    dialog.done(QDialog.Accepted)
+
+    restored = RepositoryHealthDialog(str(tmp_path))
+
+    assert restored._stale_dir_combo.currentData() == str(second_stale_dir)
