@@ -698,6 +698,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._diagnostics_breakdown_label.text() == "clean 1 | warnings 0 | errors 0 | unknown 0"
     assert "20260326T000000Z" in dialog._history_list.item(0).text()
 
+    dialog._sort_combo.setCurrentIndex(dialog._sort_combo.findData("oldest"))
     dialog._clear_filters_button.click()
     assert dialog._history_list.count() == 2
     assert dialog._result_count_label.text() == "2 / 2"
@@ -709,6 +710,7 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._profile_filter_combo.currentData() == ""
     assert dialog._artifact_filter_combo.currentData() == ""
     assert dialog._diagnostics_filter_combo.currentData() == ""
+    assert dialog._sort_combo.currentData() == "newest"
     assert dialog._search_edit.text() == ""
 
 

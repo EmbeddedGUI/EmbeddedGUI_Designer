@@ -1152,6 +1152,7 @@ class ReleaseHistoryDialog(QDialog):
         self._profile_filter_combo.setCurrentIndex(0)
         self._artifact_filter_combo.setCurrentIndex(0)
         self._diagnostics_filter_combo.setCurrentIndex(0)
+        self._sort_combo.setCurrentIndex(self._sort_combo.findData("newest"))
         self._search_edit.clear()
 
     def _copy_filtered_summary(self) -> None:
