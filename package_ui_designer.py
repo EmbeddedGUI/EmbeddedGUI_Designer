@@ -13,6 +13,7 @@ import sys
 import time
 from pathlib import Path
 
+from ui_designer.model.build_metadata import is_git_worktree_dirty, write_designer_build_metadata
 from ui_designer.model.workspace import require_designer_sdk_root
 
 
@@ -247,6 +248,7 @@ def summarize_directory_tree(root: str | Path) -> dict[str, int]:
 def write_sdk_bundle_metadata(bundle_root: str | Path, source_root: str | Path) -> Path:
     """Write a small manifest so the packaged Designer can identify bundled SDKs."""
     resolved_bundle_root = Path(bundle_root).resolve()
+    resolved_bundle_root.mkdir(parents=True, exist_ok=True)
     resolved_source_root = Path(source_root).resolve()
     summary = summarize_directory_tree(resolved_bundle_root)
     metadata = {
@@ -257,6 +259,7 @@ def write_sdk_bundle_metadata(bundle_root: str | Path, source_root: str | Path) 
         "total_size_bytes": summary["total_size_bytes"],
     }
     metadata.update(collect_sdk_git_metadata(resolved_source_root))
+    metadata["git_dirty"] = bool(collect_sdk_git_dirty_flag(resolved_source_root))
     metadata_path = resolved_bundle_root / SDK_BUNDLE_METADATA_NAME
     metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return metadata_path
@@ -332,6 +335,11 @@ def describe_sdk_git_revision(metadata: dict[str, object]) -> str:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return ""
+
+
+def collect_sdk_git_dirty_flag(source_root: str | Path) -> bool:
+    """Return True when the bundled SDK source tree has local modifications."""
+    return bool(is_git_worktree_dirty(source_root))
 
 
 def format_byte_count(size_bytes: int) -> str:
@@ -443,6 +451,8 @@ def package_ui_designer(
     if not app_dir.is_dir():
         raise FileNotFoundError(f"PyInstaller output missing: {app_dir}")
 
+    designer_metadata_path = write_designer_build_metadata(app_dir, PROJECT_ROOT)
+
     bundled_sdk_dir = None
     bundled_sdk_metadata = {}
     if bundle_sdk:
@@ -459,6 +469,7 @@ def package_ui_designer(
     return {
         "dist_dir": str(dist_dir),
         "app_dir": str(app_dir),
+        "designer_metadata_path": designer_metadata_path,
         "archive_path": str(archive_path) if archive_path else "",
         "bundled_sdk_dir": str(bundled_sdk_dir) if bundled_sdk_dir else "",
         "bundled_sdk_file_count": int(bundled_sdk_metadata.get("file_count", 0)),
@@ -569,5 +580,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
 
 

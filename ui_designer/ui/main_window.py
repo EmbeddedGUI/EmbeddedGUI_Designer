@@ -1,27 +1,28 @@
-"""Main window for EmbeddedGUI Designer — Android Studio-like IDE layout.
+﻿"""Main window for EmbeddedGUI Designer 鈥?Android Studio-like IDE layout.
 
 All panels (Project Explorer, Widget Tree, Properties) are QDockWidgets
 that can be freely dragged, docked, and rearranged.  Page switching uses
 a qfluentwidgets.TabBar strip above the central editor area.
 
 Layout (default):
-    ┌──────────┬────────────────────────┬───────────────┐
-    │ Project  │  [page tabs bar]       │  Widget Tree  │
-    │ Explorer │  Design/Split/Code     │───────────────│
-    │          │                        │  Properties   │
-    └──────────┴────────────────────────┴───────────────┘
+    鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
+    鈹?Project  鈹? [page tabs bar]       鈹? Widget Tree  鈹?
+    鈹?Explorer 鈹? Design/Split/Code     鈹傗攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
+    鈹?         鈹?                       鈹? Properties   鈹?
+    鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹粹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹粹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
 """
 
 import copy
 import os
 import re
 import shutil
+import subprocess
 
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout,
     QAction, QActionGroup, QFileDialog, QStatusBar,
     QMessageBox, QScrollArea, QDockWidget, QMenu,
-    QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog,
+    QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
 )
 from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QIcon
@@ -43,10 +44,13 @@ from .app_selector import AppSelectorDialog
 from .new_project_dialog import NewProjectDialog
 from .welcome_page import WelcomePage
 from .debug_panel import DebugPanel
+from .release_dialogs import ReleaseBuildDialog, ReleaseProfilesDialog
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
+from ..model.build_metadata import format_sdk_binding_label
 from ..model.config import get_config
+from ..model.release import ReleaseRequest
 from ..model.sdk_bootstrap import AUTO_DOWNLOAD_STRATEGY_TEXT, default_sdk_install_dir, describe_sdk_source, ensure_sdk_downloaded
 from ..model.workspace import (
     find_sdk_root,
@@ -75,6 +79,7 @@ from ..generator.code_generator import (
 from ..generator.user_code_preserver import compute_source_hash, embed_source_hash, read_existing_file
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
+from ..engine.release_engine import collect_release_diagnostics, latest_release_entry, release_project
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme
@@ -82,6 +87,7 @@ from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 
 
 _DETACHED_WORKERS = set()
+_DESIGNER_REPO_ROOT = normalize_path(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def _release_detached_worker(worker):
@@ -196,7 +202,7 @@ class MainWindow(QMainWindow):
         # Start with welcome page (don't auto-create project)
         self._show_welcome_page()
 
-    # ── UI Construction ────────────────────────────────────────────
+    # 鈹€鈹€ UI Construction 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _init_ui(self):
         self.setWindowTitle("EmbeddedGUI Designer")
@@ -206,7 +212,7 @@ class MainWindow(QMainWindow):
         # Allow docks to be nested and overlapped
         self.setDockNestingEnabled(True)
 
-        # ── Left dock: Project Explorer ──
+        # 鈹€鈹€ Left dock: Project Explorer 鈹€鈹€
         self.project_dock = ProjectExplorerDock(self)
         self.project_dock.setObjectName("project_explorer_dock")
         self.addDockWidget(Qt.LeftDockWidgetArea, self.project_dock)
@@ -222,7 +228,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.page_nav_dock)
         self.splitDockWidget(self.project_dock, self.page_nav_dock, Qt.Vertical)
 
-        # ── Central area: Stacked Widget (Welcome / Editor) ──
+        # 鈹€鈹€ Central area: Stacked Widget (Welcome / Editor) 鈹€鈹€
         self._central_stack = QStackedWidget()
 
         # Welcome page (index 0)
@@ -241,7 +247,7 @@ class MainWindow(QMainWindow):
         editor_layout.setContentsMargins(0, 0, 0, 0)
         editor_layout.setSpacing(0)
 
-        # Page tab bar (qfluentwidgets — movable, closable, scrollable)
+        # Page tab bar (qfluentwidgets 鈥?movable, closable, scrollable)
         self.page_tab_bar = self._create_page_tab_bar()
 
         editor_layout.addWidget(self.page_tab_bar)
@@ -256,7 +262,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self._central_stack)
 
-        # ── Right dock: Widget Tree ──
+        # 鈹€鈹€ Right dock: Widget Tree 鈹€鈹€
         self.tree_dock = QDockWidget("Widget Tree", self)
         self.tree_dock.setObjectName("widget_tree_dock")
         self.tree_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
@@ -265,7 +271,7 @@ class MainWindow(QMainWindow):
         self.tree_dock.setMinimumWidth(180)
         self.addDockWidget(Qt.RightDockWidgetArea, self.tree_dock)
 
-        # ── Right dock: Properties ──
+        # 鈹€鈹€ Right dock: Properties 鈹€鈹€
         self.props_dock = QDockWidget("Properties", self)
         self.props_dock.setObjectName("properties_dock")
         self.props_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
@@ -280,7 +286,7 @@ class MainWindow(QMainWindow):
         # Stack the two right docks vertically by default
         self.splitDockWidget(self.tree_dock, self.props_dock, Qt.Vertical)
 
-        # ── Left dock: Resources (independent panel) ──
+        # 鈹€鈹€ Left dock: Resources (independent panel) 鈹€鈹€
         self.res_dock = QDockWidget("Resources", self)
         self.res_dock.setObjectName("resources_dock")
         self.res_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
@@ -291,7 +297,7 @@ class MainWindow(QMainWindow):
         # Stack below the page navigator
         self.splitDockWidget(self.page_nav_dock, self.res_dock, Qt.Vertical)
 
-        # ── Bottom dock: Debug Output ──
+        # 鈹€鈹€ Bottom dock: Debug Output 鈹€鈹€
         self.debug_dock = QDockWidget("Debug Output", self)
         self.debug_dock.setObjectName("debug_output_dock")
         self.debug_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
@@ -340,9 +346,12 @@ class MainWindow(QMainWindow):
         self.tabifyDockWidget(self.page_fields_dock, self.page_timers_dock)
 
         # Status bar
+        self._sdk_status_label = QLabel("SDK: missing")
+        self.statusBar().addPermanentWidget(self._sdk_status_label)
+        self._update_sdk_status_label()
         self.statusBar().showMessage("Ready")
 
-        # ── Connect signals ──
+        # 鈹€鈹€ Connect signals 鈹€鈹€
 
         # Widget tree
         self.widget_tree.selection_changed.connect(self._on_tree_selection_changed)
@@ -367,7 +376,7 @@ class MainWindow(QMainWindow):
         self.preview_panel.drag_finished.connect(self._on_drag_finished)
         self.preview_panel.runtime_failed.connect(self._on_preview_runtime_failed)
 
-        # Editor tabs (Code → Design sync)
+        # Editor tabs (Code 鈫?Design sync)
         self.editor_tabs.xml_changed.connect(self._on_xml_changed)
         self.editor_tabs.save_requested.connect(self._save_project)
 
@@ -551,6 +560,7 @@ class MainWindow(QMainWindow):
                 self._trigger_compile()
 
         self._welcome_page.refresh()
+        self._update_sdk_status_label()
         if status_message:
             self.statusBar().showMessage(status_message)
 
@@ -576,10 +586,17 @@ class MainWindow(QMainWindow):
             and self._has_valid_sdk_root()
             and self.compiler.can_build()
         )
+        can_release = self.project is not None and bool(self._project_dir) and self._has_valid_sdk_root()
+        has_release_history = bool(self.project is not None and self._project_dir and latest_release_entry(self._project_dir, output_dir=self._release_output_root()))
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
         self._reload_project_action.setEnabled(self.project is not None and bool(self._project_dir))
+        if hasattr(self, "_release_build_action"):
+            self._release_build_action.setEnabled(can_release)
+            self._release_profiles_action.setEnabled(self.project is not None)
+            self._open_last_release_dir_action.setEnabled(has_release_history)
+            self._open_last_release_manifest_action.setEnabled(has_release_history)
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
@@ -884,6 +901,7 @@ class MainWindow(QMainWindow):
         self._recreate_compiler()
         self._show_editor()
         self._clear_editor_state()
+        self._update_sdk_status_label()
         self._apply_project()
         self._update_window_title()
         self._persist_current_project_to_config()
@@ -916,13 +934,14 @@ class MainWindow(QMainWindow):
                 "The project opened successfully, but no valid EmbeddedGUI SDK root was found. Preview will use Python fallback until you set the SDK root.",
             )
 
-    # ── View switching ─────────────────────────────────────────────
+    # 鈹€鈹€ View switching 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _show_welcome_page(self):
         """Show the welcome page (hide editor)."""
         self._central_stack.setCurrentIndex(0)
         self._welcome_page.refresh()
         self.setWindowTitle("EmbeddedGUI Designer")
+        self._update_sdk_status_label()
 
         # Hide dock widgets when on welcome page
         self.project_dock.hide()
@@ -993,7 +1012,7 @@ class MainWindow(QMainWindow):
     def _init_menus(self):
         menubar = self.menuBar()
 
-        # ── File menu ──
+        # 鈹€鈹€ File menu 鈹€鈹€
         file_menu = menubar.addMenu("File")
 
         new_action = QAction("New Project", self)
@@ -1062,7 +1081,7 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
-        # ── Edit menu ──
+        # 鈹€鈹€ Edit menu 鈹€鈹€
         edit_menu = menubar.addMenu("Edit")
 
         self._undo_action = QAction("Undo", self)
@@ -1160,7 +1179,7 @@ class MainWindow(QMainWindow):
         self._toggle_hide_action.triggered.connect(self._toggle_selection_hidden)
         arrange_menu.addAction(self._toggle_hide_action)
 
-        # ── Build menu ──
+        # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
 
         self._compile_action = QAction("Compile && Run", self)
@@ -1180,6 +1199,24 @@ class MainWindow(QMainWindow):
 
         build_menu.addSeparator()
 
+        self._release_build_action = QAction("Release Build...", self)
+        self._release_build_action.triggered.connect(self._release_build)
+        build_menu.addAction(self._release_build_action)
+
+        self._release_profiles_action = QAction("Release Profiles...", self)
+        self._release_profiles_action.triggered.connect(self._edit_release_profiles)
+        build_menu.addAction(self._release_profiles_action)
+
+        self._open_last_release_dir_action = QAction("Open Last Release Folder", self)
+        self._open_last_release_dir_action.triggered.connect(self._open_last_release_folder)
+        build_menu.addAction(self._open_last_release_dir_action)
+
+        self._open_last_release_manifest_action = QAction("Open Last Release Manifest", self)
+        self._open_last_release_manifest_action.triggered.connect(self._open_last_release_manifest)
+        build_menu.addAction(self._open_last_release_manifest_action)
+
+        build_menu.addSeparator()
+
         gen_res_action = QAction("Generate Resources", self)
         gen_res_action.setToolTip(
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -1188,7 +1225,7 @@ class MainWindow(QMainWindow):
         gen_res_action.triggered.connect(self._generate_resources)
         build_menu.addAction(gen_res_action)
 
-        # ── View menu ──
+        # 鈹€鈹€ View menu 鈹€鈹€
         view_menu = menubar.addMenu("View")
 
         # Theme Submenu
@@ -1307,7 +1344,7 @@ class MainWindow(QMainWindow):
 
         view_menu.addSeparator()
 
-        # ── Background Mockup submenu ──
+        # 鈹€鈹€ Background Mockup submenu 鈹€鈹€
         bg_menu = view_menu.addMenu("Background Mockup")
 
         load_bg_action = QAction("Load Mockup Image...", self)
@@ -1342,7 +1379,7 @@ class MainWindow(QMainWindow):
             self._opacity_group.addAction(act)
             opacity_menu.addAction(act)
 
-    # ── Toolbar ────────────────────────────────────────────────────
+    # 鈹€鈹€ Toolbar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _init_toolbar(self):
         tb = QToolBar("Main Toolbar", self)
@@ -1380,7 +1417,7 @@ class MainWindow(QMainWindow):
         self._update_compile_availability()
         self._update_edit_actions()
 
-    # ── Theme ──────────────────────────────────────────────────────
+    # 鈹€鈹€ Theme 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _set_theme(self, theme):
         """Set the application theme and save to config."""
@@ -1422,7 +1459,7 @@ class MainWindow(QMainWindow):
         ss = re.sub(r'\n\*\s*\{\s*font-size:\s*\d+pt;\s*\}', '', ss)
         return ss
 
-    # ── Project operations ─────────────────────────────────────────
+    # 鈹€鈹€ Project operations 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _update_recent_menu(self):
         """Update the Recent Projects submenu."""
@@ -1452,6 +1489,121 @@ class MainWindow(QMainWindow):
                 lambda checked, p=project_path, r=sdk_root: self._open_recent_project(p, r)
             )
             self._recent_menu.addAction(action)
+
+    def _release_output_root(self):
+        if not self._project_dir:
+            return ""
+        return os.path.join(self._project_dir, "output", "ui_designer_release")
+
+    def _update_sdk_status_label(self):
+        if not hasattr(self, "_sdk_status_label"):
+            return
+        sdk_root = self.project_root or self._active_sdk_root()
+        self._sdk_status_label.setText(format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT))
+        self._sdk_status_label.setToolTip(sdk_root or "No SDK root configured")
+
+    def _edit_release_profiles(self):
+        if self.project is None:
+            return
+        dialog = ReleaseProfilesDialog(self.project.release_config, self)
+        if dialog.exec_() != QDialog.Accepted:
+            return
+        self.project.release_config = dialog.release_config
+        if self._project_dir:
+            self.project.release_config.save(self._project_dir)
+            self._refresh_project_watch_snapshot()
+        self.statusBar().showMessage("Release profiles updated", 4000)
+        self._update_compile_availability()
+
+    def _open_path_in_shell(self, path):
+        path = normalize_path(path)
+        if not path or not os.path.exists(path):
+            raise FileNotFoundError(path or "")
+        if sys.platform == "win32":
+            os.startfile(path)
+            return
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.Popen([opener, path])
+
+    def _open_last_release_folder(self):
+        if not self._project_dir:
+            return
+        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        release_root = normalize_path(entry.get("release_root", "")) if isinstance(entry, dict) else ""
+        if not release_root:
+            self.statusBar().showMessage("No release history available", 4000)
+            return
+        try:
+            self._open_path_in_shell(release_root)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Folder Failed", str(exc))
+
+    def _open_last_release_manifest(self):
+        if not self._project_dir:
+            return
+        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        manifest_path = normalize_path(entry.get("manifest_path", "")) if isinstance(entry, dict) else ""
+        if not manifest_path:
+            self.statusBar().showMessage("No release manifest available", 4000)
+            return
+        try:
+            self._open_path_in_shell(manifest_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Open Release Manifest Failed", str(exc))
+
+    def _release_build(self):
+        if self.project is None or not self._project_dir:
+            return
+        if not self._has_valid_sdk_root():
+            QMessageBox.warning(self, "SDK Root Missing", "A valid EmbeddedGUI SDK root is required to build a release.")
+            return
+
+        self._flush_pending_xml()
+        diagnostics = collect_release_diagnostics(self.project)
+        warning_count = len(diagnostics["warnings"])
+        dialog = ReleaseBuildDialog(
+            self.project.release_config,
+            format_sdk_binding_label(self.project_root, _DESIGNER_REPO_ROOT),
+            self._release_output_root(),
+            warning_count,
+            self,
+        )
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        self._save_project()
+        if not self._project_dir:
+            return
+
+        profile = self.project.release_config.get_profile(dialog.selected_profile_id)
+        result = release_project(
+            ReleaseRequest(
+                project=self.project,
+                project_dir=self._project_dir,
+                sdk_root=self.project_root,
+                profile=profile,
+                designer_root=_DESIGNER_REPO_ROOT,
+                output_dir=self._release_output_root(),
+                warnings_as_errors=dialog.warnings_as_errors,
+                package_release=dialog.package_release,
+            )
+        )
+        self._update_compile_availability()
+        if result.success:
+            self.statusBar().showMessage(result.message, 5000)
+            QMessageBox.information(
+                self,
+                "Release Build Succeeded",
+                f"{result.message}\n\nManifest:\n{result.manifest_path}" + (f"\n\nPackage:\n{result.zip_path}" if result.zip_path else ""),
+            )
+            return
+
+        self.debug_panel.log_error(result.message)
+        self.debug_panel.log_error(f"Release log: {result.log_path}")
+        self.debug_dock.show()
+        self.debug_dock.raise_()
+        self.statusBar().showMessage(result.message, 5000)
+        QMessageBox.warning(self, "Release Build Failed", f"{result.message}\n\nLog:\n{result.log_path}")
 
     def _open_app_dialog(self):
         """Show dialog to select and open an SDK example."""
@@ -2024,7 +2176,7 @@ class MainWindow(QMainWindow):
             f"Exported {len(files)} files to {path} (user code preserved)"
         )
 
-    # ── Background Mockup Image ───────────────────────────────────
+    # 鈹€鈹€ Background Mockup Image 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _load_background_image(self):
         """Load a mockup image for the current page."""
@@ -2053,9 +2205,9 @@ class MainWindow(QMainWindow):
         if pixmap.width() != sw or pixmap.height() != sh:
             QMessageBox.information(
                 self, "Image Size Mismatch",
-                f"The mockup image size ({pixmap.width()}×{pixmap.height()}) "
-                f"does not match the screen size ({sw}×{sh}).\n\n"
-                f"The image will be scaled to {sw}×{sh} to fit the canvas."
+                f"The mockup image size ({pixmap.width()}x{pixmap.height()}) "
+                f"does not match the screen size ({sw}x{sh}).\n\n"
+                f"The image will be scaled to {sw}x{sh} to fit the canvas."
             )
             pixmap = pixmap.scaled(sw, sh, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
 
@@ -2063,8 +2215,6 @@ class MainWindow(QMainWindow):
         eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
         mockup_dir = os.path.join(eguiproject_dir, "mockup")
         os.makedirs(mockup_dir, exist_ok=True)
-
-        import shutil
         filename = os.path.basename(path)
         dest = os.path.join(mockup_dir, filename)
         # Handle name collision
@@ -2294,7 +2444,7 @@ class MainWindow(QMainWindow):
             suffix += 1
         return f"{stem}_{suffix}"
 
-    # ── Resource panel integration ──────────────────────────────────
+    # 鈹€鈹€ Resource panel integration 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _get_resource_dir(self):
         """Compute the resource directory path (resource/) for the current project.
@@ -2365,7 +2515,7 @@ class MainWindow(QMainWindow):
         self._finalize_resource_reference_change(touched_pages, source="string key rename")
 
     def _on_resource_imported(self):
-        """Resource files were imported — sync catalog and auto-regenerate."""
+        """Resource files were imported 鈥?sync catalog and auto-regenerate."""
         # Sync catalog from resource panel back to project
         if self.project:
             catalog = self.res_panel.get_resource_catalog()
@@ -2556,13 +2706,13 @@ class MainWindow(QMainWindow):
 
         Called before each compile to ensure resource C files are up-to-date.
         Skips entirely when resources haven't changed since last generation.
-        Runs silently — errors are logged to debug panel only.
+        Runs silently 鈥?errors are logged to debug panel only.
         """
         if not self._resources_need_regen:
             return
         self._run_resource_generation(silent=True)
 
-    # ── Page management ────────────────────────────────────────────
+    # 鈹€鈹€ Page management 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _switch_page(self, page_name):
         """Switch the editor to display a specific page."""
@@ -2932,7 +3082,7 @@ class MainWindow(QMainWindow):
             self.project.page_mode = mode
             self._trigger_compile()
 
-    # ── Page tabs (qfluentwidgets TabBar) ─────────────────────────
+    # 鈹€鈹€ Page tabs (qfluentwidgets TabBar) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _page_tab_name(self, index):
         item = self.page_tab_bar.tabItem(index)
@@ -3030,7 +3180,7 @@ class MainWindow(QMainWindow):
         elif action == close_all:
             self._clear_page_tabs()
 
-    # ── Widget selection / editing ─────────────────────────────────
+    # 鈹€鈹€ Widget selection / editing 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
         self._selection_state.set_widgets(widgets or [], primary=primary)
@@ -3537,7 +3687,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(message, 5000)
 
     def _on_model_changed(self, source=""):
-        """Common handler: model changed → record snapshot + update preview + XML + recompile."""
+        """Common handler: model changed 鈫?record snapshot + update preview + XML + recompile."""
         self._record_page_state_change(source=source)
 
     def _format_page_change_message(self, source):
@@ -3563,7 +3713,7 @@ class MainWindow(QMainWindow):
         if message and not self._undoing:
             self.statusBar().showMessage(message, 3000)
 
-    # ── Undo / Redo ─────────────────────────────────────────────────
+    # 鈹€鈹€ Undo / Redo 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _undo(self):
         if not self._current_page:
@@ -3616,14 +3766,14 @@ class MainWindow(QMainWindow):
             self._redo_action.setEnabled(False)
 
     def _on_drag_started(self):
-        """Preview drag/resize began — start undo batch."""
+        """Preview drag/resize began 鈥?start undo batch."""
         if self._current_page:
             self._active_batch_source = ""
             stack = self._undo_manager.get_stack(self._current_page.name)
             stack.begin_batch()
 
     def _on_drag_finished(self):
-        """Preview drag/resize ended — commit undo batch."""
+        """Preview drag/resize ended 鈥?commit undo batch."""
         if self._current_page:
             xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
@@ -3632,10 +3782,10 @@ class MainWindow(QMainWindow):
             self._update_undo_actions()
             self._update_window_title()
 
-    # ── XML bidirectional sync ─────────────────────────────────────
+    # 鈹€鈹€ XML bidirectional sync 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _sync_xml_to_editors(self):
-        """Push current page XML to the code editors (Design → Code)."""
+        """Push current page XML to the code editors (Design 鈫?Code)."""
         if not self._current_page:
             return
         try:
@@ -3645,7 +3795,7 @@ class MainWindow(QMainWindow):
             pass
 
     def _on_xml_changed(self, xml_text):
-        """User edited XML in the code editor (Code → Design)."""
+        """User edited XML in the code editor (Code 鈫?Design)."""
         if not self._current_page:
             return
         try:
@@ -3671,10 +3821,10 @@ class MainWindow(QMainWindow):
             if not self._undoing:
                 self.statusBar().showMessage(f"Changed {self._current_page.name}: xml edit.", 3000)
         except Exception:
-            # XML parse error — ignore until user fixes it
+            # XML parse error 鈥?ignore until user fixes it
             pass
 
-    # ── Preview / Compile ──────────────────────────────────────────
+    # 鈹€鈹€ Preview / Compile 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _apply_page_state(self, target_page, source_page):
         """Copy all serializable page state from source to target."""
@@ -3925,3 +4075,11 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
+
+
+
+
+
+
+
+

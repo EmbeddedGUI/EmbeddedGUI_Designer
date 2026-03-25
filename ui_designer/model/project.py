@@ -1,4 +1,4 @@
-"""Project save/load for EmbeddedGUI Designer — XML format (.egui).
+﻿"""Project save/load for EmbeddedGUI Designer 鈥?XML format (.egui).
 
 Project structure on disk (inside app directory, e.g. example/HelloDesigner/):
 
@@ -31,6 +31,7 @@ from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
+from .release import ReleaseConfig
 
 
 class Project:
@@ -50,6 +51,7 @@ class Project:
         self.resource_config = ""  # relative path to resource config (legacy)
         self.resource_catalog = ResourceCatalog()  # project resource catalog
         self.string_catalog = StringResourceCatalog()  # i18n string resources
+        self.release_config = ReleaseConfig.default()  # release build profiles
         self.pages = []  # list[Page]
 
     @property
@@ -72,7 +74,7 @@ class Project:
             return [page.root_widget]
         return []
 
-    # ── Page management ────────────────────────────────────────────
+    # 鈹€鈹€ Page management 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def get_page_by_name(self, name):
         """Find a page by its derived name (filename without extension)."""
@@ -122,7 +124,7 @@ class Project:
         self.add_page(page)
         return page
 
-    # ── Path helpers ──────────────────────────────────────────────
+    # 鈹€鈹€ Path helpers 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def get_app_dir(self):
         """Get the app directory path."""
@@ -171,7 +173,14 @@ class Project:
             return ""
         return os.path.join(res_dir, "images")
 
-    # ── Widgets ────────────────────────────────────────────────────
+    def get_release_config_path(self):
+        """Get the .eguiproject/release.json path."""
+        eguiproject_dir = self.get_eguiproject_dir()
+        if not eguiproject_dir:
+            return ""
+        return os.path.join(eguiproject_dir, "release.json")
+
+    # 鈹€鈹€ Widgets 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def get_all_widgets(self):
         """Return flat list of all widgets across all pages."""
@@ -180,7 +189,7 @@ class Project:
             result.extend(page.get_all_widgets())
         return result
 
-    # ── Save / Load (.egui XML) ───────────────────────────────────
+    # 鈹€鈹€ Save / Load (.egui XML) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def save(self, project_dir):
         """Save project to directory.
@@ -208,6 +217,9 @@ class Project:
         # Save i18n string resources to .eguiproject/resources/values*/strings.xml
         if self.string_catalog.has_strings:
             self.string_catalog.save(resources_dir)
+
+        # Save release profiles to .eguiproject/release.json
+        self.release_config.save(eguiproject_dir)
 
         # Sync .eguiproject/resources/ -> resource/src/ for generation pipeline
         self.sync_resources_to_src(project_dir)
@@ -279,6 +291,7 @@ class Project:
         proj.sdk_root = resolve_project_sdk_root(project_dir, root.get("sdk_root", root.get("egui_root", "")))
         proj.page_mode = root.get("page_mode", "easy_page")
         proj.startup_page = root.get("startup", "main_page")
+        proj.release_config = ReleaseConfig.load(project_dir)
 
         # Resource config
         res_elem = root.find("Resources")
@@ -318,7 +331,7 @@ class Project:
         proj._migrate_resources_if_needed(project_dir)
 
         # Determine the authoritative source dir for page loading
-        # (used for image path validation — point to images/ subfolder)
+        # (used for image path validation 鈥?point to images/ subfolder)
         effective_src_dir = eguiproject_images_dir if os.path.isdir(eguiproject_images_dir) else (
             eguiproject_res_dir if os.path.isdir(eguiproject_res_dir) else src_dir
         )
@@ -427,7 +440,7 @@ class Project:
             self.string_catalog = reloaded_strings
 
     def sync_resources_to_src(self, project_dir):
-        """Sync .eguiproject/resources/ → resource/src/ for the generation pipeline.
+        """Sync .eguiproject/resources/ 鈫?resource/src/ for the generation pipeline.
 
         Copies source files to resource/src/ so app_resource_generate.py can
         find them.  Images live in resources/images/, fonts and text files
@@ -471,4 +484,7 @@ class Project:
     def get_config_dir(cls, project_dir):
         """Get the .eguiproject config directory for a project."""
         return os.path.join(project_dir, ".eguiproject")
+
+
+
 

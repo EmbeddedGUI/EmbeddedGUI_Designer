@@ -1,0 +1,56 @@
+﻿"""Tests for the release CLI entry point."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+
+def _load_module():
+    module_path = Path(__file__).resolve().parents[2] / "scripts" / "ui_designer" / "release_project.py"
+    spec = importlib.util.spec_from_file_location("release_project_cli", str(module_path))
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None and spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+
+    fake_project = SimpleNamespace(
+        sdk_root=str(tmp_path / "sdk"),
+        release_config=SimpleNamespace(get_profile=lambda profile_id="": SimpleNamespace(id="windows-pc")),
+    )
+
+    monkeypatch.setattr(module, "_parse_args", lambda: SimpleNamespace(project=str(tmp_path / "Demo.egui"), profile="", sdk_root="", output_dir="", warnings_as_errors=False, no_package=True, json=True))
+    monkeypatch.setattr(module.Project, "load", lambda path: fake_project)
+    monkeypatch.setattr(module, "find_sdk_root", lambda **kwargs: str(tmp_path / "sdk"))
+    monkeypatch.setattr(
+        module,
+        "release_project",
+        lambda request: SimpleNamespace(
+            success=True,
+            message="ok",
+            build_id="20260325T000000Z",
+            profile_id="windows-pc",
+            release_root=str(tmp_path / "release"),
+            dist_dir=str(tmp_path / "release" / "dist"),
+            manifest_path=str(tmp_path / "release" / "release-manifest.json"),
+            log_path=str(tmp_path / "release" / "logs" / "build.log"),
+            history_path=str(tmp_path / "release" / "history.json"),
+            zip_path="",
+            warnings=[],
+            errors=[],
+            artifacts=[],
+        ),
+    )
+
+    exit_code = module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == module.EXIT_OK
+    assert payload["success"] is True
+    assert payload["profile_id"] == "windows-pc"
