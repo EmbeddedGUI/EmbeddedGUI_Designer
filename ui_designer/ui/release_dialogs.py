@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import shlex
 
 from PyQt5.QtCore import Qt
@@ -24,6 +26,9 @@ from PyQt5.QtWidgets import (
 )
 
 from ..model.release import ReleaseConfig, ReleaseProfile
+
+
+_PREVIEW_CHAR_LIMIT = 65536
 
 
 def _history_string(entry: dict[str, object], key: str) -> str:
@@ -106,6 +111,33 @@ def _history_detail_text(entry: dict[str, object]) -> str:
         lines.append("Message:")
         lines.append(message)
     return "\n".join(lines)
+
+
+def _preview_file_text(path: str, *, prefer_json: bool = False, char_limit: int = _PREVIEW_CHAR_LIMIT) -> str:
+    resolved_path = os.path.abspath(os.path.normpath(path))
+    if not os.path.isfile(resolved_path):
+        return f"File not found:\n{resolved_path}"
+
+    try:
+        with open(resolved_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read(char_limit + 1)
+    except OSError as exc:
+        return f"Failed to read file:\n{resolved_path}\n\n{exc}"
+
+    truncated = len(content) > char_limit
+    if truncated:
+        content = content[:char_limit]
+
+    if prefer_json:
+        try:
+            parsed = json.loads(content)
+            content = json.dumps(parsed, indent=2, ensure_ascii=False)
+        except (ValueError, TypeError):
+            pass
+
+    if truncated:
+        content = content.rstrip() + f"\n\n[truncated to first {char_limit} characters]"
+    return content
 
 
 class ReleaseBuildDialog(QDialog):
@@ -399,7 +431,7 @@ class ReleaseHistoryDialog(QDialog):
     def __init__(self, history_entries: list[dict[str, object]], open_path_callback=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Release History")
-        self.resize(920, 520)
+        self.resize(1040, 680)
         self._open_path_callback = open_path_callback
 
         root_layout = QVBoxLayout(self)
@@ -421,18 +453,31 @@ class ReleaseHistoryDialog(QDialog):
         self._details_edit.setReadOnly(True)
         right_layout.addWidget(self._details_edit, 1)
 
+        self._preview_label = QLabel("Preview")
+        right_layout.addWidget(self._preview_label)
+
+        self._preview_edit = QTextEdit()
+        self._preview_edit.setReadOnly(True)
+        right_layout.addWidget(self._preview_edit, 2)
+
         action_row = QHBoxLayout()
         right_layout.addLayout(action_row)
 
+        self._preview_manifest_button = QPushButton("Preview Manifest")
+        self._preview_log_button = QPushButton("Preview Log")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_manifest_button = QPushButton("Open Manifest")
         self._open_log_button = QPushButton("Open Log")
         self._open_package_button = QPushButton("Open Package")
+        self._preview_manifest_button.clicked.connect(lambda: self._preview_selected_path("manifest_path", "Manifest", prefer_json=True))
+        self._preview_log_button.clicked.connect(lambda: self._preview_selected_path("log_path", "Log"))
         self._open_folder_button.clicked.connect(lambda: self._open_selected_path("release_root", "Release Folder"))
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
         self._open_package_button.clicked.connect(lambda: self._open_selected_path("zip_path", "Release Package"))
         for button in (
+            self._preview_manifest_button,
+            self._preview_log_button,
             self._open_folder_button,
             self._open_manifest_button,
             self._open_log_button,
@@ -458,6 +503,8 @@ class ReleaseHistoryDialog(QDialog):
         else:
             self._summary_label.setText("No release history available for this project.")
             self._details_edit.setPlainText("Run Build -> Release Build... to create the first tracked release.")
+            self._preview_label.setText("Preview")
+            self._preview_edit.setPlainText("Select a release entry to preview its manifest or build log.")
             self._set_open_buttons(None)
 
     def _current_entry(self) -> dict[str, object] | None:
@@ -468,6 +515,8 @@ class ReleaseHistoryDialog(QDialog):
         return entry if isinstance(entry, dict) else None
 
     def _set_open_buttons(self, entry: dict[str, object] | None) -> None:
+        self._preview_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
+        self._preview_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
         self._open_folder_button.setEnabled(bool(entry and _history_string(entry, "release_root")))
         self._open_manifest_button.setEnabled(bool(entry and _history_string(entry, "manifest_path")))
         self._open_log_button.setEnabled(bool(entry and _history_string(entry, "log_path")))
@@ -477,17 +526,28 @@ class ReleaseHistoryDialog(QDialog):
         if row < 0:
             self._summary_label.setText("No release entry selected.")
             self._details_edit.clear()
+            self._preview_label.setText("Preview")
+            self._preview_edit.clear()
             self._set_open_buttons(None)
             return
         entry = self._current_entry()
         if entry is None:
             self._summary_label.setText("No release entry selected.")
             self._details_edit.clear()
+            self._preview_label.setText("Preview")
+            self._preview_edit.clear()
             self._set_open_buttons(None)
             return
         self._summary_label.setText(_history_list_label(entry))
         self._details_edit.setPlainText(_history_detail_text(entry))
         self._set_open_buttons(entry)
+        if _history_string(entry, "manifest_path"):
+            self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
+        elif _history_string(entry, "log_path"):
+            self._preview_selected_path("log_path", "Log")
+        else:
+            self._preview_label.setText("Preview")
+            self._preview_edit.setPlainText("No manifest or build log is recorded for this release entry.")
 
     def _open_selected_path(self, key: str, label: str) -> None:
         if self._open_path_callback is None:
@@ -500,3 +560,12 @@ class ReleaseHistoryDialog(QDialog):
             self._open_path_callback(path)
         except Exception as exc:
             QMessageBox.warning(self, f"Open {label} Failed", str(exc))
+
+    def _preview_selected_path(self, key: str, label: str, *, prefer_json: bool = False) -> None:
+        entry = self._current_entry()
+        path = _history_string(entry or {}, key)
+        self._preview_label.setText(f"{label} Preview")
+        if not path:
+            self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
+            return
+        self._preview_edit.setPlainText(_preview_file_text(path, prefer_json=prefer_json))

@@ -201,3 +201,55 @@ def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, mo
     assert captured["open_path_callback"] == window._open_path_in_shell
     assert captured["parent"] is window
     assert captured["shown"] is True
+
+
+@_skip_no_qt
+def test_release_history_dialog_previews_manifest_and_log(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    log_path = tmp_path / "build.log"
+    manifest_path.write_text('{"status":"success","sdk":{"revision":"v1.0.0-310-g416d576"}}\n', encoding="utf-8")
+    log_path.write_text("build ok\nline2\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "manifest_path": str(manifest_path),
+                "log_path": str(log_path),
+            }
+        ]
+    )
+
+    assert dialog._preview_label.text() == "Manifest Preview"
+    assert '"status": "success"' in dialog._preview_edit.toPlainText()
+
+    dialog._preview_selected_path("log_path", "Log")
+
+    assert dialog._preview_label.text() == "Log Preview"
+    assert "build ok" in dialog._preview_edit.toPlainText()
+
+
+@_skip_no_qt
+def test_release_history_dialog_preview_truncates_large_logs(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    log_path = tmp_path / "build.log"
+    log_path.write_text("x" * 70000, encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "windows-pc",
+                "log_path": str(log_path),
+            }
+        ]
+    )
+
+    assert dialog._preview_label.text() == "Log Preview"
+    assert "[truncated to first 65536 characters]" in dialog._preview_edit.toPlainText()
