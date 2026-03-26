@@ -722,6 +722,19 @@ class WidgetTreePanel(QWidget):
         move_into_action.setToolTip(self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", structure_state.can_move_into, self._structure_action_reason(structure_state, "move_into_reason")))
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
+        if structure_state.can_move_into:
+            quick_targets = available_move_targets(self.project, context_widgets)
+            if quick_targets:
+                quick_move_menu = structure_menu.addMenu("Quick Move Into")
+                quick_move_menu.setToolTipsVisible(True)
+                quick_move_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
+                for choice in quick_targets[:5]:
+                    quick_action = QAction(choice.label, self)
+                    quick_action.setToolTip(f"Move the current selection into {choice.label}.")
+                    quick_action.triggered.connect(
+                        lambda checked=False, target=choice.widget: self._move_selected_widgets_into(target_widget=target, widgets=context_widgets)
+                    )
+                    quick_move_menu.addAction(quick_action)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")

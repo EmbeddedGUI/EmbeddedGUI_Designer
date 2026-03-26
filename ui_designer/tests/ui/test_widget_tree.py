@@ -45,6 +45,20 @@ def _structure_menu_actions(menu):
     return {action.text(): action for action in structure_menu.actions() if action.text()}
 
 
+def _structure_submenu(menu, label):
+    for action in menu.actions():
+        if action.text() == "Structure":
+            structure_menu = action.menu()
+            break
+    else:
+        raise AssertionError("Structure menu not found")
+
+    for action in structure_menu.actions():
+        if action.text() == label:
+            return action.menu()
+    raise AssertionError(f"{label} submenu not found")
+
+
 @_skip_no_qt
 class TestWidgetTreePanel:
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
@@ -322,6 +336,39 @@ class TestWidgetTreePanel:
         assert feedback == ["Moved 1 widget(s) into target."]
         panel.deleteLater()
 
+    def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target", x=80, y=10, width=100, height=100)
+        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        sources = []
+        feedback = []
+        panel.tree_changed.connect(lambda source: sources.append(source))
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+        panel.set_selected_widgets([child], primary=child)
+
+        menu = panel._build_context_menu(child)
+        quick_menu = _structure_submenu(menu, "Quick Move Into")
+        target_action = next(action for action in quick_menu.actions() if action.text() == "root_group / target (group)")
+
+        target_action.trigger()
+
+        assert child.parent is target
+        assert panel.selected_widgets() == [child]
+        assert panel._get_selected_widget() is child
+        assert sources == ["move into container"]
+        assert feedback == ["Moved 1 widget(s) into target."]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_context_menu_structure_actions_reflect_selection_state(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -346,6 +393,7 @@ class TestWidgetTreePanel:
         assert actions["Group Selection"].isEnabled() is True
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is True
+        assert actions["Quick Move Into"].menu() is not None
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
