@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
+from PyQt5.QtGui import QColor, QBrush
 
 from ..model.widget_name import (
     is_valid_widget_name,
@@ -142,6 +143,8 @@ class WidgetTreePanel(QWidget):
         self._default_expand_next_rebuild = True
         self._filter_matches = []
         self._drag_hover_item = None
+        self._drag_hover_position = None
+        self._drag_target_item = None
         self._drag_hover_expand_timer = QTimer(self)
         self._drag_hover_expand_timer.setSingleShot(True)
         self._drag_hover_expand_timer.setInterval(350)
@@ -205,6 +208,9 @@ class WidgetTreePanel(QWidget):
         self.structure_hint_label = QLabel("Structure: select widgets to group, move, or reorder.")
         self.structure_hint_label.setWordWrap(True)
         layout.addWidget(self.structure_hint_label)
+        self.drag_target_label = QLabel(self._default_drag_target_text())
+        self.drag_target_label.setWordWrap(True)
+        layout.addWidget(self.drag_target_label)
 
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter widgets by name or type")
@@ -455,6 +461,9 @@ class WidgetTreePanel(QWidget):
         self.up_btn.setEnabled(state.can_move_up)
         self.down_btn.setEnabled(state.can_move_down)
         self.structure_hint_label.setText(self._structure_hint_text(state))
+
+    def _default_drag_target_text(self):
+        return "Drop target: drag over the tree to preview where the selection will land."
 
     def _structure_hint_text(self, state=None):
         state = state or self._structure_action_state()
@@ -844,34 +853,97 @@ class WidgetTreePanel(QWidget):
 
     def _on_tree_drag_hover(self, target_item, drop_position):
         target_widget = self._widget_map.get(id(target_item)) if target_item is not None else None
+        target_parent, target_index = self._resolve_tree_drop_destination(target_widget, drop_position)
+        valid, message = validate_move_widgets_to_parent_index(self.project, self.selected_widgets(), target_parent, target_index)
+        self._update_drag_target_preview(
+            target_item=target_item,
+            target_widget=target_widget,
+            target_parent=target_parent,
+            drop_position=drop_position,
+            valid=valid,
+            message=message,
+        )
         if (
             target_item is None
             or target_widget is None
             or not target_widget.is_container
             or drop_position != QAbstractItemView.OnItem
             or target_item.isExpanded()
-            or not self._can_drop_selected_widgets(target_widget, drop_position)
+            or not valid
         ):
-            self._clear_tree_drag_hover()
+            self._drag_hover_expand_timer.stop()
+            self._drag_hover_item = None
+            self._drag_hover_position = None
             return
-        if self._drag_hover_item is target_item and self._drag_hover_expand_timer.isActive():
+        if (
+            self._drag_hover_item is target_item
+            and self._drag_hover_position == drop_position
+            and self._drag_hover_expand_timer.isActive()
+        ):
             return
         self._drag_hover_item = target_item
+        self._drag_hover_position = drop_position
         self._drag_hover_expand_timer.start()
 
     def _clear_tree_drag_hover(self):
         self._drag_hover_expand_timer.stop()
         self._drag_hover_item = None
+        self._drag_hover_position = None
+        self._set_drag_target_item(None)
+        self.drag_target_label.setText(self._default_drag_target_text())
 
     def _expand_drag_hover_item(self):
         item = self._drag_hover_item
         self._drag_hover_item = None
+        self._drag_hover_position = None
         if item is None or item.isExpanded():
             return
         widget = self._widget_map.get(id(item))
         if widget is None or not widget.is_container:
             return
         item.setExpanded(True)
+
+    def _set_drag_target_item(self, item):
+        if self._drag_target_item is item:
+            return
+        if self._drag_target_item is not None:
+            for column in range(self.tree.columnCount()):
+                self._drag_target_item.setBackground(column, QBrush())
+        self._drag_target_item = item
+        if self._drag_target_item is not None:
+            brush = QBrush(QColor("#d8ecff"))
+            for column in range(self.tree.columnCount()):
+                self._drag_target_item.setBackground(column, brush)
+
+    def _format_drag_target_text(self, target_widget, target_parent, drop_position):
+        if drop_position == QAbstractItemView.OnViewport and target_parent is not None:
+            return f"Drop target: append to {target_parent.name}."
+        if target_widget is None:
+            return self._default_drag_target_text()
+        if drop_position == QAbstractItemView.OnItem:
+            if target_widget.is_container:
+                return f"Drop target: move into {target_widget.name}."
+            return f"Drop target: insert after {target_widget.name}."
+        if drop_position == QAbstractItemView.AboveItem:
+            return f"Drop target: insert before {target_widget.name}."
+        if drop_position == QAbstractItemView.BelowItem:
+            if target_widget.parent is None and target_parent is target_widget:
+                return f"Drop target: append inside {target_widget.name}."
+            return f"Drop target: insert after {target_widget.name}."
+        return self._default_drag_target_text()
+
+    def _update_drag_target_preview(self, target_item, target_widget, target_parent, drop_position, valid, message):
+        if valid:
+            self._set_drag_target_item(target_item)
+            self.drag_target_label.setText(
+                self._format_drag_target_text(target_widget, target_parent, drop_position)
+            )
+            return
+        self._set_drag_target_item(None)
+        if message:
+            self.drag_target_label.setText(f"Drop target unavailable: {message}")
+            return
+        self.drag_target_label.setText(self._default_drag_target_text())
 
     def _handle_tree_key_press(self, event):
         key = event.key()

@@ -610,6 +610,61 @@ class TestWidgetTreePanel:
         assert feedback == ["Cannot move selection in tree: widgets are already in that position."]
         panel.deleteLater()
 
+    def test_tree_drag_hover_updates_drop_target_preview(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        source = WidgetModel("label", name="source")
+        target = WidgetModel("group", name="target")
+        sibling = WidgetModel("label", name="sibling")
+        root.add_child(source)
+        root.add_child(target)
+        root.add_child(sibling)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([source], primary=source)
+        target_item = panel._item_map[id(target)]
+        sibling_item = panel._item_map[id(sibling)]
+
+        panel._on_tree_drag_hover(target_item, QAbstractItemView.OnItem)
+
+        assert panel.drag_target_label.text() == "Drop target: move into target."
+        assert panel._drag_target_item is target_item
+
+        panel._on_tree_drag_hover(sibling_item, QAbstractItemView.AboveItem)
+
+        assert panel.drag_target_label.text() == "Drop target: insert before sibling."
+        assert panel._drag_target_item is sibling_item
+
+        panel._clear_tree_drag_hover()
+
+        assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
+        assert panel._drag_target_item is None
+        panel.deleteLater()
+
+    def test_tree_drag_hover_reports_invalid_target_preview(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        root.add_child(first)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        first_item = panel._item_map[id(first)]
+
+        panel._on_tree_drag_hover(first_item, QAbstractItemView.AboveItem)
+
+        assert panel.drag_target_label.text() == (
+            "Drop target unavailable: Cannot move selection in tree: widgets are already in that position."
+        )
+        assert panel._drag_target_item is None
+        panel.deleteLater()
+
     def test_tree_drag_hover_expands_valid_collapsed_container(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
