@@ -191,12 +191,16 @@ def main():
         designer_revision = _string(getattr(result, "designer_revision", ""))
         if designer_revision:
             print(f"[INFO] designer_revision: {designer_revision}")
-        sdk_source_kind = _string(_sdk_payload(result).get("source_kind"))
+        sdk_payload = _sdk_payload(result)
+        sdk_source_kind = _string(sdk_payload.get("source_kind"))
         if sdk_source_kind:
             print(f"[INFO] sdk_source: {sdk_source_kind}")
         sdk_revision = _sdk_revision_text(result)
         if sdk_revision:
             print(f"[INFO] sdk_revision: {sdk_revision}")
+        sdk_remote = _string(sdk_payload.get("remote"))
+        if sdk_remote:
+            print(f"[INFO] sdk_remote: {sdk_remote}")
         print(
             "[INFO] diagnostics: "
             f"warnings={diagnostics['summary']['warnings']}, "
