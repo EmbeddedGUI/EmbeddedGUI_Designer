@@ -822,6 +822,38 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(siblings)} {noun} under {self._widget_label(parent)}.",
         )
 
+    def _same_parent_type_widgets(self, widget):
+        siblings = self._sibling_widgets(widget)
+        if not siblings or widget is None:
+            return []
+        widget_type = getattr(widget, "widget_type", "")
+        return [
+            current
+            for current in siblings
+            if current is not None and getattr(current, "widget_type", "") == widget_type
+        ]
+
+    def _select_same_parent_type_widgets(self, widget):
+        matches = self._same_parent_type_widgets(widget)
+        if len(matches) <= 1:
+            if widget is not None:
+                widget_type = getattr(widget, "widget_type", "widget")
+                if widget.parent is None:
+                    self.feedback_message.emit("Cannot select same parent type: root widgets do not have siblings.")
+                else:
+                    self.feedback_message.emit(
+                        f"Cannot select same parent type: no other {widget_type} widgets exist under the same parent."
+                    )
+            return
+        widget_type = getattr(widget, "widget_type", "widget")
+        noun = "widget" if len(matches) == 1 else "widgets"
+        parent = widget.parent
+        self._apply_programmatic_selection(
+            matches,
+            primary=widget if widget in matches else matches[0],
+            feedback_message=f"Selected {len(matches)} sibling {widget_type} {noun} under {self._widget_label(parent)}.",
+        )
+
     def _same_type_widgets(self, widget):
         if widget is None:
             return []
@@ -867,6 +899,7 @@ class WidgetTreePanel(QWidget):
         managed_subtree_widgets = self._managed_subtree_widgets(widget)
         free_position_subtree_widgets = self._free_position_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
+        same_parent_type_widgets = self._same_parent_type_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
@@ -886,6 +919,7 @@ class WidgetTreePanel(QWidget):
         can_select_managed = bool(managed_subtree_widgets)
         can_select_free_position = bool(free_position_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
+        can_select_same_parent_type = len(same_parent_type_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
         select_parent_action = QAction("Parent", self)
@@ -1108,6 +1142,20 @@ class WidgetTreePanel(QWidget):
         select_siblings_action.triggered.connect(lambda: self._select_sibling_widgets(widget))
         select_menu.addAction(select_siblings_action)
 
+        select_same_parent_type_action = QAction("Same Parent Type", self)
+        select_same_parent_type_action.setEnabled(can_select_same_parent_type)
+        select_same_parent_type_action.setToolTip(
+            self._structure_tooltip(
+                f"Select sibling {getattr(widget, 'widget_type', 'widget')} widgets under the same parent.",
+                can_select_same_parent_type,
+                "root widgets do not have siblings."
+                if widget.parent is None else
+                f"no other {getattr(widget, 'widget_type', 'widget')} widgets exist under the same parent.",
+            )
+        )
+        select_same_parent_type_action.triggered.connect(lambda: self._select_same_parent_type_widgets(widget))
+        select_menu.addAction(select_same_parent_type_action)
+
         select_same_type_action = QAction("Same Type", self)
         select_same_type_action.setEnabled(can_select_same_type)
         select_same_type_action.setToolTip(
@@ -1138,6 +1186,7 @@ class WidgetTreePanel(QWidget):
             can_select_managed,
             can_select_free_position,
             can_select_siblings,
+            can_select_same_parent_type,
             can_select_same_type,
         ])
         select_menu.menuAction().setEnabled(select_enabled)

@@ -5993,6 +5993,7 @@ class TestMainWindowCanvasActions:
         assert "Locked" in select_labels
         assert "Managed" in select_labels
         assert "Free Position" in select_labels
+        assert "Same Parent Type" in select_labels
         assert "Same Type" in select_labels
         _close_window(window)
 
@@ -6625,4 +6626,41 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [first, second]
         assert window.preview_panel.selected_widgets() == [first, second]
         assert window.statusBar().currentMessage() == "Selected 2 button widgets."
+        _close_window(window)
+
+    def test_preview_context_menu_same_parent_type_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewSameParentTypeContextMenuDemo"
+        project = _create_project(project_dir, "PreviewSameParentTypeContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
+        second = WidgetModel("label", name="second", x=8, y=28, width=40, height=16)
+        other = WidgetModel("button", name="other", x=8, y=56, width=56, height=20)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(other)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(first)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_same_parent_type_action = next(action for action in select_menu.actions() if action.text() == "Same Parent Type")
+        select_same_parent_type_action.trigger()
+
+        assert window._selection_state.primary is first
+        assert window._selection_state.widgets == [first, second]
+        assert window.widget_tree.selected_widgets() == [first, second]
+        assert window.preview_panel.selected_widgets() == [first, second]
+        assert window.statusBar().currentMessage() == "Selected 2 sibling label widgets under root_group."
         _close_window(window)
