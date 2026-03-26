@@ -820,7 +820,7 @@ class WidgetTreePanel(QWidget):
             self._add_move_target_menu_action(menu, choice, widgets)
         if not recent_display and not remaining_display:
             self._add_disabled_menu_note(menu, "(No eligible target containers)")
-        if include_management_actions and (self.remembered_move_target_label() or self.has_recent_move_targets()):
+        if include_management_actions:
             if menu.actions():
                 menu.addSeparator()
             self._add_menu_section_label(menu, "History")

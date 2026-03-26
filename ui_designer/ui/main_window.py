@@ -4052,11 +4052,10 @@ class MainWindow(QMainWindow):
             self._add_quick_move_into_action(menu, choice)
         if not recent_choices and not remaining_choices:
             self._add_quick_move_into_note(menu, "(No eligible target containers)")
-        if self._remembered_move_target_label() or self._recent_move_target_labels():
-            if menu.actions():
-                menu.addSeparator()
-            self._add_quick_move_into_section(menu, "History")
-            self._add_quick_move_history_actions(menu)
+        if menu.actions():
+            menu.addSeparator()
+        self._add_quick_move_into_section(menu, "History")
+        self._add_quick_move_history_actions(menu)
 
     def _move_selection_into_target(self, target, target_label=""):
         if target is None:

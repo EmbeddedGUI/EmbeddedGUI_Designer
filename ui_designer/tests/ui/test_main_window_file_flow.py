@@ -1570,8 +1570,13 @@ class TestMainWindowFileFlow:
         action_texts = [action.text() for action in window._quick_move_into_menu.actions()]
         assert "Recent Targets" in action_texts
         assert "Other Targets" in action_texts
+        assert "History" in action_texts
         recent_placeholder = next(action for action in window._quick_move_into_menu.actions() if action.text() == "(No recent targets yet)")
+        repeat_action = next(action for action in window._quick_move_into_menu.actions() if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in window._quick_move_into_menu.actions() if action.text() == "Clear Move Target History")
         assert recent_placeholder.isEnabled() is False
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is False
         assert _menu_target_labels(window._quick_move_into_menu) == ["root_group / target (group)"]
 
         window._undo_manager.mark_all_saved()

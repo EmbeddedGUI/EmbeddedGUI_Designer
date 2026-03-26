@@ -612,8 +612,13 @@ class TestWidgetTreePanel:
         button_actions = panel.into_btn.menu().actions()
         assert "Recent Targets" in [action.text() for action in button_actions]
         assert "Other Targets" in [action.text() for action in button_actions]
+        assert "History" in [action.text() for action in button_actions]
         recent_placeholder = next(action for action in button_actions if action.text() == "(No recent targets yet)")
+        repeat_action = next(action for action in button_actions if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in button_actions if action.text() == "Clear Move Target History")
         assert recent_placeholder.isEnabled() is False
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is False
         assert _menu_target_labels(panel.into_btn.menu()) == ["root_group / target (group)"]
 
         menu = panel._build_context_menu(child)
