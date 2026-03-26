@@ -448,6 +448,60 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_quick_move_into_menus_follow_recent_target_history(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        target_c = WidgetModel("group", name="target_c")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        third = WidgetModel("switch", name="third")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(target_c)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_c,
+            target_label="root_group / target_c (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        panel.set_selected_widgets([third], primary=third)
+        panel._refresh_into_button_menu()
+
+        button_labels = [action.text() for action in panel.into_btn.menu().actions()]
+        assert button_labels[:3] == [
+            "root_group / target_b (group)",
+            "root_group / target_c (group)",
+            "root_group / target_a (group)",
+        ]
+
+        menu = panel._build_context_menu(third)
+        quick_menu = _structure_submenu(menu, "Quick Move Into")
+        context_labels = [action.text() for action in quick_menu.actions()]
+        assert context_labels[:3] == [
+            "root_group / target_b (group)",
+            "root_group / target_c (group)",
+            "root_group / target_a (group)",
+        ]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

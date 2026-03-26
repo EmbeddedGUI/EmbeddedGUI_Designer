@@ -3856,23 +3856,34 @@ class MainWindow(QMainWindow):
             return ""
         return self.widget_tree.remembered_move_target_label()
 
+    def _recent_move_target_labels(self):
+        if not hasattr(self, "widget_tree") or self.widget_tree is None:
+            return []
+        return self.widget_tree.recent_move_target_labels()
+
     def _set_remembered_move_target_label(self, label):
         if hasattr(self, "widget_tree") and self.widget_tree is not None:
             self.widget_tree.set_remembered_move_target_label(label)
+
+    def _remember_move_target_label(self, label):
+        if hasattr(self, "widget_tree") and self.widget_tree is not None:
+            self.widget_tree.remember_move_target_label(label)
 
     def _move_into_choices(self, widgets=None):
         return available_move_targets(self._structure_project_context(), widgets or self._top_level_selected_widgets())
 
     def _quick_move_into_choices(self, widgets=None):
         choices = self._move_into_choices(widgets)
-        remembered_label = self._remembered_move_target_label()
-        if not remembered_label:
+        recent_labels = self._recent_move_target_labels()
+        if not recent_labels:
             return choices
 
-        remembered = [choice for choice in choices if choice.label == remembered_label]
-        if not remembered:
+        choice_by_label = {choice.label: choice for choice in choices}
+        prioritized = [choice_by_label[label] for label in recent_labels if label in choice_by_label]
+        if not prioritized:
             return choices
-        return remembered + [choice for choice in choices if choice.label != remembered_label]
+        prioritized_labels = {choice.label for choice in prioritized}
+        return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
 
     def _move_into_target_default_index(self, choices):
         remembered_label = self._remembered_move_target_label()
@@ -3940,7 +3951,7 @@ class MainWindow(QMainWindow):
         if not target_label:
             target_label = self._resolve_move_target_label(widgets, target)
         if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target)) and target_label:
-            self._set_remembered_move_target_label(target_label)
+            self._remember_move_target_label(target_label)
 
     def _move_selection_into_last_target(self):
         widgets = self._top_level_selected_widgets()
@@ -4221,7 +4232,7 @@ class MainWindow(QMainWindow):
         if target_choice is None:
             return
         if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target_choice.widget)):
-            self._set_remembered_move_target_label(target_choice.label)
+            self._remember_move_target_label(target_choice.label)
 
     def _lift_selection_to_parent(self):
         self._apply_structure_result(lift_to_parent(self._structure_project_context(), self._top_level_selected_widgets()))

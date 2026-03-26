@@ -137,6 +137,7 @@ class WidgetTreePanel(QWidget):
         "valid": "color: #0b5cab; font-weight: 600;",
         "invalid": "color: #a1260d; font-weight: 600;",
     }
+    _MAX_RECENT_MOVE_TARGETS = 5
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -421,7 +422,12 @@ class WidgetTreePanel(QWidget):
         return ("project", id(self.project))
 
     def remembered_move_target_label(self):
-        return self._remembered_move_target_labels.get(self._move_target_memory_key(), "")
+        labels = self.recent_move_target_labels()
+        return labels[0] if labels else ""
+
+    def recent_move_target_labels(self):
+        labels = self._remembered_move_target_labels.get(self._move_target_memory_key(), [])
+        return list(labels)
 
     def set_remembered_move_target_label(self, label):
         key = self._move_target_memory_key()
@@ -429,9 +435,20 @@ class WidgetTreePanel(QWidget):
             return
         normalized = (label or "").strip()
         if normalized:
-            self._remembered_move_target_labels[key] = normalized
+            self._remembered_move_target_labels[key] = [normalized]
         else:
             self._remembered_move_target_labels.pop(key, None)
+
+    def remember_move_target_label(self, label):
+        key = self._move_target_memory_key()
+        if key is None:
+            return
+        normalized = (label or "").strip()
+        if not normalized:
+            return
+        history = [normalized]
+        history.extend(existing for existing in self.recent_move_target_labels() if existing != normalized)
+        self._remembered_move_target_labels[key] = history[: self._MAX_RECENT_MOVE_TARGETS]
 
     def set_selected_widgets(self, widgets, primary=None):
         self._clear_tree_drag_hover()
@@ -537,14 +554,16 @@ class WidgetTreePanel(QWidget):
 
     def _quick_move_target_choices(self, widgets):
         choices = self._move_target_choices(widgets)
-        remembered_label = self.remembered_move_target_label()
-        if not remembered_label:
+        recent_labels = self.recent_move_target_labels()
+        if not recent_labels:
             return choices
 
-        remembered = [choice for choice in choices if choice.label == remembered_label]
-        if not remembered:
+        choice_by_label = {choice.label: choice for choice in choices}
+        prioritized = [choice_by_label[label] for label in recent_labels if label in choice_by_label]
+        if not prioritized:
             return choices
-        return remembered + [choice for choice in choices if choice.label != remembered_label]
+        prioritized_labels = {choice.label for choice in prioritized}
+        return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
 
     def _move_target_default_index(self, choices):
         remembered_label = self.remembered_move_target_label()
@@ -1019,7 +1038,7 @@ class WidgetTreePanel(QWidget):
         if target_widget is None:
             return
         if self._apply_structure_result(move_into_container(self.project, widgets, target_widget)) and target_label:
-            self.set_remembered_move_target_label(target_label)
+            self.remember_move_target_label(target_label)
 
     def _move_selected_widgets_into_last_target(self, widgets=None):
         widgets = widgets or self.selected_widgets()
