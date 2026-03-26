@@ -8,6 +8,7 @@ from ui_designer.model.structure_ops import (
     move_selection_by_step,
     move_widgets_to_parent_index,
     ungroup_selection,
+    validate_move_widgets_to_parent_index,
 )
 from ui_designer.model.widget_model import WidgetModel
 
@@ -224,6 +225,17 @@ def test_can_move_widgets_to_parent_index_blocks_noop_and_locked_selection():
     assert can_move_widgets_to_parent_index(project, [first], root, 0) is False
     assert can_move_widgets_to_parent_index(project, [locked], root, 0) is False
     assert can_move_widgets_to_parent_index(project, [first], root, 2) is True
+
+
+def test_validate_move_widgets_to_parent_index_reports_failure_reason():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    root.add_child(first)
+
+    valid, message = validate_move_widgets_to_parent_index(project, [first], root, 0)
+
+    assert valid is False
+    assert message == "Cannot move selection in tree: widgets are already in that position."
 
 
 def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_position():

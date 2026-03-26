@@ -24,6 +24,7 @@ from ..model.structure_ops import (
     move_selection_by_step,
     move_widgets_to_parent_index,
     ungroup_selection,
+    validate_move_widgets_to_parent_index,
 )
 from ..model.widget_model import WidgetModel
 from ..model.widget_registry import WidgetRegistry
@@ -753,7 +754,10 @@ class WidgetTreePanel(QWidget):
     def _move_selected_widgets_by_tree_drop(self, target_widget, drop_position):
         widgets = self.selected_widgets()
         target_parent, target_index = self._resolve_tree_drop_destination(target_widget, drop_position)
-        if target_parent is None:
+        valid, message = validate_move_widgets_to_parent_index(self.project, widgets, target_parent, target_index)
+        if not valid:
+            if message:
+                self.feedback_message.emit(message)
             return False
         return self._apply_structure_result(
             move_widgets_to_parent_index(self.project, widgets, target_parent, target_index)

@@ -445,6 +445,11 @@ def can_move_widgets_to_parent_index(project_like, widgets, target_parent, targe
     return adjusted_index is not None and not message
 
 
+def validate_move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
+    _, adjusted_index, message = _prepare_move_to_parent_index(project_like, widgets, target_parent, target_index)
+    return adjusted_index is not None and not message, message
+
+
 def move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
     widgets, adjusted_index, message = _prepare_move_to_parent_index(
         project_like, widgets, target_parent, target_index

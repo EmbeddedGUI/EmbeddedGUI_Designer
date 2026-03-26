@@ -566,6 +566,26 @@ class TestWidgetTreePanel:
 
         panel.deleteLater()
 
+    def test_tree_drop_invalid_target_emits_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        root.add_child(first)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        feedback = []
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        moved = panel._move_selected_widgets_by_tree_drop(first, QAbstractItemView.AboveItem)
+
+        assert moved is False
+        assert feedback == ["Cannot move selection in tree: widgets are already in that position."]
+        panel.deleteLater()
+
     def test_tree_keyboard_shortcuts_dispatch_actions(self, qapp, monkeypatch):
         from ui_designer.ui.widget_tree import WidgetTreePanel
 

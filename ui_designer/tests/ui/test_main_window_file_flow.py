@@ -983,6 +983,34 @@ class TestMainWindowFileFlow:
 
         _close_window(window)
 
+    def test_widget_tree_invalid_drop_updates_status_bar(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "TreeInvalidDropDemo"
+        project = _create_project(project_dir, "TreeInvalidDropDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        root.add_child(first)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+
+        moved = window.widget_tree._move_selected_widgets_by_tree_drop(first, QAbstractItemView.AboveItem)
+
+        assert moved is False
+        assert window.statusBar().currentMessage() == "Cannot move selection in tree: widgets are already in that position."
+        _close_window(window)
+
     def test_distribute_selection_reports_mixed_parent_constraint(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
