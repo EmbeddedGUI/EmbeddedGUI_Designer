@@ -175,6 +175,100 @@ def test_inspect_version_file_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["build_id"] == "20260325T000000Z"
 
 
+def test_inspect_release_history_json_emits_json(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+
+    history_path = tmp_path / "release" / "history.json"
+    history_path.parent.mkdir(parents=True)
+    history_path.write_text(
+        json.dumps(
+            [
+                {
+                    "build_id": "20260325T000100Z",
+                    "status": "failed",
+                    "app_name": "DemoApp",
+                    "profile_id": "esp32",
+                    "designer_revision": "designer-main-123",
+                    "sdk": {
+                        "source_kind": "submodule",
+                        "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
+                        "revision": "sdk-main-456",
+                        "commit": "abcdef123456",
+                        "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                        "dirty": False,
+                    },
+                    "warning_count": 2,
+                    "error_count": 1,
+                    "diagnostics_total": 3,
+                    "first_diagnostic": "error main_page/hero: bad callback",
+                }
+            ],
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"path": str(history_path), "json": True})())
+
+    exit_code = module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == module.EXIT_OK
+    assert payload["kind"] == "release_history"
+    assert payload["build_id"] == "20260325T000100Z"
+    assert payload["profile_id"] == "esp32"
+    assert payload["designer_revision"] == "designer-main-123"
+    assert payload["sdk_source_kind"] == "submodule"
+    assert payload["sdk_source_root"] == "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"
+    assert payload["sdk_revision"] == "sdk-main-456"
+    assert payload["diagnostics_warning_count"] == 2
+    assert payload["diagnostics_error_count"] == 1
+    assert payload["diagnostics_total"] == 3
+    assert payload["first_diagnostic"] == "error main_page/hero: bad callback"
+
+
+def test_inspect_release_history_entry_export_json_emits_json(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+
+    entry_path = tmp_path / "release-entry.json"
+    entry_path.write_text(
+        json.dumps(
+            {
+                "build_id": "20260325T000000Z",
+                "status": "success",
+                "app_name": "DemoApp",
+                "profile_id": "windows-pc",
+                "designer_revision": "designer-main-123",
+                "sdk_source_kind": "submodule",
+                "sdk_source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
+                "sdk_revision": "sdk-main-456",
+                "sdk_commit": "abcdef123456",
+                "sdk_remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                "sdk_dirty": False,
+                "warning_count": 0,
+                "error_count": 0,
+                "diagnostics_total": 0,
+                "summary_line": "20260325T000000Z | success | windows-pc | sdk sdk-main-456 | ok",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"path": str(entry_path), "json": True})())
+
+    exit_code = module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == module.EXIT_OK
+    assert payload["kind"] == "release_history_entry"
+    assert payload["build_id"] == "20260325T000000Z"
+    assert payload["profile_id"] == "windows-pc"
+    assert payload["sdk_source_kind"] == "submodule"
+    assert payload["sdk_revision"] == "sdk-main-456"
+    assert payload["sdk_commit"] == "abcdef123456"
+
+
 def test_inspect_profile_directory_uses_latest_build(monkeypatch, tmp_path, capsys):
     module = _load_module()
 

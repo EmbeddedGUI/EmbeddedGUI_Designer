@@ -54,6 +54,20 @@ def _load_json_dict(path: Path) -> dict[str, object]:
     return content if isinstance(content, dict) else {}
 
 
+def _load_json_value(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _int(value) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _load_version_text(path: Path) -> dict[str, str]:
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -105,6 +119,61 @@ def _find_release_manifest_in_children(root_dir: Path) -> Path | None:
     if not candidates:
         return None
     return sorted(candidates, key=lambda path: path.parent.name)[-1]
+
+
+def _history_entry_sdk_payload(entry: dict[str, object]) -> dict[str, object]:
+    sdk = entry.get("sdk") if isinstance(entry.get("sdk"), dict) else {}
+    return {
+        "sdk_source_kind": _string(entry.get("sdk_source_kind") or sdk.get("source_kind")),
+        "sdk_source_root": _string(entry.get("sdk_source_root") or sdk.get("source_root")),
+        "sdk_revision": _string(entry.get("sdk_revision") or sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit")),
+        "sdk_commit": _string(entry.get("sdk_commit") or sdk.get("commit")),
+        "sdk_remote": _string(entry.get("sdk_remote") or sdk.get("remote")),
+        "sdk_dirty": bool(entry.get("sdk_dirty", sdk.get("dirty", False))),
+    }
+
+
+def summarize_history_entry(entry: dict[str, object], source_path: str | Path, *, kind: str) -> dict[str, object]:
+    sdk_payload = _history_entry_sdk_payload(entry)
+    warning_count = _int(entry.get("warning_count"))
+    error_count = _int(entry.get("error_count"))
+    diagnostics_total = entry.get("diagnostics_total")
+    if diagnostics_total in (None, ""):
+        diagnostics_total = warning_count + error_count
+    return {
+        "kind": kind,
+        "source_path": str(Path(source_path).resolve()),
+        "build_id": _string(entry.get("build_id")),
+        "status": _string(entry.get("status")),
+        "app_name": _string(entry.get("app_name")),
+        "profile_id": _string(entry.get("profile_id")),
+        "designer_revision": _string(entry.get("designer_revision")),
+        "diagnostics_warning_count": warning_count,
+        "diagnostics_error_count": error_count,
+        "diagnostics_total": _int(diagnostics_total),
+        "first_diagnostic": _string(entry.get("first_diagnostic")),
+        **sdk_payload,
+    }
+
+
+def summarize_history_payload(payload, source_path: str | Path) -> dict[str, object]:
+    if isinstance(payload, list):
+        first_entry = payload[0] if payload and isinstance(payload[0], dict) else None
+        if first_entry is None:
+            raise ValueError(f"invalid release history file: {Path(source_path).resolve()}")
+        return summarize_history_entry(first_entry, source_path, kind="release_history")
+
+    if isinstance(payload, dict):
+        entries = payload.get("entries")
+        if isinstance(entries, list):
+            first_entry = entries[0] if entries and isinstance(entries[0], dict) else None
+            if first_entry is None:
+                raise ValueError(f"invalid release history export: {Path(source_path).resolve()}")
+            return summarize_history_entry(first_entry, source_path, kind="release_history_export")
+        if any(key in payload for key in ("summary_line", "list_label", "details_text", "sdk_revision", "first_diagnostic")):
+            return summarize_history_entry(payload, source_path, kind="release_history_entry")
+
+    raise ValueError(f"invalid release history payload: {Path(source_path).resolve()}")
 
 
 def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
@@ -241,15 +310,24 @@ def inspect_path(path: str | Path) -> dict[str, object]:
     elif resolved_path.is_file():
         if resolved_path.name == "release-manifest.json":
             return summarize_manifest(resolved_path)
+        if resolved_path.name == "history.json":
+            return summarize_history_payload(_load_json_value(resolved_path), resolved_path)
         if resolved_path.name.lower() == "version.txt":
             return summarize_version_file(resolved_path)
         if resolved_path.name == DESIGNER_BUILD_METADATA_NAME:
             return summarize_packaged_app(resolved_path.parent)
         if resolved_path.name == BUNDLED_SDK_METADATA_NAME:
             return summarize_sdk_bundle(resolved_path.parent)
+        if resolved_path.suffix.lower() == ".json":
+            payload = _load_json_value(resolved_path)
+            if isinstance(payload, (list, dict)):
+                try:
+                    return summarize_history_payload(payload, resolved_path)
+                except ValueError:
+                    pass
 
     raise ValueError(
-        "path must point to a release root, release-manifest.json, VERSION.txt, packaged app directory, or bundled SDK directory"
+        "path must point to a release root, release-manifest.json, release history JSON, VERSION.txt, packaged app directory, or bundled SDK directory"
     )
 
 
