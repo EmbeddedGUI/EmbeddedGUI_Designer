@@ -923,6 +923,7 @@ class TestWidgetTreePanel:
         assert root_actions["Hidden"].isEnabled() is False
         assert root_actions["Locked"].isEnabled() is False
         assert root_actions["Managed"].isEnabled() is False
+        assert root_actions["Free Position"].isEnabled() is True
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
@@ -949,6 +950,7 @@ class TestWidgetTreePanel:
         assert container_actions["Containers"].isEnabled() is False
         assert container_actions["Layout Containers"].isEnabled() is False
         assert container_actions["Managed"].isEnabled() is False
+        assert container_actions["Free Position"].isEnabled() is True
         assert container_actions["Siblings"].isEnabled() is True
         container_menu.deleteLater()
 
@@ -965,6 +967,7 @@ class TestWidgetTreePanel:
         assert child_actions["Hidden"].isEnabled() is False
         assert child_actions["Locked"].isEnabled() is False
         assert child_actions["Managed"].isEnabled() is False
+        assert child_actions["Free Position"].isEnabled() is True
         assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Type"].isEnabled() is False
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
@@ -1211,6 +1214,24 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["managed_button"], "managed_button")
         assert feedback[-1] == "Selected 1 layout-managed widget in subtree of managed_button."
         managed_menu.deleteLater()
+
+        free_menu = panel._build_context_menu(container)
+        free_actions = _select_menu_actions(free_menu)
+        free_actions["Free Position"].trigger()
+        assert panel.selected_widgets() == [container, layout_parent, managed_leaf, unmanaged_leaf]
+        assert panel._get_selected_widget() is container
+        assert selection_events[-1] == (["container", "layout_parent", "managed_leaf", "unmanaged_leaf"], "container")
+        assert feedback[-1] == "Selected 4 free-position widgets in subtree of container."
+        free_menu.deleteLater()
+
+        free_leaf_menu = panel._build_context_menu(managed_leaf)
+        free_leaf_actions = _select_menu_actions(free_leaf_menu)
+        free_leaf_actions["Free Position"].trigger()
+        assert panel.selected_widgets() == [managed_leaf]
+        assert panel._get_selected_widget() is managed_leaf
+        assert selection_events[-1] == (["managed_leaf"], "managed_leaf")
+        assert feedback[-1] == "Selected 1 free-position widget in subtree of managed_leaf."
+        free_leaf_menu.deleteLater()
         panel.deleteLater()
 
     def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):

@@ -591,6 +591,13 @@ class WidgetTreePanel(QWidget):
             if self._widget_parent_uses_layout(current)
         ]
 
+    def _free_position_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if current.parent is not None and not self._widget_parent_uses_layout(current)
+        ]
+
     def _select_hidden_subtree_widgets(self, widget):
         hidden_widgets = self._hidden_subtree_widgets(widget)
         if not hidden_widgets:
@@ -664,6 +671,25 @@ class WidgetTreePanel(QWidget):
             ),
         )
 
+    def _select_free_position_subtree_widgets(self, widget):
+        free_widgets = self._free_position_subtree_widgets(widget)
+        if not free_widgets:
+            if widget is not None:
+                self.feedback_message.emit(
+                    "Cannot select free-position widgets: no free-position widgets exist in this subtree."
+                )
+            return
+        noun = "widget" if len(free_widgets) == 1 else "widgets"
+        primary = widget if widget in free_widgets else free_widgets[0]
+        self._apply_programmatic_selection(
+            free_widgets,
+            primary=primary,
+            feedback_message=(
+                f"Selected {len(free_widgets)} free-position {noun} "
+                f"in subtree of {self._widget_label(widget)}."
+            ),
+        )
+
     def _sibling_widgets(self, widget):
         parent = widget.parent if widget is not None else None
         if parent is None:
@@ -729,6 +755,7 @@ class WidgetTreePanel(QWidget):
         locked_subtree_widgets = self._locked_subtree_widgets(widget)
         layout_container_subtree_widgets = self._layout_container_subtree_widgets(widget)
         managed_subtree_widgets = self._managed_subtree_widgets(widget)
+        free_position_subtree_widgets = self._free_position_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
@@ -742,6 +769,7 @@ class WidgetTreePanel(QWidget):
         can_select_locked = bool(locked_subtree_widgets)
         can_select_layout_containers = bool(layout_container_subtree_widgets)
         can_select_managed = bool(managed_subtree_widgets)
+        can_select_free_position = bool(free_position_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
@@ -879,6 +907,18 @@ class WidgetTreePanel(QWidget):
         select_managed_action.triggered.connect(lambda: self._select_managed_subtree_widgets(widget))
         select_menu.addAction(select_managed_action)
 
+        select_free_position_action = QAction("Free Position", self)
+        select_free_position_action.setEnabled(can_select_free_position)
+        select_free_position_action.setToolTip(
+            self._structure_tooltip(
+                "Select free-position widgets in this subtree.",
+                can_select_free_position,
+                "no free-position widgets exist in this subtree.",
+            )
+        )
+        select_free_position_action.triggered.connect(lambda: self._select_free_position_subtree_widgets(widget))
+        select_menu.addAction(select_free_position_action)
+
         select_siblings_action = QAction("Siblings", self)
         select_siblings_action.setEnabled(can_select_siblings)
         select_siblings_action.setToolTip(
@@ -916,6 +956,7 @@ class WidgetTreePanel(QWidget):
             can_select_hidden,
             can_select_locked,
             can_select_managed,
+            can_select_free_position,
             can_select_siblings,
             can_select_same_type,
         ])
