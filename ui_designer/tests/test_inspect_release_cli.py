@@ -31,6 +31,7 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
                 "designer_revision": "designer-main-123",
                 "sdk": {
                     "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-main-456",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -74,6 +75,7 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
     assert exit_code == module.EXIT_OK
     assert payload["kind"] == "release_manifest"
     assert payload["designer_revision"] == "designer-main-123"
+    assert payload["sdk_source_root"] == "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"
     assert payload["sdk_revision"] == "sdk-main-456"
     assert payload["artifact_count"] == 1
     assert payload["diagnostics_warning_count"] == 2

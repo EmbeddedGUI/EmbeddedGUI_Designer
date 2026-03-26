@@ -134,6 +134,7 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
         "profile_id": _string(manifest.get("profile_id")),
         "designer_revision": _string(manifest.get("designer_revision")),
         "sdk_source_kind": _string(sdk.get("source_kind")),
+        "sdk_source_root": _string(sdk.get("source_root")),
         "sdk_revision": _string(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit")),
         "sdk_commit": _string(sdk.get("commit")),
         "sdk_remote": _string(sdk.get("remote")),
