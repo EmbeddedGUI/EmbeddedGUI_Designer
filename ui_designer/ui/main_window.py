@@ -1759,7 +1759,14 @@ class MainWindow(QMainWindow):
             sdk_revision = ""
             if isinstance(sdk, dict):
                 sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
-            summary_lines = [result.message, "", "Manifest:", result.manifest_path]
+            summary_lines = [result.message]
+            if result.build_id:
+                summary_lines.extend(["", "Build ID:", result.build_id])
+            if result.profile_id:
+                summary_lines.extend(["", "Profile:", result.profile_id])
+            summary_lines.extend(["", "Manifest:", result.manifest_path])
+            if result.history_path:
+                summary_lines.extend(["", "History:", result.history_path])
             if result.zip_path:
                 summary_lines.extend(["", "Package:", result.zip_path])
             if designer_revision:

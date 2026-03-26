@@ -142,6 +142,9 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
     assert captured["sdk_root"] == os.path.normpath(os.path.abspath(sdk_root))
     assert window._release_build_action.isEnabled() is True
     assert window._sdk_status_label.text().startswith("SDK:")
+    assert "Build ID:\n20260325T000000Z" in message_box["text"]
+    assert "Profile:\nwindows-pc" in message_box["text"]
+    assert "History:" in message_box["text"]
     assert "Designer Revision:\ndesigner-main-123" in message_box["text"]
     assert "SDK Revision:\nsdk-main-456" in message_box["text"]
 
