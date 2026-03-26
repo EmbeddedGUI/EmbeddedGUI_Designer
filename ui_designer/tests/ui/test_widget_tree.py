@@ -703,7 +703,7 @@ class TestWidgetTreePanel:
 
         assert panel.into_btn.isEnabled() is True
         assert panel.into_btn.popupMode() == QToolButton.InstantPopup
-        assert panel.into_btn.toolTip() == "Open the Into menu to reuse move-target history."
+        assert panel.into_btn.toolTip() == "Open the Into menu to manage move-target history."
 
         button_actions = panel.into_btn.menu().actions()
         assert "(No eligible target containers)" in [action.text() for action in button_actions]
@@ -736,7 +736,7 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([], primary=None)
 
         assert panel.structure_hint_label.text() == (
-            "Structure: select widgets to group, move, or reorder. Into menu can clear move history."
+            "Structure: select widgets to group, move, or reorder. Into menu can manage move history."
         )
         panel.deleteLater()
 
@@ -836,7 +836,7 @@ class TestWidgetTreePanel:
         assert actions["Move Into..."].isEnabled() is True
         assert actions["Move Into Last Target"].isEnabled() is False
         assert actions["Quick Move Into"].menu() is not None
-        assert actions["Quick Move Into"].toolTip() == "Move directly into an available container target, or reuse move-target history."
+        assert actions["Quick Move Into"].toolTip() == "Move directly into an available container target, or manage move-target history."
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
@@ -1197,10 +1197,10 @@ class TestWidgetTreePanel:
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == (
-            "Structure: root widgets cannot be regrouped or reordered. Into menu can clear move history."
+            "Structure: root widgets cannot be regrouped or reordered. Into menu can manage move history."
         )
         assert "Unavailable: root widgets cannot be regrouped or reordered." in panel.group_btn.toolTip()
-        assert panel.into_btn.toolTip() == "Open the Into menu to reuse move-target history."
+        assert panel.into_btn.toolTip() == "Open the Into menu to manage move-target history."
 
         panel.deleteLater()
 

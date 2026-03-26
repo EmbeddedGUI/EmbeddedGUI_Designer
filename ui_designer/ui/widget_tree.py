@@ -708,15 +708,15 @@ class WidgetTreePanel(QWidget):
         return "Forget recent move-into targets for the current page"
 
     def _quick_move_menu_hint(self):
-        return "Move directly into an available container target, or reuse move-target history."
+        return "Move directly into an available container target, or manage move-target history."
 
     def _into_button_history_hint(self):
-        return "Open the Into menu to reuse move-target history."
+        return "Open the Into menu to manage move-target history."
 
     def _structure_history_hint_suffix(self):
         if not self.has_recent_move_targets():
             return ""
-        return " Into menu can clear move history."
+        return " Into menu can manage move history."
 
     def _cleared_move_target_history_text(self, count):
         noun = "target" if count == 1 else "targets"
