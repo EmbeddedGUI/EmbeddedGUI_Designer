@@ -1240,6 +1240,8 @@ def test_release_history_dialog_filters_entries(qapp):
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "diagnostics_total": 3,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "log_path": "/tmp/build.log",
                 "zip_path": "/tmp/release.zip",
             },
@@ -1291,6 +1293,10 @@ def test_release_history_dialog_filters_entries(qapp):
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
     dialog._search_edit.setText("errors 1")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._search_edit.setText("hero callback")
     assert dialog._history_list.count() == 1
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
