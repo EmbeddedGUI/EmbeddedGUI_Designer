@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 from ui_designer.engine.release_engine import release_project
 from ui_designer.model.project import Project
-from ui_designer.model.release import ReleaseRequest
+from ui_designer.model.release import ReleaseRequest, SdkFingerprint
 
 
 def _create_sdk_root(root: Path):
@@ -64,6 +64,18 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
         "ui_designer.engine.release_engine.generate_all_files_preserved",
         lambda project, project_dir, backup=True: {"ui_demo.c": "// generated\n"},
     )
+    monkeypatch.setattr(
+        "ui_designer.engine.release_engine.collect_sdk_fingerprint",
+        lambda sdk_root, designer_repo_root="": SdkFingerprint(
+            source_kind="submodule",
+            source_root=str(sdk_root),
+            remote="https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+            commit="abcdef1234567890",
+            commit_short="abcdef1",
+            revision="sdk-main-456",
+            dirty=False,
+        ),
+    )
 
     def fake_resource_generation(project, project_dir, sdk_root):
         output_dir = Path(sdk_root) / "output"
@@ -101,6 +113,8 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert Path(result.manifest_path).is_file()
     assert Path(result.history_path).is_file()
     assert Path(result.zip_path).is_file()
+    assert Path(result.release_root, "VERSION.txt").is_file()
+    assert Path(result.dist_dir, "VERSION.txt").is_file()
 
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
     assert result.designer_revision == manifest["designer_revision"]
@@ -115,6 +129,15 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert manifest["diagnostics"]["entries"][0]["target_page_name"] == "main_page"
     assert manifest["diagnostics"]["entries"][0]["target_widget_name"] == "hero"
     assert any(artifact["path"].endswith("ReleaseDemo.exe") for artifact in manifest["artifacts"])
+    version_text = Path(result.release_root, "VERSION.txt").read_text(encoding="utf-8")
+    assert "app=ReleaseDemo" in version_text
+    assert "profile=windows-pc" in version_text
+    assert f"designer_revision={result.designer_revision}" in version_text
+    assert "sdk_source_kind=submodule" in version_text
+    assert "sdk_revision=sdk-main-456" in version_text
+    assert "sdk_commit=abcdef1234567890" in version_text
+    assert f"build_id={result.build_id}" in version_text
+    assert Path(result.dist_dir, "VERSION.txt").read_text(encoding="utf-8") == version_text
 
     history = json.loads(Path(result.history_path).read_text(encoding="utf-8"))
     assert history[0]["status"] == "success"
