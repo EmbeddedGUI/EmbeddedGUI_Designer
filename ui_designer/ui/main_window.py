@@ -1754,10 +1754,22 @@ class MainWindow(QMainWindow):
         self._update_compile_availability()
         if result.success:
             self.statusBar().showMessage(result.message, 5000)
+            designer_revision = str(getattr(result, "designer_revision", "") or "").strip()
+            sdk = getattr(result, "sdk", {})
+            sdk_revision = ""
+            if isinstance(sdk, dict):
+                sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
+            summary_lines = [result.message, "", "Manifest:", result.manifest_path]
+            if result.zip_path:
+                summary_lines.extend(["", "Package:", result.zip_path])
+            if designer_revision:
+                summary_lines.extend(["", "Designer Revision:", designer_revision])
+            if sdk_revision:
+                summary_lines.extend(["", "SDK Revision:", sdk_revision])
             QMessageBox.information(
                 self,
                 "Release Build Succeeded",
-                f"{result.message}\n\nManifest:\n{result.manifest_path}" + (f"\n\nPackage:\n{result.zip_path}" if result.zip_path else ""),
+                "\n".join(summary_lines),
             )
             return
 

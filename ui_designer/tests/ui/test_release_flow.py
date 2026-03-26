@@ -108,6 +108,7 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
             return QDialog.Accepted
 
     captured = {}
+    message_box = {}
 
     def fake_release_project(request):
         captured["profile_id"] = request.profile.id
@@ -122,13 +123,18 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
             manifest_path=str(project_dir / "output" / "ui_designer_release" / "release-manifest.json"),
             log_path=str(project_dir / "output" / "ui_designer_release" / "logs" / "build.log"),
             history_path=str(project_dir / "output" / "ui_designer_release" / "history.json"),
+            designer_revision="designer-main-123",
+            sdk={"revision": "sdk-main-456"},
             artifacts=[ReleaseArtifact(path="dist/ReleaseDemo.exe", sha256="abc")],
         )
 
     monkeypatch.setattr("ui_designer.ui.main_window.ReleaseBuildDialog", FakeDialog)
     monkeypatch.setattr("ui_designer.ui.main_window.release_project", fake_release_project)
     monkeypatch.setattr(window, "_save_project", lambda: None)
-    monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.information", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "ui_designer.ui.main_window.QMessageBox.information",
+        lambda *args, **kwargs: message_box.setdefault("text", args[2] if len(args) > 2 else kwargs.get("text", "")),
+    )
 
     window._release_build()
 
@@ -136,6 +142,8 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
     assert captured["sdk_root"] == os.path.normpath(os.path.abspath(sdk_root))
     assert window._release_build_action.isEnabled() is True
     assert window._sdk_status_label.text().startswith("SDK:")
+    assert "Designer Revision:\ndesigner-main-123" in message_box["text"]
+    assert "SDK Revision:\nsdk-main-456" in message_box["text"]
 
 
 @_skip_no_qt
