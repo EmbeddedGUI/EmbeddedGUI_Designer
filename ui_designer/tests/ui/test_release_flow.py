@@ -1348,6 +1348,18 @@ def test_release_history_dialog_filters_entries(qapp):
     assert dialog._history_list.count() == 1
     assert "20260326T000100Z" in dialog._history_list.item(0).text()
 
+    dialog._search_edit.setText("build.log")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
+    dialog._search_edit.setText("release-manifest.json")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000000Z" in dialog._history_list.item(0).text()
+
+    dialog._search_edit.setText("first diagnostic")
+    assert dialog._history_list.count() == 1
+    assert "20260326T000100Z" in dialog._history_list.item(0).text()
+
     dialog._search_edit.clear()
     dialog._diagnostics_filter_combo.setCurrentIndex(dialog._diagnostics_filter_combo.findData("errors"))
     assert dialog._history_list.count() == 1

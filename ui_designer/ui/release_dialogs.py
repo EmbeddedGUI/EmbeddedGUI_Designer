@@ -185,6 +185,27 @@ def _history_summary_line(entry: dict[str, object]) -> str:
     return line
 
 
+def _history_searchable_text(entry: dict[str, object]) -> str:
+    return " ".join(
+        filter(
+            None,
+            (
+                _history_summary_line(entry),
+                _history_list_label(entry),
+                _history_detail_text(entry),
+                "clean" if _history_matches_diagnostics(entry, "clean") else "",
+                "warnings" if _history_matches_diagnostics(entry, "warnings") else "",
+                "errors" if _history_matches_diagnostics(entry, "errors") else "",
+                "issues" if _history_matches_diagnostics(entry, "issues") else "",
+                "manifest" if _history_string(entry, "manifest_path") else "",
+                "log" if _history_string(entry, "log_path") else "",
+                "package" if _history_string(entry, "zip_path") else "",
+                "version" if _history_version_path(entry) else "",
+            ),
+        )
+    ).lower()
+
+
 def _history_status_counts(entries: list[dict[str, object]]) -> dict[str, int]:
     counts = {"success": 0, "failed": 0, "unknown": 0}
     for entry in entries:
@@ -1136,33 +1157,7 @@ class ReleaseHistoryDialog(QDialog):
             return False
         if search_text:
             search_tokens = [token for token in search_text.split() if token]
-            searchable = " ".join(
-                filter(
-                    None,
-                    (
-                        _history_string(entry, "build_id"),
-                        _history_status(entry),
-                        _history_string(entry, "profile_id"),
-                        _history_string(entry, "app_name"),
-                        _history_string(entry, "message"),
-                        _history_string(entry, "first_diagnostic"),
-                        _history_string(entry, "designer_revision"),
-                        str(_history_int(entry, "warning_count") or ""),
-                        str(_history_int(entry, "error_count") or ""),
-                        str(_history_int(entry, "diagnostics_total") or ""),
-                        "clean" if _history_matches_diagnostics(entry, "clean") else "",
-                        "warnings" if _history_matches_diagnostics(entry, "warnings") else "",
-                        "errors" if _history_matches_diagnostics(entry, "errors") else "",
-                        "issues" if _history_matches_diagnostics(entry, "issues") else "",
-                        _history_sdk_label(entry),
-                        _history_string(entry.get("sdk") if isinstance(entry.get("sdk"), dict) else {}, "commit"),
-                        "manifest" if _history_string(entry, "manifest_path") else "",
-                        "log" if _history_string(entry, "log_path") else "",
-                        "package" if _history_string(entry, "zip_path") else "",
-                        "version" if _history_version_path(entry) else "",
-                    ),
-                )
-            ).lower()
+            searchable = _history_searchable_text(entry)
             if any(token not in searchable for token in search_tokens):
                 return False
         return True
