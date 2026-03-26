@@ -4031,7 +4031,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Cleared recent move target history.", 4000)
 
     def _choose_structure_target_choice(self, widgets):
-        choices = self._move_into_choices(widgets)
+        choices = self._quick_move_into_choices(widgets)
         if not choices:
             self._show_selection_action_blocked("move into container", "no eligible target containers are available")
             return None

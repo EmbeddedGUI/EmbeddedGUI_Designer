@@ -832,7 +832,7 @@ class WidgetTreePanel(QWidget):
         return True
 
     def _choose_move_target_choice(self, widgets):
-        choices = self._move_target_choices(widgets)
+        choices = self._quick_move_target_choices(widgets)
         if not choices:
             self.feedback_message.emit("Cannot move into container: no eligible target containers are available.")
             return None

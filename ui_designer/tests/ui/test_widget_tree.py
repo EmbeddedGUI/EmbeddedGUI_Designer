@@ -408,11 +408,62 @@ class TestWidgetTreePanel:
         panel._move_selected_widgets_into()
 
         assert captured["labels"] == [
-            "root_group / target_a (group)",
             "root_group / target_b (group)",
+            "root_group / target_a (group)",
         ]
-        assert captured["current_index"] == 1
+        assert captured["current_index"] == 0
         assert second.parent is target_b
+        panel.deleteLater()
+
+    def test_move_selected_widgets_into_dialog_prioritizes_recent_target_history(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        target_c = WidgetModel("group", name="target_c")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        third = WidgetModel("switch", name="third")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(target_c)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_c,
+            target_label="root_group / target_c (group)",
+        )
+        panel.set_selected_widgets([second], primary=second)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        panel.set_selected_widgets([third], primary=third)
+        captured = {}
+
+        def _fake_get_item(*args, **kwargs):
+            captured["labels"] = list(args[3])
+            captured["current_index"] = args[4]
+            return "root_group / target_b (group)", True
+
+        monkeypatch.setattr("ui_designer.ui.widget_tree.QInputDialog.getItem", _fake_get_item)
+
+        panel._move_selected_widgets_into()
+
+        assert captured["labels"] == [
+            "root_group / target_b (group)",
+            "root_group / target_c (group)",
+            "root_group / target_a (group)",
+        ]
+        assert captured["current_index"] == 0
         panel.deleteLater()
 
     def test_into_button_quick_menu_moves_selection_into_target(self, qapp):
