@@ -494,10 +494,8 @@ class WidgetTreePanel(QWidget):
     def _structure_hint_text(self, state=None):
         state = state or self._structure_action_state()
         widgets = state.widgets
-        if not widgets:
+        if not widgets and not state.blocked_reason:
             return "Structure: select widgets to group, move, or reorder."
-        if any(getattr(widget, "designer_locked", False) for widget in widgets):
-            return "Structure: locked widgets cannot be moved or regrouped."
 
         hints = []
         if state.can_group:
@@ -522,6 +520,8 @@ class WidgetTreePanel(QWidget):
             hints.append("Alt+Shift+Down move to bottom")
         if hints:
             return "Structure: " + "; ".join(hints) + "."
+        if state.blocked_reason:
+            return f"Structure: {state.blocked_reason}"
         return "Structure: no valid structure actions for the current selection."
 
     def _emit_tree_changed(self, source):

@@ -31,6 +31,7 @@ class StructureActionState:
     can_move_down: bool = False
     can_move_top: bool = False
     can_move_bottom: bool = False
+    blocked_reason: str = ""
 
 
 def _failure(message):
@@ -259,9 +260,30 @@ def _can_move_to_edge(widgets, edge):
     return False
 
 
+def _describe_blocked_structure_reason(project_like, requested_widgets, widgets):
+    requested_widgets = _unique_widgets(requested_widgets)
+    if not requested_widgets:
+        return ""
+
+    if _has_locked_widgets(requested_widgets):
+        return "locked widgets cannot be moved or regrouped."
+
+    if not widgets:
+        return "root widgets cannot be regrouped or reordered."
+
+    if len(widgets) == 1:
+        widget = widgets[0]
+        parent = widget.parent
+        if parent is not None and parent.parent is None and len(parent.children) <= 1:
+            return "select another sibling or target container to move this widget."
+
+    return "no valid structure actions for the current selection."
+
+
 def describe_structure_actions(project_like, widgets):
+    requested_widgets = _unique_widgets(widgets)
     widgets = _normalized_selection(project_like, widgets)
-    return StructureActionState(
+    state = StructureActionState(
         widgets=widgets,
         can_group=_can_group_widgets(project_like, widgets),
         can_ungroup=_can_ungroup_widgets(widgets),
@@ -272,6 +294,18 @@ def describe_structure_actions(project_like, widgets):
         can_move_top=_can_move_to_edge(widgets, "top"),
         can_move_bottom=_can_move_to_edge(widgets, "bottom"),
     )
+    if not any((
+        state.can_group,
+        state.can_ungroup,
+        state.can_move_into,
+        state.can_lift,
+        state.can_move_up,
+        state.can_move_down,
+        state.can_move_top,
+        state.can_move_bottom,
+    )):
+        state.blocked_reason = _describe_blocked_structure_reason(project_like, requested_widgets, widgets)
+    return state
 
 
 def group_selection(project_like, widgets, base_name="group"):

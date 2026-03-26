@@ -508,7 +508,7 @@ class TestWidgetTreePanel:
         assert panel.down_btn.isEnabled() is False
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
-        assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
+        assert panel.structure_hint_label.text() == "Structure: root widgets cannot be regrouped or reordered."
 
         panel.deleteLater()
 
@@ -526,6 +526,24 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([locked], primary=locked)
 
         assert panel.structure_hint_label.text() == "Structure: locked widgets cannot be moved or regrouped."
+
+        panel.deleteLater()
+
+    def test_structure_hint_reports_isolated_widget_without_move_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        child = WidgetModel("label", name="child")
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+
+        assert panel.structure_hint_label.text() == (
+            "Structure: select another sibling or target container to move this widget."
+        )
 
         panel.deleteLater()
 

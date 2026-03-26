@@ -188,6 +188,7 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     assert root_state.can_move_down is False
     assert root_state.can_move_top is False
     assert root_state.can_move_bottom is False
+    assert root_state.blocked_reason == "root widgets cannot be regrouped or reordered."
 
     locked_state = describe_structure_actions(project, [locked])
 
@@ -200,6 +201,26 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     assert locked_state.can_move_down is False
     assert locked_state.can_move_top is False
     assert locked_state.can_move_bottom is False
+    assert locked_state.blocked_reason == "locked widgets cannot be moved or regrouped."
+
+
+def test_describe_structure_actions_reports_isolated_widget_block_reason():
+    project, root = _build_project()
+    child = WidgetModel("label", name="child")
+    root.add_child(child)
+
+    state = describe_structure_actions(project, [child])
+
+    assert state.widgets == [child]
+    assert state.can_group is False
+    assert state.can_ungroup is False
+    assert state.can_move_into is False
+    assert state.can_lift is False
+    assert state.can_move_up is False
+    assert state.can_move_down is False
+    assert state.can_move_top is False
+    assert state.can_move_bottom is False
+    assert state.blocked_reason == "select another sibling or target container to move this widget."
 
 
 def test_move_selection_to_edge_moves_selected_block_to_top_and_bottom():
