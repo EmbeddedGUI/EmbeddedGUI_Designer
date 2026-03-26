@@ -202,6 +202,12 @@ class WidgetTreePanel(QWidget):
         self.down_btn = QPushButton("Down")
         self.down_btn.setToolTip("Move the current selection down among its siblings (Alt+Down)")
         self.down_btn.clicked.connect(self._move_selected_widgets_down)
+        self.top_btn = QPushButton("Top")
+        self.top_btn.setToolTip("Move the current selection to the top of its sibling list (Alt+Shift+Up)")
+        self.top_btn.clicked.connect(self._move_selected_widgets_to_top)
+        self.bottom_btn = QPushButton("Bottom")
+        self.bottom_btn.setToolTip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)")
+        self.bottom_btn.clicked.connect(self._move_selected_widgets_to_bottom)
         for button in (
             self.group_btn,
             self.ungroup_btn,
@@ -209,6 +215,8 @@ class WidgetTreePanel(QWidget):
             self.lift_btn,
             self.up_btn,
             self.down_btn,
+            self.top_btn,
+            self.bottom_btn,
         ):
             structure_layout.addWidget(button)
         layout.addLayout(structure_layout)
@@ -472,6 +480,8 @@ class WidgetTreePanel(QWidget):
         self.lift_btn.setEnabled(state.can_lift)
         self.up_btn.setEnabled(state.can_move_up)
         self.down_btn.setEnabled(state.can_move_down)
+        self.top_btn.setEnabled(state.can_move_top)
+        self.bottom_btn.setEnabled(state.can_move_bottom)
         self.structure_hint_label.setText(self._structure_hint_text(state))
 
     def _default_drag_target_text(self):

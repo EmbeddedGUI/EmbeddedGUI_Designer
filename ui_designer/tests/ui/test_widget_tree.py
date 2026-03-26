@@ -452,6 +452,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert panel.top_btn.isEnabled() is False
+        assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
         assert "#666666" in panel.drag_target_label.styleSheet()
 
@@ -463,6 +465,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is True
+        assert panel.top_btn.isEnabled() is False
+        assert panel.bottom_btn.isEnabled() is True
         assert "Ctrl+G group siblings" in panel.structure_hint_label.text()
         assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
         assert "Alt+Down reorder" in panel.structure_hint_label.text()
@@ -476,6 +480,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is True
         assert panel.down_btn.isEnabled() is True
+        assert panel.top_btn.isEnabled() is True
+        assert panel.bottom_btn.isEnabled() is True
         assert "Alt+Up/Down reorder" in panel.structure_hint_label.text()
         assert "Alt+Shift+Up/Down move to edge" in panel.structure_hint_label.text()
 
@@ -487,6 +493,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is True
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert panel.top_btn.isEnabled() is False
+        assert panel.bottom_btn.isEnabled() is False
         assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
         assert "Ctrl+Shift+L lift to parent" in panel.structure_hint_label.text()
 
@@ -498,6 +506,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert panel.top_btn.isEnabled() is False
+        assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
 
         panel.deleteLater()
@@ -853,6 +863,8 @@ class TestWidgetTreePanel:
         assert "Ctrl+Shift+L" in panel.lift_btn.toolTip()
         assert "Alt+Up" in panel.up_btn.toolTip()
         assert "Alt+Down" in panel.down_btn.toolTip()
+        assert "Alt+Shift+Up" in panel.top_btn.toolTip()
+        assert "Alt+Shift+Down" in panel.bottom_btn.toolTip()
 
         menu = panel._build_context_menu(first)
         rename_action = next(action for action in menu.actions() if action.text() == "Rename Selected")
