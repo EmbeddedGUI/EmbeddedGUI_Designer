@@ -79,12 +79,16 @@ def _history_sdk_export_payload(entry: dict[str, object]) -> dict[str, object]:
     sdk = entry.get("sdk")
     if not isinstance(sdk, dict):
         return {
+            "sdk_source_kind": "",
+            "sdk_source_root": "",
             "sdk_revision": "",
             "sdk_commit": "",
             "sdk_remote": "",
             "sdk_dirty": False,
         }
     return {
+        "sdk_source_kind": str(sdk.get("source_kind") or "").strip(),
+        "sdk_source_root": str(sdk.get("source_root") or "").strip(),
         "sdk_revision": str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip(),
         "sdk_commit": str(sdk.get("commit") or "").strip(),
         "sdk_remote": str(sdk.get("remote") or "").strip(),
@@ -144,8 +148,14 @@ def _history_detail_text(entry: dict[str, object]) -> str:
 
     sdk = entry.get("sdk")
     if isinstance(sdk, dict):
+        source_kind = str(sdk.get("source_kind") or "").strip()
+        source_root = str(sdk.get("source_root") or "").strip()
         commit = str(sdk.get("commit") or "").strip()
         remote = str(sdk.get("remote") or "").strip()
+        if source_kind:
+            lines.append(f"SDK Source: {source_kind}")
+        if source_root:
+            lines.append(f"SDK Source Root: {source_root}")
         if commit:
             lines.append(f"SDK Commit: {commit}")
         if remote:

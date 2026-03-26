@@ -728,6 +728,8 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
                 "manifest_path": str(manifest_path),
                 "zip_path": str(package_path),
                 "sdk": {
+                    "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-main-456",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -764,6 +766,8 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     copied_json = QApplication.clipboard().text()
     assert '"build_id": "20260326T000000Z"' in copied_json
     assert '"manifest_path":' in copied_json
+    assert '"sdk_source_kind": "submodule"' in copied_json
+    assert '"sdk_source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"' in copied_json
     assert '"sdk_revision": "sdk-main-456"' in copied_json
     assert '"sdk_commit": "abcdef123456"' in copied_json
     assert '"sdk_remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git"' in copied_json
@@ -771,6 +775,7 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     assert '"summary_line": "20260326T000000Z | success | windows-pc | sdk sdk-main-456 | - | diag warning main_page/hero: ghost.png is missing"' in copied_json
     assert '"list_label": "20260326T000000Z [windows-pc] success sdk sdk-main-456 diag warning main_page/hero: ghost.png is missing"' in copied_json
     assert '"details_text":' in copied_json
+    assert 'SDK Source: submodule' in copied_json
 
 
 @_skip_no_qt
@@ -841,6 +846,8 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
                 "profile_id": "windows-pc",
                 "manifest_path": str(manifest_path),
                 "sdk": {
+                    "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-main-456",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -866,6 +873,8 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
     assert exported["build_id"] == "20260326T000000Z"
     assert exported["profile_id"] == "windows-pc"
     assert exported["manifest_path"] == str(manifest_path)
+    assert exported["sdk_source_kind"] == "submodule"
+    assert exported["sdk_source_root"] == "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"
     assert exported["sdk_revision"] == "sdk-main-456"
     assert exported["sdk_commit"] == "abcdef123456"
     assert exported["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
@@ -879,6 +888,7 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
         " diag warning main_page/hero: ghost.png is missing"
     )
     assert "First Diagnostic: warning main_page/hero: ghost.png is missing" in exported["details_text"]
+    assert "SDK Source: submodule" in exported["details_text"]
 
 
 @_skip_no_qt
@@ -939,6 +949,7 @@ def test_release_history_dialog_details_show_first_diagnostic(qapp, tmp_path):
                 "error_count": 1,
                 "diagnostics_total": 3,
                 "first_diagnostic": "error main_page/hero: bad callback",
+                "sdk": {"source_kind": "submodule"},
                 "manifest_path": str(manifest_path),
             }
         ]
@@ -948,6 +959,7 @@ def test_release_history_dialog_details_show_first_diagnostic(qapp, tmp_path):
     assert "Diagnostics: warnings=2, errors=1" in details
     assert "Diagnostics Total: 3" in details
     assert "First Diagnostic: error main_page/hero: bad callback" in details
+    assert "SDK Source: submodule" in details
 
 
 @_skip_no_qt
@@ -1563,6 +1575,8 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {
+                    "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-fail",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -1611,6 +1625,8 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {
+                    "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-fail",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -1697,6 +1713,8 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
                 "profile_id": "esp32",
                 "message": "Build failed",
                 "sdk": {
+                    "source_kind": "submodule",
+                    "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                     "revision": "sdk-fail",
                     "commit": "abcdef123456",
                     "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -1733,6 +1751,8 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
         " | diag error main_page/hero: bad callback"
     ) in exported["summary_text"]
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
+    assert exported["entries"][0]["sdk_source_kind"] == "submodule"
+    assert exported["entries"][0]["sdk_source_root"] == "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"
     assert exported["entries"][0]["sdk_revision"] == "sdk-fail"
     assert exported["entries"][0]["sdk_commit"] == "abcdef123456"
     assert exported["entries"][0]["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
@@ -1746,6 +1766,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
         " diag error main_page/hero: bad callback"
     )
     assert "First Diagnostic: error main_page/hero: bad callback" in exported["entries"][0]["details_text"]
+    assert "SDK Source: submodule" in exported["entries"][0]["details_text"]
 
 
 @_skip_no_qt
