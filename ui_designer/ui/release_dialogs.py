@@ -418,6 +418,13 @@ def _build_filtered_history_json(
     sort_mode: str,
     search_text: str,
 ) -> str:
+    export_entries = []
+    for entry in filtered_entries:
+        payload_entry = dict(entry)
+        payload_entry["summary_line"] = _history_summary_line(entry)
+        payload_entry["list_label"] = _history_list_label(entry)
+        export_entries.append(payload_entry)
+
     payload = {
         "matched_entries": len(filtered_entries),
         "total_entries": len(all_entries),
@@ -433,7 +440,7 @@ def _build_filtered_history_json(
             "sort": sort_mode or "newest",
             "search": search_text or "-",
         },
-        "entries": filtered_entries,
+        "entries": export_entries,
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 

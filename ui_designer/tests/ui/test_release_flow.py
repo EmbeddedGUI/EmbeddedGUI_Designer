@@ -1519,6 +1519,7 @@ def test_release_history_dialog_export_filename_includes_search_text(qapp):
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -1556,6 +1557,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -1578,6 +1580,14 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     assert exported["filters"]["diagnostics"] == "all"
     assert exported["filters"]["sort"] == "newest"
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
+    assert exported["entries"][0]["summary_line"] == (
+        "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed"
+        " | diag error main_page/hero: bad callback"
+    )
+    assert exported["entries"][0]["list_label"] == (
+        "20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1"
+        " diag error main_page/hero: bad callback"
+    )
 
 
 @_skip_no_qt
