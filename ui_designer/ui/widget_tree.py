@@ -534,6 +534,30 @@ class WidgetTreePanel(QWidget):
                 return choice.label
         return ""
 
+    def _remembered_move_target_choice(self, widgets):
+        remembered_label = self.remembered_move_target_label()
+        if not remembered_label:
+            return None
+        for choice in self._move_target_choices(widgets):
+            if choice.label == remembered_label:
+                return choice
+        return None
+
+    def _move_into_last_target_reason(self, widgets):
+        if not self.remembered_move_target_label():
+            return "move something into a container first."
+        if self._remembered_move_target_choice(widgets) is None:
+            return "the last target is not available for the current selection."
+        return ""
+
+    def _move_into_last_target_hint(self, widgets, shortcut_text="Ctrl+Alt+I"):
+        choice = self._remembered_move_target_choice(widgets)
+        label = choice.label if choice is not None else self.remembered_move_target_label()
+        action_suffix = f" ({shortcut_text})" if shortcut_text else ""
+        if label:
+            return f"Move the current selection into {label} again{action_suffix}"
+        return f"Move the current selection into the last remembered container target{action_suffix}"
+
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
             return
@@ -590,6 +614,8 @@ class WidgetTreePanel(QWidget):
             hints.append("Ctrl+Shift+G ungroup")
         if state.can_move_into:
             hints.append("Ctrl+Shift+I move into container")
+            if self._remembered_move_target_choice(widgets) is not None:
+                hints.append("Ctrl+Alt+I repeat last target")
         if state.can_lift:
             hints.append("Ctrl+Shift+L lift to parent")
         if state.can_move_up and state.can_move_down:
@@ -783,6 +809,19 @@ class WidgetTreePanel(QWidget):
         move_into_action.setToolTip(self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", structure_state.can_move_into, self._structure_action_reason(structure_state, "move_into_reason")))
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
+        move_into_last_target_action = QAction("Move Into Last Target", self)
+        move_into_last_target_action.setShortcut("Ctrl+Alt+I")
+        move_into_last_target_choice = self._remembered_move_target_choice(context_widgets)
+        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
+        move_into_last_target_action.setToolTip(
+            self._structure_tooltip(
+                self._move_into_last_target_hint(context_widgets),
+                move_into_last_target_choice is not None,
+                self._move_into_last_target_reason(context_widgets),
+            )
+        )
+        move_into_last_target_action.triggered.connect(lambda: self._move_selected_widgets_into_last_target(context_widgets))
+        structure_menu.addAction(move_into_last_target_action)
         if structure_state.can_move_into:
             quick_targets = self._quick_move_target_choices(context_widgets)
             if quick_targets:
@@ -954,6 +993,20 @@ class WidgetTreePanel(QWidget):
             return
         if self._apply_structure_result(move_into_container(self.project, widgets, target_widget)) and target_label:
             self.set_remembered_move_target_label(target_label)
+
+    def _move_selected_widgets_into_last_target(self, widgets=None):
+        widgets = widgets or self.selected_widgets()
+        target_choice = self._remembered_move_target_choice(widgets)
+        if target_choice is None:
+            reason = self._move_into_last_target_reason(widgets).rstrip(".")
+            if reason:
+                self.feedback_message.emit(f"Cannot move into last target: {reason}.")
+            return
+        self._move_selected_widgets_into(
+            target_widget=target_choice.widget,
+            widgets=widgets,
+            target_label=target_choice.label,
+        )
 
     def _lift_selected_widgets(self, widgets=None):
         self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))
@@ -1141,6 +1194,9 @@ class WidgetTreePanel(QWidget):
             return True
         if key == Qt.Key_I and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
             self._move_selected_widgets_into()
+            return True
+        if key == Qt.Key_I and modifiers == (Qt.ControlModifier | Qt.AltModifier):
+            self._move_selected_widgets_into_last_target()
             return True
         if key == Qt.Key_L and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
             self._lift_selected_widgets()

@@ -919,6 +919,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is True
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is True
+        assert window._move_into_last_target_action.isEnabled() is False
         assert window._quick_move_into_menu.menuAction().isEnabled() is True
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
@@ -926,6 +927,7 @@ class TestMainWindowFileFlow:
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is True
         assert "selection must only include groups" in window._ungroup_selection_action.toolTip()
+        assert "move something into a container first" in window._move_into_last_target_action.toolTip()
         assert "selected widgets already belong to the top container" in window._lift_to_parent_action.statusTip()
         assert "selected widgets are already at the top" in window._move_up_action.toolTip()
         assert "selected widgets are already at the top" in window._move_top_action.statusTip()
@@ -976,6 +978,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is False
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is False
+        assert window._move_into_last_target_action.isEnabled() is False
         assert window._quick_move_into_menu.menuAction().isEnabled() is False
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_top_action.isEnabled() is False
@@ -990,6 +993,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is False
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is False
+        assert window._move_into_last_target_action.isEnabled() is False
         assert window._quick_move_into_menu.menuAction().isEnabled() is False
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
@@ -1038,6 +1042,53 @@ class TestMainWindowFileFlow:
         assert window.widget_tree._get_selected_widget() is child
         assert window._undo_manager.get_stack("main_page").current_label() == "move into container"
         assert window.statusBar().currentMessage() == "Moved 1 widget(s) into target_group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_move_into_last_target_action_reuses_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RepeatMoveIntoDemo"
+        project = _create_project(project_dir, "RepeatMoveIntoDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+
+        assert window._move_into_last_target_action.isEnabled() is True
+        assert "root_group / target_b (group)" in window._move_into_last_target_action.toolTip()
+
+        window._move_into_last_target_action.trigger()
+
+        assert second.parent is target_b
+        assert window.widget_tree.selected_widgets() == [second]
+        assert window.widget_tree._get_selected_widget() is second
+        assert window._undo_manager.get_stack("main_page").current_label() == "move into container"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) into target_b."
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -1162,6 +1213,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.shortcut().toString() == "Ctrl+G"
         assert window._ungroup_selection_action.shortcut().toString() == "Ctrl+Shift+G"
         assert window._move_into_container_action.shortcut().toString() == "Ctrl+Shift+I"
+        assert window._move_into_last_target_action.shortcut().toString() == "Ctrl+Alt+I"
         assert window._lift_to_parent_action.shortcut().toString() == "Ctrl+Shift+L"
         assert window._move_up_action.shortcut().toString() == "Alt+Up"
         assert window._move_down_action.shortcut().toString() == "Alt+Down"

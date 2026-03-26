@@ -1327,6 +1327,11 @@ class MainWindow(QMainWindow):
         self._move_into_container_action.triggered.connect(self._move_selection_into_container)
         structure_menu.addAction(self._move_into_container_action)
 
+        self._move_into_last_target_action = QAction("Move Into Last Target", self)
+        self._move_into_last_target_action.setShortcut("Ctrl+Alt+I")
+        self._move_into_last_target_action.triggered.connect(self._move_selection_into_last_target)
+        structure_menu.addAction(self._move_into_last_target_action)
+
         self._quick_move_into_menu = structure_menu.addMenu("Quick Move Into")
         self._quick_move_into_menu.setToolTipsVisible(True)
         self._quick_move_into_menu.aboutToShow.connect(self._refresh_quick_move_into_menu)
@@ -3884,6 +3889,33 @@ class MainWindow(QMainWindow):
                 return choice.label
         return ""
 
+    def _remembered_move_target_choice(self, widgets=None):
+        remembered_label = self._remembered_move_target_label()
+        if not remembered_label:
+            return None
+        for choice in self._move_into_choices(widgets):
+            if choice.label == remembered_label:
+                return choice
+        return None
+
+    def _move_into_last_target_reason(self, widgets=None):
+        if not self._remembered_move_target_label():
+            return "move something into a container first."
+        if self._remembered_move_target_choice(widgets) is None:
+            return "the last target is not available for the current selection."
+        return ""
+
+    def _move_into_last_target_hint(self, widgets=None):
+        shortcut = ""
+        if hasattr(self, "_move_into_last_target_action"):
+            shortcut = self._move_into_last_target_action.shortcut().toString()
+        choice = self._remembered_move_target_choice(widgets)
+        label = choice.label if choice is not None else self._remembered_move_target_label()
+        suffix = f" ({shortcut})" if shortcut else ""
+        if label:
+            return f"Move the current selection into {label} again{suffix}"
+        return f"Move the current selection into the last remembered container target{suffix}"
+
     def _refresh_quick_move_into_menu(self):
         if not hasattr(self, "_quick_move_into_menu"):
             return
@@ -3909,6 +3941,16 @@ class MainWindow(QMainWindow):
             target_label = self._resolve_move_target_label(widgets, target)
         if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target)) and target_label:
             self._set_remembered_move_target_label(target_label)
+
+    def _move_selection_into_last_target(self):
+        widgets = self._top_level_selected_widgets()
+        target_choice = self._remembered_move_target_choice(widgets)
+        if target_choice is None:
+            reason = self._move_into_last_target_reason(widgets).rstrip(".")
+            if reason:
+                self._show_selection_action_blocked("move into last target", reason)
+            return
+        self._move_selection_into_target(target_choice.widget, target_label=target_choice.label)
 
     def _choose_structure_target_choice(self, widgets):
         choices = self._move_into_choices(widgets)
@@ -4295,6 +4337,8 @@ class MainWindow(QMainWindow):
         self._group_selection_action.setEnabled(structure_state.can_group)
         self._ungroup_selection_action.setEnabled(structure_state.can_ungroup)
         self._move_into_container_action.setEnabled(structure_state.can_move_into)
+        repeat_move_target_choice = self._remembered_move_target_choice(selected_widgets)
+        self._move_into_last_target_action.setEnabled(repeat_move_target_choice is not None)
         self._lift_to_parent_action.setEnabled(structure_state.can_lift)
         self._move_up_action.setEnabled(structure_state.can_move_up)
         self._move_down_action.setEnabled(structure_state.can_move_down)
@@ -4304,6 +4348,13 @@ class MainWindow(QMainWindow):
             hint = self._structure_action_hint(base_text, action.isEnabled(), self._structure_action_reason(structure_state, reason_attr))
             action.setToolTip(hint)
             action.setStatusTip(hint)
+        repeat_hint = self._structure_action_hint(
+            self._move_into_last_target_hint(selected_widgets),
+            repeat_move_target_choice is not None,
+            self._move_into_last_target_reason(selected_widgets),
+        )
+        self._move_into_last_target_action.setToolTip(repeat_hint)
+        self._move_into_last_target_action.setStatusTip(repeat_hint)
         quick_hint = self._structure_action_hint(
             "Move the current selection directly into an available container target.",
             structure_state.can_move_into,

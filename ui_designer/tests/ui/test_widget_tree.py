@@ -505,6 +505,7 @@ class TestWidgetTreePanel:
         assert actions["Group Selection"].isEnabled() is True
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is True
+        assert actions["Move Into Last Target"].isEnabled() is False
         assert actions["Quick Move Into"].menu() is not None
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
@@ -512,12 +513,14 @@ class TestWidgetTreePanel:
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is True
         assert "Unavailable: selection must only include groups." in actions["Ungroup"].toolTip()
+        assert "Unavailable: move something into a container first." in actions["Move Into Last Target"].toolTip()
         assert "Unavailable: selected widgets already belong to the top container." in actions["Lift To Parent"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move Up"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move To Top"].toolTip()
         assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
         assert actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
         assert actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
+        assert actions["Move Into Last Target"].shortcut().toString() == "Ctrl+Alt+I"
         assert actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
         assert actions["Move Up"].shortcut().toString() == "Alt+Up"
         assert actions["Move Down"].shortcut().toString() == "Alt+Down"
@@ -549,6 +552,43 @@ class TestWidgetTreePanel:
         assert target_actions["Move To Bottom"].isEnabled() is False
 
         target_menu.deleteLater()
+        panel.deleteLater()
+
+    def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        menu = panel._build_context_menu(second)
+        actions = _structure_menu_actions(menu)
+
+        assert actions["Move Into Last Target"].isEnabled() is True
+        assert "root_group / target_b (group)" in actions["Move Into Last Target"].toolTip()
+
+        actions["Move Into Last Target"].trigger()
+
+        assert second.parent is target_b
+        assert panel.selected_widgets() == [second]
+
+        menu.deleteLater()
         panel.deleteLater()
 
     def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
