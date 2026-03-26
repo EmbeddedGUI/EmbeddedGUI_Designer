@@ -921,6 +921,8 @@ class TestMainWindowFileFlow:
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is False
+        assert "root widgets cannot be regrouped or reordered" in window._group_selection_action.toolTip()
+        assert "root widgets cannot be regrouped or reordered" in window._group_selection_action.statusTip()
 
         window._selection_state.set_widgets([first], primary=first)
         window._selected_widget = first
@@ -934,6 +936,8 @@ class TestMainWindowFileFlow:
         assert window._move_down_action.isEnabled() is False
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is False
+        assert "select another sibling or target container to move this widget" in window._move_into_container_action.toolTip()
+        assert "select another sibling or target container to move this widget" in window._move_into_container_action.statusTip()
 
         _close_window(window)
 

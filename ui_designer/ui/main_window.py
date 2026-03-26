@@ -1352,6 +1352,19 @@ class MainWindow(QMainWindow):
         self._move_bottom_action.setShortcut("Alt+Shift+Down")
         self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
         structure_menu.addAction(self._move_bottom_action)
+        self._structure_action_hints = {
+            self._group_selection_action: "Group the current selection (Ctrl+G)",
+            self._ungroup_selection_action: "Ungroup the selected group widgets (Ctrl+Shift+G)",
+            self._move_into_container_action: "Move the current selection into another container (Ctrl+Shift+I)",
+            self._lift_to_parent_action: "Lift the current selection to the parent container (Ctrl+Shift+L)",
+            self._move_up_action: "Move the current selection up among its siblings (Alt+Up)",
+            self._move_down_action: "Move the current selection down among its siblings (Alt+Down)",
+            self._move_top_action: "Move the current selection to the top of its sibling list (Alt+Shift+Up)",
+            self._move_bottom_action: "Move the current selection to the bottom of its sibling list (Alt+Shift+Down)",
+        }
+        for action, hint in self._structure_action_hints.items():
+            action.setToolTip(hint)
+            action.setStatusTip(hint)
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -3813,6 +3826,12 @@ class MainWindow(QMainWindow):
         selection = self._selected_widgets() if widgets is None else widgets
         return describe_structure_actions(self._structure_project_context(), selection)
 
+    def _structure_action_hint(self, base_text, enabled, blocked_reason=""):
+        if enabled or not blocked_reason:
+            return base_text
+        reason = blocked_reason.rstrip(".")
+        return f"{base_text} Unavailable: {reason}."
+
     def _choose_structure_target(self, widgets):
         context = self._structure_project_context()
         choices = available_move_targets(context, widgets)
@@ -4203,6 +4222,10 @@ class MainWindow(QMainWindow):
         self._move_down_action.setEnabled(structure_state.can_move_down)
         self._move_top_action.setEnabled(structure_state.can_move_top)
         self._move_bottom_action.setEnabled(structure_state.can_move_bottom)
+        for action, base_text in self._structure_action_hints.items():
+            hint = self._structure_action_hint(base_text, action.isEnabled(), structure_state.blocked_reason)
+            action.setToolTip(hint)
+            action.setStatusTip(hint)
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
