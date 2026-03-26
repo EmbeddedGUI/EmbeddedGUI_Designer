@@ -435,6 +435,58 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected parent widget: {self._widget_label(parent)}.",
         )
 
+    def _previous_sibling_widget(self, widget):
+        siblings = self._sibling_widgets(widget)
+        if widget not in siblings:
+            return None
+        index = siblings.index(widget)
+        if index <= 0:
+            return None
+        return siblings[index - 1]
+
+    def _next_sibling_widget(self, widget):
+        siblings = self._sibling_widgets(widget)
+        if widget not in siblings:
+            return None
+        index = siblings.index(widget)
+        if index < 0 or index >= len(siblings) - 1:
+            return None
+        return siblings[index + 1]
+
+    def _select_previous_sibling_widget(self, widget):
+        sibling = self._previous_sibling_widget(widget)
+        if sibling is None:
+            if widget is not None:
+                if widget.parent is None:
+                    self.feedback_message.emit("Cannot select previous sibling: root widgets do not have siblings.")
+                else:
+                    self.feedback_message.emit(
+                        "Cannot select previous sibling: widget does not have a previous sibling under the same parent."
+                    )
+            return
+        self._apply_programmatic_selection(
+            [sibling],
+            primary=sibling,
+            feedback_message=f"Selected previous sibling: {self._widget_label(sibling)}.",
+        )
+
+    def _select_next_sibling_widget(self, widget):
+        sibling = self._next_sibling_widget(widget)
+        if sibling is None:
+            if widget is not None:
+                if widget.parent is None:
+                    self.feedback_message.emit("Cannot select next sibling: root widgets do not have siblings.")
+                else:
+                    self.feedback_message.emit(
+                        "Cannot select next sibling: widget does not have a next sibling under the same parent."
+                    )
+            return
+        self._apply_programmatic_selection(
+            [sibling],
+            primary=sibling,
+            feedback_message=f"Selected next sibling: {self._widget_label(sibling)}.",
+        )
+
     def _ancestor_widgets(self, widget):
         if widget is None:
             return []
@@ -966,6 +1018,8 @@ class WidgetTreePanel(QWidget):
         same_type_widgets = self._same_type_widgets(widget)
         same_depth_widgets = self._same_depth_widgets(widget)
         can_select_parent = widget.parent is not None
+        can_select_previous_sibling = self._previous_sibling_widget(widget) is not None
+        can_select_next_sibling = self._next_sibling_widget(widget) is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_root = self._root_widget(widget) is not None and self._root_widget(widget) is not widget
         can_select_path = bool(self._widget_path(widget))
@@ -999,6 +1053,34 @@ class WidgetTreePanel(QWidget):
         )
         select_parent_action.triggered.connect(lambda: self._select_parent_widget(widget))
         select_menu.addAction(select_parent_action)
+
+        select_previous_sibling_action = QAction("Previous Sibling", self)
+        select_previous_sibling_action.setEnabled(can_select_previous_sibling)
+        select_previous_sibling_action.setToolTip(
+            self._structure_tooltip(
+                "Select the previous sibling under the same parent.",
+                can_select_previous_sibling,
+                "root widgets do not have siblings."
+                if widget.parent is None else
+                "widget does not have a previous sibling under the same parent.",
+            )
+        )
+        select_previous_sibling_action.triggered.connect(lambda: self._select_previous_sibling_widget(widget))
+        select_menu.addAction(select_previous_sibling_action)
+
+        select_next_sibling_action = QAction("Next Sibling", self)
+        select_next_sibling_action.setEnabled(can_select_next_sibling)
+        select_next_sibling_action.setToolTip(
+            self._structure_tooltip(
+                "Select the next sibling under the same parent.",
+                can_select_next_sibling,
+                "root widgets do not have siblings."
+                if widget.parent is None else
+                "widget does not have a next sibling under the same parent.",
+            )
+        )
+        select_next_sibling_action.triggered.connect(lambda: self._select_next_sibling_widget(widget))
+        select_menu.addAction(select_next_sibling_action)
 
         select_ancestors_action = QAction("Ancestors", self)
         select_ancestors_action.setEnabled(can_select_ancestors)
@@ -1259,6 +1341,8 @@ class WidgetTreePanel(QWidget):
         select_menu.addAction(select_same_depth_action)
         select_enabled = any([
             can_select_parent,
+            can_select_previous_sibling,
+            can_select_next_sibling,
             can_select_ancestors,
             can_select_root,
             can_select_path,

@@ -913,6 +913,8 @@ class TestWidgetTreePanel:
         root_menu = panel._build_context_menu(root)
         root_actions = _select_menu_actions(root_menu)
         assert root_actions["Parent"].isEnabled() is False
+        assert root_actions["Previous Sibling"].isEnabled() is False
+        assert root_actions["Next Sibling"].isEnabled() is False
         assert root_actions["Ancestors"].isEnabled() is False
         assert root_actions["Root"].isEnabled() is False
         assert root_actions["Path"].isEnabled() is True
@@ -932,6 +934,8 @@ class TestWidgetTreePanel:
         assert root_actions["Free Position"].isEnabled() is True
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Sibling"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Next Sibling"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
         assert "Unavailable: widget is already the page root." in root_actions["Root"].toolTip()
         assert "Unavailable: no other widgets exist at depth 0 on this page." in root_actions["Same Depth"].toolTip()
@@ -953,6 +957,8 @@ class TestWidgetTreePanel:
         container_menu = panel._build_context_menu(container)
         container_actions = _select_menu_actions(container_menu)
         assert container_actions["Parent"].isEnabled() is True
+        assert container_actions["Previous Sibling"].isEnabled() is True
+        assert container_actions["Next Sibling"].isEnabled() is True
         assert container_actions["Ancestors"].isEnabled() is True
         assert container_actions["Root"].isEnabled() is True
         assert container_actions["Path"].isEnabled() is True
@@ -976,6 +982,8 @@ class TestWidgetTreePanel:
         child_menu = panel._build_context_menu(child_a)
         child_actions = _select_menu_actions(child_menu)
         assert child_actions["Parent"].isEnabled() is True
+        assert child_actions["Previous Sibling"].isEnabled() is False
+        assert child_actions["Next Sibling"].isEnabled() is True
         assert child_actions["Ancestors"].isEnabled() is True
         assert child_actions["Root"].isEnabled() is True
         assert child_actions["Path"].isEnabled() is True
@@ -1009,6 +1017,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: no other switch widgets exist under the same parent." in child_actions["Same Parent Type"].toolTip()
         assert "Unavailable: no other switch widgets exist in this subtree." in child_actions["Subtree Type"].toolTip()
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
+        assert "Unavailable: widget does not have a previous sibling under the same parent." in child_actions["Previous Sibling"].toolTip()
         child_menu.deleteLater()
         panel.deleteLater()
 
@@ -1053,6 +1062,24 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["container"], "container")
         assert feedback[-1] == "Selected parent widget: container."
         parent_menu.deleteLater()
+
+        previous_menu = panel._build_context_menu(child_b)
+        previous_actions = _select_menu_actions(previous_menu)
+        previous_actions["Previous Sibling"].trigger()
+        assert panel.selected_widgets() == [child_a]
+        assert panel._get_selected_widget() is child_a
+        assert selection_events[-1] == (["child_a"], "child_a")
+        assert feedback[-1] == "Selected previous sibling: child_a."
+        previous_menu.deleteLater()
+
+        next_menu = panel._build_context_menu(child_b)
+        next_actions = _select_menu_actions(next_menu)
+        next_actions["Next Sibling"].trigger()
+        assert panel.selected_widgets() == [nested_group]
+        assert panel._get_selected_widget() is nested_group
+        assert selection_events[-1] == (["nested_group"], "nested_group")
+        assert feedback[-1] == "Selected next sibling: nested_group."
+        next_menu.deleteLater()
 
         ancestors_menu = panel._build_context_menu(nested_leaf)
         ancestors_actions = _select_menu_actions(ancestors_menu)

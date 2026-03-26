@@ -5978,6 +5978,8 @@ class TestMainWindowCanvasActions:
         assert "Delete" in labels
         assert "Arrange" in labels
         assert "Structure" in labels
+        assert "Previous Sibling" in select_labels
+        assert "Next Sibling" in select_labels
         assert "Root" in select_labels
         assert "Path" in select_labels
         assert "Top-Level" in select_labels
@@ -6058,6 +6060,54 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [child_a, child_b]
         assert window.preview_panel.selected_widgets() == [child_a, child_b]
         assert window.statusBar().currentMessage() == "Selected 2 child widgets of container."
+        _close_window(window)
+
+    def test_preview_context_menu_adjacent_sibling_actions_sync_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewSiblingTraversalContextMenuDemo"
+        project = _create_project(project_dir, "PreviewSiblingTraversalContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
+        child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
+        child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
+        child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
+        container.add_child(child_a)
+        container.add_child(child_b)
+        container.add_child(child_c)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([container], primary=container, sync_tree=True, sync_preview=True)
+
+        previous_menu = window._build_preview_context_menu(child_b)
+        previous_select_menu = next(action.menu() for action in previous_menu.actions() if action.text() == "Select")
+        select_previous_action = next(action for action in previous_select_menu.actions() if action.text() == "Previous Sibling")
+        select_previous_action.trigger()
+        assert window._selection_state.primary is child_a
+        assert window._selection_state.widgets == [child_a]
+        assert window.widget_tree.selected_widgets() == [child_a]
+        assert window.preview_panel.selected_widgets() == [child_a]
+        assert window.statusBar().currentMessage() == "Selected previous sibling: child_a."
+
+        next_menu = window._build_preview_context_menu(child_b)
+        next_select_menu = next(action.menu() for action in next_menu.actions() if action.text() == "Select")
+        select_next_action = next(action for action in next_select_menu.actions() if action.text() == "Next Sibling")
+        select_next_action.trigger()
+        assert window._selection_state.primary is child_c
+        assert window._selection_state.widgets == [child_c]
+        assert window.widget_tree.selected_widgets() == [child_c]
+        assert window.preview_panel.selected_widgets() == [child_c]
+        assert window.statusBar().currentMessage() == "Selected next sibling: child_c."
         _close_window(window)
 
     def test_preview_context_menu_descendants_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
