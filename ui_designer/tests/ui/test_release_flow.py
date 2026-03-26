@@ -803,6 +803,34 @@ def test_release_history_dialog_exports_selected_entry_details(qapp, tmp_path, m
 
 
 @_skip_no_qt
+def test_release_history_dialog_details_show_first_diagnostic(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    manifest_path.write_text('{"status":"failed"}\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "windows-pc",
+                "warning_count": 2,
+                "error_count": 1,
+                "diagnostics_total": 3,
+                "first_diagnostic": "error main_page/hero: bad callback",
+                "manifest_path": str(manifest_path),
+            }
+        ]
+    )
+
+    details = dialog._details_edit.toPlainText()
+    assert "Diagnostics: warnings=2, errors=1" in details
+    assert "Diagnostics Total: 3" in details
+    assert "First Diagnostic: error main_page/hero: bad callback" in details
+
+
+@_skip_no_qt
 def test_release_history_dialog_exports_selected_entry_summary(qapp, tmp_path, monkeypatch):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

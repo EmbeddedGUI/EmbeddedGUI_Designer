@@ -81,6 +81,20 @@ def summarize_diagnostic_entries(entries: list[object]) -> list[str]:
     return messages
 
 
+def _first_release_diagnostic_text(diagnostic_entries: list[dict[str, object]]) -> str:
+    if not diagnostic_entries:
+        return ""
+    first_entry = diagnostic_entries[0] if isinstance(diagnostic_entries[0], dict) else {}
+    severity = str(first_entry.get("severity") or "").strip() or "issue"
+    page_name = str(first_entry.get("target_page_name") or first_entry.get("page_name") or "").strip()
+    widget_name = str(first_entry.get("target_widget_name") or first_entry.get("widget_name") or "").strip()
+    scope = page_name or "<project>"
+    if widget_name:
+        scope = f"{scope}/{widget_name}"
+    message = str(first_entry.get("message") or "").strip()
+    return f"{severity} {scope}: {message}" if message else f"{severity} {scope}"
+
+
 def release_history_path(project_dir: str, output_dir: str = "") -> str:
     project_dir = normalize_path(project_dir)
     output_dir = normalize_path(output_dir)
@@ -501,6 +515,8 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "sdk": sdk_fingerprint.to_dict(),
             "warning_count": len(warnings),
             "error_count": len(errors),
+            "diagnostics_total": len(diagnostic_entries),
+            "first_diagnostic": _first_release_diagnostic_text(diagnostic_entries),
             "release_root": release_root,
             "dist_dir": dist_dir,
             "manifest_path": manifest_path_local,

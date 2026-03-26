@@ -120,6 +120,11 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert history[0]["manifest_path"].endswith("release-manifest.json")
     assert history[0]["log_path"].endswith("build.log")
     assert history[0]["dist_dir"].endswith("dist")
+    assert history[0]["diagnostics_total"] == 1
+    assert history[0]["first_diagnostic"] == (
+        "warning main_page/hero: Widget 'hero' references image_file='ghost.png', "
+        "but it is missing from the resource catalog."
+    )
     assert "sdk" in history[0]
     assert "revision" in history[0]["sdk"]
 
@@ -181,3 +186,7 @@ def test_release_project_blocks_on_diagnostics(tmp_path, monkeypatch):
     assert manifest["diagnostics"]["entries"][0]["target_kind"] == "widget"
     assert manifest["diagnostics"]["entries"][0]["target_page_name"] == "main_page"
     assert manifest["diagnostics"]["entries"][0]["target_widget_name"] == "hero"
+
+    history = json.loads(Path(result.history_path).read_text(encoding="utf-8"))
+    assert history[0]["diagnostics_total"] == 1
+    assert history[0]["first_diagnostic"] == "error main_page/hero: bad callback"

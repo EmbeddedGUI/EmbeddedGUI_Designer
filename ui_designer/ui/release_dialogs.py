@@ -105,6 +105,12 @@ def _history_detail_text(entry: dict[str, object]) -> str:
     error_count = entry.get("error_count")
     if warning_count is not None or error_count is not None:
         lines.append(f"Diagnostics: warnings={warning_count or 0}, errors={error_count or 0}")
+    diagnostics_total = entry.get("diagnostics_total")
+    if diagnostics_total not in (None, ""):
+        lines.append(f"Diagnostics Total: {diagnostics_total}")
+    first_diagnostic = _history_string(entry, "first_diagnostic")
+    if first_diagnostic:
+        lines.append(f"First Diagnostic: {first_diagnostic}")
 
     sdk = entry.get("sdk")
     if isinstance(sdk, dict):
