@@ -40,7 +40,21 @@ def _parse_args():
     return parser.parse_args()
 
 
+def _diagnostics_payload(result):
+    warnings = list(getattr(result, "warnings", []) or [])
+    errors = list(getattr(result, "errors", []) or [])
+    summary = dict(getattr(result, "diagnostics_summary", {}) or {})
+    summary.setdefault("errors", len(errors))
+    summary.setdefault("warnings", len(warnings))
+    summary.setdefault("total", int(summary.get("errors", 0) or 0) + int(summary.get("warnings", 0) or 0))
+    return {
+        "summary": summary,
+        "entries": list(getattr(result, "diagnostics_entries", []) or []),
+    }
+
+
 def _result_payload(result):
+    diagnostics = _diagnostics_payload(result)
     return {
         "success": result.success,
         "message": result.message,
@@ -55,10 +69,7 @@ def _result_payload(result):
         "warnings": list(result.warnings),
         "errors": list(result.errors),
         "artifacts": [artifact.to_dict() for artifact in result.artifacts],
-        "diagnostics": {
-            "summary": dict(getattr(result, "diagnostics_summary", {}) or {}),
-            "entries": list(getattr(result, "diagnostics_entries", []) or []),
-        },
+        "diagnostics": diagnostics,
     }
 
 
@@ -109,12 +120,17 @@ def main():
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     else:
+        diagnostics = _diagnostics_payload(result)
         print(f"[{'OK' if result.success else 'FAIL'}] {result.message}")
         print(f"[INFO] manifest: {result.manifest_path}")
         if result.zip_path:
             print(f"[INFO] package: {result.zip_path}")
-        if result.warnings:
-            print(f"[INFO] warnings: {len(result.warnings)}")
+        print(
+            "[INFO] diagnostics: "
+            f"warnings={diagnostics['summary']['warnings']}, "
+            f"errors={diagnostics['summary']['errors']}, "
+            f"total={diagnostics['summary']['total']}"
+        )
 
     return _resolve_exit_code(result)
 
