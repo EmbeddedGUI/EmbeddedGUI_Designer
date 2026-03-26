@@ -96,6 +96,23 @@ def _search_common_sdk_locations(anchor: str) -> list[str]:
     return result
 
 
+def _search_nearby_sdk_locations(anchor: str) -> list[str]:
+    """Search only the provided anchor and its immediate SDK-like children."""
+    base = normalize_path(anchor)
+    if not base:
+        return []
+    if os.path.isfile(base):
+        base = os.path.dirname(base)
+
+    result = [base]
+    result.extend(_list_matching_child_dirs(base))
+    for container_name in _COMMON_SDK_CONTAINER_NAMES:
+        container_dir = os.path.join(base, container_name)
+        result.append(container_dir)
+        result.extend(_list_matching_child_dirs(container_dir))
+    return result
+
+
 def resolve_sdk_root_candidate(path: str | None) -> str:
     """Resolve *path* to a valid SDK root when possible.
 
@@ -113,7 +130,7 @@ def resolve_sdk_root_candidate(path: str | None) -> str:
     if inferred:
         return inferred
 
-    for nearby in _dedupe_paths(_search_common_sdk_locations(candidate)):
+    for nearby in _dedupe_paths(_search_nearby_sdk_locations(candidate)):
         if is_valid_sdk_root(nearby):
             return nearby
     return ""
@@ -149,6 +166,38 @@ def resolve_available_sdk_root(*candidates: str | None, cached_sdk_root: str | N
     if cached_sdk_root and not is_valid_sdk_root(sdk_root):
         return cached_sdk_root
     return sdk_root
+
+
+def resolve_configured_sdk_root(
+    *candidates: str | None,
+    cached_sdk_root: str | None = None,
+    preserve_invalid: bool = False,
+) -> str:
+    """Resolve an SDK root from configured paths without broad ancestor search first.
+
+    Preference order:
+    1. Exact valid candidates or direct ``example/``-based inference
+    2. A valid cached SDK root
+    3. The first invalid configured candidate when ``preserve_invalid`` is true
+    4. Broad ``resolve_available_sdk_root()`` fallback
+    """
+    normalized_candidates = _dedupe_paths(candidates)
+
+    for candidate in normalized_candidates:
+        if is_valid_sdk_root(candidate):
+            return candidate
+        inferred = infer_sdk_root_from_project_dir(candidate)
+        if inferred:
+            return inferred
+
+    cached_sdk_root = normalize_path(cached_sdk_root)
+    if is_valid_sdk_root(cached_sdk_root):
+        return cached_sdk_root
+
+    if preserve_invalid:
+        return normalized_candidates[0] if normalized_candidates else ""
+
+    return resolve_available_sdk_root(*normalized_candidates, cached_sdk_root=cached_sdk_root)
 
 
 def serialize_sdk_root(project_dir: str, sdk_root: str) -> str:

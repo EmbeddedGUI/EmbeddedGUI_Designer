@@ -69,3 +69,34 @@ def test_run_pytest_sets_safe_temp_env_and_cleans_directory(tmp_path, monkeypatc
     assert captured["env"]["TEMP"] == str(captured["basetemp"])
     assert captured["env"]["QT_QPA_PLATFORM"] == "offscreen"
     assert not captured["basetemp"].exists()
+
+
+
+def test_resolve_basetemp_root_falls_back_to_next_writable_candidate(monkeypatch, tmp_path):
+    module = _load_module()
+
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    monkeypatch.setattr(module, "candidate_basetemp_roots", lambda: [first, second])
+    monkeypatch.setattr(
+        module,
+        "probe_writable_root",
+        lambda path: (False, "permission_denied") if Path(path).resolve() == first.resolve() else (True, ""),
+    )
+
+    assert module.resolve_basetemp_root() == second.resolve()
+
+
+
+def test_resolve_basetemp_root_rejects_explicit_unwritable_path(monkeypatch, tmp_path):
+    module = _load_module()
+    explicit_root = tmp_path / "blocked"
+    monkeypatch.setattr(module, "probe_writable_root", lambda path: (False, "permission_denied"))
+
+    try:
+        module.resolve_basetemp_root(explicit_root)
+    except ValueError as exc:
+        assert str(explicit_root.resolve()) in str(exc)
+        assert "permission_denied" in str(exc)
+    else:
+        raise AssertionError("resolve_basetemp_root should reject an unwritable explicit path")

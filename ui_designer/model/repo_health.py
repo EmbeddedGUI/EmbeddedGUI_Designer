@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -18,6 +20,124 @@ LEGACY_STALE_DIR_NAMES = (
 )
 TEMP_WORK_ROOT = Path("temp")
 TEMP_SCAN_MAX_DEPTH = 3
+
+
+def _nearest_existing_dir(path: Path) -> Path | None:
+    current = path.resolve()
+    while not current.exists():
+        parent = current.parent
+        if parent == current:
+            return None
+        current = parent
+    if current.is_dir():
+        return current
+    if current.parent == current:
+        return None
+    return current.parent
+
+
+def _probe_write_access(directory: Path) -> tuple[bool, str]:
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        return False, "permission_denied"
+    except OSError as exc:
+        return False, type(exc).__name__
+
+    temp_path = None
+    try:
+        fd, temp_name = tempfile.mkstemp(prefix=".repo-health-", dir=str(directory))
+        os.close(fd)
+        temp_path = Path(temp_name)
+        return True, ""
+    except PermissionError:
+        return False, "permission_denied"
+    except OSError as exc:
+        return False, type(exc).__name__
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+
+
+def _inspect_runtime_path(path: Path) -> dict[str, object]:
+    resolved = path.resolve()
+    exists = resolved.exists()
+    if exists and not resolved.is_dir():
+        return {
+            "path": str(resolved),
+            "exists": True,
+            "writable": False,
+            "issue": "not_directory",
+        }
+
+    probe_target = resolved if exists else _nearest_existing_dir(resolved.parent)
+    if probe_target is None:
+        return {
+            "path": str(resolved),
+            "exists": exists,
+            "writable": False,
+            "issue": "missing_parent",
+        }
+
+    writable, issue = _probe_write_access(probe_target)
+    return {
+        "path": str(resolved),
+        "exists": exists,
+        "writable": writable,
+        "issue": issue,
+    }
+
+
+def _resolve_config_dir() -> Path:
+    try:
+        from .config import _get_config_dir
+
+        return Path(_get_config_dir()).resolve()
+    except Exception:
+        override = os.environ.get("EMBEDDEDGUI_DESIGNER_CONFIG_DIR", "").strip()
+        if override:
+            return Path(override).expanduser().resolve()
+        return (REPO_ROOT / ".config").resolve()
+
+
+def _resolve_pytest_temp_root(repo_root: Path) -> Path:
+    try:
+        from scripts.ui_designer.run_pytest import resolve_basetemp_root
+
+        return Path(resolve_basetemp_root()).resolve()
+    except Exception:
+        try:
+            from scripts.ui_designer.run_pytest import default_basetemp_root
+
+            return Path(default_basetemp_root()).resolve()
+        except Exception:
+            return (repo_root / TEMP_WORK_ROOT / "pytest").resolve()
+
+
+def collect_runtime_paths(repo_root: str | Path = REPO_ROOT) -> dict[str, dict[str, object]]:
+    resolved_repo_root = Path(repo_root).resolve()
+    config_dir = _resolve_config_dir()
+    pytest_temp_root = _resolve_pytest_temp_root(resolved_repo_root)
+    return {
+        "config_dir": _inspect_runtime_path(config_dir),
+        "pytest_temp_root": _inspect_runtime_path(pytest_temp_root),
+    }
+
+
+def runtime_path_issues(payload: dict[str, object]) -> list[str]:
+    runtime_paths = payload.get("runtime_paths") if isinstance(payload.get("runtime_paths"), dict) else {}
+    config_dir = runtime_paths.get("config_dir") if isinstance(runtime_paths.get("config_dir"), dict) else {}
+    pytest_temp_root = runtime_paths.get("pytest_temp_root") if isinstance(runtime_paths.get("pytest_temp_root"), dict) else {}
+
+    issues = []
+    if config_dir and not bool(config_dir.get("writable", False)):
+        issues.append("config dir is not writable")
+    if pytest_temp_root and not bool(pytest_temp_root.get("writable", False)):
+        issues.append("pytest temp root is not writable")
+    return issues
 
 
 def _run_git_text(repo_root: str | Path, *args: str) -> str:
@@ -117,6 +237,7 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
     submodule_status_line = _run_git_text(resolved_repo_root, "submodule", "status", "--", str(SDK_SUBMODULE_PATH))
     sdk_root = resolved_repo_root / SDK_SUBMODULE_PATH
     stale_dirs = inspect_problem_dirs(resolved_repo_root)
+    runtime_paths = collect_runtime_paths(resolved_repo_root)
     show_untracked = _run_git_text(resolved_repo_root, "config", "--get", "status.showUntrackedFiles")
 
     suggestions: list[str] = []
@@ -128,6 +249,12 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
         inaccessible_paths = [entry["path"] for entry in stale_dirs if not entry["accessible"]]
         if inaccessible_paths:
             suggestions.append("Remove stale ACL-broken temp dirs from an elevated shell if they keep reappearing")
+    config_dir = runtime_paths.get("config_dir") if isinstance(runtime_paths.get("config_dir"), dict) else {}
+    pytest_temp_root = runtime_paths.get("pytest_temp_root") if isinstance(runtime_paths.get("pytest_temp_root"), dict) else {}
+    if config_dir and not bool(config_dir.get("writable", False)):
+        suggestions.append("Set EMBEDDEDGUI_DESIGNER_CONFIG_DIR to a writable folder, or fix permissions on the default config directory")
+    if pytest_temp_root and not bool(pytest_temp_root.get("writable", False)):
+        suggestions.append("Pass --basetemp-root <writable-folder> to scripts/ui_designer/run_pytest.py, or fix permissions on the default pytest temp root")
     if not (resolved_repo_root / RELEASE_SMOKE_PROJECT).is_dir():
         suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
 
@@ -143,6 +270,7 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
             "path": str(resolved_repo_root / RELEASE_SMOKE_PROJECT),
             "present": (resolved_repo_root / RELEASE_SMOKE_PROJECT).is_dir(),
         },
+        "runtime_paths": runtime_paths,
         "stale_temp_dirs": stale_dirs,
         "git_status_show_untracked": show_untracked or "default",
         "suggestions": suggestions,
@@ -159,6 +287,7 @@ def summarize_repo_health(payload: dict[str, object]) -> str:
         issues.append("SDK submodule is not initialized")
     if not smoke.get("present", False):
         issues.append("release smoke sample is missing")
+    issues.extend(runtime_path_issues(payload))
     if stale_dirs:
         issues.append(f"{len(stale_dirs)} stale temp dir(s) detected")
     if not issues:
@@ -248,6 +377,7 @@ def repo_health_view_payload(
             "path": str(smoke.get("path") or ""),
             "present": bool(smoke.get("present", False)),
         },
+        "runtime_paths": payload.get("runtime_paths") if isinstance(payload.get("runtime_paths"), dict) else {},
         "stale_temp_dirs": blocked_stale_dirs if blocked_only else [],
         "git_status_show_untracked": str(payload.get("git_status_show_untracked") or "default"),
         "suggestions": repo_health_view_suggestions(
@@ -322,6 +452,21 @@ def format_repo_health_text(
         lines.append(f"sdk_submodule.status: {sdk_status}")
     lines.append(f"release_smoke.present: {str(bool(smoke.get('present', False))).lower()}")
     lines.append(f"git_status_show_untracked: {payload.get('git_status_show_untracked', 'default')}")
+    runtime_paths = payload.get("runtime_paths") if isinstance(payload.get("runtime_paths"), dict) else {}
+    for key in ("config_dir", "pytest_temp_root"):
+        entry = runtime_paths.get(key) if isinstance(runtime_paths.get(key), dict) else None
+        if not entry:
+            continue
+        line = (
+            f"runtime_paths.{key}: "
+            f"path={entry.get('path', '')} "
+            f"exists={str(bool(entry.get('exists', False))).lower()} "
+            f"writable={str(bool(entry.get('writable', False))).lower()}"
+        )
+        issue = str(entry.get("issue") or "")
+        if issue:
+            line += f" issue={issue}"
+        lines.append(line)
     stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
     lines.append(f"stale_temp_dirs: {len(stale_dirs)} (blocked {counts['blocked_stale_dirs']})")
     for entry in stale_dirs:

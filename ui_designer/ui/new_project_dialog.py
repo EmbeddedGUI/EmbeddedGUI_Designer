@@ -19,7 +19,7 @@ from qfluentwidgets import LineEdit, PrimaryPushButton, PushButton
 
 from ..model.config import get_config
 from ..model.sdk_bootstrap import default_sdk_install_dir
-from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_available_sdk_root, resolve_sdk_root_candidate
+from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_configured_sdk_root, resolve_sdk_root_candidate
 
 
 class NewProjectDialog(QDialog):
@@ -31,11 +31,12 @@ class NewProjectDialog(QDialog):
         self.resize(560, 260)
 
         config = get_config()
-        self._sdk_root = resolve_available_sdk_root(
+        self._sdk_root = resolve_configured_sdk_root(
             sdk_root,
             config.sdk_root,
             config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
+            preserve_invalid=True,
         )
         default_parent_dir = normalize_path(default_parent_dir)
         sdk_parent_dir = self._default_parent_dir_for_sdk(self._sdk_root)

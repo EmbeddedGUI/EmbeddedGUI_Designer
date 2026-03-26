@@ -9,8 +9,9 @@ import textwrap
 from pathlib import Path
 
 
+
 def test_main_window_close_smoke_with_active_timers():
-    repo_root = Path(__file__).resolve().parents[4]
+    repo_root = Path(__file__).resolve().parents[3]
     script = textwrap.dedent(
         f"""
         import os
@@ -28,14 +29,7 @@ def test_main_window_close_smoke_with_active_timers():
         from PyQt5.QtWidgets import QApplication
 
         from ui_designer.model.project import Project
-        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
-
-
-        def create_sdk_root(root: Path):
-            (root / "src").mkdir(parents=True)
-            (root / "porting" / "designer").mkdir(parents=True)
-            (root / "Makefile").write_text("all:\\n", encoding="utf-8")
 
 
         class DisabledCompiler:
@@ -62,26 +56,19 @@ def test_main_window_close_smoke_with_active_timers():
 
 
         app = QApplication.instance() or QApplication([])
-        temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_close_smoke_", dir=str(repo_root.parent)))
+        sample_project_dir = repo_root / "samples" / "release_smoke" / "ReleaseSmokeApp"
+        sample_sdk_root = repo_root / "sdk" / "EmbeddedGUI"
+        (repo_root / "temp").mkdir(exist_ok=True)
+        config_root = Path(tempfile.mkdtemp(prefix="ui_designer_close_smoke_", dir=str(repo_root / "temp")))
+        os.environ["EMBEDDEDGUI_DESIGNER_CONFIG_DIR"] = str(config_root)
         try:
-            for index in range(12):
-                sdk_root = temp_root / f"sdk_{{index}}"
-                project_dir = temp_root / f"project_{{index}}"
-                create_sdk_root(sdk_root)
-
-                project = Project(screen_width=240, screen_height=320, app_name=f"SmokeDemo{{index}}")
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                page = project.create_new_page("main_page")
-                page.root_widget.add_child(WidgetModel("label", name="field_label"))
-                page.root_widget.add_child(WidgetModel("button", name="field_button"))
-                project.save(str(project_dir))
-
-                window = MainWindow(str(sdk_root))
+            for _ in range(12):
+                project = Project.load(str(sample_project_dir))
+                window = MainWindow(str(sample_sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
                 window._trigger_compile = lambda: None
-                window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
-                window.widget_tree.filter_edit.setText("field")
+                window._open_loaded_project(project, str(sample_project_dir), preferred_sdk_root=str(sample_sdk_root), silent=True)
+                window.widget_tree.filter_edit.setText("main")
                 window._compile_timer.start(10)
                 window._regen_timer.start(10)
                 window._project_watch_timer.start(10)
@@ -93,7 +80,7 @@ def test_main_window_close_smoke_with_active_timers():
                 app.sendPostedEvents()
                 app.processEvents()
         finally:
-            shutil.rmtree(temp_root, ignore_errors=True)
+            shutil.rmtree(config_root, ignore_errors=True)
         """
     )
 

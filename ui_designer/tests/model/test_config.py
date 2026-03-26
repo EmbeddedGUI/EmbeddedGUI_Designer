@@ -2,6 +2,8 @@
 
 import json
 import os
+from pathlib import Path
+
 import pytest
 from unittest.mock import patch
 
@@ -10,8 +12,11 @@ from ui_designer.model.workspace import normalize_path
 
 
 @pytest.fixture(autouse=True)
-def reset_singleton():
+def reset_singleton(tmp_path, monkeypatch):
     """Reset the singleton instance before each test."""
+    monkeypatch.setenv("EMBEDDEDGUI_DESIGNER_CONFIG_DIR", str(tmp_path / "config-home"))
+    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_dir", lambda: str(tmp_path / "legacy-config"))
+    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_path", lambda: str(tmp_path / "legacy-config" / "config.json"))
     DesignerConfig._instance = None
     yield
     DesignerConfig._instance = None
@@ -21,6 +26,31 @@ def reset_singleton():
 def config():
     """Create a fresh DesignerConfig (not singleton)."""
     return DesignerConfig()
+
+
+def _resolve_without_workspace_discovery(*candidates, cached_sdk_root=None):
+    def _is_sdk_root(path_text):
+        candidate = Path(path_text)
+        return (
+            candidate.is_dir()
+            and (candidate / "Makefile").is_file()
+            and (candidate / "src").is_dir()
+            and (candidate / "porting" / "designer").is_dir()
+        )
+
+    normalized_candidates = []
+    for candidate in candidates:
+        normalized = normalize_path(candidate)
+        if normalized:
+            normalized_candidates.append(normalized)
+    for candidate in normalized_candidates:
+        if _is_sdk_root(candidate):
+            return candidate
+
+    cached_candidate = normalize_path(cached_sdk_root)
+    if cached_candidate and _is_sdk_root(cached_candidate):
+        return cached_candidate
+    return normalized_candidates[0] if normalized_candidates else ""
 
 
 class TestDefaults:
@@ -237,8 +267,9 @@ class TestPathManagement:
         config.sdk_root = str(tmp_path / "missing_sdk")
         config.last_app = "MyApp"
 
-        with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "cfg")):
-            result = config.get_app_dir()
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "cfg")):
+                result = config.get_app_dir()
 
         assert result == os.path.join(normalize_path(str(cached_sdk)), "example", "MyApp")
 
@@ -267,13 +298,15 @@ class TestPathManagement:
         app2 = example_dir / "InvalidApp"
         app2.mkdir()
 
-        apps = config.list_available_apps()
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            apps = config.list_available_apps()
         assert "ValidApp" in apps
         assert "InvalidApp" not in apps
 
     def test_list_available_apps_empty_root(self, config):
         config.sdk_root = ""
-        assert config.list_available_apps() == []
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            assert config.list_available_apps() == []
 
     def test_list_available_apps_uses_cached_sdk_when_saved_root_is_invalid(self, config, tmp_path):
         cached_sdk = tmp_path / "cfg" / "sdk" / "EmbeddedGUI"
@@ -287,14 +320,16 @@ class TestPathManagement:
         (app_dir / "CachedApp.egui").write_text("")
         config.sdk_root = str(tmp_path / "missing_sdk")
 
-        with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "cfg")):
-            apps = config.list_available_apps()
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "cfg")):
+                apps = config.list_available_apps()
 
         assert apps == ["CachedApp"]
 
     def test_list_available_apps_no_example_dir(self, config, tmp_path):
         config.sdk_root = str(tmp_path)
-        assert config.list_available_apps() == []
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            assert config.list_available_apps() == []
 
 
 class TestSingleton:
@@ -306,3 +341,54 @@ class TestSingleton:
             inst1 = DesignerConfig.instance()
             inst2 = DesignerConfig.instance()
         assert inst1 is inst2
+
+
+class TestConfigMigration:
+    def test_get_config_dir_uses_env_override(self, tmp_path, monkeypatch):
+        override_dir = tmp_path / "custom-config"
+        monkeypatch.setenv("EMBEDDEDGUI_DESIGNER_CONFIG_DIR", str(override_dir))
+
+        assert _get_config_dir() == normalize_path(str(override_dir))
+        assert _get_config_path() == normalize_path(str(override_dir / "config.json"))
+
+    def test_load_falls_back_to_legacy_repo_local_config(self, config, tmp_path):
+        primary_path = tmp_path / "user" / "config.json"
+        legacy_path = tmp_path / "legacy" / "config.json"
+        legacy_path.parent.mkdir(parents=True)
+        legacy_path.write_text(json.dumps({"last_app": "LegacyApp"}), encoding="utf-8")
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(primary_path)):
+            with patch("ui_designer.model.config._get_legacy_config_path", return_value=str(legacy_path)):
+                config.load()
+
+        assert config.last_app == "LegacyApp"
+
+    def test_load_prefers_primary_config_over_legacy(self, config, tmp_path):
+        primary_path = tmp_path / "user" / "config.json"
+        legacy_path = tmp_path / "legacy" / "config.json"
+        primary_path.parent.mkdir(parents=True)
+        legacy_path.parent.mkdir(parents=True)
+        primary_path.write_text(json.dumps({"last_app": "PrimaryApp"}), encoding="utf-8")
+        legacy_path.write_text(json.dumps({"last_app": "LegacyApp"}), encoding="utf-8")
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(primary_path)):
+            with patch("ui_designer.model.config._get_legacy_config_path", return_value=str(legacy_path)):
+                config.load()
+
+        assert config.last_app == "PrimaryApp"
+
+    def test_get_app_dir_uses_legacy_cached_sdk_when_primary_cache_is_missing(self, config, tmp_path):
+        legacy_cfg = tmp_path / "legacy"
+        legacy_cached_sdk = legacy_cfg / "sdk" / "EmbeddedGUI"
+        (legacy_cached_sdk / "src").mkdir(parents=True)
+        (legacy_cached_sdk / "porting" / "designer").mkdir(parents=True)
+        (legacy_cached_sdk / "Makefile").write_text("all:\n")
+        config.sdk_root = str(tmp_path / "missing_sdk")
+        config.last_app = "LegacyApp"
+
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "primary")):
+                with patch("ui_designer.model.config._get_legacy_config_dir", return_value=str(legacy_cfg)):
+                    result = config.get_app_dir()
+
+        assert result == os.path.join(normalize_path(str(legacy_cached_sdk)), "example", "LegacyApp")

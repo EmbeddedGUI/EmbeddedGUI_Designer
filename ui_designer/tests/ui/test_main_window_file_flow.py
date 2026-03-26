@@ -58,8 +58,13 @@ def isolated_config(tmp_path, monkeypatch):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_path = config_dir / "config.json"
+    legacy_config_dir = tmp_path / "legacy_config"
+    legacy_config_path = legacy_config_dir / "config.json"
     monkeypatch.setattr("ui_designer.model.config._get_config_dir", lambda: str(config_dir))
     monkeypatch.setattr("ui_designer.model.config._get_config_path", lambda: str(config_path))
+    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_dir", lambda: str(legacy_config_dir))
+    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_path", lambda: str(legacy_config_path))
+    monkeypatch.setattr("ui_designer.model.config._get_load_config_paths", lambda: [str(config_path), str(legacy_config_path)])
     DesignerConfig._instance = None
     config = DesignerConfig.instance()
     yield config
@@ -751,6 +756,11 @@ class TestMainWindowFileFlow:
                 window.widget_tree._select_next_filter_match()
                 assert window.statusBar().currentMessage() == "Widget filter 'field': 2 matches (1/2)."
 
+                window.widget_tree._select_all_filter_matches()
+                assert window.statusBar().currentMessage() == "Widget filter 'field': selected 2 matches."
+                assert [widget.name for widget in window._selected_widgets()] == ["field_label", "field_button"]
+                assert [widget.name for widget in window.preview_panel.selected_widgets()] == ["field_label", "field_button"]
+
                 window.widget_tree.filter_edit.setText("")
                 assert window.statusBar().currentMessage() == "Widget filter cleared."
 
@@ -777,6 +787,49 @@ class TestMainWindowFileFlow:
         )
 
         assert result.returncode == 0, f"stdout:\n{result.stdout}\n\nstderr:\n{result.stderr}"
+
+    def test_widget_tree_select_actions_sync_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "TreeSelectActionDemo"
+        project = _create_project(project_dir, "TreeSelectActionDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        other = WidgetModel("label", name="other")
+        container = WidgetModel("group", name="container")
+        child_a = WidgetModel("switch", name="child_a")
+        child_b = WidgetModel("button", name="child_b")
+        container.add_child(child_a)
+        container.add_child(child_b)
+        root.add_child(other)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
+
+        menu = window.widget_tree._build_context_menu(container)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_children_action = next(action for action in select_menu.actions() if action.text() == "Children")
+
+        select_children_action.trigger()
+
+        assert window._selection_state.primary is child_a
+        assert window._selection_state.widgets == [child_a, child_b]
+        assert window.widget_tree.selected_widgets() == [child_a, child_b]
+        assert window.preview_panel.selected_widgets() == [child_a, child_b]
+        assert window.statusBar().currentMessage() == "Selected 2 child widgets of container."
+
+        menu.deleteLater()
+        _close_window(window)
 
     def test_widget_tree_batch_rename_updates_status_and_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
@@ -5769,4 +5822,91 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_dock.objectName() == "diagnostics_dock"
         assert window.debug_dock.objectName() == "debug_output_dock"
         assert window._toolbar.objectName() == "main_toolbar"
+        _close_window(window)
+
+
+@_skip_no_qt
+class TestMainWindowCanvasActions:
+    def test_select_all_selects_visible_non_root_widgets(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SelectAllDemo"
+        project = _create_project(project_dir, "SelectAllDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=16, y=40, width=80, height=24)
+        hidden = WidgetModel("switch", name="hidden", x=24, y=72, width=60, height=20)
+        hidden.designer_hidden = True
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(hidden)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._select_all_action.trigger()
+
+        assert window._select_all_action.shortcut().toString() == "Ctrl+A"
+        assert window._selection_state.widgets == [first, second]
+        assert root not in window._selection_state.widgets
+        _close_window(window)
+
+    def test_select_all_prefers_focused_text_input(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SelectAllFilterDemo"
+        project = _create_project(project_dir, "SelectAllFilterDemo", sdk_root)
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        project.get_startup_page().root_widget.add_child(first)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        window.widget_tree.filter_edit.setText("first")
+        monkeypatch.setattr("ui_designer.ui.main_window.QApplication.focusWidget", lambda: window.widget_tree.filter_edit)
+
+        window._select_all_action.trigger()
+
+        assert window.widget_tree.filter_edit.selectedText() == "first"
+        assert window._selection_state.widgets == [first]
+        _close_window(window)
+
+    def test_build_preview_context_menu_includes_expected_actions(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewContextMenuDemo"
+        project = _create_project(project_dir, "PreviewContextMenuDemo", sdk_root)
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        project.get_startup_page().root_widget.add_child(first)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        menu = window._build_preview_context_menu(first)
+        labels = [action.text() for action in menu.actions() if action.text()]
+
+        assert "Select All" in labels
+        assert "Copy" in labels
+        assert "Delete" in labels
+        assert "Arrange" in labels
+        assert "Structure" in labels
         _close_window(window)

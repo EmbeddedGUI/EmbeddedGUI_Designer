@@ -256,10 +256,15 @@ class WidgetTreePanel(QWidget):
         self.filter_prev_btn.clicked.connect(self._select_previous_filter_match)
         self.filter_next_btn = QPushButton("Next")
         self.filter_next_btn.clicked.connect(self._select_next_filter_match)
+        self.filter_select_btn = QPushButton("Select")
+        self.filter_select_btn.setToolTip("Select all current filter matches (Ctrl+Enter)")
+        self.filter_select_btn.clicked.connect(self._select_all_filter_matches)
         self.filter_prev_btn.setEnabled(False)
         self.filter_next_btn.setEnabled(False)
+        self.filter_select_btn.setEnabled(False)
         filter_layout.addWidget(self.filter_prev_btn)
         filter_layout.addWidget(self.filter_next_btn)
+        filter_layout.addWidget(self.filter_select_btn)
         self.filter_position_label = QLabel("")
         filter_layout.addWidget(self.filter_position_label)
         self.filter_status_label = QLabel("All widgets")
@@ -361,7 +366,9 @@ class WidgetTreePanel(QWidget):
     def eventFilter(self, watched, event):
         if watched is self.filter_edit and event.type() == QEvent.KeyPress:
             if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-                if event.modifiers() & Qt.ShiftModifier:
+                if event.modifiers() & Qt.ControlModifier:
+                    self._select_all_filter_matches()
+                elif event.modifiers() & Qt.ShiftModifier:
                     self._select_previous_filter_match()
                 else:
                     self._select_next_filter_match()
@@ -400,6 +407,70 @@ class WidgetTreePanel(QWidget):
             if widget is not None:
                 widgets.append(widget)
         return widgets
+
+    def _widget_label(self, widget):
+        if widget is None:
+            return ""
+        return getattr(widget, "name", "") or getattr(widget, "widget_type", "widget")
+
+    def _apply_programmatic_selection(self, widgets, primary=None, feedback_message=""):
+        widgets = [widget for widget in (widgets or []) if widget is not None]
+        if primary not in widgets:
+            primary = widgets[0] if widgets else None
+        self.set_selected_widgets(widgets, primary=primary)
+        self.widget_selected.emit(primary)
+        self.selection_changed.emit(widgets, primary)
+        if feedback_message:
+            self.feedback_message.emit(feedback_message)
+
+    def _select_parent_widget(self, widget):
+        parent = widget.parent if widget is not None else None
+        if parent is None:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select parent: root widgets do not have a parent.")
+            return
+        self._apply_programmatic_selection(
+            [parent],
+            primary=parent,
+            feedback_message=f"Selected parent widget: {self._widget_label(parent)}.",
+        )
+
+    def _select_child_widgets(self, widget):
+        children = [child for child in getattr(widget, "children", []) if child is not None]
+        if not children:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select children: widget has no child widgets.")
+            return
+        noun = "widget" if len(children) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            children,
+            primary=children[0],
+            feedback_message=f"Selected {len(children)} child {noun} of {self._widget_label(widget)}.",
+        )
+
+    def _sibling_widgets(self, widget):
+        parent = widget.parent if widget is not None else None
+        if parent is None:
+            return []
+        return [child for child in getattr(parent, "children", []) if child is not None]
+
+    def _select_sibling_widgets(self, widget):
+        siblings = self._sibling_widgets(widget)
+        if len(siblings) <= 1:
+            if widget is not None:
+                if widget.parent is None:
+                    self.feedback_message.emit("Cannot select siblings: root widgets do not have siblings.")
+                else:
+                    self.feedback_message.emit("Cannot select siblings: widget has no siblings under the same parent.")
+            return
+        parent = widget.parent
+        noun = "widget" if len(siblings) == 1 else "widgets"
+        primary = widget if widget in siblings else siblings[0]
+        self._apply_programmatic_selection(
+            siblings,
+            primary=primary,
+            feedback_message=f"Selected {len(siblings)} {noun} under {self._widget_label(parent)}.",
+        )
 
     def _move_target_memory_key(self):
         if self.project is None:
@@ -1042,6 +1113,58 @@ class WidgetTreePanel(QWidget):
                 )
                 add_menu.addAction(action)
 
+        select_menu = menu.addMenu("Select")
+        select_menu.setToolTipsVisible(True)
+        child_widgets = [child for child in getattr(widget, "children", []) if child is not None]
+        sibling_widgets = self._sibling_widgets(widget)
+        can_select_parent = widget.parent is not None
+        can_select_children = bool(child_widgets)
+        can_select_siblings = len(sibling_widgets) > 1
+
+        select_parent_action = QAction("Parent", self)
+        select_parent_action.setEnabled(can_select_parent)
+        select_parent_action.setToolTip(
+            self._structure_tooltip(
+                "Select the direct parent of this widget.",
+                can_select_parent,
+                "root widgets do not have a parent.",
+            )
+        )
+        select_parent_action.triggered.connect(lambda: self._select_parent_widget(widget))
+        select_menu.addAction(select_parent_action)
+
+        select_children_action = QAction("Children", self)
+        select_children_action.setEnabled(can_select_children)
+        select_children_action.setToolTip(
+            self._structure_tooltip(
+                "Select the direct child widgets of this container.",
+                can_select_children,
+                "widget has no child widgets.",
+            )
+        )
+        select_children_action.triggered.connect(lambda: self._select_child_widgets(widget))
+        select_menu.addAction(select_children_action)
+
+        select_siblings_action = QAction("Siblings", self)
+        select_siblings_action.setEnabled(can_select_siblings)
+        select_siblings_action.setToolTip(
+            self._structure_tooltip(
+                "Select this widget and its siblings under the same parent.",
+                can_select_siblings,
+                "root widgets do not have siblings."
+                if widget.parent is None else
+                "widget has no siblings under the same parent.",
+            )
+        )
+        select_siblings_action.triggered.connect(lambda: self._select_sibling_widgets(widget))
+        select_menu.addAction(select_siblings_action)
+        select_enabled = any([can_select_parent, can_select_children, can_select_siblings])
+        select_menu.menuAction().setEnabled(select_enabled)
+        if not select_enabled:
+            select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")
+        else:
+            select_menu.menuAction().setToolTip("")
+
         structure_menu = menu.addMenu("Structure")
         structure_menu.setToolTipsVisible(True)
         group_action = QAction("Group Selection", self)
@@ -1584,6 +1707,7 @@ class WidgetTreePanel(QWidget):
         has_matches = bool(query and self._filter_matches)
         self.filter_prev_btn.setEnabled(has_matches)
         self.filter_next_btn.setEnabled(has_matches)
+        self.filter_select_btn.setEnabled(has_matches)
         if not query:
             self.filter_status_label.setText("All widgets")
             self.filter_position_label.setText("")
@@ -1596,9 +1720,12 @@ class WidgetTreePanel(QWidget):
         self.filter_status_label.setText(f"{match_count} {noun}")
         self._update_filter_position_label()
 
+    def _current_filter_matches(self):
+        return [widget for widget in self._filter_matches if id(widget) in self._item_map]
+
     def _update_filter_position_label(self):
         query = self.filter_edit.text().strip()
-        matches = [widget for widget in self._filter_matches if id(widget) in self._item_map]
+        matches = self._current_filter_matches()
         if not query or not matches:
             self.filter_position_label.setText("")
             return
@@ -1612,7 +1739,7 @@ class WidgetTreePanel(QWidget):
 
     def _filter_feedback_text(self):
         query = self.filter_edit.text().strip()
-        matches = [widget for widget in self._filter_matches if id(widget) in self._item_map]
+        matches = self._current_filter_matches()
         if not query:
             return "Widget filter cleared."
         if not matches:
@@ -1637,7 +1764,7 @@ class WidgetTreePanel(QWidget):
         self._select_filter_match(step=1)
 
     def _select_filter_match(self, step):
-        matches = [widget for widget in self._filter_matches if id(widget) in self._item_map]
+        matches = self._current_filter_matches()
         if not matches:
             return
 
@@ -1649,10 +1776,20 @@ class WidgetTreePanel(QWidget):
             next_index = 0 if step > 0 else len(matches) - 1
 
         target = matches[next_index]
-        self.set_selected_widgets([target], primary=target)
-        self.widget_selected.emit(target)
-        self.selection_changed.emit([target], target)
+        self._apply_programmatic_selection([target], primary=target)
         self._announce_filter_feedback()
+
+    def _select_all_filter_matches(self):
+        matches = self._current_filter_matches()
+        if not matches:
+            return
+
+        current = self._get_selected_widget()
+        primary = current if current in matches else matches[0]
+        self._apply_programmatic_selection(matches, primary=primary)
+        noun = "match" if len(matches) == 1 else "matches"
+        query = self.filter_edit.text().strip()
+        self.feedback_message.emit(f"Widget filter '{query}': selected {len(matches)} {noun}.")
 
     def _restore_item_expansion(self, item):
         widget = self._widget_map.get(id(item))

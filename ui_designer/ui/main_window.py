@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QAction, QActionGroup, QFileDialog, QStatusBar,
     QMessageBox, QScrollArea, QDockWidget, QMenu,
     QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
+    QLineEdit, QPlainTextEdit, QTextEdit,
 )
 from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QIcon
@@ -55,7 +56,7 @@ from ..model.config import get_config
 from ..model.release import ReleaseRequest
 from ..model.sdk_bootstrap import AUTO_DOWNLOAD_STRATEGY_TEXT, default_sdk_install_dir, describe_sdk_source, ensure_sdk_downloaded
 from ..model.workspace import (
-    find_sdk_root,
+    infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
     normalize_path,
     resolve_available_sdk_root,
@@ -427,6 +428,7 @@ class MainWindow(QMainWindow):
         # Preview panel
         self.preview_panel.selection_changed.connect(self._on_preview_selection_changed)
         self.preview_panel.widget_selected.connect(self._on_preview_widget_selected)
+        self.preview_panel.context_menu_requested.connect(self._show_preview_context_menu)
         self.preview_panel.widget_moved.connect(self._on_widget_moved)
         self.preview_panel.widget_resized.connect(self._on_widget_resized)
         self.preview_panel.widget_reordered.connect(self._on_widget_reordered)
@@ -1014,11 +1016,12 @@ class MainWindow(QMainWindow):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
         self._shutdown_async_activity()
-        resolved_sdk_root = find_sdk_root(
-            cli_sdk_root=preferred_sdk_root or project.sdk_root,
-            configured_sdk_root=self._active_sdk_root(),
-            project_path=project_dir,
-            extra_candidates=[default_sdk_install_dir()],
+        resolved_sdk_root = self._resolve_ui_sdk_root(
+            preferred_sdk_root or project.sdk_root,
+            infer_sdk_root_from_project_dir(project_dir),
+            self.project_root,
+            self._config.sdk_root,
+            self._config.egui_root,
         )
         project.sdk_root = resolved_sdk_root or normalize_path(preferred_sdk_root or project.sdk_root)
         project.project_dir = project_dir
@@ -1225,6 +1228,11 @@ class MainWindow(QMainWindow):
         self._redo_action.setEnabled(False)
         self._redo_action.triggered.connect(self._redo)
         edit_menu.addAction(self._redo_action)
+
+        self._select_all_action = QAction("Select All", self)
+        self._select_all_action.setShortcut("Ctrl+A")
+        self._select_all_action.triggered.connect(self._select_all)
+        edit_menu.addAction(self._select_all_action)
 
         edit_menu.addSeparator()
 
@@ -1704,9 +1712,8 @@ class MainWindow(QMainWindow):
 
         for item in recent[:10]:
             project_path = item.get("project_path", "")
-            sdk_root = resolve_available_sdk_root(
+            sdk_root = self._resolve_ui_sdk_root(
                 item.get("sdk_root", ""),
-                cached_sdk_root=default_sdk_install_dir(),
             )
             display_name = item.get("display_name") or os.path.splitext(os.path.basename(project_path))[0]
             project_exists = bool(project_path) and os.path.exists(project_path)
@@ -2383,12 +2390,45 @@ class MainWindow(QMainWindow):
                 return widget
         return None
 
-    def _active_sdk_root(self):
+    def _resolved_cached_sdk_root(self):
+        cached_sdk_root = normalize_path(default_sdk_install_dir())
+        if is_valid_sdk_root(cached_sdk_root):
+            return cached_sdk_root
+
+        # Reuse config-side recovery so legacy repo-local caches still work.
+        config_cached_sdk_root = self._config._resolve_sdk_root("")
+        if is_valid_sdk_root(config_cached_sdk_root):
+            return config_cached_sdk_root
+        return ""
+
+    def _resolve_ui_sdk_root(self, *candidates):
+        normalized_candidates = []
+        for candidate in candidates:
+            normalized = normalize_path(candidate)
+            if normalized and normalized not in normalized_candidates:
+                normalized_candidates.append(normalized)
+
+        for candidate in normalized_candidates:
+            if is_valid_sdk_root(candidate):
+                return candidate
+            inferred = infer_sdk_root_from_project_dir(candidate)
+            if inferred:
+                return inferred
+
+        cached_sdk_root = self._resolved_cached_sdk_root()
+        if cached_sdk_root:
+            return cached_sdk_root
+
         return resolve_available_sdk_root(
+            *normalized_candidates,
+            cached_sdk_root=default_sdk_install_dir(),
+        )
+
+    def _active_sdk_root(self):
+        return self._resolve_ui_sdk_root(
             self.project_root,
             self._config.sdk_root,
             self._config.egui_root,
-            cached_sdk_root=default_sdk_install_dir(),
         )
 
     def _nearest_existing_directory(self, path=""):
@@ -2405,10 +2445,6 @@ class MainWindow(QMainWindow):
         return candidate if os.path.isdir(candidate) else ""
 
     def _default_new_project_parent_dir(self, sdk_root=""):
-        sdk_root = normalize_path(sdk_root) or self._active_sdk_root()
-        if is_valid_sdk_root(sdk_root):
-            return os.path.join(sdk_root, "example")
-
         if self._project_dir:
             existing_dir = self._nearest_existing_directory(os.path.dirname(self._project_dir))
             if existing_dir:
@@ -2419,6 +2455,10 @@ class MainWindow(QMainWindow):
             existing_dir = self._nearest_existing_directory(os.path.dirname(last_project_path))
             if existing_dir:
                 return existing_dir
+
+        sdk_root = self._resolve_ui_sdk_root(sdk_root)
+        if is_valid_sdk_root(sdk_root):
+            return os.path.join(sdk_root, "example")
 
         return normalize_path(os.getcwd())
 
@@ -3690,6 +3730,102 @@ class MainWindow(QMainWindow):
         elif action == close_all:
             self._clear_page_tabs()
 
+    def _focused_text_input_widget(self):
+        focus_widget = QApplication.focusWidget()
+        if isinstance(focus_widget, (QLineEdit, QPlainTextEdit, QTextEdit)):
+            return focus_widget
+        return None
+
+    def _select_all_page_widgets(self):
+        if self._current_page is None:
+            return []
+
+        widgets = [
+            widget
+            for widget in self._current_page.get_all_widgets()
+            if not getattr(widget, "designer_hidden", False)
+        ]
+        root_widget = self._current_page.root_widget
+        if root_widget is not None and any(widget is not root_widget for widget in widgets):
+            widgets = [widget for widget in widgets if widget is not root_widget]
+        return widgets
+
+    def _select_all(self):
+        text_widget = self._focused_text_input_widget()
+        if text_widget is not None:
+            text_widget.selectAll()
+            return
+
+        widgets = self._select_all_page_widgets()
+        if not widgets:
+            return
+
+        primary = self._selection_state.primary if self._selection_state.primary in widgets else widgets[-1]
+        self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=True)
+        self.statusBar().showMessage(f"Selected {len(widgets)} visible widget(s).", 3000)
+
+    def _build_preview_context_menu(self, widget=None):
+        del widget
+        menu = QMenu(self)
+        menu.setToolTipsVisible(True)
+        menu.addAction(self._select_all_action)
+        menu.addSeparator()
+        for action in (
+            self._copy_action,
+            self._cut_action,
+            self._paste_action,
+            self._duplicate_action,
+            self._delete_action,
+        ):
+            menu.addAction(action)
+
+        arrange_menu = menu.addMenu("Arrange")
+        for action in (
+            self._align_left_action,
+            self._align_right_action,
+            self._align_top_action,
+            self._align_bottom_action,
+            self._align_hcenter_action,
+            self._align_vcenter_action,
+            self._distribute_h_action,
+            self._distribute_v_action,
+            self._bring_front_action,
+            self._send_back_action,
+            self._toggle_lock_action,
+            self._toggle_hide_action,
+        ):
+            arrange_menu.addAction(action)
+
+        structure_menu = menu.addMenu("Structure")
+        structure_menu.setToolTipsVisible(True)
+        for action in (
+            self._group_selection_action,
+            self._ungroup_selection_action,
+            self._move_into_container_action,
+            self._move_into_last_target_action,
+            self._clear_move_target_history_action,
+        ):
+            structure_menu.addAction(action)
+        quick_move_menu = structure_menu.addMenu("Quick Move Into")
+        quick_move_menu.setToolTipsVisible(True)
+        self._populate_quick_move_into_menu(quick_move_menu)
+        structure_menu.addSeparator()
+        for action in (
+            self._lift_to_parent_action,
+            self._move_up_action,
+            self._move_down_action,
+            self._move_top_action,
+            self._move_bottom_action,
+        ):
+            structure_menu.addAction(action)
+        return menu
+
+    def _show_preview_context_menu(self, widget, global_pos):
+        menu = self._build_preview_context_menu(widget)
+        if menu is None:
+            return
+        menu.exec_(global_pos)
+
     # 鈹€鈹€ Widget selection / editing 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
@@ -4460,11 +4596,13 @@ class MainWindow(QMainWindow):
         has_selection = bool(selected_widgets)
         has_deletable_selection = bool(selectable_widgets)
         has_project = self._current_page is not None
+        can_select_all = bool(self._focused_text_input_widget()) or bool(self._select_all_page_widgets())
         can_paste = has_project and self._clipboard_payload is not None and self._default_paste_parent() is not None
         can_align = len(selectable_widgets) >= 2 and self._shared_selection_parent(selectable_widgets) is not None
         can_distribute = len(selectable_widgets) >= 3 and self._shared_selection_parent(selectable_widgets) is not None
         structure_state = self._structure_action_state()
 
+        self._select_all_action.setEnabled(can_select_all)
         self._copy_action.setEnabled(has_selection)
         self._cut_action.setEnabled(has_deletable_selection)
         self._paste_action.setEnabled(can_paste)

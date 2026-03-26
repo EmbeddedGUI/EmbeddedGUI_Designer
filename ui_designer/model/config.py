@@ -6,27 +6,60 @@ import json
 import os
 import sys
 
-from .workspace import normalize_path, resolve_available_sdk_root
+from .workspace import infer_sdk_root_from_project_dir, is_valid_sdk_root, normalize_path, resolve_available_sdk_root
+
+
+CONFIG_DIR_ENV_VAR = "EMBEDDEDGUI_DESIGNER_CONFIG_DIR"
+
+
+def _default_user_config_dir():
+    """Return the user-scoped config directory for the current platform."""
+    if sys.platform == "win32":
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+    elif sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
+    return os.path.join(base, "EmbeddedGUI-Designer")
+
+
+def _get_legacy_config_dir():
+    """Return the historical repo-local config directory."""
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return normalize_path(os.path.join(base, ".config"))
+
+
+def _config_path_for_dir(config_dir):
+    """Build the config.json path for a config directory."""
+    return normalize_path(os.path.join(config_dir, "config.json"))
 
 
 def _get_config_dir():
-    """Get the configuration directory path."""
-    if getattr(sys, "frozen", False):
-        if sys.platform == "win32":
-            base = os.environ.get("APPDATA", os.path.expanduser("~"))
-        elif sys.platform == "darwin":
-            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
-        else:
-            base = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
-        return os.path.join(base, "EmbeddedGUI-Designer")
-
-    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, ".config")
+    """Get the primary configuration directory path."""
+    override = normalize_path(os.environ.get(CONFIG_DIR_ENV_VAR, ""))
+    if override:
+        return override
+    return normalize_path(_default_user_config_dir())
 
 
 def _get_config_path():
-    """Get the full path to the config file."""
-    return os.path.join(_get_config_dir(), "config.json")
+    """Get the full path to the primary config file."""
+    return _config_path_for_dir(_get_config_dir())
+
+
+def _get_legacy_config_path():
+    """Get the full path to the legacy repo-local config file."""
+    return _config_path_for_dir(_get_legacy_config_dir())
+
+
+def _get_load_config_paths():
+    """Return config load candidates, preferring the new user-scoped path."""
+    paths = []
+    for path in (_get_config_path(), _get_legacy_config_path()):
+        normalized = normalize_path(path)
+        if normalized and normalized not in paths:
+            paths.append(normalized)
+    return paths
 
 
 class DesignerConfig:
@@ -129,18 +162,41 @@ class DesignerConfig:
     def _default_cached_sdk_root(self):
         return normalize_path(os.path.join(_get_config_dir(), "sdk", "EmbeddedGUI"))
 
+    def _legacy_cached_sdk_root(self):
+        return normalize_path(os.path.join(_get_legacy_config_dir(), "sdk", "EmbeddedGUI"))
+
     def _resolve_sdk_root(self, sdk_root=""):
-        return resolve_available_sdk_root(
-            sdk_root,
-            self.sdk_root,
-            self.egui_root,
-            cached_sdk_root=self._default_cached_sdk_root(),
-        )
+        candidates = []
+        for candidate in (sdk_root, self.sdk_root, self.egui_root):
+            normalized = normalize_path(candidate)
+            if normalized and normalized not in candidates:
+                candidates.append(normalized)
+
+        for candidate in candidates:
+            if is_valid_sdk_root(candidate):
+                return candidate
+            inferred = infer_sdk_root_from_project_dir(candidate)
+            if inferred:
+                return inferred
+
+        primary_cached = self._default_cached_sdk_root()
+        if is_valid_sdk_root(primary_cached):
+            return primary_cached
+
+        legacy_cached = self._legacy_cached_sdk_root()
+        if is_valid_sdk_root(legacy_cached):
+            return legacy_cached
+
+        return resolve_available_sdk_root(*candidates, cached_sdk_root=primary_cached)
 
     def load(self):
         """Load configuration from file."""
-        config_path = _get_config_path()
-        if not os.path.isfile(config_path):
+        config_path = ""
+        for candidate in _get_load_config_paths():
+            if os.path.isfile(candidate):
+                config_path = candidate
+                break
+        if not config_path:
             return
 
         try:

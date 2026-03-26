@@ -29,7 +29,7 @@ from ..model.workspace import (
     describe_sdk_root,
     is_valid_sdk_root,
     normalize_path,
-    resolve_available_sdk_root,
+    resolve_configured_sdk_root,
     resolve_sdk_root_candidate,
 )
 
@@ -44,11 +44,12 @@ class AppSelectorDialog(QDialog):
         self.resize(620, 480)
 
         self._config = get_config()
-        self._egui_root = resolve_available_sdk_root(
+        self._egui_root = resolve_configured_sdk_root(
             egui_root,
             self._config.sdk_root,
             self._config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
+            preserve_invalid=True,
         )
         self._selected_entry = None
         self._on_download_sdk = on_download_sdk

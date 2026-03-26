@@ -18,7 +18,7 @@ from ..model.sdk_bootstrap import (
     describe_sdk_source_hint,
     sdk_root_source_kind,
 )
-from ..model.workspace import describe_sdk_root, resolve_available_sdk_root
+from ..model.workspace import describe_sdk_root, resolve_configured_sdk_root
 
 
 class RecentProjectItem(QWidget):
@@ -220,10 +220,11 @@ class WelcomePage(QWidget):
         self._refresh_recent_list()
 
     def _refresh_sdk_status(self):
-        sdk_root = resolve_available_sdk_root(
+        sdk_root = resolve_configured_sdk_root(
             self._config.sdk_root,
             self._config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
+            preserve_invalid=True,
         )
         sdk_status = describe_sdk_root(sdk_root)
         default_cache_dir = default_sdk_install_dir()
@@ -258,9 +259,10 @@ class WelcomePage(QWidget):
         self._sdk_path_label.setText(sdk_root or "No SDK root configured")
 
     def _resolve_display_sdk_root(self, sdk_root=""):
-        return resolve_available_sdk_root(
+        return resolve_configured_sdk_root(
             sdk_root,
             cached_sdk_root=default_sdk_install_dir(),
+            preserve_invalid=True,
         )
 
     def _refresh_recent_list(self):

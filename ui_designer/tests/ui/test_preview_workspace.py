@@ -7,6 +7,8 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import QEvent, QPoint, QPointF, Qt
+    from PyQt5.QtGui import QContextMenuEvent, QMouseEvent
     from PyQt5.QtWidgets import QApplication
     _has_pyqt5 = True
 except ImportError:
@@ -22,6 +24,10 @@ def qapp():
         app = QApplication([])
     yield app
     app.processEvents()
+
+
+def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton, modifiers=Qt.NoModifier):
+    return QMouseEvent(event_type, QPointF(pos), button, buttons, modifiers)
 
 
 @_skip_no_qt
@@ -109,3 +115,73 @@ class TestMainWindowBuildAvailability:
         assert window.auto_compile_action.isEnabled() is False
         assert window._stop_action.isEnabled() is False
         window.deleteLater()
+
+
+@_skip_no_qt
+class TestWidgetOverlaySelection:
+    def _make_overlay(self):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        first = WidgetModel("label", name="first", x=10, y=10, width=80, height=24)
+        second = WidgetModel("button", name="second", x=10, y=60, width=90, height=28)
+        third = WidgetModel("switch", name="third", x=120, y=60, width=70, height=24)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        overlay.set_widgets(root.get_all_widgets_flat())
+        return overlay, root, first, second, third
+
+    def test_context_menu_selects_unselected_widget_before_emitting(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+        captured = []
+        overlay.context_menu_requested.connect(lambda widget, global_pos: captured.append((widget, global_pos)))
+
+        event = QContextMenuEvent(QContextMenuEvent.Mouse, QPoint(20, 70), QPoint(320, 420))
+        overlay.contextMenuEvent(event)
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [second]
+        assert captured[0][0] is second
+        assert captured[0][1] == QPoint(320, 420)
+        overlay.deleteLater()
+
+    def test_rubber_band_replace_excludes_root_widget(self, qapp):
+        overlay, root, first, second, third = self._make_overlay()
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(1, 1)))
+        overlay.mouseMoveEvent(_mouse_event(QEvent.MouseMove, QPoint(210, 120), button=Qt.NoButton, buttons=Qt.LeftButton))
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(210, 120), buttons=Qt.NoButton))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [first, second, third]
+        assert root not in overlay.selected_widgets()
+        overlay.deleteLater()
+
+    def test_rubber_band_shift_adds_to_selection(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(1, 40), modifiers=Qt.ShiftModifier))
+        overlay.mouseMoveEvent(_mouse_event(QEvent.MouseMove, QPoint(110, 100), button=Qt.NoButton, buttons=Qt.LeftButton, modifiers=Qt.ShiftModifier))
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(110, 100), buttons=Qt.NoButton, modifiers=Qt.ShiftModifier))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [first, second]
+        overlay.deleteLater()
+
+    def test_rubber_band_ctrl_toggles_matching_widgets(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_selection([first, second], primary=first)
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(1, 40), modifiers=Qt.ControlModifier))
+        overlay.mouseMoveEvent(_mouse_event(QEvent.MouseMove, QPoint(110, 100), button=Qt.NoButton, buttons=Qt.LeftButton, modifiers=Qt.ControlModifier))
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(110, 100), buttons=Qt.NoButton, modifiers=Qt.ControlModifier))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [first]
+        overlay.deleteLater()

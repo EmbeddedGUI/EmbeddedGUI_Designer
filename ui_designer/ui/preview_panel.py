@@ -71,6 +71,7 @@ class WidgetOverlay(QWidget):
     widget_resized = pyqtSignal(object, int, int)  # widget, new_width, new_height
     widget_selected = pyqtSignal(object)  # widget
     selection_changed = pyqtSignal(list, object)  # widgets, primary
+    context_menu_requested = pyqtSignal(object, object)  # widget, global_pos
     widget_reordered = pyqtSignal(object, int)  # widget, new_index
     zoom_changed = pyqtSignal(float)  # zoom factor
     resource_dropped = pyqtSignal(object, str, str)  # widget, res_type, filename
@@ -128,6 +129,9 @@ class WidgetOverlay(QWidget):
         self._rubber_band = False
         self._rubber_start = QPoint()
         self._rubber_rect = QRect()
+        self._rubber_mode = "replace"
+        self._rubber_base_selection = []
+        self._rubber_base_primary = None
 
         self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard events
 
@@ -280,15 +284,61 @@ class WidgetOverlay(QWidget):
     def _is_locked(self, widget):
         return bool(getattr(widget, "designer_locked", False))
 
-    def _widget_at(self, pos):
+    def _has_visible_non_root_widgets(self):
+        return any(widget.parent is not None and not self._is_hidden(widget) for widget in self._widgets)
+
+    def _widget_at(self, pos, *, allow_root=True):
         """Find widget at given position using display coordinates."""
+        hide_root = not allow_root and self._has_visible_non_root_widgets()
         for w in reversed(self._widgets):
             if self._is_hidden(w) or self._is_locked(w):
+                continue
+            if hide_root and w.parent is None:
                 continue
             rect = QRect(w.display_x, w.display_y, w.width, w.height)
             if rect.contains(pos):
                 return w
         return None
+
+    def _ordered_widgets(self, widgets):
+        widget_ids = {id(widget) for widget in widgets if widget is not None}
+        return [widget for widget in self._widgets if id(widget) in widget_ids]
+
+    def _filter_bulk_selection_widgets(self, widgets):
+        filtered = [widget for widget in widgets if widget is not None and not self._is_hidden(widget)]
+        if any(widget.parent is not None for widget in filtered):
+            filtered = [widget for widget in filtered if widget.parent is not None]
+        return filtered
+
+    def _selection_after_rubber_band(self, matched_widgets):
+        matched = self._ordered_widgets(self._filter_bulk_selection_widgets(matched_widgets))
+        previous_primary = self._rubber_base_primary
+        base_selection = self._ordered_widgets(self._rubber_base_selection)
+
+        if self._rubber_mode == "add":
+            final = base_selection + [widget for widget in matched if widget not in base_selection]
+            if previous_primary in final:
+                return final, previous_primary
+            if matched:
+                return final, matched[-1]
+            if final:
+                return final, final[-1]
+            return [], None
+
+        if self._rubber_mode == "toggle":
+            final = [widget for widget in base_selection if widget not in matched]
+            final.extend(widget for widget in matched if widget not in base_selection)
+            if previous_primary in final:
+                return final, previous_primary
+            if final:
+                return final, final[-1]
+            return [], None
+
+        if previous_primary in matched:
+            return matched, previous_primary
+        if matched:
+            return matched, matched[-1]
+        return [], None
 
     def _get_handle_rects(self, widget):
         """Get rectangles for all 8 resize handles of a widget.
@@ -573,6 +623,7 @@ class WidgetOverlay(QWidget):
 
         pos = self._to_logical(event.pos())
         ctrl = bool(event.modifiers() & Qt.ControlModifier)
+        shift = bool(event.modifiers() & Qt.ShiftModifier)
 
         # Check for resize handle first
         handle = self._handle_at(pos)
@@ -590,7 +641,7 @@ class WidgetOverlay(QWidget):
             return
 
         # Check for widget selection/drag
-        w = self._widget_at(pos)
+        w = self._widget_at(pos, allow_root=False)
         if w:
             if ctrl:
                 # Ctrl+Click: toggle multi-select
@@ -626,22 +677,26 @@ class WidgetOverlay(QWidget):
             self.drag_started.emit()
             self._emit_selection_changed()
             self.update()
-        else:
-            if not ctrl:
-                # Click on empty space: start rubber-band selection
-                self._selected = None
-                self._multi_selected.clear()
-                self._rubber_band = True
-                self._rubber_start = pos
-                self._rubber_rect = QRect()
-                self._emit_selection_changed()
-                self.update()
+            return
+
+        # Click on empty space: start rubber-band selection
+        self._rubber_mode = "toggle" if ctrl else "add" if shift else "replace"
+        self._rubber_base_selection = self.selected_widgets()
+        self._rubber_base_primary = self._selected
+        self._rubber_band = True
+        self._rubber_start = pos
+        self._rubber_rect = QRect()
+        if self._rubber_mode == "replace":
+            self._selected = None
+            self._multi_selected.clear()
+            self._emit_selection_changed()
+        self.update()
 
     def mouseMoveEvent(self, event):
         pos = self._to_logical(event.pos())
 
         # Emit mouse position for status bar (always, even when not dragging)
-        widget_under = self._widget_at(pos)
+        widget_under = self._widget_at(pos, allow_root=False)
         self.mouse_position_changed.emit(pos.x(), pos.y(), widget_under)
 
         if self._rubber_band:
@@ -668,7 +723,7 @@ class WidgetOverlay(QWidget):
         if handle != HANDLE_NONE:
             self.setCursor(self._cursor_for_handle(handle))
         else:
-            w = self._widget_at(pos)
+            w = self._widget_at(pos, allow_root=False)
             if w is not None:
                 # Show move cursor when hovering over a draggable widget
                 if _parent_has_layout(w):
@@ -785,26 +840,20 @@ class WidgetOverlay(QWidget):
             # Complete rubber-band selection
             self._rubber_band = False
             rect = self._rubber_rect
-            previous_primary = self._selected
-            self._multi_selected.clear()
+            matched = []
             for w in self._widgets:
                 if self._is_hidden(w):
                     continue
                 wr = QRect(w.display_x, w.display_y, w.width, w.height)
                 if rect.intersects(wr):
-                    self._multi_selected.add(w)
-            if len(self._multi_selected) == 1:
-                self._selected = next(iter(self._multi_selected))
-                self._multi_selected.clear()
-            elif self._multi_selected:
-                if previous_primary not in self._multi_selected:
-                    previous_primary = next(iter(self._multi_selected))
-                self._selected = previous_primary
-                self._multi_selected.discard(self._selected)
-            else:
-                self._selected = None
+                    matched.append(w)
+            widgets, primary = self._selection_after_rubber_band(matched)
+            self.set_selection(widgets, primary=primary)
             self._emit_selection_changed()
             self._rubber_rect = QRect()
+            self._rubber_mode = "replace"
+            self._rubber_base_selection = []
+            self._rubber_base_primary = None
             self.update()
             return
 
@@ -848,6 +897,14 @@ class WidgetOverlay(QWidget):
         self.setCursor(Qt.ArrowCursor)
         self.mouse_position_changed.emit(-1, -1, None)  # Clear position display
         self.update()
+
+    def contextMenuEvent(self, event):
+        widget = self._widget_at(self._to_logical(event.pos()), allow_root=False)
+        if widget is not None and widget not in self.selected_widgets():
+            self.set_selection([widget], primary=widget)
+            self._emit_selection_changed()
+        self.context_menu_requested.emit(widget, event.globalPos())
+        event.accept()
 
     def keyPressEvent(self, event):
         """Handle keyboard nudge for selected widget(s)."""
@@ -912,7 +969,7 @@ class WidgetOverlay(QWidget):
         if event.mimeData().hasFormat(EGUI_RESOURCE_MIME):
             # Highlight widget under cursor
             pos = self._to_logical(event.pos())
-            w = self._widget_at(pos)
+            w = self._widget_at(pos, allow_root=False)
             if w != self._hovered:
                 self._hovered = w
                 self.update()
@@ -939,7 +996,7 @@ class WidgetOverlay(QWidget):
 
         # Find target widget under drop position
         pos = self._to_logical(event.pos())
-        target = self._widget_at(pos)
+        target = self._widget_at(pos, allow_root=False)
         if target is None:
             event.ignore()
             return
@@ -971,6 +1028,7 @@ class PreviewPanel(QWidget):
     widget_resized = pyqtSignal(object, int, int)
     widget_selected = pyqtSignal(object)
     selection_changed = pyqtSignal(list, object)
+    context_menu_requested = pyqtSignal(object, object)
     widget_reordered = pyqtSignal(object, int)
     resource_dropped = pyqtSignal(object, str, str)  # widget, res_type, filename
     drag_started = pyqtSignal()
@@ -1029,6 +1087,7 @@ class PreviewPanel(QWidget):
         self.overlay.widget_resized.connect(self.widget_resized.emit)
         self.overlay.widget_selected.connect(self.widget_selected.emit)
         self.overlay.selection_changed.connect(self.selection_changed.emit)
+        self.overlay.context_menu_requested.connect(self.context_menu_requested.emit)
         self.overlay.widget_reordered.connect(self.widget_reordered.emit)
         self.overlay.resource_dropped.connect(self.resource_dropped.emit)
         self.overlay.drag_started.connect(self.drag_started.emit)

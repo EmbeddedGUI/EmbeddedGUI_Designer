@@ -45,13 +45,20 @@ def _structure_menu_actions(menu):
     return {action.text(): action for action in structure_menu.actions() if action.text()}
 
 
-def _structure_submenu(menu, label):
+def _context_submenu(menu, label):
     for action in menu.actions():
-        if action.text() == "Structure":
-            structure_menu = action.menu()
-            break
-    else:
-        raise AssertionError("Structure menu not found")
+        if action.text() == label:
+            return action.menu()
+    raise AssertionError(f"{label} submenu not found")
+
+
+def _select_menu_actions(menu):
+    select_menu = _context_submenu(menu, "Select")
+    return {action.text(): action for action in select_menu.actions() if action.text()}
+
+
+def _structure_submenu(menu, label):
+    structure_menu = _context_submenu(menu, "Structure")
 
     for action in structure_menu.actions():
         if action.text() == label:
@@ -884,6 +891,105 @@ class TestWidgetTreePanel:
         target_menu.deleteLater()
         panel.deleteLater()
 
+    def test_context_menu_select_actions_reflect_widget_relationships(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        container = WidgetModel("group", name="container")
+        child_a = WidgetModel("switch", name="child_a")
+        child_b = WidgetModel("button", name="child_b")
+        solo = WidgetModel("label", name="solo")
+        container.add_child(child_a)
+        container.add_child(child_b)
+        root.add_child(first)
+        root.add_child(container)
+        root.add_child(solo)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        root_menu = panel._build_context_menu(root)
+        root_actions = _select_menu_actions(root_menu)
+        assert root_actions["Parent"].isEnabled() is False
+        assert root_actions["Children"].isEnabled() is True
+        assert root_actions["Siblings"].isEnabled() is False
+        assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
+        root_menu.deleteLater()
+
+        container_menu = panel._build_context_menu(container)
+        container_actions = _select_menu_actions(container_menu)
+        assert container_actions["Parent"].isEnabled() is True
+        assert container_actions["Children"].isEnabled() is True
+        assert container_actions["Siblings"].isEnabled() is True
+        container_menu.deleteLater()
+
+        child_menu = panel._build_context_menu(child_a)
+        child_actions = _select_menu_actions(child_menu)
+        assert child_actions["Parent"].isEnabled() is True
+        assert child_actions["Children"].isEnabled() is False
+        assert child_actions["Siblings"].isEnabled() is True
+        assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
+        child_menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_select_actions_update_selection_and_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        other = WidgetModel("label", name="other")
+        container = WidgetModel("group", name="container")
+        child_a = WidgetModel("switch", name="child_a")
+        child_b = WidgetModel("button", name="child_b")
+        container.add_child(child_a)
+        container.add_child(child_b)
+        root.add_child(other)
+        root.add_child(container)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        selection_events = []
+        feedback = []
+        panel.selection_changed.connect(
+            lambda widgets, primary: selection_events.append(
+                ([widget.name for widget in widgets], primary.name if primary is not None else "")
+            )
+        )
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        panel.set_selected_widgets([other], primary=other)
+
+        parent_menu = panel._build_context_menu(child_a)
+        parent_actions = _select_menu_actions(parent_menu)
+        parent_actions["Parent"].trigger()
+        assert panel.selected_widgets() == [container]
+        assert panel._get_selected_widget() is container
+        assert selection_events[-1] == (["container"], "container")
+        assert feedback[-1] == "Selected parent widget: container."
+        parent_menu.deleteLater()
+
+        children_menu = panel._build_context_menu(container)
+        children_actions = _select_menu_actions(children_menu)
+        children_actions["Children"].trigger()
+        assert panel.selected_widgets() == [child_a, child_b]
+        assert panel._get_selected_widget() is child_a
+        assert selection_events[-1] == (["child_a", "child_b"], "child_a")
+        assert feedback[-1] == "Selected 2 child widgets of container."
+        children_menu.deleteLater()
+
+        siblings_menu = panel._build_context_menu(child_b)
+        siblings_actions = _select_menu_actions(siblings_menu)
+        siblings_actions["Siblings"].trigger()
+        assert panel.selected_widgets() == [child_a, child_b]
+        assert panel._get_selected_widget() is child_b
+        assert selection_events[-1] == (["child_a", "child_b"], "child_b")
+        assert feedback[-1] == "Selected 2 widgets under container."
+        siblings_menu.deleteLater()
+        panel.deleteLater()
+
     def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -1706,6 +1812,7 @@ class TestWidgetTreePanel:
         assert panel.filter_status_label.text() == "No matches"
         assert panel.filter_prev_btn.isEnabled() is False
         assert panel.filter_next_btn.isEnabled() is False
+        assert panel.filter_select_btn.isEnabled() is False
         panel.deleteLater()
 
     def test_filter_text_change_emits_feedback_message(self, qapp):
@@ -1796,6 +1903,44 @@ class TestWidgetTreePanel:
         ]
         panel.deleteLater()
 
+    def test_filter_select_button_selects_all_matches_and_emits_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="field_label")
+        second = WidgetModel("button", name="field_button")
+        third = WidgetModel("switch", name="status")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        selection_events = []
+        feedback = []
+        panel.selection_changed.connect(
+            lambda widgets, primary: selection_events.append(
+                ([widget.name for widget in widgets], primary.name if primary is not None else "")
+            )
+        )
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        panel.filter_edit.setText("field")
+        panel.set_selected_widgets([second], primary=second)
+        selection_events.clear()
+        feedback.clear()
+
+        panel.filter_select_btn.click()
+
+        assert panel.filter_select_btn.isEnabled() is True
+        assert panel.selected_widgets() == [first, second]
+        assert panel._get_selected_widget() is second
+        assert panel.filter_position_label.text() == "2/2"
+        assert selection_events == [(["field_label", "field_button"], "field_button")]
+        assert feedback == ["Widget filter 'field': selected 2 matches."]
+        panel.deleteLater()
+
     def test_filter_edit_keyboard_shortcuts_navigate_matches(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -1819,6 +1964,29 @@ class TestWidgetTreePanel:
         assert panel.filter_position_label.text() == "2/2"
 
         qapp.sendEvent(panel.filter_edit, QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.ShiftModifier))
+        assert panel._get_selected_widget() is first
+        assert panel.filter_position_label.text() == "1/2"
+        panel.deleteLater()
+
+    def test_filter_edit_ctrl_enter_selects_all_matches(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="field_label")
+        second = WidgetModel("button", name="field_button")
+        third = WidgetModel("switch", name="status")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.filter_edit.setText("field")
+
+        qapp.sendEvent(panel.filter_edit, QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.ControlModifier))
+
+        assert panel.selected_widgets() == [first, second]
         assert panel._get_selected_widget() is first
         assert panel.filter_position_label.text() == "1/2"
         panel.deleteLater()

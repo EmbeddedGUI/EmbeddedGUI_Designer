@@ -218,3 +218,81 @@ def test_format_repo_health_summary_includes_counts(tmp_path):
     assert "blocked=1" in rendered
     assert "critical_only=true" in rendered
     assert "blocked_only=false" in rendered
+
+
+
+def test_collect_repo_health_reports_runtime_path_issues(tmp_path, monkeypatch):
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    def fake_run_git_text(_repo_root, *args):
+        if args == ("submodule", "status", "--", str(repo_health.SDK_SUBMODULE_PATH)):
+            return "416d576 sdk/EmbeddedGUI"
+        if args == ("config", "--get", "status.showUntrackedFiles"):
+            return "default"
+        return ""
+
+    runtime_paths = {
+        "config_dir": {
+            "path": str(tmp_path / "config"),
+            "exists": False,
+            "writable": False,
+            "issue": "permission_denied",
+        },
+        "pytest_temp_root": {
+            "path": str(tmp_path / "pytest"),
+            "exists": False,
+            "writable": False,
+            "issue": "permission_denied",
+        },
+    }
+
+    monkeypatch.setattr(repo_health, "_run_git_text", fake_run_git_text)
+    monkeypatch.setattr(repo_health, "collect_runtime_paths", lambda _repo_root: runtime_paths)
+
+    payload = repo_health.collect_repo_health(repo_root)
+
+    assert payload["runtime_paths"] == runtime_paths
+    assert "config dir is not writable" in repo_health.summarize_repo_health(payload)
+    assert "pytest temp root is not writable" in repo_health.summarize_repo_health(payload)
+    assert any("EMBEDDEDGUI_DESIGNER_CONFIG_DIR" in item for item in payload["suggestions"])
+    assert any("--basetemp-root" in item for item in payload["suggestions"])
+
+
+
+def test_format_repo_health_text_includes_runtime_paths(tmp_path):
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {
+            "path": str(tmp_path / "sdk" / "EmbeddedGUI"),
+            "present": True,
+            "initialized": True,
+            "status": "416d576 sdk/EmbeddedGUI",
+        },
+        "release_smoke_project": {
+            "path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"),
+            "present": True,
+        },
+        "runtime_paths": {
+            "config_dir": {
+                "path": str(tmp_path / "config"),
+                "exists": False,
+                "writable": True,
+                "issue": "",
+            },
+            "pytest_temp_root": {
+                "path": str(tmp_path / "pytest"),
+                "exists": True,
+                "writable": False,
+                "issue": "permission_denied",
+            },
+        },
+        "stale_temp_dirs": [],
+        "git_status_show_untracked": "no",
+        "suggestions": [],
+    }
+
+    rendered = repo_health.format_repo_health_text(payload)
+
+    assert f"runtime_paths.config_dir: path={tmp_path / 'config'} exists=false writable=true" in rendered
+    assert f"runtime_paths.pytest_temp_root: path={tmp_path / 'pytest'} exists=true writable=false issue=permission_denied" in rendered

@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -16,14 +17,85 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TEST_ROOT = REPO_ROOT / "ui_designer" / "tests"
 DEFAULT_PYTEST_CONFIG = REPO_ROOT / "ui_designer" / "pyproject.toml"
 DEFAULT_BASETEMP_ROOT = REPO_ROOT / "temp" / "pytest"
+CONFIG_DIR_ENV_VAR = "EMBEDDEDGUI_DESIGNER_CONFIG_DIR"
+
+
+def _default_user_config_dir() -> Path:
+    if sys.platform == "win32":
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+    elif sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
+    return Path(base) / "EmbeddedGUI-Designer"
+
+
+def _default_config_dir() -> Path:
+    override = os.environ.get(CONFIG_DIR_ENV_VAR, "").strip()
+    if override:
+        return Path(override).expanduser().resolve()
+    return _default_user_config_dir().expanduser().resolve()
 
 
 def default_basetemp_root() -> Path:
     return DEFAULT_BASETEMP_ROOT
 
 
+def candidate_basetemp_roots() -> list[Path]:
+    candidates = [
+        default_basetemp_root(),
+        _default_config_dir() / "pytest",
+        Path(tempfile.gettempdir()).resolve() / "EmbeddedGUI-Designer" / "pytest",
+    ]
+    deduped = []
+    seen = set()
+    for candidate in candidates:
+        resolved = Path(candidate).expanduser().resolve()
+        key = str(resolved)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(resolved)
+    return deduped
+
+
+def probe_writable_root(path: str | Path) -> tuple[bool, str]:
+    resolved = Path(path).expanduser().resolve()
+    try:
+        resolved.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+
+    probe_path = resolved / f".write-probe-{os.getpid()}-{time.time_ns()}"
+    try:
+        probe_path.write_text("probe", encoding="utf-8")
+    except OSError as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+    finally:
+        probe_path.unlink(missing_ok=True)
+    return True, ""
+
+
+def resolve_basetemp_root(basetemp_root: str | Path | None = None) -> Path:
+    if basetemp_root is not None:
+        resolved = Path(basetemp_root).expanduser().resolve()
+        ok, issue = probe_writable_root(resolved)
+        if not ok:
+            raise ValueError(f"Basetemp root is not writable: {resolved} ({issue})")
+        return resolved
+
+    failures = []
+    for candidate in candidate_basetemp_roots():
+        ok, issue = probe_writable_root(candidate)
+        if ok:
+            return candidate
+        failures.append(f"{candidate} ({issue})")
+
+    raise RuntimeError("No writable pytest basetemp root found: " + "; ".join(failures))
+
+
 def build_basetemp_path(base_root: str | Path | None = None) -> Path:
-    root = Path(base_root or default_basetemp_root()).resolve()
+    root = resolve_basetemp_root(base_root)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     return root / f"run-{stamp}-{os.getpid()}"
 
@@ -57,8 +129,11 @@ def _parse_args():
     )
     parser.add_argument(
         "--basetemp-root",
-        default=str(default_basetemp_root()),
-        help="Parent directory used for pytest --basetemp",
+        default=None,
+        help=(
+            "Parent directory used for pytest --basetemp "
+            f"(default: auto-detect writable root, preferring {default_basetemp_root()})"
+        ),
     )
     parser.add_argument(
         "--keep-basetemp",
@@ -103,12 +178,16 @@ def run_pytest(
 
 def main() -> int:
     args, extra_args = _parse_args()
-    return run_pytest(
-        test_paths=args.paths,
-        basetemp_root=args.basetemp_root,
-        extra_args=list(extra_args),
-        keep_basetemp=args.keep_basetemp,
-    )
+    try:
+        return run_pytest(
+            test_paths=args.paths,
+            basetemp_root=args.basetemp_root,
+            extra_args=list(extra_args),
+            keep_basetemp=args.keep_basetemp,
+        )
+    except (RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
