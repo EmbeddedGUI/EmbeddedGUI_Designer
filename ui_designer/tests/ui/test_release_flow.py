@@ -325,6 +325,10 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     monkeypatch.setattr(
         "ui_designer.ui.main_window.latest_release_entry",
         lambda project_dir_arg, output_dir="": {
+            "build_id": "20260326T000000Z",
+            "status": "success",
+            "profile_id": "windows-pc",
+            "sdk": {"revision": "v1.0.0-310-g416d576"},
             "release_root": str(release_root),
             "dist_dir": str(dist_dir),
             "manifest_path": str(manifest_path),
@@ -344,6 +348,10 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     assert window._open_last_release_package_action.isEnabled() is True
     assert window._open_last_release_log_action.isEnabled() is True
     assert window._open_release_history_file_action.isEnabled() is True
+    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk v1.0.0-310-g416d576" in window._open_last_release_manifest_action.toolTip()
+    assert str(manifest_path) in window._open_last_release_manifest_action.toolTip()
+    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk v1.0.0-310-g416d576" in window._open_release_history_file_action.toolTip()
+    assert str(history_path) in window._open_release_history_file_action.toolTip()
 
     window._open_last_release_folder()
     window._open_last_release_dist()

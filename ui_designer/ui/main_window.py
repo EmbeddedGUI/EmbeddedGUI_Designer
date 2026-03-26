@@ -107,6 +107,35 @@ def _release_detached_worker(worker):
         pass
 
 
+def _latest_release_summary(entry):
+    if not isinstance(entry, dict) or not entry:
+        return "No release history available"
+    build_id = str(entry.get("build_id") or entry.get("created_at_utc") or "unknown-build").strip()
+    profile_id = str(entry.get("profile_id") or "unknown-profile").strip()
+    status = str(entry.get("status") or "").strip()
+    if not status:
+        if "success" in entry:
+            status = "success" if bool(entry.get("success")) else "failed"
+        else:
+            status = "unknown"
+    sdk = entry.get("sdk")
+    sdk_revision = "unknown"
+    if isinstance(sdk, dict):
+        sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip() or "unknown"
+        if sdk.get("dirty") and sdk_revision != "unknown":
+            sdk_revision += " (dirty)"
+    return f"Latest release: {build_id} | {profile_id} | {status} | sdk {sdk_revision}"
+
+
+def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="") -> str:
+    lines = [action_label, "", _latest_release_summary(latest_entry)]
+    if path:
+        lines.extend(["", path])
+    elif unavailable_label:
+        lines.extend(["", unavailable_label])
+    return "\n".join(lines)
+
+
 def delete_page_generated_files(project_dir, page_name):
     """Delete the three generated C files for a removed page.
 
@@ -637,6 +666,47 @@ class MainWindow(QMainWindow):
             self._open_last_release_package_action.setEnabled(bool(zip_path and os.path.isfile(zip_path)))
             self._open_last_release_log_action.setEnabled(bool(log_path and os.path.isfile(log_path)))
             self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
+            self._open_last_release_dir_action.setToolTip(
+                _release_action_tooltip("Open last release folder", latest_entry, path=release_root, unavailable_label="Release folder unavailable")
+            )
+            self._open_last_release_dist_action.setToolTip(
+                _release_action_tooltip("Open last release dist", latest_entry, path=dist_dir, unavailable_label="Release dist unavailable")
+            )
+            self._open_last_release_manifest_action.setToolTip(
+                _release_action_tooltip(
+                    "Open last release manifest",
+                    latest_entry,
+                    path=manifest_path,
+                    unavailable_label="Release manifest unavailable",
+                )
+            )
+            self._open_last_release_version_action.setToolTip(
+                _release_action_tooltip(
+                    "Open last release version",
+                    latest_entry,
+                    path=version_path,
+                    unavailable_label="Release version unavailable",
+                )
+            )
+            self._open_last_release_package_action.setToolTip(
+                _release_action_tooltip(
+                    "Open last release package",
+                    latest_entry,
+                    path=zip_path,
+                    unavailable_label="Release package unavailable",
+                )
+            )
+            self._open_last_release_log_action.setToolTip(
+                _release_action_tooltip("Open last release log", latest_entry, path=log_path, unavailable_label="Release log unavailable")
+            )
+            self._open_release_history_file_action.setToolTip(
+                _release_action_tooltip(
+                    "Open release history file",
+                    latest_entry,
+                    path=history_file_path,
+                    unavailable_label="Release history file unavailable",
+                )
+            )
         self._update_edit_actions()
 
     def _switch_to_python_preview(self, reason=""):
