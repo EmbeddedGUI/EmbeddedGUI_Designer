@@ -94,6 +94,8 @@ class TestPageDiagnostics:
         assert "on_shared_action" in entries[0].message
         assert "confirm_button.onClick" in entries[0].message
         assert "volume_slider.onValueChanged" in entries[0].message
+        assert entries[0].target_page_name == "main_page"
+        assert entries[0].target_widget_name == "confirm_button"
 
     def test_analyze_page_reports_missing_string_key_references(self):
         page = Page.create_default("main_page", screen_width=240, screen_height=320)
@@ -154,6 +156,8 @@ class TestProjectDiagnostics:
         assert [entry.code for entry in entries] == ["project_callback_duplicate"]
         assert "main_page/confirm_button.onClick" in entries[0].message
         assert "detail_page/confirm_button_2.onClick" in entries[0].message
+        assert entries[0].target_page_name == "detail_page"
+        assert entries[0].target_widget_name == "confirm_button_2"
 
     def test_analyze_project_reports_callback_signature_conflicts_across_pages(self):
         project = Project(screen_width=240, screen_height=320, app_name="DiagApp")
@@ -173,3 +177,5 @@ class TestProjectDiagnostics:
         assert [entry.code for entry in entries] == ["project_callback_signature_conflict"]
         assert "main_page/confirm_button.onClick" in entries[0].message
         assert "detail_page/volume_slider.onValueChanged" in entries[0].message
+        assert entries[0].target_page_name == "detail_page"
+        assert entries[0].target_widget_name == "volume_slider"

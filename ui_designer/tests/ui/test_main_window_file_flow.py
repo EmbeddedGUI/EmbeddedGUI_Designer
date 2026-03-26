@@ -3215,6 +3215,48 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_project_callback_diagnostic_activation_switches_to_target_widget(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ProjectCallbackDiagnosticFocusDemo"
+        project = _create_project(project_dir, "ProjectCallbackDiagnosticFocusDemo", sdk_root)
+        detail_page = project.create_new_page("detail_page")
+        main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
+        detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
+        main_button.on_click = "on_confirm"
+        detail_button.on_click = "on_confirm"
+        project.get_startup_page().root_widget.add_child(main_button)
+        detail_page.root_widget.add_child(detail_button)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window._current_page.name == "main_page"
+
+        item = window.diagnostics_panel._list.item(0)
+        window.diagnostics_panel._on_item_activated(item)
+
+        assert window._current_page.name == "detail_page"
+        assert window._selection_state.primary is detail_button
+        assert window._selection_state.widgets == [detail_button]
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_diagnostics_panel_filters_visible_entries_by_severity(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

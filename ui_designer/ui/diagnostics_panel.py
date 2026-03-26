@@ -20,8 +20,17 @@ def _format_entry_text(entry):
     return f"[{prefix}] {scope}{widget}: {entry.message}"
 
 
+def _activation_target(entry):
+    target_page_name = str(getattr(entry, "target_page_name", "") or "")
+    target_widget_name = str(getattr(entry, "target_widget_name", "") or "")
+    if target_page_name or str(getattr(entry, "page_name", "")) == "project":
+        return target_page_name, target_widget_name
+    return str(getattr(entry, "page_name", "") or ""), str(getattr(entry, "widget_name", "") or "")
+
+
 def _is_navigable_entry(entry):
-    return bool(getattr(entry, "widget_name", "")) and str(getattr(entry, "page_name", "")) != "project"
+    page_name, _ = _activation_target(entry)
+    return bool(page_name)
 
 
 class DiagnosticsPanel(QWidget):
@@ -167,7 +176,7 @@ class DiagnosticsPanel(QWidget):
 
         for entry in self._visible_entries:
             item = QListWidgetItem(_format_entry_text(entry))
-            item.setData(Qt.UserRole, (entry.page_name, entry.widget_name))
+            item.setData(Qt.UserRole, _activation_target(entry))
             item.setData(Qt.UserRole + 1, entry)
             self._list.addItem(item)
 

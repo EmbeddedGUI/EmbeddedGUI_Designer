@@ -2025,6 +2025,8 @@ class MainWindow(QMainWindow):
                     "resource_type": entry.resource_type,
                     "resource_name": entry.resource_name,
                     "property_name": entry.property_name,
+                    "target_page_name": entry.target_page_name,
+                    "target_widget_name": entry.target_widget_name,
                 }
                 for entry in entries
             ],

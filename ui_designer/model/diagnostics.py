@@ -35,6 +35,29 @@ class DiagnosticEntry:
     resource_type: str = ""
     resource_name: str = ""
     property_name: str = ""
+    target_page_name: str = ""
+    target_widget_name: str = ""
+
+
+def _sorted_callback_bindings(bindings):
+    return sorted(
+        list(bindings or []),
+        key=lambda binding: (
+            str(binding.get("page_name", "")),
+            str(binding.get("source", "")),
+            str(binding.get("widget_name", "")),
+        ),
+    )
+
+
+def _binding_target(binding):
+    if not isinstance(binding, dict):
+        return "", ""
+    target_page_name = str(binding.get("page_name", "") or "")
+    source = str(binding.get("source", "") or "")
+    if source.startswith("timer:"):
+        return target_page_name, ""
+    return target_page_name, str(binding.get("widget_name", "") or "")
 
 
 def sort_diagnostic_entries(entries):
@@ -308,20 +331,24 @@ def _callback_conflict_entries(page):
     for binding in _collect_page_callback_bindings(page):
         callback_name = binding["callback_name"].strip()
         signature = binding["signature"].strip()
-        source = binding["source"].strip()
         if not callback_name or not signature:
             continue
         entry = callback_map.setdefault(callback_name, {})
-        entry.setdefault(signature, set()).add(source)
+        entry.setdefault(signature, []).append(binding)
 
     entries = []
     for callback_name, signatures in sorted(callback_map.items()):
         if len(signatures) <= 1:
             continue
         detail_parts = []
-        for signature, sources in sorted(signatures.items()):
+        target_binding = _sorted_callback_bindings(
+            binding for bindings in signatures.values() for binding in bindings
+        )[0]
+        target_page_name, target_widget_name = _binding_target(target_binding)
+        for signature, bindings in sorted(signatures.items()):
             resolved_signature = signature.replace("{func_name}", callback_name)
-            detail_parts.append(f"{resolved_signature} from {', '.join(sorted(sources))}")
+            sources = sorted(str(binding.get("source", "")) for binding in bindings)
+            detail_parts.append(f"{resolved_signature} from {', '.join(sources)}")
         entries.append(
             DiagnosticEntry(
                 "error",
@@ -329,6 +356,8 @@ def _callback_conflict_entries(page):
                 f"Callback '{callback_name}' is reused with incompatible signatures: {'; '.join(detail_parts)}.",
                 page_name=page.name,
                 widget_name=callback_name,
+                target_page_name=target_page_name,
+                target_widget_name=target_widget_name,
             )
         )
 
@@ -355,6 +384,10 @@ def analyze_project_callback_conflicts(project):
         if len(pages) <= 1:
             continue
 
+        target_binding = _sorted_callback_bindings(
+            binding for bindings in signatures.values() for binding in bindings
+        )[0]
+        target_page_name, target_widget_name = _binding_target(target_binding)
         detail_parts = []
         for signature, bindings in sorted(signatures.items()):
             resolved_signature = signature.replace("{func_name}", callback_name)
@@ -380,6 +413,8 @@ def analyze_project_callback_conflicts(project):
                 message,
                 page_name="project",
                 widget_name=callback_name,
+                target_page_name=target_page_name,
+                target_widget_name=target_widget_name,
             )
         )
 
