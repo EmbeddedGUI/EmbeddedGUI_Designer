@@ -177,7 +177,13 @@ def main():
     else:
         diagnostics = _diagnostics_payload(result)
         print(f"[{'OK' if result.success else 'FAIL'}] {result.message}")
+        if result.build_id:
+            print(f"[INFO] build_id: {result.build_id}")
+        if result.profile_id:
+            print(f"[INFO] profile: {result.profile_id}")
         print(f"[INFO] manifest: {result.manifest_path}")
+        if result.history_path:
+            print(f"[INFO] history: {result.history_path}")
         if result.zip_path:
             print(f"[INFO] package: {result.zip_path}")
         designer_revision = _string(getattr(result, "designer_revision", ""))

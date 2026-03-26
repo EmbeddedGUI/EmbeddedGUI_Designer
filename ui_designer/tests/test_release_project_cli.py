@@ -144,7 +144,10 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
 
     assert exit_code == module.EXIT_OK
     assert "[OK] ok" in output
+    assert "[INFO] build_id: 20260325T000000Z" in output
+    assert "[INFO] profile: windows-pc" in output
     assert "[INFO] package:" in output
+    assert "[INFO] history:" in output
     assert "[INFO] designer_revision: designer-main-123" in output
     assert "[INFO] sdk_revision: sdk-main-456" in output
     assert "[INFO] diagnostics: warnings=1, errors=0, total=1" in output
