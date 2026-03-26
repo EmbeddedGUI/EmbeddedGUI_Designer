@@ -864,6 +864,24 @@ class WidgetTreePanel(QWidget):
             if current is not None and getattr(current, "widget_type", "") == widget_type
         ]
 
+    def _widget_depth(self, widget):
+        depth = 0
+        current = widget
+        while current is not None and current.parent is not None:
+            depth += 1
+            current = current.parent
+        return depth
+
+    def _same_depth_widgets(self, widget):
+        if widget is None:
+            return []
+        depth = self._widget_depth(widget)
+        return [
+            current
+            for current in self._iter_widgets() or []
+            if current is not None and self._widget_depth(current) == depth
+        ]
+
     def _select_same_type_widgets(self, widget):
         matches = self._same_type_widgets(widget)
         if len(matches) <= 1:
@@ -879,6 +897,23 @@ class WidgetTreePanel(QWidget):
             matches,
             primary=widget if widget in matches else matches[0],
             feedback_message=f"Selected {len(matches)} {widget_type} {noun}.",
+        )
+
+    def _select_same_depth_widgets(self, widget):
+        matches = self._same_depth_widgets(widget)
+        if len(matches) <= 1:
+            if widget is not None:
+                depth = self._widget_depth(widget)
+                self.feedback_message.emit(
+                    f"Cannot select same depth: no other widgets exist at depth {depth} on this page."
+                )
+            return
+        depth = self._widget_depth(widget)
+        noun = "widget" if len(matches) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            matches,
+            primary=widget if widget in matches else matches[0],
+            feedback_message=f"Selected {len(matches)} {noun} at depth {depth}.",
         )
 
     def _populate_select_menu(self, select_menu, widget):
@@ -901,6 +936,7 @@ class WidgetTreePanel(QWidget):
         sibling_widgets = self._sibling_widgets(widget)
         same_parent_type_widgets = self._same_parent_type_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
+        same_depth_widgets = self._same_depth_widgets(widget)
         can_select_parent = widget.parent is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_root = self._root_widget(widget) is not None and self._root_widget(widget) is not widget
@@ -921,6 +957,7 @@ class WidgetTreePanel(QWidget):
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_parent_type = len(same_parent_type_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
+        can_select_same_depth = len(same_depth_widgets) > 1
 
         select_parent_action = QAction("Parent", self)
         select_parent_action.setEnabled(can_select_parent)
@@ -1167,6 +1204,18 @@ class WidgetTreePanel(QWidget):
         )
         select_same_type_action.triggered.connect(lambda: self._select_same_type_widgets(widget))
         select_menu.addAction(select_same_type_action)
+
+        select_same_depth_action = QAction("Same Depth", self)
+        select_same_depth_action.setEnabled(can_select_same_depth)
+        select_same_depth_action.setToolTip(
+            self._structure_tooltip(
+                f"Select all widgets at depth {self._widget_depth(widget)} on this page.",
+                can_select_same_depth,
+                f"no other widgets exist at depth {self._widget_depth(widget)} on this page.",
+            )
+        )
+        select_same_depth_action.triggered.connect(lambda: self._select_same_depth_widgets(widget))
+        select_menu.addAction(select_same_depth_action)
         select_enabled = any([
             can_select_parent,
             can_select_ancestors,
@@ -1188,6 +1237,7 @@ class WidgetTreePanel(QWidget):
             can_select_siblings,
             can_select_same_parent_type,
             can_select_same_type,
+            can_select_same_depth,
         ])
         select_menu.menuAction().setEnabled(select_enabled)
         if not select_enabled:

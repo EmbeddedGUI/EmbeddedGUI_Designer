@@ -917,6 +917,7 @@ class TestWidgetTreePanel:
         assert root_actions["Root"].isEnabled() is False
         assert root_actions["Path"].isEnabled() is True
         assert root_actions["Top-Level"].isEnabled() is True
+        assert root_actions["Same Depth"].isEnabled() is False
         assert root_actions["Children"].isEnabled() is True
         assert root_actions["Descendants"].isEnabled() is True
         assert root_actions["Subtree"].isEnabled() is True
@@ -933,6 +934,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
         assert "Unavailable: widget is already the page root." in root_actions["Root"].toolTip()
+        assert "Unavailable: no other widgets exist at depth 0 on this page." in root_actions["Same Depth"].toolTip()
         assert "Unavailable: no layout container widgets exist in this subtree." in root_actions["Layout Containers"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
@@ -944,6 +946,7 @@ class TestWidgetTreePanel:
         first_actions = _select_menu_actions(first_menu)
         assert first_actions["Same Parent Type"].isEnabled() is True
         assert first_actions["Same Type"].isEnabled() is True
+        assert first_actions["Same Depth"].isEnabled() is True
         first_menu.deleteLater()
 
         container_menu = panel._build_context_menu(container)
@@ -965,6 +968,7 @@ class TestWidgetTreePanel:
         assert container_actions["Free Position"].isEnabled() is True
         assert container_actions["Siblings"].isEnabled() is True
         assert container_actions["Same Parent Type"].isEnabled() is False
+        assert container_actions["Same Depth"].isEnabled() is True
         container_menu.deleteLater()
 
         child_menu = panel._build_context_menu(child_a)
@@ -989,6 +993,7 @@ class TestWidgetTreePanel:
         assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Parent Type"].isEnabled() is False
         assert child_actions["Same Type"].isEnabled() is False
+        assert child_actions["Same Depth"].isEnabled() is True
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
         assert "Unavailable: widget has no descendant widgets." in child_actions["Descendants"].toolTip()
         assert "Unavailable: widget has no descendant widgets." in child_actions["Subtree"].toolTip()
@@ -1175,6 +1180,43 @@ class TestWidgetTreePanel:
         assert panel._get_selected_widget() is first
         assert selection_events[-1] == (["first", "second"], "first")
         assert feedback[-1] == "Selected 2 sibling label widgets under root_group."
+        menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_same_depth_action_updates_selection_and_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        branch_a = WidgetModel("group", name="branch_a")
+        branch_b = WidgetModel("group", name="branch_b")
+        leaf_a = WidgetModel("label", name="leaf_a")
+        leaf_b = WidgetModel("button", name="leaf_b")
+        nested_group = WidgetModel("group", name="nested_group")
+        branch_a.add_child(leaf_a)
+        branch_a.add_child(nested_group)
+        branch_b.add_child(leaf_b)
+        root.add_child(branch_a)
+        root.add_child(branch_b)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        selection_events = []
+        feedback = []
+        panel.selection_changed.connect(
+            lambda widgets, primary: selection_events.append(
+                ([widget.name for widget in widgets], primary.name if primary is not None else "")
+            )
+        )
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        menu = panel._build_context_menu(leaf_a)
+        actions = _select_menu_actions(menu)
+        actions["Same Depth"].trigger()
+        assert panel.selected_widgets() == [leaf_a, nested_group, leaf_b]
+        assert panel._get_selected_widget() is leaf_a
+        assert selection_events[-1] == (["leaf_a", "nested_group", "leaf_b"], "leaf_a")
+        assert feedback[-1] == "Selected 3 widgets at depth 2."
         menu.deleteLater()
         panel.deleteLater()
 
