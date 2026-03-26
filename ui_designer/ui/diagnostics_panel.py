@@ -221,9 +221,10 @@ class DiagnosticsPanel(QWidget):
 
     def _update_selection_actions(self):
         current_item = self._list.currentItem()
+        current_entry = current_item.data(Qt.UserRole + 1) if current_item is not None else None
         if current_item is not None:
-            self._selection_anchor_key = _entry_key(current_item.data(Qt.UserRole + 1))
-        self._open_selected_button.setEnabled(current_item is not None)
+            self._selection_anchor_key = _entry_key(current_entry)
+        self._open_selected_button.setEnabled(current_item is not None and _is_navigable_entry(current_entry))
 
     def _restore_selection(self, selection_key):
         if selection_key is None:
@@ -284,10 +285,15 @@ class DiagnosticsPanel(QWidget):
         item = self._list.currentItem()
         if item is None:
             return
+        entry = item.data(Qt.UserRole + 1)
+        if not _is_navigable_entry(entry):
+            return
         self._on_item_activated(item)
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)
         self._selection_anchor_key = _entry_key(self._activated_entry)
+        if not _is_navigable_entry(self._activated_entry):
+            return
         page_name, widget_name = item.data(Qt.UserRole) or ("", "")
         self.diagnostic_activated.emit(page_name or "", widget_name or "")

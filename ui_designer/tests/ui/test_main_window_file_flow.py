@@ -3731,6 +3731,53 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_diagnostics_panel_open_selected_is_disabled_for_non_navigable_items(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsNonNavigableDemo"
+        project = _create_project(project_dir, "DiagnosticsNonNavigableDemo", sdk_root)
+        page = project.get_startup_page()
+
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=240, height=80)
+        managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
+        managed.designer_locked = True
+        managed.designer_hidden = True
+        layout_parent.add_child(managed)
+        page.root_widget.add_child(layout_parent)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selection_state.set_widgets([managed], primary=managed)
+        window._selected_widget = managed
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._list.count() == 3
+
+        activations = []
+        window.diagnostics_panel.diagnostic_activated.connect(lambda page_name, widget_name: activations.append((page_name, widget_name)))
+
+        item = window.diagnostics_panel._list.item(0)
+        window.diagnostics_panel._list.setCurrentItem(item)
+
+        assert item.text().startswith("[Info]")
+        assert window.diagnostics_panel._open_selected_button.isEnabled() is False
+
+        window.diagnostics_panel._on_item_activated(item)
+
+        assert activations == []
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
