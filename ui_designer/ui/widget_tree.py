@@ -530,6 +530,30 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(leaves)} leaf {noun} in subtree of {self._widget_label(widget)}.",
         )
 
+    def _container_subtree_widgets(self, widget):
+        if widget is None:
+            return []
+        subtree = [widget] + self._descendant_widgets(widget)
+        return [
+            current
+            for current in subtree
+            if current is not None and getattr(current, "is_container", False)
+        ]
+
+    def _select_container_subtree_widgets(self, widget):
+        containers = self._container_subtree_widgets(widget)
+        if len(containers) <= 1:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select containers: no other container widgets exist in this subtree.")
+            return
+        noun = "widget" if len(containers) == 1 else "widgets"
+        primary = widget if widget in containers else containers[0]
+        self._apply_programmatic_selection(
+            containers,
+            primary=primary,
+            feedback_message=f"Selected {len(containers)} container {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
     def _sibling_widgets(self, widget):
         parent = widget.parent if widget is not None else None
         if parent is None:
@@ -590,6 +614,7 @@ class WidgetTreePanel(QWidget):
         descendant_widgets = self._descendant_widgets(widget)
         subtree_widgets = self._subtree_widgets(widget)
         leaf_descendant_widgets = self._leaf_descendant_widgets(widget)
+        container_subtree_widgets = self._container_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
@@ -598,6 +623,7 @@ class WidgetTreePanel(QWidget):
         can_select_descendants = bool(descendant_widgets)
         can_select_subtree = bool(subtree_widgets)
         can_select_leaves = bool(leaf_descendant_widgets)
+        can_select_containers = len(container_subtree_widgets) > 1
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
@@ -673,6 +699,18 @@ class WidgetTreePanel(QWidget):
         select_leaves_action.triggered.connect(lambda: self._select_leaf_descendant_widgets(widget))
         select_menu.addAction(select_leaves_action)
 
+        select_containers_action = QAction("Containers", self)
+        select_containers_action.setEnabled(can_select_containers)
+        select_containers_action.setToolTip(
+            self._structure_tooltip(
+                "Select container widgets in this subtree.",
+                can_select_containers,
+                "no other container widgets exist in this subtree.",
+            )
+        )
+        select_containers_action.triggered.connect(lambda: self._select_container_subtree_widgets(widget))
+        select_menu.addAction(select_containers_action)
+
         select_siblings_action = QAction("Siblings", self)
         select_siblings_action.setEnabled(can_select_siblings)
         select_siblings_action.setToolTip(
@@ -705,6 +743,7 @@ class WidgetTreePanel(QWidget):
             can_select_descendants,
             can_select_subtree,
             can_select_leaves,
+            can_select_containers,
             can_select_siblings,
             can_select_same_type,
         ])
