@@ -4275,6 +4275,18 @@ class MainWindow(QMainWindow):
             return None
         return parent
 
+    def _shared_layout_managed_parent(self, widgets=None):
+        widgets = [widget for widget in (widgets or []) if widget is not None]
+        if not widgets:
+            return None
+        parent = widgets[0].parent
+        if parent is None or not self._parent_uses_layout(parent):
+            return None
+        for widget in widgets[1:]:
+            if widget.parent is not parent:
+                return None
+        return parent
+
     def _default_paste_parent(self):
         if not self._current_page:
             return None
@@ -4430,6 +4442,13 @@ class MainWindow(QMainWindow):
             if len(selected_widgets) >= 2:
                 self._show_selection_action_blocked("align selection", "locked widgets leave fewer than 2 editable widgets")
             return
+        layout_parent = self._shared_layout_managed_parent(widgets)
+        if layout_parent is not None:
+            self._show_selection_action_blocked(
+                "align selection",
+                f"selected widgets are layout-managed by the same {layout_parent.widget_type} parent; reorder them instead",
+            )
+            return
         if self._shared_selection_parent(widgets) is None:
             self._show_selection_action_blocked("align selection", "selected widgets do not share the same free-position parent")
             return
@@ -4464,6 +4483,13 @@ class MainWindow(QMainWindow):
         if len(widgets) < 3:
             if len(selected_widgets) >= 3:
                 self._show_selection_action_blocked("distribute selection", "locked widgets leave fewer than 3 editable widgets")
+            return
+        layout_parent = self._shared_layout_managed_parent(widgets)
+        if layout_parent is not None:
+            self._show_selection_action_blocked(
+                "distribute selection",
+                f"selected widgets are layout-managed by the same {layout_parent.widget_type} parent; reorder them instead",
+            )
             return
         if self._shared_selection_parent(widgets) is None:
             self._show_selection_action_blocked("distribute selection", "selected widgets do not share the same free-position parent")

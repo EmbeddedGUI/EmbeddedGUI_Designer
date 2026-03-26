@@ -897,6 +897,38 @@ class TestMainWindowFileFlow:
         assert window.statusBar().currentMessage() == "Cannot align selection: locked widgets leave fewer than 2 editable widgets."
         _close_window(window)
 
+    def test_align_selection_reports_layout_managed_constraint(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "AlignLayoutManagedDemo"
+        project = _create_project(project_dir, "AlignLayoutManagedDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=200, height=80)
+        first = WidgetModel("switch", name="first", width=40, height=20)
+        second = WidgetModel("switch", name="second", width=40, height=20)
+        layout_parent.add_child(first)
+        layout_parent.add_child(second)
+        root.add_child(layout_parent)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
+
+        window._align_selection("left")
+
+        assert window.statusBar().currentMessage() == (
+            "Cannot align selection: selected widgets are layout-managed by the same "
+            "linearlayout parent; reorder them instead."
+        )
+        _close_window(window)
+
     def test_group_selection_groups_widgets_and_updates_status(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1925,6 +1957,40 @@ class TestMainWindowFileFlow:
         window._distribute_selection("horizontal")
 
         assert window.statusBar().currentMessage() == "Cannot distribute selection: selected widgets do not share the same free-position parent."
+        _close_window(window)
+
+    def test_distribute_selection_reports_layout_managed_constraint(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DistributeLayoutManagedDemo"
+        project = _create_project(project_dir, "DistributeLayoutManagedDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=200, height=120)
+        first = WidgetModel("switch", name="first", width=20, height=20)
+        second = WidgetModel("switch", name="second", width=20, height=20)
+        third = WidgetModel("switch", name="third", width=20, height=20)
+        layout_parent.add_child(first)
+        layout_parent.add_child(second)
+        layout_parent.add_child(third)
+        root.add_child(layout_parent)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second, third], primary=first, sync_tree=False, sync_preview=False)
+
+        window._distribute_selection("horizontal")
+
+        assert window.statusBar().currentMessage() == (
+            "Cannot distribute selection: selected widgets are layout-managed by the same "
+            "linearlayout parent; reorder them instead."
+        )
         _close_window(window)
 
     def test_move_selection_to_front_reports_all_locked(self, qapp, isolated_config, tmp_path, monkeypatch):
