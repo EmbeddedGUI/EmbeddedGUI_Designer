@@ -399,6 +399,7 @@ class TestWidgetTreePanel:
         captured = {}
 
         def _fake_get_item(*args, **kwargs):
+            captured["prompt"] = args[2]
             captured["labels"] = list(args[3])
             captured["current_index"] = args[4]
             return "root_group / target_b (group)", True
@@ -411,6 +412,7 @@ class TestWidgetTreePanel:
             "root_group / target_b (group)",
             "root_group / target_a (group)",
         ]
+        assert captured["prompt"] == "Target container (recent targets first):"
         assert captured["current_index"] == 0
         assert second.parent is target_b
         panel.deleteLater()

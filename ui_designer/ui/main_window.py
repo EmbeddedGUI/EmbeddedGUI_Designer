@@ -4060,7 +4060,7 @@ class MainWindow(QMainWindow):
         selected_label, ok = QInputDialog.getItem(
             self,
             "Move Into Container",
-            "Target container:",
+            "Target container (recent targets first):",
             labels,
             self._move_into_target_default_index(choices),
             False,
