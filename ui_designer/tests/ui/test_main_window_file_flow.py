@@ -3631,8 +3631,22 @@ class TestMainWindowFileFlow:
         assert copied["summary"]["info"] == 0
         assert copied["summary"]["total"] == 2
         assert copied["view"] == {"severity_filter": "", "visible_total": 2}
-        assert any(entry["code"] == "invalid_name" and entry["widget_name"] == "bad-name" for entry in copied["entries"])
-        assert any(entry["code"] == "missing_resource" and entry["resource_name"] == "missing.png" for entry in copied["entries"])
+        assert any(
+            entry["code"] == "invalid_name"
+            and entry["widget_name"] == "bad-name"
+            and entry["target_kind"] == "widget"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == "bad-name"
+            for entry in copied["entries"]
+        )
+        assert any(
+            entry["code"] == "missing_resource"
+            and entry["resource_name"] == "missing.png"
+            and entry["target_kind"] == "resource"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == "missing_image"
+            for entry in copied["entries"]
+        )
         assert window.statusBar().currentMessage() == "Copied diagnostics JSON."
 
         window._undo_manager.mark_all_saved()
@@ -3673,6 +3687,9 @@ class TestMainWindowFileFlow:
         assert len(copied["entries"]) == 1
         assert copied["entries"][0]["code"] == "missing_resource"
         assert copied["entries"][0]["widget_name"] == "missing_image"
+        assert copied["entries"][0]["target_kind"] == "resource"
+        assert copied["entries"][0]["target_page_name"] == "main_page"
+        assert copied["entries"][0]["target_widget_name"] == "missing_image"
 
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -3820,8 +3837,22 @@ class TestMainWindowFileFlow:
         assert exported["summary"]["warnings"] == 1
         assert exported["summary"]["info"] == 0
         assert exported["summary"]["total"] == 2
-        assert any(entry["code"] == "invalid_name" and entry["widget_name"] == "bad-name" for entry in exported["entries"])
-        assert any(entry["code"] == "missing_resource" and entry["resource_name"] == "missing.png" for entry in exported["entries"])
+        assert any(
+            entry["code"] == "invalid_name"
+            and entry["widget_name"] == "bad-name"
+            and entry["target_kind"] == "widget"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == "bad-name"
+            for entry in exported["entries"]
+        )
+        assert any(
+            entry["code"] == "missing_resource"
+            and entry["resource_name"] == "missing.png"
+            and entry["target_kind"] == "resource"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == "missing_image"
+            for entry in exported["entries"]
+        )
         assert window.statusBar().currentMessage() == f"Exported diagnostics JSON to {resolved_export_path}"
 
         window._undo_manager.mark_all_saved()

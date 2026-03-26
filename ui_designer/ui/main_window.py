@@ -1993,6 +1993,66 @@ class MainWindow(QMainWindow):
             return os.path.join(default_dir, "diagnostics.json")
         return "diagnostics.json"
 
+    def _diagnostic_json_target(self, entry):
+        code = str(getattr(entry, "code", "") or "")
+        page_name = str(getattr(entry, "page_name", "") or "")
+        widget_name = str(getattr(entry, "widget_name", "") or "")
+        target_page_name = str(getattr(entry, "target_page_name", "") or "")
+        target_widget_name = str(getattr(entry, "target_widget_name", "") or "")
+        resource_type = str(getattr(entry, "resource_type", "") or "")
+        resource_name = str(getattr(entry, "resource_name", "") or "")
+
+        if resource_type and resource_name:
+            return {
+                "target_kind": "resource",
+                "target_page_name": target_page_name or page_name,
+                "target_widget_name": target_widget_name or widget_name,
+            }
+        if code.startswith("page_field_"):
+            return {
+                "target_kind": "page_field",
+                "target_page_name": target_page_name or page_name,
+                "target_widget_name": "",
+            }
+        if code.startswith("page_timer_"):
+            return {
+                "target_kind": "page_timer",
+                "target_page_name": target_page_name or page_name,
+                "target_widget_name": "",
+            }
+
+        resolved_page_name = target_page_name or (page_name if page_name != "project" else "")
+        resolved_widget_name = target_widget_name or widget_name
+        if resolved_page_name and resolved_widget_name:
+            return {
+                "target_kind": "widget",
+                "target_page_name": resolved_page_name,
+                "target_widget_name": resolved_widget_name,
+            }
+        if resolved_page_name:
+            return {
+                "target_kind": "page",
+                "target_page_name": resolved_page_name,
+                "target_widget_name": "",
+            }
+        if code.startswith("selection_"):
+            return {
+                "target_kind": "selection",
+                "target_page_name": "",
+                "target_widget_name": "",
+            }
+        if page_name == "project":
+            return {
+                "target_kind": "project",
+                "target_page_name": "",
+                "target_widget_name": "",
+            }
+        return {
+            "target_kind": "",
+            "target_page_name": target_page_name,
+            "target_widget_name": target_widget_name,
+        }
+
     def _diagnostics_json_text(self):
         entries = self.diagnostics_panel.entries() if hasattr(self, "diagnostics_panel") else []
         view_state = self.diagnostics_panel.view_state() if hasattr(self, "diagnostics_panel") else {}
@@ -2025,8 +2085,7 @@ class MainWindow(QMainWindow):
                     "resource_type": entry.resource_type,
                     "resource_name": entry.resource_name,
                     "property_name": entry.property_name,
-                    "target_page_name": entry.target_page_name,
-                    "target_widget_name": entry.target_widget_name,
+                    **self._diagnostic_json_target(entry),
                 }
                 for entry in entries
             ],
