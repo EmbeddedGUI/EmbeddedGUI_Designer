@@ -462,6 +462,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "warnings": diagnostic_warning_count,
             "total": len(diagnostic_entries),
         }
+        sdk_payload = sdk_fingerprint.to_dict()
         manifest = {
             "schema_version": 1,
             "build_id": build_id,
@@ -469,7 +470,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "app_name": getattr(project, "app_name", ""),
             "profile_id": profile.id,
             "designer_revision": designer_revision or describe_git_revision(designer_metadata),
-            "sdk": sdk_fingerprint.to_dict(),
+            "sdk": sdk_payload,
             "workspace": {
                 "git_commit": str(workspace_metadata.get("git_commit") or ""),
                 "dirty": workspace_dirty,
@@ -512,7 +513,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "profile_id": profile.id,
             "created_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "designer_revision": manifest["designer_revision"],
-            "sdk": sdk_fingerprint.to_dict(),
+            "sdk": dict(sdk_payload),
             "warning_count": len(warnings),
             "error_count": len(errors),
             "diagnostics_total": len(diagnostic_entries),
@@ -535,6 +536,8 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             manifest_path=manifest_path_local,
             log_path=log_path,
             history_path=history_path_local,
+            designer_revision=manifest["designer_revision"],
+            sdk=dict(sdk_payload),
             zip_path=zip_path,
             warnings=warnings,
             errors=errors,

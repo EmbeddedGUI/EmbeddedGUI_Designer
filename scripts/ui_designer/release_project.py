@@ -40,6 +40,14 @@ def _parse_args():
     return parser.parse_args()
 
 
+def _string(value) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
 def _diagnostics_payload(result):
     warnings = list(getattr(result, "warnings", []) or [])
     errors = list(getattr(result, "errors", []) or [])
@@ -53,18 +61,28 @@ def _diagnostics_payload(result):
     }
 
 
+def _sdk_payload(result):
+    sdk = getattr(result, "sdk", {})
+    return dict(sdk) if isinstance(sdk, dict) else {}
+
+
+def _sdk_revision_text(result) -> str:
+    sdk = _sdk_payload(result)
+    return _string(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit"))
+
+
 def _first_diagnostic_text(result):
     diagnostics = _diagnostics_payload(result)
     entries = diagnostics["entries"]
     if entries:
         first_entry = entries[0] if isinstance(entries[0], dict) else {}
-        severity = str(first_entry.get("severity") or "").strip() or "issue"
-        page_name = str(first_entry.get("target_page_name") or first_entry.get("page_name") or "").strip()
-        widget_name = str(first_entry.get("target_widget_name") or first_entry.get("widget_name") or "").strip()
+        severity = _string(first_entry.get("severity")) or "issue"
+        page_name = _string(first_entry.get("target_page_name") or first_entry.get("page_name"))
+        widget_name = _string(first_entry.get("target_widget_name") or first_entry.get("widget_name"))
         scope = page_name or "<project>"
         if widget_name:
             scope = f"{scope}/{widget_name}"
-        message = str(first_entry.get("message") or "").strip()
+        message = _string(first_entry.get("message"))
         return f"{severity} {scope}: {message}" if message else f"{severity} {scope}"
 
     errors = list(getattr(result, "errors", []) or [])
@@ -81,6 +99,7 @@ def _first_diagnostic_text(result):
 def _result_payload(result):
     diagnostics = _diagnostics_payload(result)
     first_diagnostic = _first_diagnostic_text(result)
+    sdk = _sdk_payload(result)
     return {
         "success": result.success,
         "message": result.message,
@@ -92,6 +111,12 @@ def _result_payload(result):
         "log_path": result.log_path,
         "history_path": result.history_path,
         "zip_path": result.zip_path,
+        "designer_revision": _string(getattr(result, "designer_revision", "")),
+        "sdk_revision": _sdk_revision_text(result),
+        "sdk_commit": _string(sdk.get("commit")),
+        "sdk_remote": _string(sdk.get("remote")),
+        "sdk_dirty": bool(sdk.get("dirty", False)),
+        "sdk": sdk,
         "warnings": list(result.warnings),
         "errors": list(result.errors),
         "artifacts": [artifact.to_dict() for artifact in result.artifacts],
@@ -155,6 +180,12 @@ def main():
         print(f"[INFO] manifest: {result.manifest_path}")
         if result.zip_path:
             print(f"[INFO] package: {result.zip_path}")
+        designer_revision = _string(getattr(result, "designer_revision", ""))
+        if designer_revision:
+            print(f"[INFO] designer_revision: {designer_revision}")
+        sdk_revision = _sdk_revision_text(result)
+        if sdk_revision:
+            print(f"[INFO] sdk_revision: {sdk_revision}")
         print(
             "[INFO] diagnostics: "
             f"warnings={diagnostics['summary']['warnings']}, "

@@ -103,6 +103,8 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert Path(result.zip_path).is_file()
 
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert result.designer_revision == manifest["designer_revision"]
+    assert result.sdk == manifest["sdk"]
     assert manifest["status"] == "success"
     assert manifest["profile_id"] == "windows-pc"
     assert manifest["workspace"]["ui_input_digest"]
@@ -181,6 +183,8 @@ def test_release_project_blocks_on_diagnostics(tmp_path, monkeypatch):
     assert result.diagnostics_entries[0]["code"] == "invalid_name"
     assert result.diagnostics_entries[0]["target_kind"] == "widget"
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+    assert result.designer_revision == manifest["designer_revision"]
+    assert result.sdk == manifest["sdk"]
     assert manifest["status"] == "failed"
     assert manifest["diagnostics"]["summary"] == {"errors": 1, "warnings": 0, "total": 1}
     assert manifest["diagnostics"]["entries"][0]["target_kind"] == "widget"

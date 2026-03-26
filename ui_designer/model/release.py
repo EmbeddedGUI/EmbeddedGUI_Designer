@@ -272,6 +272,8 @@ class ReleaseResult:
     manifest_path: str
     log_path: str
     history_path: str
+    designer_revision: str = ""
+    sdk: dict[str, object] = field(default_factory=dict)
     zip_path: str = ""
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)

@@ -41,6 +41,13 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
             manifest_path=str(tmp_path / "release" / "release-manifest.json"),
             log_path=str(tmp_path / "release" / "logs" / "build.log"),
             history_path=str(tmp_path / "release" / "history.json"),
+            designer_revision="designer-main-123",
+            sdk={
+                "revision": "sdk-main-456",
+                "commit": "abcdef123456",
+                "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                "dirty": False,
+            },
             zip_path="",
             warnings=[],
             errors=[],
@@ -70,6 +77,12 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
     assert exit_code == module.EXIT_OK
     assert payload["success"] is True
     assert payload["profile_id"] == "windows-pc"
+    assert payload["designer_revision"] == "designer-main-123"
+    assert payload["sdk_revision"] == "sdk-main-456"
+    assert payload["sdk_commit"] == "abcdef123456"
+    assert payload["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
+    assert payload["sdk_dirty"] is False
+    assert payload["sdk"]["revision"] == "sdk-main-456"
     assert payload["diagnostics_warning_count"] == 1
     assert payload["diagnostics_error_count"] == 0
     assert payload["diagnostics_total"] == 1
@@ -115,6 +128,8 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
             manifest_path=str(tmp_path / "release" / "release-manifest.json"),
             log_path=str(tmp_path / "release" / "logs" / "build.log"),
             history_path=str(tmp_path / "release" / "history.json"),
+            designer_revision="designer-main-123",
+            sdk={"revision": "sdk-main-456"},
             zip_path=str(tmp_path / "release" / "ReleaseDemo.zip"),
             warnings=["warning a"],
             errors=[],
@@ -130,5 +145,7 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
     assert exit_code == module.EXIT_OK
     assert "[OK] ok" in output
     assert "[INFO] package:" in output
+    assert "[INFO] designer_revision: designer-main-123" in output
+    assert "[INFO] sdk_revision: sdk-main-456" in output
     assert "[INFO] diagnostics: warnings=1, errors=0, total=1" in output
     assert "[INFO] first_diagnostic: warning: warning a" in output
