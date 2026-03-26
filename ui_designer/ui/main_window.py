@@ -1379,8 +1379,8 @@ class MainWindow(QMainWindow):
         for action, (hint, _reason_attr) in self._structure_action_hints.items():
             action.setToolTip(hint)
             action.setStatusTip(hint)
-        self._quick_move_into_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
-        self._quick_move_into_menu.menuAction().setStatusTip("Move the current selection directly into an available container target.")
+        self._quick_move_into_menu.menuAction().setToolTip(self._quick_move_into_menu_hint())
+        self._quick_move_into_menu.menuAction().setStatusTip(self._quick_move_into_menu_hint())
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -3959,6 +3959,9 @@ class MainWindow(QMainWindow):
             return f"Forget {count} recent move-into {noun} for the current page"
         return "Forget recent move-into targets for the current page"
 
+    def _quick_move_into_menu_hint(self):
+        return "Move directly into an available container target, or reuse move-target history."
+
     def _repeat_move_target_summary(self, widgets=None):
         choice = self._remembered_move_target_choice(widgets)
         if choice is None:
@@ -4511,12 +4514,14 @@ class MainWindow(QMainWindow):
         )
         self._clear_move_target_history_action.setToolTip(clear_history_hint)
         self._clear_move_target_history_action.setStatusTip(clear_history_hint)
+        has_quick_move_history = repeat_move_target_choice is not None or has_recent_move_targets
+        quick_menu_enabled = structure_state.can_move_into or has_quick_move_history
         quick_hint = self._structure_action_hint(
-            "Move the current selection directly into an available container target.",
-            structure_state.can_move_into,
+            self._quick_move_into_menu_hint(),
+            quick_menu_enabled,
             self._structure_action_reason(structure_state, "move_into_reason"),
         )
-        self._quick_move_into_menu.menuAction().setEnabled(structure_state.can_move_into)
+        self._quick_move_into_menu.menuAction().setEnabled(quick_menu_enabled)
         self._quick_move_into_menu.menuAction().setToolTip(quick_hint)
         self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
         self._refresh_quick_move_into_menu()

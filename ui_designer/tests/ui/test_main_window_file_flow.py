@@ -1638,6 +1638,53 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_quick_move_into_menu_stays_available_for_history_only(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QuickMoveHistoryOnlyDemo"
+        project = _create_project(project_dir, "QuickMoveHistoryOnlyDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([child], primary=child, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target,
+            target_label="root_group / target (group)",
+        )
+
+        window._set_selection([target], primary=target, sync_tree=True, sync_preview=False)
+        window._refresh_quick_move_into_menu()
+
+        assert window._move_into_container_action.isEnabled() is False
+        assert window._move_into_last_target_action.isEnabled() is False
+        assert window._clear_move_target_history_action.isEnabled() is True
+        assert window._quick_move_into_menu.menuAction().isEnabled() is True
+
+        action_texts = [action.text() for action in window._quick_move_into_menu.actions()]
+        assert "(No eligible target containers)" in action_texts
+        assert "History" in action_texts
+        repeat_action = next(action for action in window._quick_move_into_menu.actions() if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in window._quick_move_into_menu.actions() if action.text() == "Clear Move Target History")
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is True
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_widget_tree_group_selection_updates_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
