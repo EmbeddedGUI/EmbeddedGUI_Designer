@@ -3609,6 +3609,128 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_diagnostics_panel_preserves_selected_item_across_severity_filter_changes(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsSelectionFilterDemo"
+        project = _create_project(project_dir, "DiagnosticsSelectionFilterDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        target_item = None
+        for row in range(window.diagnostics_panel._list.count()):
+            item = window.diagnostics_panel._list.item(row)
+            if "missing_image" in item.text():
+                target_item = item
+                break
+
+        assert target_item is not None
+
+        window.diagnostics_panel._list.setCurrentItem(target_item)
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+
+        assert window.diagnostics_panel._list.count() == 1
+        assert window.diagnostics_panel._list.currentItem() is not None
+        assert "missing_image" in window.diagnostics_panel._list.currentItem().text()
+        assert window.diagnostics_panel._open_selected_button.isEnabled() is True
+
+        filter_combo.setCurrentIndex(filter_combo.findData(""))
+
+        assert window.diagnostics_panel._list.count() == 2
+        assert window.diagnostics_panel._list.currentItem() is not None
+        assert "missing_image" in window.diagnostics_panel._list.currentItem().text()
+
+        window.diagnostics_panel._open_selected_button.click()
+
+        assert window._selection_state.primary is missing
+        assert window._selection_state.widgets == [missing]
+        assert window.statusBar().currentMessage() == "Opened diagnostic resource check: image/missing.png."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_diagnostics_panel_preserves_selected_item_across_refresh(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsSelectionRefreshDemo"
+        project = _create_project(project_dir, "DiagnosticsSelectionRefreshDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        target_item = None
+        for row in range(window.diagnostics_panel._list.count()):
+            item = window.diagnostics_panel._list.item(row)
+            if "missing_image" in item.text():
+                target_item = item
+                break
+
+        assert target_item is not None
+
+        window.diagnostics_panel._list.setCurrentItem(target_item)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._list.count() == 2
+        assert window.diagnostics_panel._list.currentItem() is not None
+        assert "missing_image" in window.diagnostics_panel._list.currentItem().text()
+        assert window.diagnostics_panel._open_selected_button.isEnabled() is True
+
+        window.diagnostics_panel._open_selected_button.click()
+
+        assert window._selection_state.primary is missing
+        assert window._selection_state.widgets == [missing]
+        assert window.statusBar().currentMessage() == "Opened diagnostic resource check: image/missing.png."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

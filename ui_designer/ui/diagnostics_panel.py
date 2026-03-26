@@ -32,6 +32,23 @@ def _activation_target(entry):
     return page_name or target_page_name, widget_name or target_widget_name
 
 
+def _entry_key(entry):
+    if entry is None:
+        return None
+    return (
+        str(getattr(entry, "severity", "") or ""),
+        str(getattr(entry, "code", "") or ""),
+        str(getattr(entry, "message", "") or ""),
+        str(getattr(entry, "page_name", "") or ""),
+        str(getattr(entry, "widget_name", "") or ""),
+        str(getattr(entry, "resource_type", "") or ""),
+        str(getattr(entry, "resource_name", "") or ""),
+        str(getattr(entry, "property_name", "") or ""),
+        str(getattr(entry, "target_page_name", "") or ""),
+        str(getattr(entry, "target_widget_name", "") or ""),
+    )
+
+
 def _is_navigable_entry(entry):
     page_name, _ = _activation_target(entry)
     return bool(page_name)
@@ -51,6 +68,7 @@ class DiagnosticsPanel(QWidget):
         self._entries = []
         self._visible_entries = []
         self._activated_entry = None
+        self._selection_anchor_key = None
         self._init_ui()
         self.clear()
 
@@ -111,6 +129,7 @@ class DiagnosticsPanel(QWidget):
         self._entries = []
         self._visible_entries = []
         self._activated_entry = None
+        self._selection_anchor_key = None
         self._summary_label.setText("Diagnostics: no active issues")
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
@@ -161,6 +180,7 @@ class DiagnosticsPanel(QWidget):
         return str(self._severity_filter_combo.currentData() or "")
 
     def _apply_filter(self):
+        selection_key = self._selection_anchor_key
         self._list.clear()
         self._visible_entries = [
             entry for entry in self._entries
@@ -193,6 +213,7 @@ class DiagnosticsPanel(QWidget):
             item.setData(Qt.UserRole, _activation_target(entry))
             item.setData(Qt.UserRole + 1, entry)
             self._list.addItem(item)
+        self._restore_selection(selection_key)
         self._update_selection_actions()
 
     def _reset_view(self):
@@ -200,7 +221,22 @@ class DiagnosticsPanel(QWidget):
 
     def _update_selection_actions(self):
         current_item = self._list.currentItem()
+        if current_item is not None:
+            self._selection_anchor_key = _entry_key(current_item.data(Qt.UserRole + 1))
         self._open_selected_button.setEnabled(current_item is not None)
+
+    def _restore_selection(self, selection_key):
+        if selection_key is None:
+            self._list.clearSelection()
+            self._list.setCurrentRow(-1)
+            return
+        for row in range(self._list.count()):
+            item = self._list.item(row)
+            if _entry_key(item.data(Qt.UserRole + 1)) == selection_key:
+                self._list.setCurrentItem(item)
+                return
+        self._list.clearSelection()
+        self._list.setCurrentRow(-1)
 
     def _first_navigable_error(self, entries):
         for entry in entries or []:
@@ -252,5 +288,6 @@ class DiagnosticsPanel(QWidget):
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)
+        self._selection_anchor_key = _entry_key(self._activated_entry)
         page_name, widget_name = item.data(Qt.UserRole) or ("", "")
         self.diagnostic_activated.emit(page_name or "", widget_name or "")
