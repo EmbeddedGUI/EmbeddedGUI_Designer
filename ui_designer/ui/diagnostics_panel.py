@@ -23,9 +23,13 @@ def _format_entry_text(entry):
 def _activation_target(entry):
     target_page_name = str(getattr(entry, "target_page_name", "") or "")
     target_widget_name = str(getattr(entry, "target_widget_name", "") or "")
-    if target_page_name or str(getattr(entry, "page_name", "")) == "project":
+    page_name = str(getattr(entry, "page_name", "") or "")
+    widget_name = str(getattr(entry, "widget_name", "") or "")
+    if (target_page_name and target_widget_name) or page_name == "project":
         return target_page_name, target_widget_name
-    return str(getattr(entry, "page_name", "") or ""), str(getattr(entry, "widget_name", "") or "")
+    if target_page_name and not widget_name:
+        return target_page_name, ""
+    return page_name or target_page_name, widget_name or target_widget_name
 
 
 def _is_navigable_entry(entry):

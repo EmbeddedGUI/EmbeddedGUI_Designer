@@ -125,6 +125,8 @@ def _duplicate_name_entries(page):
                     f"Widget name '{widget.name}' is duplicated in page '{page.name}'.",
                     page_name=page.name,
                     widget_name=widget.name,
+                    target_page_name=page.name,
+                    target_widget_name=widget.name,
                 )
             )
     return entries
@@ -142,6 +144,8 @@ def _invalid_name_entries(page):
                 f"Widget name '{widget.name}' is not a valid C identifier.",
                 page_name=page.name,
                 widget_name=widget.name,
+                target_page_name=page.name,
+                target_widget_name=widget.name,
             )
         )
     return entries
@@ -169,6 +173,8 @@ def _bounds_entries(page):
                 f"Widget '{widget.name}' has geometry issues: {', '.join(issues)}.",
                 page_name=page.name,
                 widget_name=widget.name,
+                target_page_name=page.name,
+                target_widget_name=widget.name,
             )
         )
     return entries
@@ -205,6 +211,8 @@ def _missing_resource_entries(page, resource_catalog=None, source_resource_dir="
                     resource_type=_RESOURCE_PROP_TYPES.get(prop_type, ""),
                     resource_name=value,
                     property_name=prop_name,
+                    target_page_name=page.name,
+                    target_widget_name=widget.name,
                 )
             )
 
@@ -231,6 +239,8 @@ def _missing_string_reference_entries(page, string_catalog=None):
                 resource_type="string",
                 resource_name=string_key,
                 property_name="text",
+                target_page_name=page.name,
+                target_widget_name=widget.name,
             )
         )
 
@@ -251,6 +261,7 @@ def _page_field_entries(page):
                 issue.get("message", "Page field metadata is invalid."),
                 page_name=page.name,
                 widget_name=field_name,
+                target_page_name=page.name,
             )
         )
 
@@ -271,6 +282,7 @@ def _page_timer_entries(page):
                 issue.get("message", "Page timer metadata is invalid."),
                 page_name=page.name,
                 widget_name=timer_name,
+                target_page_name=page.name,
             )
         )
 

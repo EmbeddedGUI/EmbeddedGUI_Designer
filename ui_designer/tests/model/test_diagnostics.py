@@ -37,10 +37,14 @@ class TestPageDiagnostics:
         assert codes.count("missing_resource") == 1
         assert any(entry.code == "missing_resource" and "missing on disk" in entry.message for entry in entries)
         assert all(entry.page_name == "main_page" for entry in entries)
+        assert any(entry.code == "invalid_name" and entry.target_page_name == "main_page" and entry.target_widget_name == "bad-name" for entry in entries)
+        assert any(entry.code == "bounds" and entry.target_page_name == "main_page" and entry.target_widget_name == "dup_name" for entry in entries)
         missing_entry = next(entry for entry in entries if entry.code == "missing_resource")
         assert missing_entry.resource_type == "image"
         assert missing_entry.resource_name == "ghost.png"
         assert missing_entry.property_name == "image_file"
+        assert missing_entry.target_page_name == "main_page"
+        assert missing_entry.target_widget_name == "missing_image"
 
     def test_analyze_page_reports_invalid_page_fields(self):
         page = Page.create_default("main_page", screen_width=240, screen_height=320)
@@ -61,6 +65,7 @@ class TestPageDiagnostics:
         assert codes.count("page_field_invalid_name") == 1
         assert any("auto-generated page member" in entry.message for entry in entries)
         assert any("already exists in this page" in entry.message for entry in entries)
+        assert all(entry.target_page_name == "main_page" for entry in entries)
 
     def test_analyze_page_reports_invalid_page_timers(self):
         page = Page.create_default("main_page", screen_width=240, screen_height=320)
@@ -78,6 +83,7 @@ class TestPageDiagnostics:
         assert codes.count("page_timer_conflict") == 1
         assert codes.count("page_timer_missing_callback") == 1
         assert any("callback function name" in entry.message for entry in entries)
+        assert all(entry.target_page_name == "main_page" for entry in entries)
 
     def test_analyze_page_reports_callback_signature_conflicts(self):
         page = Page.create_default("main_page", screen_width=240, screen_height=320)
@@ -113,6 +119,8 @@ class TestPageDiagnostics:
         assert entries[0].resource_type == "string"
         assert entries[0].resource_name == "missing_key"
         assert entries[0].property_name == "text"
+        assert entries[0].target_page_name == "main_page"
+        assert entries[0].target_widget_name == "title"
 
 
 class TestSelectionDiagnostics:
