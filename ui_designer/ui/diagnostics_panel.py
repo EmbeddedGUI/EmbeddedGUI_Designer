@@ -70,6 +70,8 @@ class DiagnosticsPanel(QWidget):
         self._reset_view_button.clicked.connect(self._reset_view)
         self._open_first_error_button = QPushButton("Open First Error")
         self._open_first_error_button.clicked.connect(self._open_first_error)
+        self._open_first_warning_button = QPushButton("Open First Warning")
+        self._open_first_warning_button.clicked.connect(self._open_first_warning)
         self._copy_button = QPushButton("Copy Summary")
         self._copy_button.clicked.connect(self.copy_requested.emit)
         self._copy_json_button = QPushButton("Copy JSON")
@@ -91,6 +93,7 @@ class DiagnosticsPanel(QWidget):
         header_layout.addWidget(self._severity_filter_combo)
         header_layout.addWidget(self._reset_view_button)
         header_layout.addWidget(self._open_first_error_button)
+        header_layout.addWidget(self._open_first_warning_button)
         header_layout.addWidget(self._copy_button)
         header_layout.addWidget(self._copy_json_button)
         header_layout.addWidget(self._export_button)
@@ -108,6 +111,7 @@ class DiagnosticsPanel(QWidget):
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
         self._open_first_error_button.setEnabled(False)
+        self._open_first_warning_button.setEnabled(False)
         self._copy_button.setEnabled(False)
         self._copy_json_button.setEnabled(False)
         self._export_button.setEnabled(False)
@@ -159,6 +163,7 @@ class DiagnosticsPanel(QWidget):
         ]
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
         self._open_first_error_button.setEnabled(self._first_navigable_error(self._entries) is not None)
+        self._open_first_warning_button.setEnabled(self._first_navigable_warning(self._entries) is not None)
         self._copy_button.setEnabled(bool(self._visible_entries))
         self._copy_json_button.setEnabled(bool(self._visible_entries))
         self._export_button.setEnabled(bool(self._visible_entries))
@@ -193,6 +198,12 @@ class DiagnosticsPanel(QWidget):
                 return entry
         return None
 
+    def _first_navigable_warning(self, entries):
+        for entry in entries or []:
+            if getattr(entry, "severity", "") == "warning" and _is_navigable_entry(entry):
+                return entry
+        return None
+
     def _open_first_error(self):
         target_entry = self._first_navigable_error(self._entries)
         if target_entry is None:
@@ -201,6 +212,21 @@ class DiagnosticsPanel(QWidget):
             error_index = self._severity_filter_combo.findData("error")
             if error_index >= 0:
                 self._severity_filter_combo.setCurrentIndex(error_index)
+        for row in range(self._list.count()):
+            item = self._list.item(row)
+            if item.data(Qt.UserRole + 1) is target_entry:
+                self._list.setCurrentItem(item)
+                self._on_item_activated(item)
+                return
+
+    def _open_first_warning(self):
+        target_entry = self._first_navigable_warning(self._entries)
+        if target_entry is None:
+            return
+        if self._current_filter_value() != "warning":
+            warning_index = self._severity_filter_combo.findData("warning")
+            if warning_index >= 0:
+                self._severity_filter_combo.setCurrentIndex(warning_index)
         for row in range(self._list.count()):
             item = self._list.item(row)
             if item.data(Qt.UserRole + 1) is target_entry:
