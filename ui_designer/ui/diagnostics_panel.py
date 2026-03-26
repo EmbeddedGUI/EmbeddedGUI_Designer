@@ -20,6 +20,10 @@ def _format_entry_text(entry):
     return f"[{prefix}] {scope}{widget}: {entry.message}"
 
 
+def _is_navigable_entry(entry):
+    return bool(getattr(entry, "widget_name", "")) and str(getattr(entry, "page_name", "")) != "project"
+
+
 class DiagnosticsPanel(QWidget):
     """Read-only list of diagnostics with optional widget focusing."""
 
@@ -51,6 +55,8 @@ class DiagnosticsPanel(QWidget):
         self._severity_filter_combo.currentIndexChanged.connect(self._apply_filter)
         self._reset_view_button = QPushButton("Reset View")
         self._reset_view_button.clicked.connect(self._reset_view)
+        self._open_first_error_button = QPushButton("Open First Error")
+        self._open_first_error_button.clicked.connect(self._open_first_error)
         self._copy_button = QPushButton("Copy Summary")
         self._copy_button.clicked.connect(self.copy_requested.emit)
         self._copy_json_button = QPushButton("Copy JSON")
@@ -71,6 +77,7 @@ class DiagnosticsPanel(QWidget):
         header_layout.addWidget(self._summary_label, 1)
         header_layout.addWidget(self._severity_filter_combo)
         header_layout.addWidget(self._reset_view_button)
+        header_layout.addWidget(self._open_first_error_button)
         header_layout.addWidget(self._copy_button)
         header_layout.addWidget(self._copy_json_button)
         header_layout.addWidget(self._export_button)
@@ -87,6 +94,7 @@ class DiagnosticsPanel(QWidget):
         self._summary_label.setText("Diagnostics: no active issues")
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
+        self._open_first_error_button.setEnabled(False)
         self._copy_button.setEnabled(False)
         self._copy_json_button.setEnabled(False)
         self._export_button.setEnabled(False)
@@ -137,6 +145,7 @@ class DiagnosticsPanel(QWidget):
             if not self._current_filter_value() or entry.severity == self._current_filter_value()
         ]
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
+        self._open_first_error_button.setEnabled(self._first_navigable_error(self._entries) is not None)
         self._copy_button.setEnabled(bool(self._visible_entries))
         self._copy_json_button.setEnabled(bool(self._visible_entries))
         self._export_button.setEnabled(bool(self._visible_entries))
@@ -164,6 +173,27 @@ class DiagnosticsPanel(QWidget):
 
     def _reset_view(self):
         self._severity_filter_combo.setCurrentIndex(0)
+
+    def _first_navigable_error(self, entries):
+        for entry in entries or []:
+            if getattr(entry, "severity", "") == "error" and _is_navigable_entry(entry):
+                return entry
+        return None
+
+    def _open_first_error(self):
+        target_entry = self._first_navigable_error(self._entries)
+        if target_entry is None:
+            return
+        if self._current_filter_value() != "error":
+            error_index = self._severity_filter_combo.findData("error")
+            if error_index >= 0:
+                self._severity_filter_combo.setCurrentIndex(error_index)
+        for row in range(self._list.count()):
+            item = self._list.item(row)
+            if item.data(Qt.UserRole + 1) is target_entry:
+                self._list.setCurrentItem(item)
+                self._on_item_activated(item)
+                return
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)

@@ -3376,6 +3376,78 @@ class TestMainWindowFileFlow:
         restored._undo_manager.mark_all_saved()
         _close_window(restored)
 
+    def test_diagnostics_panel_open_first_error_activates_first_error(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsOpenFirstErrorDemo"
+        project = _create_project(project_dir, "DiagnosticsOpenFirstErrorDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+        filter_combo = window.diagnostics_panel._severity_filter_combo
+        filter_combo.setCurrentIndex(filter_combo.findData("warning"))
+
+        assert window.diagnostics_panel._open_first_error_button.isEnabled() is True
+        assert window.diagnostics_panel._list.count() == 1
+
+        window.diagnostics_panel._open_first_error_button.click()
+
+        assert filter_combo.currentData() == "error"
+        assert window.diagnostics_panel._list.count() == 1
+        assert window._selection_state.primary is invalid
+        assert window._selection_state.widgets == [invalid]
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_diagnostics_panel_open_first_error_is_disabled_without_errors(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsNoErrorOpenDemo"
+        project = _create_project(project_dir, "DiagnosticsNoErrorOpenDemo", sdk_root)
+        page = project.get_startup_page()
+
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        assert window.diagnostics_panel._open_first_error_button.isEnabled() is False
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_summary_copies_panel_entries(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
