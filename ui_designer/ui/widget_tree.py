@@ -453,6 +453,11 @@ class WidgetTreePanel(QWidget):
             current = current.parent
         return current
 
+    def _widget_path(self, widget):
+        if widget is None:
+            return []
+        return self._ancestor_widgets(widget) + [widget]
+
     def _select_ancestor_widgets(self, widget):
         ancestors = self._ancestor_widgets(widget)
         if not ancestors:
@@ -476,6 +481,17 @@ class WidgetTreePanel(QWidget):
             [root],
             primary=root,
             feedback_message=f"Selected page root: {self._widget_label(root)}.",
+        )
+
+    def _select_widget_path(self, widget):
+        path_widgets = self._widget_path(widget)
+        if not path_widgets:
+            return
+        noun = "widget" if len(path_widgets) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            path_widgets,
+            primary=widget,
+            feedback_message=f"Selected {len(path_widgets)} {noun} in path to {self._widget_label(widget)}.",
         )
 
     def _select_child_widgets(self, widget):
@@ -825,6 +841,7 @@ class WidgetTreePanel(QWidget):
         can_select_parent = widget.parent is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_root = self._root_widget(widget) is not None and self._root_widget(widget) is not widget
+        can_select_path = bool(self._widget_path(widget))
         can_select_children = bool(child_widgets)
         can_select_descendants = bool(descendant_widgets)
         can_select_subtree = bool(subtree_widgets)
@@ -875,6 +892,18 @@ class WidgetTreePanel(QWidget):
         )
         select_root_action.triggered.connect(lambda: self._select_root_widget(widget))
         select_menu.addAction(select_root_action)
+
+        select_path_action = QAction("Path", self)
+        select_path_action.setEnabled(can_select_path)
+        select_path_action.setToolTip(
+            self._structure_tooltip(
+                "Select the full widget path from the page root to this widget.",
+                can_select_path,
+                "widget path is unavailable.",
+            )
+        )
+        select_path_action.triggered.connect(lambda: self._select_widget_path(widget))
+        select_menu.addAction(select_path_action)
 
         select_children_action = QAction("Children", self)
         select_children_action.setEnabled(can_select_children)
@@ -1051,6 +1080,7 @@ class WidgetTreePanel(QWidget):
             can_select_parent,
             can_select_ancestors,
             can_select_root,
+            can_select_path,
             can_select_children,
             can_select_descendants,
             can_select_subtree,
