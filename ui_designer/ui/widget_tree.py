@@ -472,6 +472,33 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(siblings)} {noun} under {self._widget_label(parent)}.",
         )
 
+    def _same_type_widgets(self, widget):
+        if widget is None:
+            return []
+        widget_type = getattr(widget, "widget_type", "")
+        return [
+            current
+            for current in self._iter_widgets() or []
+            if current is not None and getattr(current, "widget_type", "") == widget_type
+        ]
+
+    def _select_same_type_widgets(self, widget):
+        matches = self._same_type_widgets(widget)
+        if len(matches) <= 1:
+            if widget is not None:
+                widget_type = getattr(widget, "widget_type", "widget")
+                self.feedback_message.emit(
+                    f"Cannot select same type: no other {widget_type} widgets exist on this page."
+                )
+            return
+        widget_type = getattr(widget, "widget_type", "widget")
+        noun = "widget" if len(matches) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            matches,
+            primary=widget if widget in matches else matches[0],
+            feedback_message=f"Selected {len(matches)} {widget_type} {noun}.",
+        )
+
     def _populate_select_menu(self, select_menu, widget):
         if select_menu is None or widget is None:
             return
@@ -479,9 +506,11 @@ class WidgetTreePanel(QWidget):
         select_menu.setToolTipsVisible(True)
         child_widgets = [child for child in getattr(widget, "children", []) if child is not None]
         sibling_widgets = self._sibling_widgets(widget)
+        same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
         can_select_children = bool(child_widgets)
         can_select_siblings = len(sibling_widgets) > 1
+        can_select_same_type = len(same_type_widgets) > 1
 
         select_parent_action = QAction("Parent", self)
         select_parent_action.setEnabled(can_select_parent)
@@ -520,7 +549,19 @@ class WidgetTreePanel(QWidget):
         )
         select_siblings_action.triggered.connect(lambda: self._select_sibling_widgets(widget))
         select_menu.addAction(select_siblings_action)
-        select_enabled = any([can_select_parent, can_select_children, can_select_siblings])
+
+        select_same_type_action = QAction("Same Type", self)
+        select_same_type_action.setEnabled(can_select_same_type)
+        select_same_type_action.setToolTip(
+            self._structure_tooltip(
+                f"Select all {getattr(widget, 'widget_type', 'widget')} widgets on this page.",
+                can_select_same_type,
+                f"no other {getattr(widget, 'widget_type', 'widget')} widgets exist on this page.",
+            )
+        )
+        select_same_type_action.triggered.connect(lambda: self._select_same_type_widgets(widget))
+        select_menu.addAction(select_same_type_action)
+        select_enabled = any([can_select_parent, can_select_children, can_select_siblings, can_select_same_type])
         select_menu.menuAction().setEnabled(select_enabled)
         if not select_enabled:
             select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")

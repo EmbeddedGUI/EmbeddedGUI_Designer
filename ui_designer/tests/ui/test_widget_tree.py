@@ -919,6 +919,11 @@ class TestWidgetTreePanel:
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         root_menu.deleteLater()
 
+        first_menu = panel._build_context_menu(first)
+        first_actions = _select_menu_actions(first_menu)
+        assert first_actions["Same Type"].isEnabled() is True
+        first_menu.deleteLater()
+
         container_menu = panel._build_context_menu(container)
         container_actions = _select_menu_actions(container_menu)
         assert container_actions["Parent"].isEnabled() is True
@@ -931,7 +936,9 @@ class TestWidgetTreePanel:
         assert child_actions["Parent"].isEnabled() is True
         assert child_actions["Children"].isEnabled() is False
         assert child_actions["Siblings"].isEnabled() is True
+        assert child_actions["Same Type"].isEnabled() is False
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
+        assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
         panel.deleteLater()
 
@@ -944,10 +951,12 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         child_a = WidgetModel("switch", name="child_a")
         child_b = WidgetModel("button", name="child_b")
+        same_type = WidgetModel("button", name="same_type")
         container.add_child(child_a)
         container.add_child(child_b)
         root.add_child(other)
         root.add_child(container)
+        root.add_child(same_type)
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -988,6 +997,15 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["child_a", "child_b"], "child_b")
         assert feedback[-1] == "Selected 2 widgets under container."
         siblings_menu.deleteLater()
+
+        same_type_menu = panel._build_context_menu(child_b)
+        same_type_actions = _select_menu_actions(same_type_menu)
+        same_type_actions["Same Type"].trigger()
+        assert panel.selected_widgets() == [child_b, same_type]
+        assert panel._get_selected_widget() is child_b
+        assert selection_events[-1] == (["child_b", "same_type"], "child_b")
+        assert feedback[-1] == "Selected 2 button widgets."
+        same_type_menu.deleteLater()
         panel.deleteLater()
 
     def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):
