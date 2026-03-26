@@ -5984,7 +5984,9 @@ class TestMainWindowCanvasActions:
         assert "Leaves" in select_labels
         assert "Containers" in select_labels
         assert "Layout Containers" in select_labels
+        assert "Visible" in select_labels
         assert "Hidden" in select_labels
+        assert "Unlocked" in select_labels
         assert "Locked" in select_labels
         assert "Managed" in select_labels
         assert "Free Position" in select_labels
@@ -6292,6 +6294,16 @@ class TestMainWindowCanvasActions:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
 
+        visible_menu = window._build_preview_context_menu(container)
+        visible_select_menu = next(action.menu() for action in visible_menu.actions() if action.text() == "Select")
+        select_visible_action = next(action for action in visible_select_menu.actions() if action.text() == "Visible")
+        select_visible_action.trigger()
+        assert window._selection_state.primary is container
+        assert window._selection_state.widgets == [container, locked_group, locked_leaf]
+        assert window.widget_tree.selected_widgets() == [container, locked_group, locked_leaf]
+        assert window.preview_panel.selected_widgets() == [container, locked_group, locked_leaf]
+        assert window.statusBar().currentMessage() == "Selected 3 visible widgets in subtree of container."
+
         hidden_menu = window._build_preview_context_menu(container)
         hidden_select_menu = next(action.menu() for action in hidden_menu.actions() if action.text() == "Select")
         select_hidden_action = next(action for action in hidden_select_menu.actions() if action.text() == "Hidden")
@@ -6301,6 +6313,16 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [hidden_self, hidden_leaf]
         assert window.preview_panel.selected_widgets() == [hidden_self, hidden_leaf]
         assert window.statusBar().currentMessage() == "Selected 2 hidden widgets in subtree of container."
+
+        unlocked_menu = window._build_preview_context_menu(container)
+        unlocked_select_menu = next(action.menu() for action in unlocked_menu.actions() if action.text() == "Select")
+        select_unlocked_action = next(action for action in unlocked_select_menu.actions() if action.text() == "Unlocked")
+        select_unlocked_action.trigger()
+        assert window._selection_state.primary is container
+        assert window._selection_state.widgets == [container, hidden_self, hidden_leaf]
+        assert window.widget_tree.selected_widgets() == [container, hidden_self, hidden_leaf]
+        assert window.preview_panel.selected_widgets() == [container, hidden_self, hidden_leaf]
+        assert window.statusBar().currentMessage() == "Selected 3 unlocked widgets in subtree of container."
 
         locked_menu = window._build_preview_context_menu(container)
         locked_select_menu = next(action.menu() for action in locked_menu.actions() if action.text() == "Select")

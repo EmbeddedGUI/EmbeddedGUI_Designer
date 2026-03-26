@@ -920,7 +920,9 @@ class TestWidgetTreePanel:
         assert root_actions["Leaves"].isEnabled() is True
         assert root_actions["Containers"].isEnabled() is True
         assert root_actions["Layout Containers"].isEnabled() is False
+        assert root_actions["Visible"].isEnabled() is True
         assert root_actions["Hidden"].isEnabled() is False
+        assert root_actions["Unlocked"].isEnabled() is True
         assert root_actions["Locked"].isEnabled() is False
         assert root_actions["Managed"].isEnabled() is False
         assert root_actions["Free Position"].isEnabled() is True
@@ -949,6 +951,8 @@ class TestWidgetTreePanel:
         assert container_actions["Leaves"].isEnabled() is True
         assert container_actions["Containers"].isEnabled() is False
         assert container_actions["Layout Containers"].isEnabled() is False
+        assert container_actions["Visible"].isEnabled() is True
+        assert container_actions["Unlocked"].isEnabled() is True
         assert container_actions["Managed"].isEnabled() is False
         assert container_actions["Free Position"].isEnabled() is True
         assert container_actions["Siblings"].isEnabled() is True
@@ -964,7 +968,9 @@ class TestWidgetTreePanel:
         assert child_actions["Leaves"].isEnabled() is False
         assert child_actions["Containers"].isEnabled() is False
         assert child_actions["Layout Containers"].isEnabled() is False
+        assert child_actions["Visible"].isEnabled() is True
         assert child_actions["Hidden"].isEnabled() is False
+        assert child_actions["Unlocked"].isEnabled() is True
         assert child_actions["Locked"].isEnabled() is False
         assert child_actions["Managed"].isEnabled() is False
         assert child_actions["Free Position"].isEnabled() is True
@@ -1131,6 +1137,15 @@ class TestWidgetTreePanel:
         )
         panel.feedback_message.connect(lambda message: feedback.append(message))
 
+        visible_menu = panel._build_context_menu(container)
+        visible_actions = _select_menu_actions(visible_menu)
+        visible_actions["Visible"].trigger()
+        assert panel.selected_widgets() == [container, locked_self, locked_leaf, visible_leaf]
+        assert panel._get_selected_widget() is container
+        assert selection_events[-1] == (["container", "locked_self", "locked_leaf", "visible_leaf"], "container")
+        assert feedback[-1] == "Selected 4 visible widgets in subtree of container."
+        visible_menu.deleteLater()
+
         hidden_menu = panel._build_context_menu(container)
         hidden_actions = _select_menu_actions(hidden_menu)
         hidden_actions["Hidden"].trigger()
@@ -1139,6 +1154,15 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["hidden_self", "hidden_leaf"], "hidden_self")
         assert feedback[-1] == "Selected 2 hidden widgets in subtree of container."
         hidden_menu.deleteLater()
+
+        unlocked_menu = panel._build_context_menu(container)
+        unlocked_actions = _select_menu_actions(unlocked_menu)
+        unlocked_actions["Unlocked"].trigger()
+        assert panel.selected_widgets() == [container, hidden_self, hidden_leaf, visible_leaf]
+        assert panel._get_selected_widget() is container
+        assert selection_events[-1] == (["container", "hidden_self", "hidden_leaf", "visible_leaf"], "container")
+        assert feedback[-1] == "Selected 4 unlocked widgets in subtree of container."
+        unlocked_menu.deleteLater()
 
         locked_menu = panel._build_context_menu(container)
         locked_actions = _select_menu_actions(locked_menu)

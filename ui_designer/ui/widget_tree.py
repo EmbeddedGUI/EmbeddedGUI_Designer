@@ -584,11 +584,25 @@ class WidgetTreePanel(QWidget):
             if self._widget_uses_layout(current)
         ]
 
+    def _visible_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if not getattr(current, "designer_hidden", False)
+        ]
+
     def _managed_subtree_widgets(self, widget):
         return [
             current
             for current in self._widgets_including_self(widget)
             if self._widget_parent_uses_layout(current)
+        ]
+
+    def _unlocked_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if not getattr(current, "designer_locked", False)
         ]
 
     def _free_position_subtree_widgets(self, widget):
@@ -612,6 +626,20 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(hidden_widgets)} hidden {noun} in subtree of {self._widget_label(widget)}.",
         )
 
+    def _select_visible_subtree_widgets(self, widget):
+        visible_widgets = self._visible_subtree_widgets(widget)
+        if not visible_widgets:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select visible widgets: no visible widgets exist in this subtree.")
+            return
+        noun = "widget" if len(visible_widgets) == 1 else "widgets"
+        primary = widget if widget in visible_widgets else visible_widgets[0]
+        self._apply_programmatic_selection(
+            visible_widgets,
+            primary=primary,
+            feedback_message=f"Selected {len(visible_widgets)} visible {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
     def _locked_subtree_widgets(self, widget):
         return [
             current
@@ -631,6 +659,20 @@ class WidgetTreePanel(QWidget):
             locked_widgets,
             primary=primary,
             feedback_message=f"Selected {len(locked_widgets)} locked {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
+    def _select_unlocked_subtree_widgets(self, widget):
+        unlocked_widgets = self._unlocked_subtree_widgets(widget)
+        if not unlocked_widgets:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select unlocked widgets: no unlocked widgets exist in this subtree.")
+            return
+        noun = "widget" if len(unlocked_widgets) == 1 else "widgets"
+        primary = widget if widget in unlocked_widgets else unlocked_widgets[0]
+        self._apply_programmatic_selection(
+            unlocked_widgets,
+            primary=primary,
+            feedback_message=f"Selected {len(unlocked_widgets)} unlocked {noun} in subtree of {self._widget_label(widget)}.",
         )
 
     def _select_layout_container_subtree_widgets(self, widget):
@@ -751,7 +793,9 @@ class WidgetTreePanel(QWidget):
         subtree_widgets = self._subtree_widgets(widget)
         leaf_descendant_widgets = self._leaf_descendant_widgets(widget)
         container_subtree_widgets = self._container_subtree_widgets(widget)
+        visible_subtree_widgets = self._visible_subtree_widgets(widget)
         hidden_subtree_widgets = self._hidden_subtree_widgets(widget)
+        unlocked_subtree_widgets = self._unlocked_subtree_widgets(widget)
         locked_subtree_widgets = self._locked_subtree_widgets(widget)
         layout_container_subtree_widgets = self._layout_container_subtree_widgets(widget)
         managed_subtree_widgets = self._managed_subtree_widgets(widget)
@@ -765,7 +809,9 @@ class WidgetTreePanel(QWidget):
         can_select_subtree = bool(subtree_widgets)
         can_select_leaves = bool(leaf_descendant_widgets)
         can_select_containers = len(container_subtree_widgets) > 1
+        can_select_visible = bool(visible_subtree_widgets)
         can_select_hidden = bool(hidden_subtree_widgets)
+        can_select_unlocked = bool(unlocked_subtree_widgets)
         can_select_locked = bool(locked_subtree_widgets)
         can_select_layout_containers = bool(layout_container_subtree_widgets)
         can_select_managed = bool(managed_subtree_widgets)
@@ -871,6 +917,18 @@ class WidgetTreePanel(QWidget):
         )
         select_menu.addAction(select_layout_containers_action)
 
+        select_visible_action = QAction("Visible", self)
+        select_visible_action.setEnabled(can_select_visible)
+        select_visible_action.setToolTip(
+            self._structure_tooltip(
+                "Select visible widgets in this subtree.",
+                can_select_visible,
+                "no visible widgets exist in this subtree.",
+            )
+        )
+        select_visible_action.triggered.connect(lambda: self._select_visible_subtree_widgets(widget))
+        select_menu.addAction(select_visible_action)
+
         select_hidden_action = QAction("Hidden", self)
         select_hidden_action.setEnabled(can_select_hidden)
         select_hidden_action.setToolTip(
@@ -882,6 +940,18 @@ class WidgetTreePanel(QWidget):
         )
         select_hidden_action.triggered.connect(lambda: self._select_hidden_subtree_widgets(widget))
         select_menu.addAction(select_hidden_action)
+
+        select_unlocked_action = QAction("Unlocked", self)
+        select_unlocked_action.setEnabled(can_select_unlocked)
+        select_unlocked_action.setToolTip(
+            self._structure_tooltip(
+                "Select unlocked widgets in this subtree.",
+                can_select_unlocked,
+                "no unlocked widgets exist in this subtree.",
+            )
+        )
+        select_unlocked_action.triggered.connect(lambda: self._select_unlocked_subtree_widgets(widget))
+        select_menu.addAction(select_unlocked_action)
 
         select_locked_action = QAction("Locked", self)
         select_locked_action.setEnabled(can_select_locked)
@@ -953,7 +1023,9 @@ class WidgetTreePanel(QWidget):
             can_select_leaves,
             can_select_containers,
             can_select_layout_containers,
+            can_select_visible,
             can_select_hidden,
+            can_select_unlocked,
             can_select_locked,
             can_select_managed,
             can_select_free_position,
