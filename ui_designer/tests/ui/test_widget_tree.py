@@ -287,6 +287,32 @@ class TestWidgetTreePanel:
         assert feedback == ["Cannot delete widget: locked_widget is locked."]
         panel.deleteLater()
 
+    def test_delete_selection_clears_removed_recent_move_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        removable = WidgetModel("label", name="removable")
+        sibling = WidgetModel("button", name="sibling")
+        root.add_child(target)
+        root.add_child(removable)
+        root.add_child(sibling)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        feedback = []
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+        panel.remember_move_target(target, "root_group / target (group)")
+        panel.set_selected_widgets([target], primary=target)
+
+        panel._on_delete_clicked()
+
+        assert target not in root.children
+        assert panel.recent_move_target_labels() == []
+        assert feedback == ["Deleted 1 widget(s); cleared 1 recent move target"]
+        panel.deleteLater()
+
     def test_group_selected_widgets_emits_tree_change_and_selects_group(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

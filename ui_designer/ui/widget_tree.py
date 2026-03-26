@@ -448,16 +448,20 @@ class WidgetTreePanel(QWidget):
             if isinstance(entry, str):
                 widget = None
                 fallback_label = entry
+                tracked = False
             else:
                 widget = entry.get("widget")
                 fallback_label = entry.get("label", "")
+                tracked = bool(entry.get("tracked", widget is not None))
             if widget is not None and id(widget) not in valid_widget_ids:
+                if tracked:
+                    continue
                 widget = None
             label = self._current_move_target_label(widget, fallback_label)
             if not label or label in seen:
                 continue
             seen.add(label)
-            normalized.append({"widget": widget, "label": label})
+            normalized.append({"widget": widget, "label": label, "tracked": tracked})
         self._remembered_move_target_labels[key] = normalized[: self._MAX_RECENT_MOVE_TARGETS]
         return list(self._remembered_move_target_labels[key])
 
@@ -473,7 +477,7 @@ class WidgetTreePanel(QWidget):
             return
         normalized = (label or "").strip()
         if normalized:
-            self._remembered_move_target_labels[key] = [{"widget": None, "label": normalized}]
+            self._remembered_move_target_labels[key] = [{"widget": None, "label": normalized, "tracked": False}]
         else:
             self._remembered_move_target_labels.pop(key, None)
 
@@ -487,7 +491,7 @@ class WidgetTreePanel(QWidget):
         normalized = self._current_move_target_label(widget, label)
         if not normalized:
             return
-        history = [{"widget": widget, "label": normalized}]
+        history = [{"widget": widget, "label": normalized, "tracked": widget is not None}]
         for entry in self._move_target_history_entries():
             same_widget = widget is not None and entry.get("widget") is widget
             same_label = entry.get("label") == normalized
@@ -495,6 +499,28 @@ class WidgetTreePanel(QWidget):
                 continue
             history.append(entry)
         self._remembered_move_target_labels[key] = history[: self._MAX_RECENT_MOVE_TARGETS]
+
+    def forget_move_targets_for_widgets(self, widgets):
+        key = self._move_target_memory_key()
+        if key is None:
+            return 0
+        removed_ids = set()
+        for widget in widgets or []:
+            if widget is None:
+                continue
+            removed_ids.update(id(current) for current in widget.get_all_widgets_flat())
+        if not removed_ids:
+            return 0
+        kept = []
+        removed_count = 0
+        for entry in self._move_target_history_entries():
+            widget = entry.get("widget")
+            if widget is not None and id(widget) in removed_ids:
+                removed_count += 1
+                continue
+            kept.append(entry)
+        self._remembered_move_target_labels[key] = kept
+        return removed_count
 
     def clear_remembered_move_target_labels(self):
         key = self._move_target_memory_key()
@@ -680,6 +706,10 @@ class WidgetTreePanel(QWidget):
             noun = "target" if count == 1 else "targets"
             return f"Forget {count} recent move-into {noun} for the current page"
         return "Forget recent move-into targets for the current page"
+
+    def _cleared_move_target_history_text(self, count):
+        noun = "target" if count == 1 else "targets"
+        return f"cleared {count} recent move {noun}"
 
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
@@ -880,8 +910,10 @@ class WidgetTreePanel(QWidget):
                 self.feedback_message.emit(f"Cannot delete selection: {self._locked_widget_summary(locked_count)}.")
             return
 
+        deleted_widgets = self._top_level_selected_widgets(deletable)
+        removed_targets = self.forget_move_targets_for_widgets(deleted_widgets)
         deleted_count = 0
-        for widget in self._top_level_selected_widgets(deletable):
+        for widget in deleted_widgets:
             if widget.parent:
                 widget.parent.remove_child(widget)
             elif widget in self.project.root_widgets:
@@ -891,8 +923,13 @@ class WidgetTreePanel(QWidget):
         self.rebuild_tree()
         self.set_selected_widgets([], primary=None)
         self._emit_tree_changed("widget delete")
+        extras = []
+        if removed_targets:
+            extras.append(self._cleared_move_target_history_text(removed_targets))
         if locked_count:
-            self.feedback_message.emit(f"Deleted {deleted_count} widget(s); skipped {self._locked_widget_summary(locked_count)}")
+            extras.append(f"skipped {self._locked_widget_summary(locked_count)}")
+        if extras:
+            self.feedback_message.emit(f"Deleted {deleted_count} widget(s); " + "; ".join(extras))
 
     def _on_context_menu(self, pos):
         item = self.tree.itemAt(pos)
@@ -1116,6 +1153,7 @@ class WidgetTreePanel(QWidget):
         if getattr(widget, "designer_locked", False):
             self.feedback_message.emit(f"Cannot delete widget: {widget.name} is locked.")
             return
+        removed_targets = self.forget_move_targets_for_widgets([widget])
         if widget.parent:
             widget.parent.remove_child(widget)
         elif widget in self.project.root_widgets:
@@ -1123,6 +1161,8 @@ class WidgetTreePanel(QWidget):
         self.rebuild_tree()
         self.set_selected_widgets([], primary=None)
         self._emit_tree_changed("widget delete")
+        if removed_targets:
+            self.feedback_message.emit(f"Deleted widget; {self._cleared_move_target_history_text(removed_targets)}.")
 
     def _group_selected_widgets(self, widgets=None):
         self._apply_structure_result(group_selection(self.project, widgets or self.selected_widgets()))

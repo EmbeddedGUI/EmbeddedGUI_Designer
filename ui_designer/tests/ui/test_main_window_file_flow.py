@@ -458,10 +458,11 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([locked], primary=locked, sync_tree=False, sync_preview=False)
 
-        deleted_count, skipped_locked = window._delete_selection()
+        deleted_count, skipped_locked, removed_targets = window._delete_selection()
 
         assert deleted_count == 0
         assert skipped_locked == 1
+        assert removed_targets == 0
         assert locked in project.get_startup_page().root_widget.children
         assert window.statusBar().currentMessage() == "Cannot delete selection: 1 locked widget."
         _close_window(window)
@@ -491,10 +492,11 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([removable, locked], primary=removable, sync_tree=False, sync_preview=False)
 
-        deleted_count, skipped_locked = window._delete_selection()
+        deleted_count, skipped_locked, removed_targets = window._delete_selection()
 
         assert deleted_count == 1
         assert skipped_locked == 1
+        assert removed_targets == 0
         assert removable not in root.children
         assert locked in root.children
         assert window.statusBar().currentMessage() == "Deleted 1 widget(s); skipped 1 locked widget"
@@ -531,6 +533,42 @@ class TestMainWindowFileFlow:
         assert len(window._clipboard_payload["widgets"]) == 1
         assert window._clipboard_payload["widgets"][0]["name"] == "removable"
         assert window.statusBar().currentMessage() == "Cut 1 widget(s); skipped 1 locked widget"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_delete_selection_clears_removed_recent_move_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DeleteRecentMoveTargetDemo"
+        project = _create_project(project_dir, "DeleteRecentMoveTargetDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        sibling = WidgetModel("label", name="sibling")
+        root.add_child(target)
+        root.add_child(sibling)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window.widget_tree.remember_move_target(target, "root_group / target (group)")
+        window._set_selection([target], primary=target, sync_tree=True, sync_preview=False)
+
+        deleted_count, skipped_locked, removed_targets = window._delete_selection()
+
+        assert deleted_count == 1
+        assert skipped_locked == 0
+        assert removed_targets == 1
+        assert target not in root.children
+        assert window.widget_tree.recent_move_target_labels() == []
+        assert window.statusBar().currentMessage() == "Deleted 1 widget(s); cleared 1 recent move target"
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

@@ -4108,6 +4108,10 @@ class MainWindow(QMainWindow):
         noun = "widget" if count == 1 else "widgets"
         return f"{count} locked {noun}"
 
+    def _cleared_move_target_history_text(self, count):
+        noun = "target" if count == 1 else "targets"
+        return f"cleared {count} recent move {noun}"
+
     def _show_selection_action_blocked(self, action, reason):
         self.statusBar().showMessage(f"Cannot {action}: {reason}.", 4000)
 
@@ -4174,9 +4178,11 @@ class MainWindow(QMainWindow):
             return
         self._clipboard_payload = payload
         self._paste_serial = 0
-        deleted_count, skipped_locked = self._delete_selection()
+        deleted_count, skipped_locked, removed_targets = self._delete_selection()
         if deleted_count:
             message = f"Cut {deleted_count} widget(s)"
+            if removed_targets:
+                message += f"; {self._cleared_move_target_history_text(removed_targets)}"
             if skipped_locked:
                 message += f"; skipped {self._locked_widget_summary(skipped_locked)}"
             self.statusBar().showMessage(message, 3000)
@@ -4199,7 +4205,9 @@ class MainWindow(QMainWindow):
         if not widgets:
             if locked_count:
                 self.statusBar().showMessage(f"Cannot delete selection: {self._locked_widget_summary(locked_count)}.", 4000)
-            return 0, locked_count
+            return 0, locked_count, 0
+
+        removed_targets = self.widget_tree.forget_move_targets_for_widgets(widgets)
 
         for widget in widgets:
             if widget.parent is not None:
@@ -4209,10 +4217,12 @@ class MainWindow(QMainWindow):
         self._clear_selection(sync_tree=True, sync_preview=True)
         self._record_page_state_change(source="widget delete")
         message = f"Deleted {len(widgets)} widget(s)"
+        if removed_targets:
+            message += f"; {self._cleared_move_target_history_text(removed_targets)}"
         if locked_count:
             message += f"; skipped {self._locked_widget_summary(locked_count)}"
         self.statusBar().showMessage(message, 3000)
-        return len(widgets), locked_count
+        return len(widgets), locked_count, removed_targets
 
     def _align_selection(self, mode):
         selected_widgets = self._top_level_selected_widgets()
