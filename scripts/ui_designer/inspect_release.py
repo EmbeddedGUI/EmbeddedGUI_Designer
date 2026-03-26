@@ -32,7 +32,7 @@ def _parse_args():
     parser = argparse.ArgumentParser(description="Inspect UI Designer release or package metadata")
     parser.add_argument(
         "path",
-        help="Path to a release root, release-manifest.json, packaged app dir, or bundled SDK dir",
+        help="Path to a release root, release-manifest.json, VERSION.txt, packaged app dir, or bundled SDK dir",
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     return parser.parse_args()
@@ -52,6 +52,24 @@ def _load_json_dict(path: Path) -> dict[str, object]:
     except (OSError, ValueError, TypeError):
         return {}
     return content if isinstance(content, dict) else {}
+
+
+def _load_version_text(path: Path) -> dict[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+
+    payload: dict[str, str] = {}
+    for line in lines:
+        key, sep, value = line.partition("=")
+        if not sep:
+            continue
+        normalized_key = _string(key)
+        if not normalized_key:
+            continue
+        payload[normalized_key] = _string(value)
+    return payload
 
 
 def _first_diagnostic_text(manifest: dict[str, object]) -> str:
@@ -130,6 +148,25 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
     }
 
 
+def summarize_version_file(version_path: str | Path) -> dict[str, object]:
+    resolved_path = Path(version_path).resolve()
+    version_data = _load_version_text(resolved_path)
+    if not version_data:
+        raise ValueError(f"invalid version file: {resolved_path}")
+
+    return {
+        "kind": "release_version",
+        "source_path": str(resolved_path),
+        "build_id": _string(version_data.get("build_id")),
+        "app_name": _string(version_data.get("app")),
+        "profile_id": _string(version_data.get("profile")),
+        "designer_revision": _string(version_data.get("designer_revision")),
+        "sdk_source_kind": _string(version_data.get("sdk_source_kind")),
+        "sdk_revision": _string(version_data.get("sdk_revision")),
+        "sdk_commit": _string(version_data.get("sdk_commit")),
+    }
+
+
 def summarize_sdk_bundle(sdk_root: str | Path) -> dict[str, object]:
     resolved_sdk_root = Path(sdk_root).resolve()
     metadata_path = resolved_sdk_root / BUNDLED_SDK_METADATA_NAME
@@ -200,13 +237,15 @@ def inspect_path(path: str | Path) -> dict[str, object]:
     elif resolved_path.is_file():
         if resolved_path.name == "release-manifest.json":
             return summarize_manifest(resolved_path)
+        if resolved_path.name.lower() == "version.txt":
+            return summarize_version_file(resolved_path)
         if resolved_path.name == DESIGNER_BUILD_METADATA_NAME:
             return summarize_packaged_app(resolved_path.parent)
         if resolved_path.name == BUNDLED_SDK_METADATA_NAME:
             return summarize_sdk_bundle(resolved_path.parent)
 
     raise ValueError(
-        "path must point to a release root, release-manifest.json, packaged app directory, or bundled SDK directory"
+        "path must point to a release root, release-manifest.json, VERSION.txt, packaged app directory, or bundled SDK directory"
     )
 
 

@@ -133,6 +133,43 @@ def test_inspect_packaged_app_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["file_count"] == 42
 
 
+def test_inspect_version_file_emits_json(monkeypatch, tmp_path, capsys):
+    module = _load_module()
+
+    version_path = tmp_path / "release" / "VERSION.txt"
+    version_path.parent.mkdir(parents=True)
+    version_path.write_text(
+        "\n".join(
+            (
+                "app=DemoApp",
+                "profile=windows-pc",
+                "designer_revision=designer-main-123",
+                "sdk_source_kind=submodule",
+                "sdk_revision=sdk-main-456",
+                "sdk_commit=abcdef1234567890",
+                "build_id=20260325T000000Z",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"path": str(version_path), "json": True})())
+
+    exit_code = module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == module.EXIT_OK
+    assert payload["kind"] == "release_version"
+    assert payload["app_name"] == "DemoApp"
+    assert payload["profile_id"] == "windows-pc"
+    assert payload["designer_revision"] == "designer-main-123"
+    assert payload["sdk_source_kind"] == "submodule"
+    assert payload["sdk_revision"] == "sdk-main-456"
+    assert payload["sdk_commit"] == "abcdef1234567890"
+    assert payload["build_id"] == "20260325T000000Z"
+
+
 def test_inspect_profile_directory_uses_latest_build(monkeypatch, tmp_path, capsys):
     module = _load_module()
 
