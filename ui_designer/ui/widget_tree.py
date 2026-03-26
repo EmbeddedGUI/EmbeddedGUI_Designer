@@ -152,6 +152,7 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_item = None
         self._drag_hover_position = None
         self._drag_target_item = None
+        self._remembered_move_target_label = ""
         self._drag_hover_expand_timer = QTimer(self)
         self._drag_hover_expand_timer.setSingleShot(True)
         self._drag_hover_expand_timer.setInterval(350)
@@ -399,6 +400,12 @@ class WidgetTreePanel(QWidget):
                 widgets.append(widget)
         return widgets
 
+    def remembered_move_target_label(self):
+        return self._remembered_move_target_label
+
+    def set_remembered_move_target_label(self, label):
+        self._remembered_move_target_label = (label or "").strip()
+
     def set_selected_widgets(self, widgets, primary=None):
         self._clear_tree_drag_hover()
         self._syncing_selection = True
@@ -498,6 +505,35 @@ class WidgetTreePanel(QWidget):
                 return reason
         return state.blocked_reason
 
+    def _move_target_choices(self, widgets):
+        return available_move_targets(self.project, widgets)
+
+    def _quick_move_target_choices(self, widgets):
+        choices = self._move_target_choices(widgets)
+        remembered_label = self.remembered_move_target_label()
+        if not remembered_label:
+            return choices
+
+        remembered = [choice for choice in choices if choice.label == remembered_label]
+        if not remembered:
+            return choices
+        return remembered + [choice for choice in choices if choice.label != remembered_label]
+
+    def _move_target_default_index(self, choices):
+        remembered_label = self.remembered_move_target_label()
+        if not remembered_label:
+            return 0
+        for index, choice in enumerate(choices):
+            if choice.label == remembered_label:
+                return index
+        return 0
+
+    def _resolve_move_target_label(self, widgets, target_widget):
+        for choice in self._move_target_choices(widgets):
+            if choice.widget is target_widget:
+                return choice.label
+        return ""
+
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
             return
@@ -521,12 +557,16 @@ class WidgetTreePanel(QWidget):
 
         state = state or self._structure_action_state()
         self._into_quick_menu.clear()
-        choices = available_move_targets(self.project, state.widgets)
+        choices = self._quick_move_target_choices(state.widgets)
         for choice in choices:
             action = QAction(choice.label, self)
             action.setToolTip(f"Move the current selection into {choice.label}.")
             action.triggered.connect(
-                lambda checked=False, target=choice.widget, widgets=list(state.widgets): self._move_selected_widgets_into(target_widget=target, widgets=widgets)
+                lambda checked=False, target=choice.widget, target_label=choice.label, widgets=list(state.widgets): self._move_selected_widgets_into(
+                    target_widget=target,
+                    widgets=widgets,
+                    target_label=target_label,
+                )
             )
             self._into_quick_menu.addAction(action)
 
@@ -586,8 +626,8 @@ class WidgetTreePanel(QWidget):
             self.feedback_message.emit(result.message)
         return True
 
-    def _choose_move_target(self, widgets):
-        choices = available_move_targets(self.project, widgets)
+    def _choose_move_target_choice(self, widgets):
+        choices = self._move_target_choices(widgets)
         if not choices:
             self.feedback_message.emit("Cannot move into container: no eligible target containers are available.")
             return None
@@ -598,7 +638,7 @@ class WidgetTreePanel(QWidget):
             "Move Into Container",
             "Target container:",
             labels,
-            0,
+            self._move_target_default_index(choices),
             False,
         )
         if not ok or not selected_label:
@@ -606,7 +646,7 @@ class WidgetTreePanel(QWidget):
 
         for choice in choices:
             if choice.label == selected_label:
-                return choice.widget
+                return choice
         return None
 
     def _on_add_clicked(self):
@@ -744,7 +784,7 @@ class WidgetTreePanel(QWidget):
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
         if structure_state.can_move_into:
-            quick_targets = available_move_targets(self.project, context_widgets)
+            quick_targets = self._quick_move_target_choices(context_widgets)
             if quick_targets:
                 quick_move_menu = structure_menu.addMenu("Quick Move Into")
                 quick_move_menu.setToolTipsVisible(True)
@@ -753,7 +793,11 @@ class WidgetTreePanel(QWidget):
                     quick_action = QAction(choice.label, self)
                     quick_action.setToolTip(f"Move the current selection into {choice.label}.")
                     quick_action.triggered.connect(
-                        lambda checked=False, target=choice.widget: self._move_selected_widgets_into(target_widget=target, widgets=context_widgets)
+                        lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selected_widgets_into(
+                            target_widget=target,
+                            widgets=context_widgets,
+                            target_label=target_label,
+                        )
                     )
                     quick_move_menu.addAction(quick_action)
 
@@ -896,12 +940,20 @@ class WidgetTreePanel(QWidget):
     def _ungroup_selected_widgets(self, widgets=None):
         self._apply_structure_result(ungroup_selection(self.project, widgets or self.selected_widgets()))
 
-    def _move_selected_widgets_into(self, target_widget=None, widgets=None):
+    def _move_selected_widgets_into(self, target_widget=None, widgets=None, target_label=""):
         widgets = widgets or self.selected_widgets()
-        target_widget = target_widget or self._choose_move_target(widgets)
+        if target_widget is None:
+            target_choice = self._choose_move_target_choice(widgets)
+            if target_choice is None:
+                return
+            target_widget = target_choice.widget
+            target_label = target_choice.label
+        elif not target_label:
+            target_label = self._resolve_move_target_label(widgets, target_widget)
         if target_widget is None:
             return
-        self._apply_structure_result(move_into_container(self.project, widgets, target_widget))
+        if self._apply_structure_result(move_into_container(self.project, widgets, target_widget)) and target_label:
+            self.set_remembered_move_target_label(target_label)
 
     def _lift_selected_widgets(self, widgets=None):
         self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))

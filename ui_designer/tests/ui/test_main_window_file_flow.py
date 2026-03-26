@@ -834,6 +834,59 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_move_selection_into_container_dialog_prefers_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RememberMoveIntoDemo"
+        project = _create_project(project_dir, "RememberMoveIntoDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=False, sync_preview=False)
+        window._move_selection_into_target(
+            target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        window._set_selection([second], primary=second, sync_tree=False, sync_preview=False)
+        captured = {}
+
+        def _fake_get_item(*args, **kwargs):
+            captured["labels"] = list(args[3])
+            captured["current_index"] = args[4]
+            return "root_group / target_b (group)", True
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QInputDialog.getItem", _fake_get_item)
+
+        window._move_selection_into_container()
+
+        assert captured["labels"] == [
+            "root_group / target_a (group)",
+            "root_group / target_b (group)",
+        ]
+        assert captured["current_index"] == 1
+        assert second.parent is target_b
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_structure_actions_follow_precise_selection_constraints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -985,6 +1038,50 @@ class TestMainWindowFileFlow:
         assert window.widget_tree._get_selected_widget() is child
         assert window._undo_manager.get_stack("main_page").current_label() == "move into container"
         assert window.statusBar().currentMessage() == "Moved 1 widget(s) into target_group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_quick_move_into_menu_prioritizes_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RememberQuickMoveIntoDemo"
+        project = _create_project(project_dir, "RememberQuickMoveIntoDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+        window._refresh_quick_move_into_menu()
+
+        labels = [action.text() for action in window._quick_move_into_menu.actions()]
+        assert labels[:2] == [
+            "root_group / target_b (group)",
+            "root_group / target_a (group)",
+        ]
+
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

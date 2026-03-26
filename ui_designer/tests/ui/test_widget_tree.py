@@ -336,6 +336,48 @@ class TestWidgetTreePanel:
         assert feedback == ["Moved 1 widget(s) into target."]
         panel.deleteLater()
 
+    def test_move_selected_widgets_into_dialog_prefers_remembered_target(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        captured = {}
+
+        def _fake_get_item(*args, **kwargs):
+            captured["labels"] = list(args[3])
+            captured["current_index"] = args[4]
+            return "root_group / target_b (group)", True
+
+        monkeypatch.setattr("ui_designer.ui.widget_tree.QInputDialog.getItem", _fake_get_item)
+
+        panel._move_selected_widgets_into()
+
+        assert captured["labels"] == [
+            "root_group / target_a (group)",
+            "root_group / target_b (group)",
+        ]
+        assert captured["current_index"] == 1
+        assert second.parent is target_b
+        panel.deleteLater()
+
     def test_into_button_quick_menu_moves_selection_into_target(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -362,6 +404,48 @@ class TestWidgetTreePanel:
         assert panel._get_selected_widget() is child
         assert sources == ["move into container"]
         assert feedback == ["Moved 1 widget(s) into target."]
+        panel.deleteLater()
+
+    def test_quick_move_into_menus_prioritize_remembered_target(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        panel._refresh_into_button_menu()
+
+        button_labels = [action.text() for action in panel.into_btn.menu().actions()]
+        assert button_labels[:2] == [
+            "root_group / target_b (group)",
+            "root_group / target_a (group)",
+        ]
+
+        menu = panel._build_context_menu(second)
+        quick_menu = _structure_submenu(menu, "Quick Move Into")
+        context_labels = [action.text() for action in quick_menu.actions()]
+        assert context_labels[:2] == [
+            "root_group / target_b (group)",
+            "root_group / target_a (group)",
+        ]
+
+        menu.deleteLater()
         panel.deleteLater()
 
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):

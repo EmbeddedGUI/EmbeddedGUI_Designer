@@ -3846,8 +3846,43 @@ class MainWindow(QMainWindow):
                 return reason
         return state.blocked_reason
 
-    def _quick_move_into_choices(self, widgets=None):
+    def _remembered_move_target_label(self):
+        if not hasattr(self, "widget_tree") or self.widget_tree is None:
+            return ""
+        return self.widget_tree.remembered_move_target_label()
+
+    def _set_remembered_move_target_label(self, label):
+        if hasattr(self, "widget_tree") and self.widget_tree is not None:
+            self.widget_tree.set_remembered_move_target_label(label)
+
+    def _move_into_choices(self, widgets=None):
         return available_move_targets(self._structure_project_context(), widgets or self._top_level_selected_widgets())
+
+    def _quick_move_into_choices(self, widgets=None):
+        choices = self._move_into_choices(widgets)
+        remembered_label = self._remembered_move_target_label()
+        if not remembered_label:
+            return choices
+
+        remembered = [choice for choice in choices if choice.label == remembered_label]
+        if not remembered:
+            return choices
+        return remembered + [choice for choice in choices if choice.label != remembered_label]
+
+    def _move_into_target_default_index(self, choices):
+        remembered_label = self._remembered_move_target_label()
+        if not remembered_label:
+            return 0
+        for index, choice in enumerate(choices):
+            if choice.label == remembered_label:
+                return index
+        return 0
+
+    def _resolve_move_target_label(self, widgets, target_widget):
+        for choice in self._move_into_choices(widgets):
+            if choice.widget is target_widget:
+                return choice.label
+        return ""
 
     def _refresh_quick_move_into_menu(self):
         if not hasattr(self, "_quick_move_into_menu"):
@@ -3858,17 +3893,25 @@ class MainWindow(QMainWindow):
             action = QAction(choice.label, self)
             action.setToolTip(f"Move the current selection into {choice.label}.")
             action.setStatusTip(f"Move the current selection into {choice.label}.")
-            action.triggered.connect(lambda checked=False, target=choice.widget: self._move_selection_into_target(target))
+            action.triggered.connect(
+                lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selection_into_target(
+                    target,
+                    target_label=target_label,
+                )
+            )
             self._quick_move_into_menu.addAction(action)
 
-    def _move_selection_into_target(self, target):
+    def _move_selection_into_target(self, target, target_label=""):
         if target is None:
             return
-        self._apply_structure_result(move_into_container(self._structure_project_context(), self._top_level_selected_widgets(), target))
+        widgets = self._top_level_selected_widgets()
+        if not target_label:
+            target_label = self._resolve_move_target_label(widgets, target)
+        if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target)) and target_label:
+            self._set_remembered_move_target_label(target_label)
 
-    def _choose_structure_target(self, widgets):
-        context = self._structure_project_context()
-        choices = available_move_targets(context, widgets)
+    def _choose_structure_target_choice(self, widgets):
+        choices = self._move_into_choices(widgets)
         if not choices:
             self._show_selection_action_blocked("move into container", "no eligible target containers are available")
             return None
@@ -3879,7 +3922,7 @@ class MainWindow(QMainWindow):
             "Move Into Container",
             "Target container:",
             labels,
-            0,
+            self._move_into_target_default_index(choices),
             False,
         )
         if not ok or not selected_label:
@@ -3887,7 +3930,7 @@ class MainWindow(QMainWindow):
 
         for choice in choices:
             if choice.label == selected_label:
-                return choice.widget
+                return choice
         return None
 
     def _apply_structure_result(self, result):
@@ -4132,10 +4175,11 @@ class MainWindow(QMainWindow):
 
     def _move_selection_into_container(self):
         widgets = self._top_level_selected_widgets()
-        target = self._choose_structure_target(widgets)
-        if target is None:
+        target_choice = self._choose_structure_target_choice(widgets)
+        if target_choice is None:
             return
-        self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target))
+        if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target_choice.widget)):
+            self._set_remembered_move_target_label(target_choice.label)
 
     def _lift_selection_to_parent(self):
         self._apply_structure_result(lift_to_parent(self._structure_project_context(), self._top_level_selected_widgets()))
