@@ -351,6 +351,8 @@ class TestWidgetTreePanel:
         assert actions["Move Down"].isEnabled() is True
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is True
+        assert "Unavailable: selected widgets are already at the top." in actions["Move Up"].toolTip()
+        assert "Unavailable: selected widgets are already at the top." in actions["Move To Top"].toolTip()
         assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
         assert actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
         assert actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
@@ -476,6 +478,8 @@ class TestWidgetTreePanel:
         assert panel.down_btn.isEnabled() is True
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is True
+        assert "Unavailable: selected widgets are already at the top." in panel.up_btn.toolTip()
+        assert "Unavailable: selected widgets are already at the top." in panel.top_btn.toolTip()
         assert "Ctrl+G group siblings" in panel.structure_hint_label.text()
         assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
         assert "Alt+Down reorder" in panel.structure_hint_label.text()

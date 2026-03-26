@@ -31,6 +31,10 @@ class StructureActionState:
     can_move_down: bool = False
     can_move_top: bool = False
     can_move_bottom: bool = False
+    move_up_reason: str = ""
+    move_down_reason: str = ""
+    move_top_reason: str = ""
+    move_bottom_reason: str = ""
     blocked_reason: str = ""
 
 
@@ -260,6 +264,21 @@ def _can_move_to_edge(widgets, edge):
     return False
 
 
+def _reorder_block_reason(widgets, boundary):
+    if not widgets or _has_locked_widgets(widgets):
+        return ""
+
+    grouped = {}
+    for widget in widgets:
+        if widget.parent is None:
+            continue
+        grouped.setdefault(id(widget.parent), (widget.parent, set()))[1].add(widget)
+
+    if not grouped:
+        return "selected widgets do not have a movable parent."
+    return f"selected widgets are already at the {boundary}."
+
+
 def _describe_blocked_structure_reason(project_like, requested_widgets, widgets):
     requested_widgets = _unique_widgets(requested_widgets)
     if not requested_widgets:
@@ -283,16 +302,24 @@ def _describe_blocked_structure_reason(project_like, requested_widgets, widgets)
 def describe_structure_actions(project_like, widgets):
     requested_widgets = _unique_widgets(widgets)
     widgets = _normalized_selection(project_like, widgets)
+    can_move_up = _can_move_by_step(widgets, -1)
+    can_move_down = _can_move_by_step(widgets, 1)
+    can_move_top = _can_move_to_edge(widgets, "top")
+    can_move_bottom = _can_move_to_edge(widgets, "bottom")
     state = StructureActionState(
         widgets=widgets,
         can_group=_can_group_widgets(project_like, widgets),
         can_ungroup=_can_ungroup_widgets(widgets),
         can_move_into=_can_move_into_container(project_like, widgets),
         can_lift=_can_lift_widgets(widgets),
-        can_move_up=_can_move_by_step(widgets, -1),
-        can_move_down=_can_move_by_step(widgets, 1),
-        can_move_top=_can_move_to_edge(widgets, "top"),
-        can_move_bottom=_can_move_to_edge(widgets, "bottom"),
+        can_move_up=can_move_up,
+        can_move_down=can_move_down,
+        can_move_top=can_move_top,
+        can_move_bottom=can_move_bottom,
+        move_up_reason="" if can_move_up else _reorder_block_reason(widgets, "top"),
+        move_down_reason="" if can_move_down else _reorder_block_reason(widgets, "bottom"),
+        move_top_reason="" if can_move_top else _reorder_block_reason(widgets, "top"),
+        move_bottom_reason="" if can_move_bottom else _reorder_block_reason(widgets, "bottom"),
     )
     if not any((
         state.can_group,

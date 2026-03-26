@@ -155,6 +155,10 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert sibling_state.can_move_down is True
     assert sibling_state.can_move_top is False
     assert sibling_state.can_move_bottom is True
+    assert sibling_state.move_up_reason == "selected widgets are already at the top."
+    assert sibling_state.move_top_reason == "selected widgets are already at the top."
+    assert sibling_state.move_down_reason == ""
+    assert sibling_state.move_bottom_reason == ""
 
     nested_state = describe_structure_actions(project, [nested])
 
@@ -167,6 +171,8 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert nested_state.can_move_down is False
     assert nested_state.can_move_top is False
     assert nested_state.can_move_bottom is False
+    assert nested_state.move_up_reason == "selected widgets are already at the top."
+    assert nested_state.move_down_reason == "selected widgets are already at the bottom."
 
 
 def test_describe_structure_actions_blocks_root_and_locked_selection():

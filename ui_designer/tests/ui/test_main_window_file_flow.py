@@ -871,6 +871,8 @@ class TestMainWindowFileFlow:
         assert window._move_down_action.isEnabled() is True
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is True
+        assert "selected widgets are already at the top" in window._move_up_action.toolTip()
+        assert "selected widgets are already at the top" in window._move_top_action.statusTip()
 
         window._set_selection([second], primary=second, sync_tree=False, sync_preview=False)
 

@@ -1353,16 +1353,16 @@ class MainWindow(QMainWindow):
         self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
         structure_menu.addAction(self._move_bottom_action)
         self._structure_action_hints = {
-            self._group_selection_action: "Group the current selection (Ctrl+G)",
-            self._ungroup_selection_action: "Ungroup the selected group widgets (Ctrl+Shift+G)",
-            self._move_into_container_action: "Move the current selection into another container (Ctrl+Shift+I)",
-            self._lift_to_parent_action: "Lift the current selection to the parent container (Ctrl+Shift+L)",
-            self._move_up_action: "Move the current selection up among its siblings (Alt+Up)",
-            self._move_down_action: "Move the current selection down among its siblings (Alt+Down)",
-            self._move_top_action: "Move the current selection to the top of its sibling list (Alt+Shift+Up)",
-            self._move_bottom_action: "Move the current selection to the bottom of its sibling list (Alt+Shift+Down)",
+            self._group_selection_action: ("Group the current selection (Ctrl+G)", ""),
+            self._ungroup_selection_action: ("Ungroup the selected group widgets (Ctrl+Shift+G)", ""),
+            self._move_into_container_action: ("Move the current selection into another container (Ctrl+Shift+I)", ""),
+            self._lift_to_parent_action: ("Lift the current selection to the parent container (Ctrl+Shift+L)", ""),
+            self._move_up_action: ("Move the current selection up among its siblings (Alt+Up)", "move_up_reason"),
+            self._move_down_action: ("Move the current selection down among its siblings (Alt+Down)", "move_down_reason"),
+            self._move_top_action: ("Move the current selection to the top of its sibling list (Alt+Shift+Up)", "move_top_reason"),
+            self._move_bottom_action: ("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)", "move_bottom_reason"),
         }
-        for action, hint in self._structure_action_hints.items():
+        for action, (hint, _reason_attr) in self._structure_action_hints.items():
             action.setToolTip(hint)
             action.setStatusTip(hint)
 
@@ -3832,6 +3832,13 @@ class MainWindow(QMainWindow):
         reason = blocked_reason.rstrip(".")
         return f"{base_text} Unavailable: {reason}."
 
+    def _structure_action_reason(self, state, reason_attr=""):
+        if reason_attr:
+            reason = getattr(state, reason_attr, "")
+            if reason:
+                return reason
+        return state.blocked_reason
+
     def _choose_structure_target(self, widgets):
         context = self._structure_project_context()
         choices = available_move_targets(context, widgets)
@@ -4222,8 +4229,8 @@ class MainWindow(QMainWindow):
         self._move_down_action.setEnabled(structure_state.can_move_down)
         self._move_top_action.setEnabled(structure_state.can_move_top)
         self._move_bottom_action.setEnabled(structure_state.can_move_bottom)
-        for action, base_text in self._structure_action_hints.items():
-            hint = self._structure_action_hint(base_text, action.isEnabled(), structure_state.blocked_reason)
+        for action, (base_text, reason_attr) in self._structure_action_hints.items():
+            hint = self._structure_action_hint(base_text, action.isEnabled(), self._structure_action_reason(structure_state, reason_attr))
             action.setToolTip(hint)
             action.setStatusTip(hint)
 
