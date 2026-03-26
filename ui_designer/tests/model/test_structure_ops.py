@@ -155,6 +155,10 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert sibling_state.can_move_down is True
     assert sibling_state.can_move_top is False
     assert sibling_state.can_move_bottom is True
+    assert sibling_state.group_reason == ""
+    assert sibling_state.ungroup_reason == "selection must only include groups."
+    assert sibling_state.move_into_reason == ""
+    assert sibling_state.lift_reason == "selected widgets already belong to the top container."
     assert sibling_state.move_up_reason == "selected widgets are already at the top."
     assert sibling_state.move_top_reason == "selected widgets are already at the top."
     assert sibling_state.move_down_reason == ""
@@ -171,6 +175,10 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert nested_state.can_move_down is False
     assert nested_state.can_move_top is False
     assert nested_state.can_move_bottom is False
+    assert nested_state.group_reason == "select at least 2 widgets."
+    assert nested_state.ungroup_reason == "selection must only include groups."
+    assert nested_state.move_into_reason == ""
+    assert nested_state.lift_reason == ""
     assert nested_state.move_up_reason == "selected widgets are already at the top."
     assert nested_state.move_down_reason == "selected widgets are already at the bottom."
 
@@ -226,7 +234,33 @@ def test_describe_structure_actions_reports_isolated_widget_block_reason():
     assert state.can_move_down is False
     assert state.can_move_top is False
     assert state.can_move_bottom is False
+    assert state.group_reason == "select at least 2 widgets."
+    assert state.ungroup_reason == "selection must only include groups."
+    assert state.move_into_reason == "no eligible target containers are available."
+    assert state.lift_reason == "selected widgets already belong to the top container."
     assert state.blocked_reason == "select another sibling or target container to move this widget."
+
+
+def test_describe_structure_actions_reports_group_constraint_for_noncontiguous_layout_selection():
+    project = Project(screen_width=240, screen_height=320, app_name="LayoutGroupStateDemo")
+    page = project.create_new_page("main_page")
+    root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+    root.properties["orientation"] = "vertical"
+    page.root_widget = root
+
+    first = WidgetModel("label", name="first", width=80, height=20)
+    second = WidgetModel("label", name="second", width=80, height=20)
+    third = WidgetModel("label", name="third", width=80, height=20)
+    root.add_child(first)
+    root.add_child(second)
+    root.add_child(third)
+
+    state = describe_structure_actions(project, [first, third])
+
+    assert state.can_group is False
+    assert state.group_reason == "layout-managed siblings must be contiguous."
+    assert state.can_move_up is True
+    assert state.can_move_down is True
 
 
 def test_move_selection_to_edge_moves_selected_block_to_top_and_bottom():

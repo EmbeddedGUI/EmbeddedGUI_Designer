@@ -351,6 +351,8 @@ class TestWidgetTreePanel:
         assert actions["Move Down"].isEnabled() is True
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is True
+        assert "Unavailable: selection must only include groups." in actions["Ungroup"].toolTip()
+        assert "Unavailable: selected widgets already belong to the top container." in actions["Lift To Parent"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move Up"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move To Top"].toolTip()
         assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
@@ -431,7 +433,7 @@ class TestWidgetTreePanel:
         assert child_actions["Move Down"].isEnabled() is False
         assert child_actions["Move To Top"].isEnabled() is False
         assert child_actions["Move To Bottom"].isEnabled() is False
-        assert "select another sibling or target container to move this widget" in child_actions["Move Into..."].toolTip()
+        assert "no eligible target containers are available" in child_actions["Move Into..."].toolTip()
         assert (
             "Structure unavailable: select another sibling or target container to move this widget."
             == child_structure_action.toolTip()
@@ -478,6 +480,8 @@ class TestWidgetTreePanel:
         assert panel.down_btn.isEnabled() is True
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is True
+        assert "Unavailable: selection must only include groups." in panel.ungroup_btn.toolTip()
+        assert "Unavailable: selected widgets already belong to the top container." in panel.lift_btn.toolTip()
         assert "Unavailable: selected widgets are already at the top." in panel.up_btn.toolTip()
         assert "Unavailable: selected widgets are already at the top." in panel.top_btn.toolTip()
         assert "Ctrl+G group siblings" in panel.structure_hint_label.text()
@@ -495,6 +499,7 @@ class TestWidgetTreePanel:
         assert panel.down_btn.isEnabled() is True
         assert panel.top_btn.isEnabled() is True
         assert panel.bottom_btn.isEnabled() is True
+        assert "Unavailable: select at least 2 widgets." in panel.group_btn.toolTip()
         assert "Alt+Up/Down reorder" in panel.structure_hint_label.text()
         assert "Alt+Shift+Up/Down move to edge" in panel.structure_hint_label.text()
 
@@ -558,7 +563,10 @@ class TestWidgetTreePanel:
         assert panel.structure_hint_label.text() == (
             "Structure: select another sibling or target container to move this widget."
         )
-        assert "Unavailable: select another sibling or target container to move this widget." in panel.into_btn.toolTip()
+        assert "Unavailable: select at least 2 widgets." in panel.group_btn.toolTip()
+        assert "Unavailable: selection must only include groups." in panel.ungroup_btn.toolTip()
+        assert "Unavailable: no eligible target containers are available." in panel.into_btn.toolTip()
+        assert "Unavailable: selected widgets already belong to the top container." in panel.lift_btn.toolTip()
 
         panel.deleteLater()
 

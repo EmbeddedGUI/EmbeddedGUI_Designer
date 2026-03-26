@@ -871,6 +871,8 @@ class TestMainWindowFileFlow:
         assert window._move_down_action.isEnabled() is True
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is True
+        assert "selection must only include groups" in window._ungroup_selection_action.toolTip()
+        assert "selected widgets already belong to the top container" in window._lift_to_parent_action.statusTip()
         assert "selected widgets are already at the top" in window._move_up_action.toolTip()
         assert "selected widgets are already at the top" in window._move_top_action.statusTip()
 
@@ -938,8 +940,11 @@ class TestMainWindowFileFlow:
         assert window._move_down_action.isEnabled() is False
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is False
-        assert "select another sibling or target container to move this widget" in window._move_into_container_action.toolTip()
-        assert "select another sibling or target container to move this widget" in window._move_into_container_action.statusTip()
+        assert "select at least 2 widgets" in window._group_selection_action.toolTip()
+        assert "selection must only include groups" in window._ungroup_selection_action.statusTip()
+        assert "no eligible target containers are available" in window._move_into_container_action.toolTip()
+        assert "no eligible target containers are available" in window._move_into_container_action.statusTip()
+        assert "selected widgets already belong to the top container" in window._lift_to_parent_action.toolTip()
 
         _close_window(window)
 

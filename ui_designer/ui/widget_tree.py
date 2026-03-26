@@ -209,10 +209,10 @@ class WidgetTreePanel(QWidget):
         self.bottom_btn.setToolTip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)")
         self.bottom_btn.clicked.connect(self._move_selected_widgets_to_bottom)
         self._structure_button_tooltips = {
-            self.group_btn: ("Group the current selection (Ctrl+G)", ""),
-            self.ungroup_btn: ("Ungroup the selected group widgets (Ctrl+Shift+G)", ""),
-            self.into_btn: ("Move the current selection into another container (Ctrl+Shift+I)", ""),
-            self.lift_btn: ("Lift the current selection to the parent container (Ctrl+Shift+L)", ""),
+            self.group_btn: ("Group the current selection (Ctrl+G)", "group_reason"),
+            self.ungroup_btn: ("Ungroup the selected group widgets (Ctrl+Shift+G)", "ungroup_reason"),
+            self.into_btn: ("Move the current selection into another container (Ctrl+Shift+I)", "move_into_reason"),
+            self.lift_btn: ("Lift the current selection to the parent container (Ctrl+Shift+L)", "lift_reason"),
             self.up_btn: ("Move the current selection up among its siblings (Alt+Up)", "move_up_reason"),
             self.down_btn: ("Move the current selection down among its siblings (Alt+Down)", "move_down_reason"),
             self.top_btn: ("Move the current selection to the top of its sibling list (Alt+Shift+Up)", "move_top_reason"),
@@ -705,28 +705,28 @@ class WidgetTreePanel(QWidget):
         group_action = QAction("Group Selection", self)
         group_action.setShortcut("Ctrl+G")
         group_action.setEnabled(structure_state.can_group)
-        group_action.setToolTip(self._structure_tooltip("Group the current selection (Ctrl+G)", structure_state.can_group, structure_state.blocked_reason))
+        group_action.setToolTip(self._structure_tooltip("Group the current selection (Ctrl+G)", structure_state.can_group, self._structure_action_reason(structure_state, "group_reason")))
         group_action.triggered.connect(lambda: self._group_selected_widgets(context_widgets))
         structure_menu.addAction(group_action)
 
         ungroup_action = QAction("Ungroup", self)
         ungroup_action.setShortcut("Ctrl+Shift+G")
         ungroup_action.setEnabled(structure_state.can_ungroup)
-        ungroup_action.setToolTip(self._structure_tooltip("Ungroup the selected group widgets (Ctrl+Shift+G)", structure_state.can_ungroup, structure_state.blocked_reason))
+        ungroup_action.setToolTip(self._structure_tooltip("Ungroup the selected group widgets (Ctrl+Shift+G)", structure_state.can_ungroup, self._structure_action_reason(structure_state, "ungroup_reason")))
         ungroup_action.triggered.connect(lambda: self._ungroup_selected_widgets(context_widgets))
         structure_menu.addAction(ungroup_action)
 
         move_into_action = QAction("Move Into...", self)
         move_into_action.setShortcut("Ctrl+Shift+I")
         move_into_action.setEnabled(structure_state.can_move_into)
-        move_into_action.setToolTip(self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", structure_state.can_move_into, structure_state.blocked_reason))
+        move_into_action.setToolTip(self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", structure_state.can_move_into, self._structure_action_reason(structure_state, "move_into_reason")))
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")
         lift_action.setEnabled(structure_state.can_lift)
-        lift_action.setToolTip(self._structure_tooltip("Lift the current selection to the parent container (Ctrl+Shift+L)", structure_state.can_lift, structure_state.blocked_reason))
+        lift_action.setToolTip(self._structure_tooltip("Lift the current selection to the parent container (Ctrl+Shift+L)", structure_state.can_lift, self._structure_action_reason(structure_state, "lift_reason")))
         lift_action.triggered.connect(lambda: self._lift_selected_widgets(context_widgets))
         structure_menu.addAction(lift_action)
 

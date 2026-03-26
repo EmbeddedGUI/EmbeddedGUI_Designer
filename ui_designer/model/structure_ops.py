@@ -31,6 +31,10 @@ class StructureActionState:
     can_move_down: bool = False
     can_move_top: bool = False
     can_move_bottom: bool = False
+    group_reason: str = ""
+    ungroup_reason: str = ""
+    move_into_reason: str = ""
+    lift_reason: str = ""
     move_up_reason: str = ""
     move_down_reason: str = ""
     move_top_reason: str = ""
@@ -196,20 +200,71 @@ def _can_group_widgets(project_like, widgets):
     return True
 
 
+def _group_block_reason(project_like, widgets):
+    if not widgets:
+        return ""
+    if len(widgets) < 2:
+        return "select at least 2 widgets."
+    if _has_locked_widgets(widgets):
+        return "locked widgets cannot be regrouped."
+
+    parent = _shared_parent(widgets)
+    if parent is None:
+        return "selected widgets must share the same direct parent."
+
+    if _parent_uses_layout(parent):
+        indices = [parent.children.index(widget) for widget in widgets]
+        if indices != list(range(min(indices), max(indices) + 1)):
+            return "layout-managed siblings must be contiguous."
+    return ""
+
+
 def _can_ungroup_widgets(widgets):
     if not widgets or _has_locked_widgets(widgets):
         return False
     return all(widget.widget_type == "group" and widget.parent is not None for widget in widgets)
 
 
+def _ungroup_block_reason(widgets):
+    if not widgets:
+        return ""
+    if _has_locked_widgets(widgets):
+        return "locked groups cannot be regrouped."
+    if any(widget.widget_type != "group" for widget in widgets):
+        return "selection must only include groups."
+    if any(widget.parent is None for widget in widgets):
+        return "the root group cannot be ungrouped."
+    return ""
+
+
 def _can_move_into_container(project_like, widgets):
     return bool(widgets) and not _has_locked_widgets(widgets) and bool(available_move_targets(project_like, widgets))
+
+
+def _move_into_block_reason(project_like, widgets):
+    if not widgets:
+        return ""
+    if _has_locked_widgets(widgets):
+        return "locked widgets cannot be moved."
+    if not available_move_targets(project_like, widgets):
+        return "no eligible target containers are available."
+    return ""
 
 
 def _can_lift_widgets(widgets):
     if not widgets or _has_locked_widgets(widgets):
         return False
     return all(widget.parent is not None and widget.parent.parent is not None for widget in widgets)
+
+
+def _lift_block_reason(widgets):
+    if not widgets:
+        return ""
+    if _has_locked_widgets(widgets):
+        return "locked widgets cannot be moved."
+    if any(widget.parent is None or widget.parent.parent is None for widget in widgets):
+        return "selected widgets already belong to the top container."
+    return ""
 
 
 def _can_move_by_step(widgets, step):
@@ -312,6 +367,10 @@ def describe_structure_actions(project_like, widgets):
         can_ungroup=_can_ungroup_widgets(widgets),
         can_move_into=_can_move_into_container(project_like, widgets),
         can_lift=_can_lift_widgets(widgets),
+        group_reason=_group_block_reason(project_like, widgets),
+        ungroup_reason=_ungroup_block_reason(widgets),
+        move_into_reason=_move_into_block_reason(project_like, widgets),
+        lift_reason=_lift_block_reason(widgets),
         can_move_up=can_move_up,
         can_move_down=can_move_down,
         can_move_top=can_move_top,

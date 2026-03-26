@@ -1353,10 +1353,10 @@ class MainWindow(QMainWindow):
         self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
         structure_menu.addAction(self._move_bottom_action)
         self._structure_action_hints = {
-            self._group_selection_action: ("Group the current selection (Ctrl+G)", ""),
-            self._ungroup_selection_action: ("Ungroup the selected group widgets (Ctrl+Shift+G)", ""),
-            self._move_into_container_action: ("Move the current selection into another container (Ctrl+Shift+I)", ""),
-            self._lift_to_parent_action: ("Lift the current selection to the parent container (Ctrl+Shift+L)", ""),
+            self._group_selection_action: ("Group the current selection (Ctrl+G)", "group_reason"),
+            self._ungroup_selection_action: ("Ungroup the selected group widgets (Ctrl+Shift+G)", "ungroup_reason"),
+            self._move_into_container_action: ("Move the current selection into another container (Ctrl+Shift+I)", "move_into_reason"),
+            self._lift_to_parent_action: ("Lift the current selection to the parent container (Ctrl+Shift+L)", "lift_reason"),
             self._move_up_action: ("Move the current selection up among its siblings (Alt+Up)", "move_up_reason"),
             self._move_down_action: ("Move the current selection down among its siblings (Alt+Down)", "move_down_reason"),
             self._move_top_action: ("Move the current selection to the top of its sibling list (Alt+Shift+Up)", "move_top_reason"),
