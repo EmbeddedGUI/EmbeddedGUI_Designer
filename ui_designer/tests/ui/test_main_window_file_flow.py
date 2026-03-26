@@ -814,6 +814,92 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_structure_actions_follow_precise_selection_constraints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "StructureActionStateDemo"
+        project = _create_project(project_dir, "StructureActionStateDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        target = WidgetModel("group", name="target_group")
+        nested = WidgetModel("switch", name="nested")
+        target.add_child(nested)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
+
+        assert window._group_selection_action.isEnabled() is True
+        assert window._ungroup_selection_action.isEnabled() is False
+        assert window._move_into_container_action.isEnabled() is True
+        assert window._lift_to_parent_action.isEnabled() is False
+        assert window._move_up_action.isEnabled() is False
+        assert window._move_down_action.isEnabled() is True
+
+        window._set_selection([nested], primary=nested, sync_tree=False, sync_preview=False)
+
+        assert window._group_selection_action.isEnabled() is False
+        assert window._ungroup_selection_action.isEnabled() is False
+        assert window._move_into_container_action.isEnabled() is True
+        assert window._lift_to_parent_action.isEnabled() is True
+        assert window._move_up_action.isEnabled() is False
+        assert window._move_down_action.isEnabled() is False
+
+        _close_window(window)
+
+    def test_structure_actions_disable_root_ungroup_and_noop_move_into(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "StructureActionDisabledDemo"
+        project = _create_project(project_dir, "StructureActionDisabledDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        root.add_child(first)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._selection_state.set_widgets([root], primary=root)
+        window._selected_widget = root
+        window._update_edit_actions()
+
+        assert window._group_selection_action.isEnabled() is False
+        assert window._ungroup_selection_action.isEnabled() is False
+        assert window._move_into_container_action.isEnabled() is False
+        assert window._lift_to_parent_action.isEnabled() is False
+
+        window._selection_state.set_widgets([first], primary=first)
+        window._selected_widget = first
+        window._update_edit_actions()
+
+        assert window._group_selection_action.isEnabled() is False
+        assert window._ungroup_selection_action.isEnabled() is False
+        assert window._move_into_container_action.isEnabled() is False
+        assert window._lift_to_parent_action.isEnabled() is False
+        assert window._move_up_action.isEnabled() is False
+        assert window._move_down_action.isEnabled() is False
+
+        _close_window(window)
+
     def test_widget_tree_group_selection_updates_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

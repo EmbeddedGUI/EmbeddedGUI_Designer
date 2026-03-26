@@ -1,5 +1,6 @@
 from ui_designer.model.project import Project
 from ui_designer.model.structure_ops import (
+    describe_structure_actions,
     group_selection,
     lift_to_parent,
     move_into_container,
@@ -126,3 +127,64 @@ def test_move_selection_by_step_moves_selected_block():
     assert moved_up.changed is True
     assert [widget.name for widget in root.children] == ["first", "second", "third", "fourth"]
     assert moved_up.message == "Moved 2 widget(s) up."
+
+
+def test_describe_structure_actions_reports_precise_capabilities():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    target = WidgetModel("group", name="target")
+    nested = WidgetModel("label", name="nested")
+    target.add_child(nested)
+    root.add_child(first)
+    root.add_child(second)
+    root.add_child(target)
+
+    sibling_state = describe_structure_actions(project, [first, second])
+
+    assert sibling_state.widgets == [first, second]
+    assert sibling_state.can_group is True
+    assert sibling_state.can_ungroup is False
+    assert sibling_state.can_move_into is True
+    assert sibling_state.can_lift is False
+    assert sibling_state.can_move_up is False
+    assert sibling_state.can_move_down is True
+
+    nested_state = describe_structure_actions(project, [nested])
+
+    assert nested_state.widgets == [nested]
+    assert nested_state.can_group is False
+    assert nested_state.can_ungroup is False
+    assert nested_state.can_move_into is True
+    assert nested_state.can_lift is True
+    assert nested_state.can_move_up is False
+    assert nested_state.can_move_down is False
+
+
+def test_describe_structure_actions_blocks_root_and_locked_selection():
+    project, root = _build_project()
+    target = WidgetModel("group", name="target")
+    locked = WidgetModel("label", name="locked")
+    locked.designer_locked = True
+    root.add_child(target)
+    root.add_child(locked)
+
+    root_state = describe_structure_actions(project, [root])
+
+    assert root_state.widgets == []
+    assert root_state.can_group is False
+    assert root_state.can_ungroup is False
+    assert root_state.can_move_into is False
+    assert root_state.can_lift is False
+    assert root_state.can_move_up is False
+    assert root_state.can_move_down is False
+
+    locked_state = describe_structure_actions(project, [locked])
+
+    assert locked_state.widgets == [locked]
+    assert locked_state.can_group is False
+    assert locked_state.can_ungroup is False
+    assert locked_state.can_move_into is False
+    assert locked_state.can_lift is False
+    assert locked_state.can_move_up is False
+    assert locked_state.can_move_down is False

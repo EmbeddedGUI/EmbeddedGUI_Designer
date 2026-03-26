@@ -20,6 +20,17 @@ class StructureOperationResult:
     primary: WidgetModel = None
 
 
+@dataclass
+class StructureActionState:
+    widgets: list = field(default_factory=list)
+    can_group: bool = False
+    can_ungroup: bool = False
+    can_move_into: bool = False
+    can_lift: bool = False
+    can_move_up: bool = False
+    can_move_down: bool = False
+
+
 def _failure(message):
     return StructureOperationResult(changed=False, message=message)
 
@@ -142,8 +153,95 @@ def available_move_targets(project_like, widgets):
     for widget in _iter_widgets(project_like):
         if not widget.is_container or id(widget) in excluded_ids:
             continue
+        if all(selected_widget.parent is widget for selected_widget in selected):
+            continue
         result.append(ContainerChoice(f"{_widget_path(widget)} ({widget.widget_type})", widget))
     return result
+
+
+def _normalized_selection(project_like, widgets):
+    roots = _root_widgets(project_like)
+    return _sort_by_tree_order(project_like, _top_level_widgets(widgets, exclude_roots=roots))
+
+
+def _shared_parent(widgets):
+    if not widgets:
+        return None
+    parent = widgets[0].parent
+    if parent is None:
+        return None
+    if any(widget.parent is not parent for widget in widgets[1:]):
+        return None
+    return parent
+
+
+def _can_group_widgets(project_like, widgets):
+    if len(widgets) < 2 or _has_locked_widgets(widgets):
+        return False
+
+    parent = _shared_parent(widgets)
+    if parent is None:
+        return False
+
+    if _parent_uses_layout(parent):
+        indices = [parent.children.index(widget) for widget in widgets]
+        return indices == list(range(min(indices), max(indices) + 1))
+    return True
+
+
+def _can_ungroup_widgets(widgets):
+    if not widgets or _has_locked_widgets(widgets):
+        return False
+    return all(widget.widget_type == "group" and widget.parent is not None for widget in widgets)
+
+
+def _can_move_into_container(project_like, widgets):
+    return bool(widgets) and not _has_locked_widgets(widgets) and bool(available_move_targets(project_like, widgets))
+
+
+def _can_lift_widgets(widgets):
+    if not widgets or _has_locked_widgets(widgets):
+        return False
+    return all(widget.parent is not None and widget.parent.parent is not None for widget in widgets)
+
+
+def _can_move_by_step(widgets, step):
+    if not widgets or _has_locked_widgets(widgets) or step not in (-1, 1):
+        return False
+
+    grouped = {}
+    for widget in widgets:
+        if widget.parent is None:
+            continue
+        grouped.setdefault(id(widget.parent), (widget.parent, set()))[1].add(widget)
+
+    if not grouped:
+        return False
+
+    for parent, selected_set in grouped.values():
+        children = parent.children
+        if step < 0:
+            for index in range(1, len(children)):
+                if children[index] in selected_set and children[index - 1] not in selected_set:
+                    return True
+        else:
+            for index in range(len(children) - 2, -1, -1):
+                if children[index] in selected_set and children[index + 1] not in selected_set:
+                    return True
+    return False
+
+
+def describe_structure_actions(project_like, widgets):
+    widgets = _normalized_selection(project_like, widgets)
+    return StructureActionState(
+        widgets=widgets,
+        can_group=_can_group_widgets(project_like, widgets),
+        can_ungroup=_can_ungroup_widgets(widgets),
+        can_move_into=_can_move_into_container(project_like, widgets),
+        can_lift=_can_lift_widgets(widgets),
+        can_move_up=_can_move_by_step(widgets, -1),
+        can_move_down=_can_move_by_step(widgets, 1),
+    )
 
 
 def group_selection(project_like, widgets, base_name="group"):

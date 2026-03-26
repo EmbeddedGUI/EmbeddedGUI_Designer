@@ -35,6 +35,16 @@ def _build_project_with_root():
     return project, project.get_startup_page().root_widget
 
 
+def _structure_menu_actions(menu):
+    structure_menu = None
+    for action in menu.actions():
+        if action.text() == "Structure":
+            structure_menu = action.menu()
+            break
+    assert structure_menu is not None
+    return {action.text(): action for action in structure_menu.actions() if action.text()}
+
+
 @_skip_no_qt
 class TestWidgetTreePanel:
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
@@ -310,6 +320,88 @@ class TestWidgetTreePanel:
         assert panel._get_selected_widget() is child
         assert sources == ["move into container"]
         assert feedback == ["Moved 1 widget(s) into target."]
+        panel.deleteLater()
+
+    def test_context_menu_structure_actions_reflect_selection_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        target = WidgetModel("group", name="target")
+        nested = WidgetModel("switch", name="nested")
+        target.add_child(nested)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first, second], primary=first)
+
+        menu = panel._build_context_menu(first)
+        actions = _structure_menu_actions(menu)
+
+        assert actions["Group Selection"].isEnabled() is True
+        assert actions["Ungroup"].isEnabled() is False
+        assert actions["Move Into..."].isEnabled() is True
+        assert actions["Lift To Parent"].isEnabled() is False
+        assert actions["Move Up"].isEnabled() is False
+        assert actions["Move Down"].isEnabled() is True
+
+        menu.deleteLater()
+
+        panel.set_selected_widgets([nested], primary=nested)
+        nested_menu = panel._build_context_menu(nested)
+        nested_actions = _structure_menu_actions(nested_menu)
+
+        assert nested_actions["Group Selection"].isEnabled() is False
+        assert nested_actions["Ungroup"].isEnabled() is False
+        assert nested_actions["Move Into..."].isEnabled() is True
+        assert nested_actions["Lift To Parent"].isEnabled() is True
+        assert nested_actions["Move Up"].isEnabled() is False
+        assert nested_actions["Move Down"].isEnabled() is False
+
+        nested_menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        child = WidgetModel("label", name="child")
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([root], primary=root)
+
+        root_menu = panel._build_context_menu(root)
+        root_actions = _structure_menu_actions(root_menu)
+
+        assert root_actions["Group Selection"].isEnabled() is False
+        assert root_actions["Ungroup"].isEnabled() is False
+        assert root_actions["Move Into..."].isEnabled() is False
+        assert root_actions["Lift To Parent"].isEnabled() is False
+        assert root_actions["Move Up"].isEnabled() is False
+        assert root_actions["Move Down"].isEnabled() is False
+
+        root_menu.deleteLater()
+
+        panel.set_selected_widgets([child], primary=child)
+        child_menu = panel._build_context_menu(child)
+        child_actions = _structure_menu_actions(child_menu)
+
+        assert child_actions["Group Selection"].isEnabled() is False
+        assert child_actions["Ungroup"].isEnabled() is False
+        assert child_actions["Move Into..."].isEnabled() is False
+        assert child_actions["Lift To Parent"].isEnabled() is False
+        assert child_actions["Move Up"].isEnabled() is False
+        assert child_actions["Move Down"].isEnabled() is False
+
+        child_menu.deleteLater()
         panel.deleteLater()
 
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):

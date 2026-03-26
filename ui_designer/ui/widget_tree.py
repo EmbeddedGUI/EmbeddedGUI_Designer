@@ -16,6 +16,7 @@ from ..model.widget_name import (
 )
 from ..model.structure_ops import (
     available_move_targets,
+    describe_structure_actions,
     group_selection,
     lift_to_parent,
     move_into_container,
@@ -298,6 +299,10 @@ class WidgetTreePanel(QWidget):
             return [anchor_widget]
         return selected_widgets or ([anchor_widget] if anchor_widget is not None else [])
 
+    def _structure_action_state(self, widgets=None):
+        selection = self.selected_widgets() if widgets is None else widgets
+        return describe_structure_actions(self.project, selection)
+
     def _emit_tree_changed(self, source):
         self.tree_changed.emit(source or "widget tree change")
 
@@ -416,9 +421,19 @@ class WidgetTreePanel(QWidget):
         if widget is None:
             return
 
+        menu = self._build_context_menu(widget)
+        if menu is None:
+            return
+        menu.exec_(self.tree.viewport().mapToGlobal(pos))
+
+    def _build_context_menu(self, widget):
+        if widget is None:
+            return None
+
         menu = QMenu(self)
         context_widgets = self._context_widgets(widget)
         rename_selected = len(context_widgets) > 1 and widget in context_widgets
+        structure_state = self._structure_action_state(context_widgets)
 
         # Rename
         rename_action = QAction("Rename Selected" if rename_selected else "Rename", self)
@@ -440,37 +455,51 @@ class WidgetTreePanel(QWidget):
 
         structure_menu = menu.addMenu("Structure")
         group_action = QAction("Group Selection", self)
+        group_action.setEnabled(structure_state.can_group)
         group_action.triggered.connect(lambda: self._group_selected_widgets(context_widgets))
         structure_menu.addAction(group_action)
 
         ungroup_action = QAction("Ungroup", self)
+        ungroup_action.setEnabled(structure_state.can_ungroup)
         ungroup_action.triggered.connect(lambda: self._ungroup_selected_widgets(context_widgets))
         structure_menu.addAction(ungroup_action)
 
         move_into_action = QAction("Move Into...", self)
+        move_into_action.setEnabled(structure_state.can_move_into)
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
 
         lift_action = QAction("Lift To Parent", self)
+        lift_action.setEnabled(structure_state.can_lift)
         lift_action.triggered.connect(lambda: self._lift_selected_widgets(context_widgets))
         structure_menu.addAction(lift_action)
 
         structure_menu.addSeparator()
 
         move_up_action = QAction("Move Up", self)
+        move_up_action.setEnabled(structure_state.can_move_up)
         move_up_action.triggered.connect(lambda: self._move_selected_widgets_up(context_widgets))
         structure_menu.addAction(move_up_action)
 
         move_down_action = QAction("Move Down", self)
+        move_down_action.setEnabled(structure_state.can_move_down)
         move_down_action.triggered.connect(lambda: self._move_selected_widgets_down(context_widgets))
         structure_menu.addAction(move_down_action)
+        structure_menu.setEnabled(any([
+            structure_state.can_group,
+            structure_state.can_ungroup,
+            structure_state.can_move_into,
+            structure_state.can_lift,
+            structure_state.can_move_up,
+            structure_state.can_move_down,
+        ]))
 
         # Delete
         del_action = QAction("Delete", self)
         del_action.triggered.connect(lambda: self._delete_widget(widget))
         menu.addAction(del_action)
 
-        menu.exec_(self.tree.viewport().mapToGlobal(pos))
+        return menu
 
     def _rename_widget(self, widget):
         new_name, ok = QInputDialog.getText(

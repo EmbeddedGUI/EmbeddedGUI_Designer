@@ -69,6 +69,7 @@ from ..model.resource_usage import (
 )
 from ..model.structure_ops import (
     available_move_targets,
+    describe_structure_actions,
     group_selection,
     lift_to_parent,
     move_into_container,
@@ -3786,6 +3787,10 @@ class MainWindow(QMainWindow):
             return None
         return getattr(self, "_page_shim", _PageProjectShim(self._current_page))
 
+    def _structure_action_state(self, widgets=None):
+        selection = self._selected_widgets() if widgets is None else widgets
+        return describe_structure_actions(self._structure_project_context(), selection)
+
     def _choose_structure_target(self, widgets):
         context = self._structure_project_context()
         choices = available_move_targets(context, widgets)
@@ -4141,7 +4146,7 @@ class MainWindow(QMainWindow):
         can_paste = has_project and self._clipboard_payload is not None and self._default_paste_parent() is not None
         can_align = len(selectable_widgets) >= 2 and self._shared_selection_parent(selectable_widgets) is not None
         can_distribute = len(selectable_widgets) >= 3 and self._shared_selection_parent(selectable_widgets) is not None
-        can_move_into = has_project and bool(available_move_targets(self._structure_project_context(), selected_widgets))
+        structure_state = self._structure_action_state()
 
         self._copy_action.setEnabled(has_selection)
         self._cut_action.setEnabled(has_deletable_selection)
@@ -4162,12 +4167,12 @@ class MainWindow(QMainWindow):
         self._toggle_lock_action.setEnabled(has_selection)
         self._toggle_hide_action.setEnabled(has_selection)
 
-        self._group_selection_action.setEnabled(len(selected_widgets) >= 2)
-        self._ungroup_selection_action.setEnabled(has_selection)
-        self._move_into_container_action.setEnabled(can_move_into)
-        self._lift_to_parent_action.setEnabled(has_selection)
-        self._move_up_action.setEnabled(has_selection)
-        self._move_down_action.setEnabled(has_selection)
+        self._group_selection_action.setEnabled(structure_state.can_group)
+        self._ungroup_selection_action.setEnabled(structure_state.can_ungroup)
+        self._move_into_container_action.setEnabled(structure_state.can_move_into)
+        self._lift_to_parent_action.setEnabled(structure_state.can_lift)
+        self._move_up_action.setEnabled(structure_state.can_move_up)
+        self._move_down_action.setEnabled(structure_state.can_move_down)
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
