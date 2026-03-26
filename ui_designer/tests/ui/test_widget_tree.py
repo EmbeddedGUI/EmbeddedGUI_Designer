@@ -252,6 +252,66 @@ class TestWidgetTreePanel:
         assert feedback == ["Cannot delete widget: locked_widget is locked."]
         panel.deleteLater()
 
+    def test_group_selected_widgets_emits_tree_change_and_selects_group(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
+        second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        sources = []
+        feedback = []
+        panel.tree_changed.connect(lambda source: sources.append(source))
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+        panel.set_selected_widgets([first, second], primary=first)
+
+        panel._group_selected_widgets()
+
+        group = root.children[0]
+        assert group.widget_type == "group"
+        assert panel.selected_widgets() == [group]
+        assert panel._get_selected_widget() is group
+        assert sources == ["group selection"]
+        assert feedback == ["Grouped 2 widget(s) into group."]
+        panel.deleteLater()
+
+    def test_move_selected_widgets_into_uses_dialog_target(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target", x=80, y=10, width=100, height=100)
+        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        sources = []
+        feedback = []
+        panel.tree_changed.connect(lambda source: sources.append(source))
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+        panel.set_selected_widgets([child], primary=child)
+
+        monkeypatch.setattr(
+            "ui_designer.ui.widget_tree.QInputDialog.getItem",
+            lambda *args, **kwargs: ("root_group / target (group)", True),
+        )
+
+        panel._move_selected_widgets_into()
+
+        assert child.parent is target
+        assert panel.selected_widgets() == [child]
+        assert panel._get_selected_widget() is child
+        assert sources == ["move into container"]
+        assert feedback == ["Moved 1 widget(s) into target."]
+        panel.deleteLater()
+
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

@@ -29,12 +29,15 @@ def _run_git_text(repo_root: str | Path, *args: str) -> str:
     if not git_exe or not resolved_repo_root.is_dir():
         return ""
 
-    result = _subprocess_run(
-        [git_exe, "-c", f"safe.directory={resolved_repo_root}", "-C", str(resolved_repo_root), *args],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = _subprocess_run(
+            [git_exe, "-c", f"safe.directory={resolved_repo_root}", "-C", str(resolved_repo_root), *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return ""
     if result.returncode != 0:
         return ""
     return result.stdout.strip()

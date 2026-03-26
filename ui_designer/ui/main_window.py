@@ -67,6 +67,14 @@ from ..model.resource_usage import (
     rewrite_project_resource_references,
     rewrite_project_string_references,
 )
+from ..model.structure_ops import (
+    available_move_targets,
+    group_selection,
+    lift_to_parent,
+    move_into_container,
+    move_selection_by_step,
+    ungroup_selection,
+)
 from ..model.selection_state import SelectionState
 from ..model.diagnostics import (
     analyze_page,
@@ -1298,6 +1306,36 @@ class MainWindow(QMainWindow):
         self._toggle_hide_action = QAction("Toggle Hide", self)
         self._toggle_hide_action.triggered.connect(self._toggle_selection_hidden)
         arrange_menu.addAction(self._toggle_hide_action)
+
+        structure_menu = menubar.addMenu("Structure")
+
+        self._group_selection_action = QAction("Group Selection", self)
+        self._group_selection_action.setShortcut("Ctrl+G")
+        self._group_selection_action.triggered.connect(self._group_selection)
+        structure_menu.addAction(self._group_selection_action)
+
+        self._ungroup_selection_action = QAction("Ungroup", self)
+        self._ungroup_selection_action.setShortcut("Ctrl+Shift+G")
+        self._ungroup_selection_action.triggered.connect(self._ungroup_selection)
+        structure_menu.addAction(self._ungroup_selection_action)
+
+        self._move_into_container_action = QAction("Move Into...", self)
+        self._move_into_container_action.triggered.connect(self._move_selection_into_container)
+        structure_menu.addAction(self._move_into_container_action)
+
+        self._lift_to_parent_action = QAction("Lift To Parent", self)
+        self._lift_to_parent_action.triggered.connect(self._lift_selection_to_parent)
+        structure_menu.addAction(self._lift_to_parent_action)
+
+        structure_menu.addSeparator()
+
+        self._move_up_action = QAction("Move Up", self)
+        self._move_up_action.triggered.connect(self._move_selection_up)
+        structure_menu.addAction(self._move_up_action)
+
+        self._move_down_action = QAction("Move Down", self)
+        self._move_down_action.triggered.connect(self._move_selection_down)
+        structure_menu.addAction(self._move_down_action)
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -3743,6 +3781,48 @@ class MainWindow(QMainWindow):
             return False
         return WidgetModel._get_type_info(parent.widget_type).get("layout_func") is not None
 
+    def _structure_project_context(self):
+        if self._current_page is None:
+            return None
+        return getattr(self, "_page_shim", _PageProjectShim(self._current_page))
+
+    def _choose_structure_target(self, widgets):
+        context = self._structure_project_context()
+        choices = available_move_targets(context, widgets)
+        if not choices:
+            self._show_selection_action_blocked("move into container", "no eligible target containers are available")
+            return None
+
+        labels = [choice.label for choice in choices]
+        selected_label, ok = QInputDialog.getItem(
+            self,
+            "Move Into Container",
+            "Target container:",
+            labels,
+            0,
+            False,
+        )
+        if not ok or not selected_label:
+            return None
+
+        for choice in choices:
+            if choice.label == selected_label:
+                return choice.widget
+        return None
+
+    def _apply_structure_result(self, result):
+        if not result.changed:
+            if result.message:
+                self.statusBar().showMessage(result.message, 4000)
+            return False
+
+        self.widget_tree.rebuild_tree()
+        self._set_selection(result.widgets, primary=result.primary, sync_tree=True, sync_preview=True)
+        self._record_page_state_change(source=result.source)
+        if result.message:
+            self.statusBar().showMessage(result.message, 5000)
+        return True
+
     def _shared_selection_parent(self, widgets=None):
         widgets = [widget for widget in (widgets or []) if widget is not None]
         if not widgets:
@@ -3964,6 +4044,28 @@ class MainWindow(QMainWindow):
 
         self._record_page_state_change(source=f"distribute {axis}")
 
+    def _group_selection(self):
+        self._apply_structure_result(group_selection(self._structure_project_context(), self._top_level_selected_widgets()))
+
+    def _ungroup_selection(self):
+        self._apply_structure_result(ungroup_selection(self._structure_project_context(), self._top_level_selected_widgets()))
+
+    def _move_selection_into_container(self):
+        widgets = self._top_level_selected_widgets()
+        target = self._choose_structure_target(widgets)
+        if target is None:
+            return
+        self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target))
+
+    def _lift_selection_to_parent(self):
+        self._apply_structure_result(lift_to_parent(self._structure_project_context(), self._top_level_selected_widgets()))
+
+    def _move_selection_up(self):
+        self._apply_structure_result(move_selection_by_step(self._structure_project_context(), self._top_level_selected_widgets(), -1))
+
+    def _move_selection_down(self):
+        self._apply_structure_result(move_selection_by_step(self._structure_project_context(), self._top_level_selected_widgets(), 1))
+
     def _move_selection_to_front(self):
         selected_widgets = self._top_level_selected_widgets()
         widgets = [widget for widget in selected_widgets if not getattr(widget, "designer_locked", False)]
@@ -4039,6 +4141,7 @@ class MainWindow(QMainWindow):
         can_paste = has_project and self._clipboard_payload is not None and self._default_paste_parent() is not None
         can_align = len(selectable_widgets) >= 2 and self._shared_selection_parent(selectable_widgets) is not None
         can_distribute = len(selectable_widgets) >= 3 and self._shared_selection_parent(selectable_widgets) is not None
+        can_move_into = has_project and bool(available_move_targets(self._structure_project_context(), selected_widgets))
 
         self._copy_action.setEnabled(has_selection)
         self._cut_action.setEnabled(has_deletable_selection)
@@ -4058,6 +4161,13 @@ class MainWindow(QMainWindow):
         self._send_back_action.setEnabled(has_selection)
         self._toggle_lock_action.setEnabled(has_selection)
         self._toggle_hide_action.setEnabled(has_selection)
+
+        self._group_selection_action.setEnabled(len(selected_widgets) >= 2)
+        self._ungroup_selection_action.setEnabled(has_selection)
+        self._move_into_container_action.setEnabled(can_move_into)
+        self._lift_to_parent_action.setEnabled(has_selection)
+        self._move_up_action.setEnabled(has_selection)
+        self._move_down_action.setEnabled(has_selection)
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
@@ -4093,10 +4203,12 @@ class MainWindow(QMainWindow):
         self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
         self._on_model_changed(source="layout reorder")
 
-    def _on_tree_changed(self):
+    def _on_tree_changed(self, source="widget tree change"):
         """Widget tree structure changed (add/delete/reorder)."""
-        self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
-        self._on_model_changed(source="widget tree change")
+        widgets = self.widget_tree.selected_widgets()
+        primary = self.widget_tree._get_selected_widget()
+        self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
+        self._on_model_changed(source=source or "widget tree change")
 
     def _on_widget_tree_feedback_message(self, message):
         if message:

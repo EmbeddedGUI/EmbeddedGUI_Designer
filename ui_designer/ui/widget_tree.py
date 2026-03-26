@@ -14,6 +14,14 @@ from ..model.widget_name import (
     resolve_widget_name,
     sanitize_widget_name,
 )
+from ..model.structure_ops import (
+    available_move_targets,
+    group_selection,
+    lift_to_parent,
+    move_into_container,
+    move_selection_by_step,
+    ungroup_selection,
+)
 from ..model.widget_model import WidgetModel
 from ..model.widget_registry import WidgetRegistry
 
@@ -33,7 +41,7 @@ class WidgetTreePanel(QWidget):
 
     widget_selected = pyqtSignal(object)  # emits WidgetModel or None
     selection_changed = pyqtSignal(list, object)  # widgets, primary
-    tree_changed = pyqtSignal()  # emits when tree structure changes
+    tree_changed = pyqtSignal(str)  # emits change source when tree structure changes
     feedback_message = pyqtSignal(str)  # emits user-facing status messages
 
     def __init__(self, parent=None):
@@ -284,6 +292,51 @@ class WidgetTreePanel(QWidget):
             suffix += 1
         return f"{stem}_{suffix}"
 
+    def _context_widgets(self, anchor_widget=None):
+        selected_widgets = self.selected_widgets()
+        if anchor_widget is not None and anchor_widget not in selected_widgets:
+            return [anchor_widget]
+        return selected_widgets or ([anchor_widget] if anchor_widget is not None else [])
+
+    def _emit_tree_changed(self, source):
+        self.tree_changed.emit(source or "widget tree change")
+
+    def _apply_structure_result(self, result):
+        if not result.changed:
+            if result.message:
+                self.feedback_message.emit(result.message)
+            return False
+
+        self.rebuild_tree()
+        self.set_selected_widgets(result.widgets, primary=result.primary)
+        self._emit_tree_changed(result.source)
+        if result.message:
+            self.feedback_message.emit(result.message)
+        return True
+
+    def _choose_move_target(self, widgets):
+        choices = available_move_targets(self.project, widgets)
+        if not choices:
+            self.feedback_message.emit("Cannot move into container: no eligible target containers are available.")
+            return None
+
+        labels = [choice.label for choice in choices]
+        selected_label, ok = QInputDialog.getItem(
+            self,
+            "Move Into Container",
+            "Target container:",
+            labels,
+            0,
+            False,
+        )
+        if not ok or not selected_label:
+            return None
+
+        for choice in choices:
+            if choice.label == selected_label:
+                return choice.widget
+        return None
+
     def _on_add_clicked(self):
         menu = QMenu(self)
         for display_name, type_name in _get_addable_types():
@@ -325,7 +378,8 @@ class WidgetTreePanel(QWidget):
             self.project.root_widgets.append(widget)
 
         self.rebuild_tree()
-        self.tree_changed.emit()
+        self.set_selected_widgets([widget], primary=widget)
+        self._emit_tree_changed("widget add")
 
     def _on_delete_clicked(self):
         widgets = self.selected_widgets()
@@ -348,7 +402,8 @@ class WidgetTreePanel(QWidget):
             deleted_count += 1
 
         self.rebuild_tree()
-        self.tree_changed.emit()
+        self.set_selected_widgets([], primary=None)
+        self._emit_tree_changed("widget delete")
         if locked_count:
             self.feedback_message.emit(f"Deleted {deleted_count} widget(s); skipped {self._locked_widget_summary(locked_count)}")
 
@@ -362,13 +417,13 @@ class WidgetTreePanel(QWidget):
             return
 
         menu = QMenu(self)
-        selected_widgets = self.selected_widgets()
-        rename_selected = len(selected_widgets) > 1 and widget in selected_widgets
+        context_widgets = self._context_widgets(widget)
+        rename_selected = len(context_widgets) > 1 and widget in context_widgets
 
         # Rename
         rename_action = QAction("Rename Selected" if rename_selected else "Rename", self)
         if rename_selected:
-            rename_action.triggered.connect(lambda: self._rename_selected_widgets(selected_widgets))
+            rename_action.triggered.connect(lambda: self._rename_selected_widgets(context_widgets))
         else:
             rename_action.triggered.connect(lambda: self._rename_widget(widget))
         menu.addAction(rename_action)
@@ -382,6 +437,33 @@ class WidgetTreePanel(QWidget):
                     lambda checked, w=widget, t=type_name: self._add_child_to(w, t)
                 )
                 add_menu.addAction(action)
+
+        structure_menu = menu.addMenu("Structure")
+        group_action = QAction("Group Selection", self)
+        group_action.triggered.connect(lambda: self._group_selected_widgets(context_widgets))
+        structure_menu.addAction(group_action)
+
+        ungroup_action = QAction("Ungroup", self)
+        ungroup_action.triggered.connect(lambda: self._ungroup_selected_widgets(context_widgets))
+        structure_menu.addAction(ungroup_action)
+
+        move_into_action = QAction("Move Into...", self)
+        move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
+        structure_menu.addAction(move_into_action)
+
+        lift_action = QAction("Lift To Parent", self)
+        lift_action.triggered.connect(lambda: self._lift_selected_widgets(context_widgets))
+        structure_menu.addAction(lift_action)
+
+        structure_menu.addSeparator()
+
+        move_up_action = QAction("Move Up", self)
+        move_up_action.triggered.connect(lambda: self._move_selected_widgets_up(context_widgets))
+        structure_menu.addAction(move_up_action)
+
+        move_down_action = QAction("Move Down", self)
+        move_down_action.triggered.connect(lambda: self._move_selected_widgets_down(context_widgets))
+        structure_menu.addAction(move_down_action)
 
         # Delete
         del_action = QAction("Delete", self)
@@ -402,7 +484,7 @@ class WidgetTreePanel(QWidget):
             widget.name = resolved_name
             self.rebuild_tree()
             self.set_selected_widgets([widget], primary=widget)
-            self.tree_changed.emit()
+            self._emit_tree_changed("widget rename")
             feedback = message or f"Renamed widget to {resolved_name}."
             self.feedback_message.emit(feedback)
 
@@ -440,7 +522,7 @@ class WidgetTreePanel(QWidget):
         primary = widgets[0]
         self.rebuild_tree()
         self.set_selected_widgets(widgets, primary=primary)
-        self.tree_changed.emit()
+        self._emit_tree_changed("widget rename")
         self.feedback_message.emit(f"Renamed {len(widgets)} widget(s) with prefix '{normalized}'.")
 
     def _add_child_to(self, parent, widget_type):
@@ -448,7 +530,8 @@ class WidgetTreePanel(QWidget):
         child.name = self._make_unique_widget_name(child.name)
         parent.add_child(child)
         self.rebuild_tree()
-        self.tree_changed.emit()
+        self.set_selected_widgets([child], primary=child)
+        self._emit_tree_changed("widget add")
 
     def _delete_widget(self, widget):
         if getattr(widget, "designer_locked", False):
@@ -459,7 +542,30 @@ class WidgetTreePanel(QWidget):
         elif widget in self.project.root_widgets:
             self.project.root_widgets.remove(widget)
         self.rebuild_tree()
-        self.tree_changed.emit()
+        self.set_selected_widgets([], primary=None)
+        self._emit_tree_changed("widget delete")
+
+    def _group_selected_widgets(self, widgets=None):
+        self._apply_structure_result(group_selection(self.project, widgets or self.selected_widgets()))
+
+    def _ungroup_selected_widgets(self, widgets=None):
+        self._apply_structure_result(ungroup_selection(self.project, widgets or self.selected_widgets()))
+
+    def _move_selected_widgets_into(self, target_widget=None, widgets=None):
+        widgets = widgets or self.selected_widgets()
+        target_widget = target_widget or self._choose_move_target(widgets)
+        if target_widget is None:
+            return
+        self._apply_structure_result(move_into_container(self.project, widgets, target_widget))
+
+    def _lift_selected_widgets(self, widgets=None):
+        self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))
+
+    def _move_selected_widgets_up(self, widgets=None):
+        self._apply_structure_result(move_selection_by_step(self.project, widgets or self.selected_widgets(), -1))
+
+    def _move_selected_widgets_down(self, widgets=None):
+        self._apply_structure_result(move_selection_by_step(self.project, widgets or self.selected_widgets(), 1))
 
     def _top_level_selected_widgets(self, widgets):
         selected_ids = {id(widget) for widget in widgets}

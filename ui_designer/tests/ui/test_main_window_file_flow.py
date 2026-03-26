@@ -743,6 +743,109 @@ class TestMainWindowFileFlow:
         assert window.statusBar().currentMessage() == "Cannot align selection: locked widgets leave fewer than 2 editable widgets."
         _close_window(window)
 
+    def test_group_selection_groups_widgets_and_updates_status(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "GroupSelectionDemo"
+        project = _create_project(project_dir, "GroupSelectionDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
+        second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
+
+        window._group_selection()
+
+        group = root.children[0]
+        assert group.widget_type == "group"
+        assert group.children == [first, second]
+        assert window.widget_tree.selected_widgets() == [group]
+        assert window.widget_tree._get_selected_widget() is group
+        assert window._undo_manager.get_stack("main_page").current_label() == "group selection"
+        assert window.statusBar().currentMessage() == "Grouped 2 widget(s) into group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_move_selection_into_container_uses_dialog_choice(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MoveIntoDemo"
+        project = _create_project(project_dir, "MoveIntoDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
+        child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QInputDialog.getItem",
+            lambda *args, **kwargs: ("root_group / target_group (group)", True),
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([child], primary=child, sync_tree=False, sync_preview=False)
+
+        window._move_selection_into_container()
+
+        assert child.parent is target
+        assert (child.display_x, child.display_y) == (10, 15)
+        assert window.widget_tree.selected_widgets() == [child]
+        assert window.widget_tree._get_selected_widget() is child
+        assert window._undo_manager.get_stack("main_page").current_label() == "move into container"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) into target_group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_widget_tree_group_selection_updates_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "TreeGroupSelectionDemo"
+        project = _create_project(project_dir, "TreeGroupSelectionDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
+        second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=False)
+
+        window.widget_tree._group_selected_widgets()
+
+        group = root.children[0]
+        assert window._primary_selected_widget() is group
+        assert window.preview_panel.selected_widgets() == [group]
+        assert window._undo_manager.get_stack("main_page").current_label() == "group selection"
+        assert window.statusBar().currentMessage() == "Grouped 2 widget(s) into group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_distribute_selection_reports_mixed_parent_constraint(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
