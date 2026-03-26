@@ -34,6 +34,12 @@ def test_build_pytest_command_includes_config_and_basetemp(tmp_path):
     assert command[-1] == "-q"
 
 
+def test_default_basetemp_root_uses_repo_temp_directory():
+    module = _load_module()
+
+    assert module.default_basetemp_root() == module.REPO_ROOT / "temp" / "pytest"
+
+
 def test_run_pytest_sets_safe_temp_env_and_cleans_directory(tmp_path, monkeypatch):
     module = _load_module()
 

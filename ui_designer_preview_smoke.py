@@ -42,6 +42,7 @@ PAGE_NAME = "main_page"
 STATUS_REGION = (20, 62, 200, 28)
 ANIM_REGION = (20, 170, 180, 40)
 BUTTON_CENTER = (120, 130)
+DEFAULT_WORK_ROOT = REPO_ROOT / "temp" / "preview_smoke"
 
 
 def parse_args() -> argparse.Namespace:
@@ -260,13 +261,17 @@ def _perform_click(compiler: CompilerEngine, x: int, y: int) -> None:
     _assert_frame(compiler.get_frame(), "button release")
 
 
+def default_work_dir_root() -> Path:
+    return DEFAULT_WORK_ROOT
+
+
 def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -> int:
     resolved_sdk_root = require_designer_sdk_root(
         repo_root=str(REPO_ROOT),
         cli_sdk_root=sdk_root,
         cli_flag="--sdk-root",
     )
-    project_parent = Path(work_dir).resolve() if work_dir else REPO_ROOT.parent
+    project_parent = Path(work_dir).resolve() if work_dir else default_work_dir_root()
     project_parent.mkdir(parents=True, exist_ok=True)
     temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_preview_smoke_", dir=str(project_parent)))
     app_dir = temp_root / APP_NAME

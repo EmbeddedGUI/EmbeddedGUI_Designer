@@ -4,11 +4,13 @@ from pathlib import Path
 
 from ui_designer_preview_smoke import (
     APP_NAME,
+    DEFAULT_WORK_ROOT,
     PAGE_NAME,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     build_main_page_user_source,
     build_smoke_project,
+    default_work_dir_root,
     extract_region,
 )
 
@@ -54,3 +56,6 @@ class TestPreviewSmokeHelpers:
         assert '"Status: click ok"' in source
         assert '"Verified"' in source
         assert f"void {page.c_prefix}_init(egui_page_base_t *self)" in source
+
+    def test_default_work_dir_root_uses_repo_temp_directory(self):
+        assert default_work_dir_root() == DEFAULT_WORK_ROOT

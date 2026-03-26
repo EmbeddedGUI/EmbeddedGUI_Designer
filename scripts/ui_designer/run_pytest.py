@@ -8,7 +8,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -16,7 +15,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TEST_ROOT = REPO_ROOT / "ui_designer" / "tests"
 DEFAULT_PYTEST_CONFIG = REPO_ROOT / "ui_designer" / "pyproject.toml"
-DEFAULT_BASETEMP_ROOT = Path(tempfile.gettempdir()) / "EmbeddedGUI_Designer_pytest"
+DEFAULT_BASETEMP_ROOT = REPO_ROOT / "temp" / "pytest"
 
 
 def default_basetemp_root() -> Path:
