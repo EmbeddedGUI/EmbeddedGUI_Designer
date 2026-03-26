@@ -1073,13 +1073,12 @@ class WidgetTreePanel(QWidget):
         )
         clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
         structure_menu.addAction(clear_move_target_history_action)
-        if structure_state.can_move_into:
-            quick_targets = self._quick_move_target_choices(context_widgets)
-            if quick_targets:
-                quick_move_menu = structure_menu.addMenu("Quick Move Into")
-                quick_move_menu.setToolTipsVisible(True)
-                quick_move_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
-                self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5)
+        quick_targets = self._quick_move_target_choices(context_widgets)
+        if quick_targets or self.remembered_move_target_label() or self.has_recent_move_targets():
+            quick_move_menu = structure_menu.addMenu("Quick Move Into")
+            quick_move_menu.setToolTipsVisible(True)
+            quick_move_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
+            self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5, include_management_actions=True)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")

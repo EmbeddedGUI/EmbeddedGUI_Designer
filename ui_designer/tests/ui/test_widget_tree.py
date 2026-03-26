@@ -60,10 +60,12 @@ def _structure_submenu(menu, label):
 
 
 def _menu_target_labels(menu):
+    ignored_labels = {"Move Into Last Target", "Clear Move Target History"}
     return [
         action.text()
         for action in menu.actions()
         if action.text()
+        and action.text() not in ignored_labels
         and action.isEnabled()
         and not action.isSeparator()
         and action.menu() is None
@@ -708,6 +710,43 @@ class TestWidgetTreePanel:
         assert panel._get_selected_widget() is child
         assert sources == ["move into container"]
         assert feedback == ["Moved 1 widget(s) into target."]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_quick_move_into_shows_history_without_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        panel.set_selected_widgets([target], primary=target)
+        menu = panel._build_context_menu(target)
+        actions = _structure_menu_actions(menu)
+        quick_menu = _structure_submenu(menu, "Quick Move Into")
+
+        assert actions["Quick Move Into"].menu() is not None
+        quick_action_texts = [action.text() for action in quick_menu.actions()]
+        assert "(No eligible target containers)" in quick_action_texts
+        assert "History" in quick_action_texts
+
+        repeat_action = next(action for action in quick_menu.actions() if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in quick_menu.actions() if action.text() == "Clear Move Target History")
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is True
+        assert _menu_target_labels(quick_menu) == []
 
         menu.deleteLater()
         panel.deleteLater()
