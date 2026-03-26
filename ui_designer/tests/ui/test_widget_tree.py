@@ -434,6 +434,7 @@ class TestWidgetTreePanel:
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
+        assert "#666666" in panel.drag_target_label.styleSheet()
 
         panel.set_selected_widgets([first, second], primary=first)
 
@@ -632,6 +633,7 @@ class TestWidgetTreePanel:
 
         assert panel.drag_target_label.text() == "Drop target: move into target."
         assert panel._drag_target_item is target_item
+        assert "#0b5cab" in panel.drag_target_label.styleSheet()
 
         panel._on_tree_drag_hover(sibling_item, QAbstractItemView.AboveItem)
 
@@ -642,6 +644,7 @@ class TestWidgetTreePanel:
 
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
         assert panel._drag_target_item is None
+        assert "#666666" in panel.drag_target_label.styleSheet()
         panel.deleteLater()
 
     def test_tree_drag_hover_reports_invalid_target_preview(self, qapp):
@@ -663,6 +666,7 @@ class TestWidgetTreePanel:
             "Drop target unavailable: Cannot move selection in tree: widgets are already in that position."
         )
         assert panel._drag_target_item is None
+        assert "#a1260d" in panel.drag_target_label.styleSheet()
         panel.deleteLater()
 
     def test_tree_drag_preview_clears_on_selection_change_and_rebuild(self, qapp):
@@ -688,6 +692,7 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([third], primary=third)
         assert panel._drag_target_item is None
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
+        assert "#666666" in panel.drag_target_label.styleSheet()
 
         panel._on_tree_drag_hover(second_item, QAbstractItemView.OnItem)
         assert panel._drag_target_item is second_item
@@ -695,6 +700,7 @@ class TestWidgetTreePanel:
         panel.rebuild_tree()
         assert panel._drag_target_item is None
         assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
+        assert "#666666" in panel.drag_target_label.styleSheet()
         panel.deleteLater()
 
     def test_tree_drag_hover_expands_valid_collapsed_container(self, qapp):

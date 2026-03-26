@@ -131,6 +131,12 @@ class WidgetTreePanel(QWidget):
     tree_changed = pyqtSignal(str)  # emits change source when tree structure changes
     feedback_message = pyqtSignal(str)  # emits user-facing status messages
 
+    _DRAG_TARGET_LABEL_STYLES = {
+        "default": "color: #666666;",
+        "valid": "color: #0b5cab; font-weight: 600;",
+        "invalid": "color: #a1260d; font-weight: 600;",
+    }
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.project = None
@@ -210,6 +216,7 @@ class WidgetTreePanel(QWidget):
         layout.addWidget(self.structure_hint_label)
         self.drag_target_label = QLabel(self._default_drag_target_text())
         self.drag_target_label.setWordWrap(True)
+        self._set_drag_target_label(self._default_drag_target_text(), tone="default")
         layout.addWidget(self.drag_target_label)
 
         self.filter_edit = QLineEdit()
@@ -468,6 +475,10 @@ class WidgetTreePanel(QWidget):
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."
+
+    def _set_drag_target_label(self, text, tone="default"):
+        self.drag_target_label.setText(text)
+        self.drag_target_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
 
     def _structure_hint_text(self, state=None):
         state = state or self._structure_action_state()
@@ -894,7 +905,7 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_item = None
         self._drag_hover_position = None
         self._set_drag_target_item(None)
-        self.drag_target_label.setText(self._default_drag_target_text())
+        self._set_drag_target_label(self._default_drag_target_text(), tone="default")
 
     def _expand_drag_hover_item(self):
         item = self._drag_hover_item
@@ -939,15 +950,16 @@ class WidgetTreePanel(QWidget):
     def _update_drag_target_preview(self, target_item, target_widget, target_parent, drop_position, valid, message):
         if valid:
             self._set_drag_target_item(target_item)
-            self.drag_target_label.setText(
-                self._format_drag_target_text(target_widget, target_parent, drop_position)
+            self._set_drag_target_label(
+                self._format_drag_target_text(target_widget, target_parent, drop_position),
+                tone="valid",
             )
             return
         self._set_drag_target_item(None)
         if message:
-            self.drag_target_label.setText(f"Drop target unavailable: {message}")
+            self._set_drag_target_label(f"Drop target unavailable: {message}", tone="invalid")
             return
-        self.drag_target_label.setText(self._default_drag_target_text())
+        self._set_drag_target_label(self._default_drag_target_text(), tone="default")
 
     def _handle_tree_key_press(self, event):
         key = event.key()
