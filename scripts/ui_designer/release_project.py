@@ -53,6 +53,31 @@ def _diagnostics_payload(result):
     }
 
 
+def _first_diagnostic_text(result):
+    diagnostics = _diagnostics_payload(result)
+    entries = diagnostics["entries"]
+    if entries:
+        first_entry = entries[0] if isinstance(entries[0], dict) else {}
+        severity = str(first_entry.get("severity") or "").strip() or "issue"
+        page_name = str(first_entry.get("target_page_name") or first_entry.get("page_name") or "").strip()
+        widget_name = str(first_entry.get("target_widget_name") or first_entry.get("widget_name") or "").strip()
+        scope = page_name or "<project>"
+        if widget_name:
+            scope = f"{scope}/{widget_name}"
+        message = str(first_entry.get("message") or "").strip()
+        return f"{severity} {scope}: {message}" if message else f"{severity} {scope}"
+
+    errors = list(getattr(result, "errors", []) or [])
+    if errors:
+        return f"error: {errors[0]}"
+
+    warnings = list(getattr(result, "warnings", []) or [])
+    if warnings:
+        return f"warning: {warnings[0]}"
+
+    return ""
+
+
 def _result_payload(result):
     diagnostics = _diagnostics_payload(result)
     return {
@@ -131,6 +156,9 @@ def main():
             f"errors={diagnostics['summary']['errors']}, "
             f"total={diagnostics['summary']['total']}"
         )
+        first_diagnostic = _first_diagnostic_text(result)
+        if first_diagnostic:
+            print(f"[INFO] first_diagnostic: {first_diagnostic}")
 
     return _resolve_exit_code(result)
 

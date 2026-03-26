@@ -127,3 +127,4 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
     assert "[OK] ok" in output
     assert "[INFO] package:" in output
     assert "[INFO] diagnostics: warnings=1, errors=0, total=1" in output
+    assert "[INFO] first_diagnostic: warning: warning a" in output
