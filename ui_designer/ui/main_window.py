@@ -3996,6 +3996,37 @@ class MainWindow(QMainWindow):
             note_action.setStatusTip(tooltip)
         menu.addAction(note_action)
 
+    def _add_quick_move_history_actions(self, menu):
+        widgets = self._top_level_selected_widgets()
+
+        move_into_last_target_action = QAction("Move Into Last Target", self)
+        move_into_last_target_choice = self._remembered_move_target_choice(widgets)
+        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
+        move_into_last_target_action.setToolTip(
+            self._structure_action_hint(
+                self._move_into_last_target_hint(widgets),
+                move_into_last_target_choice is not None,
+                self._move_into_last_target_reason(widgets),
+            )
+        )
+        move_into_last_target_action.setStatusTip(move_into_last_target_action.toolTip())
+        move_into_last_target_action.triggered.connect(self._move_selection_into_last_target)
+        menu.addAction(move_into_last_target_action)
+
+        clear_move_target_history_action = QAction("Clear Move Target History", self)
+        has_recent_move_targets = bool(self._recent_move_target_labels())
+        clear_move_target_history_action.setEnabled(has_recent_move_targets)
+        clear_move_target_history_action.setToolTip(
+            self._structure_action_hint(
+                self._clear_move_target_history_hint(),
+                has_recent_move_targets,
+                "no recent move targets are saved.",
+            )
+        )
+        clear_move_target_history_action.setStatusTip(clear_move_target_history_action.toolTip())
+        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
+        menu.addAction(clear_move_target_history_action)
+
     def _populate_quick_move_into_menu(self, menu):
         menu.clear()
         recent_choices = self._recent_move_into_choices()
@@ -4021,6 +4052,11 @@ class MainWindow(QMainWindow):
             self._add_quick_move_into_action(menu, choice)
         if not recent_choices and not remaining_choices:
             self._add_quick_move_into_note(menu, "(No eligible target containers)")
+        if self._remembered_move_target_label() or self._recent_move_target_labels():
+            if menu.actions():
+                menu.addSeparator()
+            self._add_quick_move_into_section(menu, "History")
+            self._add_quick_move_history_actions(menu)
 
     def _move_selection_into_target(self, target, target_label=""):
         if target is None:
