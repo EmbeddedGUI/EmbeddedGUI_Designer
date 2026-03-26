@@ -3253,6 +3253,7 @@ class TestMainWindowFileFlow:
         assert window._current_page.name == "detail_page"
         assert window._selection_state.primary is detail_button
         assert window._selection_state.widgets == [detail_button]
+        assert window.statusBar().currentMessage() == "Opened diagnostic target: detail_page/confirm_button_2."
 
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -3887,6 +3888,7 @@ class TestMainWindowFileFlow:
         assert window._current_page.name == "detail_page"
         assert window._selection_state.primary is target
         assert window._selection_state.widgets == [target]
+        assert window.statusBar().currentMessage() == "Opened diagnostic target: detail_page/target."
 
         window._undo_manager.mark_all_saved()
         _close_window(window)

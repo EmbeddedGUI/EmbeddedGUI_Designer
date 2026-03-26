@@ -3227,6 +3227,8 @@ class MainWindow(QMainWindow):
                 f"Opened diagnostic resource check: {diagnostic_entry.resource_type}/{diagnostic_entry.resource_name}.",
                 4000,
             )
+            return
+        self.statusBar().showMessage(f"Opened diagnostic target: {target_page_name}/{widget_name}.", 4000)
 
     def _on_page_added(self, page_name):
         """User requested a new page."""
