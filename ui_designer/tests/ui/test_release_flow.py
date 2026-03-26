@@ -1593,6 +1593,12 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
     assert exported["filters"]["artifact"] == "package"
     assert exported["filters"]["diagnostics"] == "all"
     assert exported["filters"]["sort"] == "newest"
+    assert exported["summary_text"].startswith("Release History Summary\n")
+    assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in exported["summary_text"]
+    assert (
+        "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed"
+        " | diag error main_page/hero: bad callback"
+    ) in exported["summary_text"]
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
     assert exported["entries"][0]["summary_line"] == (
         "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed"

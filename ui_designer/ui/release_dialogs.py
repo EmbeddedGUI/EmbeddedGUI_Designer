@@ -418,6 +418,17 @@ def _build_filtered_history_json(
     sort_mode: str,
     search_text: str,
 ) -> str:
+    summary_text = _build_filtered_history_summary(
+        filtered_entries,
+        all_entries,
+        range_filter=range_filter,
+        status_filter=status_filter,
+        profile_filter=profile_filter,
+        artifact_filter=artifact_filter,
+        diagnostics_filter=diagnostics_filter,
+        sort_mode=sort_mode,
+        search_text=search_text,
+    )
     export_entries = []
     for entry in filtered_entries:
         export_entries.append(_history_entry_export_payload(entry))
@@ -437,6 +448,7 @@ def _build_filtered_history_json(
             "sort": sort_mode or "newest",
             "search": search_text or "-",
         },
+        "summary_text": summary_text,
         "entries": export_entries,
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
