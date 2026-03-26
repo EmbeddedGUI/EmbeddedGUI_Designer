@@ -336,6 +336,34 @@ class TestWidgetTreePanel:
         assert feedback == ["Moved 1 widget(s) into target."]
         panel.deleteLater()
 
+    def test_into_button_quick_menu_moves_selection_into_target(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target", x=80, y=10, width=100, height=100)
+        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        sources = []
+        feedback = []
+        panel.tree_changed.connect(lambda source: sources.append(source))
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+        panel.set_selected_widgets([child], primary=child)
+
+        target_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "root_group / target (group)")
+        target_action.trigger()
+
+        assert child.parent is target
+        assert panel.selected_widgets() == [child]
+        assert panel._get_selected_widget() is child
+        assert sources == ["move into container"]
+        assert feedback == ["Moved 1 widget(s) into target."]
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

@@ -4,7 +4,7 @@ import re
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
-    QPushButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
+    QPushButton, QToolButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
 from PyQt5.QtGui import QColor, QBrush
@@ -190,9 +190,14 @@ class WidgetTreePanel(QWidget):
         self.ungroup_btn = QPushButton("Ungroup")
         self.ungroup_btn.setToolTip("Ungroup the selected group widgets (Ctrl+Shift+G)")
         self.ungroup_btn.clicked.connect(self._ungroup_selected_widgets)
-        self.into_btn = QPushButton("Into")
+        self.into_btn = QToolButton()
+        self.into_btn.setText("Into")
         self.into_btn.setToolTip("Move the current selection into another container (Ctrl+Shift+I)")
         self.into_btn.clicked.connect(self._move_selected_widgets_into)
+        self._into_quick_menu = QMenu(self)
+        self._into_quick_menu.setToolTipsVisible(True)
+        self.into_btn.setPopupMode(QToolButton.MenuButtonPopup)
+        self.into_btn.setMenu(self._into_quick_menu)
         self.lift_btn = QPushButton("Lift")
         self.lift_btn.setToolTip("Lift the current selection to the parent container (Ctrl+Shift+L)")
         self.lift_btn.clicked.connect(self._lift_selected_widgets)
@@ -507,7 +512,23 @@ class WidgetTreePanel(QWidget):
         self.bottom_btn.setEnabled(state.can_move_bottom)
         for button, (base_text, reason_attr) in self._structure_button_tooltips.items():
             button.setToolTip(self._structure_tooltip(base_text, button.isEnabled(), self._structure_action_reason(state, reason_attr)))
+        self._refresh_into_button_menu(state)
         self.structure_hint_label.setText(self._structure_hint_text(state))
+
+    def _refresh_into_button_menu(self, state=None):
+        if not hasattr(self, "_into_quick_menu"):
+            return
+
+        state = state or self._structure_action_state()
+        self._into_quick_menu.clear()
+        choices = available_move_targets(self.project, state.widgets)
+        for choice in choices:
+            action = QAction(choice.label, self)
+            action.setToolTip(f"Move the current selection into {choice.label}.")
+            action.triggered.connect(
+                lambda checked=False, target=choice.widget, widgets=list(state.widgets): self._move_selected_widgets_into(target_widget=target, widgets=widgets)
+            )
+            self._into_quick_menu.addAction(action)
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."
