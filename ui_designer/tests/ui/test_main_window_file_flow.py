@@ -3694,6 +3694,89 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_copy_diagnostics_json_classifies_page_metadata_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsCopyJsonMetadataDemo"
+        project = _create_project(project_dir, "DiagnosticsCopyJsonMetadataDemo", sdk_root)
+        page = project.get_startup_page()
+        page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
+        page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        QApplication.clipboard().clear()
+        window.diagnostics_panel._copy_json_button.click()
+
+        copied = json.loads(QApplication.clipboard().text())
+        assert any(
+            entry["code"] == "page_field_invalid_name"
+            and entry["widget_name"] == "bad-name"
+            and entry["target_kind"] == "page_field"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == ""
+            for entry in copied["entries"]
+        )
+        assert any(
+            entry["code"] == "page_timer_missing_callback"
+            and entry["widget_name"] == "refresh_timer"
+            and entry["target_kind"] == "page_timer"
+            and entry["target_page_name"] == "main_page"
+            and entry["target_widget_name"] == ""
+            for entry in copied["entries"]
+        )
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_copy_diagnostics_json_classifies_project_callback_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsCopyJsonProjectTargetsDemo"
+        project = _create_project(project_dir, "DiagnosticsCopyJsonProjectTargetsDemo", sdk_root)
+        detail_page = project.create_new_page("detail_page")
+        main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
+        detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
+        main_button.on_click = "on_confirm"
+        detail_button.on_click = "on_confirm"
+        project.get_startup_page().root_widget.add_child(main_button)
+        detail_page.root_widget.add_child(detail_button)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        QApplication.clipboard().clear()
+        window.diagnostics_panel._copy_json_button.click()
+
+        copied = json.loads(QApplication.clipboard().text())
+        assert any(
+            entry["code"] == "project_callback_duplicate"
+            and entry["widget_name"] == "on_confirm"
+            and entry["target_kind"] == "widget"
+            and entry["target_page_name"] == "detail_page"
+            and entry["target_widget_name"] == "confirm_button_2"
+            for entry in copied["entries"]
+        )
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_copy_diagnostics_json_without_entries_reports_empty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
