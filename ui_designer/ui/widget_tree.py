@@ -733,7 +733,7 @@ class WidgetTreePanel(QWidget):
             return
 
         state = state or self._structure_action_state()
-        self._populate_quick_move_menu(self._into_quick_menu, state.widgets)
+        self._populate_quick_move_menu(self._into_quick_menu, state.widgets, include_management_actions=True)
 
     def _add_move_target_menu_action(self, menu, choice, widgets):
         action = QAction(choice.label, self)
@@ -760,7 +760,33 @@ class WidgetTreePanel(QWidget):
             note_action.setStatusTip(tooltip)
         menu.addAction(note_action)
 
-    def _populate_quick_move_menu(self, menu, widgets, max_targets=None):
+    def _add_into_button_management_actions(self, menu, widgets):
+        move_into_last_target_action = QAction("Move Into Last Target", self)
+        move_into_last_target_choice = self._remembered_move_target_choice(widgets)
+        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
+        move_into_last_target_action.setToolTip(
+            self._structure_tooltip(
+                self._move_into_last_target_hint(widgets),
+                move_into_last_target_choice is not None,
+                self._move_into_last_target_reason(widgets),
+            )
+        )
+        move_into_last_target_action.triggered.connect(lambda checked=False, selected_widgets=list(widgets): self._move_selected_widgets_into_last_target(selected_widgets))
+        menu.addAction(move_into_last_target_action)
+
+        clear_move_target_history_action = QAction("Clear Move Target History", self)
+        clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
+        clear_move_target_history_action.setToolTip(
+            self._structure_tooltip(
+                self._clear_move_target_history_hint(),
+                self.has_recent_move_targets(),
+                "no recent move targets are saved.",
+            )
+        )
+        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
+        menu.addAction(clear_move_target_history_action)
+
+    def _populate_quick_move_menu(self, menu, widgets, max_targets=None, include_management_actions=False):
         menu.clear()
         recent_choices = self._recent_move_target_choices(widgets)
         remaining_choices = self._remaining_move_target_choices(widgets)
@@ -790,6 +816,10 @@ class WidgetTreePanel(QWidget):
             self._add_move_target_menu_action(menu, choice, widgets)
         if not recent_display and not remaining_display:
             self._add_disabled_menu_note(menu, "(No eligible target containers)")
+        if include_management_actions and (self.remembered_move_target_label() or self.has_recent_move_targets()):
+            if menu.actions():
+                menu.addSeparator()
+            self._add_into_button_management_actions(menu, widgets)
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."

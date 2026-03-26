@@ -626,6 +626,51 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_into_button_menu_reuses_last_target_and_clears_history(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        feedback = []
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        panel._refresh_into_button_menu()
+
+        repeat_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Clear Move Target History")
+        assert repeat_action.isEnabled() is True
+        assert clear_action.isEnabled() is True
+        assert "root_group / target (group)" in repeat_action.toolTip()
+
+        repeat_action.trigger()
+
+        assert second.parent is target
+        assert panel.selected_widgets() == [second]
+
+        panel._refresh_into_button_menu()
+        clear_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Clear Move Target History")
+        clear_action.trigger()
+
+        assert panel.recent_move_target_labels() == []
+        assert feedback[-1] == "Cleared recent move target history."
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
