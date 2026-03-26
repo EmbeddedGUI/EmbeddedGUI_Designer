@@ -5912,6 +5912,7 @@ class TestMainWindowCanvasActions:
         assert "Delete" in labels
         assert "Arrange" in labels
         assert "Structure" in labels
+        assert "Descendants" in select_labels
         assert "Same Type" in select_labels
         _close_window(window)
 
@@ -5974,6 +5975,47 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [child_a, child_b]
         assert window.preview_panel.selected_widgets() == [child_a, child_b]
         assert window.statusBar().currentMessage() == "Selected 2 child widgets of container."
+        _close_window(window)
+
+    def test_preview_context_menu_descendants_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewDescendantsContextMenuDemo"
+        project = _create_project(project_dir, "PreviewDescendantsContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
+        container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
+        child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
+        nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
+        nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
+        nested_group.add_child(nested_leaf)
+        container.add_child(child_a)
+        container.add_child(nested_group)
+        root.add_child(other)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(container)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_descendants_action = next(action for action in select_menu.actions() if action.text() == "Descendants")
+        select_descendants_action.trigger()
+
+        assert window._selection_state.primary is child_a
+        assert window._selection_state.widgets == [child_a, nested_group, nested_leaf]
+        assert window.widget_tree.selected_widgets() == [child_a, nested_group, nested_leaf]
+        assert window.preview_panel.selected_widgets() == [child_a, nested_group, nested_leaf]
+        assert window.statusBar().currentMessage() == "Selected 3 descendant widgets of container."
         _close_window(window)
 
     def test_preview_context_menu_same_type_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
