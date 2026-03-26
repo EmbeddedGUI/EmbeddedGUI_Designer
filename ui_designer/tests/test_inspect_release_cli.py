@@ -130,6 +130,7 @@ def test_inspect_packaged_app_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["kind"] == "packaged_app"
     assert payload["designer_revision"] == "designer-main-1234567"
     assert payload["designer_dirty"] is True
+    assert payload["sdk_source_kind"] == "bundled"
     assert payload["sdk_revision"] == "sdk-main-abcdef1"
     assert payload["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
     assert payload["file_count"] == 42

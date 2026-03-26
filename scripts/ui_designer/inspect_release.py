@@ -179,6 +179,7 @@ def summarize_sdk_bundle(sdk_root: str | Path) -> dict[str, object]:
     return {
         "kind": "bundled_sdk",
         "source_path": str(resolved_sdk_root),
+        "sdk_source_kind": "bundled",
         "sdk_revision": bundled_sdk_revision(metadata),
         "sdk_commit": _string(metadata.get("git_commit")),
         "sdk_remote": _string(metadata.get("git_remote_url")),
@@ -211,6 +212,7 @@ def summarize_packaged_app(app_dir: str | Path) -> dict[str, object]:
     else:
         payload.update(
             {
+                "sdk_source_kind": "",
                 "sdk_revision": "",
                 "sdk_commit": "",
                 "sdk_remote": "",
