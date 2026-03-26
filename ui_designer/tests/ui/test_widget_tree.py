@@ -654,6 +654,7 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([second], primary=second)
         panel._refresh_into_button_menu()
 
+        assert "History" in [action.text() for action in panel.into_btn.menu().actions()]
         repeat_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Move Into Last Target")
         clear_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Clear Move Target History")
         assert repeat_action.isEnabled() is True

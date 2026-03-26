@@ -823,6 +823,7 @@ class WidgetTreePanel(QWidget):
         if include_management_actions and (self.remembered_move_target_label() or self.has_recent_move_targets()):
             if menu.actions():
                 menu.addSeparator()
+            self._add_menu_section_label(menu, "History")
             self._add_into_button_management_actions(menu, widgets)
 
     def _default_drag_target_text(self):
