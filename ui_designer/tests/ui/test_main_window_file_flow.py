@@ -1273,9 +1273,56 @@ class TestMainWindowFileFlow:
         assert window.widget_tree.recent_move_target_labels() == []
         assert window._clear_move_target_history_action.isEnabled() is False
         assert window._move_into_last_target_action.isEnabled() is False
-        assert window.statusBar().currentMessage() == "Cleared recent move target history."
+        assert window.statusBar().currentMessage() == "Cleared 1 recent move target."
         assert "no recent move targets are saved" in window._clear_move_target_history_action.toolTip()
 
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_clear_move_target_history_reports_plural_count(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ClearMoveHistoryCountDemo"
+        project = _create_project(project_dir, "ClearMoveHistoryCountDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        third = WidgetModel("switch", name="third")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target_a,
+            target_label="root_group / target_a (group)",
+        )
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target_b,
+            target_label="root_group / target_b (group)",
+        )
+        window._set_selection([third], primary=third, sync_tree=True, sync_preview=False)
+
+        window._clear_move_target_history_action.trigger()
+
+        assert window.widget_tree.recent_move_target_labels() == []
+        assert window.statusBar().currentMessage() == "Cleared 2 recent move targets."
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

@@ -4045,9 +4045,10 @@ class MainWindow(QMainWindow):
         if not self._recent_move_target_labels():
             self._show_selection_action_blocked("clear move target history", "no recent move targets are saved")
             return
+        cleared_count = len(self._recent_move_target_labels())
         self.widget_tree.clear_remembered_move_target_labels()
         self._update_edit_actions()
-        self.statusBar().showMessage("Cleared recent move target history.", 4000)
+        self.statusBar().showMessage(self._cleared_move_target_history_message(cleared_count), 4000)
 
     def _choose_structure_target_choice(self, widgets):
         choices = self._quick_move_into_choices(widgets)
@@ -4130,6 +4131,10 @@ class MainWindow(QMainWindow):
     def _cleared_move_target_history_text(self, count):
         noun = "target" if count == 1 else "targets"
         return f"cleared {count} recent move {noun}"
+
+    def _cleared_move_target_history_message(self, count):
+        noun = "target" if count == 1 else "targets"
+        return f"Cleared {count} recent move {noun}."
 
     def _show_selection_action_blocked(self, action, reason):
         self.statusBar().showMessage(f"Cannot {action}: {reason}.", 4000)

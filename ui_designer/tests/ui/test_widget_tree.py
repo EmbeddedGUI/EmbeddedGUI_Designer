@@ -668,7 +668,7 @@ class TestWidgetTreePanel:
         clear_action.trigger()
 
         assert panel.recent_move_target_labels() == []
-        assert feedback[-1] == "Cleared recent move target history."
+        assert feedback[-1] == "Cleared 1 recent move target."
         panel.deleteLater()
 
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
@@ -847,7 +847,7 @@ class TestWidgetTreePanel:
         actions["Clear Move Target History"].trigger()
 
         assert panel.recent_move_target_labels() == []
-        assert feedback[-1] == "Cleared recent move target history."
+        assert feedback[-1] == "Cleared 1 recent move target."
 
         menu.deleteLater()
         menu = panel._build_context_menu(second)
@@ -856,6 +856,45 @@ class TestWidgetTreePanel:
         assert "Unavailable: no recent move targets are saved." in actions["Clear Move Target History"].toolTip()
 
         menu.deleteLater()
+        panel.deleteLater()
+
+    def test_clear_move_target_history_reports_plural_count(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target_a = WidgetModel("group", name="target_a")
+        target_b = WidgetModel("group", name="target_b")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        third = WidgetModel("switch", name="third")
+        root.add_child(target_a)
+        root.add_child(target_b)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        feedback = []
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target_a,
+            target_label="root_group / target_a (group)",
+        )
+        panel.set_selected_widgets([second], primary=second)
+        panel._move_selected_widgets_into(
+            target_widget=target_b,
+            target_label="root_group / target_b (group)",
+        )
+        panel.set_selected_widgets([third], primary=third)
+
+        panel._clear_move_target_history()
+
+        assert panel.recent_move_target_labels() == []
+        assert feedback[-1] == "Cleared 2 recent move targets."
         panel.deleteLater()
 
     def test_remembered_move_target_is_scoped_per_project(self, qapp):

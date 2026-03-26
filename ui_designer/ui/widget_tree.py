@@ -711,6 +711,10 @@ class WidgetTreePanel(QWidget):
         noun = "target" if count == 1 else "targets"
         return f"cleared {count} recent move {noun}"
 
+    def _cleared_move_target_history_message(self, count):
+        noun = "target" if count == 1 else "targets"
+        return f"Cleared {count} recent move {noun}."
+
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
             return
@@ -1252,9 +1256,10 @@ class WidgetTreePanel(QWidget):
         if not self.has_recent_move_targets():
             self.feedback_message.emit("Cannot clear move target history: no recent move targets are saved.")
             return
+        cleared_count = len(self.recent_move_target_labels())
         self.clear_remembered_move_target_labels()
         self._update_structure_controls()
-        self.feedback_message.emit("Cleared recent move target history.")
+        self.feedback_message.emit(self._cleared_move_target_history_message(cleared_count))
 
     def _lift_selected_widgets(self, widgets=None):
         self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))
