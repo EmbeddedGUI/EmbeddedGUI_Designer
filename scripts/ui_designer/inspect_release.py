@@ -164,6 +164,7 @@ def summarize_version_file(version_path: str | Path) -> dict[str, object]:
         "sdk_source_kind": _string(version_data.get("sdk_source_kind")),
         "sdk_revision": _string(version_data.get("sdk_revision")),
         "sdk_commit": _string(version_data.get("sdk_commit")),
+        "sdk_remote": _string(version_data.get("sdk_remote")),
     }
 
 

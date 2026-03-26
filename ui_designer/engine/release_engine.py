@@ -390,6 +390,7 @@ def _format_version_text(app_name: str, profile, designer_revision: str, sdk_fin
     sdk_revision = sdk_fingerprint.revision or sdk_fingerprint.commit_short or sdk_fingerprint.commit or "unknown"
     sdk_commit = sdk_fingerprint.commit or sdk_fingerprint.commit_short or "unknown"
     sdk_source_kind = sdk_fingerprint.source_kind or "unknown"
+    sdk_remote = sdk_fingerprint.remote or ""
     return (
         f"app={app_name}\n"
         f"profile={profile.id}\n"
@@ -397,6 +398,7 @@ def _format_version_text(app_name: str, profile, designer_revision: str, sdk_fin
         f"sdk_source_kind={sdk_source_kind}\n"
         f"sdk_revision={sdk_revision}\n"
         f"sdk_commit={sdk_commit}\n"
+        f"sdk_remote={sdk_remote}\n"
         f"build_id={build_id}\n"
     )
 

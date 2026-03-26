@@ -147,6 +147,7 @@ def test_inspect_version_file_emits_json(monkeypatch, tmp_path, capsys):
                 "sdk_source_kind=submodule",
                 "sdk_revision=sdk-main-456",
                 "sdk_commit=abcdef1234567890",
+                "sdk_remote=https://github.com/EmbeddedGUI/EmbeddedGUI.git",
                 "build_id=20260325T000000Z",
                 "",
             )
@@ -167,6 +168,7 @@ def test_inspect_version_file_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["sdk_source_kind"] == "submodule"
     assert payload["sdk_revision"] == "sdk-main-456"
     assert payload["sdk_commit"] == "abcdef1234567890"
+    assert payload["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
     assert payload["build_id"] == "20260325T000000Z"
 
 

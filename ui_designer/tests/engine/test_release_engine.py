@@ -136,6 +136,7 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     assert "sdk_source_kind=submodule" in version_text
     assert "sdk_revision=sdk-main-456" in version_text
     assert "sdk_commit=abcdef1234567890" in version_text
+    assert "sdk_remote=https://github.com/EmbeddedGUI/EmbeddedGUI.git" in version_text
     assert f"build_id={result.build_id}" in version_text
     assert Path(result.dist_dir, "VERSION.txt").read_text(encoding="utf-8") == version_text
 
