@@ -458,6 +458,20 @@ class WidgetTreePanel(QWidget):
             return []
         return self._ancestor_widgets(widget) + [widget]
 
+    def _top_level_widgets(self, widget):
+        root = self._root_widget(widget)
+        if root is None:
+            return []
+        return [child for child in getattr(root, "children", []) if child is not None]
+
+    def _top_level_ancestor(self, widget):
+        path_widgets = self._widget_path(widget)
+        if len(path_widgets) >= 2:
+            return path_widgets[1]
+        if len(path_widgets) == 1:
+            return path_widgets[0]
+        return None
+
     def _select_ancestor_widgets(self, widget):
         ancestors = self._ancestor_widgets(widget)
         if not ancestors:
@@ -492,6 +506,22 @@ class WidgetTreePanel(QWidget):
             path_widgets,
             primary=widget,
             feedback_message=f"Selected {len(path_widgets)} {noun} in path to {self._widget_label(widget)}.",
+        )
+
+    def _select_top_level_widgets(self, widget):
+        top_level_widgets = self._top_level_widgets(widget)
+        if not top_level_widgets:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select top-level widgets: page root has no child widgets.")
+            return
+        noun = "widget" if len(top_level_widgets) == 1 else "widgets"
+        primary = self._top_level_ancestor(widget)
+        if primary not in top_level_widgets:
+            primary = top_level_widgets[0]
+        self._apply_programmatic_selection(
+            top_level_widgets,
+            primary=primary,
+            feedback_message=f"Selected {len(top_level_widgets)} top-level {noun} on this page.",
         )
 
     def _select_child_widgets(self, widget):
@@ -842,6 +872,7 @@ class WidgetTreePanel(QWidget):
         can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_root = self._root_widget(widget) is not None and self._root_widget(widget) is not widget
         can_select_path = bool(self._widget_path(widget))
+        can_select_top_level = bool(self._top_level_widgets(widget))
         can_select_children = bool(child_widgets)
         can_select_descendants = bool(descendant_widgets)
         can_select_subtree = bool(subtree_widgets)
@@ -904,6 +935,18 @@ class WidgetTreePanel(QWidget):
         )
         select_path_action.triggered.connect(lambda: self._select_widget_path(widget))
         select_menu.addAction(select_path_action)
+
+        select_top_level_action = QAction("Top-Level", self)
+        select_top_level_action.setEnabled(can_select_top_level)
+        select_top_level_action.setToolTip(
+            self._structure_tooltip(
+                "Select widgets directly under the page root.",
+                can_select_top_level,
+                "page root has no child widgets.",
+            )
+        )
+        select_top_level_action.triggered.connect(lambda: self._select_top_level_widgets(widget))
+        select_menu.addAction(select_top_level_action)
 
         select_children_action = QAction("Children", self)
         select_children_action.setEnabled(can_select_children)
@@ -1081,6 +1124,7 @@ class WidgetTreePanel(QWidget):
             can_select_ancestors,
             can_select_root,
             can_select_path,
+            can_select_top_level,
             can_select_children,
             can_select_descendants,
             can_select_subtree,

@@ -916,6 +916,7 @@ class TestWidgetTreePanel:
         assert root_actions["Ancestors"].isEnabled() is False
         assert root_actions["Root"].isEnabled() is False
         assert root_actions["Path"].isEnabled() is True
+        assert root_actions["Top-Level"].isEnabled() is True
         assert root_actions["Children"].isEnabled() is True
         assert root_actions["Descendants"].isEnabled() is True
         assert root_actions["Subtree"].isEnabled() is True
@@ -950,6 +951,7 @@ class TestWidgetTreePanel:
         assert container_actions["Ancestors"].isEnabled() is True
         assert container_actions["Root"].isEnabled() is True
         assert container_actions["Path"].isEnabled() is True
+        assert container_actions["Top-Level"].isEnabled() is True
         assert container_actions["Children"].isEnabled() is True
         assert container_actions["Descendants"].isEnabled() is True
         assert container_actions["Subtree"].isEnabled() is True
@@ -969,6 +971,7 @@ class TestWidgetTreePanel:
         assert child_actions["Ancestors"].isEnabled() is True
         assert child_actions["Root"].isEnabled() is True
         assert child_actions["Path"].isEnabled() is True
+        assert child_actions["Top-Level"].isEnabled() is True
         assert child_actions["Children"].isEnabled() is False
         assert child_actions["Descendants"].isEnabled() is False
         assert child_actions["Subtree"].isEnabled() is False
@@ -1064,6 +1067,15 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["root_group", "container", "nested_group", "nested_leaf"], "nested_leaf")
         assert feedback[-1] == "Selected 4 widgets in path to nested_leaf."
         path_menu.deleteLater()
+
+        top_level_menu = panel._build_context_menu(nested_leaf)
+        top_level_actions = _select_menu_actions(top_level_menu)
+        top_level_actions["Top-Level"].trigger()
+        assert panel.selected_widgets() == [other, container, same_type]
+        assert panel._get_selected_widget() is container
+        assert selection_events[-1] == (["other", "container", "same_type"], "container")
+        assert feedback[-1] == "Selected 3 top-level widgets on this page."
+        top_level_menu.deleteLater()
 
         children_menu = panel._build_context_menu(container)
         children_actions = _select_menu_actions(children_menu)
