@@ -68,6 +68,8 @@ class DiagnosticsPanel(QWidget):
         self._severity_filter_combo.currentIndexChanged.connect(self._apply_filter)
         self._reset_view_button = QPushButton("Reset View")
         self._reset_view_button.clicked.connect(self._reset_view)
+        self._open_selected_button = QPushButton("Open Selected")
+        self._open_selected_button.clicked.connect(self._open_selected)
         self._open_first_error_button = QPushButton("Open First Error")
         self._open_first_error_button.clicked.connect(self._open_first_error)
         self._open_first_warning_button = QPushButton("Open First Warning")
@@ -86,12 +88,14 @@ class DiagnosticsPanel(QWidget):
         self._list = QListWidget()
         self._list.setFocusPolicy(Qt.NoFocus)
         self._list.itemDoubleClicked.connect(self._on_item_activated)
+        self._list.itemSelectionChanged.connect(self._update_selection_actions)
 
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(self._summary_label, 1)
         header_layout.addWidget(self._severity_filter_combo)
         header_layout.addWidget(self._reset_view_button)
+        header_layout.addWidget(self._open_selected_button)
         header_layout.addWidget(self._open_first_error_button)
         header_layout.addWidget(self._open_first_warning_button)
         header_layout.addWidget(self._copy_button)
@@ -110,6 +114,7 @@ class DiagnosticsPanel(QWidget):
         self._summary_label.setText("Diagnostics: no active issues")
         self._hint_label.setText(_DEFAULT_HINT_TEXT)
         self._reset_view_button.setEnabled(bool(self._current_filter_value()))
+        self._open_selected_button.setEnabled(False)
         self._open_first_error_button.setEnabled(False)
         self._open_first_warning_button.setEnabled(False)
         self._copy_button.setEnabled(False)
@@ -188,9 +193,14 @@ class DiagnosticsPanel(QWidget):
             item.setData(Qt.UserRole, _activation_target(entry))
             item.setData(Qt.UserRole + 1, entry)
             self._list.addItem(item)
+        self._update_selection_actions()
 
     def _reset_view(self):
         self._severity_filter_combo.setCurrentIndex(0)
+
+    def _update_selection_actions(self):
+        current_item = self._list.currentItem()
+        self._open_selected_button.setEnabled(current_item is not None)
 
     def _first_navigable_error(self, entries):
         for entry in entries or []:
@@ -233,6 +243,12 @@ class DiagnosticsPanel(QWidget):
                 self._list.setCurrentItem(item)
                 self._on_item_activated(item)
                 return
+
+    def _open_selected(self):
+        item = self._list.currentItem()
+        if item is None:
+            return
+        self._on_item_activated(item)
 
     def _on_item_activated(self, item):
         self._activated_entry = item.data(Qt.UserRole + 1)
