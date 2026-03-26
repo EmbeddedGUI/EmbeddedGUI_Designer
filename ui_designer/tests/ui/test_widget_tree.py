@@ -945,6 +945,7 @@ class TestWidgetTreePanel:
         first_menu = panel._build_context_menu(first)
         first_actions = _select_menu_actions(first_menu)
         assert first_actions["Same Parent Type"].isEnabled() is True
+        assert first_actions["Subtree Type"].isEnabled() is False
         assert first_actions["Same Type"].isEnabled() is True
         assert first_actions["Same Depth"].isEnabled() is True
         first_menu.deleteLater()
@@ -968,6 +969,7 @@ class TestWidgetTreePanel:
         assert container_actions["Free Position"].isEnabled() is True
         assert container_actions["Siblings"].isEnabled() is True
         assert container_actions["Same Parent Type"].isEnabled() is False
+        assert container_actions["Subtree Type"].isEnabled() is False
         assert container_actions["Same Depth"].isEnabled() is True
         container_menu.deleteLater()
 
@@ -992,6 +994,7 @@ class TestWidgetTreePanel:
         assert child_actions["Free Position"].isEnabled() is True
         assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Parent Type"].isEnabled() is False
+        assert child_actions["Subtree Type"].isEnabled() is False
         assert child_actions["Same Type"].isEnabled() is False
         assert child_actions["Same Depth"].isEnabled() is True
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
@@ -1004,6 +1007,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in child_actions["Managed"].toolTip()
         assert "Unavailable: no other switch widgets exist under the same parent." in child_actions["Same Parent Type"].toolTip()
+        assert "Unavailable: no other switch widgets exist in this subtree." in child_actions["Subtree Type"].toolTip()
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
         panel.deleteLater()
@@ -1085,6 +1089,15 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["other", "container", "same_type"], "container")
         assert feedback[-1] == "Selected 3 top-level widgets on this page."
         top_level_menu.deleteLater()
+
+        subtree_type_menu = panel._build_context_menu(root)
+        subtree_type_actions = _select_menu_actions(subtree_type_menu)
+        subtree_type_actions["Subtree Type"].trigger()
+        assert panel.selected_widgets() == [root, container, nested_group]
+        assert panel._get_selected_widget() is root
+        assert selection_events[-1] == (["root_group", "container", "nested_group"], "root_group")
+        assert feedback[-1] == "Selected 3 group widgets in subtree of root_group."
+        subtree_type_menu.deleteLater()
 
         children_menu = panel._build_context_menu(container)
         children_actions = _select_menu_actions(children_menu)

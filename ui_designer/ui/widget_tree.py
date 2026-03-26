@@ -854,6 +854,33 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(matches)} sibling {widget_type} {noun} under {self._widget_label(parent)}.",
         )
 
+    def _same_subtree_type_widgets(self, widget):
+        if widget is None:
+            return []
+        widget_type = getattr(widget, "widget_type", "")
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if current is not None and getattr(current, "widget_type", "") == widget_type
+        ]
+
+    def _select_same_subtree_type_widgets(self, widget):
+        matches = self._same_subtree_type_widgets(widget)
+        if len(matches) <= 1:
+            if widget is not None:
+                widget_type = getattr(widget, "widget_type", "widget")
+                self.feedback_message.emit(
+                    f"Cannot select subtree type: no other {widget_type} widgets exist in this subtree."
+                )
+            return
+        widget_type = getattr(widget, "widget_type", "widget")
+        noun = "widget" if len(matches) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            matches,
+            primary=widget if widget in matches else matches[0],
+            feedback_message=f"Selected {len(matches)} {widget_type} {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
     def _same_type_widgets(self, widget):
         if widget is None:
             return []
@@ -935,6 +962,7 @@ class WidgetTreePanel(QWidget):
         free_position_subtree_widgets = self._free_position_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_parent_type_widgets = self._same_parent_type_widgets(widget)
+        same_subtree_type_widgets = self._same_subtree_type_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         same_depth_widgets = self._same_depth_widgets(widget)
         can_select_parent = widget.parent is not None
@@ -956,6 +984,7 @@ class WidgetTreePanel(QWidget):
         can_select_free_position = bool(free_position_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_parent_type = len(same_parent_type_widgets) > 1
+        can_select_same_subtree_type = len(same_subtree_type_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
         can_select_same_depth = len(same_depth_widgets) > 1
 
@@ -1193,6 +1222,18 @@ class WidgetTreePanel(QWidget):
         select_same_parent_type_action.triggered.connect(lambda: self._select_same_parent_type_widgets(widget))
         select_menu.addAction(select_same_parent_type_action)
 
+        select_same_subtree_type_action = QAction("Subtree Type", self)
+        select_same_subtree_type_action.setEnabled(can_select_same_subtree_type)
+        select_same_subtree_type_action.setToolTip(
+            self._structure_tooltip(
+                f"Select {getattr(widget, 'widget_type', 'widget')} widgets in this subtree.",
+                can_select_same_subtree_type,
+                f"no other {getattr(widget, 'widget_type', 'widget')} widgets exist in this subtree.",
+            )
+        )
+        select_same_subtree_type_action.triggered.connect(lambda: self._select_same_subtree_type_widgets(widget))
+        select_menu.addAction(select_same_subtree_type_action)
+
         select_same_type_action = QAction("Same Type", self)
         select_same_type_action.setEnabled(can_select_same_type)
         select_same_type_action.setToolTip(
@@ -1236,6 +1277,7 @@ class WidgetTreePanel(QWidget):
             can_select_free_position,
             can_select_siblings,
             can_select_same_parent_type,
+            can_select_same_subtree_type,
             can_select_same_type,
             can_select_same_depth,
         ])
