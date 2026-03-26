@@ -435,6 +435,29 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected parent widget: {self._widget_label(parent)}.",
         )
 
+    def _ancestor_widgets(self, widget):
+        if widget is None:
+            return []
+        ancestors = []
+        current = widget.parent
+        while current is not None:
+            ancestors.append(current)
+            current = current.parent
+        return list(reversed(ancestors))
+
+    def _select_ancestor_widgets(self, widget):
+        ancestors = self._ancestor_widgets(widget)
+        if not ancestors:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select ancestors: root widgets do not have ancestors.")
+            return
+        noun = "widget" if len(ancestors) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            ancestors,
+            primary=widget.parent if widget is not None else None,
+            feedback_message=f"Selected {len(ancestors)} ancestor {noun} of {self._widget_label(widget)}.",
+        )
+
     def _select_child_widgets(self, widget):
         children = [child for child in getattr(widget, "children", []) if child is not None]
         if not children:
@@ -549,6 +572,7 @@ class WidgetTreePanel(QWidget):
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
+        can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_children = bool(child_widgets)
         can_select_descendants = bool(descendant_widgets)
         can_select_subtree = bool(subtree_widgets)
@@ -566,6 +590,18 @@ class WidgetTreePanel(QWidget):
         )
         select_parent_action.triggered.connect(lambda: self._select_parent_widget(widget))
         select_menu.addAction(select_parent_action)
+
+        select_ancestors_action = QAction("Ancestors", self)
+        select_ancestors_action.setEnabled(can_select_ancestors)
+        select_ancestors_action.setToolTip(
+            self._structure_tooltip(
+                "Select all ancestor widgets up to the page root.",
+                can_select_ancestors,
+                "root widgets do not have ancestors.",
+            )
+        )
+        select_ancestors_action.triggered.connect(lambda: self._select_ancestor_widgets(widget))
+        select_menu.addAction(select_ancestors_action)
 
         select_children_action = QAction("Children", self)
         select_children_action.setEnabled(can_select_children)
@@ -630,6 +666,7 @@ class WidgetTreePanel(QWidget):
         select_menu.addAction(select_same_type_action)
         select_enabled = any([
             can_select_parent,
+            can_select_ancestors,
             can_select_children,
             can_select_descendants,
             can_select_subtree,
