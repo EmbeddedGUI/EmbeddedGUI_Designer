@@ -70,6 +70,10 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
     assert exit_code == module.EXIT_OK
     assert payload["success"] is True
     assert payload["profile_id"] == "windows-pc"
+    assert payload["diagnostics_warning_count"] == 1
+    assert payload["diagnostics_error_count"] == 0
+    assert payload["diagnostics_total"] == 1
+    assert payload["first_diagnostic"] == "warning main_page/hero: ghost.png is missing"
     assert payload["diagnostics"]["summary"] == {"errors": 0, "warnings": 1, "total": 1}
     assert payload["diagnostics"]["entries"][0]["code"] == "missing_resource"
     assert payload["diagnostics"]["entries"][0]["target_kind"] == "resource"

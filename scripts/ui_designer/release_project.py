@@ -80,6 +80,7 @@ def _first_diagnostic_text(result):
 
 def _result_payload(result):
     diagnostics = _diagnostics_payload(result)
+    first_diagnostic = _first_diagnostic_text(result)
     return {
         "success": result.success,
         "message": result.message,
@@ -94,6 +95,10 @@ def _result_payload(result):
         "warnings": list(result.warnings),
         "errors": list(result.errors),
         "artifacts": [artifact.to_dict() for artifact in result.artifacts],
+        "diagnostics_warning_count": int(diagnostics["summary"].get("warnings", 0) or 0),
+        "diagnostics_error_count": int(diagnostics["summary"].get("errors", 0) or 0),
+        "diagnostics_total": int(diagnostics["summary"].get("total", 0) or 0),
+        "first_diagnostic": first_diagnostic,
         "diagnostics": diagnostics,
     }
 
