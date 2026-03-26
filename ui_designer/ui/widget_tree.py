@@ -81,6 +81,36 @@ class WidgetTreePanel(QWidget):
         btn_layout.addWidget(self.collapse_btn)
         layout.addLayout(btn_layout)
 
+        structure_layout = QHBoxLayout()
+        self.group_btn = QPushButton("Group")
+        self.group_btn.setToolTip("Group the current selection")
+        self.group_btn.clicked.connect(self._group_selected_widgets)
+        self.ungroup_btn = QPushButton("Ungroup")
+        self.ungroup_btn.setToolTip("Ungroup the selected group widgets")
+        self.ungroup_btn.clicked.connect(self._ungroup_selected_widgets)
+        self.into_btn = QPushButton("Into")
+        self.into_btn.setToolTip("Move the current selection into another container")
+        self.into_btn.clicked.connect(self._move_selected_widgets_into)
+        self.lift_btn = QPushButton("Lift")
+        self.lift_btn.setToolTip("Lift the current selection to the parent container")
+        self.lift_btn.clicked.connect(self._lift_selected_widgets)
+        self.up_btn = QPushButton("Up")
+        self.up_btn.setToolTip("Move the current selection up among its siblings")
+        self.up_btn.clicked.connect(self._move_selected_widgets_up)
+        self.down_btn = QPushButton("Down")
+        self.down_btn.setToolTip("Move the current selection down among its siblings")
+        self.down_btn.clicked.connect(self._move_selected_widgets_down)
+        for button in (
+            self.group_btn,
+            self.ungroup_btn,
+            self.into_btn,
+            self.lift_btn,
+            self.up_btn,
+            self.down_btn,
+        ):
+            structure_layout.addWidget(button)
+        layout.addLayout(structure_layout)
+
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter widgets by name or type")
         self.filter_edit.setClearButtonEnabled(True)
@@ -113,6 +143,7 @@ class WidgetTreePanel(QWidget):
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
         layout.addWidget(self.tree)
+        self._update_structure_controls()
 
     def set_project(self, project):
         self.project = project
@@ -133,6 +164,7 @@ class WidgetTreePanel(QWidget):
                 self._add_widget_to_tree(root_widget, None)
         self._building = False
         self._apply_tree_filter(default_expand=default_expand)
+        self._update_structure_controls()
 
     def shutdown(self):
         self._filter_matches = []
@@ -206,6 +238,7 @@ class WidgetTreePanel(QWidget):
         if primary is None and widgets:
             primary = widgets[-1]
         self._update_filter_position_label()
+        self._update_structure_controls()
         self.widget_selected.emit(primary)
         self.selection_changed.emit(widgets, primary)
 
@@ -250,6 +283,7 @@ class WidgetTreePanel(QWidget):
         finally:
             self._syncing_selection = False
         self._update_filter_position_label()
+        self._update_structure_controls()
 
     def _iter_widgets(self):
         if not self.project:
@@ -302,6 +336,17 @@ class WidgetTreePanel(QWidget):
     def _structure_action_state(self, widgets=None):
         selection = self.selected_widgets() if widgets is None else widgets
         return describe_structure_actions(self.project, selection)
+
+    def _update_structure_controls(self):
+        if not hasattr(self, "group_btn"):
+            return
+        state = self._structure_action_state()
+        self.group_btn.setEnabled(state.can_group)
+        self.ungroup_btn.setEnabled(state.can_ungroup)
+        self.into_btn.setEnabled(state.can_move_into)
+        self.lift_btn.setEnabled(state.can_lift)
+        self.up_btn.setEnabled(state.can_move_up)
+        self.down_btn.setEnabled(state.can_move_down)
 
     def _emit_tree_changed(self, source):
         self.tree_changed.emit(source or "widget tree change")

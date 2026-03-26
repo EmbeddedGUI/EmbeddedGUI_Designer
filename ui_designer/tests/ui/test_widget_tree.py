@@ -404,6 +404,59 @@ class TestWidgetTreePanel:
         child_menu.deleteLater()
         panel.deleteLater()
 
+    def test_structure_buttons_reflect_selection_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        target = WidgetModel("group", name="target")
+        nested = WidgetModel("switch", name="nested")
+        target.add_child(nested)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        assert panel.group_btn.isEnabled() is False
+        assert panel.ungroup_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is False
+        assert panel.lift_btn.isEnabled() is False
+        assert panel.up_btn.isEnabled() is False
+        assert panel.down_btn.isEnabled() is False
+
+        panel.set_selected_widgets([first, second], primary=first)
+
+        assert panel.group_btn.isEnabled() is True
+        assert panel.ungroup_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is True
+        assert panel.lift_btn.isEnabled() is False
+        assert panel.up_btn.isEnabled() is False
+        assert panel.down_btn.isEnabled() is True
+
+        panel.set_selected_widgets([nested], primary=nested)
+
+        assert panel.group_btn.isEnabled() is False
+        assert panel.ungroup_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is True
+        assert panel.lift_btn.isEnabled() is True
+        assert panel.up_btn.isEnabled() is False
+        assert panel.down_btn.isEnabled() is False
+
+        panel.set_selected_widgets([root], primary=root)
+
+        assert panel.group_btn.isEnabled() is False
+        assert panel.ungroup_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is False
+        assert panel.lift_btn.isEnabled() is False
+        assert panel.up_btn.isEnabled() is False
+        assert panel.down_btn.isEnabled() is False
+
+        panel.deleteLater()
+
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
