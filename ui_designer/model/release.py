@@ -276,3 +276,5 @@ class ReleaseResult:
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     artifacts: list[ReleaseArtifact] = field(default_factory=list)
+    diagnostics_summary: dict[str, object] = field(default_factory=dict)
+    diagnostics_entries: list[dict[str, object]] = field(default_factory=list)

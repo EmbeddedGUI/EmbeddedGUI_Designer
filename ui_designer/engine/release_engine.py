@@ -443,6 +443,11 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
     def _finalize(success: bool, message: str) -> ReleaseResult:
         diagnostic_error_count = sum(1 for entry in diagnostic_entries if str(entry.get("severity") or "") == "error")
         diagnostic_warning_count = sum(1 for entry in diagnostic_entries if str(entry.get("severity") or "") == "warning")
+        diagnostics_summary = {
+            "errors": diagnostic_error_count,
+            "warnings": diagnostic_warning_count,
+            "total": len(diagnostic_entries),
+        }
         manifest = {
             "schema_version": 1,
             "build_id": build_id,
@@ -461,11 +466,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "warnings": warnings,
             "errors": errors,
             "diagnostics": {
-                "summary": {
-                    "errors": diagnostic_error_count,
-                    "warnings": diagnostic_warning_count,
-                    "total": len(diagnostic_entries),
-                },
+                "summary": diagnostics_summary,
                 "entries": list(diagnostic_entries),
             },
             "command": command,
@@ -522,6 +523,8 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             warnings=warnings,
             errors=errors,
             artifacts=artifacts,
+            diagnostics_summary=diagnostics_summary,
+            diagnostics_entries=list(diagnostic_entries),
         )
 
     try:

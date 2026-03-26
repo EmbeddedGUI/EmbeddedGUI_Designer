@@ -45,6 +45,22 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
             warnings=[],
             errors=[],
             artifacts=[],
+            diagnostics_summary={"errors": 0, "warnings": 1, "total": 1},
+            diagnostics_entries=[
+                {
+                    "severity": "warning",
+                    "code": "missing_resource",
+                    "message": "ghost.png is missing",
+                    "page_name": "main_page",
+                    "widget_name": "hero",
+                    "resource_type": "image",
+                    "resource_name": "ghost.png",
+                    "property_name": "image_file",
+                    "target_kind": "resource",
+                    "target_page_name": "main_page",
+                    "target_widget_name": "hero",
+                }
+            ],
         ),
     )
 
@@ -54,3 +70,6 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
     assert exit_code == module.EXIT_OK
     assert payload["success"] is True
     assert payload["profile_id"] == "windows-pc"
+    assert payload["diagnostics"]["summary"] == {"errors": 0, "warnings": 1, "total": 1}
+    assert payload["diagnostics"]["entries"][0]["code"] == "missing_resource"
+    assert payload["diagnostics"]["entries"][0]["target_kind"] == "resource"

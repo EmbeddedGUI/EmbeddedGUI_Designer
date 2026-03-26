@@ -55,6 +55,10 @@ def _result_payload(result):
         "warnings": list(result.warnings),
         "errors": list(result.errors),
         "artifacts": [artifact.to_dict() for artifact in result.artifacts],
+        "diagnostics": {
+            "summary": dict(getattr(result, "diagnostics_summary", {}) or {}),
+            "entries": list(getattr(result, "diagnostics_entries", []) or []),
+        },
     }
 
 

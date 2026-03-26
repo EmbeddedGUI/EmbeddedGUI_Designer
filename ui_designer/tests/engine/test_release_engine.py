@@ -95,6 +95,9 @@ def test_release_project_creates_manifest_and_history(tmp_path, monkeypatch):
     )
 
     assert result.success is True
+    assert result.diagnostics_summary == {"errors": 0, "warnings": 1, "total": 1}
+    assert result.diagnostics_entries[0]["code"] == "missing_resource"
+    assert result.diagnostics_entries[0]["target_kind"] == "resource"
     assert Path(result.manifest_path).is_file()
     assert Path(result.history_path).is_file()
     assert Path(result.zip_path).is_file()
@@ -169,6 +172,9 @@ def test_release_project_blocks_on_diagnostics(tmp_path, monkeypatch):
 
     assert result.success is False
     assert "diagnostics" in result.message.lower()
+    assert result.diagnostics_summary == {"errors": 1, "warnings": 0, "total": 1}
+    assert result.diagnostics_entries[0]["code"] == "invalid_name"
+    assert result.diagnostics_entries[0]["target_kind"] == "widget"
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
     assert manifest["status"] == "failed"
     assert manifest["diagnostics"]["summary"] == {"errors": 1, "warnings": 0, "total": 1}
