@@ -6,6 +6,7 @@ from ui_designer.model.structure_ops import (
     lift_to_parent,
     move_into_container,
     move_selection_by_step,
+    move_selection_to_edge,
     move_widgets_to_parent_index,
     ungroup_selection,
     validate_move_widgets_to_parent_index,
@@ -152,6 +153,8 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert sibling_state.can_lift is False
     assert sibling_state.can_move_up is False
     assert sibling_state.can_move_down is True
+    assert sibling_state.can_move_top is False
+    assert sibling_state.can_move_bottom is True
 
     nested_state = describe_structure_actions(project, [nested])
 
@@ -162,6 +165,8 @@ def test_describe_structure_actions_reports_precise_capabilities():
     assert nested_state.can_lift is True
     assert nested_state.can_move_up is False
     assert nested_state.can_move_down is False
+    assert nested_state.can_move_top is False
+    assert nested_state.can_move_bottom is False
 
 
 def test_describe_structure_actions_blocks_root_and_locked_selection():
@@ -181,6 +186,8 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     assert root_state.can_lift is False
     assert root_state.can_move_up is False
     assert root_state.can_move_down is False
+    assert root_state.can_move_top is False
+    assert root_state.can_move_bottom is False
 
     locked_state = describe_structure_actions(project, [locked])
 
@@ -191,6 +198,46 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     assert locked_state.can_lift is False
     assert locked_state.can_move_up is False
     assert locked_state.can_move_down is False
+    assert locked_state.can_move_top is False
+    assert locked_state.can_move_bottom is False
+
+
+def test_move_selection_to_edge_moves_selected_block_to_top_and_bottom():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    third = WidgetModel("label", name="third")
+    fourth = WidgetModel("label", name="fourth")
+    root.add_child(first)
+    root.add_child(second)
+    root.add_child(third)
+    root.add_child(fourth)
+
+    moved_top = move_selection_to_edge(project, [second, third], "top")
+
+    assert moved_top.changed is True
+    assert [widget.name for widget in root.children] == ["second", "third", "first", "fourth"]
+    assert moved_top.message == "Moved 2 widget(s) to the top."
+
+    moved_bottom = move_selection_to_edge(project, [second, third], "bottom")
+
+    assert moved_bottom.changed is True
+    assert [widget.name for widget in root.children] == ["first", "fourth", "second", "third"]
+    assert moved_bottom.message == "Moved 2 widget(s) to the bottom."
+
+
+def test_move_selection_to_edge_reports_boundary_noop():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    root.add_child(first)
+    root.add_child(second)
+
+    result = move_selection_to_edge(project, [first], "top")
+
+    assert result.changed is False
+    assert result.message == "Cannot move selection to top: selected widgets are already at the top."
+    assert root.children == [first, second]
 
 
 def test_move_widgets_to_parent_index_reorders_selection_block():

@@ -23,6 +23,7 @@ from ..model.structure_ops import (
     lift_to_parent,
     move_into_container,
     move_selection_by_step,
+    move_selection_to_edge,
     move_widgets_to_parent_index,
     ungroup_selection,
     validate_move_widgets_to_parent_index,
@@ -503,6 +504,12 @@ class WidgetTreePanel(QWidget):
             hints.append("Alt+Up reorder")
         elif state.can_move_down:
             hints.append("Alt+Down reorder")
+        if state.can_move_top and state.can_move_bottom:
+            hints.append("Alt+Shift+Up/Down move to edge")
+        elif state.can_move_top:
+            hints.append("Alt+Shift+Up move to top")
+        elif state.can_move_bottom:
+            hints.append("Alt+Shift+Down move to bottom")
         if hints:
             return "Structure: " + "; ".join(hints) + "."
         return "Structure: no valid structure actions for the current selection."
@@ -696,6 +703,18 @@ class WidgetTreePanel(QWidget):
         move_down_action.setEnabled(structure_state.can_move_down)
         move_down_action.triggered.connect(lambda: self._move_selected_widgets_down(context_widgets))
         structure_menu.addAction(move_down_action)
+
+        move_top_action = QAction("Move To Top", self)
+        move_top_action.setShortcut("Alt+Shift+Up")
+        move_top_action.setEnabled(structure_state.can_move_top)
+        move_top_action.triggered.connect(lambda: self._move_selected_widgets_to_top(context_widgets))
+        structure_menu.addAction(move_top_action)
+
+        move_bottom_action = QAction("Move To Bottom", self)
+        move_bottom_action.setShortcut("Alt+Shift+Down")
+        move_bottom_action.setEnabled(structure_state.can_move_bottom)
+        move_bottom_action.triggered.connect(lambda: self._move_selected_widgets_to_bottom(context_widgets))
+        structure_menu.addAction(move_bottom_action)
         structure_menu.setEnabled(any([
             structure_state.can_group,
             structure_state.can_ungroup,
@@ -703,6 +722,8 @@ class WidgetTreePanel(QWidget):
             structure_state.can_lift,
             structure_state.can_move_up,
             structure_state.can_move_down,
+            structure_state.can_move_top,
+            structure_state.can_move_bottom,
         ]))
 
         # Delete
@@ -807,6 +828,12 @@ class WidgetTreePanel(QWidget):
 
     def _move_selected_widgets_down(self, widgets=None):
         self._apply_structure_result(move_selection_by_step(self.project, widgets or self.selected_widgets(), 1))
+
+    def _move_selected_widgets_to_top(self, widgets=None):
+        self._apply_structure_result(move_selection_to_edge(self.project, widgets or self.selected_widgets(), "top"))
+
+    def _move_selected_widgets_to_bottom(self, widgets=None):
+        self._apply_structure_result(move_selection_to_edge(self.project, widgets or self.selected_widgets(), "bottom"))
 
     def _resolve_tree_drop_destination(self, target_widget, drop_position):
         root = self._drop_root_widget()
@@ -988,6 +1015,12 @@ class WidgetTreePanel(QWidget):
             return True
         if key == Qt.Key_Down and modifiers == Qt.AltModifier:
             self._move_selected_widgets_down()
+            return True
+        if key == Qt.Key_Up and modifiers == (Qt.AltModifier | Qt.ShiftModifier):
+            self._move_selected_widgets_to_top()
+            return True
+        if key == Qt.Key_Down and modifiers == (Qt.AltModifier | Qt.ShiftModifier):
+            self._move_selected_widgets_to_bottom()
             return True
         return False
 

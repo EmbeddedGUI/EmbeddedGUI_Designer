@@ -349,12 +349,16 @@ class TestWidgetTreePanel:
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
+        assert actions["Move To Top"].isEnabled() is False
+        assert actions["Move To Bottom"].isEnabled() is True
         assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
         assert actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
         assert actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
         assert actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
         assert actions["Move Up"].shortcut().toString() == "Alt+Up"
         assert actions["Move Down"].shortcut().toString() == "Alt+Down"
+        assert actions["Move To Top"].shortcut().toString() == "Alt+Shift+Up"
+        assert actions["Move To Bottom"].shortcut().toString() == "Alt+Shift+Down"
 
         menu.deleteLater()
 
@@ -368,8 +372,19 @@ class TestWidgetTreePanel:
         assert nested_actions["Lift To Parent"].isEnabled() is True
         assert nested_actions["Move Up"].isEnabled() is False
         assert nested_actions["Move Down"].isEnabled() is False
+        assert nested_actions["Move To Top"].isEnabled() is False
+        assert nested_actions["Move To Bottom"].isEnabled() is False
 
         nested_menu.deleteLater()
+
+        panel.set_selected_widgets([target], primary=target)
+        target_menu = panel._build_context_menu(target)
+        target_actions = _structure_menu_actions(target_menu)
+
+        assert target_actions["Move To Top"].isEnabled() is True
+        assert target_actions["Move To Bottom"].isEnabled() is False
+
+        target_menu.deleteLater()
         panel.deleteLater()
 
     def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
@@ -393,6 +408,8 @@ class TestWidgetTreePanel:
         assert root_actions["Lift To Parent"].isEnabled() is False
         assert root_actions["Move Up"].isEnabled() is False
         assert root_actions["Move Down"].isEnabled() is False
+        assert root_actions["Move To Top"].isEnabled() is False
+        assert root_actions["Move To Bottom"].isEnabled() is False
 
         root_menu.deleteLater()
 
@@ -406,6 +423,8 @@ class TestWidgetTreePanel:
         assert child_actions["Lift To Parent"].isEnabled() is False
         assert child_actions["Move Up"].isEnabled() is False
         assert child_actions["Move Down"].isEnabled() is False
+        assert child_actions["Move To Top"].isEnabled() is False
+        assert child_actions["Move To Bottom"].isEnabled() is False
 
         child_menu.deleteLater()
         panel.deleteLater()
@@ -447,6 +466,18 @@ class TestWidgetTreePanel:
         assert "Ctrl+G group siblings" in panel.structure_hint_label.text()
         assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
         assert "Alt+Down reorder" in panel.structure_hint_label.text()
+        assert "Alt+Shift+Down move to bottom" in panel.structure_hint_label.text()
+
+        panel.set_selected_widgets([second], primary=second)
+
+        assert panel.group_btn.isEnabled() is False
+        assert panel.ungroup_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is True
+        assert panel.lift_btn.isEnabled() is False
+        assert panel.up_btn.isEnabled() is True
+        assert panel.down_btn.isEnabled() is True
+        assert "Alt+Up/Down reorder" in panel.structure_hint_label.text()
+        assert "Alt+Shift+Up/Down move to edge" in panel.structure_hint_label.text()
 
         panel.set_selected_widgets([nested], primary=nested)
 
@@ -780,6 +811,8 @@ class TestWidgetTreePanel:
         monkeypatch.setattr(panel, "_lift_selected_widgets", lambda *args, **kwargs: calls.append("lift"))
         monkeypatch.setattr(panel, "_move_selected_widgets_up", lambda *args, **kwargs: calls.append("up"))
         monkeypatch.setattr(panel, "_move_selected_widgets_down", lambda *args, **kwargs: calls.append("down"))
+        monkeypatch.setattr(panel, "_move_selected_widgets_to_top", lambda *args, **kwargs: calls.append("top"))
+        monkeypatch.setattr(panel, "_move_selected_widgets_to_bottom", lambda *args, **kwargs: calls.append("bottom"))
 
         for key, modifiers in (
             (Qt.Key_Delete, Qt.NoModifier),
@@ -790,10 +823,12 @@ class TestWidgetTreePanel:
             (Qt.Key_L, Qt.ControlModifier | Qt.ShiftModifier),
             (Qt.Key_Up, Qt.AltModifier),
             (Qt.Key_Down, Qt.AltModifier),
+            (Qt.Key_Up, Qt.AltModifier | Qt.ShiftModifier),
+            (Qt.Key_Down, Qt.AltModifier | Qt.ShiftModifier),
         ):
             QApplication.sendEvent(panel.tree, QKeyEvent(QEvent.KeyPress, key, modifiers))
 
-        assert calls == ["delete", "rename", "group", "ungroup", "into", "lift", "up", "down"]
+        assert calls == ["delete", "rename", "group", "ungroup", "into", "lift", "up", "down", "top", "bottom"]
         panel.deleteLater()
 
     def test_tree_buttons_and_context_menu_expose_shortcut_hints(self, qapp):

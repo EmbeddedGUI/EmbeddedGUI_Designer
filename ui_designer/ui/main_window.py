@@ -74,6 +74,7 @@ from ..model.structure_ops import (
     lift_to_parent,
     move_into_container,
     move_selection_by_step,
+    move_selection_to_edge,
     ungroup_selection,
 )
 from ..model.selection_state import SelectionState
@@ -1341,6 +1342,16 @@ class MainWindow(QMainWindow):
         self._move_down_action.setShortcut("Alt+Down")
         self._move_down_action.triggered.connect(self._move_selection_down)
         structure_menu.addAction(self._move_down_action)
+
+        self._move_top_action = QAction("Move To Top", self)
+        self._move_top_action.setShortcut("Alt+Shift+Up")
+        self._move_top_action.triggered.connect(self._move_selection_to_top)
+        structure_menu.addAction(self._move_top_action)
+
+        self._move_bottom_action = QAction("Move To Bottom", self)
+        self._move_bottom_action.setShortcut("Alt+Shift+Down")
+        self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
+        structure_menu.addAction(self._move_bottom_action)
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -4075,6 +4086,12 @@ class MainWindow(QMainWindow):
     def _move_selection_down(self):
         self._apply_structure_result(move_selection_by_step(self._structure_project_context(), self._top_level_selected_widgets(), 1))
 
+    def _move_selection_to_top(self):
+        self._apply_structure_result(move_selection_to_edge(self._structure_project_context(), self._top_level_selected_widgets(), "top"))
+
+    def _move_selection_to_bottom(self):
+        self._apply_structure_result(move_selection_to_edge(self._structure_project_context(), self._top_level_selected_widgets(), "bottom"))
+
     def _move_selection_to_front(self):
         selected_widgets = self._top_level_selected_widgets()
         widgets = [widget for widget in selected_widgets if not getattr(widget, "designer_locked", False)]
@@ -4177,6 +4194,8 @@ class MainWindow(QMainWindow):
         self._lift_to_parent_action.setEnabled(structure_state.can_lift)
         self._move_up_action.setEnabled(structure_state.can_move_up)
         self._move_down_action.setEnabled(structure_state.can_move_down)
+        self._move_top_action.setEnabled(structure_state.can_move_top)
+        self._move_bottom_action.setEnabled(structure_state.can_move_bottom)
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)

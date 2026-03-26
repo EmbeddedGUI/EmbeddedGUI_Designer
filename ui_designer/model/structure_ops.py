@@ -29,6 +29,8 @@ class StructureActionState:
     can_lift: bool = False
     can_move_up: bool = False
     can_move_down: bool = False
+    can_move_top: bool = False
+    can_move_bottom: bool = False
 
 
 def _failure(message):
@@ -231,6 +233,32 @@ def _can_move_by_step(widgets, step):
     return False
 
 
+def _can_move_to_edge(widgets, edge):
+    if not widgets or _has_locked_widgets(widgets) or edge not in ("top", "bottom"):
+        return False
+
+    grouped = {}
+    for widget in widgets:
+        if widget.parent is None:
+            continue
+        grouped.setdefault(id(widget.parent), (widget.parent, set()))[1].add(widget)
+
+    if not grouped:
+        return False
+
+    for parent, selected_set in grouped.values():
+        children = parent.children
+        ordered = [child for child in children if child in selected_set]
+        remaining = [child for child in children if child not in selected_set]
+        if edge == "top":
+            new_children = ordered + remaining
+        else:
+            new_children = remaining + ordered
+        if new_children != children:
+            return True
+    return False
+
+
 def describe_structure_actions(project_like, widgets):
     widgets = _normalized_selection(project_like, widgets)
     return StructureActionState(
@@ -241,6 +269,8 @@ def describe_structure_actions(project_like, widgets):
         can_lift=_can_lift_widgets(widgets),
         can_move_up=_can_move_by_step(widgets, -1),
         can_move_down=_can_move_by_step(widgets, 1),
+        can_move_top=_can_move_to_edge(widgets, "top"),
+        can_move_bottom=_can_move_to_edge(widgets, "bottom"),
     )
 
 
@@ -590,6 +620,52 @@ def move_selection_by_step(project_like, widgets, step):
         changed=True,
         source=f"move {direction}",
         message=f"Moved {len(widgets)} widget(s) {direction}.",
+        widgets=_sort_by_tree_order(project_like, widgets),
+        primary=widgets[-1],
+    )
+
+
+def move_selection_to_edge(project_like, widgets, edge):
+    roots = _root_widgets(project_like)
+    widgets = _sort_by_tree_order(project_like, _top_level_widgets(widgets, exclude_roots=roots))
+    if not widgets:
+        return _failure("Cannot reorder selection: no widgets are selected.")
+    if _has_locked_widgets(widgets):
+        return _failure("Cannot reorder selection: locked widgets cannot be reordered.")
+    if edge not in ("top", "bottom"):
+        return _failure("Cannot reorder selection: unsupported edge move.")
+
+    grouped = {}
+    for widget in widgets:
+        if widget.parent is None:
+            continue
+        grouped.setdefault(id(widget.parent), (widget.parent, set()))[1].add(widget)
+
+    if not grouped:
+        return _failure("Cannot reorder selection: selected widgets do not have a movable parent.")
+
+    moved = False
+    for parent, selected_set in grouped.values():
+        children = parent.children
+        ordered = [child for child in children if child in selected_set]
+        remaining = [child for child in children if child not in selected_set]
+        if edge == "top":
+            new_children = ordered + remaining
+        else:
+            new_children = remaining + ordered
+        if new_children != children:
+            parent.children = new_children
+            moved = True
+
+    if not moved:
+        boundary = "top" if edge == "top" else "bottom"
+        return _failure(f"Cannot move selection to {boundary}: selected widgets are already at the {boundary}.")
+
+    _recompute_layout(project_like)
+    return StructureOperationResult(
+        changed=True,
+        source=f"move to {edge}",
+        message=f"Moved {len(widgets)} widget(s) to the {edge}.",
         widgets=_sort_by_tree_order(project_like, widgets),
         primary=widgets[-1],
     )

@@ -395,6 +395,8 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([locked], primary=locked, sync_tree=False, sync_preview=False)
@@ -426,6 +428,8 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([removable, locked], primary=removable, sync_tree=False, sync_preview=False)
@@ -836,6 +840,8 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
@@ -847,6 +853,15 @@ class TestMainWindowFileFlow:
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
         assert window._move_down_action.isEnabled() is True
+        assert window._move_top_action.isEnabled() is False
+        assert window._move_bottom_action.isEnabled() is True
+
+        window._set_selection([second], primary=second, sync_tree=False, sync_preview=False)
+
+        assert window._move_up_action.isEnabled() is True
+        assert window._move_down_action.isEnabled() is True
+        assert window._move_top_action.isEnabled() is True
+        assert window._move_bottom_action.isEnabled() is True
 
         window._set_selection([nested], primary=nested, sync_tree=False, sync_preview=False)
 
@@ -856,6 +871,8 @@ class TestMainWindowFileFlow:
         assert window._lift_to_parent_action.isEnabled() is True
         assert window._move_up_action.isEnabled() is False
         assert window._move_down_action.isEnabled() is False
+        assert window._move_top_action.isEnabled() is False
+        assert window._move_bottom_action.isEnabled() is False
 
         _close_window(window)
 
@@ -886,6 +903,8 @@ class TestMainWindowFileFlow:
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is False
         assert window._lift_to_parent_action.isEnabled() is False
+        assert window._move_top_action.isEnabled() is False
+        assert window._move_bottom_action.isEnabled() is False
 
         window._selection_state.set_widgets([first], primary=first)
         window._selected_widget = first
@@ -897,6 +916,8 @@ class TestMainWindowFileFlow:
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
         assert window._move_down_action.isEnabled() is False
+        assert window._move_top_action.isEnabled() is False
+        assert window._move_bottom_action.isEnabled() is False
 
         _close_window(window)
 
@@ -980,7 +1001,51 @@ class TestMainWindowFileFlow:
         assert window._lift_to_parent_action.shortcut().toString() == "Ctrl+Shift+L"
         assert window._move_up_action.shortcut().toString() == "Alt+Up"
         assert window._move_down_action.shortcut().toString() == "Alt+Down"
+        assert window._move_top_action.shortcut().toString() == "Alt+Shift+Up"
+        assert window._move_bottom_action.shortcut().toString() == "Alt+Shift+Down"
 
+        _close_window(window)
+
+    def test_move_selection_to_edge_updates_status_and_history(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MoveToEdgeDemo"
+        project = _create_project(project_dir, "MoveToEdgeDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+        third = WidgetModel("label", name="third")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+
+        window._move_selection_to_bottom()
+
+        assert [widget.name for widget in root.children] == ["first", "third", "second"]
+        assert window._primary_selected_widget() is second
+        assert window._undo_manager.get_stack("main_page").current_label() == "move to bottom"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) to the bottom."
+
+        window._move_selection_to_top()
+
+        assert [widget.name for widget in root.children] == ["second", "first", "third"]
+        assert window._primary_selected_widget() is second
+        assert window._undo_manager.get_stack("main_page").current_label() == "move to top"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) to the top."
+        window._undo_manager.mark_all_saved()
         _close_window(window)
 
     def test_widget_tree_invalid_drop_updates_status_bar(self, qapp, isolated_config, tmp_path, monkeypatch):
