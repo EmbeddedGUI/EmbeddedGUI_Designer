@@ -3893,6 +3893,66 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_page_field_diagnostic_activation_selects_field_row(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "FieldDiagnosticFocusDemo"
+        project = _create_project(project_dir, "FieldDiagnosticFocusDemo", sdk_root)
+        page = project.get_startup_page()
+        page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        item = window.diagnostics_panel._list.item(0)
+        window.diagnostics_panel._on_item_activated(item)
+
+        selected_rows = window.page_fields_panel._table.selectionModel().selectedRows()
+        assert len(selected_rows) == 1
+        assert selected_rows[0].row() == 0
+        assert window.page_fields_panel._table.item(0, 0).text() == "bad-name"
+        assert window.statusBar().currentMessage() == "Opened diagnostic field: main_page/bad-name."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_page_timer_diagnostic_activation_selects_timer_row(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "TimerDiagnosticFocusDemo"
+        project = _create_project(project_dir, "TimerDiagnosticFocusDemo", sdk_root)
+        page = project.get_startup_page()
+        page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        item = window.diagnostics_panel._list.item(0)
+        window.diagnostics_panel._on_item_activated(item)
+
+        selected_rows = window.page_timers_panel._table.selectionModel().selectedRows()
+        assert len(selected_rows) == 1
+        assert selected_rows[0].row() == 0
+        assert window.page_timers_panel._table.item(0, 0).text() == "refresh_timer"
+        assert window.statusBar().currentMessage() == "Opened diagnostic timer: main_page/refresh_timer."
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_missing_resource_diagnostic_activation_opens_resource_panel_usage(self, tmp_path):
         repo_root = Path(__file__).resolve().parents[4]
         script = textwrap.dedent(

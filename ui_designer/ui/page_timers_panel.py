@@ -206,3 +206,19 @@ class PageTimersPanel(QWidget):
         if not callback_name:
             return
         self.user_code_requested.emit(callback_name, "void {func_name}(egui_timer_t *timer)")
+
+    def select_timer(self, timer_name):
+        if self._page is None:
+            return False
+        wanted_name = str(timer_name or "")
+        if not wanted_name:
+            return False
+        for row, timer in enumerate(self._timers):
+            if str(timer.get("name", "")) != wanted_name:
+                continue
+            self._table.selectRow(row)
+            item = self._table.item(row, 0)
+            if item is not None:
+                self._table.scrollToItem(item)
+            return True
+        return False

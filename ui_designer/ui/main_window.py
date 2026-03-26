@@ -3193,6 +3193,26 @@ class MainWindow(QMainWindow):
     def _on_page_user_code_section_requested(self, section_name):
         self._open_page_user_source(section_name=section_name or "")
 
+    def _open_page_field_diagnostic(self, page_name, field_name):
+        if not field_name or not hasattr(self, "page_fields_panel"):
+            return False
+        self.page_fields_dock.show()
+        self.page_fields_dock.raise_()
+        if not self.page_fields_panel.select_field(field_name):
+            return False
+        self.statusBar().showMessage(f"Opened diagnostic field: {page_name}/{field_name}.", 4000)
+        return True
+
+    def _open_page_timer_diagnostic(self, page_name, timer_name):
+        if not timer_name or not hasattr(self, "page_timers_panel"):
+            return False
+        self.page_timers_dock.show()
+        self.page_timers_dock.raise_()
+        if not self.page_timers_panel.select_timer(timer_name):
+            return False
+        self.statusBar().showMessage(f"Opened diagnostic timer: {page_name}/{timer_name}.", 4000)
+        return True
+
     def _on_diagnostic_requested(self, page_name, widget_name):
         if not self.project:
             return
@@ -3216,6 +3236,11 @@ class MainWindow(QMainWindow):
 
         widget = self._find_widget_in_page(page, widget_name)
         if widget is None:
+            diagnostic_code = str(getattr(diagnostic_entry, "code", "") or "")
+            if diagnostic_code.startswith("page_field_") and self._open_page_field_diagnostic(target_page_name, widget_name):
+                return
+            if diagnostic_code.startswith("page_timer_") and self._open_page_timer_diagnostic(target_page_name, widget_name):
+                return
             self.statusBar().showMessage(f"Diagnostic target not found: {target_page_name}/{widget_name}", 4000)
             return
 

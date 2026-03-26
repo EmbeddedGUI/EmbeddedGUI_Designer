@@ -195,3 +195,19 @@ class PageFieldsPanel(QWidget):
         if self._page is None or not section_name:
             return
         self.user_code_section_requested.emit(section_name)
+
+    def select_field(self, field_name):
+        if self._page is None:
+            return False
+        wanted_name = str(field_name or "")
+        if not wanted_name:
+            return False
+        for row, field in enumerate(self._fields):
+            if str(field.get("name", "")) != wanted_name:
+                continue
+            self._table.selectRow(row)
+            item = self._table.item(row, 0)
+            if item is not None:
+                self._table.scrollToItem(item)
+            return True
+        return False
