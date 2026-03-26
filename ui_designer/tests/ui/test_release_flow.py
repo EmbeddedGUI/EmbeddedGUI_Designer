@@ -1608,6 +1608,7 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
         "20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1"
         " diag error main_page/hero: bad callback"
     )
+    assert "First Diagnostic: error main_page/hero: bad callback" in exported["entries"][0]["details_text"]
 
 
 @_skip_no_qt

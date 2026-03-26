@@ -431,7 +431,7 @@ def _build_filtered_history_json(
     )
     export_entries = []
     for entry in filtered_entries:
-        export_entries.append(_history_entry_export_payload(entry))
+        export_entries.append(_history_entry_export_payload(entry, include_details=True))
 
     payload = {
         "matched_entries": len(filtered_entries),
