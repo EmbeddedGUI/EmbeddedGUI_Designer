@@ -349,6 +349,12 @@ class TestWidgetTreePanel:
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
+        assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
+        assert actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
+        assert actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
+        assert actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
+        assert actions["Move Up"].shortcut().toString() == "Alt+Up"
+        assert actions["Move Down"].shortcut().toString() == "Alt+Down"
 
         menu.deleteLater()
 
@@ -588,6 +594,39 @@ class TestWidgetTreePanel:
             QApplication.sendEvent(panel.tree, QKeyEvent(QEvent.KeyPress, key, modifiers))
 
         assert calls == ["delete", "rename", "group", "ungroup", "into", "lift", "up", "down"]
+        panel.deleteLater()
+
+    def test_tree_buttons_and_context_menu_expose_shortcut_hints(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first, second], primary=first)
+
+        assert "F2" in panel.rename_btn.toolTip()
+        assert "Del" in panel.del_btn.toolTip()
+        assert "Ctrl+G" in panel.group_btn.toolTip()
+        assert "Ctrl+Shift+G" in panel.ungroup_btn.toolTip()
+        assert "Ctrl+Shift+I" in panel.into_btn.toolTip()
+        assert "Ctrl+Shift+L" in panel.lift_btn.toolTip()
+        assert "Alt+Up" in panel.up_btn.toolTip()
+        assert "Alt+Down" in panel.down_btn.toolTip()
+
+        menu = panel._build_context_menu(first)
+        rename_action = next(action for action in menu.actions() if action.text() == "Rename Selected")
+        delete_action = next(action for action in menu.actions() if action.text() == "Delete")
+
+        assert rename_action.shortcut().toString() == "F2"
+        assert delete_action.shortcut().toString() == "Del"
+
+        menu.deleteLater()
         panel.deleteLater()
 
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):

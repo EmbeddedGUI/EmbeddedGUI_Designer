@@ -126,8 +126,10 @@ class WidgetTreePanel(QWidget):
         self.add_btn = QPushButton("Add")
         self.add_btn.clicked.connect(self._on_add_clicked)
         self.rename_btn = QPushButton("Rename")
+        self.rename_btn.setToolTip("Rename the current selection (F2)")
         self.rename_btn.clicked.connect(self._on_rename_clicked)
         self.del_btn = QPushButton("Delete")
+        self.del_btn.setToolTip("Delete the current selection (Del)")
         self.del_btn.clicked.connect(self._on_delete_clicked)
         self.expand_btn = QPushButton("Expand")
         self.expand_btn.clicked.connect(self._expand_all_items)
@@ -142,22 +144,22 @@ class WidgetTreePanel(QWidget):
 
         structure_layout = QHBoxLayout()
         self.group_btn = QPushButton("Group")
-        self.group_btn.setToolTip("Group the current selection")
+        self.group_btn.setToolTip("Group the current selection (Ctrl+G)")
         self.group_btn.clicked.connect(self._group_selected_widgets)
         self.ungroup_btn = QPushButton("Ungroup")
-        self.ungroup_btn.setToolTip("Ungroup the selected group widgets")
+        self.ungroup_btn.setToolTip("Ungroup the selected group widgets (Ctrl+Shift+G)")
         self.ungroup_btn.clicked.connect(self._ungroup_selected_widgets)
         self.into_btn = QPushButton("Into")
-        self.into_btn.setToolTip("Move the current selection into another container")
+        self.into_btn.setToolTip("Move the current selection into another container (Ctrl+Shift+I)")
         self.into_btn.clicked.connect(self._move_selected_widgets_into)
         self.lift_btn = QPushButton("Lift")
-        self.lift_btn.setToolTip("Lift the current selection to the parent container")
+        self.lift_btn.setToolTip("Lift the current selection to the parent container (Ctrl+Shift+L)")
         self.lift_btn.clicked.connect(self._lift_selected_widgets)
         self.up_btn = QPushButton("Up")
-        self.up_btn.setToolTip("Move the current selection up among its siblings")
+        self.up_btn.setToolTip("Move the current selection up among its siblings (Alt+Up)")
         self.up_btn.clicked.connect(self._move_selected_widgets_up)
         self.down_btn = QPushButton("Down")
-        self.down_btn.setToolTip("Move the current selection down among its siblings")
+        self.down_btn.setToolTip("Move the current selection down among its siblings (Alt+Down)")
         self.down_btn.clicked.connect(self._move_selected_widgets_down)
         for button in (
             self.group_btn,
@@ -550,6 +552,7 @@ class WidgetTreePanel(QWidget):
 
         # Rename
         rename_action = QAction("Rename Selected" if rename_selected else "Rename", self)
+        rename_action.setShortcut("F2")
         if rename_selected:
             rename_action.triggered.connect(lambda: self._rename_selected_widgets(context_widgets))
         else:
@@ -568,21 +571,25 @@ class WidgetTreePanel(QWidget):
 
         structure_menu = menu.addMenu("Structure")
         group_action = QAction("Group Selection", self)
+        group_action.setShortcut("Ctrl+G")
         group_action.setEnabled(structure_state.can_group)
         group_action.triggered.connect(lambda: self._group_selected_widgets(context_widgets))
         structure_menu.addAction(group_action)
 
         ungroup_action = QAction("Ungroup", self)
+        ungroup_action.setShortcut("Ctrl+Shift+G")
         ungroup_action.setEnabled(structure_state.can_ungroup)
         ungroup_action.triggered.connect(lambda: self._ungroup_selected_widgets(context_widgets))
         structure_menu.addAction(ungroup_action)
 
         move_into_action = QAction("Move Into...", self)
+        move_into_action.setShortcut("Ctrl+Shift+I")
         move_into_action.setEnabled(structure_state.can_move_into)
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
 
         lift_action = QAction("Lift To Parent", self)
+        lift_action.setShortcut("Ctrl+Shift+L")
         lift_action.setEnabled(structure_state.can_lift)
         lift_action.triggered.connect(lambda: self._lift_selected_widgets(context_widgets))
         structure_menu.addAction(lift_action)
@@ -590,11 +597,13 @@ class WidgetTreePanel(QWidget):
         structure_menu.addSeparator()
 
         move_up_action = QAction("Move Up", self)
+        move_up_action.setShortcut("Alt+Up")
         move_up_action.setEnabled(structure_state.can_move_up)
         move_up_action.triggered.connect(lambda: self._move_selected_widgets_up(context_widgets))
         structure_menu.addAction(move_up_action)
 
         move_down_action = QAction("Move Down", self)
+        move_down_action.setShortcut("Alt+Down")
         move_down_action.setEnabled(structure_state.can_move_down)
         move_down_action.triggered.connect(lambda: self._move_selected_widgets_down(context_widgets))
         structure_menu.addAction(move_down_action)
@@ -609,6 +618,7 @@ class WidgetTreePanel(QWidget):
 
         # Delete
         del_action = QAction("Delete", self)
+        del_action.setShortcut("Del")
         del_action.triggered.connect(lambda: self._delete_widget(widget))
         menu.addAction(del_action)
 
