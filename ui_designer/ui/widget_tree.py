@@ -202,6 +202,9 @@ class WidgetTreePanel(QWidget):
         ):
             structure_layout.addWidget(button)
         layout.addLayout(structure_layout)
+        self.structure_hint_label = QLabel("Structure: select widgets to group, move, or reorder.")
+        self.structure_hint_label.setWordWrap(True)
+        layout.addWidget(self.structure_hint_label)
 
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter widgets by name or type")
@@ -451,6 +454,34 @@ class WidgetTreePanel(QWidget):
         self.lift_btn.setEnabled(state.can_lift)
         self.up_btn.setEnabled(state.can_move_up)
         self.down_btn.setEnabled(state.can_move_down)
+        self.structure_hint_label.setText(self._structure_hint_text(state))
+
+    def _structure_hint_text(self, state=None):
+        state = state or self._structure_action_state()
+        widgets = state.widgets
+        if not widgets:
+            return "Structure: select widgets to group, move, or reorder."
+        if any(getattr(widget, "designer_locked", False) for widget in widgets):
+            return "Structure: locked widgets cannot be moved or regrouped."
+
+        hints = []
+        if state.can_group:
+            hints.append("Ctrl+G group siblings")
+        if state.can_ungroup:
+            hints.append("Ctrl+Shift+G ungroup")
+        if state.can_move_into:
+            hints.append("Ctrl+Shift+I move into container")
+        if state.can_lift:
+            hints.append("Ctrl+Shift+L lift to parent")
+        if state.can_move_up and state.can_move_down:
+            hints.append("Alt+Up/Down reorder")
+        elif state.can_move_up:
+            hints.append("Alt+Up reorder")
+        elif state.can_move_down:
+            hints.append("Alt+Down reorder")
+        if hints:
+            return "Structure: " + "; ".join(hints) + "."
+        return "Structure: no valid structure actions for the current selection."
 
     def _emit_tree_changed(self, source):
         self.tree_changed.emit(source or "widget tree change")

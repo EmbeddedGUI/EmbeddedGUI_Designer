@@ -433,6 +433,7 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
 
         panel.set_selected_widgets([first, second], primary=first)
 
@@ -442,6 +443,9 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is True
+        assert "Ctrl+G group siblings" in panel.structure_hint_label.text()
+        assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
+        assert "Alt+Down reorder" in panel.structure_hint_label.text()
 
         panel.set_selected_widgets([nested], primary=nested)
 
@@ -451,6 +455,8 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is True
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert "Ctrl+Shift+I move into container" in panel.structure_hint_label.text()
+        assert "Ctrl+Shift+L lift to parent" in panel.structure_hint_label.text()
 
         panel.set_selected_widgets([root], primary=root)
 
@@ -460,6 +466,24 @@ class TestWidgetTreePanel:
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
+        assert panel.structure_hint_label.text() == "Structure: select widgets to group, move, or reorder."
+
+        panel.deleteLater()
+
+    def test_structure_hint_reports_locked_and_invalid_selection(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        locked = WidgetModel("label", name="locked")
+        locked.designer_locked = True
+        root.add_child(locked)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([locked], primary=locked)
+
+        assert panel.structure_hint_label.text() == "Structure: locked widgets cannot be moved or regrouped."
 
         panel.deleteLater()
 
