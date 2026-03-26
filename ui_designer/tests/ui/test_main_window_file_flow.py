@@ -5917,6 +5917,7 @@ class TestMainWindowCanvasActions:
         assert "Subtree" in select_labels
         assert "Leaves" in select_labels
         assert "Containers" in select_labels
+        assert "Layout Containers" in select_labels
         assert "Hidden" in select_labels
         assert "Locked" in select_labels
         assert "Managed" in select_labels
@@ -6243,6 +6244,49 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [locked_group, locked_leaf]
         assert window.preview_panel.selected_widgets() == [locked_group, locked_leaf]
         assert window.statusBar().currentMessage() == "Selected 2 locked widgets in subtree of container."
+        _close_window(window)
+
+    def test_preview_context_menu_layout_containers_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewLayoutContainersContextMenuDemo"
+        project = _create_project(project_dir, "PreviewLayoutContainersContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
+        container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
+        layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
+        managed_group = WidgetModel("group", name="managed_group", x=2, y=2, width=48, height=24)
+        managed_leaf = WidgetModel("label", name="managed_leaf", x=1, y=1, width=24, height=12)
+        unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf", x=4, y=72, width=40, height=16)
+        managed_group.add_child(managed_leaf)
+        layout_parent.add_child(managed_group)
+        container.add_child(layout_parent)
+        container.add_child(unmanaged_leaf)
+        root.add_child(other)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(container)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_layout_action = next(action for action in select_menu.actions() if action.text() == "Layout Containers")
+        select_layout_action.trigger()
+
+        assert window._selection_state.primary is layout_parent
+        assert window._selection_state.widgets == [layout_parent]
+        assert window.widget_tree.selected_widgets() == [layout_parent]
+        assert window.preview_panel.selected_widgets() == [layout_parent]
+        assert window.statusBar().currentMessage() == "Selected 1 layout container widget in subtree of container."
         _close_window(window)
 
     def test_preview_context_menu_managed_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):

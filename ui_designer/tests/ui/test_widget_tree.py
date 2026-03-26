@@ -919,12 +919,14 @@ class TestWidgetTreePanel:
         assert root_actions["Subtree"].isEnabled() is True
         assert root_actions["Leaves"].isEnabled() is True
         assert root_actions["Containers"].isEnabled() is True
+        assert root_actions["Layout Containers"].isEnabled() is False
         assert root_actions["Hidden"].isEnabled() is False
         assert root_actions["Locked"].isEnabled() is False
         assert root_actions["Managed"].isEnabled() is False
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
+        assert "Unavailable: no layout container widgets exist in this subtree." in root_actions["Layout Containers"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
@@ -945,6 +947,7 @@ class TestWidgetTreePanel:
         assert container_actions["Subtree"].isEnabled() is True
         assert container_actions["Leaves"].isEnabled() is True
         assert container_actions["Containers"].isEnabled() is False
+        assert container_actions["Layout Containers"].isEnabled() is False
         assert container_actions["Managed"].isEnabled() is False
         assert container_actions["Siblings"].isEnabled() is True
         container_menu.deleteLater()
@@ -958,6 +961,7 @@ class TestWidgetTreePanel:
         assert child_actions["Subtree"].isEnabled() is False
         assert child_actions["Leaves"].isEnabled() is False
         assert child_actions["Containers"].isEnabled() is False
+        assert child_actions["Layout Containers"].isEnabled() is False
         assert child_actions["Hidden"].isEnabled() is False
         assert child_actions["Locked"].isEnabled() is False
         assert child_actions["Managed"].isEnabled() is False
@@ -968,6 +972,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: widget has no descendant widgets." in child_actions["Subtree"].toolTip()
         assert "Unavailable: widget has no leaf descendants." in child_actions["Leaves"].toolTip()
         assert "Unavailable: no other container widgets exist in this subtree." in child_actions["Containers"].toolTip()
+        assert "Unavailable: no layout container widgets exist in this subtree." in child_actions["Layout Containers"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in child_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in child_actions["Managed"].toolTip()
@@ -1170,6 +1175,24 @@ class TestWidgetTreePanel:
             )
         )
         panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        layout_menu = panel._build_context_menu(container)
+        layout_actions = _select_menu_actions(layout_menu)
+        layout_actions["Layout Containers"].trigger()
+        assert panel.selected_widgets() == [layout_parent]
+        assert panel._get_selected_widget() is layout_parent
+        assert selection_events[-1] == (["layout_parent"], "layout_parent")
+        assert feedback[-1] == "Selected 1 layout container widget in subtree of container."
+        layout_menu.deleteLater()
+
+        layout_parent_menu = panel._build_context_menu(layout_parent)
+        layout_parent_actions = _select_menu_actions(layout_parent_menu)
+        layout_parent_actions["Layout Containers"].trigger()
+        assert panel.selected_widgets() == [layout_parent]
+        assert panel._get_selected_widget() is layout_parent
+        assert selection_events[-1] == (["layout_parent"], "layout_parent")
+        assert feedback[-1] == "Selected 1 layout container widget in subtree of layout_parent."
+        layout_parent_menu.deleteLater()
 
         container_menu = panel._build_context_menu(container)
         container_actions = _select_menu_actions(container_menu)

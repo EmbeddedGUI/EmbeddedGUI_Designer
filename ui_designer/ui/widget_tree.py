@@ -565,11 +565,23 @@ class WidgetTreePanel(QWidget):
             return False
         return WidgetModel._get_type_info(parent.widget_type).get("layout_func") is not None
 
+    def _widget_uses_layout(self, widget):
+        if widget is None:
+            return False
+        return WidgetModel._get_type_info(widget.widget_type).get("layout_func") is not None
+
     def _hidden_subtree_widgets(self, widget):
         return [
             current
             for current in self._widgets_including_self(widget)
             if getattr(current, "designer_hidden", False)
+        ]
+
+    def _layout_container_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if self._widget_uses_layout(current)
         ]
 
     def _managed_subtree_widgets(self, widget):
@@ -612,6 +624,25 @@ class WidgetTreePanel(QWidget):
             locked_widgets,
             primary=primary,
             feedback_message=f"Selected {len(locked_widgets)} locked {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
+    def _select_layout_container_subtree_widgets(self, widget):
+        layout_containers = self._layout_container_subtree_widgets(widget)
+        if not layout_containers:
+            if widget is not None:
+                self.feedback_message.emit(
+                    "Cannot select layout containers: no layout container widgets exist in this subtree."
+                )
+            return
+        noun = "widget" if len(layout_containers) == 1 else "widgets"
+        primary = widget if widget in layout_containers else layout_containers[0]
+        self._apply_programmatic_selection(
+            layout_containers,
+            primary=primary,
+            feedback_message=(
+                f"Selected {len(layout_containers)} layout container {noun} "
+                f"in subtree of {self._widget_label(widget)}."
+            ),
         )
 
     def _select_managed_subtree_widgets(self, widget):
@@ -696,6 +727,7 @@ class WidgetTreePanel(QWidget):
         container_subtree_widgets = self._container_subtree_widgets(widget)
         hidden_subtree_widgets = self._hidden_subtree_widgets(widget)
         locked_subtree_widgets = self._locked_subtree_widgets(widget)
+        layout_container_subtree_widgets = self._layout_container_subtree_widgets(widget)
         managed_subtree_widgets = self._managed_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
@@ -708,6 +740,7 @@ class WidgetTreePanel(QWidget):
         can_select_containers = len(container_subtree_widgets) > 1
         can_select_hidden = bool(hidden_subtree_widgets)
         can_select_locked = bool(locked_subtree_widgets)
+        can_select_layout_containers = bool(layout_container_subtree_widgets)
         can_select_managed = bool(managed_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
@@ -796,6 +829,20 @@ class WidgetTreePanel(QWidget):
         select_containers_action.triggered.connect(lambda: self._select_container_subtree_widgets(widget))
         select_menu.addAction(select_containers_action)
 
+        select_layout_containers_action = QAction("Layout Containers", self)
+        select_layout_containers_action.setEnabled(can_select_layout_containers)
+        select_layout_containers_action.setToolTip(
+            self._structure_tooltip(
+                "Select layout container widgets in this subtree.",
+                can_select_layout_containers,
+                "no layout container widgets exist in this subtree.",
+            )
+        )
+        select_layout_containers_action.triggered.connect(
+            lambda: self._select_layout_container_subtree_widgets(widget)
+        )
+        select_menu.addAction(select_layout_containers_action)
+
         select_hidden_action = QAction("Hidden", self)
         select_hidden_action.setEnabled(can_select_hidden)
         select_hidden_action.setToolTip(
@@ -865,6 +912,7 @@ class WidgetTreePanel(QWidget):
             can_select_subtree,
             can_select_leaves,
             can_select_containers,
+            can_select_layout_containers,
             can_select_hidden,
             can_select_locked,
             can_select_managed,
