@@ -152,7 +152,7 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_item = None
         self._drag_hover_position = None
         self._drag_target_item = None
-        self._remembered_move_target_label = ""
+        self._remembered_move_target_labels = {}
         self._drag_hover_expand_timer = QTimer(self)
         self._drag_hover_expand_timer.setSingleShot(True)
         self._drag_hover_expand_timer.setInterval(350)
@@ -400,11 +400,38 @@ class WidgetTreePanel(QWidget):
                 widgets.append(widget)
         return widgets
 
+    def _move_target_memory_key(self):
+        if self.project is None:
+            return None
+
+        page = getattr(self.project, "_page", None)
+        if page is not None:
+            return ("page", id(page))
+
+        project_dir = (getattr(self.project, "project_dir", "") or "").strip()
+        get_startup_page = getattr(self.project, "get_startup_page", None)
+        if callable(get_startup_page):
+            page = get_startup_page()
+            page_name = getattr(page, "name", "") if page is not None else ""
+            return ("project", project_dir or id(self.project), page_name)
+
+        root_ids = tuple(id(widget) for widget in (getattr(self.project, "root_widgets", []) or []) if widget is not None)
+        if root_ids:
+            return ("roots", root_ids)
+        return ("project", id(self.project))
+
     def remembered_move_target_label(self):
-        return self._remembered_move_target_label
+        return self._remembered_move_target_labels.get(self._move_target_memory_key(), "")
 
     def set_remembered_move_target_label(self, label):
-        self._remembered_move_target_label = (label or "").strip()
+        key = self._move_target_memory_key()
+        if key is None:
+            return
+        normalized = (label or "").strip()
+        if normalized:
+            self._remembered_move_target_labels[key] = normalized
+        else:
+            self._remembered_move_target_labels.pop(key, None)
 
     def set_selected_widgets(self, widgets, primary=None):
         self._clear_tree_drag_hover()

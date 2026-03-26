@@ -591,6 +591,29 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_remembered_move_target_is_scoped_per_project(self, qapp):
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project_a, _root_a = _build_project_with_root()
+        project_b, _root_b = _build_project_with_root()
+
+        panel = WidgetTreePanel()
+        panel.set_project(project_a)
+        panel.set_remembered_move_target_label("target-a")
+
+        panel.set_project(project_b)
+        assert panel.remembered_move_target_label() == ""
+
+        panel.set_remembered_move_target_label("target-b")
+        assert panel.remembered_move_target_label() == "target-b"
+
+        panel.set_project(project_a)
+        assert panel.remembered_move_target_label() == "target-a"
+
+        panel.set_project(project_b)
+        assert panel.remembered_move_target_label() == "target-b"
+        panel.deleteLater()
+
     def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

@@ -1092,6 +1092,76 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_move_into_last_target_is_scoped_per_page(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PerPageMoveIntoDemo"
+        project = _create_project(project_dir, "PerPageMoveIntoDemo", sdk_root)
+
+        main_page = project.get_page_by_name("main_page")
+        main_root = main_page.root_widget
+        main_target = WidgetModel("group", name="main_target")
+        main_first = WidgetModel("label", name="main_first")
+        main_second = WidgetModel("button", name="main_second")
+        main_root.add_child(main_target)
+        main_root.add_child(main_first)
+        main_root.add_child(main_second)
+
+        detail_page = project.create_new_page("detail_page")
+        detail_root = detail_page.root_widget
+        detail_target = WidgetModel("group", name="detail_target")
+        detail_first = WidgetModel("label", name="detail_first")
+        detail_second = WidgetModel("button", name="detail_second")
+        detail_root.add_child(detail_target)
+        detail_root.add_child(detail_first)
+        detail_root.add_child(detail_second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([main_first], primary=main_first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            main_target,
+            target_label="root_group / main_target (group)",
+        )
+
+        window._switch_page("detail_page")
+        window._set_selection([detail_first], primary=detail_first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            detail_target,
+            target_label="root_group / detail_target (group)",
+        )
+
+        window._switch_page("main_page")
+        window._set_selection([main_second], primary=main_second, sync_tree=True, sync_preview=False)
+
+        assert window.widget_tree.remembered_move_target_label() == "root_group / main_target (group)"
+        assert "root_group / main_target (group)" in window._move_into_last_target_action.toolTip()
+        assert "detail_target" not in window._move_into_last_target_action.toolTip()
+
+        window._move_into_last_target_action.trigger()
+        assert main_second.parent is main_target
+
+        window._switch_page("detail_page")
+        window._set_selection([detail_second], primary=detail_second, sync_tree=True, sync_preview=False)
+
+        assert window.widget_tree.remembered_move_target_label() == "root_group / detail_target (group)"
+        assert "root_group / detail_target (group)" in window._move_into_last_target_action.toolTip()
+
+        window._move_into_last_target_action.trigger()
+        assert detail_second.parent is detail_target
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_quick_move_into_menu_prioritizes_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
