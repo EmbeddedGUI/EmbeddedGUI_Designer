@@ -5980,6 +5980,8 @@ class TestMainWindowCanvasActions:
         assert "Structure" in labels
         assert "Previous Sibling" in select_labels
         assert "Next Sibling" in select_labels
+        assert "Previous In Tree" in select_labels
+        assert "Next In Tree" in select_labels
         assert "First Child" in select_labels
         assert "Last Child" in select_labels
         assert "Root" in select_labels
@@ -6158,6 +6160,58 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [child_c]
         assert window.preview_panel.selected_widgets() == [child_c]
         assert window.statusBar().currentMessage() == "Selected last child: child_c."
+        _close_window(window)
+
+    def test_preview_context_menu_tree_navigation_actions_sync_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewTreeTraversalContextMenuDemo"
+        project = _create_project(project_dir, "PreviewTreeTraversalContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
+        container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
+        child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
+        child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
+        container.add_child(child_a)
+        container.add_child(child_b)
+        root.add_child(other)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([container], primary=container, sync_tree=True, sync_preview=True)
+
+        previous_in_tree_menu = window._build_preview_context_menu(container)
+        previous_in_tree_select_menu = next(action.menu() for action in previous_in_tree_menu.actions() if action.text() == "Select")
+        select_previous_in_tree_action = next(
+            action for action in previous_in_tree_select_menu.actions() if action.text() == "Previous In Tree"
+        )
+        select_previous_in_tree_action.trigger()
+        assert window._selection_state.primary is other
+        assert window._selection_state.widgets == [other]
+        assert window.widget_tree.selected_widgets() == [other]
+        assert window.preview_panel.selected_widgets() == [other]
+        assert window.statusBar().currentMessage() == "Selected previous widget in tree order: other."
+
+        next_in_tree_menu = window._build_preview_context_menu(container)
+        next_in_tree_select_menu = next(action.menu() for action in next_in_tree_menu.actions() if action.text() == "Select")
+        select_next_in_tree_action = next(
+            action for action in next_in_tree_select_menu.actions() if action.text() == "Next In Tree"
+        )
+        select_next_in_tree_action.trigger()
+        assert window._selection_state.primary is child_a
+        assert window._selection_state.widgets == [child_a]
+        assert window.widget_tree.selected_widgets() == [child_a]
+        assert window.preview_panel.selected_widgets() == [child_a]
+        assert window.statusBar().currentMessage() == "Selected next widget in tree order: child_a."
         _close_window(window)
 
     def test_preview_context_menu_descendants_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):

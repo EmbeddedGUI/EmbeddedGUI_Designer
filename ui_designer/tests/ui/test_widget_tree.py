@@ -915,6 +915,8 @@ class TestWidgetTreePanel:
         assert root_actions["Parent"].isEnabled() is False
         assert root_actions["Previous Sibling"].isEnabled() is False
         assert root_actions["Next Sibling"].isEnabled() is False
+        assert root_actions["Previous In Tree"].isEnabled() is False
+        assert root_actions["Next In Tree"].isEnabled() is True
         assert root_actions["Ancestors"].isEnabled() is False
         assert root_actions["Root"].isEnabled() is False
         assert root_actions["Path"].isEnabled() is True
@@ -938,6 +940,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Sibling"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Next Sibling"].toolTip()
+        assert "Unavailable: widget is already the first widget in tree order on this page." in root_actions["Previous In Tree"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
         assert "Unavailable: widget is already the page root." in root_actions["Root"].toolTip()
         assert "Unavailable: no other widgets exist at depth 0 on this page." in root_actions["Same Depth"].toolTip()
@@ -961,6 +964,8 @@ class TestWidgetTreePanel:
         assert container_actions["Parent"].isEnabled() is True
         assert container_actions["Previous Sibling"].isEnabled() is True
         assert container_actions["Next Sibling"].isEnabled() is True
+        assert container_actions["Previous In Tree"].isEnabled() is True
+        assert container_actions["Next In Tree"].isEnabled() is True
         assert container_actions["Ancestors"].isEnabled() is True
         assert container_actions["Root"].isEnabled() is True
         assert container_actions["Path"].isEnabled() is True
@@ -988,6 +993,8 @@ class TestWidgetTreePanel:
         assert child_actions["Parent"].isEnabled() is True
         assert child_actions["Previous Sibling"].isEnabled() is False
         assert child_actions["Next Sibling"].isEnabled() is True
+        assert child_actions["Previous In Tree"].isEnabled() is True
+        assert child_actions["Next In Tree"].isEnabled() is True
         assert child_actions["Ancestors"].isEnabled() is True
         assert child_actions["Root"].isEnabled() is True
         assert child_actions["Path"].isEnabled() is True
@@ -1027,6 +1034,13 @@ class TestWidgetTreePanel:
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         assert "Unavailable: widget does not have a previous sibling under the same parent." in child_actions["Previous Sibling"].toolTip()
         child_menu.deleteLater()
+
+        solo_menu = panel._build_context_menu(solo)
+        solo_actions = _select_menu_actions(solo_menu)
+        assert solo_actions["Previous In Tree"].isEnabled() is True
+        assert solo_actions["Next In Tree"].isEnabled() is False
+        assert "Unavailable: widget is already the last widget in tree order on this page." in solo_actions["Next In Tree"].toolTip()
+        solo_menu.deleteLater()
         panel.deleteLater()
 
     def test_context_menu_select_actions_update_selection_and_feedback(self, qapp):
@@ -1070,6 +1084,24 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["container"], "container")
         assert feedback[-1] == "Selected parent widget: container."
         parent_menu.deleteLater()
+
+        previous_in_tree_menu = panel._build_context_menu(container)
+        previous_in_tree_actions = _select_menu_actions(previous_in_tree_menu)
+        previous_in_tree_actions["Previous In Tree"].trigger()
+        assert panel.selected_widgets() == [other]
+        assert panel._get_selected_widget() is other
+        assert selection_events[-1] == (["other"], "other")
+        assert feedback[-1] == "Selected previous widget in tree order: other."
+        previous_in_tree_menu.deleteLater()
+
+        next_in_tree_menu = panel._build_context_menu(container)
+        next_in_tree_actions = _select_menu_actions(next_in_tree_menu)
+        next_in_tree_actions["Next In Tree"].trigger()
+        assert panel.selected_widgets() == [child_a]
+        assert panel._get_selected_widget() is child_a
+        assert selection_events[-1] == (["child_a"], "child_a")
+        assert feedback[-1] == "Selected next widget in tree order: child_a."
+        next_in_tree_menu.deleteLater()
 
         first_child_menu = panel._build_context_menu(container)
         first_child_actions = _select_menu_actions(first_child_menu)

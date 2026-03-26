@@ -465,6 +465,30 @@ class WidgetTreePanel(QWidget):
             return None
         return children[-1]
 
+    def _previous_tree_widget(self, widget):
+        root = self._root_widget(widget)
+        if root is None:
+            return None
+        tree_widgets = [current for current in root.get_all_widgets_flat() if current is not None]
+        if widget not in tree_widgets:
+            return None
+        index = tree_widgets.index(widget)
+        if index <= 0:
+            return None
+        return tree_widgets[index - 1]
+
+    def _next_tree_widget(self, widget):
+        root = self._root_widget(widget)
+        if root is None:
+            return None
+        tree_widgets = [current for current in root.get_all_widgets_flat() if current is not None]
+        if widget not in tree_widgets:
+            return None
+        index = tree_widgets.index(widget)
+        if index < 0 or index >= len(tree_widgets) - 1:
+            return None
+        return tree_widgets[index + 1]
+
     def _select_previous_sibling_widget(self, widget):
         sibling = self._previous_sibling_widget(widget)
         if sibling is None:
@@ -521,6 +545,34 @@ class WidgetTreePanel(QWidget):
             [child],
             primary=child,
             feedback_message=f"Selected last child: {self._widget_label(child)}.",
+        )
+
+    def _select_previous_tree_widget(self, widget):
+        previous_widget = self._previous_tree_widget(widget)
+        if previous_widget is None:
+            if widget is not None:
+                self.feedback_message.emit(
+                    "Cannot select previous in tree: widget is already the first widget in tree order on this page."
+                )
+            return
+        self._apply_programmatic_selection(
+            [previous_widget],
+            primary=previous_widget,
+            feedback_message=f"Selected previous widget in tree order: {self._widget_label(previous_widget)}.",
+        )
+
+    def _select_next_tree_widget(self, widget):
+        next_widget = self._next_tree_widget(widget)
+        if next_widget is None:
+            if widget is not None:
+                self.feedback_message.emit(
+                    "Cannot select next in tree: widget is already the last widget in tree order on this page."
+                )
+            return
+        self._apply_programmatic_selection(
+            [next_widget],
+            primary=next_widget,
+            feedback_message=f"Selected next widget in tree order: {self._widget_label(next_widget)}.",
         )
 
     def _ancestor_widgets(self, widget):
@@ -1056,6 +1108,8 @@ class WidgetTreePanel(QWidget):
         can_select_parent = widget.parent is not None
         can_select_previous_sibling = self._previous_sibling_widget(widget) is not None
         can_select_next_sibling = self._next_sibling_widget(widget) is not None
+        can_select_previous_in_tree = self._previous_tree_widget(widget) is not None
+        can_select_next_in_tree = self._next_tree_widget(widget) is not None
         can_select_first_child = self._first_child_widget(widget) is not None
         can_select_last_child = self._last_child_widget(widget) is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
@@ -1119,6 +1173,30 @@ class WidgetTreePanel(QWidget):
         )
         select_next_sibling_action.triggered.connect(lambda: self._select_next_sibling_widget(widget))
         select_menu.addAction(select_next_sibling_action)
+
+        select_previous_tree_action = QAction("Previous In Tree", self)
+        select_previous_tree_action.setEnabled(can_select_previous_in_tree)
+        select_previous_tree_action.setToolTip(
+            self._structure_tooltip(
+                "Select the previous widget in page tree order.",
+                can_select_previous_in_tree,
+                "widget is already the first widget in tree order on this page.",
+            )
+        )
+        select_previous_tree_action.triggered.connect(lambda: self._select_previous_tree_widget(widget))
+        select_menu.addAction(select_previous_tree_action)
+
+        select_next_tree_action = QAction("Next In Tree", self)
+        select_next_tree_action.setEnabled(can_select_next_in_tree)
+        select_next_tree_action.setToolTip(
+            self._structure_tooltip(
+                "Select the next widget in page tree order.",
+                can_select_next_in_tree,
+                "widget is already the last widget in tree order on this page.",
+            )
+        )
+        select_next_tree_action.triggered.connect(lambda: self._select_next_tree_widget(widget))
+        select_menu.addAction(select_next_tree_action)
 
         select_ancestors_action = QAction("Ancestors", self)
         select_ancestors_action.setEnabled(can_select_ancestors)
@@ -1405,6 +1483,8 @@ class WidgetTreePanel(QWidget):
             can_select_parent,
             can_select_previous_sibling,
             can_select_next_sibling,
+            can_select_previous_in_tree,
+            can_select_next_in_tree,
             can_select_first_child,
             can_select_last_child,
             can_select_ancestors,
