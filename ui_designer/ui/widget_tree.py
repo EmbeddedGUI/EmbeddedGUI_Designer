@@ -574,6 +574,18 @@ class WidgetTreePanel(QWidget):
         prioritized_labels = {choice.label for choice in prioritized}
         return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
 
+    def _recent_move_target_choices(self, widgets):
+        choices = self._move_target_choices(widgets)
+        if not choices:
+            return []
+        choice_by_label = {choice.label: choice for choice in choices}
+        return [choice_by_label[label] for label in self.recent_move_target_labels() if label in choice_by_label]
+
+    def _remaining_move_target_choices(self, widgets):
+        choices = self._move_target_choices(widgets)
+        recent_labels = {choice.label for choice in self._recent_move_target_choices(widgets)}
+        return [choice for choice in choices if choice.label not in recent_labels]
+
     def _move_target_default_index(self, choices):
         remembered_label = self.remembered_move_target_label()
         if not remembered_label:
@@ -642,19 +654,44 @@ class WidgetTreePanel(QWidget):
             return
 
         state = state or self._structure_action_state()
-        self._into_quick_menu.clear()
-        choices = self._quick_move_target_choices(state.widgets)
-        for choice in choices:
-            action = QAction(choice.label, self)
-            action.setToolTip(f"Move the current selection into {choice.label}.")
-            action.triggered.connect(
-                lambda checked=False, target=choice.widget, target_label=choice.label, widgets=list(state.widgets): self._move_selected_widgets_into(
-                    target_widget=target,
-                    widgets=widgets,
-                    target_label=target_label,
-                )
+        self._populate_quick_move_menu(self._into_quick_menu, state.widgets)
+
+    def _add_move_target_menu_action(self, menu, choice, widgets):
+        action = QAction(choice.label, self)
+        action.setToolTip(f"Move the current selection into {choice.label}.")
+        action.triggered.connect(
+            lambda checked=False, target=choice.widget, target_label=choice.label, selected_widgets=list(widgets): self._move_selected_widgets_into(
+                target_widget=target,
+                widgets=selected_widgets,
+                target_label=target_label,
             )
-            self._into_quick_menu.addAction(action)
+        )
+        menu.addAction(action)
+
+    def _add_menu_section_label(self, menu, title):
+        section_action = QAction(title, menu)
+        section_action.setEnabled(False)
+        menu.addAction(section_action)
+
+    def _populate_quick_move_menu(self, menu, widgets, max_targets=None):
+        menu.clear()
+        recent_choices = self._recent_move_target_choices(widgets)
+        remaining_choices = self._remaining_move_target_choices(widgets)
+
+        recent_limit = len(recent_choices) if max_targets is None else max(0, min(len(recent_choices), max_targets))
+        recent_display = recent_choices[:recent_limit]
+        remaining_limit = None if max_targets is None else max(0, max_targets - len(recent_display))
+        remaining_display = remaining_choices if remaining_limit is None else remaining_choices[:remaining_limit]
+
+        if recent_display:
+            self._add_menu_section_label(menu, "Recent Targets")
+            for choice in recent_display:
+                self._add_move_target_menu_action(menu, choice, widgets)
+            if remaining_display:
+                menu.addSeparator()
+                self._add_menu_section_label(menu, "Other Targets")
+        for choice in remaining_display:
+            self._add_move_target_menu_action(menu, choice, widgets)
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."
@@ -901,17 +938,7 @@ class WidgetTreePanel(QWidget):
                 quick_move_menu = structure_menu.addMenu("Quick Move Into")
                 quick_move_menu.setToolTipsVisible(True)
                 quick_move_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
-                for choice in quick_targets[:5]:
-                    quick_action = QAction(choice.label, self)
-                    quick_action.setToolTip(f"Move the current selection into {choice.label}.")
-                    quick_action.triggered.connect(
-                        lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selected_widgets_into(
-                            target_widget=target,
-                            widgets=context_widgets,
-                            target_label=target_label,
-                        )
-                    )
-                    quick_move_menu.addAction(quick_action)
+                self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")

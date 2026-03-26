@@ -3889,6 +3889,18 @@ class MainWindow(QMainWindow):
         prioritized_labels = {choice.label for choice in prioritized}
         return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
 
+    def _recent_move_into_choices(self, widgets=None):
+        choices = self._move_into_choices(widgets)
+        if not choices:
+            return []
+        choice_by_label = {choice.label: choice for choice in choices}
+        return [choice_by_label[label] for label in self._recent_move_target_labels() if label in choice_by_label]
+
+    def _remaining_move_into_choices(self, widgets=None):
+        choices = self._move_into_choices(widgets)
+        recent_labels = {choice.label for choice in self._recent_move_into_choices(widgets)}
+        return [choice for choice in choices if choice.label not in recent_labels]
+
     def _move_into_target_default_index(self, choices):
         remembered_label = self._remembered_move_target_label()
         if not remembered_label:
@@ -3942,18 +3954,39 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_quick_move_into_menu"):
             return
 
-        self._quick_move_into_menu.clear()
-        for choice in self._quick_move_into_choices():
-            action = QAction(choice.label, self)
-            action.setToolTip(f"Move the current selection into {choice.label}.")
-            action.setStatusTip(f"Move the current selection into {choice.label}.")
-            action.triggered.connect(
-                lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selection_into_target(
-                    target,
-                    target_label=target_label,
-                )
+        self._populate_quick_move_into_menu(self._quick_move_into_menu)
+
+    def _add_quick_move_into_action(self, menu, choice):
+        action = QAction(choice.label, self)
+        action.setToolTip(f"Move the current selection into {choice.label}.")
+        action.setStatusTip(f"Move the current selection into {choice.label}.")
+        action.triggered.connect(
+            lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selection_into_target(
+                target,
+                target_label=target_label,
             )
-            self._quick_move_into_menu.addAction(action)
+        )
+        menu.addAction(action)
+
+    def _add_quick_move_into_section(self, menu, title):
+        section_action = QAction(title, menu)
+        section_action.setEnabled(False)
+        menu.addAction(section_action)
+
+    def _populate_quick_move_into_menu(self, menu):
+        menu.clear()
+        recent_choices = self._recent_move_into_choices()
+        remaining_choices = self._remaining_move_into_choices()
+
+        if recent_choices:
+            self._add_quick_move_into_section(menu, "Recent Targets")
+            for choice in recent_choices:
+                self._add_quick_move_into_action(menu, choice)
+            if remaining_choices:
+                menu.addSeparator()
+                self._add_quick_move_into_section(menu, "Other Targets")
+        for choice in remaining_choices:
+            self._add_quick_move_into_action(menu, choice)
 
     def _move_selection_into_target(self, target, target_label=""):
         if target is None:

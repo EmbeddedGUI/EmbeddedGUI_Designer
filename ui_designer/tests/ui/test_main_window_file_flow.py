@@ -102,6 +102,17 @@ def _close_window(window):
         app.processEvents()
 
 
+def _menu_target_labels(menu):
+    return [
+        action.text()
+        for action in menu.actions()
+        if action.text()
+        and action.isEnabled()
+        and not action.isSeparator()
+        and action.menu() is None
+    ]
+
+
 class _DisabledCompiler:
     def can_build(self):
         return False
@@ -1243,11 +1254,13 @@ class TestMainWindowFileFlow:
         window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
         window._refresh_quick_move_into_menu()
 
-        labels = [action.text() for action in window._quick_move_into_menu.actions()]
+        labels = _menu_target_labels(window._quick_move_into_menu)
         assert labels[:2] == [
             "root_group / target_b (group)",
             "root_group / target_a (group)",
         ]
+        assert "Recent Targets" in [action.text() for action in window._quick_move_into_menu.actions()]
+        assert "Other Targets" in [action.text() for action in window._quick_move_into_menu.actions()]
 
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -1297,7 +1310,7 @@ class TestMainWindowFileFlow:
         window._set_selection([third], primary=third, sync_tree=True, sync_preview=False)
         window._refresh_quick_move_into_menu()
 
-        labels = [action.text() for action in window._quick_move_into_menu.actions()]
+        labels = _menu_target_labels(window._quick_move_into_menu)
         assert labels[:3] == [
             "root_group / target_b (group)",
             "root_group / target_c (group)",

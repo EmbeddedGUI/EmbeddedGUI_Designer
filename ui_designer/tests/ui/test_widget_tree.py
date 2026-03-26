@@ -59,6 +59,17 @@ def _structure_submenu(menu, label):
     raise AssertionError(f"{label} submenu not found")
 
 
+def _menu_target_labels(menu):
+    return [
+        action.text()
+        for action in menu.actions()
+        if action.text()
+        and action.isEnabled()
+        and not action.isSeparator()
+        and action.menu() is None
+    ]
+
+
 @_skip_no_qt
 class TestWidgetTreePanel:
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
@@ -431,15 +442,17 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([second], primary=second)
         panel._refresh_into_button_menu()
 
-        button_labels = [action.text() for action in panel.into_btn.menu().actions()]
+        button_labels = _menu_target_labels(panel.into_btn.menu())
         assert button_labels[:2] == [
             "root_group / target_b (group)",
             "root_group / target_a (group)",
         ]
+        assert "Recent Targets" in [action.text() for action in panel.into_btn.menu().actions()]
+        assert "Other Targets" in [action.text() for action in panel.into_btn.menu().actions()]
 
         menu = panel._build_context_menu(second)
         quick_menu = _structure_submenu(menu, "Quick Move Into")
-        context_labels = [action.text() for action in quick_menu.actions()]
+        context_labels = _menu_target_labels(quick_menu)
         assert context_labels[:2] == [
             "root_group / target_b (group)",
             "root_group / target_a (group)",
@@ -483,7 +496,7 @@ class TestWidgetTreePanel:
         panel.set_selected_widgets([third], primary=third)
         panel._refresh_into_button_menu()
 
-        button_labels = [action.text() for action in panel.into_btn.menu().actions()]
+        button_labels = _menu_target_labels(panel.into_btn.menu())
         assert button_labels[:3] == [
             "root_group / target_b (group)",
             "root_group / target_c (group)",
@@ -492,7 +505,7 @@ class TestWidgetTreePanel:
 
         menu = panel._build_context_menu(third)
         quick_menu = _structure_submenu(menu, "Quick Move Into")
-        context_labels = [action.text() for action in quick_menu.actions()]
+        context_labels = _menu_target_labels(quick_menu)
         assert context_labels[:3] == [
             "root_group / target_b (group)",
             "root_group / target_c (group)",
