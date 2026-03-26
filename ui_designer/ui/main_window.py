@@ -3765,10 +3765,11 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Selected {len(widgets)} visible widget(s).", 3000)
 
     def _build_preview_context_menu(self, widget=None):
-        del widget
         menu = QMenu(self)
         menu.setToolTipsVisible(True)
         menu.addAction(self._select_all_action)
+        if widget is not None and hasattr(self, "widget_tree") and self.widget_tree is not None:
+            self.widget_tree._populate_select_menu(menu.addMenu("Select"), widget)
         menu.addSeparator()
         for action in (
             self._copy_action,

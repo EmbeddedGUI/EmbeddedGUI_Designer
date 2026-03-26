@@ -472,6 +472,61 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(siblings)} {noun} under {self._widget_label(parent)}.",
         )
 
+    def _populate_select_menu(self, select_menu, widget):
+        if select_menu is None or widget is None:
+            return
+
+        select_menu.setToolTipsVisible(True)
+        child_widgets = [child for child in getattr(widget, "children", []) if child is not None]
+        sibling_widgets = self._sibling_widgets(widget)
+        can_select_parent = widget.parent is not None
+        can_select_children = bool(child_widgets)
+        can_select_siblings = len(sibling_widgets) > 1
+
+        select_parent_action = QAction("Parent", self)
+        select_parent_action.setEnabled(can_select_parent)
+        select_parent_action.setToolTip(
+            self._structure_tooltip(
+                "Select the direct parent of this widget.",
+                can_select_parent,
+                "root widgets do not have a parent.",
+            )
+        )
+        select_parent_action.triggered.connect(lambda: self._select_parent_widget(widget))
+        select_menu.addAction(select_parent_action)
+
+        select_children_action = QAction("Children", self)
+        select_children_action.setEnabled(can_select_children)
+        select_children_action.setToolTip(
+            self._structure_tooltip(
+                "Select the direct child widgets of this container.",
+                can_select_children,
+                "widget has no child widgets.",
+            )
+        )
+        select_children_action.triggered.connect(lambda: self._select_child_widgets(widget))
+        select_menu.addAction(select_children_action)
+
+        select_siblings_action = QAction("Siblings", self)
+        select_siblings_action.setEnabled(can_select_siblings)
+        select_siblings_action.setToolTip(
+            self._structure_tooltip(
+                "Select this widget and its siblings under the same parent.",
+                can_select_siblings,
+                "root widgets do not have siblings."
+                if widget.parent is None else
+                "widget has no siblings under the same parent.",
+            )
+        )
+        select_siblings_action.triggered.connect(lambda: self._select_sibling_widgets(widget))
+        select_menu.addAction(select_siblings_action)
+        select_enabled = any([can_select_parent, can_select_children, can_select_siblings])
+        select_menu.menuAction().setEnabled(select_enabled)
+        if not select_enabled:
+            select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")
+        else:
+            select_menu.menuAction().setToolTip("")
+
     def _move_target_memory_key(self):
         if self.project is None:
             return None
@@ -1113,57 +1168,7 @@ class WidgetTreePanel(QWidget):
                 )
                 add_menu.addAction(action)
 
-        select_menu = menu.addMenu("Select")
-        select_menu.setToolTipsVisible(True)
-        child_widgets = [child for child in getattr(widget, "children", []) if child is not None]
-        sibling_widgets = self._sibling_widgets(widget)
-        can_select_parent = widget.parent is not None
-        can_select_children = bool(child_widgets)
-        can_select_siblings = len(sibling_widgets) > 1
-
-        select_parent_action = QAction("Parent", self)
-        select_parent_action.setEnabled(can_select_parent)
-        select_parent_action.setToolTip(
-            self._structure_tooltip(
-                "Select the direct parent of this widget.",
-                can_select_parent,
-                "root widgets do not have a parent.",
-            )
-        )
-        select_parent_action.triggered.connect(lambda: self._select_parent_widget(widget))
-        select_menu.addAction(select_parent_action)
-
-        select_children_action = QAction("Children", self)
-        select_children_action.setEnabled(can_select_children)
-        select_children_action.setToolTip(
-            self._structure_tooltip(
-                "Select the direct child widgets of this container.",
-                can_select_children,
-                "widget has no child widgets.",
-            )
-        )
-        select_children_action.triggered.connect(lambda: self._select_child_widgets(widget))
-        select_menu.addAction(select_children_action)
-
-        select_siblings_action = QAction("Siblings", self)
-        select_siblings_action.setEnabled(can_select_siblings)
-        select_siblings_action.setToolTip(
-            self._structure_tooltip(
-                "Select this widget and its siblings under the same parent.",
-                can_select_siblings,
-                "root widgets do not have siblings."
-                if widget.parent is None else
-                "widget has no siblings under the same parent.",
-            )
-        )
-        select_siblings_action.triggered.connect(lambda: self._select_sibling_widgets(widget))
-        select_menu.addAction(select_siblings_action)
-        select_enabled = any([can_select_parent, can_select_children, can_select_siblings])
-        select_menu.menuAction().setEnabled(select_enabled)
-        if not select_enabled:
-            select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")
-        else:
-            select_menu.menuAction().setToolTip("")
+        self._populate_select_menu(menu.addMenu("Select"), widget)
 
         structure_menu = menu.addMenu("Structure")
         structure_menu.setToolTipsVisible(True)
