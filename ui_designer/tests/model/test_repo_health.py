@@ -36,6 +36,28 @@ def test_collect_repo_health_reports_missing_submodule_and_stale_dirs(tmp_path, 
     ]
 
 
+def test_inspect_problem_dirs_includes_blocked_temp_subdirectories(tmp_path, monkeypatch):
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    blocked = repo_root / "temp" / "pytest" / "run-001"
+    blocked.mkdir(parents=True)
+
+    original_iterdir = repo_health.Path.iterdir
+
+    def fake_iterdir(self):
+        if self == blocked:
+            raise PermissionError()
+        return original_iterdir(self)
+
+    monkeypatch.setattr(repo_health.Path, "iterdir", fake_iterdir)
+
+    entries = repo_health.inspect_problem_dirs(repo_root)
+
+    assert entries == [
+        {"path": str(blocked), "accessible": False, "issue": "permission_denied"},
+    ]
+
+
 def test_format_repo_health_text_includes_expected_sections(tmp_path):
     payload = {
         "repo_root": str(tmp_path),

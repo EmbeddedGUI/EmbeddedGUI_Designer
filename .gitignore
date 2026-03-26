@@ -1,6 +1,7 @@
 ﻿__pycache__/
 *.py[cod]
-temp/
+temp/*
+!temp/.gitkeep
 .pytest_cache/
 .pytest-tmp/
 pytest-cache-files-*/

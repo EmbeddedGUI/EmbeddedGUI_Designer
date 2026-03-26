@@ -11,11 +11,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SDK_SUBMODULE_PATH = Path("sdk") / "EmbeddedGUI"
 RELEASE_SMOKE_PROJECT = Path("samples") / "release_smoke" / "ReleaseSmokeApp"
-KNOWN_STALE_DIR_NAMES = (
+LEGACY_STALE_DIR_NAMES = (
     ".pytest-tmp-codex",
     "tmpxtayw0f6",
     "verify_pytest_release",
 )
+TEMP_WORK_ROOT = Path("temp")
+TEMP_SCAN_MAX_DEPTH = 3
 
 
 def _run_git_text(repo_root: str | Path, *args: str) -> str:
@@ -43,28 +45,71 @@ def sdk_is_initialized(submodule_status_line: str) -> bool:
 def inspect_problem_dirs(repo_root: str | Path = REPO_ROOT) -> list[dict[str, object]]:
     resolved_repo_root = Path(repo_root).resolve()
     entries: list[dict[str, object]] = []
-    for name in KNOWN_STALE_DIR_NAMES:
+    for name in LEGACY_STALE_DIR_NAMES:
         path = resolved_repo_root / name
-        if not path.exists():
-            continue
-        issue = ""
-        accessible = True
-        try:
-            next(path.iterdir(), None)
-        except PermissionError:
-            accessible = False
-            issue = "permission_denied"
-        except OSError as exc:
-            accessible = False
-            issue = type(exc).__name__
-        entries.append(
-            {
-                "path": str(path),
-                "accessible": accessible,
-                "issue": issue,
-            }
-        )
+        entry = _inspect_directory(path)
+        if entry is not None:
+            entries.append(entry)
+    entries.extend(_inspect_temp_work_dirs(resolved_repo_root / TEMP_WORK_ROOT))
     return entries
+
+
+def _inspect_directory(path: Path, *, include_accessible: bool = True) -> dict[str, object] | None:
+    if not path.exists() or not path.is_dir():
+        return None
+
+    issue = ""
+    accessible = True
+    try:
+        next(path.iterdir(), None)
+    except PermissionError:
+        accessible = False
+        issue = "permission_denied"
+    except OSError as exc:
+        accessible = False
+        issue = type(exc).__name__
+
+    if not include_accessible and accessible:
+        return None
+
+    return {
+        "path": str(path),
+        "accessible": accessible,
+        "issue": issue,
+    }
+
+
+def _inspect_temp_work_dirs(temp_root: Path) -> list[dict[str, object]]:
+    if not temp_root.exists() or not temp_root.is_dir():
+        return []
+
+    results: list[dict[str, object]] = []
+    seen_paths: set[str] = set()
+    stack: list[tuple[Path, int]] = [(temp_root, 0)]
+
+    while stack:
+        current, depth = stack.pop()
+        entry = _inspect_directory(current, include_accessible=False)
+        if entry is not None:
+            path_text = str(current)
+            if path_text not in seen_paths:
+                results.append(entry)
+                seen_paths.add(path_text)
+            continue
+
+        if depth >= TEMP_SCAN_MAX_DEPTH:
+            continue
+
+        try:
+            children = [child for child in current.iterdir() if child.is_dir()]
+        except (PermissionError, OSError):
+            continue
+
+        for child in children:
+            stack.append((child, depth + 1))
+
+    results.sort(key=lambda item: item["path"])
+    return results
 
 
 def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
