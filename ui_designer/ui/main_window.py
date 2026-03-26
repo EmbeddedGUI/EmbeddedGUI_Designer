@@ -1332,6 +1332,10 @@ class MainWindow(QMainWindow):
         self._move_into_last_target_action.triggered.connect(self._move_selection_into_last_target)
         structure_menu.addAction(self._move_into_last_target_action)
 
+        self._clear_move_target_history_action = QAction("Clear Move Target History", self)
+        self._clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
+        structure_menu.addAction(self._clear_move_target_history_action)
+
         self._quick_move_into_menu = structure_menu.addMenu("Quick Move Into")
         self._quick_move_into_menu.setToolTipsVisible(True)
         self._quick_move_into_menu.aboutToShow.connect(self._refresh_quick_move_into_menu)
@@ -3927,6 +3931,13 @@ class MainWindow(QMainWindow):
             return f"Move the current selection into {label} again{suffix}"
         return f"Move the current selection into the last remembered container target{suffix}"
 
+    def _clear_move_target_history_hint(self):
+        count = len(self._recent_move_target_labels())
+        if count:
+            noun = "target" if count == 1 else "targets"
+            return f"Forget {count} recent move-into {noun} for the current page"
+        return "Forget recent move-into targets for the current page"
+
     def _refresh_quick_move_into_menu(self):
         if not hasattr(self, "_quick_move_into_menu"):
             return
@@ -3962,6 +3973,14 @@ class MainWindow(QMainWindow):
                 self._show_selection_action_blocked("move into last target", reason)
             return
         self._move_selection_into_target(target_choice.widget, target_label=target_choice.label)
+
+    def _clear_move_target_history(self):
+        if not self._recent_move_target_labels():
+            self._show_selection_action_blocked("clear move target history", "no recent move targets are saved")
+            return
+        self.widget_tree.clear_remembered_move_target_labels()
+        self._update_edit_actions()
+        self.statusBar().showMessage("Cleared recent move target history.", 4000)
 
     def _choose_structure_target_choice(self, widgets):
         choices = self._move_into_choices(widgets)
@@ -4350,6 +4369,8 @@ class MainWindow(QMainWindow):
         self._move_into_container_action.setEnabled(structure_state.can_move_into)
         repeat_move_target_choice = self._remembered_move_target_choice(selected_widgets)
         self._move_into_last_target_action.setEnabled(repeat_move_target_choice is not None)
+        has_recent_move_targets = bool(self._recent_move_target_labels())
+        self._clear_move_target_history_action.setEnabled(has_recent_move_targets)
         self._lift_to_parent_action.setEnabled(structure_state.can_lift)
         self._move_up_action.setEnabled(structure_state.can_move_up)
         self._move_down_action.setEnabled(structure_state.can_move_down)
@@ -4366,6 +4387,13 @@ class MainWindow(QMainWindow):
         )
         self._move_into_last_target_action.setToolTip(repeat_hint)
         self._move_into_last_target_action.setStatusTip(repeat_hint)
+        clear_history_hint = self._structure_action_hint(
+            self._clear_move_target_history_hint(),
+            has_recent_move_targets,
+            "no recent move targets are saved.",
+        )
+        self._clear_move_target_history_action.setToolTip(clear_history_hint)
+        self._clear_move_target_history_action.setStatusTip(clear_history_hint)
         quick_hint = self._structure_action_hint(
             "Move the current selection directly into an available container target.",
             structure_state.can_move_into,

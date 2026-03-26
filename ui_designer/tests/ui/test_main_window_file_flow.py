@@ -1092,6 +1092,52 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clear_move_target_history_action_clears_recent_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ClearMoveTargetHistoryDemo"
+        project = _create_project(project_dir, "ClearMoveTargetHistoryDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+        window._move_selection_into_target(
+            target,
+            target_label="root_group / target (group)",
+        )
+
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+
+        assert window._clear_move_target_history_action.isEnabled() is True
+        assert "Forget 1 recent move-into target" in window._clear_move_target_history_action.toolTip()
+
+        window._clear_move_target_history_action.trigger()
+
+        assert window.widget_tree.recent_move_target_labels() == []
+        assert window._clear_move_target_history_action.isEnabled() is False
+        assert window._move_into_last_target_action.isEnabled() is False
+        assert window.statusBar().currentMessage() == "Cleared recent move target history."
+        assert "no recent move targets are saved" in window._clear_move_target_history_action.toolTip()
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_move_into_last_target_is_scoped_per_page(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

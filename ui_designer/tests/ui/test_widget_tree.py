@@ -645,6 +645,50 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_clear_move_target_history_context_action_clears_recent_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        feedback = []
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        panel.set_selected_widgets([second], primary=second)
+        menu = panel._build_context_menu(second)
+        actions = _structure_menu_actions(menu)
+
+        assert actions["Clear Move Target History"].isEnabled() is True
+        assert "Forget 1 recent move-into target" in actions["Clear Move Target History"].toolTip()
+
+        actions["Clear Move Target History"].trigger()
+
+        assert panel.recent_move_target_labels() == []
+        assert feedback[-1] == "Cleared recent move target history."
+
+        menu.deleteLater()
+        menu = panel._build_context_menu(second)
+        actions = _structure_menu_actions(menu)
+        assert actions["Clear Move Target History"].isEnabled() is False
+        assert "Unavailable: no recent move targets are saved." in actions["Clear Move Target History"].toolTip()
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_remembered_move_target_is_scoped_per_project(self, qapp):
         from ui_designer.ui.widget_tree import WidgetTreePanel
 

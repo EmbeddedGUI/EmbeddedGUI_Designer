@@ -429,6 +429,9 @@ class WidgetTreePanel(QWidget):
         labels = self._remembered_move_target_labels.get(self._move_target_memory_key(), [])
         return list(labels)
 
+    def has_recent_move_targets(self):
+        return bool(self.recent_move_target_labels())
+
     def set_remembered_move_target_label(self, label):
         key = self._move_target_memory_key()
         if key is None:
@@ -449,6 +452,12 @@ class WidgetTreePanel(QWidget):
         history = [normalized]
         history.extend(existing for existing in self.recent_move_target_labels() if existing != normalized)
         self._remembered_move_target_labels[key] = history[: self._MAX_RECENT_MOVE_TARGETS]
+
+    def clear_remembered_move_target_labels(self):
+        key = self._move_target_memory_key()
+        if key is None:
+            return
+        self._remembered_move_target_labels.pop(key, None)
 
     def set_selected_widgets(self, widgets, primary=None):
         self._clear_tree_drag_hover()
@@ -603,6 +612,13 @@ class WidgetTreePanel(QWidget):
         if label:
             return f"Move the current selection into {label} again{action_suffix}"
         return f"Move the current selection into the last remembered container target{action_suffix}"
+
+    def _clear_move_target_history_hint(self):
+        count = len(self.recent_move_target_labels())
+        if count:
+            noun = "target" if count == 1 else "targets"
+            return f"Forget {count} recent move-into {noun} for the current page"
+        return "Forget recent move-into targets for the current page"
 
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
@@ -868,6 +884,17 @@ class WidgetTreePanel(QWidget):
         )
         move_into_last_target_action.triggered.connect(lambda: self._move_selected_widgets_into_last_target(context_widgets))
         structure_menu.addAction(move_into_last_target_action)
+        clear_move_target_history_action = QAction("Clear Move Target History", self)
+        clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
+        clear_move_target_history_action.setToolTip(
+            self._structure_tooltip(
+                self._clear_move_target_history_hint(),
+                self.has_recent_move_targets(),
+                "no recent move targets are saved.",
+            )
+        )
+        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
+        structure_menu.addAction(clear_move_target_history_action)
         if structure_state.can_move_into:
             quick_targets = self._quick_move_target_choices(context_widgets)
             if quick_targets:
@@ -931,6 +958,7 @@ class WidgetTreePanel(QWidget):
             structure_state.can_move_down,
             structure_state.can_move_top,
             structure_state.can_move_bottom,
+            self.has_recent_move_targets(),
         ])
         structure_menu.setEnabled(structure_enabled)
         if not structure_enabled and structure_state.blocked_reason:
@@ -1053,6 +1081,14 @@ class WidgetTreePanel(QWidget):
             widgets=widgets,
             target_label=target_choice.label,
         )
+
+    def _clear_move_target_history(self):
+        if not self.has_recent_move_targets():
+            self.feedback_message.emit("Cannot clear move target history: no recent move targets are saved.")
+            return
+        self.clear_remembered_move_target_labels()
+        self._update_structure_controls()
+        self.feedback_message.emit("Cleared recent move target history.")
 
     def _lift_selected_widgets(self, widgets=None):
         self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))
