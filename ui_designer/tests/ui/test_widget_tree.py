@@ -592,6 +592,40 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_quick_move_into_menus_show_recent_placeholder_without_history(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+        panel._refresh_into_button_menu()
+
+        button_actions = panel.into_btn.menu().actions()
+        assert "Recent Targets" in [action.text() for action in button_actions]
+        assert "Other Targets" in [action.text() for action in button_actions]
+        recent_placeholder = next(action for action in button_actions if action.text() == "(No recent targets yet)")
+        assert recent_placeholder.isEnabled() is False
+        assert _menu_target_labels(panel.into_btn.menu()) == ["root_group / target (group)"]
+
+        menu = panel._build_context_menu(child)
+        quick_menu = _structure_submenu(menu, "Quick Move Into")
+        context_actions = quick_menu.actions()
+        assert "Recent Targets" in [action.text() for action in context_actions]
+        assert "Other Targets" in [action.text() for action in context_actions]
+        recent_placeholder = next(action for action in context_actions if action.text() == "(No recent targets yet)")
+        assert recent_placeholder.isEnabled() is False
+        assert _menu_target_labels(quick_menu) == ["root_group / target (group)"]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

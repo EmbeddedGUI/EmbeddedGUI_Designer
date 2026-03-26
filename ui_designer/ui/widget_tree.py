@@ -752,6 +752,14 @@ class WidgetTreePanel(QWidget):
         section_action.setEnabled(False)
         menu.addAction(section_action)
 
+    def _add_disabled_menu_note(self, menu, text, tooltip=""):
+        note_action = QAction(text, menu)
+        note_action.setEnabled(False)
+        if tooltip:
+            note_action.setToolTip(tooltip)
+            note_action.setStatusTip(tooltip)
+        menu.addAction(note_action)
+
     def _populate_quick_move_menu(self, menu, widgets, max_targets=None):
         menu.clear()
         recent_choices = self._recent_move_target_choices(widgets)
@@ -769,8 +777,19 @@ class WidgetTreePanel(QWidget):
             if remaining_display:
                 menu.addSeparator()
                 self._add_menu_section_label(menu, "Other Targets")
+        elif remaining_display:
+            self._add_menu_section_label(menu, "Recent Targets")
+            self._add_disabled_menu_note(
+                menu,
+                "(No recent targets yet)",
+                "Move something into a container first to build recent targets for this page.",
+            )
+            menu.addSeparator()
+            self._add_menu_section_label(menu, "Other Targets")
         for choice in remaining_display:
             self._add_move_target_menu_action(menu, choice, widgets)
+        if not recent_display and not remaining_display:
+            self._add_disabled_menu_note(menu, "(No eligible target containers)")
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."

@@ -3988,6 +3988,14 @@ class MainWindow(QMainWindow):
         section_action.setEnabled(False)
         menu.addAction(section_action)
 
+    def _add_quick_move_into_note(self, menu, text, tooltip=""):
+        note_action = QAction(text, menu)
+        note_action.setEnabled(False)
+        if tooltip:
+            note_action.setToolTip(tooltip)
+            note_action.setStatusTip(tooltip)
+        menu.addAction(note_action)
+
     def _populate_quick_move_into_menu(self, menu):
         menu.clear()
         recent_choices = self._recent_move_into_choices()
@@ -4000,8 +4008,19 @@ class MainWindow(QMainWindow):
             if remaining_choices:
                 menu.addSeparator()
                 self._add_quick_move_into_section(menu, "Other Targets")
+        elif remaining_choices:
+            self._add_quick_move_into_section(menu, "Recent Targets")
+            self._add_quick_move_into_note(
+                menu,
+                "(No recent targets yet)",
+                "Move something into a container first to build recent targets for this page.",
+            )
+            menu.addSeparator()
+            self._add_quick_move_into_section(menu, "Other Targets")
         for choice in remaining_choices:
             self._add_quick_move_into_action(menu, choice)
+        if not recent_choices and not remaining_choices:
+            self._add_quick_move_into_note(menu, "(No eligible target containers)")
 
     def _move_selection_into_target(self, target, target_label=""):
         if target is None:

@@ -1491,6 +1491,41 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_quick_move_into_menu_shows_recent_placeholder_without_history(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QuickMovePlaceholderDemo"
+        project = _create_project(project_dir, "QuickMovePlaceholderDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([child], primary=child, sync_tree=False, sync_preview=False)
+        window._refresh_quick_move_into_menu()
+
+        action_texts = [action.text() for action in window._quick_move_into_menu.actions()]
+        assert "Recent Targets" in action_texts
+        assert "Other Targets" in action_texts
+        recent_placeholder = next(action for action in window._quick_move_into_menu.actions() if action.text() == "(No recent targets yet)")
+        assert recent_placeholder.isEnabled() is False
+        assert _menu_target_labels(window._quick_move_into_menu) == ["root_group / target (group)"]
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_widget_tree_group_selection_updates_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
