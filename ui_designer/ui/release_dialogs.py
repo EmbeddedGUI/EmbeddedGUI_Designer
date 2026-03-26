@@ -33,6 +33,7 @@ from ..model.release import ReleaseConfig, ReleaseProfile
 
 
 _PREVIEW_CHAR_LIMIT = 65536
+_LIST_DIAGNOSTIC_LIMIT = 72
 
 
 def _history_string(entry: dict[str, object], key: str) -> str:
@@ -74,6 +75,15 @@ def _history_sdk_label(entry: dict[str, object]) -> str:
     return label
 
 
+def _truncate_history_text(text: str, limit: int) -> str:
+    normalized = str(text or "").strip()
+    if limit <= 0 or len(normalized) <= limit:
+        return normalized
+    if limit <= 3:
+        return normalized[:limit]
+    return normalized[: limit - 3].rstrip() + "..."
+
+
 def _history_list_label(entry: dict[str, object]) -> str:
     build_id = _history_string(entry, "build_id") or _history_string(entry, "created_at_utc") or "unknown-build"
     profile_id = _history_string(entry, "profile_id") or "unknown-profile"
@@ -86,7 +96,7 @@ def _history_list_label(entry: dict[str, object]) -> str:
         parts.append(f"err {error_count}")
     first_diagnostic = _history_string(entry, "first_diagnostic")
     if first_diagnostic:
-        parts.append(f"diag {first_diagnostic}")
+        parts.append(f"diag {_truncate_history_text(first_diagnostic, _LIST_DIAGNOSTIC_LIMIT)}")
     return " ".join(parts)
 
 

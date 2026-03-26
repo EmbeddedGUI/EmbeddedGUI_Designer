@@ -831,6 +831,34 @@ def test_release_history_dialog_details_show_first_diagnostic(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_truncates_long_first_diagnostic_in_list_label(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    long_diagnostic = (
+        "warning main_page/hero: Widget 'hero' references image_file='ghost.png', "
+        "but it is missing from the resource catalog and requires a manual import step."
+    )
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "failed",
+                "profile_id": "windows-pc",
+                "sdk": {"revision": "sdk-fail"},
+                "warning_count": 1,
+                "error_count": 0,
+                "first_diagnostic": long_diagnostic,
+            }
+        ]
+    )
+
+    label = dialog._history_list.item(0).text()
+    assert "diag warning main_page/hero:" in label
+    assert "manual import step." not in label
+    assert "..." in label
+
+
+@_skip_no_qt
 def test_release_history_dialog_exports_selected_entry_summary(qapp, tmp_path, monkeypatch):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
