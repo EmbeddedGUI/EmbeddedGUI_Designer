@@ -586,6 +586,69 @@ class TestWidgetTreePanel:
         assert feedback == ["Cannot move selection in tree: widgets are already in that position."]
         panel.deleteLater()
 
+    def test_tree_drag_hover_expands_valid_collapsed_container(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        source = WidgetModel("label", name="source")
+        container = WidgetModel("group", name="container")
+        nested = WidgetModel("group", name="nested")
+        deep_child = WidgetModel("label", name="deep_child")
+        nested.add_child(deep_child)
+        container.add_child(nested)
+        root.add_child(source)
+        root.add_child(container)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([source], primary=source)
+        container_item = panel._item_map[id(container)]
+        container_item.setExpanded(False)
+
+        panel._on_tree_drag_hover(container_item, QAbstractItemView.OnItem)
+        panel._expand_drag_hover_item()
+
+        assert container_item.isExpanded() is True
+        assert id(container) in panel._expanded_widgets
+        panel.deleteLater()
+
+    def test_tree_drag_hover_ignores_invalid_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        source = WidgetModel("label", name="source")
+        sibling = WidgetModel("label", name="sibling")
+        container = WidgetModel("group", name="container")
+        child = WidgetModel("label", name="child")
+        container.add_child(child)
+        root.add_child(source)
+        root.add_child(sibling)
+        root.add_child(container)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([source], primary=source)
+        container_item = panel._item_map[id(container)]
+        container_item.setExpanded(False)
+        sibling_item = panel._item_map[id(sibling)]
+
+        panel._on_tree_drag_hover(sibling_item, QAbstractItemView.OnItem)
+        panel._expand_drag_hover_item()
+        assert container_item.isExpanded() is False
+
+        panel._on_tree_drag_hover(container_item, QAbstractItemView.BelowItem)
+        panel._expand_drag_hover_item()
+        assert container_item.isExpanded() is False
+
+        panel.set_selected_widgets([container], primary=container)
+        panel._on_tree_drag_hover(container_item, QAbstractItemView.OnItem)
+        panel._expand_drag_hover_item()
+        assert container_item.isExpanded() is False
+
+        panel.deleteLater()
+
     def test_tree_keyboard_shortcuts_dispatch_actions(self, qapp, monkeypatch):
         from ui_designer.ui.widget_tree import WidgetTreePanel
 

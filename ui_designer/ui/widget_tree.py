@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
     QPushButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
 )
-from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent
+from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
 
 from ..model.widget_name import (
     is_valid_widget_name,
@@ -41,11 +41,21 @@ def _get_container_types():
 
 
 class _StructureTreeWidget(QTreeWidget):
-    def __init__(self, drop_handler=None, can_drop_handler=None, key_handler=None, parent=None):
+    def __init__(
+        self,
+        drop_handler=None,
+        can_drop_handler=None,
+        key_handler=None,
+        drag_hover_handler=None,
+        clear_drag_hover_handler=None,
+        parent=None,
+    ):
         super().__init__(parent)
         self._drop_handler = drop_handler
         self._can_drop_handler = can_drop_handler
         self._key_handler = key_handler
+        self._drag_hover_handler = drag_hover_handler
+        self._clear_drag_hover_handler = clear_drag_hover_handler
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
@@ -61,6 +71,12 @@ class _StructureTreeWidget(QTreeWidget):
     def set_key_handler(self, key_handler):
         self._key_handler = key_handler
 
+    def set_drag_hover_handler(self, drag_hover_handler):
+        self._drag_hover_handler = drag_hover_handler
+
+    def set_clear_drag_hover_handler(self, clear_drag_hover_handler):
+        self._clear_drag_hover_handler = clear_drag_hover_handler
+
     def dragEnterEvent(self, event):
         if event.source() is self and self.selectedItems():
             event.acceptProposedAction()
@@ -70,6 +86,8 @@ class _StructureTreeWidget(QTreeWidget):
     def dragMoveEvent(self, event):
         if event.source() is self and self.selectedItems():
             target_item = self.itemAt(event.pos())
+            if self._drag_hover_handler is not None:
+                self._drag_hover_handler(target_item, int(self.dropIndicatorPosition()))
             if self._can_drop_handler is not None and not self._can_drop_handler(
                 target_item, int(self.dropIndicatorPosition())
             ):
@@ -84,11 +102,18 @@ class _StructureTreeWidget(QTreeWidget):
             event.ignore()
             return
         target_item = self.itemAt(event.pos())
+        if self._clear_drag_hover_handler is not None:
+            self._clear_drag_hover_handler()
         handled = bool(self._drop_handler(target_item, int(self.dropIndicatorPosition())))
         if handled:
             event.acceptProposedAction()
             return
         event.ignore()
+
+    def dragLeaveEvent(self, event):
+        if self._clear_drag_hover_handler is not None:
+            self._clear_drag_hover_handler()
+        super().dragLeaveEvent(event)
 
     def keyPressEvent(self, event):
         if self._key_handler is not None and self._key_handler(event):
@@ -116,6 +141,11 @@ class WidgetTreePanel(QWidget):
         self._suppress_expansion_tracking = False
         self._default_expand_next_rebuild = True
         self._filter_matches = []
+        self._drag_hover_item = None
+        self._drag_hover_expand_timer = QTimer(self)
+        self._drag_hover_expand_timer.setSingleShot(True)
+        self._drag_hover_expand_timer.setInterval(350)
+        self._drag_hover_expand_timer.timeout.connect(self._expand_drag_hover_item)
         self._init_ui()
 
     def _init_ui(self):
@@ -199,6 +229,8 @@ class WidgetTreePanel(QWidget):
             drop_handler=self._handle_tree_drop,
             can_drop_handler=self._can_handle_tree_drop,
             key_handler=self._handle_tree_key_press,
+            drag_hover_handler=self._on_tree_drag_hover,
+            clear_drag_hover_handler=self._clear_tree_drag_hover,
             parent=self,
         )
         self.tree.setHeaderLabels(["Widget", "Type"])
@@ -235,6 +267,7 @@ class WidgetTreePanel(QWidget):
 
     def shutdown(self):
         self._filter_matches = []
+        self._clear_tree_drag_hover()
         self._suppress_expansion_tracking = True
         try:
             self.filter_edit.removeEventFilter(self)
@@ -777,6 +810,37 @@ class WidgetTreePanel(QWidget):
     def _can_handle_tree_drop(self, target_item, drop_position):
         target_widget = self._widget_map.get(id(target_item)) if target_item is not None else None
         return self._can_drop_selected_widgets(target_widget, drop_position)
+
+    def _on_tree_drag_hover(self, target_item, drop_position):
+        target_widget = self._widget_map.get(id(target_item)) if target_item is not None else None
+        if (
+            target_item is None
+            or target_widget is None
+            or not target_widget.is_container
+            or drop_position != QAbstractItemView.OnItem
+            or target_item.isExpanded()
+            or not self._can_drop_selected_widgets(target_widget, drop_position)
+        ):
+            self._clear_tree_drag_hover()
+            return
+        if self._drag_hover_item is target_item and self._drag_hover_expand_timer.isActive():
+            return
+        self._drag_hover_item = target_item
+        self._drag_hover_expand_timer.start()
+
+    def _clear_tree_drag_hover(self):
+        self._drag_hover_expand_timer.stop()
+        self._drag_hover_item = None
+
+    def _expand_drag_hover_item(self):
+        item = self._drag_hover_item
+        self._drag_hover_item = None
+        if item is None or item.isExpanded():
+            return
+        widget = self._widget_map.get(id(item))
+        if widget is None or not widget.is_container:
+            return
+        item.setExpanded(True)
 
     def _handle_tree_key_press(self, event):
         key = event.key()
