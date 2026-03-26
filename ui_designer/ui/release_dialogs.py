@@ -165,7 +165,11 @@ def _history_summary_line(entry: dict[str, object]) -> str:
     profile_id = _history_string(entry, "profile_id") or "unknown-profile"
     sdk_label = _history_sdk_label(entry)
     message = _history_string(entry, "message") or "-"
-    return f"{build_id} | {status} | {profile_id} | sdk {sdk_label} | {message}"
+    line = f"{build_id} | {status} | {profile_id} | sdk {sdk_label} | {message}"
+    first_diagnostic = _history_string(entry, "first_diagnostic")
+    if first_diagnostic:
+        line += f" | diag {first_diagnostic}"
+    return line
 
 
 def _history_status_counts(entries: list[dict[str, object]]) -> dict[str, int]:

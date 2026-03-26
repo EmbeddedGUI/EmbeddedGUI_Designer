@@ -845,6 +845,7 @@ def test_release_history_dialog_exports_selected_entry_summary(qapp, tmp_path, m
                 "profile_id": "windows-pc",
                 "message": "Release created",
                 "sdk": {"revision": "sdk-good"},
+                "first_diagnostic": "warning main_page/hero: ghost.png is missing",
             }
         ]
     )
@@ -861,7 +862,11 @@ def test_release_history_dialog_exports_selected_entry_summary(qapp, tmp_path, m
 
     exported = export_path.read_text(encoding="utf-8")
     assert captured["default_name"] == "release-entry-20260326t000000z-windows-pc-success-summary.txt"
-    assert exported == "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created\n"
+    assert (
+        exported
+        == "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created"
+        " | diag warning main_page/hero: ghost.png is missing\n"
+    )
 
 
 @_skip_no_qt
@@ -1351,6 +1356,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -1368,7 +1374,7 @@ def test_release_history_dialog_copy_filtered_summary_uses_current_filter(qapp):
     assert "artifact_counts: manifest=0 log=0 package=1 version=0" in copied
     assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in copied
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in copied
-    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in copied
+    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed | diag error main_page/hero: bad callback" in copied
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in copied
 
 
@@ -1398,6 +1404,7 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -1440,6 +1447,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
                 "sdk": {"revision": "sdk-fail"},
                 "warning_count": 2,
                 "error_count": 1,
+                "first_diagnostic": "error main_page/hero: bad callback",
                 "zip_path": "/tmp/release.zip",
             },
         ]
@@ -1464,7 +1472,7 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
     assert "artifact_counts: manifest=0 log=0 package=1 version=0" in exported
     assert "diagnostics_counts: clean=0 warnings=1 errors=1 unknown=0" in exported
     assert "filters: range=all, status=failed, profile=all, artifact=package, diagnostics=all, sort=newest, search=-" in exported
-    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed" in exported
+    assert "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed | diag error main_page/hero: bad callback" in exported
     assert "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created" not in exported
 
 
