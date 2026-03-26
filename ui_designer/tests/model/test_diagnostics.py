@@ -1,6 +1,12 @@
 """Tests for ui_designer.model.diagnostics."""
 
-from ui_designer.model.diagnostics import analyze_page, analyze_project_callback_conflicts, analyze_selection
+from ui_designer.model.diagnostics import (
+    analyze_page,
+    analyze_project_callback_conflicts,
+    analyze_selection,
+    diagnostic_entry_payload,
+    diagnostic_target_payload,
+)
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.resource_catalog import ResourceCatalog
@@ -187,3 +193,76 @@ class TestProjectDiagnostics:
         assert "detail_page/volume_slider.onValueChanged" in entries[0].message
         assert entries[0].target_page_name == "detail_page"
         assert entries[0].target_widget_name == "volume_slider"
+
+
+class TestDiagnosticPayloads:
+    def test_diagnostic_target_payload_classifies_resource_and_project_entries(self):
+        resource_entry = type(
+            "Entry",
+            (),
+            {
+                "code": "missing_resource",
+                "page_name": "main_page",
+                "widget_name": "missing_image",
+                "target_page_name": "main_page",
+                "target_widget_name": "missing_image",
+                "resource_type": "image",
+                "resource_name": "ghost.png",
+            },
+        )()
+        project_entry = type(
+            "Entry",
+            (),
+            {
+                "code": "project_callback_duplicate",
+                "page_name": "project",
+                "widget_name": "on_confirm",
+                "target_page_name": "",
+                "target_widget_name": "",
+                "resource_type": "",
+                "resource_name": "",
+            },
+        )()
+
+        assert diagnostic_target_payload(resource_entry) == {
+            "target_kind": "resource",
+            "target_page_name": "main_page",
+            "target_widget_name": "missing_image",
+        }
+        assert diagnostic_target_payload(project_entry) == {
+            "target_kind": "project",
+            "target_page_name": "",
+            "target_widget_name": "",
+        }
+
+    def test_diagnostic_entry_payload_includes_target_metadata(self):
+        entry = type(
+            "Entry",
+            (),
+            {
+                "severity": "error",
+                "code": "page_timer_missing_callback",
+                "message": "Page timer metadata is invalid.",
+                "page_name": "main_page",
+                "widget_name": "refresh_timer",
+                "resource_type": "",
+                "resource_name": "",
+                "property_name": "",
+                "target_page_name": "main_page",
+                "target_widget_name": "",
+            },
+        )()
+
+        assert diagnostic_entry_payload(entry) == {
+            "severity": "error",
+            "code": "page_timer_missing_callback",
+            "message": "Page timer metadata is invalid.",
+            "page_name": "main_page",
+            "widget_name": "refresh_timer",
+            "resource_type": "",
+            "resource_name": "",
+            "property_name": "",
+            "target_kind": "page_timer",
+            "target_page_name": "main_page",
+            "target_widget_name": "",
+        }

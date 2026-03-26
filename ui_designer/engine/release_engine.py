@@ -23,7 +23,12 @@ from ..model.build_metadata import (
     describe_git_revision,
     is_git_worktree_dirty,
 )
-from ..model.diagnostics import analyze_page, analyze_project_callback_conflicts, sort_diagnostic_entries
+from ..model.diagnostics import (
+    analyze_page,
+    analyze_project_callback_conflicts,
+    diagnostic_entry_payload,
+    sort_diagnostic_entries,
+)
 from ..model.release import ReleaseArtifact, ReleaseRequest, ReleaseResult
 from ..model.workspace import compute_make_app_root_arg, is_valid_sdk_root, normalize_path
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
@@ -421,6 +426,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
 
     warnings: list[str] = []
     errors: list[str] = []
+    diagnostic_entries: list[dict[str, object]] = []
     log_chunks: list[str] = []
     artifacts: list[ReleaseArtifact] = []
     zip_path = ""
@@ -435,6 +441,8 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
     designer_revision = current_designer_revision(designer_root)
 
     def _finalize(success: bool, message: str) -> ReleaseResult:
+        diagnostic_error_count = sum(1 for entry in diagnostic_entries if str(entry.get("severity") or "") == "error")
+        diagnostic_warning_count = sum(1 for entry in diagnostic_entries if str(entry.get("severity") or "") == "warning")
         manifest = {
             "schema_version": 1,
             "build_id": build_id,
@@ -452,6 +460,14 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
             "artifacts": [artifact.to_dict() for artifact in artifacts],
             "warnings": warnings,
             "errors": errors,
+            "diagnostics": {
+                "summary": {
+                    "errors": diagnostic_error_count,
+                    "warnings": diagnostic_warning_count,
+                    "total": len(diagnostic_entries),
+                },
+                "entries": list(diagnostic_entries),
+            },
             "command": command,
             "message": message,
         }
@@ -523,6 +539,7 @@ def release_project(request: ReleaseRequest) -> ReleaseResult:
         ui_input_digest = _hash_files(_collect_ui_input_paths(project_dir, project.app_name), base_root=project_dir)
 
         diagnostics = collect_release_diagnostics(project)
+        diagnostic_entries = [diagnostic_entry_payload(entry) for entry in diagnostics["entries"]]
         warnings = summarize_diagnostic_entries(diagnostics["warnings"])
         errors = summarize_diagnostic_entries(diagnostics["errors"])
         if errors:
