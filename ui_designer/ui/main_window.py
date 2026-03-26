@@ -2056,6 +2056,12 @@ class MainWindow(QMainWindow):
     def _diagnostics_json_text(self):
         entries = self.diagnostics_panel.entries() if hasattr(self, "diagnostics_panel") else []
         view_state = self.diagnostics_panel.view_state() if hasattr(self, "diagnostics_panel") else {}
+        selected_entry = self.diagnostics_panel.current_selected_entry() if hasattr(self, "diagnostics_panel") else None
+        selected_target = self._diagnostic_json_target(selected_entry) if selected_entry is not None else {
+            "target_kind": "",
+            "target_page_name": "",
+            "target_widget_name": "",
+        }
         errors = sum(1 for entry in entries if entry.severity == "error")
         warnings = sum(1 for entry in entries if entry.severity == "warning")
         infos = sum(1 for entry in entries if entry.severity == "info")
@@ -2074,6 +2080,10 @@ class MainWindow(QMainWindow):
             "view": {
                 "severity_filter": str(view_state.get("severity_filter") or ""),
                 "visible_total": len(entries),
+                "selected_code": str(getattr(selected_entry, "code", "") or ""),
+                "selected_target_kind": str(selected_target.get("target_kind") or ""),
+                "selected_target_page_name": str(selected_target.get("target_page_name") or ""),
+                "selected_target_widget_name": str(selected_target.get("target_widget_name") or ""),
             },
             "entries": [
                 {

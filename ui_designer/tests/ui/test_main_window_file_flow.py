@@ -3917,7 +3917,14 @@ class TestMainWindowFileFlow:
         assert copied["summary"]["warnings"] == 1
         assert copied["summary"]["info"] == 0
         assert copied["summary"]["total"] == 2
-        assert copied["view"] == {"severity_filter": "", "visible_total": 2}
+        assert copied["view"] == {
+            "severity_filter": "",
+            "visible_total": 2,
+            "selected_code": "",
+            "selected_target_kind": "",
+            "selected_target_page_name": "",
+            "selected_target_widget_name": "",
+        }
         assert any(
             entry["code"] == "invalid_name"
             and entry["widget_name"] == "bad-name"
@@ -3970,13 +3977,67 @@ class TestMainWindowFileFlow:
 
         copied = json.loads(QApplication.clipboard().text())
         assert copied["summary"] == {"errors": 0, "warnings": 1, "info": 0, "total": 1}
-        assert copied["view"] == {"severity_filter": "warning", "visible_total": 1}
+        assert copied["view"] == {
+            "severity_filter": "warning",
+            "visible_total": 1,
+            "selected_code": "",
+            "selected_target_kind": "",
+            "selected_target_page_name": "",
+            "selected_target_widget_name": "",
+        }
         assert len(copied["entries"]) == 1
         assert copied["entries"][0]["code"] == "missing_resource"
         assert copied["entries"][0]["widget_name"] == "missing_image"
         assert copied["entries"][0]["target_kind"] == "resource"
         assert copied["entries"][0]["target_page_name"] == "main_page"
         assert copied["entries"][0]["target_widget_name"] == "missing_image"
+
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_copy_diagnostics_json_includes_selected_entry_context(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DiagnosticsCopyJsonSelectedDemo"
+        project = _create_project(project_dir, "DiagnosticsCopyJsonSelectedDemo", sdk_root)
+        page = project.get_startup_page()
+
+        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
+        missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
+        missing.properties["image_file"] = "missing.png"
+        page.root_widget.add_child(invalid)
+        page.root_widget.add_child(missing)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_diagnostics_panel()
+
+        target_item = None
+        for row in range(window.diagnostics_panel._list.count()):
+            item = window.diagnostics_panel._list.item(row)
+            if "missing_image" in item.text():
+                target_item = item
+                break
+
+        assert target_item is not None
+
+        window.diagnostics_panel._list.setCurrentItem(target_item)
+
+        QApplication.clipboard().clear()
+        window.diagnostics_panel._copy_json_button.click()
+
+        copied = json.loads(QApplication.clipboard().text())
+        assert copied["view"]["selected_code"] == "missing_resource"
+        assert copied["view"]["selected_target_kind"] == "resource"
+        assert copied["view"]["selected_target_page_name"] == "main_page"
+        assert copied["view"]["selected_target_widget_name"] == "missing_image"
 
         window._undo_manager.mark_all_saved()
         _close_window(window)

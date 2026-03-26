@@ -164,6 +164,12 @@ class DiagnosticsPanel(QWidget):
     def current_activated_entry(self):
         return self._activated_entry
 
+    def current_selected_entry(self):
+        item = self._list.currentItem()
+        if item is None:
+            return None
+        return item.data(Qt.UserRole + 1)
+
     def entries(self):
         return list(self._visible_entries)
 
