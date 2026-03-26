@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PyQt5.QtCore import QEvent, Qt
     from PyQt5.QtGui import QKeyEvent
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView
 
     _has_pyqt5 = True
 except ImportError:
@@ -455,6 +455,83 @@ class TestWidgetTreePanel:
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
 
+        panel.deleteLater()
+
+    def test_tree_drop_reorders_selected_widgets_and_emits_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+        third = WidgetModel("label", name="third")
+        fourth = WidgetModel("label", name="fourth")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        root.add_child(fourth)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([second, third], primary=second)
+        sources = []
+        feedback = []
+        panel.tree_changed.connect(lambda source: sources.append(source))
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        moved = panel._move_selected_widgets_by_tree_drop(fourth, QAbstractItemView.BelowItem)
+
+        assert moved is True
+        assert [widget.name for widget in root.children] == ["first", "fourth", "second", "third"]
+        assert panel.selected_widgets() == [second, third]
+        assert panel._get_selected_widget() is third
+        assert sources == ["tree move"]
+        assert feedback == ["Moved 2 widget(s) in the widget tree."]
+        panel.deleteLater()
+
+    def test_tree_drop_into_container_moves_selection(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target", x=80, y=20, width=100, height=100)
+        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+
+        moved = panel._move_selected_widgets_by_tree_drop(target, QAbstractItemView.OnItem)
+
+        assert moved is True
+        assert child.parent is target
+        assert panel.selected_widgets() == [child]
+        assert panel._get_selected_widget() is child
+        panel.deleteLater()
+
+    def test_tree_drop_viewport_moves_selection_to_root_end(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        container = WidgetModel("group", name="container")
+        child = WidgetModel("label", name="child")
+        tail = WidgetModel("label", name="tail")
+        container.add_child(child)
+        root.add_child(container)
+        root.add_child(tail)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+
+        moved = panel._move_selected_widgets_by_tree_drop(None, QAbstractItemView.OnViewport)
+
+        assert moved is True
+        assert root.children[-1] is child
+        assert child.parent is root
         panel.deleteLater()
 
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):

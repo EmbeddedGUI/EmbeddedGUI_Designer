@@ -21,6 +21,7 @@ from ..model.structure_ops import (
     lift_to_parent,
     move_into_container,
     move_selection_by_step,
+    move_widgets_to_parent_index,
     ungroup_selection,
 )
 from ..model.widget_model import WidgetModel
@@ -35,6 +36,43 @@ def _get_addable_types():
 def _get_container_types():
     """Get container widget types from the registry."""
     return WidgetRegistry.instance().container_types()
+
+
+class _StructureTreeWidget(QTreeWidget):
+    def __init__(self, drop_handler=None, parent=None):
+        super().__init__(parent)
+        self._drop_handler = drop_handler
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDefaultDropAction(Qt.MoveAction)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
+
+    def set_drop_handler(self, drop_handler):
+        self._drop_handler = drop_handler
+
+    def dragEnterEvent(self, event):
+        if event.source() is self and self.selectedItems():
+            event.acceptProposedAction()
+            return
+        event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.source() is self and self.selectedItems():
+            event.acceptProposedAction()
+            return
+        event.ignore()
+
+    def dropEvent(self, event):
+        if event.source() is not self or self._drop_handler is None:
+            event.ignore()
+            return
+        target_item = self.itemAt(event.pos())
+        handled = bool(self._drop_handler(target_item, int(self.dropIndicatorPosition())))
+        if handled:
+            event.acceptProposedAction()
+            return
+        event.ignore()
 
 
 class WidgetTreePanel(QWidget):
@@ -133,7 +171,7 @@ class WidgetTreePanel(QWidget):
         layout.addLayout(filter_layout)
 
         # Tree
-        self.tree = QTreeWidget()
+        self.tree = _StructureTreeWidget(drop_handler=self._handle_tree_drop, parent=self)
         self.tree.setHeaderLabels(["Widget", "Type"])
         self.tree.setColumnWidth(0, 140)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -332,6 +370,10 @@ class WidgetTreePanel(QWidget):
         if anchor_widget is not None and anchor_widget not in selected_widgets:
             return [anchor_widget]
         return selected_widgets or ([anchor_widget] if anchor_widget is not None else [])
+
+    def _drop_root_widget(self):
+        root_widgets = list(getattr(self.project, "root_widgets", []) or [])
+        return root_widgets[0] if root_widgets else None
 
     def _structure_action_state(self, widgets=None):
         selection = self.selected_widgets() if widgets is None else widgets
@@ -640,6 +682,50 @@ class WidgetTreePanel(QWidget):
 
     def _move_selected_widgets_down(self, widgets=None):
         self._apply_structure_result(move_selection_by_step(self.project, widgets or self.selected_widgets(), 1))
+
+    def _resolve_tree_drop_destination(self, target_widget, drop_position):
+        root = self._drop_root_widget()
+        if root is None:
+            return None, None
+
+        if drop_position == QAbstractItemView.OnViewport:
+            return root, len(root.children)
+
+        if target_widget is None:
+            return None, None
+
+        if drop_position == QAbstractItemView.AboveItem:
+            if target_widget.parent is None:
+                return target_widget, 0
+            parent = target_widget.parent
+            return parent, parent.children.index(target_widget)
+
+        if drop_position == QAbstractItemView.BelowItem:
+            if target_widget.parent is None:
+                return target_widget, len(target_widget.children)
+            parent = target_widget.parent
+            return parent, parent.children.index(target_widget) + 1
+
+        if drop_position == QAbstractItemView.OnItem:
+            if target_widget.is_container:
+                return target_widget, len(target_widget.children)
+            if target_widget.parent is not None:
+                parent = target_widget.parent
+                return parent, parent.children.index(target_widget) + 1
+        return None, None
+
+    def _move_selected_widgets_by_tree_drop(self, target_widget, drop_position):
+        widgets = self.selected_widgets()
+        target_parent, target_index = self._resolve_tree_drop_destination(target_widget, drop_position)
+        if target_parent is None:
+            return False
+        return self._apply_structure_result(
+            move_widgets_to_parent_index(self.project, widgets, target_parent, target_index)
+        )
+
+    def _handle_tree_drop(self, target_item, drop_position):
+        target_widget = self._widget_map.get(id(target_item)) if target_item is not None else None
+        return self._move_selected_widgets_by_tree_drop(target_widget, drop_position)
 
     def _top_level_selected_widgets(self, widgets):
         selected_ids = {id(widget) for widget in widgets}

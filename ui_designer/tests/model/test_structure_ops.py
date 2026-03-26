@@ -5,6 +5,7 @@ from ui_designer.model.structure_ops import (
     lift_to_parent,
     move_into_container,
     move_selection_by_step,
+    move_widgets_to_parent_index,
     ungroup_selection,
 )
 from ui_designer.model.widget_model import WidgetModel
@@ -188,3 +189,54 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     assert locked_state.can_lift is False
     assert locked_state.can_move_up is False
     assert locked_state.can_move_down is False
+
+
+def test_move_widgets_to_parent_index_reorders_selection_block():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    third = WidgetModel("label", name="third")
+    fourth = WidgetModel("label", name="fourth")
+    root.add_child(first)
+    root.add_child(second)
+    root.add_child(third)
+    root.add_child(fourth)
+
+    result = move_widgets_to_parent_index(project, [second, third], root, 4)
+
+    assert result.changed is True
+    assert result.source == "tree move"
+    assert [widget.name for widget in root.children] == ["first", "fourth", "second", "third"]
+    assert result.message == "Moved 2 widget(s) in the widget tree."
+
+
+def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_position():
+    project, root = _build_project()
+    target = WidgetModel("group", name="target", x=100, y=30, width=80, height=80)
+    existing = WidgetModel("label", name="existing", x=10, y=10, width=20, height=10)
+    child = WidgetModel("label", name="child", x=15, y=25, width=20, height=10)
+    target.add_child(existing)
+    root.add_child(target)
+    root.add_child(child)
+
+    result = move_widgets_to_parent_index(project, [child], target, 0)
+
+    assert result.changed is True
+    assert target.children == [child, existing]
+    assert child.parent is target
+    assert (child.display_x, child.display_y) == (15, 25)
+    assert (child.x, child.y) == (-85, -5)
+
+
+def test_move_widgets_to_parent_index_blocks_noop_position():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    root.add_child(first)
+    root.add_child(second)
+
+    result = move_widgets_to_parent_index(project, [first], root, 0)
+
+    assert result.changed is False
+    assert result.message == "Cannot move selection in tree: widgets are already in that position."
+    assert root.children == [first, second]

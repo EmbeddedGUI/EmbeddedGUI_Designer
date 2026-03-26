@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QByteArray, Qt
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView
     from PyQt5.QtWidgets import QMessageBox
 
     _has_pyqt5 = True
@@ -929,6 +929,43 @@ class TestMainWindowFileFlow:
         assert window.preview_panel.selected_widgets() == [group]
         assert window._undo_manager.get_stack("main_page").current_label() == "group selection"
         assert window.statusBar().currentMessage() == "Grouped 2 widget(s) into group."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_widget_tree_drop_move_updates_main_window_selection_and_history(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "TreeDropMoveDemo"
+        project = _create_project(project_dir, "TreeDropMoveDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+        third = WidgetModel("label", name="third")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=False)
+
+        moved = window.widget_tree._move_selected_widgets_by_tree_drop(third, QAbstractItemView.BelowItem)
+
+        assert moved is True
+        assert [widget.name for widget in root.children] == ["second", "third", "first"]
+        assert window._primary_selected_widget() is first
+        assert window.preview_panel.selected_widgets() == [first]
+        assert window._undo_manager.get_stack("main_page").current_label() == "tree move"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) in the widget tree."
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

@@ -402,6 +402,78 @@ def move_into_container(project_like, widgets, target_container):
     )
 
 
+def move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
+    roots = _root_widgets(project_like)
+    widgets = _sort_by_tree_order(project_like, _top_level_widgets(widgets, exclude_roots=roots))
+    if not widgets:
+        return _failure("Cannot move selection in tree: no widgets are selected.")
+    if _has_locked_widgets(widgets):
+        return _failure("Cannot move selection in tree: locked widgets cannot be moved.")
+    if target_parent is None or not getattr(target_parent, "is_container", False):
+        return _failure("Cannot move selection in tree: choose a valid target container.")
+
+    excluded_ids = set()
+    for widget in widgets:
+        excluded_ids.update(_subtree_ids(widget))
+    if id(target_parent) in excluded_ids:
+        return _failure("Cannot move selection in tree: target container is inside the current selection.")
+
+    children = list(getattr(target_parent, "children", []) or [])
+    if target_index is None:
+        target_index = len(children)
+    try:
+        target_index = int(target_index)
+    except (TypeError, ValueError):
+        return _failure("Cannot move selection in tree: target position is invalid.")
+    if target_index < 0 or target_index > len(children):
+        return _failure("Cannot move selection in tree: target position is invalid.")
+
+    selected_ids = {id(widget) for widget in widgets}
+    adjusted_index = target_index - sum(1 for child in children[:target_index] if id(child) in selected_ids)
+    adjusted_index = max(0, min(adjusted_index, len([child for child in children if id(child) not in selected_ids])))
+
+    if all(widget.parent is target_parent for widget in widgets):
+        remaining = [child for child in children if id(child) not in selected_ids]
+        new_children = remaining[:adjusted_index] + widgets + remaining[adjusted_index:]
+        if new_children == children:
+            return _failure("Cannot move selection in tree: widgets are already in that position.")
+
+    _recompute_layout(project_like)
+
+    positions = [
+        (widget, widget.parent, getattr(widget, "display_x", widget.x), getattr(widget, "display_y", widget.y))
+        for widget in widgets
+    ]
+    target_uses_layout = _parent_uses_layout(target_parent)
+    target_abs_x = getattr(target_parent, "display_x", 0)
+    target_abs_y = getattr(target_parent, "display_y", 0)
+
+    for widget, _, _, _ in positions:
+        if widget.parent is not None:
+            _remove_child(widget.parent, widget)
+
+    insert_index = adjusted_index
+    for widget, source_parent, abs_x, abs_y in positions:
+        if source_parent is not target_parent:
+            if target_uses_layout:
+                widget.x = 0
+                widget.y = 0
+            else:
+                widget.x = abs_x - target_abs_x
+                widget.y = abs_y - target_abs_y
+        _insert_child(target_parent, insert_index, widget)
+        insert_index += 1
+
+    _recompute_layout(project_like)
+    return StructureOperationResult(
+        changed=True,
+        source="tree move",
+        message=f"Moved {len(widgets)} widget(s) in the widget tree.",
+        widgets=widgets,
+        primary=widgets[-1],
+    )
+
+
 def lift_to_parent(project_like, widgets):
     roots = _root_widgets(project_like)
     widgets = _sort_by_tree_order(project_like, _top_level_widgets(widgets, exclude_roots=roots))
