@@ -420,10 +420,7 @@ def _build_filtered_history_json(
 ) -> str:
     export_entries = []
     for entry in filtered_entries:
-        payload_entry = dict(entry)
-        payload_entry["summary_line"] = _history_summary_line(entry)
-        payload_entry["list_label"] = _history_list_label(entry)
-        export_entries.append(payload_entry)
+        export_entries.append(_history_entry_export_payload(entry))
 
     payload = {
         "matched_entries": len(filtered_entries),
@@ -443,6 +440,15 @@ def _build_filtered_history_json(
         "entries": export_entries,
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+
+def _history_entry_export_payload(entry: dict[str, object], *, include_details: bool = False) -> dict[str, object]:
+    payload_entry = dict(entry or {})
+    payload_entry["summary_line"] = _history_summary_line(entry or {})
+    payload_entry["list_label"] = _history_list_label(entry or {})
+    if include_details:
+        payload_entry["details_text"] = _history_detail_text(entry or {})
+    return payload_entry
 
 
 def _write_text_file(path: str, content: str) -> None:
@@ -1412,7 +1418,7 @@ class ReleaseHistoryDialog(QDialog):
         entry = self._current_entry()
         if not entry:
             return ""
-        return json.dumps(entry, indent=2, ensure_ascii=False) + "\n"
+        return json.dumps(_history_entry_export_payload(entry, include_details=True), indent=2, ensure_ascii=False) + "\n"
 
     def _export_entry_json(self) -> None:
         if not self._current_entry():

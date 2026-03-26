@@ -641,6 +641,7 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
                 "dist_dir": str(dist_dir),
                 "manifest_path": str(manifest_path),
                 "zip_path": str(package_path),
+                "first_diagnostic": "warning main_page/hero: ghost.png is missing",
             }
         ]
     )
@@ -671,6 +672,9 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     copied_json = QApplication.clipboard().text()
     assert '"build_id": "20260326T000000Z"' in copied_json
     assert '"manifest_path":' in copied_json
+    assert '"summary_line": "20260326T000000Z | success | windows-pc | sdk unknown | - | diag warning main_page/hero: ghost.png is missing"' in copied_json
+    assert '"list_label": "20260326T000000Z [windows-pc] success sdk unknown diag warning main_page/hero: ghost.png is missing"' in copied_json
+    assert '"details_text":' in copied_json
 
 
 @_skip_no_qt
@@ -740,6 +744,7 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
                 "status": "success",
                 "profile_id": "windows-pc",
                 "manifest_path": str(manifest_path),
+                "first_diagnostic": "warning main_page/hero: ghost.png is missing",
             }
         ]
     )
@@ -759,6 +764,15 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
     assert exported["build_id"] == "20260326T000000Z"
     assert exported["profile_id"] == "windows-pc"
     assert exported["manifest_path"] == str(manifest_path)
+    assert exported["summary_line"] == (
+        "20260326T000000Z | success | windows-pc | sdk unknown | -"
+        " | diag warning main_page/hero: ghost.png is missing"
+    )
+    assert exported["list_label"] == (
+        "20260326T000000Z [windows-pc] success sdk unknown"
+        " diag warning main_page/hero: ghost.png is missing"
+    )
+    assert "First Diagnostic: warning main_page/hero: ghost.png is missing" in exported["details_text"]
 
 
 @_skip_no_qt
