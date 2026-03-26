@@ -725,6 +725,35 @@ class TestWidgetTreePanel:
         assert panel.remembered_move_target_label() == "target-b"
         panel.deleteLater()
 
+    def test_recent_move_target_label_follows_target_rename(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        target.name = "renamed_target"
+        panel.rebuild_tree()
+        panel.set_selected_widgets([second], primary=second)
+
+        assert panel.remembered_move_target_label() == "root_group / renamed_target (group)"
+        assert "Ctrl+Alt+I repeat into renamed_target" in panel.structure_hint_label.text()
+
+        panel.deleteLater()
+
     def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

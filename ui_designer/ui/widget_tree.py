@@ -425,9 +425,44 @@ class WidgetTreePanel(QWidget):
         labels = self.recent_move_target_labels()
         return labels[0] if labels else ""
 
+    def _current_move_target_label(self, widget=None, fallback_label=""):
+        if widget is not None:
+            current_item = widget
+            names = []
+            while current_item is not None:
+                names.append(current_item.name or current_item.widget_type)
+                current_item = current_item.parent
+            if names:
+                return f"{' / '.join(reversed(names))} ({widget.widget_type})"
+        return (fallback_label or "").strip()
+
+    def _move_target_history_entries(self):
+        key = self._move_target_memory_key()
+        if key is None:
+            return []
+        entries = self._remembered_move_target_labels.get(key, [])
+        normalized = []
+        seen = set()
+        valid_widget_ids = {id(widget) for widget in self._iter_widgets() or []}
+        for entry in entries:
+            if isinstance(entry, str):
+                widget = None
+                fallback_label = entry
+            else:
+                widget = entry.get("widget")
+                fallback_label = entry.get("label", "")
+            if widget is not None and id(widget) not in valid_widget_ids:
+                widget = None
+            label = self._current_move_target_label(widget, fallback_label)
+            if not label or label in seen:
+                continue
+            seen.add(label)
+            normalized.append({"widget": widget, "label": label})
+        self._remembered_move_target_labels[key] = normalized[: self._MAX_RECENT_MOVE_TARGETS]
+        return list(self._remembered_move_target_labels[key])
+
     def recent_move_target_labels(self):
-        labels = self._remembered_move_target_labels.get(self._move_target_memory_key(), [])
-        return list(labels)
+        return [entry["label"] for entry in self._move_target_history_entries()]
 
     def has_recent_move_targets(self):
         return bool(self.recent_move_target_labels())
@@ -438,19 +473,27 @@ class WidgetTreePanel(QWidget):
             return
         normalized = (label or "").strip()
         if normalized:
-            self._remembered_move_target_labels[key] = [normalized]
+            self._remembered_move_target_labels[key] = [{"widget": None, "label": normalized}]
         else:
             self._remembered_move_target_labels.pop(key, None)
 
     def remember_move_target_label(self, label):
+        self.remember_move_target(None, label)
+
+    def remember_move_target(self, widget=None, label=""):
         key = self._move_target_memory_key()
         if key is None:
             return
-        normalized = (label or "").strip()
+        normalized = self._current_move_target_label(widget, label)
         if not normalized:
             return
-        history = [normalized]
-        history.extend(existing for existing in self.recent_move_target_labels() if existing != normalized)
+        history = [{"widget": widget, "label": normalized}]
+        for entry in self._move_target_history_entries():
+            same_widget = widget is not None and entry.get("widget") is widget
+            same_label = entry.get("label") == normalized
+            if same_widget or same_label:
+                continue
+            history.append(entry)
         self._remembered_move_target_labels[key] = history[: self._MAX_RECENT_MOVE_TARGETS]
 
     def clear_remembered_move_target_labels(self):
@@ -1100,7 +1143,7 @@ class WidgetTreePanel(QWidget):
         if target_widget is None:
             return
         if self._apply_structure_result(move_into_container(self.project, widgets, target_widget)) and target_label:
-            self.remember_move_target_label(target_label)
+            self.remember_move_target(target_widget, target_label)
 
     def _move_selected_widgets_into_last_target(self, widgets=None):
         widgets = widgets or self.selected_widgets()

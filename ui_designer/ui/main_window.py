@@ -3878,6 +3878,10 @@ class MainWindow(QMainWindow):
         if hasattr(self, "widget_tree") and self.widget_tree is not None:
             self.widget_tree.remember_move_target_label(label)
 
+    def _remember_move_target(self, target_widget=None, label=""):
+        if hasattr(self, "widget_tree") and self.widget_tree is not None:
+            self.widget_tree.remember_move_target(target_widget, label)
+
     def _move_into_choices(self, widgets=None):
         return available_move_targets(self._structure_project_context(), widgets or self._top_level_selected_widgets())
 
@@ -4006,7 +4010,7 @@ class MainWindow(QMainWindow):
         if not target_label:
             target_label = self._resolve_move_target_label(widgets, target)
         if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target)) and target_label:
-            self._remember_move_target_label(target_label)
+            self._remember_move_target(target, target_label)
 
     def _move_selection_into_last_target(self):
         widgets = self._top_level_selected_widgets()
@@ -4295,7 +4299,7 @@ class MainWindow(QMainWindow):
         if target_choice is None:
             return
         if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target_choice.widget)):
-            self._remember_move_target_label(target_choice.label)
+            self._remember_move_target(target_choice.widget, target_choice.label)
 
     def _lift_selection_to_parent(self):
         self._apply_structure_result(lift_to_parent(self._structure_project_context(), self._top_level_selected_widgets()))
