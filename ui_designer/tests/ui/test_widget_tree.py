@@ -919,9 +919,13 @@ class TestWidgetTreePanel:
         assert root_actions["Subtree"].isEnabled() is True
         assert root_actions["Leaves"].isEnabled() is True
         assert root_actions["Containers"].isEnabled() is True
+        assert root_actions["Hidden"].isEnabled() is False
+        assert root_actions["Locked"].isEnabled() is False
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
+        assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
+        assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         root_menu.deleteLater()
 
@@ -951,6 +955,8 @@ class TestWidgetTreePanel:
         assert child_actions["Subtree"].isEnabled() is False
         assert child_actions["Leaves"].isEnabled() is False
         assert child_actions["Containers"].isEnabled() is False
+        assert child_actions["Hidden"].isEnabled() is False
+        assert child_actions["Locked"].isEnabled() is False
         assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Type"].isEnabled() is False
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
@@ -958,6 +964,8 @@ class TestWidgetTreePanel:
         assert "Unavailable: widget has no descendant widgets." in child_actions["Subtree"].toolTip()
         assert "Unavailable: widget has no leaf descendants." in child_actions["Leaves"].toolTip()
         assert "Unavailable: no other container widgets exist in this subtree." in child_actions["Containers"].toolTip()
+        assert "Unavailable: no hidden widgets exist in this subtree." in child_actions["Hidden"].toolTip()
+        assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
         panel.deleteLater()
@@ -1075,6 +1083,58 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["child_b", "same_type"], "child_b")
         assert feedback[-1] == "Selected 2 button widgets."
         same_type_menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_state_select_actions_update_selection_and_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        container = WidgetModel("group", name="container")
+        hidden_self = WidgetModel("button", name="hidden_self")
+        hidden_self.designer_hidden = True
+        hidden_leaf = WidgetModel("label", name="hidden_leaf")
+        hidden_leaf.designer_hidden = True
+        locked_self = WidgetModel("group", name="locked_self")
+        locked_self.designer_locked = True
+        locked_leaf = WidgetModel("switch", name="locked_leaf")
+        locked_leaf.designer_locked = True
+        visible_leaf = WidgetModel("label", name="visible_leaf")
+        locked_self.add_child(locked_leaf)
+        container.add_child(hidden_self)
+        container.add_child(hidden_leaf)
+        container.add_child(locked_self)
+        container.add_child(visible_leaf)
+        root.add_child(container)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        selection_events = []
+        feedback = []
+        panel.selection_changed.connect(
+            lambda widgets, primary: selection_events.append(
+                ([widget.name for widget in widgets], primary.name if primary is not None else "")
+            )
+        )
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        hidden_menu = panel._build_context_menu(container)
+        hidden_actions = _select_menu_actions(hidden_menu)
+        hidden_actions["Hidden"].trigger()
+        assert panel.selected_widgets() == [hidden_self, hidden_leaf]
+        assert panel._get_selected_widget() is hidden_self
+        assert selection_events[-1] == (["hidden_self", "hidden_leaf"], "hidden_self")
+        assert feedback[-1] == "Selected 2 hidden widgets in subtree of container."
+        hidden_menu.deleteLater()
+
+        locked_menu = panel._build_context_menu(container)
+        locked_actions = _select_menu_actions(locked_menu)
+        locked_actions["Locked"].trigger()
+        assert panel.selected_widgets() == [locked_self, locked_leaf]
+        assert panel._get_selected_widget() is locked_self
+        assert selection_events[-1] == (["locked_self", "locked_leaf"], "locked_self")
+        assert feedback[-1] == "Selected 2 locked widgets in subtree of container."
+        locked_menu.deleteLater()
         panel.deleteLater()
 
     def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):

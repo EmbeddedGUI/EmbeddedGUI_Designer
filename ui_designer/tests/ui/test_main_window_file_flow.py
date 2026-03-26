@@ -5917,6 +5917,8 @@ class TestMainWindowCanvasActions:
         assert "Subtree" in select_labels
         assert "Leaves" in select_labels
         assert "Containers" in select_labels
+        assert "Hidden" in select_labels
+        assert "Locked" in select_labels
         assert "Same Type" in select_labels
         _close_window(window)
 
@@ -6184,6 +6186,62 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [container, nested_group]
         assert window.preview_panel.selected_widgets() == [container, nested_group]
         assert window.statusBar().currentMessage() == "Selected 2 container widgets in subtree of container."
+        _close_window(window)
+
+    def test_preview_context_menu_hidden_and_locked_actions_sync_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewStateContextMenuDemo"
+        project = _create_project(project_dir, "PreviewStateContextMenuDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
+        container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
+        hidden_self = WidgetModel("button", name="hidden_self", x=4, y=4, width=48, height=20)
+        hidden_self.designer_hidden = True
+        hidden_leaf = WidgetModel("label", name="hidden_leaf", x=4, y=28, width=40, height=16)
+        hidden_leaf.designer_hidden = True
+        locked_group = WidgetModel("group", name="locked_group", x=4, y=52, width=60, height=40)
+        locked_group.designer_locked = True
+        locked_leaf = WidgetModel("switch", name="locked_leaf", x=2, y=2, width=32, height=16)
+        locked_leaf.designer_locked = True
+        locked_group.add_child(locked_leaf)
+        container.add_child(hidden_self)
+        container.add_child(hidden_leaf)
+        container.add_child(locked_group)
+        root.add_child(other)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([other], primary=other, sync_tree=True, sync_preview=True)
+
+        hidden_menu = window._build_preview_context_menu(container)
+        hidden_select_menu = next(action.menu() for action in hidden_menu.actions() if action.text() == "Select")
+        select_hidden_action = next(action for action in hidden_select_menu.actions() if action.text() == "Hidden")
+        select_hidden_action.trigger()
+        assert window._selection_state.primary is hidden_self
+        assert window._selection_state.widgets == [hidden_self, hidden_leaf]
+        assert window.widget_tree.selected_widgets() == [hidden_self, hidden_leaf]
+        assert window.preview_panel.selected_widgets() == [hidden_self, hidden_leaf]
+        assert window.statusBar().currentMessage() == "Selected 2 hidden widgets in subtree of container."
+
+        locked_menu = window._build_preview_context_menu(container)
+        locked_select_menu = next(action.menu() for action in locked_menu.actions() if action.text() == "Select")
+        select_locked_action = next(action for action in locked_select_menu.actions() if action.text() == "Locked")
+        select_locked_action.trigger()
+        assert window._selection_state.primary is locked_group
+        assert window._selection_state.widgets == [locked_group, locked_leaf]
+        assert window.widget_tree.selected_widgets() == [locked_group, locked_leaf]
+        assert window.preview_panel.selected_widgets() == [locked_group, locked_leaf]
+        assert window.statusBar().currentMessage() == "Selected 2 locked widgets in subtree of container."
         _close_window(window)
 
     def test_preview_context_menu_same_type_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):

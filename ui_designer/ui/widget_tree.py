@@ -554,6 +554,53 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(containers)} container {noun} in subtree of {self._widget_label(widget)}.",
         )
 
+    def _widgets_including_self(self, widget):
+        if widget is None:
+            return []
+        return [widget] + self._descendant_widgets(widget)
+
+    def _hidden_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if getattr(current, "designer_hidden", False)
+        ]
+
+    def _select_hidden_subtree_widgets(self, widget):
+        hidden_widgets = self._hidden_subtree_widgets(widget)
+        if not hidden_widgets:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select hidden widgets: no hidden widgets exist in this subtree.")
+            return
+        noun = "widget" if len(hidden_widgets) == 1 else "widgets"
+        primary = widget if widget in hidden_widgets else hidden_widgets[0]
+        self._apply_programmatic_selection(
+            hidden_widgets,
+            primary=primary,
+            feedback_message=f"Selected {len(hidden_widgets)} hidden {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
+    def _locked_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if getattr(current, "designer_locked", False)
+        ]
+
+    def _select_locked_subtree_widgets(self, widget):
+        locked_widgets = self._locked_subtree_widgets(widget)
+        if not locked_widgets:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select locked widgets: no locked widgets exist in this subtree.")
+            return
+        noun = "widget" if len(locked_widgets) == 1 else "widgets"
+        primary = widget if widget in locked_widgets else locked_widgets[0]
+        self._apply_programmatic_selection(
+            locked_widgets,
+            primary=primary,
+            feedback_message=f"Selected {len(locked_widgets)} locked {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
     def _sibling_widgets(self, widget):
         parent = widget.parent if widget is not None else None
         if parent is None:
@@ -615,6 +662,8 @@ class WidgetTreePanel(QWidget):
         subtree_widgets = self._subtree_widgets(widget)
         leaf_descendant_widgets = self._leaf_descendant_widgets(widget)
         container_subtree_widgets = self._container_subtree_widgets(widget)
+        hidden_subtree_widgets = self._hidden_subtree_widgets(widget)
+        locked_subtree_widgets = self._locked_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
@@ -624,6 +673,8 @@ class WidgetTreePanel(QWidget):
         can_select_subtree = bool(subtree_widgets)
         can_select_leaves = bool(leaf_descendant_widgets)
         can_select_containers = len(container_subtree_widgets) > 1
+        can_select_hidden = bool(hidden_subtree_widgets)
+        can_select_locked = bool(locked_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
@@ -711,6 +762,30 @@ class WidgetTreePanel(QWidget):
         select_containers_action.triggered.connect(lambda: self._select_container_subtree_widgets(widget))
         select_menu.addAction(select_containers_action)
 
+        select_hidden_action = QAction("Hidden", self)
+        select_hidden_action.setEnabled(can_select_hidden)
+        select_hidden_action.setToolTip(
+            self._structure_tooltip(
+                "Select hidden widgets in this subtree.",
+                can_select_hidden,
+                "no hidden widgets exist in this subtree.",
+            )
+        )
+        select_hidden_action.triggered.connect(lambda: self._select_hidden_subtree_widgets(widget))
+        select_menu.addAction(select_hidden_action)
+
+        select_locked_action = QAction("Locked", self)
+        select_locked_action.setEnabled(can_select_locked)
+        select_locked_action.setToolTip(
+            self._structure_tooltip(
+                "Select locked widgets in this subtree.",
+                can_select_locked,
+                "no locked widgets exist in this subtree.",
+            )
+        )
+        select_locked_action.triggered.connect(lambda: self._select_locked_subtree_widgets(widget))
+        select_menu.addAction(select_locked_action)
+
         select_siblings_action = QAction("Siblings", self)
         select_siblings_action.setEnabled(can_select_siblings)
         select_siblings_action.setToolTip(
@@ -744,6 +819,8 @@ class WidgetTreePanel(QWidget):
             can_select_subtree,
             can_select_leaves,
             can_select_containers,
+            can_select_hidden,
+            can_select_locked,
             can_select_siblings,
             can_select_same_type,
         ])
