@@ -1995,6 +1995,7 @@ class MainWindow(QMainWindow):
 
     def _diagnostics_json_text(self):
         entries = self.diagnostics_panel.entries() if hasattr(self, "diagnostics_panel") else []
+        view_state = self.diagnostics_panel.view_state() if hasattr(self, "diagnostics_panel") else {}
         errors = sum(1 for entry in entries if entry.severity == "error")
         warnings = sum(1 for entry in entries if entry.severity == "warning")
         infos = sum(1 for entry in entries if entry.severity == "info")
@@ -2009,6 +2010,10 @@ class MainWindow(QMainWindow):
                 "warnings": warnings,
                 "info": infos,
                 "total": len(entries),
+            },
+            "view": {
+                "severity_filter": str(view_state.get("severity_filter") or ""),
+                "visible_total": len(entries),
             },
             "entries": [
                 {
