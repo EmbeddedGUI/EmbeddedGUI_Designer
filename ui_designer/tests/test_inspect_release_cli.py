@@ -48,7 +48,17 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
                         "warnings": 2,
                         "errors": 1,
                         "total": 3,
-                    }
+                    },
+                    "entries": [
+                        {
+                            "severity": "error",
+                            "message": "bad callback",
+                            "page_name": "main_page",
+                            "widget_name": "hero",
+                            "target_page_name": "main_page",
+                            "target_widget_name": "hero",
+                        }
+                    ],
                 },
             },
             indent=2,
@@ -69,6 +79,7 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["diagnostics_warning_count"] == 2
     assert payload["diagnostics_error_count"] == 1
     assert payload["diagnostics_total"] == 3
+    assert payload["first_diagnostic"] == "error main_page/hero: bad callback"
 
 
 def test_inspect_packaged_app_emits_json(monkeypatch, tmp_path, capsys):

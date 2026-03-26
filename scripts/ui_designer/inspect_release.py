@@ -54,6 +54,28 @@ def _load_json_dict(path: Path) -> dict[str, object]:
     return content if isinstance(content, dict) else {}
 
 
+def _first_diagnostic_text(manifest: dict[str, object]) -> str:
+    diagnostics = manifest.get("diagnostics") if isinstance(manifest.get("diagnostics"), dict) else {}
+    entries = diagnostics.get("entries") if isinstance(diagnostics.get("entries"), list) else []
+    if entries:
+        first_entry = entries[0] if isinstance(entries[0], dict) else {}
+        severity = _string(first_entry.get("severity")) or "issue"
+        page_name = _string(first_entry.get("target_page_name") or first_entry.get("page_name"))
+        widget_name = _string(first_entry.get("target_widget_name") or first_entry.get("widget_name"))
+        scope = page_name or "<project>"
+        if widget_name:
+            scope = f"{scope}/{widget_name}"
+        message = _string(first_entry.get("message"))
+        return f"{severity} {scope}: {message}" if message else f"{severity} {scope}"
+    error_entries = manifest.get("errors") if isinstance(manifest.get("errors"), list) else []
+    if error_entries:
+        return f"error: {_string(error_entries[0])}"
+    warning_entries = manifest.get("warnings") if isinstance(manifest.get("warnings"), list) else []
+    if warning_entries:
+        return f"warning: {_string(warning_entries[0])}"
+    return ""
+
+
 def _find_release_manifest_in_children(root_dir: Path) -> Path | None:
     candidates = []
     for child in root_dir.iterdir():
@@ -83,6 +105,7 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
     diagnostics_warning_count = int(diagnostics_summary.get("warnings", len(warning_entries)) or 0)
     diagnostics_error_count = int(diagnostics_summary.get("errors", len(error_entries)) or 0)
     diagnostics_total = int(diagnostics_summary.get("total", diagnostics_warning_count + diagnostics_error_count) or 0)
+    first_diagnostic = _first_diagnostic_text(manifest)
 
     return {
         "kind": "release_manifest",
@@ -103,6 +126,7 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
         "diagnostics_warning_count": diagnostics_warning_count,
         "diagnostics_error_count": diagnostics_error_count,
         "diagnostics_total": diagnostics_total,
+        "first_diagnostic": first_diagnostic,
     }
 
 
@@ -216,6 +240,7 @@ def _print_human(payload: dict[str, object]) -> None:
         ("diagnostics_warning_count", "diagnostics_warning_count"),
         ("diagnostics_error_count", "diagnostics_error_count"),
         ("diagnostics_total", "diagnostics_total"),
+        ("first_diagnostic", "first_diagnostic"),
         ("file_count", "file_count"),
         ("total_size_bytes", "total_size_bytes"),
     ]
