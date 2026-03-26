@@ -401,6 +401,7 @@ class TestWidgetTreePanel:
 
         root_menu = panel._build_context_menu(root)
         root_actions = _structure_menu_actions(root_menu)
+        root_structure_action = next(action for action in root_menu.actions() if action.text() == "Structure")
 
         assert root_actions["Group Selection"].isEnabled() is False
         assert root_actions["Ungroup"].isEnabled() is False
@@ -410,12 +411,15 @@ class TestWidgetTreePanel:
         assert root_actions["Move Down"].isEnabled() is False
         assert root_actions["Move To Top"].isEnabled() is False
         assert root_actions["Move To Bottom"].isEnabled() is False
+        assert "root widgets cannot be regrouped or reordered" in root_actions["Group Selection"].toolTip()
+        assert "Structure unavailable: root widgets cannot be regrouped or reordered." == root_structure_action.toolTip()
 
         root_menu.deleteLater()
 
         panel.set_selected_widgets([child], primary=child)
         child_menu = panel._build_context_menu(child)
         child_actions = _structure_menu_actions(child_menu)
+        child_structure_action = next(action for action in child_menu.actions() if action.text() == "Structure")
 
         assert child_actions["Group Selection"].isEnabled() is False
         assert child_actions["Ungroup"].isEnabled() is False
@@ -425,6 +429,11 @@ class TestWidgetTreePanel:
         assert child_actions["Move Down"].isEnabled() is False
         assert child_actions["Move To Top"].isEnabled() is False
         assert child_actions["Move To Bottom"].isEnabled() is False
+        assert "select another sibling or target container to move this widget" in child_actions["Move Into..."].toolTip()
+        assert (
+            "Structure unavailable: select another sibling or target container to move this widget."
+            == child_structure_action.toolTip()
+        )
 
         child_menu.deleteLater()
         panel.deleteLater()
@@ -509,6 +518,7 @@ class TestWidgetTreePanel:
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: root widgets cannot be regrouped or reordered."
+        assert "Unavailable: root widgets cannot be regrouped or reordered." in panel.group_btn.toolTip()
 
         panel.deleteLater()
 
@@ -544,6 +554,7 @@ class TestWidgetTreePanel:
         assert panel.structure_hint_label.text() == (
             "Structure: select another sibling or target container to move this widget."
         )
+        assert "Unavailable: select another sibling or target container to move this widget." in panel.into_btn.toolTip()
 
         panel.deleteLater()
 

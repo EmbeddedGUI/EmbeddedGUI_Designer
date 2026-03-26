@@ -208,6 +208,16 @@ class WidgetTreePanel(QWidget):
         self.bottom_btn = QPushButton("Bottom")
         self.bottom_btn.setToolTip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)")
         self.bottom_btn.clicked.connect(self._move_selected_widgets_to_bottom)
+        self._structure_button_tooltips = {
+            self.group_btn: "Group the current selection (Ctrl+G)",
+            self.ungroup_btn: "Ungroup the selected group widgets (Ctrl+Shift+G)",
+            self.into_btn: "Move the current selection into another container (Ctrl+Shift+I)",
+            self.lift_btn: "Lift the current selection to the parent container (Ctrl+Shift+L)",
+            self.up_btn: "Move the current selection up among its siblings (Alt+Up)",
+            self.down_btn: "Move the current selection down among its siblings (Alt+Down)",
+            self.top_btn: "Move the current selection to the top of its sibling list (Alt+Shift+Up)",
+            self.bottom_btn: "Move the current selection to the bottom of its sibling list (Alt+Shift+Down)",
+        }
         for button in (
             self.group_btn,
             self.ungroup_btn,
@@ -470,6 +480,12 @@ class WidgetTreePanel(QWidget):
         selection = self.selected_widgets() if widgets is None else widgets
         return describe_structure_actions(self.project, selection)
 
+    def _structure_tooltip(self, base_text, enabled, blocked_reason=""):
+        if enabled or not blocked_reason:
+            return base_text
+        reason = blocked_reason.rstrip(".")
+        return f"{base_text}\nUnavailable: {reason}."
+
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
             return
@@ -482,6 +498,8 @@ class WidgetTreePanel(QWidget):
         self.down_btn.setEnabled(state.can_move_down)
         self.top_btn.setEnabled(state.can_move_top)
         self.bottom_btn.setEnabled(state.can_move_bottom)
+        for button, base_text in self._structure_button_tooltips.items():
+            button.setToolTip(self._structure_tooltip(base_text, button.isEnabled(), state.blocked_reason))
         self.structure_hint_label.setText(self._structure_hint_text(state))
 
     def _default_drag_target_text(self):
@@ -676,27 +694,32 @@ class WidgetTreePanel(QWidget):
                 add_menu.addAction(action)
 
         structure_menu = menu.addMenu("Structure")
+        structure_menu.setToolTipsVisible(True)
         group_action = QAction("Group Selection", self)
         group_action.setShortcut("Ctrl+G")
         group_action.setEnabled(structure_state.can_group)
+        group_action.setToolTip(self._structure_tooltip("Group the current selection (Ctrl+G)", structure_state.can_group, structure_state.blocked_reason))
         group_action.triggered.connect(lambda: self._group_selected_widgets(context_widgets))
         structure_menu.addAction(group_action)
 
         ungroup_action = QAction("Ungroup", self)
         ungroup_action.setShortcut("Ctrl+Shift+G")
         ungroup_action.setEnabled(structure_state.can_ungroup)
+        ungroup_action.setToolTip(self._structure_tooltip("Ungroup the selected group widgets (Ctrl+Shift+G)", structure_state.can_ungroup, structure_state.blocked_reason))
         ungroup_action.triggered.connect(lambda: self._ungroup_selected_widgets(context_widgets))
         structure_menu.addAction(ungroup_action)
 
         move_into_action = QAction("Move Into...", self)
         move_into_action.setShortcut("Ctrl+Shift+I")
         move_into_action.setEnabled(structure_state.can_move_into)
+        move_into_action.setToolTip(self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", structure_state.can_move_into, structure_state.blocked_reason))
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")
         lift_action.setEnabled(structure_state.can_lift)
+        lift_action.setToolTip(self._structure_tooltip("Lift the current selection to the parent container (Ctrl+Shift+L)", structure_state.can_lift, structure_state.blocked_reason))
         lift_action.triggered.connect(lambda: self._lift_selected_widgets(context_widgets))
         structure_menu.addAction(lift_action)
 
@@ -705,27 +728,31 @@ class WidgetTreePanel(QWidget):
         move_up_action = QAction("Move Up", self)
         move_up_action.setShortcut("Alt+Up")
         move_up_action.setEnabled(structure_state.can_move_up)
+        move_up_action.setToolTip(self._structure_tooltip("Move the current selection up among its siblings (Alt+Up)", structure_state.can_move_up, structure_state.blocked_reason))
         move_up_action.triggered.connect(lambda: self._move_selected_widgets_up(context_widgets))
         structure_menu.addAction(move_up_action)
 
         move_down_action = QAction("Move Down", self)
         move_down_action.setShortcut("Alt+Down")
         move_down_action.setEnabled(structure_state.can_move_down)
+        move_down_action.setToolTip(self._structure_tooltip("Move the current selection down among its siblings (Alt+Down)", structure_state.can_move_down, structure_state.blocked_reason))
         move_down_action.triggered.connect(lambda: self._move_selected_widgets_down(context_widgets))
         structure_menu.addAction(move_down_action)
 
         move_top_action = QAction("Move To Top", self)
         move_top_action.setShortcut("Alt+Shift+Up")
         move_top_action.setEnabled(structure_state.can_move_top)
+        move_top_action.setToolTip(self._structure_tooltip("Move the current selection to the top of its sibling list (Alt+Shift+Up)", structure_state.can_move_top, structure_state.blocked_reason))
         move_top_action.triggered.connect(lambda: self._move_selected_widgets_to_top(context_widgets))
         structure_menu.addAction(move_top_action)
 
         move_bottom_action = QAction("Move To Bottom", self)
         move_bottom_action.setShortcut("Alt+Shift+Down")
         move_bottom_action.setEnabled(structure_state.can_move_bottom)
+        move_bottom_action.setToolTip(self._structure_tooltip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)", structure_state.can_move_bottom, structure_state.blocked_reason))
         move_bottom_action.triggered.connect(lambda: self._move_selected_widgets_to_bottom(context_widgets))
         structure_menu.addAction(move_bottom_action)
-        structure_menu.setEnabled(any([
+        structure_enabled = any([
             structure_state.can_group,
             structure_state.can_ungroup,
             structure_state.can_move_into,
@@ -734,7 +761,12 @@ class WidgetTreePanel(QWidget):
             structure_state.can_move_down,
             structure_state.can_move_top,
             structure_state.can_move_bottom,
-        ]))
+        ])
+        structure_menu.setEnabled(structure_enabled)
+        if not structure_enabled and structure_state.blocked_reason:
+            structure_menu.menuAction().setToolTip(f"Structure unavailable: {structure_state.blocked_reason}")
+        else:
+            structure_menu.menuAction().setToolTip("")
 
         # Delete
         del_action = QAction("Delete", self)
