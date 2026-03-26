@@ -466,6 +466,27 @@ class WidgetTreePanel(QWidget):
             feedback_message=f"Selected {len(descendants)} descendant {noun} of {self._widget_label(widget)}.",
         )
 
+    def _subtree_widgets(self, widget):
+        if widget is None:
+            return []
+        descendants = self._descendant_widgets(widget)
+        if not descendants:
+            return []
+        return [widget] + descendants
+
+    def _select_subtree_widgets(self, widget):
+        subtree = self._subtree_widgets(widget)
+        if not subtree:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select subtree: widget has no descendant widgets.")
+            return
+        noun = "widget" if len(subtree) == 1 else "widgets"
+        self._apply_programmatic_selection(
+            subtree,
+            primary=widget,
+            feedback_message=f"Selected {len(subtree)} {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
     def _sibling_widgets(self, widget):
         parent = widget.parent if widget is not None else None
         if parent is None:
@@ -524,11 +545,13 @@ class WidgetTreePanel(QWidget):
         select_menu.setToolTipsVisible(True)
         child_widgets = [child for child in getattr(widget, "children", []) if child is not None]
         descendant_widgets = self._descendant_widgets(widget)
+        subtree_widgets = self._subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
         can_select_children = bool(child_widgets)
         can_select_descendants = bool(descendant_widgets)
+        can_select_subtree = bool(subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
@@ -568,6 +591,18 @@ class WidgetTreePanel(QWidget):
         select_descendants_action.triggered.connect(lambda: self._select_descendant_widgets(widget))
         select_menu.addAction(select_descendants_action)
 
+        select_subtree_action = QAction("Subtree", self)
+        select_subtree_action.setEnabled(can_select_subtree)
+        select_subtree_action.setToolTip(
+            self._structure_tooltip(
+                "Select this widget and all descendant widgets in its subtree.",
+                can_select_subtree,
+                "widget has no descendant widgets.",
+            )
+        )
+        select_subtree_action.triggered.connect(lambda: self._select_subtree_widgets(widget))
+        select_menu.addAction(select_subtree_action)
+
         select_siblings_action = QAction("Siblings", self)
         select_siblings_action.setEnabled(can_select_siblings)
         select_siblings_action.setToolTip(
@@ -597,6 +632,7 @@ class WidgetTreePanel(QWidget):
             can_select_parent,
             can_select_children,
             can_select_descendants,
+            can_select_subtree,
             can_select_siblings,
             can_select_same_type,
         ])
