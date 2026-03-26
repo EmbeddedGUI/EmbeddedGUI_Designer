@@ -1321,20 +1321,24 @@ class MainWindow(QMainWindow):
         structure_menu.addAction(self._ungroup_selection_action)
 
         self._move_into_container_action = QAction("Move Into...", self)
+        self._move_into_container_action.setShortcut("Ctrl+Shift+I")
         self._move_into_container_action.triggered.connect(self._move_selection_into_container)
         structure_menu.addAction(self._move_into_container_action)
 
         self._lift_to_parent_action = QAction("Lift To Parent", self)
+        self._lift_to_parent_action.setShortcut("Ctrl+Shift+L")
         self._lift_to_parent_action.triggered.connect(self._lift_selection_to_parent)
         structure_menu.addAction(self._lift_to_parent_action)
 
         structure_menu.addSeparator()
 
         self._move_up_action = QAction("Move Up", self)
+        self._move_up_action.setShortcut("Alt+Up")
         self._move_up_action.triggered.connect(self._move_selection_up)
         structure_menu.addAction(self._move_up_action)
 
         self._move_down_action = QAction("Move Down", self)
+        self._move_down_action.setShortcut("Alt+Down")
         self._move_down_action.triggered.connect(self._move_selection_down)
         structure_menu.addAction(self._move_down_action)
 

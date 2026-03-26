@@ -969,6 +969,20 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_structure_actions_expose_keyboard_shortcuts(self, qapp):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._group_selection_action.shortcut().toString() == "Ctrl+G"
+        assert window._ungroup_selection_action.shortcut().toString() == "Ctrl+Shift+G"
+        assert window._move_into_container_action.shortcut().toString() == "Ctrl+Shift+I"
+        assert window._lift_to_parent_action.shortcut().toString() == "Ctrl+Shift+L"
+        assert window._move_up_action.shortcut().toString() == "Alt+Up"
+        assert window._move_down_action.shortcut().toString() == "Alt+Down"
+
+        _close_window(window)
+
     def test_distribute_selection_reports_mixed_parent_constraint(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

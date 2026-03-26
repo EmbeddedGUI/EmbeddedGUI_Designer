@@ -560,6 +560,36 @@ class TestWidgetTreePanel:
 
         panel.deleteLater()
 
+    def test_tree_keyboard_shortcuts_dispatch_actions(self, qapp, monkeypatch):
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        panel = WidgetTreePanel()
+        calls = []
+
+        monkeypatch.setattr(panel, "_on_delete_clicked", lambda: calls.append("delete"))
+        monkeypatch.setattr(panel, "_on_rename_clicked", lambda: calls.append("rename"))
+        monkeypatch.setattr(panel, "_group_selected_widgets", lambda *args, **kwargs: calls.append("group"))
+        monkeypatch.setattr(panel, "_ungroup_selected_widgets", lambda *args, **kwargs: calls.append("ungroup"))
+        monkeypatch.setattr(panel, "_move_selected_widgets_into", lambda *args, **kwargs: calls.append("into"))
+        monkeypatch.setattr(panel, "_lift_selected_widgets", lambda *args, **kwargs: calls.append("lift"))
+        monkeypatch.setattr(panel, "_move_selected_widgets_up", lambda *args, **kwargs: calls.append("up"))
+        monkeypatch.setattr(panel, "_move_selected_widgets_down", lambda *args, **kwargs: calls.append("down"))
+
+        for key, modifiers in (
+            (Qt.Key_Delete, Qt.NoModifier),
+            (Qt.Key_F2, Qt.NoModifier),
+            (Qt.Key_G, Qt.ControlModifier),
+            (Qt.Key_G, Qt.ControlModifier | Qt.ShiftModifier),
+            (Qt.Key_I, Qt.ControlModifier | Qt.ShiftModifier),
+            (Qt.Key_L, Qt.ControlModifier | Qt.ShiftModifier),
+            (Qt.Key_Up, Qt.AltModifier),
+            (Qt.Key_Down, Qt.AltModifier),
+        ):
+            QApplication.sendEvent(panel.tree, QKeyEvent(QEvent.KeyPress, key, modifiers))
+
+        assert calls == ["delete", "rename", "group", "ungroup", "into", "lift", "up", "down"]
+        panel.deleteLater()
+
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

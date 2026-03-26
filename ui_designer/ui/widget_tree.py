@@ -40,10 +40,11 @@ def _get_container_types():
 
 
 class _StructureTreeWidget(QTreeWidget):
-    def __init__(self, drop_handler=None, can_drop_handler=None, parent=None):
+    def __init__(self, drop_handler=None, can_drop_handler=None, key_handler=None, parent=None):
         super().__init__(parent)
         self._drop_handler = drop_handler
         self._can_drop_handler = can_drop_handler
+        self._key_handler = key_handler
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
@@ -55,6 +56,9 @@ class _StructureTreeWidget(QTreeWidget):
 
     def set_can_drop_handler(self, can_drop_handler):
         self._can_drop_handler = can_drop_handler
+
+    def set_key_handler(self, key_handler):
+        self._key_handler = key_handler
 
     def dragEnterEvent(self, event):
         if event.source() is self and self.selectedItems():
@@ -84,6 +88,12 @@ class _StructureTreeWidget(QTreeWidget):
             event.acceptProposedAction()
             return
         event.ignore()
+
+    def keyPressEvent(self, event):
+        if self._key_handler is not None and self._key_handler(event):
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
 class WidgetTreePanel(QWidget):
@@ -185,6 +195,7 @@ class WidgetTreePanel(QWidget):
         self.tree = _StructureTreeWidget(
             drop_handler=self._handle_tree_drop,
             can_drop_handler=self._can_handle_tree_drop,
+            key_handler=self._handle_tree_key_press,
             parent=self,
         )
         self.tree.setHeaderLabels(["Widget", "Type"])
@@ -752,6 +763,36 @@ class WidgetTreePanel(QWidget):
     def _can_handle_tree_drop(self, target_item, drop_position):
         target_widget = self._widget_map.get(id(target_item)) if target_item is not None else None
         return self._can_drop_selected_widgets(target_widget, drop_position)
+
+    def _handle_tree_key_press(self, event):
+        key = event.key()
+        modifiers = event.modifiers()
+
+        if key == Qt.Key_Delete and modifiers == Qt.NoModifier:
+            self._on_delete_clicked()
+            return True
+        if key == Qt.Key_F2 and modifiers == Qt.NoModifier:
+            self._on_rename_clicked()
+            return True
+        if key == Qt.Key_G and modifiers == Qt.ControlModifier:
+            self._group_selected_widgets()
+            return True
+        if key == Qt.Key_G and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
+            self._ungroup_selected_widgets()
+            return True
+        if key == Qt.Key_I and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
+            self._move_selected_widgets_into()
+            return True
+        if key == Qt.Key_L and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
+            self._lift_selected_widgets()
+            return True
+        if key == Qt.Key_Up and modifiers == Qt.AltModifier:
+            self._move_selected_widgets_up()
+            return True
+        if key == Qt.Key_Down and modifiers == Qt.AltModifier:
+            self._move_selected_widgets_down()
+            return True
+        return False
 
     def _top_level_selected_widgets(self, widgets):
         selected_ids = {id(widget) for widget in widgets}
