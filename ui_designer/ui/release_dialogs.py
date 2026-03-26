@@ -75,6 +75,23 @@ def _history_sdk_label(entry: dict[str, object]) -> str:
     return label
 
 
+def _history_sdk_export_payload(entry: dict[str, object]) -> dict[str, object]:
+    sdk = entry.get("sdk")
+    if not isinstance(sdk, dict):
+        return {
+            "sdk_revision": "",
+            "sdk_commit": "",
+            "sdk_remote": "",
+            "sdk_dirty": False,
+        }
+    return {
+        "sdk_revision": str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip(),
+        "sdk_commit": str(sdk.get("commit") or "").strip(),
+        "sdk_remote": str(sdk.get("remote") or "").strip(),
+        "sdk_dirty": bool(sdk.get("dirty", False)),
+    }
+
+
 def _truncate_history_text(text: str, limit: int) -> str:
     normalized = str(text or "").strip()
     if limit <= 0 or len(normalized) <= limit:
@@ -477,6 +494,7 @@ def _build_filtered_history_json(
 
 def _history_entry_export_payload(entry: dict[str, object], *, include_details: bool = False) -> dict[str, object]:
     payload_entry = dict(entry or {})
+    payload_entry.update(_history_sdk_export_payload(entry or {}))
     payload_entry["summary_line"] = _history_summary_line(entry or {})
     payload_entry["list_label"] = _history_list_label(entry or {})
     if include_details:

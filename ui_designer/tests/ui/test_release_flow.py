@@ -719,6 +719,12 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
                 "dist_dir": str(dist_dir),
                 "manifest_path": str(manifest_path),
                 "zip_path": str(package_path),
+                "sdk": {
+                    "revision": "sdk-main-456",
+                    "commit": "abcdef123456",
+                    "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                    "dirty": False,
+                },
                 "first_diagnostic": "warning main_page/hero: ghost.png is missing",
             }
         ]
@@ -750,8 +756,12 @@ def test_release_history_dialog_copy_buttons_write_clipboard(qapp, tmp_path):
     copied_json = QApplication.clipboard().text()
     assert '"build_id": "20260326T000000Z"' in copied_json
     assert '"manifest_path":' in copied_json
-    assert '"summary_line": "20260326T000000Z | success | windows-pc | sdk unknown | - | diag warning main_page/hero: ghost.png is missing"' in copied_json
-    assert '"list_label": "20260326T000000Z [windows-pc] success sdk unknown diag warning main_page/hero: ghost.png is missing"' in copied_json
+    assert '"sdk_revision": "sdk-main-456"' in copied_json
+    assert '"sdk_commit": "abcdef123456"' in copied_json
+    assert '"sdk_remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git"' in copied_json
+    assert '"sdk_dirty": false' in copied_json
+    assert '"summary_line": "20260326T000000Z | success | windows-pc | sdk sdk-main-456 | - | diag warning main_page/hero: ghost.png is missing"' in copied_json
+    assert '"list_label": "20260326T000000Z [windows-pc] success sdk sdk-main-456 diag warning main_page/hero: ghost.png is missing"' in copied_json
     assert '"details_text":' in copied_json
 
 
@@ -822,6 +832,12 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
                 "status": "success",
                 "profile_id": "windows-pc",
                 "manifest_path": str(manifest_path),
+                "sdk": {
+                    "revision": "sdk-main-456",
+                    "commit": "abcdef123456",
+                    "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                    "dirty": False,
+                },
                 "first_diagnostic": "warning main_page/hero: ghost.png is missing",
             }
         ]
@@ -842,12 +858,16 @@ def test_release_history_dialog_exports_selected_entry_json(qapp, tmp_path, monk
     assert exported["build_id"] == "20260326T000000Z"
     assert exported["profile_id"] == "windows-pc"
     assert exported["manifest_path"] == str(manifest_path)
+    assert exported["sdk_revision"] == "sdk-main-456"
+    assert exported["sdk_commit"] == "abcdef123456"
+    assert exported["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
+    assert exported["sdk_dirty"] is False
     assert exported["summary_line"] == (
-        "20260326T000000Z | success | windows-pc | sdk unknown | -"
+        "20260326T000000Z | success | windows-pc | sdk sdk-main-456 | -"
         " | diag warning main_page/hero: ghost.png is missing"
     )
     assert exported["list_label"] == (
-        "20260326T000000Z [windows-pc] success sdk unknown"
+        "20260326T000000Z [windows-pc] success sdk sdk-main-456"
         " diag warning main_page/hero: ghost.png is missing"
     )
     assert "First Diagnostic: warning main_page/hero: ghost.png is missing" in exported["details_text"]
@@ -1534,7 +1554,12 @@ def test_release_history_dialog_copy_filtered_json_uses_current_filter(qapp):
                 "status": "failed",
                 "profile_id": "esp32",
                 "message": "Build failed",
-                "sdk": {"revision": "sdk-fail"},
+                "sdk": {
+                    "revision": "sdk-fail",
+                    "commit": "abcdef123456",
+                    "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                    "dirty": False,
+                },
                 "warning_count": 2,
                 "error_count": 1,
                 "first_diagnostic": "error main_page/hero: bad callback",
@@ -1577,7 +1602,12 @@ def test_release_history_dialog_exports_filtered_summary_to_file(qapp, tmp_path,
                 "status": "failed",
                 "profile_id": "esp32",
                 "message": "Build failed",
-                "sdk": {"revision": "sdk-fail"},
+                "sdk": {
+                    "revision": "sdk-fail",
+                    "commit": "abcdef123456",
+                    "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                    "dirty": False,
+                },
                 "warning_count": 2,
                 "error_count": 1,
                 "first_diagnostic": "error main_page/hero: bad callback",
@@ -1658,7 +1688,12 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
                 "status": "failed",
                 "profile_id": "esp32",
                 "message": "Build failed",
-                "sdk": {"revision": "sdk-fail"},
+                "sdk": {
+                    "revision": "sdk-fail",
+                    "commit": "abcdef123456",
+                    "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
+                    "dirty": False,
+                },
                 "warning_count": 2,
                 "error_count": 1,
                 "first_diagnostic": "error main_page/hero: bad callback",
@@ -1690,6 +1725,10 @@ def test_release_history_dialog_exports_filtered_entries_as_json(qapp, tmp_path,
         " | diag error main_page/hero: bad callback"
     ) in exported["summary_text"]
     assert exported["entries"][0]["build_id"] == "20260326T000100Z"
+    assert exported["entries"][0]["sdk_revision"] == "sdk-fail"
+    assert exported["entries"][0]["sdk_commit"] == "abcdef123456"
+    assert exported["entries"][0]["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
+    assert exported["entries"][0]["sdk_dirty"] is False
     assert exported["entries"][0]["summary_line"] == (
         "20260326T000100Z | failed | esp32 | sdk sdk-fail | Build failed"
         " | diag error main_page/hero: bad callback"
