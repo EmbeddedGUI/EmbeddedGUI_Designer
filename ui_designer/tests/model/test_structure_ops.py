@@ -1,5 +1,6 @@
 from ui_designer.model.project import Project
 from ui_designer.model.structure_ops import (
+    can_move_widgets_to_parent_index,
     describe_structure_actions,
     group_selection,
     lift_to_parent,
@@ -208,6 +209,21 @@ def test_move_widgets_to_parent_index_reorders_selection_block():
     assert result.source == "tree move"
     assert [widget.name for widget in root.children] == ["first", "fourth", "second", "third"]
     assert result.message == "Moved 2 widget(s) in the widget tree."
+
+
+def test_can_move_widgets_to_parent_index_blocks_noop_and_locked_selection():
+    project, root = _build_project()
+    first = WidgetModel("label", name="first")
+    second = WidgetModel("label", name="second")
+    locked = WidgetModel("label", name="locked")
+    locked.designer_locked = True
+    root.add_child(first)
+    root.add_child(second)
+    root.add_child(locked)
+
+    assert can_move_widgets_to_parent_index(project, [first], root, 0) is False
+    assert can_move_widgets_to_parent_index(project, [locked], root, 0) is False
+    assert can_move_widgets_to_parent_index(project, [first], root, 2) is True
 
 
 def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_position():

@@ -534,6 +534,32 @@ class TestWidgetTreePanel:
         assert child.parent is root
         panel.deleteLater()
 
+    def test_tree_drop_capability_blocks_root_locked_and_noop_targets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        locked = WidgetModel("label", name="locked")
+        locked.designer_locked = True
+        root.add_child(first)
+        root.add_child(locked)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        panel.set_selected_widgets([root], primary=root)
+        assert panel._can_drop_selected_widgets(None, QAbstractItemView.OnViewport) is False
+
+        panel.set_selected_widgets([locked], primary=locked)
+        assert panel._can_drop_selected_widgets(first, QAbstractItemView.BelowItem) is False
+
+        panel.set_selected_widgets([first], primary=first)
+        assert panel._can_drop_selected_widgets(first, QAbstractItemView.AboveItem) is False
+        assert panel._can_drop_selected_widgets(None, QAbstractItemView.OnViewport) is True
+
+        panel.deleteLater()
+
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

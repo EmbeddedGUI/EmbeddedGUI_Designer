@@ -402,21 +402,21 @@ def move_into_container(project_like, widgets, target_container):
     )
 
 
-def move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
+def _prepare_move_to_parent_index(project_like, widgets, target_parent, target_index):
     roots = _root_widgets(project_like)
     widgets = _sort_by_tree_order(project_like, _top_level_widgets(widgets, exclude_roots=roots))
     if not widgets:
-        return _failure("Cannot move selection in tree: no widgets are selected.")
+        return widgets, None, "Cannot move selection in tree: no widgets are selected."
     if _has_locked_widgets(widgets):
-        return _failure("Cannot move selection in tree: locked widgets cannot be moved.")
+        return widgets, None, "Cannot move selection in tree: locked widgets cannot be moved."
     if target_parent is None or not getattr(target_parent, "is_container", False):
-        return _failure("Cannot move selection in tree: choose a valid target container.")
+        return widgets, None, "Cannot move selection in tree: choose a valid target container."
 
     excluded_ids = set()
     for widget in widgets:
         excluded_ids.update(_subtree_ids(widget))
     if id(target_parent) in excluded_ids:
-        return _failure("Cannot move selection in tree: target container is inside the current selection.")
+        return widgets, None, "Cannot move selection in tree: target container is inside the current selection."
 
     children = list(getattr(target_parent, "children", []) or [])
     if target_index is None:
@@ -424,9 +424,9 @@ def move_widgets_to_parent_index(project_like, widgets, target_parent, target_in
     try:
         target_index = int(target_index)
     except (TypeError, ValueError):
-        return _failure("Cannot move selection in tree: target position is invalid.")
+        return widgets, None, "Cannot move selection in tree: target position is invalid."
     if target_index < 0 or target_index > len(children):
-        return _failure("Cannot move selection in tree: target position is invalid.")
+        return widgets, None, "Cannot move selection in tree: target position is invalid."
 
     selected_ids = {id(widget) for widget in widgets}
     adjusted_index = target_index - sum(1 for child in children[:target_index] if id(child) in selected_ids)
@@ -436,7 +436,21 @@ def move_widgets_to_parent_index(project_like, widgets, target_parent, target_in
         remaining = [child for child in children if id(child) not in selected_ids]
         new_children = remaining[:adjusted_index] + widgets + remaining[adjusted_index:]
         if new_children == children:
-            return _failure("Cannot move selection in tree: widgets are already in that position.")
+            return widgets, None, "Cannot move selection in tree: widgets are already in that position."
+    return widgets, adjusted_index, ""
+
+
+def can_move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
+    _, adjusted_index, message = _prepare_move_to_parent_index(project_like, widgets, target_parent, target_index)
+    return adjusted_index is not None and not message
+
+
+def move_widgets_to_parent_index(project_like, widgets, target_parent, target_index):
+    widgets, adjusted_index, message = _prepare_move_to_parent_index(
+        project_like, widgets, target_parent, target_index
+    )
+    if adjusted_index is None:
+        return _failure(message)
 
     _recompute_layout(project_like)
 
