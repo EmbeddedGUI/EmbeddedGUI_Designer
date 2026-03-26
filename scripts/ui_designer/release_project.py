@@ -112,6 +112,8 @@ def _result_payload(result):
         "history_path": result.history_path,
         "zip_path": result.zip_path,
         "designer_revision": _string(getattr(result, "designer_revision", "")),
+        "sdk_source_kind": _string(sdk.get("source_kind")),
+        "sdk_source_root": _string(sdk.get("source_root")),
         "sdk_revision": _sdk_revision_text(result),
         "sdk_commit": _string(sdk.get("commit")),
         "sdk_remote": _string(sdk.get("remote")),
@@ -189,6 +191,9 @@ def main():
         designer_revision = _string(getattr(result, "designer_revision", ""))
         if designer_revision:
             print(f"[INFO] designer_revision: {designer_revision}")
+        sdk_source_kind = _string(_sdk_payload(result).get("source_kind"))
+        if sdk_source_kind:
+            print(f"[INFO] sdk_source: {sdk_source_kind}")
         sdk_revision = _sdk_revision_text(result)
         if sdk_revision:
             print(f"[INFO] sdk_revision: {sdk_revision}")

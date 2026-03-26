@@ -43,6 +43,8 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
             history_path=str(tmp_path / "release" / "history.json"),
             designer_revision="designer-main-123",
             sdk={
+                "source_kind": "submodule",
+                "source_root": "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI",
                 "revision": "sdk-main-456",
                 "commit": "abcdef123456",
                 "remote": "https://github.com/EmbeddedGUI/EmbeddedGUI.git",
@@ -78,6 +80,8 @@ def test_release_cli_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["success"] is True
     assert payload["profile_id"] == "windows-pc"
     assert payload["designer_revision"] == "designer-main-123"
+    assert payload["sdk_source_kind"] == "submodule"
+    assert payload["sdk_source_root"] == "D:/workspace/gitee/EmbeddedGUI_Designer/sdk/EmbeddedGUI"
     assert payload["sdk_revision"] == "sdk-main-456"
     assert payload["sdk_commit"] == "abcdef123456"
     assert payload["sdk_remote"] == "https://github.com/EmbeddedGUI/EmbeddedGUI.git"
@@ -129,7 +133,7 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
             log_path=str(tmp_path / "release" / "logs" / "build.log"),
             history_path=str(tmp_path / "release" / "history.json"),
             designer_revision="designer-main-123",
-            sdk={"revision": "sdk-main-456"},
+            sdk={"source_kind": "submodule", "revision": "sdk-main-456"},
             zip_path=str(tmp_path / "release" / "ReleaseDemo.zip"),
             warnings=["warning a"],
             errors=[],
@@ -149,6 +153,7 @@ def test_release_cli_emits_text_diagnostics_summary(monkeypatch, tmp_path, capsy
     assert "[INFO] package:" in output
     assert "[INFO] history:" in output
     assert "[INFO] designer_revision: designer-main-123" in output
+    assert "[INFO] sdk_source: submodule" in output
     assert "[INFO] sdk_revision: sdk-main-456" in output
     assert "[INFO] diagnostics: warnings=1, errors=0, total=1" in output
     assert "[INFO] first_diagnostic: warning: warning a" in output
