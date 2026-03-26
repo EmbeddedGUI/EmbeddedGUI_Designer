@@ -559,11 +559,24 @@ class WidgetTreePanel(QWidget):
             return []
         return [widget] + self._descendant_widgets(widget)
 
+    def _widget_parent_uses_layout(self, widget):
+        parent = widget.parent if widget is not None else None
+        if parent is None:
+            return False
+        return WidgetModel._get_type_info(parent.widget_type).get("layout_func") is not None
+
     def _hidden_subtree_widgets(self, widget):
         return [
             current
             for current in self._widgets_including_self(widget)
             if getattr(current, "designer_hidden", False)
+        ]
+
+    def _managed_subtree_widgets(self, widget):
+        return [
+            current
+            for current in self._widgets_including_self(widget)
+            if self._widget_parent_uses_layout(current)
         ]
 
     def _select_hidden_subtree_widgets(self, widget):
@@ -599,6 +612,25 @@ class WidgetTreePanel(QWidget):
             locked_widgets,
             primary=primary,
             feedback_message=f"Selected {len(locked_widgets)} locked {noun} in subtree of {self._widget_label(widget)}.",
+        )
+
+    def _select_managed_subtree_widgets(self, widget):
+        managed_widgets = self._managed_subtree_widgets(widget)
+        if not managed_widgets:
+            if widget is not None:
+                self.feedback_message.emit(
+                    "Cannot select layout-managed widgets: no layout-managed widgets exist in this subtree."
+                )
+            return
+        noun = "widget" if len(managed_widgets) == 1 else "widgets"
+        primary = widget if widget in managed_widgets else managed_widgets[0]
+        self._apply_programmatic_selection(
+            managed_widgets,
+            primary=primary,
+            feedback_message=(
+                f"Selected {len(managed_widgets)} layout-managed {noun} "
+                f"in subtree of {self._widget_label(widget)}."
+            ),
         )
 
     def _sibling_widgets(self, widget):
@@ -664,6 +696,7 @@ class WidgetTreePanel(QWidget):
         container_subtree_widgets = self._container_subtree_widgets(widget)
         hidden_subtree_widgets = self._hidden_subtree_widgets(widget)
         locked_subtree_widgets = self._locked_subtree_widgets(widget)
+        managed_subtree_widgets = self._managed_subtree_widgets(widget)
         sibling_widgets = self._sibling_widgets(widget)
         same_type_widgets = self._same_type_widgets(widget)
         can_select_parent = widget.parent is not None
@@ -675,6 +708,7 @@ class WidgetTreePanel(QWidget):
         can_select_containers = len(container_subtree_widgets) > 1
         can_select_hidden = bool(hidden_subtree_widgets)
         can_select_locked = bool(locked_subtree_widgets)
+        can_select_managed = bool(managed_subtree_widgets)
         can_select_siblings = len(sibling_widgets) > 1
         can_select_same_type = len(same_type_widgets) > 1
 
@@ -786,6 +820,18 @@ class WidgetTreePanel(QWidget):
         select_locked_action.triggered.connect(lambda: self._select_locked_subtree_widgets(widget))
         select_menu.addAction(select_locked_action)
 
+        select_managed_action = QAction("Managed", self)
+        select_managed_action.setEnabled(can_select_managed)
+        select_managed_action.setToolTip(
+            self._structure_tooltip(
+                "Select layout-managed widgets in this subtree.",
+                can_select_managed,
+                "no layout-managed widgets exist in this subtree.",
+            )
+        )
+        select_managed_action.triggered.connect(lambda: self._select_managed_subtree_widgets(widget))
+        select_menu.addAction(select_managed_action)
+
         select_siblings_action = QAction("Siblings", self)
         select_siblings_action.setEnabled(can_select_siblings)
         select_siblings_action.setToolTip(
@@ -821,6 +867,7 @@ class WidgetTreePanel(QWidget):
             can_select_containers,
             can_select_hidden,
             can_select_locked,
+            can_select_managed,
             can_select_siblings,
             can_select_same_type,
         ])

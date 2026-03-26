@@ -921,11 +921,13 @@ class TestWidgetTreePanel:
         assert root_actions["Containers"].isEnabled() is True
         assert root_actions["Hidden"].isEnabled() is False
         assert root_actions["Locked"].isEnabled() is False
+        assert root_actions["Managed"].isEnabled() is False
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
+        assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         root_menu.deleteLater()
 
@@ -943,6 +945,7 @@ class TestWidgetTreePanel:
         assert container_actions["Subtree"].isEnabled() is True
         assert container_actions["Leaves"].isEnabled() is True
         assert container_actions["Containers"].isEnabled() is False
+        assert container_actions["Managed"].isEnabled() is False
         assert container_actions["Siblings"].isEnabled() is True
         container_menu.deleteLater()
 
@@ -957,6 +960,7 @@ class TestWidgetTreePanel:
         assert child_actions["Containers"].isEnabled() is False
         assert child_actions["Hidden"].isEnabled() is False
         assert child_actions["Locked"].isEnabled() is False
+        assert child_actions["Managed"].isEnabled() is False
         assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Type"].isEnabled() is False
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
@@ -966,6 +970,7 @@ class TestWidgetTreePanel:
         assert "Unavailable: no other container widgets exist in this subtree." in child_actions["Containers"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in child_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
+        assert "Unavailable: no layout-managed widgets exist in this subtree." in child_actions["Managed"].toolTip()
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
         panel.deleteLater()
@@ -1135,6 +1140,54 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["locked_self", "locked_leaf"], "locked_self")
         assert feedback[-1] == "Selected 2 locked widgets in subtree of container."
         locked_menu.deleteLater()
+        panel.deleteLater()
+
+    def test_context_menu_managed_select_action_updates_selection_and_feedback(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        container = WidgetModel("group", name="container")
+        layout_parent = WidgetModel("linearlayout", name="layout_parent")
+        managed_group = WidgetModel("group", name="managed_group")
+        managed_leaf = WidgetModel("label", name="managed_leaf")
+        managed_button = WidgetModel("button", name="managed_button")
+        unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf")
+        managed_group.add_child(managed_leaf)
+        layout_parent.add_child(managed_group)
+        layout_parent.add_child(managed_button)
+        container.add_child(layout_parent)
+        container.add_child(unmanaged_leaf)
+        root.add_child(container)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        selection_events = []
+        feedback = []
+        panel.selection_changed.connect(
+            lambda widgets, primary: selection_events.append(
+                ([widget.name for widget in widgets], primary.name if primary is not None else "")
+            )
+        )
+        panel.feedback_message.connect(lambda message: feedback.append(message))
+
+        container_menu = panel._build_context_menu(container)
+        container_actions = _select_menu_actions(container_menu)
+        container_actions["Managed"].trigger()
+        assert panel.selected_widgets() == [managed_group, managed_button]
+        assert panel._get_selected_widget() is managed_group
+        assert selection_events[-1] == (["managed_group", "managed_button"], "managed_group")
+        assert feedback[-1] == "Selected 2 layout-managed widgets in subtree of container."
+        container_menu.deleteLater()
+
+        managed_menu = panel._build_context_menu(managed_button)
+        managed_actions = _select_menu_actions(managed_menu)
+        managed_actions["Managed"].trigger()
+        assert panel.selected_widgets() == [managed_button]
+        assert panel._get_selected_widget() is managed_button
+        assert selection_events[-1] == (["managed_button"], "managed_button")
+        assert feedback[-1] == "Selected 1 layout-managed widget in subtree of managed_button."
+        managed_menu.deleteLater()
         panel.deleteLater()
 
     def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):
