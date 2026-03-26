@@ -150,6 +150,73 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
 
 
 @_skip_no_qt
+def test_release_build_failure_shows_release_metadata(qapp, isolated_config, tmp_path, monkeypatch):
+    from ui_designer.model.project import Project
+    from ui_designer.model.release import ReleaseResult
+    from ui_designer.ui.main_window import MainWindow
+
+    sdk_root = tmp_path / "sdk"
+    project_dir = sdk_root / "example" / "ReleaseDemo"
+    _create_sdk_root(sdk_root)
+    project_dir.mkdir(parents=True)
+
+    project = Project(app_name="ReleaseDemo")
+    project.sdk_root = str(sdk_root)
+    project.project_dir = str(project_dir)
+    project.create_new_page("main_page")
+    project.save(str(project_dir))
+
+    window = MainWindow(str(sdk_root))
+    monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+    monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+    window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+    class FakeDialog:
+        def __init__(self, *args, **kwargs):
+            self.selected_profile_id = "windows-pc"
+            self.warnings_as_errors = False
+            self.package_release = False
+
+        def exec_(self):
+            return QDialog.Accepted
+
+    message_box = {}
+
+    def fake_release_project(request):
+        return ReleaseResult(
+            success=False,
+            message="Build failed",
+            build_id="20260325T000000Z",
+            profile_id=request.profile.id,
+            release_root=str(project_dir / "output" / "ui_designer_release"),
+            dist_dir=str(project_dir / "output" / "ui_designer_release" / "dist"),
+            manifest_path=str(project_dir / "output" / "ui_designer_release" / "release-manifest.json"),
+            log_path=str(project_dir / "output" / "ui_designer_release" / "logs" / "build.log"),
+            history_path=str(project_dir / "output" / "ui_designer_release" / "history.json"),
+            designer_revision="designer-main-123",
+            sdk={"revision": "sdk-main-456"},
+        )
+
+    monkeypatch.setattr("ui_designer.ui.main_window.ReleaseBuildDialog", FakeDialog)
+    monkeypatch.setattr("ui_designer.ui.main_window.release_project", fake_release_project)
+    monkeypatch.setattr(window, "_save_project", lambda: None)
+    monkeypatch.setattr(
+        "ui_designer.ui.main_window.QMessageBox.warning",
+        lambda *args, **kwargs: message_box.setdefault("text", args[2] if len(args) > 2 else kwargs.get("text", "")),
+    )
+
+    window._release_build()
+
+    assert "Build ID:\n20260325T000000Z" in message_box["text"]
+    assert "Profile:\nwindows-pc" in message_box["text"]
+    assert "Manifest:" in message_box["text"]
+    assert "History:" in message_box["text"]
+    assert "Log:" in message_box["text"]
+    assert "Designer Revision:\ndesigner-main-123" in message_box["text"]
+    assert "SDK Revision:\nsdk-main-456" in message_box["text"]
+
+
+@_skip_no_qt
 def test_release_history_action_opens_dialog(qapp, isolated_config, tmp_path, monkeypatch):
     from ui_designer.model.project import Project
     from ui_designer.ui.main_window import MainWindow

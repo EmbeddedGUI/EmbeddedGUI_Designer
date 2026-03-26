@@ -1752,13 +1752,13 @@ class MainWindow(QMainWindow):
             )
         )
         self._update_compile_availability()
+        designer_revision = str(getattr(result, "designer_revision", "") or "").strip()
+        sdk = getattr(result, "sdk", {})
+        sdk_revision = ""
+        if isinstance(sdk, dict):
+            sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
         if result.success:
             self.statusBar().showMessage(result.message, 5000)
-            designer_revision = str(getattr(result, "designer_revision", "") or "").strip()
-            sdk = getattr(result, "sdk", {})
-            sdk_revision = ""
-            if isinstance(sdk, dict):
-                sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
             summary_lines = [result.message]
             if result.build_id:
                 summary_lines.extend(["", "Build ID:", result.build_id])
@@ -1785,7 +1785,22 @@ class MainWindow(QMainWindow):
         self.debug_dock.show()
         self.debug_dock.raise_()
         self.statusBar().showMessage(result.message, 5000)
-        QMessageBox.warning(self, "Release Build Failed", f"{result.message}\n\nLog:\n{result.log_path}")
+        summary_lines = [result.message]
+        if result.build_id:
+            summary_lines.extend(["", "Build ID:", result.build_id])
+        if result.profile_id:
+            summary_lines.extend(["", "Profile:", result.profile_id])
+        if result.manifest_path:
+            summary_lines.extend(["", "Manifest:", result.manifest_path])
+        if result.history_path:
+            summary_lines.extend(["", "History:", result.history_path])
+        if result.log_path:
+            summary_lines.extend(["", "Log:", result.log_path])
+        if designer_revision:
+            summary_lines.extend(["", "Designer Revision:", designer_revision])
+        if sdk_revision:
+            summary_lines.extend(["", "SDK Revision:", sdk_revision])
+        QMessageBox.warning(self, "Release Build Failed", "\n".join(summary_lines))
 
     def _open_app_dialog(self):
         """Show dialog to select and open an SDK example."""
