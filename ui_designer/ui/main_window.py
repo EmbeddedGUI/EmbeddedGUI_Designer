@@ -107,6 +107,22 @@ def _release_detached_worker(worker):
         pass
 
 
+def _release_sdk_summary(sdk) -> str:
+    if not isinstance(sdk, dict):
+        return "unknown"
+    source_kind = str(sdk.get("source_kind") or "").strip()
+    revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
+    if sdk.get("dirty") and revision:
+        revision += " (dirty)"
+    if source_kind and revision:
+        return f"{source_kind} {revision}"
+    if source_kind:
+        return source_kind
+    if revision:
+        return revision
+    return "unknown"
+
+
 def _latest_release_summary(entry):
     if not isinstance(entry, dict) or not entry:
         return "No release history available"
@@ -118,13 +134,7 @@ def _latest_release_summary(entry):
             status = "success" if bool(entry.get("success")) else "failed"
         else:
             status = "unknown"
-    sdk = entry.get("sdk")
-    sdk_revision = "unknown"
-    if isinstance(sdk, dict):
-        sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip() or "unknown"
-        if sdk.get("dirty") and sdk_revision != "unknown":
-            sdk_revision += " (dirty)"
-    return f"Latest release: {build_id} | {profile_id} | {status} | sdk {sdk_revision}"
+    return f"Latest release: {build_id} | {profile_id} | {status} | sdk {_release_sdk_summary(entry.get('sdk'))}"
 
 
 def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="") -> str:
@@ -1824,8 +1834,10 @@ class MainWindow(QMainWindow):
         self._update_compile_availability()
         designer_revision = str(getattr(result, "designer_revision", "") or "").strip()
         sdk = getattr(result, "sdk", {})
+        sdk_source_kind = ""
         sdk_revision = ""
         if isinstance(sdk, dict):
+            sdk_source_kind = str(sdk.get("source_kind") or "").strip()
             sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
         if result.success:
             self.statusBar().showMessage(result.message, 5000)
@@ -1841,6 +1853,8 @@ class MainWindow(QMainWindow):
                 summary_lines.extend(["", "Package:", result.zip_path])
             if designer_revision:
                 summary_lines.extend(["", "Designer Revision:", designer_revision])
+            if sdk_source_kind:
+                summary_lines.extend(["", "SDK Source:", sdk_source_kind])
             if sdk_revision:
                 summary_lines.extend(["", "SDK Revision:", sdk_revision])
             QMessageBox.information(
@@ -1868,6 +1882,8 @@ class MainWindow(QMainWindow):
             summary_lines.extend(["", "Log:", result.log_path])
         if designer_revision:
             summary_lines.extend(["", "Designer Revision:", designer_revision])
+        if sdk_source_kind:
+            summary_lines.extend(["", "SDK Source:", sdk_source_kind])
         if sdk_revision:
             summary_lines.extend(["", "SDK Revision:", sdk_revision])
         QMessageBox.warning(self, "Release Build Failed", "\n".join(summary_lines))

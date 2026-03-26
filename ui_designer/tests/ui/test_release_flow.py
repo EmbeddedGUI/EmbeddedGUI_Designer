@@ -124,7 +124,7 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
             log_path=str(project_dir / "output" / "ui_designer_release" / "logs" / "build.log"),
             history_path=str(project_dir / "output" / "ui_designer_release" / "history.json"),
             designer_revision="designer-main-123",
-            sdk={"revision": "sdk-main-456"},
+            sdk={"source_kind": "submodule", "revision": "sdk-main-456"},
             artifacts=[ReleaseArtifact(path="dist/ReleaseDemo.exe", sha256="abc")],
         )
 
@@ -146,6 +146,7 @@ def test_release_build_action_uses_release_engine(qapp, isolated_config, tmp_pat
     assert "Profile:\nwindows-pc" in message_box["text"]
     assert "History:" in message_box["text"]
     assert "Designer Revision:\ndesigner-main-123" in message_box["text"]
+    assert "SDK Source:\nsubmodule" in message_box["text"]
     assert "SDK Revision:\nsdk-main-456" in message_box["text"]
 
 
@@ -194,7 +195,7 @@ def test_release_build_failure_shows_release_metadata(qapp, isolated_config, tmp
             log_path=str(project_dir / "output" / "ui_designer_release" / "logs" / "build.log"),
             history_path=str(project_dir / "output" / "ui_designer_release" / "history.json"),
             designer_revision="designer-main-123",
-            sdk={"revision": "sdk-main-456"},
+            sdk={"source_kind": "submodule", "revision": "sdk-main-456"},
         )
 
     monkeypatch.setattr("ui_designer.ui.main_window.ReleaseBuildDialog", FakeDialog)
@@ -213,6 +214,7 @@ def test_release_build_failure_shows_release_metadata(qapp, isolated_config, tmp
     assert "History:" in message_box["text"]
     assert "Log:" in message_box["text"]
     assert "Designer Revision:\ndesigner-main-123" in message_box["text"]
+    assert "SDK Source:\nsubmodule" in message_box["text"]
     assert "SDK Revision:\nsdk-main-456" in message_box["text"]
 
 
@@ -328,7 +330,7 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
             "build_id": "20260326T000000Z",
             "status": "success",
             "profile_id": "windows-pc",
-            "sdk": {"revision": "v1.0.0-310-g416d576"},
+            "sdk": {"source_kind": "submodule", "revision": "v1.0.0-310-g416d576"},
             "release_root": str(release_root),
             "dist_dir": str(dist_dir),
             "manifest_path": str(manifest_path),
@@ -348,9 +350,9 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     assert window._open_last_release_package_action.isEnabled() is True
     assert window._open_last_release_log_action.isEnabled() is True
     assert window._open_release_history_file_action.isEnabled() is True
-    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk v1.0.0-310-g416d576" in window._open_last_release_manifest_action.toolTip()
+    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk submodule v1.0.0-310-g416d576" in window._open_last_release_manifest_action.toolTip()
     assert str(manifest_path) in window._open_last_release_manifest_action.toolTip()
-    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk v1.0.0-310-g416d576" in window._open_release_history_file_action.toolTip()
+    assert "Latest release: 20260326T000000Z | windows-pc | success | sdk submodule v1.0.0-310-g416d576" in window._open_release_history_file_action.toolTip()
     assert str(history_path) in window._open_release_history_file_action.toolTip()
 
     window._open_last_release_folder()
