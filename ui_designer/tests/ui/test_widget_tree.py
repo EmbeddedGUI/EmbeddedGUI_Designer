@@ -914,6 +914,7 @@ class TestWidgetTreePanel:
         root_actions = _select_menu_actions(root_menu)
         assert root_actions["Parent"].isEnabled() is False
         assert root_actions["Ancestors"].isEnabled() is False
+        assert root_actions["Root"].isEnabled() is False
         assert root_actions["Children"].isEnabled() is True
         assert root_actions["Descendants"].isEnabled() is True
         assert root_actions["Subtree"].isEnabled() is True
@@ -929,6 +930,7 @@ class TestWidgetTreePanel:
         assert root_actions["Siblings"].isEnabled() is False
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
+        assert "Unavailable: widget is already the page root." in root_actions["Root"].toolTip()
         assert "Unavailable: no layout container widgets exist in this subtree." in root_actions["Layout Containers"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
@@ -945,6 +947,7 @@ class TestWidgetTreePanel:
         container_actions = _select_menu_actions(container_menu)
         assert container_actions["Parent"].isEnabled() is True
         assert container_actions["Ancestors"].isEnabled() is True
+        assert container_actions["Root"].isEnabled() is True
         assert container_actions["Children"].isEnabled() is True
         assert container_actions["Descendants"].isEnabled() is True
         assert container_actions["Subtree"].isEnabled() is True
@@ -962,6 +965,7 @@ class TestWidgetTreePanel:
         child_actions = _select_menu_actions(child_menu)
         assert child_actions["Parent"].isEnabled() is True
         assert child_actions["Ancestors"].isEnabled() is True
+        assert child_actions["Root"].isEnabled() is True
         assert child_actions["Children"].isEnabled() is False
         assert child_actions["Descendants"].isEnabled() is False
         assert child_actions["Subtree"].isEnabled() is False
@@ -1039,6 +1043,15 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["root_group", "container", "nested_group"], "nested_group")
         assert feedback[-1] == "Selected 3 ancestor widgets of nested_leaf."
         ancestors_menu.deleteLater()
+
+        root_menu = panel._build_context_menu(nested_leaf)
+        root_actions = _select_menu_actions(root_menu)
+        root_actions["Root"].trigger()
+        assert panel.selected_widgets() == [root]
+        assert panel._get_selected_widget() is root
+        assert selection_events[-1] == (["root_group"], "root_group")
+        assert feedback[-1] == "Selected page root: root_group."
+        root_menu.deleteLater()
 
         children_menu = panel._build_context_menu(container)
         children_actions = _select_menu_actions(children_menu)
