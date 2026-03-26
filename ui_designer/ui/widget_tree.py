@@ -707,6 +707,9 @@ class WidgetTreePanel(QWidget):
             return f"Forget {count} recent move-into {noun} for the current page"
         return "Forget recent move-into targets for the current page"
 
+    def _quick_move_menu_hint(self):
+        return "Move directly into an available container target, or reuse move-target history."
+
     def _cleared_move_target_history_text(self, count):
         noun = "target" if count == 1 else "targets"
         return f"cleared {count} recent move {noun}"
@@ -1077,7 +1080,7 @@ class WidgetTreePanel(QWidget):
         if quick_targets or self.remembered_move_target_label() or self.has_recent_move_targets():
             quick_move_menu = structure_menu.addMenu("Quick Move Into")
             quick_move_menu.setToolTipsVisible(True)
-            quick_move_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
+            quick_move_menu.menuAction().setToolTip(self._quick_move_menu_hint())
             self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5, include_management_actions=True)
 
         lift_action = QAction("Lift To Parent", self)

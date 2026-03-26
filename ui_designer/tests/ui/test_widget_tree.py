@@ -777,6 +777,7 @@ class TestWidgetTreePanel:
         assert actions["Move Into..."].isEnabled() is True
         assert actions["Move Into Last Target"].isEnabled() is False
         assert actions["Quick Move Into"].menu() is not None
+        assert actions["Quick Move Into"].toolTip() == "Move directly into an available container target, or reuse move-target history."
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
