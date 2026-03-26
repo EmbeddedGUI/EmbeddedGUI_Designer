@@ -710,6 +710,9 @@ class WidgetTreePanel(QWidget):
     def _quick_move_menu_hint(self):
         return "Move directly into an available container target, or reuse move-target history."
 
+    def _into_button_history_hint(self):
+        return "Open the Into menu to reuse move-target history."
+
     def _cleared_move_target_history_text(self, count):
         noun = "target" if count == 1 else "targets"
         return f"cleared {count} recent move {noun}"
@@ -722,9 +725,11 @@ class WidgetTreePanel(QWidget):
         if not hasattr(self, "group_btn"):
             return
         state = self._structure_action_state()
+        has_quick_move_history = self._remembered_move_target_choice(state.widgets) is not None or self.has_recent_move_targets()
         self.group_btn.setEnabled(state.can_group)
         self.ungroup_btn.setEnabled(state.can_ungroup)
-        self.into_btn.setEnabled(state.can_move_into)
+        self.into_btn.setEnabled(state.can_move_into or has_quick_move_history)
+        self.into_btn.setPopupMode(QToolButton.MenuButtonPopup if state.can_move_into else QToolButton.InstantPopup)
         self.lift_btn.setEnabled(state.can_lift)
         self.up_btn.setEnabled(state.can_move_up)
         self.down_btn.setEnabled(state.can_move_down)
@@ -732,6 +737,8 @@ class WidgetTreePanel(QWidget):
         self.bottom_btn.setEnabled(state.can_move_bottom)
         for button, (base_text, reason_attr) in self._structure_button_tooltips.items():
             button.setToolTip(self._structure_tooltip(base_text, button.isEnabled(), self._structure_action_reason(state, reason_attr)))
+        if not state.can_move_into and has_quick_move_history:
+            self.into_btn.setToolTip(self._into_button_history_hint())
         self._refresh_into_button_menu(state)
         self.structure_hint_label.setText(self._structure_hint_text(state))
 

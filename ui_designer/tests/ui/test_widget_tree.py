@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PyQt5.QtCore import QEvent, Qt
     from PyQt5.QtGui import QKeyEvent
-    from PyQt5.QtWidgets import QApplication, QAbstractItemView
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView, QToolButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -681,6 +681,40 @@ class TestWidgetTreePanel:
         assert feedback[-1] == "Cleared 1 recent move target."
         panel.deleteLater()
 
+    def test_into_button_stays_available_for_history_only(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        panel.set_selected_widgets([target], primary=target)
+
+        assert panel.into_btn.isEnabled() is True
+        assert panel.into_btn.popupMode() == QToolButton.InstantPopup
+        assert panel.into_btn.toolTip() == "Open the Into menu to reuse move-target history."
+
+        button_actions = panel.into_btn.menu().actions()
+        assert "(No eligible target containers)" in [action.text() for action in button_actions]
+        assert "History" in [action.text() for action in button_actions]
+        repeat_action = next(action for action in button_actions if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in button_actions if action.text() == "Clear Move Target History")
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is True
+
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -1130,7 +1164,8 @@ class TestWidgetTreePanel:
 
         assert panel.group_btn.isEnabled() is False
         assert panel.ungroup_btn.isEnabled() is False
-        assert panel.into_btn.isEnabled() is False
+        assert panel.into_btn.isEnabled() is True
+        assert panel.into_btn.popupMode() == QToolButton.InstantPopup
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
@@ -1138,6 +1173,7 @@ class TestWidgetTreePanel:
         assert panel.bottom_btn.isEnabled() is False
         assert panel.structure_hint_label.text() == "Structure: root widgets cannot be regrouped or reordered."
         assert "Unavailable: root widgets cannot be regrouped or reordered." in panel.group_btn.toolTip()
+        assert panel.into_btn.toolTip() == "Open the Into menu to reuse move-target history."
 
         panel.deleteLater()
 
