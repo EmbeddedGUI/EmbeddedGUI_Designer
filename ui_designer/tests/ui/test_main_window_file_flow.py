@@ -406,6 +406,36 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_selection_feedback_status_mentions_repeat_move_target(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SelectionRepeatMoveTargetDemo"
+        project = _create_project(project_dir, "SelectionRepeatMoveTargetDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("switch", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window.widget_tree.remember_move_target_label("root_group / target (group)")
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=False)
+
+        assert window.statusBar().currentMessage() == "Selection note: Ctrl+Alt+I repeats move into target."
+        _close_window(window)
+
     def test_delete_selection_blocks_locked_widgets(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

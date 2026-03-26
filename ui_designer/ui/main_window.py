@@ -3727,6 +3727,7 @@ class MainWindow(QMainWindow):
         structure_reason = self._structure_action_state(widgets).blocked_reason
         if structure_reason:
             structure_reason = structure_reason.rstrip(".")
+        repeat_target = self._repeat_move_target_summary(widgets)
         if len(widgets) == 1:
             widget = widgets[0]
             parts = []
@@ -3739,6 +3740,8 @@ class MainWindow(QMainWindow):
             if not parts:
                 if structure_reason:
                     return f"Selection note: {structure_reason}."
+                if repeat_target:
+                    return f"Selection note: Ctrl+Alt+I repeats move into {repeat_target}."
                 return ""
             return f"Selection note: {widget.name} is " + ", ".join(parts) + "."
 
@@ -3758,6 +3761,8 @@ class MainWindow(QMainWindow):
         if not issues:
             if structure_reason:
                 return f"Selection note: {structure_reason}."
+            if repeat_target:
+                return f"Selection note: Ctrl+Alt+I repeats move into {repeat_target}."
             return ""
         return "Selection note: current selection includes " + ", ".join(issues) + "."
 
@@ -3949,6 +3954,12 @@ class MainWindow(QMainWindow):
             noun = "target" if count == 1 else "targets"
             return f"Forget {count} recent move-into {noun} for the current page"
         return "Forget recent move-into targets for the current page"
+
+    def _repeat_move_target_summary(self, widgets=None):
+        choice = self._remembered_move_target_choice(widgets)
+        if choice is None:
+            return ""
+        return getattr(choice.widget, "name", "") or choice.label
 
     def _refresh_quick_move_into_menu(self):
         if not hasattr(self, "_quick_move_into_menu"):

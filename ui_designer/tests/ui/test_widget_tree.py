@@ -823,6 +823,10 @@ class TestWidgetTreePanel:
         assert "Alt+Down reorder" in panel.structure_hint_label.text()
         assert "Alt+Shift+Down move to bottom" in panel.structure_hint_label.text()
 
+        panel.remember_move_target_label("root_group / target (group)")
+        panel.set_selected_widgets([second], primary=second)
+        assert "Ctrl+Alt+I repeat into target" in panel.structure_hint_label.text()
+
         panel.set_selected_widgets([second], primary=second)
 
         assert panel.group_btn.isEnabled() is False

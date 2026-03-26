@@ -625,6 +625,12 @@ class WidgetTreePanel(QWidget):
             return f"Move the current selection into {label} again{action_suffix}"
         return f"Move the current selection into the last remembered container target{action_suffix}"
 
+    def _repeat_move_target_summary(self, widgets):
+        choice = self._remembered_move_target_choice(widgets)
+        if choice is None:
+            return ""
+        return getattr(choice.widget, "name", "") or choice.label
+
     def _clear_move_target_history_hint(self):
         count = len(self.recent_move_target_labels())
         if count:
@@ -713,8 +719,9 @@ class WidgetTreePanel(QWidget):
             hints.append("Ctrl+Shift+G ungroup")
         if state.can_move_into:
             hints.append("Ctrl+Shift+I move into container")
-            if self._remembered_move_target_choice(widgets) is not None:
-                hints.append("Ctrl+Alt+I repeat last target")
+            repeat_target = self._repeat_move_target_summary(widgets)
+            if repeat_target:
+                hints.append(f"Ctrl+Alt+I repeat into {repeat_target}")
         if state.can_lift:
             hints.append("Ctrl+Shift+L lift to parent")
         if state.can_move_up and state.can_move_down:
