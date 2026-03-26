@@ -919,6 +919,8 @@ class TestWidgetTreePanel:
         assert root_actions["Root"].isEnabled() is False
         assert root_actions["Path"].isEnabled() is True
         assert root_actions["Top-Level"].isEnabled() is True
+        assert root_actions["First Child"].isEnabled() is True
+        assert root_actions["Last Child"].isEnabled() is True
         assert root_actions["Same Depth"].isEnabled() is False
         assert root_actions["Children"].isEnabled() is True
         assert root_actions["Descendants"].isEnabled() is True
@@ -963,6 +965,8 @@ class TestWidgetTreePanel:
         assert container_actions["Root"].isEnabled() is True
         assert container_actions["Path"].isEnabled() is True
         assert container_actions["Top-Level"].isEnabled() is True
+        assert container_actions["First Child"].isEnabled() is True
+        assert container_actions["Last Child"].isEnabled() is True
         assert container_actions["Children"].isEnabled() is True
         assert container_actions["Descendants"].isEnabled() is True
         assert container_actions["Subtree"].isEnabled() is True
@@ -988,6 +992,8 @@ class TestWidgetTreePanel:
         assert child_actions["Root"].isEnabled() is True
         assert child_actions["Path"].isEnabled() is True
         assert child_actions["Top-Level"].isEnabled() is True
+        assert child_actions["First Child"].isEnabled() is False
+        assert child_actions["Last Child"].isEnabled() is False
         assert child_actions["Children"].isEnabled() is False
         assert child_actions["Descendants"].isEnabled() is False
         assert child_actions["Subtree"].isEnabled() is False
@@ -1011,6 +1017,8 @@ class TestWidgetTreePanel:
         assert "Unavailable: widget has no leaf descendants." in child_actions["Leaves"].toolTip()
         assert "Unavailable: no other container widgets exist in this subtree." in child_actions["Containers"].toolTip()
         assert "Unavailable: no layout container widgets exist in this subtree." in child_actions["Layout Containers"].toolTip()
+        assert "Unavailable: widget has no child widgets." in child_actions["First Child"].toolTip()
+        assert "Unavailable: widget has no child widgets." in child_actions["Last Child"].toolTip()
         assert "Unavailable: no hidden widgets exist in this subtree." in child_actions["Hidden"].toolTip()
         assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in child_actions["Managed"].toolTip()
@@ -1062,6 +1070,24 @@ class TestWidgetTreePanel:
         assert selection_events[-1] == (["container"], "container")
         assert feedback[-1] == "Selected parent widget: container."
         parent_menu.deleteLater()
+
+        first_child_menu = panel._build_context_menu(container)
+        first_child_actions = _select_menu_actions(first_child_menu)
+        first_child_actions["First Child"].trigger()
+        assert panel.selected_widgets() == [child_a]
+        assert panel._get_selected_widget() is child_a
+        assert selection_events[-1] == (["child_a"], "child_a")
+        assert feedback[-1] == "Selected first child: child_a."
+        first_child_menu.deleteLater()
+
+        last_child_menu = panel._build_context_menu(container)
+        last_child_actions = _select_menu_actions(last_child_menu)
+        last_child_actions["Last Child"].trigger()
+        assert panel.selected_widgets() == [nested_group]
+        assert panel._get_selected_widget() is nested_group
+        assert selection_events[-1] == (["nested_group"], "nested_group")
+        assert feedback[-1] == "Selected last child: nested_group."
+        last_child_menu.deleteLater()
 
         previous_menu = panel._build_context_menu(child_b)
         previous_actions = _select_menu_actions(previous_menu)

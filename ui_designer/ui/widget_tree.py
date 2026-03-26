@@ -453,6 +453,18 @@ class WidgetTreePanel(QWidget):
             return None
         return siblings[index + 1]
 
+    def _first_child_widget(self, widget):
+        children = [child for child in getattr(widget, "children", []) if child is not None]
+        if not children:
+            return None
+        return children[0]
+
+    def _last_child_widget(self, widget):
+        children = [child for child in getattr(widget, "children", []) if child is not None]
+        if not children:
+            return None
+        return children[-1]
+
     def _select_previous_sibling_widget(self, widget):
         sibling = self._previous_sibling_widget(widget)
         if sibling is None:
@@ -485,6 +497,30 @@ class WidgetTreePanel(QWidget):
             [sibling],
             primary=sibling,
             feedback_message=f"Selected next sibling: {self._widget_label(sibling)}.",
+        )
+
+    def _select_first_child_widget(self, widget):
+        child = self._first_child_widget(widget)
+        if child is None:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select first child: widget has no child widgets.")
+            return
+        self._apply_programmatic_selection(
+            [child],
+            primary=child,
+            feedback_message=f"Selected first child: {self._widget_label(child)}.",
+        )
+
+    def _select_last_child_widget(self, widget):
+        child = self._last_child_widget(widget)
+        if child is None:
+            if widget is not None:
+                self.feedback_message.emit("Cannot select last child: widget has no child widgets.")
+            return
+        self._apply_programmatic_selection(
+            [child],
+            primary=child,
+            feedback_message=f"Selected last child: {self._widget_label(child)}.",
         )
 
     def _ancestor_widgets(self, widget):
@@ -1020,6 +1056,8 @@ class WidgetTreePanel(QWidget):
         can_select_parent = widget.parent is not None
         can_select_previous_sibling = self._previous_sibling_widget(widget) is not None
         can_select_next_sibling = self._next_sibling_widget(widget) is not None
+        can_select_first_child = self._first_child_widget(widget) is not None
+        can_select_last_child = self._last_child_widget(widget) is not None
         can_select_ancestors = bool(self._ancestor_widgets(widget))
         can_select_root = self._root_widget(widget) is not None and self._root_widget(widget) is not widget
         can_select_path = bool(self._widget_path(widget))
@@ -1129,6 +1167,30 @@ class WidgetTreePanel(QWidget):
         )
         select_top_level_action.triggered.connect(lambda: self._select_top_level_widgets(widget))
         select_menu.addAction(select_top_level_action)
+
+        select_first_child_action = QAction("First Child", self)
+        select_first_child_action.setEnabled(can_select_first_child)
+        select_first_child_action.setToolTip(
+            self._structure_tooltip(
+                "Select the first direct child of this widget.",
+                can_select_first_child,
+                "widget has no child widgets.",
+            )
+        )
+        select_first_child_action.triggered.connect(lambda: self._select_first_child_widget(widget))
+        select_menu.addAction(select_first_child_action)
+
+        select_last_child_action = QAction("Last Child", self)
+        select_last_child_action.setEnabled(can_select_last_child)
+        select_last_child_action.setToolTip(
+            self._structure_tooltip(
+                "Select the last direct child of this widget.",
+                can_select_last_child,
+                "widget has no child widgets.",
+            )
+        )
+        select_last_child_action.triggered.connect(lambda: self._select_last_child_widget(widget))
+        select_menu.addAction(select_last_child_action)
 
         select_children_action = QAction("Children", self)
         select_children_action.setEnabled(can_select_children)
@@ -1343,6 +1405,8 @@ class WidgetTreePanel(QWidget):
             can_select_parent,
             can_select_previous_sibling,
             can_select_next_sibling,
+            can_select_first_child,
+            can_select_last_child,
             can_select_ancestors,
             can_select_root,
             can_select_path,
