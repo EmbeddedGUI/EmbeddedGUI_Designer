@@ -3695,6 +3695,9 @@ class MainWindow(QMainWindow):
         if not widgets:
             return ""
 
+        structure_reason = self._structure_action_state(widgets).blocked_reason
+        if structure_reason:
+            structure_reason = structure_reason.rstrip(".")
         if len(widgets) == 1:
             widget = widgets[0]
             parts = []
@@ -3705,6 +3708,8 @@ class MainWindow(QMainWindow):
             if self._parent_uses_layout(widget.parent):
                 parts.append(f"layout-managed by {widget.parent.widget_type}")
             if not parts:
+                if structure_reason:
+                    return f"Selection note: {structure_reason}."
                 return ""
             return f"Selection note: {widget.name} is " + ", ".join(parts) + "."
 
@@ -3722,6 +3727,8 @@ class MainWindow(QMainWindow):
             noun = "widget" if layout_count == 1 else "widgets"
             issues.append(f"{layout_count} layout-managed {noun}")
         if not issues:
+            if structure_reason:
+                return f"Selection note: {structure_reason}."
             return ""
         return "Selection note: current selection includes " + ", ".join(issues) + "."
 

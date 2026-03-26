@@ -379,6 +379,22 @@ class TestMainWindowFileFlow:
         assert "2 layout-managed widgets" in message
         _close_window(window)
 
+    def test_selection_feedback_status_reports_isolated_structure_limit(self, qapp, isolated_config):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        root = WidgetModel("group", name="root")
+        child = WidgetModel("switch", name="child")
+        root.add_child(child)
+
+        window._set_selection([child], primary=child, sync_tree=False, sync_preview=False)
+
+        assert window.statusBar().currentMessage() == (
+            "Selection note: select another sibling or target container to move this widget."
+        )
+        _close_window(window)
+
     def test_delete_selection_blocks_locked_widgets(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
