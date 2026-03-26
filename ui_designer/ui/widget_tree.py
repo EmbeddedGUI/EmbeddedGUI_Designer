@@ -713,6 +713,11 @@ class WidgetTreePanel(QWidget):
     def _into_button_history_hint(self):
         return "Open the Into menu to reuse move-target history."
 
+    def _structure_history_hint_suffix(self):
+        if not self.has_recent_move_targets():
+            return ""
+        return " Into menu can clear move history."
+
     def _cleared_move_target_history_text(self, count):
         noun = "target" if count == 1 else "targets"
         return f"cleared {count} recent move {noun}"
@@ -847,7 +852,7 @@ class WidgetTreePanel(QWidget):
         state = state or self._structure_action_state()
         widgets = state.widgets
         if not widgets and not state.blocked_reason:
-            return "Structure: select widgets to group, move, or reorder."
+            return "Structure: select widgets to group, move, or reorder." + self._structure_history_hint_suffix()
 
         hints = []
         if state.can_group:
@@ -876,8 +881,8 @@ class WidgetTreePanel(QWidget):
         if hints:
             return "Structure: " + "; ".join(hints) + "."
         if state.blocked_reason:
-            return f"Structure: {state.blocked_reason}"
-        return "Structure: no valid structure actions for the current selection."
+            return f"Structure: {state.blocked_reason}" + self._structure_history_hint_suffix()
+        return "Structure: no valid structure actions for the current selection." + self._structure_history_hint_suffix()
 
     def _emit_tree_changed(self, source):
         self.tree_changed.emit(source or "widget tree change")

@@ -715,6 +715,31 @@ class TestWidgetTreePanel:
 
         panel.deleteLater()
 
+    def test_structure_hint_mentions_history_without_selection(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([child], primary=child)
+        panel._move_selected_widgets_into(
+            target_widget=target,
+            target_label="root_group / target (group)",
+        )
+
+        panel.set_selected_widgets([], primary=None)
+
+        assert panel.structure_hint_label.text() == (
+            "Structure: select widgets to group, move, or reorder. Into menu can clear move history."
+        )
+        panel.deleteLater()
+
     def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -1171,7 +1196,9 @@ class TestWidgetTreePanel:
         assert panel.down_btn.isEnabled() is False
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
-        assert panel.structure_hint_label.text() == "Structure: root widgets cannot be regrouped or reordered."
+        assert panel.structure_hint_label.text() == (
+            "Structure: root widgets cannot be regrouped or reordered. Into menu can clear move history."
+        )
         assert "Unavailable: root widgets cannot be regrouped or reordered." in panel.group_btn.toolTip()
         assert panel.into_btn.toolTip() == "Open the Into menu to reuse move-target history."
 
