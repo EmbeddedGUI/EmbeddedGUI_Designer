@@ -43,6 +43,13 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
                 "artifacts": [
                     {"path": "dist/DemoApp.exe", "sha256": "abc"},
                 ],
+                "diagnostics": {
+                    "summary": {
+                        "warnings": 2,
+                        "errors": 1,
+                        "total": 3,
+                    }
+                },
             },
             indent=2,
         ),
@@ -59,6 +66,9 @@ def test_inspect_release_manifest_emits_json(monkeypatch, tmp_path, capsys):
     assert payload["designer_revision"] == "designer-main-123"
     assert payload["sdk_revision"] == "sdk-main-456"
     assert payload["artifact_count"] == 1
+    assert payload["diagnostics_warning_count"] == 2
+    assert payload["diagnostics_error_count"] == 1
+    assert payload["diagnostics_total"] == 3
 
 
 def test_inspect_packaged_app_emits_json(monkeypatch, tmp_path, capsys):

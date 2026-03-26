@@ -76,6 +76,13 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
     sdk = manifest.get("sdk") if isinstance(manifest.get("sdk"), dict) else {}
     workspace = manifest.get("workspace") if isinstance(manifest.get("workspace"), dict) else {}
     artifacts = manifest.get("artifacts") if isinstance(manifest.get("artifacts"), list) else []
+    diagnostics = manifest.get("diagnostics") if isinstance(manifest.get("diagnostics"), dict) else {}
+    diagnostics_summary = diagnostics.get("summary") if isinstance(diagnostics.get("summary"), dict) else {}
+    warning_entries = manifest.get("warnings") if isinstance(manifest.get("warnings"), list) else []
+    error_entries = manifest.get("errors") if isinstance(manifest.get("errors"), list) else []
+    diagnostics_warning_count = int(diagnostics_summary.get("warnings", len(warning_entries)) or 0)
+    diagnostics_error_count = int(diagnostics_summary.get("errors", len(error_entries)) or 0)
+    diagnostics_total = int(diagnostics_summary.get("total", diagnostics_warning_count + diagnostics_error_count) or 0)
 
     return {
         "kind": "release_manifest",
@@ -93,6 +100,9 @@ def summarize_manifest(manifest_path: str | Path) -> dict[str, object]:
         "workspace_commit": _string(workspace.get("git_commit")),
         "workspace_dirty": bool(workspace.get("dirty", False)),
         "artifact_count": len(artifacts),
+        "diagnostics_warning_count": diagnostics_warning_count,
+        "diagnostics_error_count": diagnostics_error_count,
+        "diagnostics_total": diagnostics_total,
     }
 
 
@@ -203,6 +213,9 @@ def _print_human(payload: dict[str, object]) -> None:
         ("workspace_commit", "workspace_commit"),
         ("workspace_dirty", "workspace_dirty"),
         ("artifact_count", "artifact_count"),
+        ("diagnostics_warning_count", "diagnostics_warning_count"),
+        ("diagnostics_error_count", "diagnostics_error_count"),
+        ("diagnostics_total", "diagnostics_total"),
         ("file_count", "file_count"),
         ("total_size_bytes", "total_size_bytes"),
     ]
