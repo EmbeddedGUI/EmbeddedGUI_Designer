@@ -1310,6 +1310,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._toggle_hide_action)
 
         structure_menu = menubar.addMenu("Structure")
+        self._structure_menu = structure_menu
 
         self._group_selection_action = QAction("Group Selection", self)
         self._group_selection_action.setShortcut("Ctrl+G")
@@ -1325,6 +1326,10 @@ class MainWindow(QMainWindow):
         self._move_into_container_action.setShortcut("Ctrl+Shift+I")
         self._move_into_container_action.triggered.connect(self._move_selection_into_container)
         structure_menu.addAction(self._move_into_container_action)
+
+        self._quick_move_into_menu = structure_menu.addMenu("Quick Move Into")
+        self._quick_move_into_menu.setToolTipsVisible(True)
+        self._quick_move_into_menu.aboutToShow.connect(self._refresh_quick_move_into_menu)
 
         self._lift_to_parent_action = QAction("Lift To Parent", self)
         self._lift_to_parent_action.setShortcut("Ctrl+Shift+L")
@@ -1365,6 +1370,8 @@ class MainWindow(QMainWindow):
         for action, (hint, _reason_attr) in self._structure_action_hints.items():
             action.setToolTip(hint)
             action.setStatusTip(hint)
+        self._quick_move_into_menu.menuAction().setToolTip("Move the current selection directly into an available container target.")
+        self._quick_move_into_menu.menuAction().setStatusTip("Move the current selection directly into an available container target.")
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -3839,6 +3846,26 @@ class MainWindow(QMainWindow):
                 return reason
         return state.blocked_reason
 
+    def _quick_move_into_choices(self, widgets=None):
+        return available_move_targets(self._structure_project_context(), widgets or self._top_level_selected_widgets())
+
+    def _refresh_quick_move_into_menu(self):
+        if not hasattr(self, "_quick_move_into_menu"):
+            return
+
+        self._quick_move_into_menu.clear()
+        for choice in self._quick_move_into_choices():
+            action = QAction(choice.label, self)
+            action.setToolTip(f"Move the current selection into {choice.label}.")
+            action.setStatusTip(f"Move the current selection into {choice.label}.")
+            action.triggered.connect(lambda checked=False, target=choice.widget: self._move_selection_into_target(target))
+            self._quick_move_into_menu.addAction(action)
+
+    def _move_selection_into_target(self, target):
+        if target is None:
+            return
+        self._apply_structure_result(move_into_container(self._structure_project_context(), self._top_level_selected_widgets(), target))
+
     def _choose_structure_target(self, widgets):
         context = self._structure_project_context()
         choices = available_move_targets(context, widgets)
@@ -4233,6 +4260,15 @@ class MainWindow(QMainWindow):
             hint = self._structure_action_hint(base_text, action.isEnabled(), self._structure_action_reason(structure_state, reason_attr))
             action.setToolTip(hint)
             action.setStatusTip(hint)
+        quick_hint = self._structure_action_hint(
+            "Move the current selection directly into an available container target.",
+            structure_state.can_move_into,
+            self._structure_action_reason(structure_state, "move_into_reason"),
+        )
+        self._quick_move_into_menu.menuAction().setEnabled(structure_state.can_move_into)
+        self._quick_move_into_menu.menuAction().setToolTip(quick_hint)
+        self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
+        self._refresh_quick_move_into_menu()
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)

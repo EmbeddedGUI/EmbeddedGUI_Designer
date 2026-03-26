@@ -866,6 +866,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is True
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is True
+        assert window._quick_move_into_menu.menuAction().isEnabled() is True
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
         assert window._move_down_action.isEnabled() is True
@@ -922,6 +923,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is False
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is False
+        assert window._quick_move_into_menu.menuAction().isEnabled() is False
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_top_action.isEnabled() is False
         assert window._move_bottom_action.isEnabled() is False
@@ -935,6 +937,7 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.isEnabled() is False
         assert window._ungroup_selection_action.isEnabled() is False
         assert window._move_into_container_action.isEnabled() is False
+        assert window._quick_move_into_menu.menuAction().isEnabled() is False
         assert window._lift_to_parent_action.isEnabled() is False
         assert window._move_up_action.isEnabled() is False
         assert window._move_down_action.isEnabled() is False
@@ -946,6 +949,43 @@ class TestMainWindowFileFlow:
         assert "no eligible target containers are available" in window._move_into_container_action.statusTip()
         assert "selected widgets already belong to the top container" in window._lift_to_parent_action.toolTip()
 
+        _close_window(window)
+
+    def test_quick_move_into_menu_moves_selection_into_target(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QuickMoveIntoDemo"
+        project = _create_project(project_dir, "QuickMoveIntoDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
+        child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
+        root.add_child(target)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([child], primary=child, sync_tree=True, sync_preview=False)
+        window._refresh_quick_move_into_menu()
+
+        quick_action = next(action for action in window._quick_move_into_menu.actions() if action.text() == "root_group / target_group (group)")
+        quick_action.trigger()
+
+        assert child.parent is target
+        assert (child.display_x, child.display_y) == (10, 15)
+        assert window.widget_tree.selected_widgets() == [child]
+        assert window.widget_tree._get_selected_widget() is child
+        assert window._undo_manager.get_stack("main_page").current_label() == "move into container"
+        assert window.statusBar().currentMessage() == "Moved 1 widget(s) into target_group."
+        window._undo_manager.mark_all_saved()
         _close_window(window)
 
     def test_widget_tree_group_selection_updates_main_window_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
