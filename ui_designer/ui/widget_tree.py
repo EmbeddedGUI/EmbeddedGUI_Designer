@@ -255,11 +255,13 @@ class WidgetTreePanel(QWidget):
 
     def set_project(self, project):
         self.project = project
+        self._clear_tree_drag_hover()
         self._expanded_widgets = set()
         self._default_expand_next_rebuild = True
         self.rebuild_tree()
 
     def rebuild_tree(self):
+        self._clear_tree_drag_hover()
         self._expanded_widgets = self._collect_expanded_widget_ids()
         default_expand = self._default_expand_next_rebuild
         self._default_expand_next_rebuild = False
@@ -342,6 +344,7 @@ class WidgetTreePanel(QWidget):
     def _on_selection_changed(self):
         if self._building or self._syncing_selection:
             return
+        self._clear_tree_drag_hover()
         widgets = self.selected_widgets()
         primary = self._widget_map.get(id(self.tree.currentItem())) if self.tree.currentItem() else None
         if primary is None and widgets:
@@ -366,6 +369,7 @@ class WidgetTreePanel(QWidget):
         return widgets
 
     def set_selected_widgets(self, widgets, primary=None):
+        self._clear_tree_drag_hover()
         self._syncing_selection = True
         try:
             self.tree.clearSelection()

@@ -665,6 +665,38 @@ class TestWidgetTreePanel:
         assert panel._drag_target_item is None
         panel.deleteLater()
 
+    def test_tree_drag_preview_clears_on_selection_change_and_rebuild(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("group", name="second")
+        third = WidgetModel("label", name="third")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first], primary=first)
+        second_item = panel._item_map[id(second)]
+
+        panel._on_tree_drag_hover(second_item, QAbstractItemView.OnItem)
+        assert panel._drag_target_item is second_item
+
+        panel.set_selected_widgets([third], primary=third)
+        assert panel._drag_target_item is None
+        assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
+
+        panel._on_tree_drag_hover(second_item, QAbstractItemView.OnItem)
+        assert panel._drag_target_item is second_item
+
+        panel.rebuild_tree()
+        assert panel._drag_target_item is None
+        assert panel.drag_target_label.text() == "Drop target: drag over the tree to preview where the selection will land."
+        panel.deleteLater()
+
     def test_tree_drag_hover_expands_valid_collapsed_container(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
