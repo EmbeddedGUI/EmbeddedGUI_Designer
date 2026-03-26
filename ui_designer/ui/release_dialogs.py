@@ -84,6 +84,9 @@ def _history_list_label(entry: dict[str, object]) -> str:
         parts.append(f"warn {warning_count}")
     if (error_count or 0) > 0:
         parts.append(f"err {error_count}")
+    first_diagnostic = _history_string(entry, "first_diagnostic")
+    if first_diagnostic:
+        parts.append(f"diag {first_diagnostic}")
     return " ".join(parts)
 
 
