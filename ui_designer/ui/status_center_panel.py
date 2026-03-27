@@ -225,6 +225,11 @@ class StatusCenterPanel(QWidget):
         suggested_row.addWidget(self._suggested_action_button, 0)
         suggested_row.addStretch()
         quick_layout.addLayout(suggested_row)
+        self._suggested_action_summary_label = QLabel("Guidance: Open Project to configure the SDK workspace.")
+        self._suggested_action_summary_label.setObjectName("workspace_section_subtitle")
+        self._suggested_action_summary_label.setWordWrap(True)
+        self._suggested_action_summary_label.setAccessibleName("Suggested action guidance")
+        quick_layout.addWidget(self._suggested_action_summary_label)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -504,14 +509,25 @@ class StatusCenterPanel(QWidget):
             return f"Summary: {', '.join(parts)} need review."
         return f"Summary: {', '.join(parts)} available."
 
-    def _workspace_summary_text(self, sdk_ready, can_compile, dirty_count, selection_total, preview_text):
+    def _workspace_summary_text(
+        self,
+        sdk_ready,
+        can_compile,
+        dirty_count,
+        selection_total,
+        preview_text,
+        diag_total=0,
+        runtime_text="",
+    ):
         sdk_text = "SDK ready" if sdk_ready else "SDK missing"
         compile_text = "compile available" if can_compile else "compile unavailable"
         preview_value = str(preview_text or "Preview Idle").strip() or "Preview Idle"
+        runtime_summary = "runtime issue detected" if str(runtime_text or "").strip() else "runtime clear"
+        diag_summary = "diagnostics clear" if int(diag_total or 0) <= 0 else self._count_label(diag_total, "diagnostic", "diagnostics")
         return (
-            f"Workspace: {sdk_text}, {compile_text}, {preview_value}, "
+            f"Workspace: {sdk_text}, {compile_text}, {preview_value}, {runtime_summary}, "
             f"{self._count_label(dirty_count, 'dirty page', 'dirty pages')}, "
-            f"{self._count_label(selection_total, 'widget', 'widgets')} selected."
+            f"{self._count_label(selection_total, 'widget', 'widgets')} selected, {diag_summary}."
         )
 
     def _workspace_chip_state(
@@ -725,6 +741,9 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_button.setText(suggested_label)
         self._suggested_action_button.setIcon(make_icon(suggested_icon))
         self._set_hint(self._suggested_action_button, suggested_hint)
+        suggested_summary = f"Guidance: {suggested_hint}"
+        self._suggested_action_summary_label.setText(suggested_summary)
+        self._set_hint(self._suggested_action_summary_label, suggested_summary)
         workspace_chip_label, workspace_chip_tone = self._workspace_chip_state(
             sdk_ready=sdk_ready,
             can_compile=can_compile,
@@ -744,6 +763,8 @@ class StatusCenterPanel(QWidget):
             dirty_count,
             selection_total,
             preview_text,
+            diag_total,
+            runtime_text,
         )
         self._workspace_summary_label.setText(workspace_summary)
         self._set_hint(self._workspace_summary_label, workspace_summary)

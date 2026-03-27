@@ -146,7 +146,7 @@ class TestStatusCenterPanel:
         )
 
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK ready, compile available, Preview Running, 2 dirty pages, 1 widget selected."
+            "Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics."
         )
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
@@ -166,6 +166,7 @@ class TestStatusCenterPanel:
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._suggested_action_button.text() == "Fix First Error"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics."
+        assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
@@ -184,13 +185,15 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.toolTip() == "Open Project to configure the SDK workspace."
         assert panel._suggested_action_button.accessibleName() == "Suggested status action"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Open Project to configure the SDK workspace."
+        assert panel._suggested_action_summary_label.accessibleName() == "Suggested action guidance"
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.toolTip() == "Check Workspace. Open Project to configure the SDK workspace."
         assert panel._workspace_chip.accessibleName() == "Workspace status: Check Workspace"
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected."
+            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear."
         )
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary"
         assert panel._components_btn.toolTip() == "Open Components."
@@ -209,27 +212,35 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._suggested_action_button.text() == "Configure SDK"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Open Project to configure the SDK workspace."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
         assert panel._suggested_action_button.text() == "Fix First Error"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
         assert panel._suggested_action_button.text() == "Review First Warning"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Review the first warning in Diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output."
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
         assert panel._suggested_action_button.text() == "Review History"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
         assert panel._suggested_action_button.text() == "Inspect Selection"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
         assert panel._suggested_action_button.text() == "Inspect Info"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._suggested_action_button.text() == "Open Diagnostics"
+        assert panel._suggested_action_summary_label.text() == "Guidance: Open Diagnostics for a full health review."
         panel.deleteLater()
 
     def test_suggested_action_button_emits_contextual_action(self, qapp):
