@@ -2,7 +2,7 @@
 
 import re
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
 from PyQt5.QtCore import pyqtSignal
 
 from qfluentwidgets import EditableComboBox, BodyLabel
@@ -46,9 +46,17 @@ class EguiFontSelector(QWidget):
         self._combo.currentTextChanged.connect(self._on_changed)
         layout.addWidget(self._combo, 1)
 
-        self._preview = BodyLabel("Abc")
+        self._preview = self._create_preview_label()
         self._preview.setFixedWidth(80)
         layout.addWidget(self._preview)
+
+    @staticmethod
+    def _create_preview_label():
+        """Build a preview label while tolerating stale qfluentwidgets globals."""
+        try:
+            return BodyLabel("Abc")
+        except RuntimeError:
+            return QLabel("Abc")
 
     def set_value(self, value):
         """Set the current font value."""

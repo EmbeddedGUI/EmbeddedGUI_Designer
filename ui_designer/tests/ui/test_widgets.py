@@ -75,6 +75,20 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
+@pytest.fixture
+def qapp():
+    if not _has_pyqt5:
+        yield None
+        return
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    yield app
+    app.processEvents()
+
+
 @_skip_no_qt
 class TestEguiColorToQColor:
     """Test egui_color_to_qcolor conversion (requires PyQt5)."""
@@ -112,3 +126,22 @@ class TestQColorToEguiHex:
         from PyQt5.QtGui import QColor
         from ui_designer.ui.widgets.color_picker import qcolor_to_egui_hex
         assert qcolor_to_egui_hex(QColor(18, 52, 86)) == "EGUI_COLOR_HEX(0x123456)"
+
+
+@_skip_no_qt
+class TestEguiFontSelector:
+    """Test EguiFontSelector fallback behavior when qfluentwidgets state is stale."""
+
+    def test_preview_label_falls_back_when_body_label_raises_runtime_error(self, qapp, monkeypatch):
+        from PyQt5.QtWidgets import QLabel
+        from ui_designer.ui.widgets import font_selector as font_selector_module
+
+        def _raise_runtime_error(*_args, **_kwargs):
+            raise RuntimeError("wrapped C/C++ object of type QConfig has been deleted")
+
+        monkeypatch.setattr(font_selector_module, "BodyLabel", _raise_runtime_error)
+
+        selector = font_selector_module.EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT"])
+
+        assert isinstance(selector._preview, QLabel)
+        selector.deleteLater()
