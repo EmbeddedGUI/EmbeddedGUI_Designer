@@ -6113,6 +6113,24 @@ class TestMainWindowFileFlow:
         assert opened == ["error"]
         _close_window(window)
 
+    def test_status_center_workspace_chip_routes_contextually(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        opened = []
+        monkeypatch.setattr(window.diagnostics_panel, "open_first_error", lambda: opened.append("error"))
+
+        assert window.status_center_panel._workspace_chip.text() == "Check Workspace"
+        window.status_center_panel._workspace_chip.click()
+        assert window._current_left_panel == "project"
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert window.status_center_panel._workspace_chip.text() == "Action Needed"
+        window.status_center_panel._workspace_chip.click()
+        assert window._bottom_tabs.currentIndex() == 0
+        assert opened == ["error"]
+        _close_window(window)
+
     def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
