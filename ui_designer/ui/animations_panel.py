@@ -31,6 +31,7 @@ from ..model.widget_animations import (
     create_default_animation,
     normalize_widget_animations,
 )
+from .iconography import make_icon
 
 
 class AnimationsPanel(QWidget):
@@ -53,9 +54,11 @@ class AnimationsPanel(QWidget):
         layout.setSpacing(6)
 
         self._summary_label = QLabel("")
+        self._summary_label.setObjectName("workspace_section_title")
         self._hint_label = QLabel(
             "Animations are stored on the selected widget and compiled into the generated layout source."
         )
+        self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
 
         self._table = QTableWidget(0, 4, self)
@@ -74,8 +77,11 @@ class AnimationsPanel(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Animation")
+        self._add_button.setIcon(make_icon("animation"))
         self._duplicate_button = QPushButton("Duplicate")
+        self._duplicate_button.setIcon(make_icon("page"))
         self._remove_button = QPushButton("Remove")
+        self._remove_button.setIcon(make_icon("stop"))
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)

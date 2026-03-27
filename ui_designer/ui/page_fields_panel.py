@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ..model.page_fields import COMMON_PAGE_FIELD_TYPES, normalize_page_fields, suggest_page_field_name, validate_page_fields
+from .iconography import make_icon
 
 
 class PageFieldsPanel(QWidget):
@@ -39,20 +40,26 @@ class PageFieldsPanel(QWidget):
         layout.setSpacing(6)
 
         self._summary_label = QLabel("")
+        self._summary_label.setObjectName("workspace_section_title")
         self._hint_label = QLabel(
             "Page fields become generated struct members. Default is treated as a raw C expression and is applied on page open."
         )
+        self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
 
         self._code_hint_label = QLabel("Page lifecycle hooks live in {page}.c. Open a section to edit page-level setup and teardown logic.")
+        self._code_hint_label.setObjectName("workspace_section_subtitle")
         self._code_hint_label.setWordWrap(True)
 
         code_buttons = QHBoxLayout()
         code_buttons.setContentsMargins(0, 0, 0, 0)
         code_buttons.setSpacing(6)
         self._open_on_open_button = QPushButton("Open on_open")
+        self._open_on_open_button.setIcon(make_icon("page"))
         self._open_on_close_button = QPushButton("Open on_close")
+        self._open_on_close_button.setIcon(make_icon("page"))
         self._open_init_button = QPushButton("Open init")
+        self._open_init_button.setIcon(make_icon("page"))
         self._open_on_open_button.clicked.connect(lambda: self._request_section("on_open"))
         self._open_on_close_button.clicked.connect(lambda: self._request_section("on_close"))
         self._open_init_button.clicked.connect(lambda: self._request_section("init"))
@@ -76,7 +83,9 @@ class PageFieldsPanel(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Field")
+        self._add_button.setIcon(make_icon("page"))
         self._remove_button = QPushButton("Remove Field")
+        self._remove_button.setIcon(make_icon("stop"))
         self._add_button.clicked.connect(self._on_add_field)
         self._remove_button.clicked.connect(self._on_remove_field)
         buttons.addWidget(self._add_button)

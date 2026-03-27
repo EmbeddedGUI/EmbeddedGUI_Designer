@@ -21,6 +21,7 @@ from ..model.page_timers import (
     suggest_page_timer_name,
     validate_page_timers,
 )
+from .iconography import make_icon
 
 
 class PageTimersPanel(QWidget):
@@ -44,9 +45,11 @@ class PageTimersPanel(QWidget):
         layout.setSpacing(6)
 
         self._summary_label = QLabel("")
+        self._summary_label.setObjectName("workspace_section_title")
         self._hint_label = QLabel(
             "Page timers generate egui_timer_t members plus helper functions. Delay and period are raw C expressions in milliseconds."
         )
+        self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
 
         self._table = QTableWidget(0, 5, self)
@@ -66,8 +69,11 @@ class PageTimersPanel(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Timer")
+        self._add_button.setIcon(make_icon("time"))
         self._remove_button = QPushButton("Remove Timer")
+        self._remove_button.setIcon(make_icon("stop"))
         self._open_code_button = QPushButton("Open User Code")
+        self._open_code_button.setIcon(make_icon("page"))
         self._add_button.clicked.connect(self._on_add_timer)
         self._remove_button.clicked.connect(self._on_remove_timer)
         self._open_code_button.clicked.connect(self._on_open_user_code)
