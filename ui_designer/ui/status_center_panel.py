@@ -409,7 +409,7 @@ class StatusCenterPanel(QWidget):
             menu_action.setStatusTip(menu_tooltip)
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
-        clear_action = self._repeat_action_menu.addAction("Clear Recent Actions")
+        clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
         clear_action.setIcon(make_icon("history", size=16))
         clear_action.setToolTip(self._clear_recent_actions_tooltip())
         clear_action.setStatusTip(clear_action.toolTip())
@@ -435,6 +435,10 @@ class StatusCenterPanel(QWidget):
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
         return f"Forget {count} recent status center {noun}."
+
+    def _clear_recent_actions_label(self):
+        count = len(self._recent_actions)
+        return f"Clear Recent Actions ({count})" if count > 0 else "Clear Recent Actions"
 
     def _repeat_action_tooltip(self, action_label):
         if not self._last_action:
@@ -545,8 +549,12 @@ class StatusCenterPanel(QWidget):
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
+        self._repeat_action_button.setIcon(make_icon(self._action_icon_key(self._last_action if has_action else "history")))
         self._repeat_action_button.setToolTip(self._repeat_action_tooltip(action_label))
         self._repeat_action_button.setStatusTip(self._repeat_action_button.toolTip())
+        self._repeat_action_button.setAccessibleName(
+            f"Repeat {action_label} action" if has_action else "Repeat last action"
+        )
         self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):

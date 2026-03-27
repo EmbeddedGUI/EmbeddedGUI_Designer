@@ -155,6 +155,7 @@ class TestStatusCenterPanel:
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._suggested_action_button.text() == "Fix First Error"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics."
+        assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
@@ -172,6 +173,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.toolTip() == "Open Project to configure the SDK workspace."
         assert panel._suggested_action_button.accessibleName() == "Suggested status action"
+        assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._workspace_summary_label.text() == (
             "Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected."
         )
@@ -283,6 +285,7 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
+        assert panel._repeat_action_button.accessibleName() == "Repeat Assets action"
         assert panel._recent_actions_label.text() == "Recent actions: Assets, Components, Structure, +1 more."
         assert panel._recent_actions_label.toolTip() == (
             "4 recent status center actions: Assets, Components, Structure, Project"
@@ -295,7 +298,7 @@ class TestStatusCenterPanel:
             "Components",
             "Structure",
             "Project",
-            "Clear Recent Actions",
+            "Clear Recent Actions (4)",
         ]
         panel.deleteLater()
 
@@ -324,7 +327,7 @@ class TestStatusCenterPanel:
             "Fields",
             "Animations",
             "Properties",
-            "Clear Recent Actions",
+            "Clear Recent Actions (4)",
         ]
         panel.deleteLater()
 
@@ -359,7 +362,7 @@ class TestStatusCenterPanel:
             "Debug Output",
             "Diagnostics",
             "Project",
-            "Clear Recent Actions",
+            "Clear Recent Actions (5)",
         ]
         panel.deleteLater()
 
@@ -404,7 +407,7 @@ class TestStatusCenterPanel:
         assert panel._info_row.accessibleName() == "Info diagnostics"
         assert panel._last_action_label.text() == "Last action: Info"
         assert panel._repeat_action_button.text() == "Repeat Info"
-        assert _menu_labels(panel._repeat_action_menu) == ["Info", "Warnings", "Errors", "Clear Recent Actions"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Info", "Warnings", "Errors", "Clear Recent Actions (3)"]
         panel.deleteLater()
 
     def test_health_rows_support_keyboard_activation(self, qapp):
@@ -441,6 +444,7 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: Fields"
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
+        assert panel._repeat_action_button.accessibleName() == "Repeat Fields action"
         assert panel._recent_actions_label.text() == "Recent actions: Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent status center actions: Fields, Debug Output"
         assert panel._repeat_action_button.toolTip() == (
@@ -450,7 +454,7 @@ class TestStatusCenterPanel:
             "last_action": "open_page_fields",
             "recent_actions": ["open_page_fields", "open_debug"],
         }
-        assert _menu_labels(panel._repeat_action_menu) == ["Fields", "Debug Output", "Clear Recent Actions"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Fields", "Debug Output", "Clear Recent Actions (2)"]
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
@@ -498,7 +502,8 @@ class TestStatusCenterPanel:
         assert emitted == ["open_components_panel"]
         assert panel._last_action_label.text() == "Last action: Components"
         assert panel._repeat_action_button.text() == "Repeat Components"
-        assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions"]
+        assert panel._repeat_action_button.accessibleName() == "Repeat Components action"
+        assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions (1)"]
         panel.deleteLater()
 
     def test_repeat_action_menu_replays_selected_recent_action(self, qapp):
@@ -525,7 +530,7 @@ class TestStatusCenterPanel:
             "Assets",
             "Debug Output",
             "Project",
-            "Clear Recent Actions",
+            "Clear Recent Actions (3)",
         ]
         replay_actions = [action for action in panel._repeat_action_menu.actions() if not action.isSeparator()]
         assert replay_actions[0].icon().isNull() is False
@@ -539,7 +544,9 @@ class TestStatusCenterPanel:
 
         panel._project_btn.click()
         panel._assets_btn.click()
-        clear_action = next(action for action in panel._repeat_action_menu.actions() if action.text() == "Clear Recent Actions")
+        clear_action = next(
+            action for action in panel._repeat_action_menu.actions() if action.text().startswith("Clear Recent Actions")
+        )
         clear_action.trigger()
 
         assert panel._last_action_label.text() == "Last action: None"
@@ -570,7 +577,7 @@ class TestStatusCenterPanel:
             "Debug Output",
             "Assets",
             "Project",
-            "Clear Recent Actions",
+            "Clear Recent Actions (3)",
         ]
         assert menu_actions[0].toolTip() == "Repeat the current action: Debug Output."
         assert menu_actions[1].toolTip() == "Replay Assets from recent status center history."
