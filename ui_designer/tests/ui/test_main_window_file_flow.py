@@ -6569,6 +6569,8 @@ class TestMainWindowCanvasActions:
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
+        assert root_actions["Parent"].statusTip() == root_actions["Parent"].toolTip()
+        assert root_actions["Managed"].statusTip() == root_actions["Managed"].toolTip()
         root_menu.deleteLater()
 
         container_menu, container_actions = _select_actions(container)
@@ -6599,6 +6601,7 @@ class TestMainWindowCanvasActions:
         assert container_actions["Same Parent Type"].isEnabled() is False
         assert container_actions["Subtree Type"].isEnabled() is False
         assert container_actions["Same Depth"].isEnabled() is True
+        assert container_actions["Children"].statusTip() == container_actions["Children"].toolTip()
         container_menu.deleteLater()
 
         child_menu, child_actions = _select_actions(child_a)
@@ -6648,6 +6651,8 @@ class TestMainWindowCanvasActions:
         assert "Unavailable: no other switch widgets exist under the same parent." in child_actions["Same Parent Type"].toolTip()
         assert "Unavailable: no other switch widgets exist in this subtree." in child_actions["Subtree Type"].toolTip()
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
+        assert child_actions["Children"].statusTip() == child_actions["Children"].toolTip()
+        assert child_actions["Same Type"].statusTip() == child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
 
         solo_menu, solo_actions = _select_actions(solo)

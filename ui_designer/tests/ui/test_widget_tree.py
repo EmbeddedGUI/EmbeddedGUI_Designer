@@ -1094,6 +1094,8 @@ class TestWidgetTreePanel:
         assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
+        assert root_actions["Parent"].statusTip() == root_actions["Parent"].toolTip()
+        assert root_actions["Managed"].statusTip() == root_actions["Managed"].toolTip()
         root_menu.deleteLater()
 
         first_menu = panel._build_context_menu(first)
@@ -1133,6 +1135,7 @@ class TestWidgetTreePanel:
         assert container_actions["Same Parent Type"].isEnabled() is False
         assert container_actions["Subtree Type"].isEnabled() is False
         assert container_actions["Same Depth"].isEnabled() is True
+        assert container_actions["Children"].statusTip() == container_actions["Children"].toolTip()
         container_menu.deleteLater()
 
         child_menu = panel._build_context_menu(child_a)
@@ -1183,6 +1186,8 @@ class TestWidgetTreePanel:
         assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         assert "Unavailable: widget does not have a previous sibling under the same parent." in child_actions["Previous Sibling"].toolTip()
         assert "Unavailable: widget does not have any previous siblings under the same parent." in child_actions["Previous Siblings"].toolTip()
+        assert child_actions["Children"].statusTip() == child_actions["Children"].toolTip()
+        assert child_actions["Same Type"].statusTip() == child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
 
         solo_menu = panel._build_context_menu(solo)

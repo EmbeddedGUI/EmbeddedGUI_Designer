@@ -1595,11 +1595,14 @@ class WidgetTreePanel(QWidget):
             can_select_same_type,
             can_select_same_depth,
         ])
+        for action in select_menu.actions():
+            action.setStatusTip(action.toolTip())
         select_menu.menuAction().setEnabled(select_enabled)
         if not select_enabled:
             select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")
         else:
             select_menu.menuAction().setToolTip("")
+        select_menu.menuAction().setStatusTip(select_menu.menuAction().toolTip())
 
     def _move_target_memory_key(self):
         if self.project is None:
