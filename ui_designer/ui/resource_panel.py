@@ -44,6 +44,7 @@ from qfluentwidgets import (
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
+from .iconography import make_icon
 
 
 # -- Constants ----------------------------------------------------------
@@ -812,23 +813,28 @@ class ResourcePanel(QWidget):
 
         img_btn_layout = QHBoxLayout()
         import_img_btn = PushButton("Import Image...")
+        import_img_btn.setIcon(make_icon("image"))
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
         restore_img_btn = PushButton("Restore Missing...")
+        restore_img_btn.setIcon(make_icon("history"))
         restore_img_btn.setToolTip("Restore missing image files by matching selected filenames against missing catalog entries.")
         restore_img_btn.clicked.connect(lambda: self._restore_missing_resources("image"))
         img_btn_layout.addWidget(restore_img_btn)
         replace_img_btn = PushButton("Replace Missing...")
+        replace_img_btn.setIcon(make_icon("properties"))
         replace_img_btn.setToolTip("Replace missing image resources with new files and rewrite widget references to the new filenames.")
         replace_img_btn.clicked.connect(lambda: self._replace_missing_resources("image"))
         img_btn_layout.addWidget(replace_img_btn)
         next_missing_img_btn = PushButton("Next Missing")
+        next_missing_img_btn.setIcon(make_icon("navigation"))
         next_missing_img_btn.setToolTip("Select the next missing image resource in this tab.")
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
         img_btn_layout.addStretch()
         img_tab_layout.addLayout(img_btn_layout)
         self._tabs.addTab(img_tab, "Images")
+        self._tabs.setTabIcon(0, make_icon("image"))
 
         # Fonts tab
         font_tab = QWidget()
@@ -847,23 +853,28 @@ class ResourcePanel(QWidget):
 
         font_btn_layout = QHBoxLayout()
         import_font_btn = PushButton("Import Font...")
+        import_font_btn.setIcon(make_icon("text"))
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
         restore_font_btn = PushButton("Restore Missing...")
+        restore_font_btn.setIcon(make_icon("history"))
         restore_font_btn.setToolTip("Restore missing font files by matching selected filenames against missing catalog entries.")
         restore_font_btn.clicked.connect(lambda: self._restore_missing_resources("font"))
         font_btn_layout.addWidget(restore_font_btn)
         replace_font_btn = PushButton("Replace Missing...")
+        replace_font_btn.setIcon(make_icon("properties"))
         replace_font_btn.setToolTip("Replace missing font resources with new files and rewrite widget references to the new filenames.")
         replace_font_btn.clicked.connect(lambda: self._replace_missing_resources("font"))
         font_btn_layout.addWidget(replace_font_btn)
         next_missing_font_btn = PushButton("Next Missing")
+        next_missing_font_btn.setIcon(make_icon("navigation"))
         next_missing_font_btn.setToolTip("Select the next missing font resource in this tab.")
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
         font_btn_layout.addStretch()
         font_tab_layout.addLayout(font_btn_layout)
         self._tabs.addTab(font_tab, "Fonts")
+        self._tabs.setTabIcon(1, make_icon("text"))
 
         # Text tab
         text_tab = QWidget()
@@ -882,24 +893,29 @@ class ResourcePanel(QWidget):
 
         text_btn_layout = QHBoxLayout()
         import_text_btn = PushButton("Import Text...")
+        import_text_btn.setIcon(make_icon("text"))
         import_text_btn.setToolTip("Import supported-text .txt file into .eguiproject/resources/")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
         restore_text_btn = PushButton("Restore Missing...")
+        restore_text_btn.setIcon(make_icon("history"))
         restore_text_btn.setToolTip("Restore missing text files by matching selected filenames against missing catalog entries.")
         restore_text_btn.clicked.connect(lambda: self._restore_missing_resources("text"))
         text_btn_layout.addWidget(restore_text_btn)
         replace_text_btn = PushButton("Replace Missing...")
+        replace_text_btn.setIcon(make_icon("properties"))
         replace_text_btn.setToolTip("Replace missing text resources with new files and rewrite widget references to the new filenames.")
         replace_text_btn.clicked.connect(lambda: self._replace_missing_resources("text"))
         text_btn_layout.addWidget(replace_text_btn)
         next_missing_text_btn = PushButton("Next Missing")
+        next_missing_text_btn.setIcon(make_icon("navigation"))
         next_missing_text_btn.setToolTip("Select the next missing text resource in this tab.")
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
         text_btn_layout.addStretch()
         text_tab_layout.addLayout(text_btn_layout)
         self._tabs.addTab(text_tab, "Text")
+        self._tabs.setTabIcon(2, make_icon("text"))
 
         # Strings (i18n) tab
         strings_tab = QWidget()
@@ -915,9 +931,11 @@ class ResourcePanel(QWidget):
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
         add_locale_btn = PushButton("Add Locale...")
+        add_locale_btn.setIcon(make_icon("page"))
         add_locale_btn.clicked.connect(self._on_add_locale)
         locale_row.addWidget(add_locale_btn)
         remove_locale_btn = PushButton("Remove Locale")
+        remove_locale_btn.setIcon(make_icon("stop"))
         remove_locale_btn.clicked.connect(self._on_remove_locale)
         locale_row.addWidget(remove_locale_btn)
         locale_row.addStretch()
@@ -941,18 +959,22 @@ class ResourcePanel(QWidget):
         # Buttons
         str_btn_layout = QHBoxLayout()
         add_key_btn = PushButton("Add Key...")
+        add_key_btn.setIcon(make_icon("page"))
         add_key_btn.clicked.connect(self._on_add_string_key)
         str_btn_layout.addWidget(add_key_btn)
         rename_key_btn = PushButton("Rename Key...")
+        rename_key_btn.setIcon(make_icon("properties"))
         rename_key_btn.clicked.connect(self._on_rename_string_key)
         str_btn_layout.addWidget(rename_key_btn)
         remove_key_btn = PushButton("Remove Key")
+        remove_key_btn.setIcon(make_icon("stop"))
         remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(remove_key_btn)
         str_btn_layout.addStretch()
         strings_tab_layout.addLayout(str_btn_layout)
 
         self._tabs.addTab(strings_tab, "Strings")
+        self._tabs.setTabIcon(3, make_icon("assets"))
 
         top_layout.addWidget(self._tabs, 1)
         splitter.addWidget(top_widget)
@@ -964,6 +986,7 @@ class ResourcePanel(QWidget):
         bottom_layout.setSpacing(4)
 
         preview_caption = QLabel("Preview")
+        preview_caption.setObjectName("workspace_section_title")
         bottom_layout.addWidget(preview_caption)
 
         self._preview = _PreviewWidget()
@@ -971,6 +994,7 @@ class ResourcePanel(QWidget):
         bottom_layout.addWidget(self._preview, 1)
 
         usage_caption = QLabel("Usage")
+        usage_caption.setObjectName("workspace_section_title")
         bottom_layout.addWidget(usage_caption)
 
         usage_filter_row = QHBoxLayout()
