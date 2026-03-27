@@ -6021,6 +6021,87 @@ class TestMainWindowCanvasActions:
         assert "Same Depth" in select_labels
         _close_window(window)
 
+    def test_build_preview_context_menu_structure_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewStructureMenuOrderDemo"
+        project = _create_project(project_dir, "PreviewStructureMenuOrderDemo", sdk_root)
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
+        project.get_startup_page().root_widget.add_child(first)
+        project.get_startup_page().root_widget.add_child(second)
+        project.get_startup_page().root_widget.add_child(target)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(first)
+        structure_menu = next(action.menu() for action in menu.actions() if action.text() == "Structure")
+        structure_labels = [action.text() for action in structure_menu.actions() if action.text()]
+
+        assert structure_labels == [
+            "Group Selection",
+            "Ungroup",
+            "Move Into...",
+            "Move Into Last Target",
+            "Clear Move Target History",
+            "Quick Move Into",
+            "Lift To Parent",
+            "Move Up",
+            "Move Down",
+            "Move To Top",
+            "Move To Bottom",
+        ]
+        _close_window(window)
+
+    def test_build_preview_context_menu_arrange_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewArrangeMenuOrderDemo"
+        project = _create_project(project_dir, "PreviewArrangeMenuOrderDemo", sdk_root)
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        project.get_startup_page().root_widget.add_child(first)
+        project.get_startup_page().root_widget.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(first)
+        arrange_menu = next(action.menu() for action in menu.actions() if action.text() == "Arrange")
+        arrange_labels = [action.text() for action in arrange_menu.actions() if action.text()]
+
+        assert arrange_labels == [
+            "Align Left",
+            "Align Right",
+            "Align Top",
+            "Align Bottom",
+            "Align Horizontal Center",
+            "Align Vertical Center",
+            "Distribute Horizontally",
+            "Distribute Vertically",
+            "Bring to Front",
+            "Send to Back",
+            "Toggle Lock",
+            "Toggle Hide",
+        ]
+        _close_window(window)
+
     def test_build_preview_context_menu_select_actions_reflect_widget_relationships(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

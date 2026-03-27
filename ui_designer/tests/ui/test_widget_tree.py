@@ -45,6 +45,11 @@ def _structure_menu_actions(menu):
     return {action.text(): action for action in structure_menu.actions() if action.text()}
 
 
+def _structure_menu_labels(menu):
+    structure_menu = _context_submenu(menu, "Structure")
+    return [action.text() for action in structure_menu.actions() if action.text()]
+
+
 def _context_submenu(menu, label):
     for action in menu.actions():
         if action.text() == label:
@@ -86,6 +91,40 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_context_menu_structure_actions_appear_in_expected_order(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        target = WidgetModel("group", name="target")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first, second], primary=first)
+
+        menu = panel._build_context_menu(first)
+        assert _structure_menu_labels(menu) == [
+            "Group Selection",
+            "Ungroup",
+            "Move Into...",
+            "Move Into Last Target",
+            "Clear Move Target History",
+            "Quick Move Into",
+            "Lift To Parent",
+            "Move Up",
+            "Move Down",
+            "Move To Top",
+            "Move To Bottom",
+        ]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_context_menu_select_actions_appear_in_expected_order(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
