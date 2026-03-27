@@ -583,14 +583,21 @@ class StatusCenterPanel(QWidget):
     def _project_button_text(self, sdk_ready):
         return "Project" if sdk_ready else "Project (Setup)"
 
-    def _set_button_count_text(self, button, count=0):
-        base_text = str(button.property("baseText") or button.text() or "").strip()
-        value = max(int(count or 0), 0)
-        button.setText(f"{base_text} ({value})" if value > 0 else base_text)
-
     def _counted_label(self, base_text, count=0):
         value = max(int(count or 0), 0)
         return f"{base_text} ({value})" if value > 0 else str(base_text or "").strip()
+
+    def _diagnostics_button_text(self, total_count):
+        total = max(int(total_count or 0), 0)
+        return f"Diagnostics ({total} active)" if total > 0 else "Diagnostics"
+
+    def _history_button_text(self, dirty_count):
+        total = max(int(dirty_count or 0), 0)
+        return f"History ({total} dirty)" if total > 0 else "History"
+
+    def _structure_button_text(self, selection_total):
+        total = max(int(selection_total or 0), 0)
+        return f"Structure ({total} selected)" if total > 0 else "Structure"
 
     def _set_metric_context(self, label, value_label, card, summary):
         summary_text = str(summary or "").strip()
@@ -946,9 +953,9 @@ class StatusCenterPanel(QWidget):
         self._error_bar.setValue(int(round((error_count * 100.0) / total)))
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
-        self._set_button_count_text(self._diag_btn, diag_total)
-        self._set_button_count_text(self._history_btn, dirty_count)
-        self._set_button_count_text(self._structure_btn, selection_total)
+        self._diag_btn.setText(self._diagnostics_button_text(diag_total))
+        self._history_btn.setText(self._history_button_text(dirty_count))
+        self._structure_btn.setText(self._structure_button_text(selection_total))
         self._diag_btn.setAccessibleName(
             self._action_button_accessible_name("open_diagnostics", self._diag_btn.text())
         )
