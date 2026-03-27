@@ -6410,6 +6410,8 @@ class TestMainWindowCanvasActions:
 
         window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
         menu, actions = _arrange_actions()
+        arrange_action = next(action for action in menu.actions() if action.text() == "Arrange")
+        assert arrange_action.isEnabled() is True
         assert actions["Align Left"].isEnabled() is False
         assert actions["Align Vertical Center"].isEnabled() is False
         assert actions["Distribute Horizontally"].isEnabled() is False
@@ -6654,6 +6656,9 @@ class TestMainWindowCanvasActions:
         assert actions["Paste"].isEnabled() is False
         assert actions["Duplicate"].isEnabled() is False
         assert actions["Delete"].isEnabled() is False
+        assert actions["Arrange"].isEnabled() is False
+        assert actions["Arrange"].toolTip() == "Arrange unavailable: select at least 1 widget."
+        assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
         assert actions["Structure"].isEnabled() is False
 
         assert arrange_actions["Align Left"].isEnabled() is False

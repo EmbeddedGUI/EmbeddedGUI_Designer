@@ -3796,6 +3796,29 @@ class MainWindow(QMainWindow):
             self._toggle_hide_action,
         ):
             arrange_menu.addAction(action)
+        arrange_enabled = any(
+            action.isEnabled()
+            for action in (
+                self._align_left_action,
+                self._align_right_action,
+                self._align_top_action,
+                self._align_bottom_action,
+                self._align_hcenter_action,
+                self._align_vcenter_action,
+                self._distribute_h_action,
+                self._distribute_v_action,
+                self._bring_front_action,
+                self._send_back_action,
+                self._toggle_lock_action,
+                self._toggle_hide_action,
+            )
+        )
+        arrange_menu.setEnabled(arrange_enabled)
+        arrange_hint = ""
+        if not arrange_enabled:
+            arrange_hint = "Arrange unavailable: select at least 1 widget."
+        arrange_menu.menuAction().setToolTip(arrange_hint)
+        arrange_menu.menuAction().setStatusTip(arrange_hint)
 
         structure_menu = menu.addMenu("Structure")
         structure_menu.setToolTipsVisible(True)
