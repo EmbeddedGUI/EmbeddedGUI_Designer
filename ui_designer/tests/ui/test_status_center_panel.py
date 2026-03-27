@@ -267,6 +267,9 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
+        assert panel._header_title.text() == "Status Center (Workspace)"
+        assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace."
+        assert panel._header_title.accessibleName() == "Status Center (Workspace)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Configure SDK."
         assert panel._header_subtitle.toolTip() == (
             "Status Center: Check Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
@@ -345,6 +348,7 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Action needed now. Focus on Fix First Error (1)."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
@@ -355,6 +359,7 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
+        assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Review First Warning (2)."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Review First Warning (2)"
@@ -365,6 +370,7 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
+        assert panel._header_title.text() == "Status Center (Runtime)"
         assert panel._header_subtitle.text() == "Action needed now. Focus on Inspect Debug Output."
         assert panel._suggested_action_label.text() == "Suggested next step (Runtime):"
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
@@ -373,6 +379,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output. Bridge lost"
 
         panel.set_status(sdk_ready=True, can_compile=False)
+        assert panel._header_title.text() == "Status Center (Build)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Check Compile Output."
         assert panel._suggested_action_label.text() == "Suggested next step (Build):"
         assert panel._suggested_action_button.text() == "Check Compile Output"
@@ -383,6 +390,7 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        assert panel._header_title.text() == "Status Center (History)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Review History (2)."
         assert panel._suggested_action_label.text() == "Suggested next step (History):"
         assert panel._suggested_action_button.text() == "Review History (2)"
@@ -391,6 +399,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History. 2 dirty pages pending."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
+        assert panel._header_title.text() == "Status Center (Selection)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Inspect Selection (3)."
         assert panel._suggested_action_label.text() == "Suggested next step (Selection):"
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
@@ -399,6 +408,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection. 3 widgets selected."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
+        assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Inspect Info (2)."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
@@ -407,6 +417,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics. 2 info items active."
 
         panel.set_status(sdk_ready=True, can_compile=True)
+        assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Workspace looks ready. Open Diagnostics remains available."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Open Diagnostics"

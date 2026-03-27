@@ -95,9 +95,10 @@ class StatusCenterPanel(QWidget):
         header_title_row = QHBoxLayout()
         header_title_row.setContentsMargins(0, 0, 0, 0)
         header_title_row.setSpacing(8)
-        title = QLabel("Status Center")
-        title.setObjectName("workspace_section_title")
-        header_title_row.addWidget(title)
+        self._header_title = QLabel("Status Center")
+        self._header_title.setObjectName("workspace_section_title")
+        self._header_title.setAccessibleName("Status Center")
+        header_title_row.addWidget(self._header_title)
         self._workspace_chip = QToolButton()
         self._workspace_chip.setText("Check Workspace")
         self._workspace_chip.setObjectName("workspace_status_chip")
@@ -687,6 +688,15 @@ class StatusCenterPanel(QWidget):
             return f"Status Center: {status}. {hint}"
         return f"Status Center: {status}."
 
+    def _header_title_text(self, suggested_context):
+        context = str(suggested_context or "").strip()
+        return f"Status Center ({context})" if context else "Status Center"
+
+    def _header_title_tooltip(self, suggested_context, workspace_chip_label):
+        context = str(suggested_context or "").strip() or "Status"
+        status = str(workspace_chip_label or "").strip() or "Ready"
+        return f"Status Center focused on {context}. {status}."
+
     def _suggested_action_state(
         self,
         *,
@@ -974,6 +984,12 @@ class StatusCenterPanel(QWidget):
             info_count=info_count,
             runtime_text=runtime_text,
         )
+        self._header_title.setText(self._header_title_text(suggested_context))
+        self._set_hint(
+            self._header_title,
+            self._header_title_tooltip(suggested_context, workspace_chip_label),
+        )
+        self._header_title.setAccessibleName(self._header_title.text())
         header_subtitle = self._header_subtitle_text(workspace_chip_label, suggested_label)
         self._header_subtitle.setText(header_subtitle)
         self._set_hint(
