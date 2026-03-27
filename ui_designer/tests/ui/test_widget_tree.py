@@ -203,6 +203,25 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_context_menu_add_child_actions_follow_registry_order(self, qapp):
+        from ui_designer.model.widget_registry import WidgetRegistry
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        menu = panel._build_context_menu(root)
+        add_child_menu = _context_submenu(menu, "Add Child")
+
+        assert [action.text() for action in add_child_menu.actions() if action.text()] == [
+            display_name for display_name, _ in WidgetRegistry.instance().addable_types()
+        ]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
