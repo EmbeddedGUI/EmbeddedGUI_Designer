@@ -349,6 +349,7 @@ class StatusCenterPanel(QWidget):
         top.addWidget(title, 1)
         value_label = QLabel("0")
         value_label.setObjectName("status_center_health_value")
+        value_label.setAccessibleName(f"{label} diagnostics value")
         top.addWidget(value_label, 0, Qt.AlignRight)
         row_layout.addLayout(top)
 
@@ -357,6 +358,7 @@ class StatusCenterPanel(QWidget):
         bar.setTextVisible(False)
         bar.setRange(0, 100)
         bar.setValue(0)
+        bar.setAccessibleName(f"{label} diagnostics share")
         row_layout.addWidget(bar)
         host_layout.addWidget(row)
         return value_label, bar, row
@@ -489,6 +491,14 @@ class StatusCenterPanel(QWidget):
         if value <= 0:
             return f"No {plural} active."
         return f"{self._count_label(value, singular, plural)} active."
+
+    def _count_with_percent(self, count, total, singular, plural):
+        value = max(int(count or 0), 0)
+        total_value = max(int(total or 0), 0)
+        if total_value <= 0:
+            return self._count_label(value, singular, plural)
+        percent = int(round((value * 100.0) / total_value))
+        return f"{self._count_label(value, singular, plural)} ({percent}%)"
 
     def _set_button_count_text(self, button, count=0):
         base_text = str(button.property("baseText") or button.text() or "").strip()
@@ -719,9 +729,9 @@ class StatusCenterPanel(QWidget):
             f"{info_count} info"
         )
         total = max(error_count + warning_count + info_count, 1)
-        self._error_value.setText(str(error_count))
-        self._warning_value.setText(str(warning_count))
-        self._info_value.setText(str(info_count))
+        self._error_value.setText(self._count_with_percent(error_count, diag_total, "error", "errors"))
+        self._warning_value.setText(self._count_with_percent(warning_count, diag_total, "warning", "warnings"))
+        self._info_value.setText(self._count_with_percent(info_count, diag_total, "info item", "info items"))
         self._error_bar.setValue(int(round((error_count * 100.0) / total)))
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
@@ -821,6 +831,21 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
+        self._error_value.setToolTip("Errors: " + self._error_value.text())
+        self._warning_value.setToolTip("Warnings: " + self._warning_value.text())
+        self._info_value.setToolTip("Info: " + self._info_value.text())
+        self._error_value.setStatusTip(self._error_value.toolTip())
+        self._warning_value.setStatusTip(self._warning_value.toolTip())
+        self._info_value.setStatusTip(self._info_value.toolTip())
+        self._error_value.setAccessibleName(f"Errors value: {self._error_value.text()}")
+        self._warning_value.setAccessibleName(f"Warnings value: {self._warning_value.text()}")
+        self._info_value.setAccessibleName(f"Info value: {self._info_value.text()}")
+        self._set_hint(self._error_bar, f"Errors share: {self._error_value.text()}")
+        self._set_hint(self._warning_bar, f"Warnings share: {self._warning_value.text()}")
+        self._set_hint(self._info_bar, f"Info share: {self._info_value.text()}")
+        self._error_bar.setAccessibleName(f"Errors share: {self._error_value.text()}")
+        self._warning_bar.setAccessibleName(f"Warnings share: {self._warning_value.text()}")
+        self._info_bar.setAccessibleName(f"Info share: {self._info_value.text()}")
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
         self._set_hint(self._health_summary_label, health_summary)
