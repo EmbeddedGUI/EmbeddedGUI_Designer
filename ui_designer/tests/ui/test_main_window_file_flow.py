@@ -6421,6 +6421,48 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    def test_build_preview_context_menu_quick_move_into_shows_recent_placeholder_without_history(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewQuickMovePlaceholderDemo"
+        project = _create_project(project_dir, "PreviewQuickMovePlaceholderDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        child = WidgetModel("label", name="child")
+        root.add_child(target)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([child], primary=child, sync_tree=True, sync_preview=False)
+
+        menu = window._build_preview_context_menu(child)
+        structure_menu = _context_submenu(menu, "Structure")
+        quick_move_menu = next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into")
+        action_texts = [action.text() for action in quick_move_menu.actions()]
+        recent_placeholder = next(action for action in quick_move_menu.actions() if action.text() == "(No recent targets yet)")
+        repeat_action = next(action for action in quick_move_menu.actions() if action.text() == "Move Into Last Target")
+        clear_action = next(action for action in quick_move_menu.actions() if action.text() == "Clear Move Target History")
+
+        assert "Recent Targets" in action_texts
+        assert "Other Targets" in action_texts
+        assert "History" in action_texts
+        assert recent_placeholder.isEnabled() is False
+        assert repeat_action.isEnabled() is False
+        assert clear_action.isEnabled() is False
+        assert _menu_target_labels(quick_move_menu) == ["root_group / target (group)"]
+
+        menu.deleteLater()
+        _close_window(window)
+
     def test_preview_context_menu_select_actions_sync_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
