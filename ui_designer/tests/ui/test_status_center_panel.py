@@ -18,6 +18,10 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
+def _menu_labels(menu):
+    return [action.text() for action in menu.actions() if not action.isSeparator()]
+
+
 @pytest.fixture
 def qapp():
     app = QApplication.instance()
@@ -115,7 +119,13 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Assets", "Components", "Structure", "Project"]
+        assert _menu_labels(panel._repeat_action_menu) == [
+            "Assets",
+            "Components",
+            "Structure",
+            "Project",
+            "Clear Recent Actions",
+        ]
         panel.deleteLater()
 
     def test_inspector_navigation_buttons_emit_expected_actions(self, qapp):
@@ -138,7 +148,13 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Timers"
         assert panel._repeat_action_button.text() == "Repeat Timers"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Timers", "Fields", "Animations", "Properties"]
+        assert _menu_labels(panel._repeat_action_menu) == [
+            "Timers",
+            "Fields",
+            "Animations",
+            "Properties",
+            "Clear Recent Actions",
+        ]
         panel.deleteLater()
 
     def test_metric_cards_emit_expected_actions(self, qapp):
@@ -166,12 +182,13 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: History"
         assert panel._repeat_action_button.text() == "Repeat History"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == [
+        assert _menu_labels(panel._repeat_action_menu) == [
             "History",
             "Structure",
             "Debug Output",
             "Diagnostics",
             "Project",
+            "Clear Recent Actions",
         ]
         panel.deleteLater()
 
@@ -216,7 +233,7 @@ class TestStatusCenterPanel:
         assert panel._info_row.accessibleName() == "Info diagnostics"
         assert panel._last_action_label.text() == "Last action: Info"
         assert panel._repeat_action_button.text() == "Repeat Info"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Info", "Warnings", "Errors"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Info", "Warnings", "Errors", "Clear Recent Actions"]
         panel.deleteLater()
 
     def test_health_rows_support_keyboard_activation(self, qapp):
@@ -248,7 +265,7 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["No recent actions"]
+        assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.restore_view_state({"last_action": "open_page_fields", "recent_actions": ["open_page_fields", "open_debug"]})
         assert panel._last_action_label.text() == "Last action: Fields"
         assert panel._repeat_action_button.isEnabled() is True
@@ -257,14 +274,14 @@ class TestStatusCenterPanel:
             "last_action": "open_page_fields",
             "recent_actions": ["open_page_fields", "open_debug"],
         }
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Fields", "Debug Output"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Fields", "Debug Output", "Clear Recent Actions"]
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["No recent actions"]
+        assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.deleteLater()
 
     def test_runtime_panel_emits_debug_action(self, qapp):
@@ -302,7 +319,7 @@ class TestStatusCenterPanel:
         assert emitted == ["open_components_panel"]
         assert panel._last_action_label.text() == "Last action: Components"
         assert panel._repeat_action_button.text() == "Repeat Components"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Components"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions"]
         panel.deleteLater()
 
     def test_repeat_action_menu_replays_selected_recent_action(self, qapp):
@@ -325,9 +342,27 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
-        assert [action.text() for action in panel._repeat_action_menu.actions()] == [
+        assert _menu_labels(panel._repeat_action_menu) == [
             "Assets",
             "Debug Output",
             "Project",
+            "Clear Recent Actions",
         ]
+        panel.deleteLater()
+
+    def test_repeat_action_menu_can_clear_recent_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        panel._project_btn.click()
+        panel._assets_btn.click()
+        clear_action = next(action for action in panel._repeat_action_menu.actions() if action.text() == "Clear Recent Actions")
+        clear_action.trigger()
+
+        assert panel._last_action_label.text() == "Last action: None"
+        assert panel._repeat_action_button.isEnabled() is False
+        assert panel._repeat_action_button.text() == "Repeat Action"
+        assert panel.view_state() == {"last_action": "", "recent_actions": []}
+        assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.deleteLater()

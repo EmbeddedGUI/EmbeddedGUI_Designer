@@ -345,6 +345,10 @@ class StatusCenterPanel(QWidget):
             menu_action = self._repeat_action_menu.addAction(action_label)
             menu_action.setToolTip(f"Replay {action_label}")
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
+        self._repeat_action_menu.addSeparator()
+        clear_action = self._repeat_action_menu.addAction("Clear Recent Actions")
+        clear_action.setToolTip("Forget the recent status center actions.")
+        clear_action.triggered.connect(self._clear_recent_actions)
 
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
@@ -366,6 +370,9 @@ class StatusCenterPanel(QWidget):
         if not self._last_action:
             return
         self._emit_action(self._last_action)
+
+    def _clear_recent_actions(self):
+        self._set_last_action("", [])
 
     def _open_health_chip_target(self):
         self._emit_action(self._health_chip_action or "open_diagnostics")

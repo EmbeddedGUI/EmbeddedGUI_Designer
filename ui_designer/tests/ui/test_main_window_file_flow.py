@@ -6082,10 +6082,11 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
 
-        assert [action.text() for action in window.status_center_panel._repeat_action_menu.actions()] == [
+        assert [action.text() for action in window.status_center_panel._repeat_action_menu.actions() if not action.isSeparator()] == [
             "Assets",
             "Project",
             "Debug Output",
+            "Clear Recent Actions",
         ]
 
         window.status_center_panel._repeat_action_menu.actions()[1].trigger()
@@ -6095,6 +6096,30 @@ class TestMainWindowFileFlow:
         assert window.status_center_panel._last_action_label.text() == "Last action: Project"
         assert window.status_center_panel._repeat_action_button.text() == "Repeat Project"
         _close_window(window)
+
+    def test_status_center_recent_action_menu_can_clear_restored_history(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        isolated_config.workspace_status_panel_state = {
+            "last_action": "open_assets_panel",
+            "recent_actions": ["open_assets_panel", "open_project_panel", "open_debug"],
+        }
+
+        window = MainWindow("")
+
+        clear_action = next(
+            action
+            for action in window.status_center_panel._repeat_action_menu.actions()
+            if action.text() == "Clear Recent Actions"
+        )
+        clear_action.trigger()
+
+        assert window.status_center_panel._last_action_label.text() == "Last action: None"
+        assert window.status_center_panel._repeat_action_button.isEnabled() is False
+        assert window.status_center_panel.view_state() == {"last_action": "", "recent_actions": []}
+
+        _close_window(window)
+        assert isolated_config.workspace_status_panel_state == {"last_action": "", "recent_actions": []}
 
 
 @_skip_no_qt
