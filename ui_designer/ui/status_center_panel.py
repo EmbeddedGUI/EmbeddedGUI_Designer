@@ -289,9 +289,22 @@ class StatusCenterPanel(QWidget):
         runtime_layout = QVBoxLayout(runtime)
         runtime_layout.setContentsMargins(12, 12, 12, 12)
         runtime_layout.setSpacing(6)
+        runtime_title_row = QHBoxLayout()
+        runtime_title_row.setContentsMargins(0, 0, 0, 0)
+        runtime_title_row.setSpacing(8)
         runtime_title = QLabel("Runtime")
         runtime_title.setObjectName("workspace_section_title")
-        runtime_layout.addWidget(runtime_title)
+        runtime_title_row.addWidget(runtime_title)
+        self._runtime_chip = QToolButton()
+        self._runtime_chip.setText("Clear")
+        self._runtime_chip.setObjectName("workspace_status_chip")
+        self._runtime_chip.setProperty("chipTone", "success")
+        self._runtime_chip.setCursor(Qt.PointingHandCursor)
+        self._runtime_chip.setAccessibleName("Runtime status: Clear")
+        self._runtime_chip.clicked.connect(lambda: self._emit_action("open_debug"))
+        runtime_title_row.addStretch()
+        runtime_title_row.addWidget(self._runtime_chip)
+        runtime_layout.addLayout(runtime_title_row)
         self._runtime_label = QLabel("No runtime errors.")
         self._runtime_label.setObjectName("workspace_section_subtitle")
         self._runtime_label.setWordWrap(True)
@@ -323,6 +336,7 @@ class StatusCenterPanel(QWidget):
         card_layout.addLayout(top)
         value_label = QLabel(value)
         value_label.setObjectName("status_center_metric_value")
+        value_label.setAccessibleName(f"{label} value")
         card_layout.addWidget(value_label)
         grid_layout.addWidget(card, row, col)
         return value_label, card
@@ -508,6 +522,14 @@ class StatusCenterPanel(QWidget):
     def _counted_label(self, base_text, count=0):
         value = max(int(count or 0), 0)
         return f"{base_text} ({value})" if value > 0 else str(base_text or "").strip()
+
+    def _set_metric_context(self, label, value_label, card, summary):
+        summary_text = str(summary or "").strip()
+        label_text = str(label or "").strip() or "Metric"
+        self._set_hint(value_label, f"{label_text}: {summary_text}")
+        value_label.setAccessibleName(f"{label_text} value: {summary_text}")
+        self._set_hint(card, f"Open {label_text}. {summary_text}")
+        card.setAccessibleName(f"{label_text} metric: {summary_text}")
 
     def _diagnostic_summary_text(self, error_count, warning_count, info_count):
         errors = max(int(error_count or 0), 0)
@@ -751,6 +773,12 @@ class StatusCenterPanel(QWidget):
         self._set_button_count_text(self._diag_btn, diag_total)
         self._set_button_count_text(self._history_btn, dirty_count)
         self._set_button_count_text(self._structure_btn, selection_total)
+        self._set_metric_context("SDK", self._sdk_value, self._sdk_card, self._sdk_value.text())
+        self._set_metric_context("Compile", self._compile_value, self._compile_card, self._compile_value.text())
+        self._set_metric_context("Diagnostics", self._diag_value, self._diag_card, self._diag_value.text())
+        self._set_metric_context("Preview", self._preview_value, self._preview_card, self._preview_value.text())
+        self._set_metric_context("Selection", self._selection_value, self._selection_card, self._selection_value.text())
+        self._set_metric_context("Dirty Pages", self._dirty_value, self._dirty_card, self._dirty_value.text())
         self._set_hint(
             self._sdk_card,
             "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
@@ -905,7 +933,15 @@ class StatusCenterPanel(QWidget):
         )
         if runtime_text:
             self._runtime_label.setText(runtime_text)
+            self._set_chip_text(self._runtime_chip, "Issue", "danger")
+            self._set_widget_icon(self._runtime_chip, "debug", size=16)
+            self._runtime_chip.setAccessibleName("Runtime status: Issue")
+            self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
             self._runtime_label.setText("No runtime errors.")
+            self._set_chip_text(self._runtime_chip, "Clear", "success")
+            self._set_widget_icon(self._runtime_chip, "debug", size=16)
+            self._runtime_chip.setAccessibleName("Runtime status: Clear")
+            self._set_hint(self._runtime_chip, "Open Debug Output. No runtime errors.")
             self._set_hint(self._runtime_panel, "Open Debug Output. No runtime errors.")

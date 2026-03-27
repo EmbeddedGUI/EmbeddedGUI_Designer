@@ -43,6 +43,9 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
+        assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warnings, 1 info"
+        assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warnings, 1 info"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: 2 errors, 1 warnings, 1 info"
         assert panel._error_bar.value() == 50
         assert panel._warning_bar.value() == 25
         assert panel._info_bar.value() == 25
@@ -98,6 +101,10 @@ class TestStatusCenterPanel:
         assert panel._info_value.text() == "1 info item (25%)"
         assert panel._warning_bar.toolTip() == "Warnings share: 3 warnings (75%)"
         assert panel._runtime_label.text() == "Runtime failed"
+        assert panel._runtime_chip.text() == "Issue"
+        assert panel._runtime_chip.property("chipTone") == "danger"
+        assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
+        assert panel._runtime_chip.accessibleName() == "Runtime status: Issue"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
@@ -124,6 +131,10 @@ class TestStatusCenterPanel:
         assert panel._info_value.text() == "2 info items (100%)"
         assert panel._info_bar.toolTip() == "Info share: 2 info items (100%)"
         assert panel._runtime_label.text() == "No runtime errors."
+        assert panel._runtime_chip.text() == "Clear"
+        assert panel._runtime_chip.property("chipTone") == "success"
+        assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
+        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
@@ -152,6 +163,8 @@ class TestStatusCenterPanel:
         assert panel._warning_bar.toolTip() == "Warnings share: 0 warnings"
         assert panel._info_bar.toolTip() == "Info share: 0 info items"
         assert panel._runtime_label.text() == "No runtime errors."
+        assert panel._runtime_chip.text() == "Clear"
+        assert panel._runtime_chip.property("chipTone") == "success"
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
         assert panel._warning_row.toolTip() == "Open Warnings. No warnings active."
         assert panel._info_row.toolTip() == "Open Info. No info items active."
@@ -187,6 +200,17 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
+        assert panel._sdk_value.toolTip() == "SDK: SDK Ready"
+        assert panel._sdk_value.accessibleName() == "SDK value: SDK Ready"
+        assert panel._sdk_card.accessibleName() == "SDK metric: SDK Ready"
+        assert panel._compile_value.toolTip() == "Compile: Available"
+        assert panel._compile_card.accessibleName() == "Compile metric: Available"
+        assert panel._preview_value.toolTip() == "Preview: Preview Running"
+        assert panel._preview_card.accessibleName() == "Preview metric: Preview Running"
+        assert panel._selection_value.toolTip() == "Selection: 1 widgets"
+        assert panel._selection_card.accessibleName() == "Selection metric: 1 widgets"
+        assert panel._dirty_value.toolTip() == "Dirty Pages: 2"
+        assert panel._dirty_card.accessibleName() == "Dirty Pages metric: 2"
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
@@ -215,6 +239,8 @@ class TestStatusCenterPanel:
             "Guidance: Start with the first error in Diagnostics. 2 errors active."
         )
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
+        assert panel._runtime_chip.text() == "Issue"
+        assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
@@ -251,9 +277,17 @@ class TestStatusCenterPanel:
         assert panel._workspace_summary_label.text() == (
             "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear."
         )
+        assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
+        assert panel._compile_value.toolTip() == "Compile: Unavailable"
+        assert panel._preview_value.toolTip() == "Preview: Preview Idle"
+        assert panel._selection_value.toolTip() == "Selection: 0 widgets"
+        assert panel._dirty_value.toolTip() == "Dirty Pages: 0"
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary"
         assert panel._health_chip.accessibleName() == "Diagnostic status: Stable"
         assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._runtime_chip.text() == "Clear"
+        assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
+        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."
         assert panel._components_btn.accessibleName() == "Components action"
@@ -509,7 +543,7 @@ class TestStatusCenterPanel:
             "open_diagnostics",
             "open_diagnostics",
         ]
-        assert panel._diag_card.accessibleName() == "Diagnostics metric"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: 0 errors, 0 warnings, 0 info"
         assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 
@@ -612,6 +646,8 @@ class TestStatusCenterPanel:
             "open_debug",
         ]
         assert panel._runtime_panel.accessibleName() == "Runtime section"
+        assert panel._runtime_chip.text() == "Clear"
+        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._last_action_label.text() == "Last action: Debug Output"
         assert panel._repeat_action_button.text() == "Repeat Debug Output"
         panel.deleteLater()
