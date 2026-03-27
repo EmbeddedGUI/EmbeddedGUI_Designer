@@ -490,6 +490,10 @@ class StatusCenterPanel(QWidget):
         value = max(int(count or 0), 0)
         button.setText(f"{base_text} ({value})" if value > 0 else base_text)
 
+    def _counted_label(self, base_text, count=0):
+        value = max(int(count or 0), 0)
+        return f"{base_text} ({value})" if value > 0 else str(base_text or "").strip()
+
     def _diagnostic_summary_text(self, error_count, warning_count, info_count):
         errors = max(int(error_count or 0), 0)
         warnings = max(int(warning_count or 0), 0)
@@ -563,11 +567,16 @@ class StatusCenterPanel(QWidget):
         runtime_text,
     ):
         if error_count > 0:
-            return ("open_first_error", "Fix First Error", "diagnostics", "Start with the first error in Diagnostics.")
+            return (
+                "open_first_error",
+                self._counted_label("Fix First Error", error_count),
+                "diagnostics",
+                "Start with the first error in Diagnostics.",
+            )
         if warning_count > 0:
             return (
                 "open_first_warning",
-                "Review First Warning",
+                self._counted_label("Review First Warning", warning_count),
                 "diagnostics",
                 "Review the first warning in Diagnostics.",
             )
@@ -578,11 +587,26 @@ class StatusCenterPanel(QWidget):
         if not can_compile:
             return ("open_debug", "Check Compile Output", "debug", "Open Debug Output to inspect compile availability.")
         if dirty_count > 0:
-            return ("open_history", "Review History", "history", "Review unsaved changes in History.")
+            return (
+                "open_history",
+                self._counted_label("Review History", dirty_count),
+                "history",
+                "Review unsaved changes in History.",
+            )
         if selection_total > 0:
-            return ("open_structure_panel", "Inspect Selection", "structure", "Open Structure for the current selection.")
+            return (
+                "open_structure_panel",
+                self._counted_label("Inspect Selection", selection_total),
+                "structure",
+                "Open Structure for the current selection.",
+            )
         if info_count > 0:
-            return ("open_info_diagnostics", "Inspect Info", "debug", "Inspect informational diagnostics.")
+            return (
+                "open_info_diagnostics",
+                self._counted_label("Inspect Info", info_count),
+                "debug",
+                "Inspect informational diagnostics.",
+            )
         return ("open_diagnostics", "Open Diagnostics", "diagnostics", "Open Diagnostics for a full health review.")
 
     def _set_last_action(self, action_key, recent_actions=None):

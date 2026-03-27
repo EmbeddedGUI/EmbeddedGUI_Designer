@@ -164,7 +164,7 @@ class TestStatusCenterPanel:
         assert panel._project_btn.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
-        assert panel._suggested_action_button.text() == "Fix First Error"
+        assert panel._suggested_action_button.text() == "Fix First Error (2)"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics."
         assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
@@ -215,11 +215,11 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Project to configure the SDK workspace."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
-        assert panel._suggested_action_button.text() == "Fix First Error"
+        assert panel._suggested_action_button.text() == "Fix First Error (1)"
         assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
-        assert panel._suggested_action_button.text() == "Review First Warning"
+        assert panel._suggested_action_button.text() == "Review First Warning (2)"
         assert panel._suggested_action_summary_label.text() == "Guidance: Review the first warning in Diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
@@ -227,15 +227,15 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output."
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
-        assert panel._suggested_action_button.text() == "Review History"
+        assert panel._suggested_action_button.text() == "Review History (2)"
         assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
-        assert panel._suggested_action_button.text() == "Inspect Selection"
+        assert panel._suggested_action_button.text() == "Inspect Selection (3)"
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
-        assert panel._suggested_action_button.text() == "Inspect Info"
+        assert panel._suggested_action_button.text() == "Inspect Info (2)"
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics."
 
         panel.set_status(sdk_ready=True, can_compile=True)

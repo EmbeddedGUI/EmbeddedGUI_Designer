@@ -6096,18 +6096,18 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "project"
 
         window.status_center_panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
-        assert window.status_center_panel._suggested_action_button.text() == "Review History"
+        assert window.status_center_panel._suggested_action_button.text() == "Review History (2)"
         window.status_center_panel._suggested_action_button.click()
         assert window._bottom_panel_visible is True
         assert window._bottom_tabs.currentIndex() == 1
 
         window.status_center_panel.set_status(sdk_ready=True, can_compile=True, selection_count=1)
-        assert window.status_center_panel._suggested_action_button.text() == "Inspect Selection"
+        assert window.status_center_panel._suggested_action_button.text() == "Inspect Selection (1)"
         window.status_center_panel._suggested_action_button.click()
         assert window._current_left_panel == "structure"
 
         window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
-        assert window.status_center_panel._suggested_action_button.text() == "Fix First Error"
+        assert window.status_center_panel._suggested_action_button.text() == "Fix First Error (1)"
         window.status_center_panel._suggested_action_button.click()
         assert window._bottom_tabs.currentIndex() == 0
         assert opened == ["error"]
@@ -6143,7 +6143,7 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.currentIndex() == 2
 
         window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
-        assert window.status_center_panel._suggested_action_button.text() == "Inspect Info"
+        assert window.status_center_panel._suggested_action_button.text() == "Inspect Info (2)"
         window.status_center_panel._suggested_action_button.click()
         assert window._bottom_tabs.currentIndex() == 0
         assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
