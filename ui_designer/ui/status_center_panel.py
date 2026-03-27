@@ -824,6 +824,12 @@ class StatusCenterPanel(QWidget):
             return f"Suggested next step in {context}. {hint}"
         return f"Suggested next step in {context}."
 
+    def _suggested_action_summary_text(self, suggested_context, suggested_hint):
+        context = str(suggested_context or "").strip()
+        prefix = f"{context} guidance" if context else "Guidance"
+        hint = str(suggested_hint or "").strip()
+        return f"{prefix}: {hint}" if hint else f"{prefix}:"
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -1008,7 +1014,7 @@ class StatusCenterPanel(QWidget):
         self._set_widget_icon(self._suggested_action_button, suggested_icon)
         self._suggested_action_button.setAccessibleName(f"Suggested status action: {suggested_label}")
         self._set_hint(self._suggested_action_button, suggested_hint)
-        suggested_summary = f"Guidance: {suggested_hint}"
+        suggested_summary = self._suggested_action_summary_text(suggested_context, suggested_hint)
         self._suggested_action_summary_label.setText(suggested_summary)
         self._set_hint(self._suggested_action_summary_label, suggested_summary)
         self._suggested_action_summary_label.setAccessibleName(

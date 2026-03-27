@@ -287,7 +287,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics. 2 errors active."
         assert panel._suggested_action_button.accessibleName() == "Suggested status action: Fix First Error (2)"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Start with the first error in Diagnostics. 2 errors active."
+            "Diagnostics guidance: Start with the first error in Diagnostics. 2 errors active."
         )
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._runtime_chip.text() == "Issue"
@@ -341,10 +341,10 @@ class TestStatusCenterPanel:
         )
         assert panel._suggested_action_button.accessibleName() == "Suggested status action: Configure SDK"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
+            "Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
         assert panel._suggested_action_summary_label.accessibleName() == (
-            "Suggested action guidance: Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
+            "Suggested action guidance: Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"
@@ -395,7 +395,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
+            "Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
@@ -406,7 +406,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Start with the first error in Diagnostics. 1 error active."
+            "Diagnostics guidance: Start with the first error in Diagnostics. 1 error active."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
@@ -417,7 +417,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Review the first warning in Diagnostics. 2 warnings active."
+            "Diagnostics guidance: Review the first warning in Diagnostics. 2 warnings active."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
@@ -427,7 +427,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output. Bridge lost"
+        assert panel._suggested_action_summary_label.text() == (
+            "Runtime guidance: Inspect the latest runtime output. Bridge lost"
+        )
 
         panel.set_status(sdk_ready=True, can_compile=False)
         assert panel._header_title.text() == "Status Center (Build)"
@@ -437,7 +439,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == (
-            "Guidance: Open Debug Output to inspect compile availability. Compile pipeline is unavailable."
+            "Build guidance: Open Debug Output to inspect compile availability. Compile pipeline is unavailable."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
@@ -447,7 +449,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Review History (2)"
         assert panel._suggested_action_button.property("iconKey") == "history"
         assert panel._workspace_chip.property("iconKey") == "history"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History. 2 dirty pages pending."
+        assert panel._suggested_action_summary_label.text() == (
+            "History guidance: Review unsaved changes in History. 2 dirty pages pending."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
         assert panel._header_title.text() == "Status Center (Selection)"
@@ -456,7 +460,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
         assert panel._suggested_action_button.property("iconKey") == "structure"
         assert panel._workspace_chip.property("iconKey") == "structure"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection. 3 widgets selected."
+        assert panel._suggested_action_summary_label.text() == (
+            "Selection guidance: Open Structure for the current selection. 3 widgets selected."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
@@ -465,7 +471,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics. 2 info items active."
+        assert panel._suggested_action_summary_label.text() == (
+            "Diagnostics guidance: Inspect informational diagnostics. 2 info items active."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
@@ -474,7 +482,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Open Diagnostics"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Open Diagnostics for a full health review."
+        assert panel._suggested_action_summary_label.text() == (
+            "Diagnostics guidance: Open Diagnostics for a full health review."
+        )
         panel.deleteLater()
 
     def test_suggested_action_button_emits_contextual_action(self, qapp):
