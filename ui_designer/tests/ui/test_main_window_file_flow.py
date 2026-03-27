@@ -6056,6 +6056,34 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
         _close_window(window)
 
+    def test_status_center_first_error_action_opens_diagnostics_entry(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        opened = []
+        monkeypatch.setattr(window.diagnostics_panel, "open_first_error", lambda: opened.append("error"))
+
+        window._on_status_center_action_requested("open_first_error")
+
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 0
+        assert opened == ["error"]
+        _close_window(window)
+
+    def test_status_center_first_warning_action_opens_diagnostics_entry(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        opened = []
+        monkeypatch.setattr(window.diagnostics_panel, "open_first_warning", lambda: opened.append("warning"))
+
+        window._on_status_center_action_requested("open_first_warning")
+
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 0
+        assert opened == ["warning"]
+        _close_window(window)
+
     def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
