@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QToolButton, QVBoxLayout, QWidget
 
 from .iconography import make_icon
 
@@ -55,6 +55,7 @@ class StatusCenterPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._last_action = ""
+        self._health_chip_action = "open_diagnostics"
         self._init_ui()
         self.set_status()
 
@@ -117,9 +118,12 @@ class StatusCenterPanel(QWidget):
         health_title = QLabel("Diagnostic Mix")
         health_title.setObjectName("workspace_section_title")
         health_title_row.addWidget(health_title)
-        self._health_chip = QLabel("Stable")
+        self._health_chip = QToolButton()
+        self._health_chip.setText("Stable")
         self._health_chip.setObjectName("workspace_status_chip")
         self._health_chip.setProperty("chipTone", "success")
+        self._health_chip.setCursor(Qt.PointingHandCursor)
+        self._health_chip.clicked.connect(self._open_health_chip_target)
         health_title_row.addStretch()
         health_title_row.addWidget(self._health_chip)
         health_layout.addLayout(health_title_row)
@@ -320,6 +324,9 @@ class StatusCenterPanel(QWidget):
             return
         self._emit_action(self._last_action)
 
+    def _open_health_chip_target(self):
+        self._emit_action(self._health_chip_action or "open_diagnostics")
+
     def _emit_action(self, action_key):
         self._set_last_action(action_key)
         self.action_requested.emit(action_key)
@@ -367,11 +374,18 @@ class StatusCenterPanel(QWidget):
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
         if error_count > 0:
+            self._health_chip_action = "open_error_diagnostics"
             self._set_chip_text(self._health_chip, "Critical", "danger")
         elif warning_count > 0:
+            self._health_chip_action = "open_warning_diagnostics"
             self._set_chip_text(self._health_chip, "Attention", "warning")
-        else:
+        elif info_count > 0:
+            self._health_chip_action = "open_info_diagnostics"
             self._set_chip_text(self._health_chip, "Stable", "success")
+        else:
+            self._health_chip_action = "open_diagnostics"
+            self._set_chip_text(self._health_chip, "Stable", "success")
+        self._health_chip.setToolTip(f"Open {self._action_label(self._health_chip_action)}")
         self._first_error_btn.setEnabled(int(diagnostics_errors or 0) > 0)
         self._first_warning_btn.setEnabled(int(diagnostics_warnings or 0) > 0)
         runtime_text = str(runtime_error or "").strip()

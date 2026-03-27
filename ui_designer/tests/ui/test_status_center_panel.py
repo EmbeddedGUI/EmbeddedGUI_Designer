@@ -42,6 +42,8 @@ class TestStatusCenterPanel:
         assert panel._info_bar.value() == 25
         assert panel._first_error_btn.isEnabled() is True
         assert panel._first_warning_btn.isEnabled() is True
+        assert panel._health_chip_action == "open_error_diagnostics"
+        assert panel._health_chip.toolTip() == "Open Errors"
         panel.deleteLater()
 
     def test_health_chip_runtime_and_buttons_update_across_status_changes(self, qapp):
@@ -52,6 +54,7 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Attention"
         assert panel._health_chip.property("chipTone") == "warning"
+        assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._runtime_label.text() == "Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
@@ -60,9 +63,36 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Stable"
         assert panel._health_chip.property("chipTone") == "success"
+        assert panel._health_chip_action == "open_diagnostics"
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
+        panel.deleteLater()
+
+    def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
+        panel._health_chip.click()
+        panel.set_status(diagnostics_errors=0, diagnostics_warnings=2, diagnostics_infos=0)
+        panel._health_chip.click()
+        panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=3)
+        panel._health_chip.click()
+        panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0)
+        panel._health_chip.click()
+
+        assert emitted == [
+            "open_error_diagnostics",
+            "open_warning_diagnostics",
+            "open_info_diagnostics",
+            "open_diagnostics",
+        ]
+        assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 
     def test_workspace_navigation_buttons_emit_expected_actions(self, qapp):

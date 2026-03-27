@@ -359,6 +359,11 @@ QToolButton#workspace_status_chip:hover {{
     border-color: {t['border_strong']};
 }}
 
+QToolButton#workspace_status_chip:focus {{
+    border-color: {t['accent']};
+    background-color: {t['surface_hover']};
+}}
+
 #workspace_status_chip[chipTone="accent"] {{
     background-color: {t['accent_soft']};
     color: {t['accent_hover']};
