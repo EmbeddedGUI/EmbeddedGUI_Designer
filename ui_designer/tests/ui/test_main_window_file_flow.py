@@ -6071,6 +6071,81 @@ class TestMainWindowCanvasActions:
         ]
         _close_window(window)
 
+    def test_build_preview_context_menu_structure_actions_reflect_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewStructureMenuStateDemo"
+        project = _create_project(project_dir, "PreviewStructureMenuStateDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        target = WidgetModel("group", name="target_group", x=10, y=40, width=120, height=80)
+        nested = WidgetModel("switch", name="nested", x=4, y=4, width=32, height=16)
+        target.add_child(nested)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        def _structure_actions(widget):
+            menu = window._build_preview_context_menu(widget)
+            structure_menu = _context_submenu(menu, "Structure")
+            actions = {action.text(): action for action in structure_menu.actions() if action.text()}
+            return menu, actions
+
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
+        menu, actions = _structure_actions(first)
+        assert actions["Group Selection"].isEnabled() is True
+        assert actions["Ungroup"].isEnabled() is False
+        assert actions["Move Into..."].isEnabled() is True
+        assert actions["Move Into Last Target"].isEnabled() is False
+        assert actions["Quick Move Into"].menu() is not None
+        assert actions["Lift To Parent"].isEnabled() is False
+        assert actions["Move Up"].isEnabled() is False
+        assert actions["Move Down"].isEnabled() is True
+        assert actions["Move To Top"].isEnabled() is False
+        assert actions["Move To Bottom"].isEnabled() is True
+        assert "selection must only include groups" in actions["Ungroup"].toolTip()
+        assert "move something into a container first" in actions["Move Into Last Target"].toolTip()
+        assert "selected widgets already belong to the top container" in actions["Lift To Parent"].toolTip()
+        assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
+        assert actions["Move Into Last Target"].shortcut().toString() == "Ctrl+Alt+I"
+        assert actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
+        menu.deleteLater()
+
+        window._set_selection([nested], primary=nested, sync_tree=True, sync_preview=True)
+        menu, actions = _structure_actions(nested)
+        assert actions["Group Selection"].isEnabled() is False
+        assert actions["Ungroup"].isEnabled() is False
+        assert actions["Move Into..."].isEnabled() is True
+        assert actions["Lift To Parent"].isEnabled() is True
+        assert actions["Move Up"].isEnabled() is False
+        assert actions["Move Down"].isEnabled() is False
+        assert actions["Move To Top"].isEnabled() is False
+        assert actions["Move To Bottom"].isEnabled() is False
+        menu.deleteLater()
+
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        window._move_selection_into_target(target, target_label="root_group / target_group (group)")
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=True)
+        menu, actions = _structure_actions(second)
+        assert actions["Move Into Last Target"].isEnabled() is True
+        assert actions["Clear Move Target History"].isEnabled() is True
+        assert "root_group / target_group (group)" in actions["Move Into Last Target"].toolTip()
+        menu.deleteLater()
+
+        _close_window(window)
+
     def test_build_preview_context_menu_arrange_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
