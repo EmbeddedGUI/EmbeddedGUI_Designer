@@ -556,6 +556,15 @@ class StatusCenterPanel(QWidget):
         percent = int(round((value * 100.0) / total_value))
         return f"{self._count_label(value, singular, plural)} ({percent}%)"
 
+    def _diagnostic_metric_text(self, error_count, warning_count, info_count):
+        return ", ".join(
+            [
+                self._count_label(error_count, "error", "errors"),
+                self._count_label(warning_count, "warning", "warnings"),
+                self._count_label(info_count, "info item", "info items"),
+            ]
+        )
+
     def _set_button_count_text(self, button, count=0):
         base_text = str(button.property("baseText") or button.text() or "").strip()
         value = max(int(count or 0), 0)
@@ -902,14 +911,10 @@ class StatusCenterPanel(QWidget):
 
         self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
         self._compile_value.setText("Available" if can_compile else "Unavailable")
-        self._dirty_value.setText(str(dirty_count))
-        self._selection_value.setText(f"{selection_total} widgets")
+        self._dirty_value.setText(self._count_label(dirty_count, "dirty page", "dirty pages"))
+        self._selection_value.setText(self._count_label(selection_total, "widget", "widgets"))
         self._preview_value.setText(preview_text)
-        self._diag_value.setText(
-            f"{error_count} errors, "
-            f"{warning_count} warnings, "
-            f"{info_count} info"
-        )
+        self._diag_value.setText(self._diagnostic_metric_text(error_count, warning_count, info_count))
         total = max(error_count + warning_count + info_count, 1)
         self._error_value.setText(self._count_with_percent(error_count, diag_total, "error", "errors"))
         self._warning_value.setText(self._count_with_percent(warning_count, diag_total, "warning", "warnings"))

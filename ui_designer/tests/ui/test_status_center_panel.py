@@ -47,9 +47,9 @@ class TestStatusCenterPanel:
         assert panel._health_title.toolTip() == "Diagnostic mix with 4 total diagnostics."
         assert panel._runtime_title.text() == "Runtime (Clear)"
         assert panel._runtime_title.toolTip() == "Runtime status: clear."
-        assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warnings, 1 info"
-        assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warnings, 1 info"
-        assert panel._diag_card.accessibleName() == "Diagnostics metric: 2 errors, 1 warnings, 1 info"
+        assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warning, 1 info item"
+        assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warning, 1 info item"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: 2 errors, 1 warning, 1 info item"
         assert panel._error_bar.value() == 50
         assert panel._warning_bar.value() == 25
         assert panel._info_bar.value() == 25
@@ -255,10 +255,10 @@ class TestStatusCenterPanel:
         assert panel._compile_card.accessibleName() == "Compile metric: Available"
         assert panel._preview_value.toolTip() == "Preview: Preview Running"
         assert panel._preview_card.accessibleName() == "Preview metric: Preview Running"
-        assert panel._selection_value.toolTip() == "Selection: 1 widgets"
-        assert panel._selection_card.accessibleName() == "Selection metric: 1 widgets"
-        assert panel._dirty_value.toolTip() == "Dirty Pages: 2"
-        assert panel._dirty_card.accessibleName() == "Dirty Pages metric: 2"
+        assert panel._selection_value.toolTip() == "Selection: 1 widget"
+        assert panel._selection_card.accessibleName() == "Selection metric: 1 widget"
+        assert panel._dirty_value.toolTip() == "Dirty Pages: 2 dirty pages"
+        assert panel._dirty_card.accessibleName() == "Dirty Pages metric: 2 dirty pages"
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
@@ -362,7 +362,7 @@ class TestStatusCenterPanel:
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
         assert panel._preview_value.toolTip() == "Preview: Preview Idle"
         assert panel._selection_value.toolTip() == "Selection: 0 widgets"
-        assert panel._dirty_value.toolTip() == "Dirty Pages: 0"
+        assert panel._dirty_value.toolTip() == "Dirty Pages: 0 dirty pages"
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary: Summary: Diagnostics are clear."
         assert panel._health_chip.accessibleName() == "Diagnostic status: Stable"
         assert panel._health_chip.property("iconKey") == "diagnostics"
@@ -672,7 +672,7 @@ class TestStatusCenterPanel:
             "open_diagnostics",
             "open_diagnostics",
         ]
-        assert panel._diag_card.accessibleName() == "Diagnostics metric: 0 errors, 0 warnings, 0 info"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: 0 errors, 0 warnings, 0 info items"
         assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 
