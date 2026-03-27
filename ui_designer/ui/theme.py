@@ -628,10 +628,36 @@ QToolButton#widget_browser_tag:checked {{
     border-radius: 10px;
 }}
 
+#status_center_metric_card:hover {{
+    border-color: {t['accent_soft']};
+    background-color: {t['hover']};
+}}
+
+#status_center_metric_card:focus {{
+    border-color: {t['accent']};
+    background-color: {t['hover']};
+}}
+
 #status_center_metric_value {{
     color: {t['text']};
     font-size: 14px;
     font-weight: 600;
+}}
+
+#status_center_health_row {{
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+}}
+
+#status_center_health_row:hover {{
+    border-color: {t['accent_soft']};
+    background-color: {t['hover']};
+}}
+
+#status_center_health_row:focus {{
+    border-color: {t['accent']};
+    background-color: {t['hover']};
 }}
 
 #status_center_health_value {{
@@ -663,6 +689,16 @@ QProgressBar#status_center_health_warning_bar::chunk {{
 QProgressBar#status_center_health_info_bar::chunk {{
     background-color: {t['accent']};
     border-radius: 4px;
+}}
+
+#status_center_runtime:hover {{
+    border-color: {t['accent_soft']};
+    background-color: {t['panel_alt']};
+}}
+
+#status_center_runtime:focus {{
+    border-color: {t['accent']};
+    background-color: {t['panel_alt']};
 }}
 """
 
