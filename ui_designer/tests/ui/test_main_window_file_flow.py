@@ -7929,6 +7929,17 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [layout_parent]
         assert window.preview_panel.selected_widgets() == [layout_parent]
         assert window.statusBar().currentMessage() == "Selected 1 layout container widget in subtree of container."
+
+        menu = window._build_preview_context_menu(layout_parent)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_layout_action = next(action for action in select_menu.actions() if action.text() == "Layout Containers")
+        select_layout_action.trigger()
+
+        assert window._selection_state.primary is layout_parent
+        assert window._selection_state.widgets == [layout_parent]
+        assert window.widget_tree.selected_widgets() == [layout_parent]
+        assert window.preview_panel.selected_widgets() == [layout_parent]
+        assert window.statusBar().currentMessage() == "Selected 1 layout container widget in subtree of layout_parent."
         _close_window(window)
 
     def test_preview_context_menu_managed_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -7974,6 +7985,17 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [managed_group, managed_button]
         assert window.preview_panel.selected_widgets() == [managed_group, managed_button]
         assert window.statusBar().currentMessage() == "Selected 2 layout-managed widgets in subtree of container."
+
+        menu = window._build_preview_context_menu(managed_button)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_managed_action = next(action for action in select_menu.actions() if action.text() == "Managed")
+        select_managed_action.trigger()
+
+        assert window._selection_state.primary is managed_button
+        assert window._selection_state.widgets == [managed_button]
+        assert window.widget_tree.selected_widgets() == [managed_button]
+        assert window.preview_panel.selected_widgets() == [managed_button]
+        assert window.statusBar().currentMessage() == "Selected 1 layout-managed widget in subtree of managed_button."
         _close_window(window)
 
     def test_preview_context_menu_free_position_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -8019,6 +8041,17 @@ class TestMainWindowCanvasActions:
         assert window.widget_tree.selected_widgets() == [container, layout_parent, managed_leaf, unmanaged_leaf]
         assert window.preview_panel.selected_widgets() == [container, layout_parent, managed_leaf, unmanaged_leaf]
         assert window.statusBar().currentMessage() == "Selected 4 free-position widgets in subtree of container."
+
+        menu = window._build_preview_context_menu(managed_leaf)
+        select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+        select_free_position_action = next(action for action in select_menu.actions() if action.text() == "Free Position")
+        select_free_position_action.trigger()
+
+        assert window._selection_state.primary is managed_leaf
+        assert window._selection_state.widgets == [managed_leaf]
+        assert window.widget_tree.selected_widgets() == [managed_leaf]
+        assert window.preview_panel.selected_widgets() == [managed_leaf]
+        assert window.statusBar().currentMessage() == "Selected 1 free-position widget in subtree of managed_leaf."
         _close_window(window)
 
     def test_preview_context_menu_same_type_action_syncs_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
