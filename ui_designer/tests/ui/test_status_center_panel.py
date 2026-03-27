@@ -43,6 +43,10 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
+        assert panel._health_title.text() == "Diagnostic Mix (4 total)"
+        assert panel._health_title.toolTip() == "Diagnostic mix with 4 total diagnostics."
+        assert panel._runtime_title.text() == "Runtime (Clear)"
+        assert panel._runtime_title.toolTip() == "Runtime status: clear."
         assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warnings, 1 info"
         assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warnings, 1 info"
         assert panel._diag_card.accessibleName() == "Diagnostics metric: 2 errors, 1 warnings, 1 info"
@@ -95,12 +99,15 @@ class TestStatusCenterPanel:
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
         assert panel._health_chip.property("iconKey") == "history"
+        assert panel._health_title.text() == "Diagnostic Mix (4 total)"
         assert panel._health_summary_label.text() == "Summary: 3 warnings, 1 info item need review. Warnings lead at 75%."
         assert panel._error_value.text() == "0 errors (0%)"
         assert panel._warning_value.text() == "3 warnings (75%)"
         assert panel._info_value.text() == "1 info item (25%)"
         assert panel._warning_bar.toolTip() == "Warnings share: 3 warnings (75%)"
         assert panel._runtime_label.text() == "Runtime failed"
+        assert panel._runtime_title.text() == "Runtime (Issue)"
+        assert panel._runtime_title.toolTip() == "Runtime status: issue detected. Runtime failed"
         assert panel._runtime_chip.text() == "Issue"
         assert panel._runtime_chip.property("chipTone") == "danger"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
@@ -125,6 +132,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip_action == "open_info_diagnostics"
         assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
         assert panel._health_chip.property("iconKey") == "debug"
+        assert panel._health_title.text() == "Diagnostic Mix (2 total)"
         assert panel._health_summary_label.text() == "Summary: 2 info items available. Info lead at 100%."
         assert panel._error_value.text() == "0 errors (0%)"
         assert panel._warning_value.text() == "0 warnings (0%)"
@@ -155,6 +163,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip_action == "open_diagnostics"
         assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
         assert panel._error_value.text() == "0 errors"
         assert panel._warning_value.text() == "0 warnings"
@@ -195,11 +204,14 @@ class TestStatusCenterPanel:
         )
 
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics."
+            "Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
         )
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
+        assert panel._health_title.text() == "Diagnostic Mix (6 total)"
+        assert panel._runtime_title.text() == "Runtime (Issue)"
+        assert panel._runtime_title.accessibleName() == "Runtime (Issue)"
         assert panel._sdk_value.toolTip() == "SDK: SDK Ready"
         assert panel._sdk_value.accessibleName() == "SDK value: SDK Ready"
         assert panel._sdk_card.accessibleName() == "SDK metric: SDK Ready"
@@ -255,6 +267,10 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
+        assert panel._health_title.text() == "Diagnostic Mix"
+        assert panel._health_title.accessibleName() == "Diagnostic Mix"
+        assert panel._runtime_title.text() == "Runtime (Clear)"
+        assert panel._runtime_title.accessibleName() == "Runtime (Clear)"
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no saved recent status center actions."
         assert panel._actions_title.accessibleName() == "Quick Actions"
@@ -278,7 +294,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear."
+            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"

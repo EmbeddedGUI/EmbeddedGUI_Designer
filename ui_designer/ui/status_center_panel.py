@@ -155,9 +155,10 @@ class StatusCenterPanel(QWidget):
         health_title_row = QHBoxLayout()
         health_title_row.setContentsMargins(0, 0, 0, 0)
         health_title_row.setSpacing(8)
-        health_title = QLabel("Diagnostic Mix")
-        health_title.setObjectName("workspace_section_title")
-        health_title_row.addWidget(health_title)
+        self._health_title = QLabel("Diagnostic Mix")
+        self._health_title.setObjectName("workspace_section_title")
+        self._health_title.setAccessibleName("Diagnostic Mix")
+        health_title_row.addWidget(self._health_title)
         self._health_chip = QToolButton()
         self._health_chip.setText("Stable")
         self._health_chip.setObjectName("workspace_status_chip")
@@ -293,9 +294,10 @@ class StatusCenterPanel(QWidget):
         runtime_title_row = QHBoxLayout()
         runtime_title_row.setContentsMargins(0, 0, 0, 0)
         runtime_title_row.setSpacing(8)
-        runtime_title = QLabel("Runtime")
-        runtime_title.setObjectName("workspace_section_title")
-        runtime_title_row.addWidget(runtime_title)
+        self._runtime_title = QLabel("Runtime")
+        self._runtime_title.setObjectName("workspace_section_title")
+        self._runtime_title.setAccessibleName("Runtime")
+        runtime_title_row.addWidget(self._runtime_title)
         self._runtime_chip = QToolButton()
         self._runtime_chip.setText("Clear")
         self._runtime_chip.setObjectName("workspace_status_chip")
@@ -578,6 +580,25 @@ class StatusCenterPanel(QWidget):
             return f"Summary: {', '.join(parts)} need review. {dominant_label} lead at {dominant_share}%."
         return f"Summary: {', '.join(parts)} available. {dominant_label} lead at {dominant_share}%."
 
+    def _diagnostic_title_text(self, total_count):
+        total = max(int(total_count or 0), 0)
+        return f"Diagnostic Mix ({total} total)" if total > 0 else "Diagnostic Mix"
+
+    def _diagnostic_title_tooltip(self, total_count):
+        total = max(int(total_count or 0), 0)
+        if total <= 0:
+            return "Diagnostic mix with no active diagnostics."
+        return f"Diagnostic mix with {total} total diagnostics."
+
+    def _runtime_title_text(self, runtime_text):
+        return "Runtime (Issue)" if str(runtime_text or "").strip() else "Runtime (Clear)"
+
+    def _runtime_title_tooltip(self, runtime_text):
+        message = str(runtime_text or "").strip()
+        if message:
+            return f"Runtime status: issue detected. {message}"
+        return "Runtime status: clear."
+
     def _workspace_summary_text(
         self,
         sdk_ready,
@@ -587,17 +608,22 @@ class StatusCenterPanel(QWidget):
         preview_text,
         diag_total=0,
         runtime_text="",
+        suggested_label="",
     ):
         sdk_text = "SDK ready" if sdk_ready else "SDK missing"
         compile_text = "compile available" if can_compile else "compile unavailable"
         preview_value = str(preview_text or "Preview Idle").strip() or "Preview Idle"
         runtime_summary = "runtime issue detected" if str(runtime_text or "").strip() else "runtime clear"
         diag_summary = "diagnostics clear" if int(diag_total or 0) <= 0 else self._count_label(diag_total, "diagnostic", "diagnostics")
-        return (
+        summary = (
             f"Workspace: {sdk_text}, {compile_text}, {preview_value}, {runtime_summary}, "
             f"{self._count_label(dirty_count, 'dirty page', 'dirty pages')}, "
             f"{self._count_label(selection_total, 'widget', 'widgets')} selected, {diag_summary}."
         )
+        suggested = str(suggested_label or "").strip()
+        if suggested:
+            summary = f"{summary} Next: {suggested}."
+        return summary
 
     def _workspace_chip_state(
         self,
@@ -884,6 +910,7 @@ class StatusCenterPanel(QWidget):
             preview_text,
             diag_total,
             runtime_text,
+            suggested_label,
         )
         self._workspace_summary_label.setText(workspace_summary)
         self._set_hint(self._workspace_summary_label, workspace_summary)
@@ -905,6 +932,9 @@ class StatusCenterPanel(QWidget):
         self._error_bar.setAccessibleName(f"Errors share: {self._error_value.text()}")
         self._warning_bar.setAccessibleName(f"Warnings share: {self._warning_value.text()}")
         self._info_bar.setAccessibleName(f"Info share: {self._info_value.text()}")
+        self._health_title.setText(self._diagnostic_title_text(diag_total))
+        self._set_hint(self._health_title, self._diagnostic_title_tooltip(diag_total))
+        self._health_title.setAccessibleName(self._health_title.text())
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
         self._set_hint(self._health_summary_label, health_summary)
@@ -950,6 +980,9 @@ class StatusCenterPanel(QWidget):
             else "Unavailable: no warnings are active.",
         )
         if runtime_text:
+            self._runtime_title.setText(self._runtime_title_text(runtime_text))
+            self._set_hint(self._runtime_title, self._runtime_title_tooltip(runtime_text))
+            self._runtime_title.setAccessibleName(self._runtime_title.text())
             self._runtime_label.setText(runtime_text)
             self._set_chip_text(self._runtime_chip, "Issue", "danger")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
@@ -957,6 +990,9 @@ class StatusCenterPanel(QWidget):
             self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
+            self._runtime_title.setText(self._runtime_title_text(""))
+            self._set_hint(self._runtime_title, self._runtime_title_tooltip(""))
+            self._runtime_title.setAccessibleName(self._runtime_title.text())
             self._runtime_label.setText("No runtime errors.")
             self._set_chip_text(self._runtime_chip, "Clear", "success")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
