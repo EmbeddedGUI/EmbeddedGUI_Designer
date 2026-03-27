@@ -6535,16 +6535,38 @@ class TestMainWindowCanvasActions:
         root_menu, root_actions = _select_actions(root)
         assert root_actions["Parent"].isEnabled() is False
         assert root_actions["Previous Sibling"].isEnabled() is False
+        assert root_actions["Next Sibling"].isEnabled() is False
         assert root_actions["Previous Siblings"].isEnabled() is False
+        assert root_actions["Next Siblings"].isEnabled() is False
         assert root_actions["Previous In Tree"].isEnabled() is False
         assert root_actions["Ancestors"].isEnabled() is False
+        assert root_actions["Root"].isEnabled() is False
+        assert root_actions["Same Depth"].isEnabled() is False
+        assert root_actions["Children"].isEnabled() is True
+        assert root_actions["Descendants"].isEnabled() is True
+        assert root_actions["Subtree"].isEnabled() is True
+        assert root_actions["Leaves"].isEnabled() is True
+        assert root_actions["Containers"].isEnabled() is True
+        assert root_actions["Layout Containers"].isEnabled() is False
+        assert root_actions["Visible"].isEnabled() is True
+        assert root_actions["Hidden"].isEnabled() is False
+        assert root_actions["Unlocked"].isEnabled() is True
+        assert root_actions["Locked"].isEnabled() is False
         assert root_actions["Siblings"].isEnabled() is False
         assert root_actions["Managed"].isEnabled() is False
+        assert root_actions["Free Position"].isEnabled() is True
         assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Sibling"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Next Sibling"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Siblings"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Next Siblings"].toolTip()
         assert "Unavailable: widget is already the first widget in tree order on this page." in root_actions["Previous In Tree"].toolTip()
         assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
+        assert "Unavailable: widget is already the page root." in root_actions["Root"].toolTip()
+        assert "Unavailable: no other widgets exist at depth 0 on this page." in root_actions["Same Depth"].toolTip()
+        assert "Unavailable: no layout container widgets exist in this subtree." in root_actions["Layout Containers"].toolTip()
+        assert "Unavailable: no hidden widgets exist in this subtree." in root_actions["Hidden"].toolTip()
+        assert "Unavailable: no locked widgets exist in this subtree." in root_actions["Locked"].toolTip()
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
         root_menu.deleteLater()
@@ -6555,8 +6577,27 @@ class TestMainWindowCanvasActions:
         assert container_actions["Next Sibling"].isEnabled() is True
         assert container_actions["Previous Siblings"].isEnabled() is True
         assert container_actions["Next Siblings"].isEnabled() is True
+        assert container_actions["Previous In Tree"].isEnabled() is True
+        assert container_actions["Next In Tree"].isEnabled() is True
+        assert container_actions["Ancestors"].isEnabled() is True
+        assert container_actions["Root"].isEnabled() is True
+        assert container_actions["Path"].isEnabled() is True
+        assert container_actions["Top-Level"].isEnabled() is True
+        assert container_actions["First Child"].isEnabled() is True
+        assert container_actions["Last Child"].isEnabled() is True
         assert container_actions["Children"].isEnabled() is True
+        assert container_actions["Descendants"].isEnabled() is True
+        assert container_actions["Subtree"].isEnabled() is True
+        assert container_actions["Leaves"].isEnabled() is True
+        assert container_actions["Containers"].isEnabled() is False
+        assert container_actions["Layout Containers"].isEnabled() is False
+        assert container_actions["Visible"].isEnabled() is True
+        assert container_actions["Unlocked"].isEnabled() is True
+        assert container_actions["Managed"].isEnabled() is False
+        assert container_actions["Free Position"].isEnabled() is True
         assert container_actions["Siblings"].isEnabled() is True
+        assert container_actions["Same Parent Type"].isEnabled() is False
+        assert container_actions["Subtree Type"].isEnabled() is False
         assert container_actions["Same Depth"].isEnabled() is True
         container_menu.deleteLater()
 
@@ -6566,16 +6607,47 @@ class TestMainWindowCanvasActions:
         assert child_actions["Next Sibling"].isEnabled() is True
         assert child_actions["Previous Siblings"].isEnabled() is False
         assert child_actions["Next Siblings"].isEnabled() is True
+        assert child_actions["Previous In Tree"].isEnabled() is True
+        assert child_actions["Next In Tree"].isEnabled() is True
+        assert child_actions["Ancestors"].isEnabled() is True
+        assert child_actions["Root"].isEnabled() is True
+        assert child_actions["Path"].isEnabled() is True
+        assert child_actions["Top-Level"].isEnabled() is True
         assert child_actions["First Child"].isEnabled() is False
         assert child_actions["Last Child"].isEnabled() is False
         assert child_actions["Children"].isEnabled() is False
+        assert child_actions["Descendants"].isEnabled() is False
+        assert child_actions["Subtree"].isEnabled() is False
+        assert child_actions["Leaves"].isEnabled() is False
+        assert child_actions["Containers"].isEnabled() is False
+        assert child_actions["Layout Containers"].isEnabled() is False
+        assert child_actions["Visible"].isEnabled() is True
+        assert child_actions["Hidden"].isEnabled() is False
+        assert child_actions["Unlocked"].isEnabled() is True
+        assert child_actions["Locked"].isEnabled() is False
+        assert child_actions["Managed"].isEnabled() is False
+        assert child_actions["Free Position"].isEnabled() is True
+        assert child_actions["Siblings"].isEnabled() is True
         assert child_actions["Same Parent Type"].isEnabled() is False
+        assert child_actions["Subtree Type"].isEnabled() is False
+        assert child_actions["Same Type"].isEnabled() is False
+        assert child_actions["Same Depth"].isEnabled() is True
         assert "Unavailable: widget has no child widgets." in child_actions["First Child"].toolTip()
         assert "Unavailable: widget has no child widgets." in child_actions["Last Child"].toolTip()
         assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
+        assert "Unavailable: widget has no descendant widgets." in child_actions["Descendants"].toolTip()
+        assert "Unavailable: widget has no descendant widgets." in child_actions["Subtree"].toolTip()
+        assert "Unavailable: widget has no leaf descendants." in child_actions["Leaves"].toolTip()
+        assert "Unavailable: no other container widgets exist in this subtree." in child_actions["Containers"].toolTip()
+        assert "Unavailable: no layout container widgets exist in this subtree." in child_actions["Layout Containers"].toolTip()
+        assert "Unavailable: no hidden widgets exist in this subtree." in child_actions["Hidden"].toolTip()
+        assert "Unavailable: no locked widgets exist in this subtree." in child_actions["Locked"].toolTip()
+        assert "Unavailable: no layout-managed widgets exist in this subtree." in child_actions["Managed"].toolTip()
         assert "Unavailable: widget does not have a previous sibling under the same parent." in child_actions["Previous Sibling"].toolTip()
         assert "Unavailable: widget does not have any previous siblings under the same parent." in child_actions["Previous Siblings"].toolTip()
         assert "Unavailable: no other switch widgets exist under the same parent." in child_actions["Same Parent Type"].toolTip()
+        assert "Unavailable: no other switch widgets exist in this subtree." in child_actions["Subtree Type"].toolTip()
+        assert "Unavailable: no other switch widgets exist on this page." in child_actions["Same Type"].toolTip()
         child_menu.deleteLater()
 
         solo_menu, solo_actions = _select_actions(solo)
