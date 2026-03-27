@@ -287,6 +287,28 @@ QGroupBox::title {{
     border-radius: 14px;
 }}
 
+QPushButton#project_workspace_view_button {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 10px;
+    color: {t['text_muted']};
+    padding: 8px 10px;
+    text-align: left;
+    min-height: 42px;
+}}
+
+QPushButton#project_workspace_view_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QPushButton#project_workspace_view_button:checked {{
+    background-color: {t['accent_soft']};
+    border-color: {t['accent']};
+    color: {t['accent_hover']};
+}}
+
 #workspace_shell, #workspace_center_shell, #workspace_right_shell, #workspace_bottom_shell, #workspace_left_shell {{
     background-color: transparent;
 }}

@@ -729,6 +729,14 @@ class MainWindow(QMainWindow):
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         if hasattr(self, "_dirty_chip"):
             self._set_chip(self._dirty_chip, f"Dirty {len(dirty_pages)}" if dirty_pages else "Clean", "warning" if dirty_pages else "success")
+        page_count = len(getattr(self.project, "pages", [])) if getattr(self, "project", None) is not None else 0
+        active_page_name = str(getattr(getattr(self, "_current_page", None), "name", "") or "")
+        if hasattr(self, "_project_workspace"):
+            self._project_workspace.set_workspace_snapshot(
+                page_count=page_count,
+                active_page=active_page_name,
+                dirty_pages=len(dirty_pages),
+            )
         if hasattr(self, "_selection_chip"):
             count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
             self._set_chip(self._selection_chip, f"Selection {count}" if count else "No Selection")
