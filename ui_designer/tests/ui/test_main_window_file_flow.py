@@ -6084,6 +6084,35 @@ class TestMainWindowFileFlow:
         assert opened == ["warning"]
         _close_window(window)
 
+    def test_status_center_suggested_action_button_routes_contextually(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        opened = []
+        monkeypatch.setattr(window.diagnostics_panel, "open_first_error", lambda: opened.append("error"))
+
+        assert window.status_center_panel._suggested_action_button.text() == "Configure SDK"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._current_left_panel == "project"
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        assert window.status_center_panel._suggested_action_button.text() == "Review History"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 1
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, selection_count=1)
+        assert window.status_center_panel._suggested_action_button.text() == "Inspect Selection"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._current_left_panel == "structure"
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert window.status_center_panel._suggested_action_button.text() == "Fix First Error"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._bottom_tabs.currentIndex() == 0
+        assert opened == ["error"]
+        _close_window(window)
+
     def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -6114,7 +6143,7 @@ class TestMainWindowFileFlow:
             "Assets",
             "Project",
             "Debug Output",
-            "Clear Recent Actions",
+            "Clear Recent Actions (3)",
         ]
 
         window.status_center_panel._repeat_action_menu.actions()[1].trigger()
@@ -6138,7 +6167,7 @@ class TestMainWindowFileFlow:
         clear_action = next(
             action
             for action in window.status_center_panel._repeat_action_menu.actions()
-            if action.text() == "Clear Recent Actions"
+            if action.text().startswith("Clear Recent Actions")
         )
         clear_action.trigger()
 
