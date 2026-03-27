@@ -83,6 +83,7 @@ class TestStatusCenterPanel:
             "open_components_panel",
             "open_assets_panel",
         ]
+        assert panel._last_action_label.text() == "Last action: Assets"
         panel.deleteLater()
 
     def test_inspector_navigation_buttons_emit_expected_actions(self, qapp):
@@ -103,6 +104,7 @@ class TestStatusCenterPanel:
             "open_page_fields",
             "open_page_timers",
         ]
+        assert panel._last_action_label.text() == "Last action: Timers"
         panel.deleteLater()
 
     def test_metric_cards_emit_expected_actions(self, qapp):
@@ -128,6 +130,7 @@ class TestStatusCenterPanel:
             "open_structure_panel",
             "open_history",
         ]
+        assert panel._last_action_label.text() == "Last action: History"
         panel.deleteLater()
 
     def test_metric_cards_support_keyboard_activation(self, qapp):
@@ -148,4 +151,19 @@ class TestStatusCenterPanel:
             "open_diagnostics",
         ]
         assert panel._diag_card.accessibleName() == "Diagnostics metric"
+        panel.deleteLater()
+
+    def test_restore_view_state_updates_last_action_label(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        assert panel._last_action_label.text() == "Last action: None"
+        panel.restore_view_state({"last_action": "open_page_fields"})
+        assert panel._last_action_label.text() == "Last action: Fields"
+        assert panel.view_state() == {"last_action": "open_page_fields"}
+
+        panel.restore_view_state(None)
+        assert panel._last_action_label.text() == "Last action: None"
+        assert panel.view_state() == {"last_action": ""}
         panel.deleteLater()

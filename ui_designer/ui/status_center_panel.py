@@ -33,6 +33,21 @@ class StatusCenterPanel(QWidget):
     """Workspace status dashboard with quick-open actions."""
 
     action_requested = pyqtSignal(str)
+    _ACTION_LABELS = {
+        "open_project_panel": "Project",
+        "open_structure_panel": "Structure",
+        "open_components_panel": "Components",
+        "open_assets_panel": "Assets",
+        "open_properties_inspector": "Properties",
+        "open_animations_inspector": "Animations",
+        "open_page_fields": "Fields",
+        "open_page_timers": "Timers",
+        "open_diagnostics": "Diagnostics",
+        "open_history": "History",
+        "open_debug": "Debug Output",
+        "open_first_error": "First Error",
+        "open_first_warning": "First Warning",
+    }
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -120,6 +135,9 @@ class StatusCenterPanel(QWidget):
         actions_title = QLabel("Quick Actions")
         actions_title.setObjectName("workspace_section_title")
         quick_layout.addWidget(actions_title)
+        self._last_action_label = QLabel("Last action: None")
+        self._last_action_label.setObjectName("workspace_section_subtitle")
+        quick_layout.addWidget(self._last_action_label)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -257,8 +275,18 @@ class StatusCenterPanel(QWidget):
         button.clicked.connect(lambda checked=False, key=action_key: self._emit_action(key))
         return button
 
+    def _action_label(self, action_key):
+        action = str(action_key or "").strip()
+        if not action:
+            return "None"
+        return self._ACTION_LABELS.get(action, action.replace("_", " ").title())
+
+    def _set_last_action(self, action_key):
+        self._last_action = str(action_key or "").strip()
+        self._last_action_label.setText(f"Last action: {self._action_label(self._last_action)}")
+
     def _emit_action(self, action_key):
-        self._last_action = action_key
+        self._set_last_action(action_key)
         self.action_requested.emit(action_key)
 
     def view_state(self):
@@ -266,9 +294,9 @@ class StatusCenterPanel(QWidget):
 
     def restore_view_state(self, state):
         if not isinstance(state, dict):
-            self._last_action = ""
+            self._set_last_action("")
             return
-        self._last_action = str(state.get("last_action", "") or "")
+        self._set_last_action(state.get("last_action", ""))
 
     def set_status(
         self,
