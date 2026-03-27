@@ -52,7 +52,7 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.text() == "Open First Warning (1)"
         assert panel._health_chip_action == "open_error_diagnostics"
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
-        assert panel._workspace_chip.toolTip() == "Action Needed. Start with the first error in Diagnostics."
+        assert panel._workspace_chip.toolTip() == "Action Needed. Start with the first error in Diagnostics. 2 errors active."
         assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention."
         assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
         assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
@@ -165,8 +165,10 @@ class TestStatusCenterPanel:
         assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._suggested_action_button.text() == "Fix First Error (2)"
-        assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics."
-        assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
+        assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics. 2 errors active."
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Start with the first error in Diagnostics. 2 errors active."
+        )
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
@@ -183,13 +185,19 @@ class TestStatusCenterPanel:
 
         assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
         assert panel._suggested_action_button.text() == "Configure SDK"
-        assert panel._suggested_action_button.toolTip() == "Open Project to configure the SDK workspace."
+        assert panel._suggested_action_button.toolTip() == (
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._suggested_action_button.accessibleName() == "Suggested status action"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Open Project to configure the SDK workspace."
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._suggested_action_summary_label.accessibleName() == "Suggested action guidance"
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"
-        assert panel._workspace_chip.toolTip() == "Check Workspace. Open Project to configure the SDK workspace."
+        assert panel._workspace_chip.toolTip() == (
+            "Check Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._workspace_chip.accessibleName() == "Workspace status: Check Workspace"
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._workspace_summary_label.text() == (
@@ -212,31 +220,37 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._suggested_action_button.text() == "Configure SDK"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Open Project to configure the SDK workspace."
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Start with the first error in Diagnostics."
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Start with the first error in Diagnostics. 1 error active."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
         assert panel._suggested_action_button.text() == "Review First Warning (2)"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Review the first warning in Diagnostics."
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Review the first warning in Diagnostics. 2 warnings active."
+        )
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output."
+        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output. Bridge lost"
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
         assert panel._suggested_action_button.text() == "Review History (2)"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History."
+        assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History. 2 dirty pages pending."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection."
+        assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection. 3 widgets selected."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
-        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics."
+        assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics. 2 info items active."
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._suggested_action_button.text() == "Open Diagnostics"

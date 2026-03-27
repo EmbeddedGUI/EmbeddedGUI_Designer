@@ -571,41 +571,56 @@ class StatusCenterPanel(QWidget):
                 "open_first_error",
                 self._counted_label("Fix First Error", error_count),
                 "diagnostics",
-                "Start with the first error in Diagnostics.",
+                f"Start with the first error in Diagnostics. {self._active_count_hint(error_count, 'error', 'errors')}",
             )
         if warning_count > 0:
             return (
                 "open_first_warning",
                 self._counted_label("Review First Warning", warning_count),
                 "diagnostics",
-                "Review the first warning in Diagnostics.",
+                f"Review the first warning in Diagnostics. {self._active_count_hint(warning_count, 'warning', 'warnings')}",
             )
         if runtime_text:
-            return ("open_debug", "Inspect Debug Output", "debug", "Inspect the latest runtime output.")
+            return (
+                "open_debug",
+                "Inspect Debug Output",
+                "debug",
+                f"Inspect the latest runtime output. {runtime_text}",
+            )
         if not sdk_ready:
-            return ("open_project_panel", "Configure SDK", "project", "Open Project to configure the SDK workspace.")
+            return (
+                "open_project_panel",
+                "Configure SDK",
+                "project",
+                "Open Project to configure the SDK workspace. SDK root is missing or invalid.",
+            )
         if not can_compile:
-            return ("open_debug", "Check Compile Output", "debug", "Open Debug Output to inspect compile availability.")
+            return (
+                "open_debug",
+                "Check Compile Output",
+                "debug",
+                "Open Debug Output to inspect compile availability. Compile pipeline is unavailable.",
+            )
         if dirty_count > 0:
             return (
                 "open_history",
                 self._counted_label("Review History", dirty_count),
                 "history",
-                "Review unsaved changes in History.",
+                f"Review unsaved changes in History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')} pending.",
             )
         if selection_total > 0:
             return (
                 "open_structure_panel",
                 self._counted_label("Inspect Selection", selection_total),
                 "structure",
-                "Open Structure for the current selection.",
+                f"Open Structure for the current selection. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
             )
         if info_count > 0:
             return (
                 "open_info_diagnostics",
                 self._counted_label("Inspect Info", info_count),
                 "debug",
-                "Inspect informational diagnostics.",
+                f"Inspect informational diagnostics. {self._active_count_hint(info_count, 'info item', 'info items')}",
             )
         return ("open_diagnostics", "Open Diagnostics", "diagnostics", "Open Diagnostics for a full health review.")
 
