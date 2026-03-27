@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMenu,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QToolButton,
@@ -179,6 +180,23 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target.setObjectName("workspace_status_chip")
         self._insert_target.setWordWrap(True)
         header_layout.addWidget(self._insert_target)
+
+        stats_row = QHBoxLayout()
+        stats_row.setContentsMargins(0, 0, 0, 0)
+        stats_row.setSpacing(8)
+        self._visible_count_chip = QLabel("Visible 0")
+        self._visible_count_chip.setObjectName("workspace_status_chip")
+        self._visible_count_chip.setProperty("chipTone", "accent")
+        self._favorites_count_chip = QLabel("Favorites 0")
+        self._favorites_count_chip.setObjectName("workspace_status_chip")
+        self._favorites_count_chip.setProperty("chipTone", "success")
+        self._recent_count_chip = QLabel("Recent 0")
+        self._recent_count_chip.setObjectName("workspace_status_chip")
+        self._recent_count_chip.setProperty("chipTone", "warning")
+        for chip in (self._visible_count_chip, self._favorites_count_chip, self._recent_count_chip):
+            stats_row.addWidget(chip)
+        stats_row.addStretch()
+        header_layout.addLayout(stats_row)
         layout.addWidget(header)
 
         search_row = QHBoxLayout()
@@ -359,10 +377,30 @@ class WidgetBrowserPanel(QWidget):
 
     def refresh(self):
         self._sync_tags_from_config()
-        self._rebuild_cards(self._filtered_items())
+        items = self._filtered_items()
+        self._rebuild_cards(items)
+        self._update_browser_stats(len(items))
 
     def _update_insert_target(self):
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
+
+    def _set_chip_text(self, chip, text, tone=None):
+        chip.setText(text)
+        if tone is not None:
+            chip.setProperty("chipTone", tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
+    def _update_browser_stats(self, visible_count):
+        total = len(self._registry.browser_items(addable_only=True))
+        favorites = len(self._config.widget_browser_favorites)
+        recent = len(self._config.widget_browser_recent)
+        active_filters = bool((self._search.text() or "").strip()) or bool(self._active_tag_values()) or self._selected_category() != "all"
+        tone = "accent" if active_filters else "success"
+        self._set_chip_text(self._visible_count_chip, f"Visible {visible_count}/{total}", tone)
+        self._set_chip_text(self._favorites_count_chip, f"Favorites {favorites}", "success" if favorites else "accent")
+        self._set_chip_text(self._recent_count_chip, f"Recent {recent}", "warning" if recent else "accent")
 
     def _on_category_changed(self, _row):
         if self._suspend_filter_persist:
@@ -467,9 +505,36 @@ class WidgetBrowserPanel(QWidget):
         columns = 2
         if not items:
             self._selected_type = ""
-            empty = QLabel("No widgets match the current filters.")
-            empty.setObjectName("workspace_empty_state")
-            empty.setAlignment(Qt.AlignCenter)
+            empty = QFrame()
+            empty.setObjectName("widget_browser_empty_state")
+            empty_layout = QVBoxLayout(empty)
+            empty_layout.setContentsMargins(20, 20, 20, 20)
+            empty_layout.setSpacing(10)
+
+            title = QLabel("No widgets match the current filters.")
+            title.setObjectName("workspace_section_title")
+            title.setAlignment(Qt.AlignCenter)
+            empty_layout.addWidget(title)
+
+            hint = QLabel("Try clearing search text, removing tags, or switching to All Widgets.")
+            hint.setObjectName("workspace_section_subtitle")
+            hint.setWordWrap(True)
+            hint.setAlignment(Qt.AlignCenter)
+            empty_layout.addWidget(hint)
+
+            action_row = QHBoxLayout()
+            action_row.setContentsMargins(0, 0, 0, 0)
+            action_row.setSpacing(8)
+            reset_search_btn = QPushButton("Reset Search")
+            reset_search_btn.clicked.connect(self._reset_search_only)
+            action_row.addWidget(reset_search_btn)
+            clear_tags_btn = QPushButton("Clear Tags")
+            clear_tags_btn.clicked.connect(self._clear_active_tags)
+            action_row.addWidget(clear_tags_btn)
+            show_all_btn = QPushButton("Show All Widgets")
+            show_all_btn.clicked.connect(self._reset_all_filters)
+            action_row.addWidget(show_all_btn)
+            empty_layout.addLayout(action_row)
             self._cards_layout.addWidget(empty, 0, 0, 1, columns)
             return
 
@@ -515,3 +580,25 @@ class WidgetBrowserPanel(QWidget):
             self._toggle_favorite(widget_type)
         elif chosen == reveal_action:
             self.reveal_requested.emit(widget_type)
+
+    def _set_category_by_id(self, category_id):
+        target = str(category_id or "").strip().lower()
+        for row in range(self._category_list.count()):
+            item = self._category_list.item(row)
+            value = str(item.data(Qt.UserRole) or "").strip().lower() if item is not None else ""
+            if value == target:
+                self._category_list.setCurrentRow(row)
+                return
+
+    def _reset_search_only(self):
+        if self._search.text():
+            self._search.setText("")
+
+    def _reset_all_filters(self):
+        self._suspend_filter_persist = True
+        self._config.set_widget_browser_filters(scenario="all", tags=[])
+        self._suspend_filter_persist = False
+        self._search.setText("")
+        self._sync_tags_from_config()
+        self._set_category_by_id("all")
+        self.refresh()
