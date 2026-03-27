@@ -792,6 +792,18 @@ class MainWindow(QMainWindow):
         if action == "open_assets_panel":
             self._select_left_panel("assets")
             return
+        if action == "open_properties_inspector":
+            self._show_inspector_tab("properties")
+            return
+        if action == "open_animations_inspector":
+            self._show_inspector_tab("animations")
+            return
+        if action == "open_page_fields":
+            self._show_inspector_tab("page", "fields")
+            return
+        if action == "open_page_timers":
+            self._show_inspector_tab("page", "timers")
+            return
         if action == "open_diagnostics":
             self._show_bottom_panel("Diagnostics")
             return

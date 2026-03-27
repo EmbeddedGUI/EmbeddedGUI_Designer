@@ -6008,6 +6008,23 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "assets"
         _close_window(window)
 
+    def test_status_center_inspector_actions_switch_inspector_tabs(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._on_status_center_action_requested("open_animations_inspector")
+        assert window._inspector_tabs.currentIndex() == 1
+        window._on_status_center_action_requested("open_properties_inspector")
+        assert window._inspector_tabs.currentIndex() == 0
+        window._on_status_center_action_requested("open_page_timers")
+        assert window._inspector_tabs.currentIndex() == 2
+        assert window._page_tools_tabs.currentIndex() == 1
+        window._on_status_center_action_requested("open_page_fields")
+        assert window._inspector_tabs.currentIndex() == 2
+        assert window._page_tools_tabs.currentIndex() == 0
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:

@@ -82,3 +82,23 @@ class TestStatusCenterPanel:
             "open_assets_panel",
         ]
         panel.deleteLater()
+
+    def test_inspector_navigation_buttons_emit_expected_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel._properties_btn.click()
+        panel._animations_btn.click()
+        panel._fields_btn.click()
+        panel._timers_btn.click()
+
+        assert emitted == [
+            "open_properties_inspector",
+            "open_animations_inspector",
+            "open_page_fields",
+            "open_page_timers",
+        ]
+        panel.deleteLater()
