@@ -5993,6 +5993,21 @@ class TestMainWindowFileFlow:
         assert window.widget_browser._selected_type == "label"
         _close_window(window)
 
+    def test_status_center_workspace_actions_switch_left_panel(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._on_status_center_action_requested("open_components_panel")
+        assert window._current_left_panel == "widgets"
+        window._on_status_center_action_requested("open_project_panel")
+        assert window._current_left_panel == "project"
+        window._on_status_center_action_requested("open_structure_panel")
+        assert window._current_left_panel == "structure"
+        window._on_status_center_action_requested("open_assets_panel")
+        assert window._current_left_panel == "assets"
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:

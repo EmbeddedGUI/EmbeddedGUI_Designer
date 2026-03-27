@@ -62,3 +62,23 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
         panel.deleteLater()
+
+    def test_workspace_navigation_buttons_emit_expected_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel._project_btn.click()
+        panel._structure_btn.click()
+        panel._components_btn.click()
+        panel._assets_btn.click()
+
+        assert emitted == [
+            "open_project_panel",
+            "open_structure_panel",
+            "open_components_panel",
+            "open_assets_panel",
+        ]
+        panel.deleteLater()

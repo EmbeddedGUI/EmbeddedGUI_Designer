@@ -780,6 +780,18 @@ class MainWindow(QMainWindow):
 
     def _on_status_center_action_requested(self, action_key):
         action = str(action_key or "").strip().lower()
+        if action == "open_project_panel":
+            self._select_left_panel("project")
+            return
+        if action == "open_structure_panel":
+            self._select_left_panel("structure")
+            return
+        if action == "open_components_panel":
+            self._select_left_panel("widgets")
+            return
+        if action == "open_assets_panel":
+            self._select_left_panel("assets")
+            return
         if action == "open_diagnostics":
             self._show_bottom_panel("Diagnostics")
             return
