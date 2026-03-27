@@ -92,9 +92,22 @@ class StatusCenterPanel(QWidget):
         header_layout.setContentsMargins(14, 14, 14, 14)
         header_layout.setSpacing(6)
 
+        header_title_row = QHBoxLayout()
+        header_title_row.setContentsMargins(0, 0, 0, 0)
+        header_title_row.setSpacing(8)
         title = QLabel("Status Center")
         title.setObjectName("workspace_section_title")
-        header_layout.addWidget(title)
+        header_title_row.addWidget(title)
+        self._workspace_chip = QToolButton()
+        self._workspace_chip.setText("Check Workspace")
+        self._workspace_chip.setObjectName("workspace_status_chip")
+        self._workspace_chip.setProperty("chipTone", "warning")
+        self._workspace_chip.setCursor(Qt.PointingHandCursor)
+        self._workspace_chip.setAccessibleName("Workspace status chip")
+        self._workspace_chip.clicked.connect(self._trigger_suggested_action)
+        header_title_row.addStretch()
+        header_title_row.addWidget(self._workspace_chip)
+        header_layout.addLayout(header_title_row)
 
         subtitle = QLabel("Monitor diagnostics, preview runtime, and jump to key tooling quickly.")
         subtitle.setObjectName("workspace_section_subtitle")
@@ -501,6 +514,26 @@ class StatusCenterPanel(QWidget):
             f"{self._count_label(selection_total, 'widget', 'widgets')} selected."
         )
 
+    def _workspace_chip_state(
+        self,
+        *,
+        sdk_ready,
+        can_compile,
+        dirty_count,
+        selection_total,
+        error_count,
+        warning_count,
+        info_count,
+        runtime_text,
+    ):
+        if error_count > 0 or runtime_text:
+            return ("Action Needed", "danger")
+        if warning_count > 0 or not sdk_ready or not can_compile:
+            return ("Check Workspace", "warning")
+        if dirty_count > 0 or selection_total > 0 or info_count > 0:
+            return ("In Progress", "accent")
+        return ("Ready", "success")
+
     def _suggested_action_state(
         self,
         *,
@@ -692,6 +725,19 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_button.setText(suggested_label)
         self._suggested_action_button.setIcon(make_icon(suggested_icon))
         self._set_hint(self._suggested_action_button, suggested_hint)
+        workspace_chip_label, workspace_chip_tone = self._workspace_chip_state(
+            sdk_ready=sdk_ready,
+            can_compile=can_compile,
+            dirty_count=dirty_count,
+            selection_total=selection_total,
+            error_count=error_count,
+            warning_count=warning_count,
+            info_count=info_count,
+            runtime_text=runtime_text,
+        )
+        self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)
+        self._workspace_chip.setAccessibleName(f"Workspace status: {workspace_chip_label}")
+        self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
             can_compile,
