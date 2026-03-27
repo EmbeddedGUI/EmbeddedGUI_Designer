@@ -563,6 +563,9 @@ class StatusCenterPanel(QWidget):
             health_hint = "Open Diagnostics. No active diagnostics."
         self._set_hint(self._health_chip, health_hint)
         self._first_error_btn.setEnabled(error_count > 0)
+        self._first_error_btn.setText(
+            f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
+        )
         self._set_hint(
             self._first_error_btn,
             "Jump to the first error in Diagnostics. "
@@ -571,6 +574,9 @@ class StatusCenterPanel(QWidget):
             else "Unavailable: no errors are active.",
         )
         self._first_warning_btn.setEnabled(warning_count > 0)
+        self._first_warning_btn.setText(
+            f"Open First Warning ({warning_count})" if warning_count > 0 else "Open First Warning"
+        )
         self._set_hint(
             self._first_warning_btn,
             "Jump to the first warning in Diagnostics. "

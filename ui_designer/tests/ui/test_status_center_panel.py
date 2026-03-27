@@ -46,6 +46,8 @@ class TestStatusCenterPanel:
         assert panel._info_bar.value() == 25
         assert panel._first_error_btn.isEnabled() is True
         assert panel._first_warning_btn.isEnabled() is True
+        assert panel._first_error_btn.text() == "Open First Error (2)"
+        assert panel._first_warning_btn.text() == "Open First Warning (1)"
         assert panel._health_chip_action == "open_error_diagnostics"
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
         assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
@@ -69,6 +71,8 @@ class TestStatusCenterPanel:
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
+        assert panel._first_error_btn.text() == "Open First Error"
+        assert panel._first_warning_btn.text() == "Open First Warning (3)"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 3 warnings active."
 
@@ -82,6 +86,8 @@ class TestStatusCenterPanel:
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
+        assert panel._first_error_btn.text() == "Open First Error"
+        assert panel._first_warning_btn.text() == "Open First Warning"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
 
@@ -97,6 +103,8 @@ class TestStatusCenterPanel:
         assert panel._info_row.toolTip() == "Open Info. No info items active."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
+        assert panel._first_error_btn.text() == "Open First Error"
+        assert panel._first_warning_btn.text() == "Open First Warning"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
         panel.deleteLater()
