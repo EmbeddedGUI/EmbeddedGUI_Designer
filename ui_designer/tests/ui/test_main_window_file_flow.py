@@ -6072,6 +6072,30 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.currentWidget() is window.res_panel
         _close_window(window)
 
+    def test_status_center_recent_action_menu_replays_restored_action(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        isolated_config.workspace_status_panel_state = {
+            "last_action": "open_assets_panel",
+            "recent_actions": ["open_assets_panel", "open_project_panel", "open_debug"],
+        }
+
+        window = MainWindow("")
+
+        assert [action.text() for action in window.status_center_panel._repeat_action_menu.actions()] == [
+            "Assets",
+            "Project",
+            "Debug Output",
+        ]
+
+        window.status_center_panel._repeat_action_menu.actions()[1].trigger()
+
+        assert window._current_left_panel == "project"
+        assert window._left_panel_stack.currentWidget() is window._project_workspace
+        assert window.status_center_panel._last_action_label.text() == "Last action: Project"
+        assert window.status_center_panel._repeat_action_button.text() == "Repeat Project"
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:
