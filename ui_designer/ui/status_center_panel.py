@@ -109,10 +109,11 @@ class StatusCenterPanel(QWidget):
         header_title_row.addWidget(self._workspace_chip)
         header_layout.addLayout(header_title_row)
 
-        subtitle = QLabel("Monitor diagnostics, preview runtime, and jump to key tooling quickly.")
-        subtitle.setObjectName("workspace_section_subtitle")
-        subtitle.setWordWrap(True)
-        header_layout.addWidget(subtitle)
+        self._header_subtitle = QLabel("Monitor diagnostics, preview runtime, and jump to key tooling quickly.")
+        self._header_subtitle.setObjectName("workspace_section_subtitle")
+        self._header_subtitle.setWordWrap(True)
+        self._header_subtitle.setAccessibleName("Status Center summary")
+        header_layout.addWidget(self._header_subtitle)
         self._workspace_summary_label = QLabel("Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected.")
         self._workspace_summary_label.setObjectName("workspace_section_subtitle")
         self._workspace_summary_label.setWordWrap(True)
@@ -668,6 +669,24 @@ class StatusCenterPanel(QWidget):
             return ("In Progress", "accent")
         return ("Ready", "success")
 
+    def _header_subtitle_text(self, workspace_chip_label, suggested_label):
+        status = str(workspace_chip_label or "").strip()
+        focus = str(suggested_label or "").strip() or "Open Diagnostics"
+        if status == "Action Needed":
+            return f"Action needed now. Focus on {focus}."
+        if status == "Check Workspace":
+            return f"Workspace checks are pending. Focus on {focus}."
+        if status == "In Progress":
+            return f"Work is in progress. Focus on {focus}."
+        return f"Workspace looks ready. {focus} remains available."
+
+    def _header_subtitle_tooltip(self, workspace_chip_label, suggested_hint):
+        status = str(workspace_chip_label or "").strip() or "Ready"
+        hint = str(suggested_hint or "").strip()
+        if hint:
+            return f"Status Center: {status}. {hint}"
+        return f"Status Center: {status}."
+
     def _suggested_action_state(
         self,
         *,
@@ -955,6 +974,13 @@ class StatusCenterPanel(QWidget):
             info_count=info_count,
             runtime_text=runtime_text,
         )
+        header_subtitle = self._header_subtitle_text(workspace_chip_label, suggested_label)
+        self._header_subtitle.setText(header_subtitle)
+        self._set_hint(
+            self._header_subtitle,
+            self._header_subtitle_tooltip(workspace_chip_label, suggested_hint),
+        )
+        self._header_subtitle.setAccessibleName(header_subtitle)
         self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)
         self._set_widget_icon(self._workspace_chip, suggested_icon, size=16)
         self._workspace_chip.setAccessibleName(f"Workspace status: {workspace_chip_label} ({suggested_label})")
