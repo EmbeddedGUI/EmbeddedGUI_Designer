@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLabel,
     QGroupBox, QScrollArea, QHBoxLayout,
     QDialog, QListWidget, QListWidgetItem,
-    QDialogButtonBox, QMessageBox, QFileDialog,
+    QDialogButtonBox, QMessageBox, QFileDialog, QFrame,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker
 from PyQt5.QtGui import QFont
@@ -27,6 +27,7 @@ from ..model.widget_model import (
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
+from .iconography import make_icon, widget_icon_key
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
 
@@ -333,6 +334,50 @@ class PropertyPanel(QWidget):
             elif item.layout():
                 self._clear_layout(item.layout())
 
+    def _make_status_chip(self, text, tone=None):
+        chip = QLabel(text)
+        chip.setObjectName("workspace_status_chip")
+        if tone:
+            chip.setProperty("chipTone", tone)
+        return chip
+
+    def _build_single_selection_header(self, widget):
+        header = QFrame()
+        header.setObjectName("workspace_panel_header")
+        layout = QVBoxLayout()
+        header.setLayout(layout)
+
+        top_row = QHBoxLayout()
+        icon = QLabel()
+        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=26).pixmap(26, 26))
+        top_row.addWidget(icon, 0, Qt.AlignTop)
+
+        title_col = QVBoxLayout()
+        title = QLabel(widget.name)
+        title.setObjectName("workspace_section_title")
+        title_col.addWidget(title)
+
+        subtitle = QLabel(f"{WidgetRegistry.instance().display_name(widget.widget_type)} • {widget.widget_type}")
+        subtitle.setObjectName("workspace_section_subtitle")
+        title_col.addWidget(subtitle)
+        top_row.addLayout(title_col, 1)
+        layout.addLayout(top_row)
+
+        chips_row = QHBoxLayout()
+        chips_row.setSpacing(8)
+        chips_row.addWidget(self._make_status_chip(f"{widget.width}×{widget.height}", "accent"))
+        if getattr(widget, "designer_locked", False):
+            chips_row.addWidget(self._make_status_chip("Locked", "warning"))
+        if getattr(widget, "designer_hidden", False):
+            chips_row.addWidget(self._make_status_chip("Hidden", "danger"))
+        layout_parent = self._layout_parent_name(widget)
+        if layout_parent:
+            chips_row.addWidget(self._make_status_chip(f"Managed by {layout_parent}", "warning"))
+        chips_row.addStretch()
+        layout.addLayout(chips_row)
+
+        return header
+
     def _rebuild_form(self):
         self._clear_layout(self._layout)
         self._editors = {}
@@ -348,6 +393,7 @@ class PropertyPanel(QWidget):
             return
 
         w = self._primary_widget
+        self._layout.addWidget(self._build_single_selection_header(w))
 
         # Common properties group
         common_group = QGroupBox(f"{w.widget_type} - {w.name}")
