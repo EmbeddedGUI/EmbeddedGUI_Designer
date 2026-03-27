@@ -86,6 +86,9 @@ class TestStatusCenterPanel:
         assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
         assert panel._warning_row.toolTip() == "Open Warnings. 1 warning active."
         assert panel._info_row.toolTip() == "Open Info. 1 info item active."
+        assert panel._error_row.accessibleName() == "Errors diagnostics: 2 errors (50%)"
+        assert panel._warning_row.accessibleName() == "Warnings diagnostics: 1 warning (25%)"
+        assert panel._info_row.accessibleName() == "Info diagnostics: 1 info item (25%)"
         assert panel._first_error_btn.toolTip() == "Jump to the first error in Diagnostics. 2 errors active."
         assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 1 warning active."
         assert panel._first_error_btn.accessibleName() == "First Error action: Open First Error (2)"
@@ -122,6 +125,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._runtime_chip.accessibleName() == "Runtime status: Issue"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
         assert panel._first_error_btn.text() == "Open First Error"
@@ -159,6 +163,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
@@ -192,6 +197,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.property("chipTone") == "success"
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
@@ -241,6 +247,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.accessibleName() == "Runtime (Issue)"
         assert panel._runtime_label.toolTip() == "Bridge disconnected"
         assert panel._runtime_label.accessibleName() == "Runtime details: Bridge disconnected"
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Bridge disconnected"
         assert panel._sdk_value.toolTip() == "SDK: SDK Ready"
         assert panel._sdk_value.accessibleName() == "SDK value: SDK Ready"
         assert panel._sdk_card.accessibleName() == "SDK metric: SDK Ready"
@@ -364,6 +371,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."
         assert panel._components_btn.accessibleName() == "Components action: Components"
@@ -685,7 +693,7 @@ class TestStatusCenterPanel:
             "open_warning_diagnostics",
             "open_info_diagnostics",
         ]
-        assert panel._info_row.accessibleName() == "Info diagnostics"
+        assert panel._info_row.accessibleName() == "Info diagnostics: 0 info items"
         assert panel._last_action_label.text() == "Last action: Info"
         assert panel._repeat_action_button.text() == "Repeat Info"
         assert _menu_labels(panel._repeat_action_menu) == ["Info", "Warnings", "Errors", "Clear Recent Actions (3)"]
@@ -708,7 +716,7 @@ class TestStatusCenterPanel:
             "open_warning_diagnostics",
             "open_warning_diagnostics",
         ]
-        assert panel._warning_row.accessibleName() == "Warnings diagnostics"
+        assert panel._warning_row.accessibleName() == "Warnings diagnostics: 0 warnings"
         assert panel._repeat_action_button.text() == "Repeat Warnings"
         panel.deleteLater()
 
@@ -778,7 +786,7 @@ class TestStatusCenterPanel:
             "open_debug",
             "open_debug",
         ]
-        assert panel._runtime_panel.accessibleName() == "Runtime section"
+        assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._last_action_label.text() == "Last action: Debug Output"

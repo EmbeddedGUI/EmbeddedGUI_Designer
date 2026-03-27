@@ -709,6 +709,17 @@ class StatusCenterPanel(QWidget):
             return f"{label} action unavailable: {text}"
         return f"{label} action: {text}"
 
+    def _health_row_accessible_name(self, label, value_text):
+        row_label = str(label or "").strip() or "Diagnostics"
+        value = str(value_text or "").strip()
+        return f"{row_label} diagnostics: {value}" if value else f"{row_label} diagnostics"
+
+    def _runtime_panel_accessible_name(self, runtime_text):
+        message = str(runtime_text or "").strip()
+        if message:
+            return f"Runtime section: Issue. {message}"
+        return "Runtime section: Clear. No runtime errors."
+
     def _suggested_action_state(
         self,
         *,
@@ -1043,6 +1054,9 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
+        self._error_row.setAccessibleName(self._health_row_accessible_name("Errors", self._error_value.text()))
+        self._warning_row.setAccessibleName(self._health_row_accessible_name("Warnings", self._warning_value.text()))
+        self._info_row.setAccessibleName(self._health_row_accessible_name("Info", self._info_value.text()))
         self._error_value.setToolTip("Errors: " + self._error_value.text())
         self._warning_value.setToolTip("Warnings: " + self._warning_value.text())
         self._info_value.setToolTip("Info: " + self._info_value.text())
@@ -1129,6 +1143,7 @@ class StatusCenterPanel(QWidget):
             self._runtime_label.setText(runtime_text)
             self._set_hint(self._runtime_label, runtime_text)
             self._runtime_label.setAccessibleName(f"Runtime details: {runtime_text}")
+            self._runtime_panel.setAccessibleName(self._runtime_panel_accessible_name(runtime_text))
             self._set_chip_text(self._runtime_chip, "Issue", "danger")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
             self._runtime_chip.setAccessibleName("Runtime status: Issue")
@@ -1141,6 +1156,7 @@ class StatusCenterPanel(QWidget):
             self._runtime_label.setText("No runtime errors.")
             self._set_hint(self._runtime_label, "No runtime errors.")
             self._runtime_label.setAccessibleName("Runtime details: No runtime errors.")
+            self._runtime_panel.setAccessibleName(self._runtime_panel_accessible_name(""))
             self._set_chip_text(self._runtime_chip, "Clear", "success")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
             self._runtime_chip.setAccessibleName("Runtime status: Clear")
