@@ -721,6 +721,13 @@ class MainWindow(QMainWindow):
         if int(getattr(self._config, "workspace_layout_version", 0) or 0) != WORKSPACE_LAYOUT_VERSION:
             return
 
+        state = (self._config.window_state or "").strip()
+        if state:
+            try:
+                self.restoreState(QByteArray.fromBase64(state.encode("ascii")))
+            except Exception:
+                pass
+
         workspace_state = getattr(self._config, "workspace_state", {}) if isinstance(getattr(self._config, "workspace_state", {}), dict) else {}
         for splitter, key in (
             (getattr(self, "_top_splitter", None), "top_splitter"),
@@ -739,7 +746,7 @@ class MainWindow(QMainWindow):
     def _save_window_state_to_config(self):
         try:
             self._config.window_geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")
-            self._config.window_state = ""
+            self._config.window_state = bytes(self.saveState().toBase64()).decode("ascii")
             self._config.workspace_layout_version = WORKSPACE_LAYOUT_VERSION
             self._config.workspace_left_panel = getattr(self, "_current_left_panel", "project")
             self._config.workspace_state = {
