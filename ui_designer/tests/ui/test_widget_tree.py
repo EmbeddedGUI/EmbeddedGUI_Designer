@@ -57,6 +57,11 @@ def _select_menu_actions(menu):
     return {action.text(): action for action in select_menu.actions() if action.text()}
 
 
+def _select_menu_labels(menu):
+    select_menu = _context_submenu(menu, "Select")
+    return [action.text() for action in select_menu.actions() if action.text()]
+
+
 def _structure_submenu(menu, label):
     structure_menu = _context_submenu(menu, "Structure")
 
@@ -81,6 +86,53 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_context_menu_select_actions_appear_in_expected_order(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        root.add_child(WidgetModel("label", name="first"))
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        menu = panel._build_context_menu(root)
+        assert _select_menu_labels(menu) == [
+            "Parent",
+            "Previous Sibling",
+            "Next Sibling",
+            "Previous Siblings",
+            "Next Siblings",
+            "Previous In Tree",
+            "Next In Tree",
+            "Ancestors",
+            "Root",
+            "Path",
+            "Top-Level",
+            "First Child",
+            "Last Child",
+            "Children",
+            "Descendants",
+            "Subtree",
+            "Leaves",
+            "Containers",
+            "Layout Containers",
+            "Visible",
+            "Hidden",
+            "Unlocked",
+            "Locked",
+            "Managed",
+            "Free Position",
+            "Siblings",
+            "Same Parent Type",
+            "Subtree Type",
+            "Same Type",
+            "Same Depth",
+        ]
+
+        menu.deleteLater()
+        panel.deleteLater()
+
     def test_rename_widget_resolves_duplicate_name(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
