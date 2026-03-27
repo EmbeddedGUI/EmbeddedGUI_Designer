@@ -434,7 +434,7 @@ class StatusCenterPanel(QWidget):
             self._set_chip_text(self._health_chip, "Attention", "warning")
         elif info_count > 0:
             self._health_chip_action = "open_info_diagnostics"
-            self._set_chip_text(self._health_chip, "Stable", "success")
+            self._set_chip_text(self._health_chip, "Info", "accent")
         else:
             self._health_chip_action = "open_diagnostics"
             self._set_chip_text(self._health_chip, "Stable", "success")

@@ -63,6 +63,15 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
 
+        panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
+
+        assert panel._health_chip.text() == "Info"
+        assert panel._health_chip.property("chipTone") == "accent"
+        assert panel._health_chip_action == "open_info_diagnostics"
+        assert panel._runtime_label.text() == "No runtime errors."
+        assert panel._first_error_btn.isEnabled() is False
+        assert panel._first_warning_btn.isEnabled() is False
+
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0, runtime_error="")
 
         assert panel._health_chip.text() == "Stable"
