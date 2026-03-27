@@ -6131,6 +6131,24 @@ class TestMainWindowFileFlow:
         assert opened == ["error"]
         _close_window(window)
 
+    def test_status_center_suggested_action_routes_runtime_and_info_context(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
+        assert window.status_center_panel._suggested_action_button.text() == "Inspect Debug Output"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 2
+
+        window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
+        assert window.status_center_panel._suggested_action_button.text() == "Inspect Info"
+        window.status_center_panel._suggested_action_button.click()
+        assert window._bottom_tabs.currentIndex() == 0
+        assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
+        _close_window(window)
+
     def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
