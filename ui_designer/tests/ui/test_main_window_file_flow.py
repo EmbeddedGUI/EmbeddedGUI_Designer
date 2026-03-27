@@ -5903,6 +5903,7 @@ class TestMainWindowFileFlow:
 
         isolated_config.workspace_left_panel = "widgets"
         isolated_config.workspace_state = {"project_workspace_view": ProjectWorkspacePanel.VIEW_THUMBNAILS}
+        isolated_config.workspace_status_panel_state = {"last_action": "open_page_fields"}
         isolated_config.workspace_layout_version = 1
 
         window = MainWindow("")
@@ -5910,6 +5911,7 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
 
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
