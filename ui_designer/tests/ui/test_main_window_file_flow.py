@@ -5972,6 +5972,17 @@ class TestMainWindowCanvasActions:
         select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
         select_labels = [action.text() for action in select_menu.actions() if action.text()]
 
+        assert labels == [
+            "Select All",
+            "Select",
+            "Copy",
+            "Cut",
+            "Paste",
+            "Duplicate",
+            "Delete",
+            "Arrange",
+            "Structure",
+        ]
         assert "Select All" in labels
         assert "Select" in labels
         assert "Copy" in labels
@@ -6117,6 +6128,16 @@ class TestMainWindowCanvasActions:
         menu = window._build_preview_context_menu(None)
         labels = [action.text() for action in menu.actions() if action.text()]
 
+        assert labels == [
+            "Select All",
+            "Copy",
+            "Cut",
+            "Paste",
+            "Duplicate",
+            "Delete",
+            "Arrange",
+            "Structure",
+        ]
         assert "Select" not in labels
         assert "Structure" in labels
         _close_window(window)
