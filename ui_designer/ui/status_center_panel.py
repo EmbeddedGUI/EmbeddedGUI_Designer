@@ -14,11 +14,19 @@ class _ClickableFrame(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCursor(Qt.PointingHandCursor)
+        self.setFocusPolicy(Qt.StrongFocus)
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
             self.clicked.emit()
         super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space):
+            self.clicked.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
 class StatusCenterPanel(QWidget):
@@ -185,6 +193,7 @@ class StatusCenterPanel(QWidget):
         if action_key:
             card.clicked.connect(lambda key=action_key: self._emit_action(key))
             card.setToolTip(f"Open {label}")
+            card.setAccessibleName(f"{label} metric")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(10, 10, 10, 10)
         card_layout.setSpacing(6)

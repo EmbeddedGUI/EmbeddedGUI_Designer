@@ -129,3 +129,23 @@ class TestStatusCenterPanel:
             "open_history",
         ]
         panel.deleteLater()
+
+    def test_metric_cards_support_keyboard_activation(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel._diag_card.setFocus()
+        assert panel._diag_card.focusPolicy() == Qt.StrongFocus
+        QTest.keyClick(panel._diag_card, Qt.Key_Return)
+        QTest.keyClick(panel._diag_card, Qt.Key_Space)
+
+        assert emitted == [
+            "open_diagnostics",
+            "open_diagnostics",
+        ]
+        assert panel._diag_card.accessibleName() == "Diagnostics metric"
+        panel.deleteLater()
