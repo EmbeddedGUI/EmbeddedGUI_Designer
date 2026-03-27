@@ -19,6 +19,7 @@ from ..model.sdk_bootstrap import (
     sdk_root_source_kind,
 )
 from ..model.workspace import describe_sdk_root, resolve_configured_sdk_root
+from .iconography import make_icon
 
 
 class RecentProjectItem(QWidget):
@@ -33,9 +34,7 @@ class RecentProjectItem(QWidget):
         self.display_name = display_name
         self.setCursor(Qt.PointingHandCursor)
         self.setFixedHeight(82)
-        self.setStyleSheet(
-            "background-color: #262626; border: 1px solid #333; border-radius: 10px;"
-        )
+        self.setObjectName("workspace_panel_header")
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
@@ -43,11 +42,8 @@ class RecentProjectItem(QWidget):
 
         icon_label = QLabel()
         icon_label.setFixedSize(40, 40)
-        icon_label.setStyleSheet(
-            "background-color: #0078d4; border-radius: 6px; color: white; font-size: 18px; font-weight: bold;"
-        )
         icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setText(display_name[0].upper() if display_name else "?")
+        icon_label.setPixmap(make_icon("project", size=28).pixmap(28, 28))
         layout.addWidget(icon_label)
 
         text_layout = QVBoxLayout()
@@ -55,25 +51,28 @@ class RecentProjectItem(QWidget):
 
         name_label = QLabel(display_name)
         name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
-        name_label.setStyleSheet("color: #fff;")
+        name_label.setObjectName("workspace_section_title")
         text_layout.addWidget(name_label)
 
         path_label = QLabel(project_path)
-        path_label.setStyleSheet("color: #888;")
+        path_label.setObjectName("workspace_section_subtitle")
         text_layout.addWidget(path_label)
 
         project_status = "ready" if os.path.exists(project_path) else "missing"
         sdk_status = describe_sdk_root(sdk_root)
         sdk_source = describe_sdk_source(sdk_root) if sdk_status == "ready" else sdk_status
         self._status_label = QLabel(f"Project: {project_status}  |  SDK: {sdk_status} ({sdk_source})")
+        self._status_label.setObjectName("workspace_status_chip")
         if project_status != "ready":
-            self._status_label.setStyleSheet("color: #f44336;")
+            self._status_label.setProperty("chipTone", "danger")
         elif sdk_status == "ready":
-            self._status_label.setStyleSheet("color: #4caf50;")
+            self._status_label.setProperty("chipTone", "success")
         elif sdk_status == "invalid":
-            self._status_label.setStyleSheet("color: #ff9800;")
+            self._status_label.setProperty("chipTone", "warning")
         else:
-            self._status_label.setStyleSheet("color: #f44336;")
+            self._status_label.setProperty("chipTone", "danger")
+        self._status_label.style().unpolish(self._status_label)
+        self._status_label.style().polish(self._status_label)
         text_layout.addWidget(self._status_label)
 
         layout.addLayout(text_layout, 1)
@@ -100,8 +99,6 @@ class WelcomePage(QWidget):
         self._init_ui()
 
     def _init_ui(self):
-        self.setStyleSheet("QWidget { background-color: #1e1e1e; }")
-
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -113,12 +110,12 @@ class WelcomePage(QWidget):
 
         title = QLabel("EmbeddedGUI Designer")
         title.setFont(QFont("Segoe UI", 28, QFont.Light))
-        title.setStyleSheet("color: #fff;")
+        title.setObjectName("workspace_section_title")
         center_layout.addWidget(title)
 
         subtitle = QLabel("Visual designer with SDK-backed preview and external app workspace support")
         subtitle.setFont(QFont("Segoe UI", 12))
-        subtitle.setStyleSheet("color: #888;")
+        subtitle.setObjectName("workspace_section_subtitle")
         center_layout.addWidget(subtitle)
 
         center_layout.addSpacing(20)
@@ -131,58 +128,64 @@ class WelcomePage(QWidget):
 
         start_label = QLabel("Start")
         start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
-        start_label.setStyleSheet("color: #ccc;")
+        start_label.setObjectName("workspace_section_title")
         left_col.addWidget(start_label)
 
         self._new_project_btn = PrimaryPushButton("New Project...")
         self._new_project_btn.setFixedWidth(220)
+        self._new_project_btn.setIcon(make_icon("project"))
         self._new_project_btn.clicked.connect(self.new_project.emit)
         left_col.addWidget(self._new_project_btn)
 
         self._open_project_btn = PushButton("Open Project File...")
         self._open_project_btn.setFixedWidth(220)
+        self._open_project_btn.setIcon(make_icon("project"))
         self._open_project_btn.clicked.connect(self.open_project.emit)
         left_col.addWidget(self._open_project_btn)
 
         self._open_app_btn = PushButton("Open SDK Example...")
         self._open_app_btn.setFixedWidth(220)
+        self._open_app_btn.setIcon(make_icon("navigation"))
         self._open_app_btn.clicked.connect(self.open_app.emit)
         left_col.addWidget(self._open_app_btn)
 
         self._set_sdk_root_btn = PushButton("Set SDK Root...")
         self._set_sdk_root_btn.setFixedWidth(220)
+        self._set_sdk_root_btn.setIcon(make_icon("properties"))
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
 
         self._download_sdk_btn = PushButton("Download SDK...")
         self._download_sdk_btn.setFixedWidth(220)
+        self._download_sdk_btn.setIcon(make_icon("compile"))
         self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
         self._download_sdk_btn.setToolTip(describe_auto_download_plan())
         left_col.addWidget(self._download_sdk_btn)
 
         self._sdk_card = QWidget()
-        self._sdk_card.setStyleSheet("background-color: #262626; border: 1px solid #333; border-radius: 10px;")
+        self._sdk_card.setObjectName("workspace_panel_header")
         sdk_layout = QVBoxLayout(self._sdk_card)
         sdk_layout.setContentsMargins(16, 14, 16, 14)
         sdk_layout.setSpacing(6)
 
         sdk_title = QLabel("SDK Status")
         sdk_title.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
-        sdk_title.setStyleSheet("color: #fff;")
+        sdk_title.setObjectName("workspace_section_title")
         sdk_layout.addWidget(sdk_title)
 
         self._sdk_status_label = QLabel("")
+        self._sdk_status_label.setObjectName("workspace_status_chip")
         self._sdk_status_label.setWordWrap(True)
         sdk_layout.addWidget(self._sdk_status_label)
 
         self._sdk_path_label = QLabel("")
         self._sdk_path_label.setWordWrap(True)
-        self._sdk_path_label.setStyleSheet("color: #888;")
+        self._sdk_path_label.setObjectName("workspace_section_subtitle")
         sdk_layout.addWidget(self._sdk_path_label)
 
         self._sdk_hint_label = QLabel("")
         self._sdk_hint_label.setWordWrap(True)
-        self._sdk_hint_label.setStyleSheet("color: #666;")
+        self._sdk_hint_label.setObjectName("workspace_section_subtitle")
         sdk_layout.addWidget(self._sdk_hint_label)
 
         left_col.addSpacing(12)
@@ -196,7 +199,7 @@ class WelcomePage(QWidget):
 
         recent_label = QLabel("Recent Projects")
         recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
-        recent_label.setStyleSheet("color: #ccc;")
+        recent_label.setObjectName("workspace_section_title")
         right_col.addWidget(recent_label)
 
         self._recent_list = QVBoxLayout()
@@ -208,7 +211,7 @@ class WelcomePage(QWidget):
         center_layout.addLayout(content_layout, 1)
 
         footer = QLabel("Press Ctrl+Shift+O to open an SDK example, Ctrl+O to open a .egui project, or Ctrl+N to create a new project")
-        footer.setStyleSheet("color: #666; font-size: 11px;")
+        footer.setObjectName("workspace_section_subtitle")
         footer.setAlignment(Qt.AlignCenter)
         center_layout.addWidget(footer)
 
@@ -218,6 +221,12 @@ class WelcomePage(QWidget):
 
         self._refresh_sdk_status()
         self._refresh_recent_list()
+
+    def _set_sdk_chip_tone(self, tone):
+        self._sdk_status_label.setProperty("chipTone", tone)
+        self._sdk_status_label.style().unpolish(self._sdk_status_label)
+        self._sdk_status_label.style().polish(self._sdk_status_label)
+        self._sdk_status_label.update()
 
     def _refresh_sdk_status(self):
         sdk_root = resolve_configured_sdk_root(
@@ -240,17 +249,17 @@ class WelcomePage(QWidget):
             else:
                 self._sdk_status_label.setText("Ready: using selected SDK root")
             self._sdk_hint_label.setText(describe_sdk_source_hint(sdk_root))
-            self._sdk_status_label.setStyleSheet("color: #4caf50;")
+            self._set_sdk_chip_tone("success")
         elif sdk_status == "invalid":
             self._sdk_status_label.setText("Invalid: SDK path needs attention")
-            self._sdk_status_label.setStyleSheet("color: #ff9800;")
+            self._set_sdk_chip_tone("warning")
             self._sdk_hint_label.setText(
                 "Select a valid SDK root, or download one automatically to restore compile preview.\n"
                 f"{auto_download_plan}"
             )
         else:
             self._sdk_status_label.setText("Missing: editing only, Python preview fallback")
-            self._sdk_status_label.setStyleSheet("color: #f44336;")
+            self._set_sdk_chip_tone("danger")
             self._sdk_hint_label.setText(
                 "You can still edit projects, but compile preview stays disabled until you set or download an SDK.\n"
                 f"{auto_download_plan}"
@@ -274,7 +283,7 @@ class WelcomePage(QWidget):
         recent = self._config.recent_projects
         if not recent:
             no_recent = QLabel("No recent projects")
-            no_recent.setStyleSheet("color: #666; font-style: italic;")
+            no_recent.setObjectName("workspace_empty_state")
             self._recent_list.addWidget(no_recent)
             return
 

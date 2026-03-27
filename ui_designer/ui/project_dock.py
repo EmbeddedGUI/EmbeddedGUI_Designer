@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon, QFont
+from .iconography import make_icon
 
 # Page names that collide with egui internal module names.
 # A page named "test" generates egui_test_init() which conflicts with
@@ -91,6 +92,7 @@ class ProjectExplorerDock(QDockWidget):
         # Page tree
         pages_label = QLabel("Pages")
         pages_label.setFont(QFont("", -1, QFont.Bold))
+        pages_label.setObjectName("workspace_section_title")
         layout.addWidget(pages_label)
 
         self._page_tree = QTreeWidget()
@@ -102,6 +104,7 @@ class ProjectExplorerDock(QDockWidget):
 
         # Add page button
         add_btn = QPushButton("+ New Page")
+        add_btn.setIcon(make_icon("page"))
         add_btn.clicked.connect(self._on_add_page)
         layout.addWidget(add_btn)
 
@@ -151,6 +154,7 @@ class ProjectExplorerDock(QDockWidget):
             name = page.name
             item = QTreeWidgetItem([self._page_item_text(name)])
             item.setData(0, Qt.UserRole, name)
+            item.setIcon(0, make_icon("page", size=16))
             if name == self._current_page_name:
                 font = item.font(0)
                 font.setBold(True)
