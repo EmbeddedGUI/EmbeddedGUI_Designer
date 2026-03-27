@@ -421,6 +421,21 @@ class StatusCenterPanel(QWidget):
             )
         return f"Repeat {action_label}. {count} recent status center {noun} saved."
 
+    def _set_hint(self, widget, text):
+        hint = str(text or "").strip()
+        widget.setToolTip(hint)
+        widget.setStatusTip(hint)
+
+    def _count_label(self, count, singular, plural):
+        value = max(int(count or 0), 0)
+        return f"{value} {singular if value == 1 else plural}"
+
+    def _active_count_hint(self, count, singular, plural):
+        value = max(int(count or 0), 0)
+        if value <= 0:
+            return f"No {plural} active."
+        return f"{self._count_label(value, singular, plural)} active."
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -478,19 +493,25 @@ class StatusCenterPanel(QWidget):
         diagnostics_infos=0,
         runtime_error="",
     ):
-        self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
-        self._compile_value.setText("Available" if can_compile else "Unavailable")
-        self._dirty_value.setText(str(max(int(dirty_pages or 0), 0)))
-        self._selection_value.setText(f"{max(int(selection_count or 0), 0)} widgets")
-        self._preview_value.setText(str(preview_label or "Preview Idle"))
-        self._diag_value.setText(
-            f"{max(int(diagnostics_errors or 0), 0)} errors, "
-            f"{max(int(diagnostics_warnings or 0), 0)} warnings, "
-            f"{max(int(diagnostics_infos or 0), 0)} info"
-        )
+        sdk_ready = bool(sdk_ready)
+        can_compile = bool(can_compile)
+        dirty_count = max(int(dirty_pages or 0), 0)
+        selection_total = max(int(selection_count or 0), 0)
+        preview_text = str(preview_label or "Preview Idle")
         error_count = max(int(diagnostics_errors or 0), 0)
         warning_count = max(int(diagnostics_warnings or 0), 0)
         info_count = max(int(diagnostics_infos or 0), 0)
+
+        self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
+        self._compile_value.setText("Available" if can_compile else "Unavailable")
+        self._dirty_value.setText(str(dirty_count))
+        self._selection_value.setText(f"{selection_total} widgets")
+        self._preview_value.setText(preview_text)
+        self._diag_value.setText(
+            f"{error_count} errors, "
+            f"{warning_count} warnings, "
+            f"{info_count} info"
+        )
         total = max(error_count + warning_count + info_count, 1)
         self._error_value.setText(str(error_count))
         self._warning_value.setText(str(warning_count))
@@ -498,23 +519,69 @@ class StatusCenterPanel(QWidget):
         self._error_bar.setValue(int(round((error_count * 100.0) / total)))
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
+        self._set_hint(
+            self._sdk_card,
+            "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
+        )
+        self._set_hint(
+            self._compile_card,
+            "Open Debug Output. Compile pipeline is available."
+            if can_compile
+            else "Open Debug Output. Compile pipeline is unavailable.",
+        )
+        self._set_hint(
+            self._diag_card,
+            "Open Diagnostics. "
+            f"{self._count_label(error_count, 'error', 'errors')}, "
+            f"{self._count_label(warning_count, 'warning', 'warnings')}, "
+            f"{self._count_label(info_count, 'info item', 'info items')}.",
+        )
+        self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
+        self._set_hint(
+            self._selection_card,
+            f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
+        )
+        self._set_hint(self._dirty_card, f"Open History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')}.")
+        self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
+        self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
+        self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
         if error_count > 0:
             self._health_chip_action = "open_error_diagnostics"
             self._set_chip_text(self._health_chip, "Critical", "danger")
+            health_hint = f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}"
         elif warning_count > 0:
             self._health_chip_action = "open_warning_diagnostics"
             self._set_chip_text(self._health_chip, "Attention", "warning")
+            health_hint = f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}"
         elif info_count > 0:
             self._health_chip_action = "open_info_diagnostics"
             self._set_chip_text(self._health_chip, "Info", "accent")
+            health_hint = f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}"
         else:
             self._health_chip_action = "open_diagnostics"
             self._set_chip_text(self._health_chip, "Stable", "success")
-        self._health_chip.setToolTip(f"Open {self._action_label(self._health_chip_action)}")
-        self._first_error_btn.setEnabled(int(diagnostics_errors or 0) > 0)
-        self._first_warning_btn.setEnabled(int(diagnostics_warnings or 0) > 0)
+            health_hint = "Open Diagnostics. No active diagnostics."
+        self._set_hint(self._health_chip, health_hint)
+        self._first_error_btn.setEnabled(error_count > 0)
+        self._set_hint(
+            self._first_error_btn,
+            "Jump to the first error in Diagnostics. "
+            f"{self._active_count_hint(error_count, 'error', 'errors')}"
+            if error_count > 0
+            else "Unavailable: no errors are active.",
+        )
+        self._first_warning_btn.setEnabled(warning_count > 0)
+        self._set_hint(
+            self._first_warning_btn,
+            "Jump to the first warning in Diagnostics. "
+            f"{self._active_count_hint(warning_count, 'warning', 'warnings')}"
+            if warning_count > 0
+            else "Unavailable: no warnings are active.",
+        )
         runtime_text = str(runtime_error or "").strip()
         if runtime_text:
             self._runtime_label.setText(runtime_text)
+            self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
             self._runtime_label.setText("No runtime errors.")
+            self._set_hint(self._runtime_panel, "Open Debug Output. No runtime errors.")

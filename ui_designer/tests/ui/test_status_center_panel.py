@@ -47,7 +47,12 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.isEnabled() is True
         assert panel._first_warning_btn.isEnabled() is True
         assert panel._health_chip_action == "open_error_diagnostics"
-        assert panel._health_chip.toolTip() == "Open Errors"
+        assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
+        assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
+        assert panel._warning_row.toolTip() == "Open Warnings. 1 warning active."
+        assert panel._info_row.toolTip() == "Open Info. 1 info item active."
+        assert panel._first_error_btn.toolTip() == "Jump to the first error in Diagnostics. 2 errors active."
+        assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 1 warning active."
         panel.deleteLater()
 
     def test_health_chip_runtime_and_buttons_update_across_status_changes(self, qapp):
@@ -59,27 +64,68 @@ class TestStatusCenterPanel:
         assert panel._health_chip.text() == "Attention"
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._health_chip_action == "open_warning_diagnostics"
+        assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
         assert panel._runtime_label.text() == "Runtime failed"
+        assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
+        assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
+        assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 3 warnings active."
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
 
         assert panel._health_chip.text() == "Info"
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._health_chip_action == "open_info_diagnostics"
+        assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
         assert panel._runtime_label.text() == "No runtime errors."
+        assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
+        assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
+        assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0, runtime_error="")
 
         assert panel._health_chip.text() == "Stable"
         assert panel._health_chip.property("chipTone") == "success"
         assert panel._health_chip_action == "open_diagnostics"
+        assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._runtime_label.text() == "No runtime errors."
+        assert panel._error_row.toolTip() == "Open Errors. No errors active."
+        assert panel._warning_row.toolTip() == "Open Warnings. No warnings active."
+        assert panel._info_row.toolTip() == "Open Info. No info items active."
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
+        assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
+        assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
+        panel.deleteLater()
+
+    def test_metric_and_runtime_tooltips_reflect_workspace_state(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.set_status(
+            sdk_ready=True,
+            can_compile=True,
+            dirty_pages=2,
+            selection_count=1,
+            preview_label="Preview Running",
+            diagnostics_errors=2,
+            diagnostics_warnings=1,
+            diagnostics_infos=3,
+            runtime_error="Bridge disconnected",
+        )
+
+        assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
+        assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
+        assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
+        assert panel._preview_card.toolTip() == "Open Debug Output. Preview Running."
+        assert panel._selection_card.toolTip() == "Open Structure. 1 widget selected."
+        assert panel._dirty_card.toolTip() == "Open History. 2 dirty pages."
+        assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
+        assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
+        assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
         panel.deleteLater()
 
     def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):
