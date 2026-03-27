@@ -84,6 +84,11 @@ class DesignerConfig:
         self.show_all_examples = False
         self.window_geometry = ""
         self.window_state = ""
+        self.workspace_layout_version = 0
+        self.workspace_left_panel = "project"
+        self.workspace_state = {}
+        self.widget_browser_recent = []
+        self.widget_browser_favorites = []
         self.sdk_setup_prompted = False
         self.release_history_view = {}
         self.repo_health_view = {}
@@ -223,6 +228,14 @@ class DesignerConfig:
             self.show_all_examples = data.get("show_all_examples", False)
             self.window_geometry = data.get("window_geometry", "")
             self.window_state = data.get("window_state", "")
+            self.workspace_layout_version = int(data.get("workspace_layout_version", 0) or 0)
+            self.workspace_left_panel = str(data.get("workspace_left_panel", "project") or "project")
+            workspace_state = data.get("workspace_state", {})
+            self.workspace_state = workspace_state if isinstance(workspace_state, dict) else {}
+            recent = data.get("widget_browser_recent", [])
+            favorites = data.get("widget_browser_favorites", [])
+            self.widget_browser_recent = [str(item).strip() for item in recent if str(item).strip()][:24]
+            self.widget_browser_favorites = [str(item).strip() for item in favorites if str(item).strip()][:64]
             self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
             self.release_history_view = data.get("release_history_view", {}) if isinstance(data.get("release_history_view", {}), dict) else {}
             self.repo_health_view = data.get("repo_health_view", {}) if isinstance(data.get("repo_health_view", {}), dict) else {}
@@ -254,6 +267,11 @@ class DesignerConfig:
                 "show_all_examples": self.show_all_examples,
                 "window_geometry": self.window_geometry,
                 "window_state": self.window_state,
+                "workspace_layout_version": self.workspace_layout_version,
+                "workspace_left_panel": self.workspace_left_panel,
+                "workspace_state": self.workspace_state,
+                "widget_browser_recent": self.widget_browser_recent,
+                "widget_browser_favorites": self.widget_browser_favorites,
                 "sdk_setup_prompted": self.sdk_setup_prompted,
                 "release_history_view": self.release_history_view,
                 "repo_health_view": self.repo_health_view,
@@ -311,6 +329,32 @@ class DesignerConfig:
         if sdk_root:
             project_path = os.path.join(sdk_root, "example", app_name, f"{app_name}.egui")
         self.add_recent_project(project_path, sdk_root, app_name)
+
+    def record_widget_browser_recent(self, widget_type):
+        """Add a widget type to the browser MRU list."""
+        widget_type = str(widget_type or "").strip()
+        if not widget_type:
+            return
+        self.widget_browser_recent = [item for item in self.widget_browser_recent if item != widget_type]
+        self.widget_browser_recent.insert(0, widget_type)
+        self.widget_browser_recent = self.widget_browser_recent[:24]
+        self.save()
+
+    def toggle_widget_browser_favorite(self, widget_type):
+        """Toggle a widget type in the browser favorites list."""
+        widget_type = str(widget_type or "").strip()
+        if not widget_type:
+            return False
+        favorites = [item for item in self.widget_browser_favorites if item]
+        if widget_type in favorites:
+            favorites = [item for item in favorites if item != widget_type]
+            enabled = False
+        else:
+            favorites.insert(0, widget_type)
+            enabled = True
+        self.widget_browser_favorites = favorites[:64]
+        self.save()
+        return enabled
 
     def get_app_dir(self, app_name=None, sdk_root=None):
         """Get the default SDK example directory for an app."""

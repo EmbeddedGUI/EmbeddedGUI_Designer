@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
 from PyQt5.QtGui import QColor, QBrush
 
+from ..model.config import get_config
 from ..model.widget_name import (
     is_valid_widget_name,
     make_unique_widget_name,
@@ -30,6 +31,7 @@ from ..model.structure_ops import (
 )
 from ..model.widget_model import WidgetModel
 from ..model.widget_registry import WidgetRegistry
+from .iconography import make_icon, widget_icon_key
 
 
 def _get_addable_types():
@@ -131,6 +133,7 @@ class WidgetTreePanel(QWidget):
     selection_changed = pyqtSignal(list, object)  # widgets, primary
     tree_changed = pyqtSignal(str)  # emits change source when tree structure changes
     feedback_message = pyqtSignal(str)  # emits user-facing status messages
+    browse_widgets_requested = pyqtSignal(object)  # preferred parent widget or None
 
     _DRAG_TARGET_LABEL_STYLES = {
         "default": "color: #666666;",
@@ -141,6 +144,7 @@ class WidgetTreePanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._config = get_config()
         self.project = None
         self._widget_map = {}  # QTreeWidgetItem -> WidgetModel
         self._item_map = {}  # widget id -> QTreeWidgetItem
@@ -166,17 +170,23 @@ class WidgetTreePanel(QWidget):
 
         # Button bar
         btn_layout = QHBoxLayout()
-        self.add_btn = QPushButton("Add")
+        self.add_btn = QPushButton("Insert")
+        self.add_btn.setIcon(make_icon("widgets"))
+        self.add_btn.setToolTip("Open the widget browser for the current insert target.")
         self.add_btn.clicked.connect(self._on_add_clicked)
         self.rename_btn = QPushButton("Rename")
+        self.rename_btn.setIcon(make_icon("properties"))
         self.rename_btn.setToolTip("Rename the current selection (F2)")
         self.rename_btn.clicked.connect(self._on_rename_clicked)
         self.del_btn = QPushButton("Delete")
+        self.del_btn.setIcon(make_icon("stop"))
         self.del_btn.setToolTip("Delete the current selection (Del)")
         self.del_btn.clicked.connect(self._on_delete_clicked)
         self.expand_btn = QPushButton("Expand")
+        self.expand_btn.setIcon(make_icon("navigation"))
         self.expand_btn.clicked.connect(self._expand_all_items)
         self.collapse_btn = QPushButton("Collapse")
+        self.collapse_btn.setIcon(make_icon("navigation"))
         self.collapse_btn.clicked.connect(self._collapse_all_items)
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.rename_btn)
@@ -187,13 +197,16 @@ class WidgetTreePanel(QWidget):
 
         structure_layout = QHBoxLayout()
         self.group_btn = QPushButton("Group")
+        self.group_btn.setIcon(make_icon("layout"))
         self.group_btn.setToolTip("Group the current selection (Ctrl+G)")
         self.group_btn.clicked.connect(self._group_selected_widgets)
         self.ungroup_btn = QPushButton("Ungroup")
+        self.ungroup_btn.setIcon(make_icon("layout"))
         self.ungroup_btn.setToolTip("Ungroup the selected group widgets (Ctrl+Shift+G)")
         self.ungroup_btn.clicked.connect(self._ungroup_selected_widgets)
         self.into_btn = QToolButton()
         self.into_btn.setText("Into")
+        self.into_btn.setIcon(make_icon("navigation"))
         self.into_btn.setToolTip("Move the current selection into another container (Ctrl+Shift+I)")
         self.into_btn.clicked.connect(self._move_selected_widgets_into)
         self._into_quick_menu = QMenu(self)
@@ -201,18 +214,23 @@ class WidgetTreePanel(QWidget):
         self.into_btn.setPopupMode(QToolButton.MenuButtonPopup)
         self.into_btn.setMenu(self._into_quick_menu)
         self.lift_btn = QPushButton("Lift")
+        self.lift_btn.setIcon(make_icon("navigation"))
         self.lift_btn.setToolTip("Lift the current selection to the parent container (Ctrl+Shift+L)")
         self.lift_btn.clicked.connect(self._lift_selected_widgets)
         self.up_btn = QPushButton("Up")
+        self.up_btn.setIcon(make_icon("undo"))
         self.up_btn.setToolTip("Move the current selection up among its siblings (Alt+Up)")
         self.up_btn.clicked.connect(self._move_selected_widgets_up)
         self.down_btn = QPushButton("Down")
+        self.down_btn.setIcon(make_icon("redo"))
         self.down_btn.setToolTip("Move the current selection down among its siblings (Alt+Down)")
         self.down_btn.clicked.connect(self._move_selected_widgets_down)
         self.top_btn = QPushButton("Top")
+        self.top_btn.setIcon(make_icon("undo"))
         self.top_btn.setToolTip("Move the current selection to the top of its sibling list (Alt+Shift+Up)")
         self.top_btn.clicked.connect(self._move_selected_widgets_to_top)
         self.bottom_btn = QPushButton("Bottom")
+        self.bottom_btn.setIcon(make_icon("redo"))
         self.bottom_btn.setToolTip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)")
         self.bottom_btn.clicked.connect(self._move_selected_widgets_to_bottom)
         self._structure_button_tooltips = {
@@ -280,7 +298,7 @@ class WidgetTreePanel(QWidget):
             clear_drag_hover_handler=self._clear_tree_drag_hover,
             parent=self,
         )
-        self.tree.setHeaderLabels(["Widget", "Type"])
+        self.tree.setHeaderLabels(["Widget", "Details"])
         self.tree.setColumnWidth(0, 140)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -339,7 +357,8 @@ class WidgetTreePanel(QWidget):
     def _add_widget_to_tree(self, widget, parent_item):
         item = QTreeWidgetItem()
         item.setText(0, self._display_name(widget))
-        item.setText(1, widget.widget_type)
+        item.setText(1, self._widget_state_summary(widget))
+        item.setIcon(0, make_icon(widget_icon_key(widget.widget_type), size=18))
         self._widget_map[id(item)] = widget
         self._item_map[id(widget)] = item
 
@@ -354,14 +373,24 @@ class WidgetTreePanel(QWidget):
         return item
 
     def _display_name(self, widget):
-        prefix = []
-        if getattr(widget, "designer_locked", False):
-            prefix.append("[L]")
-        if getattr(widget, "designer_hidden", False):
-            prefix.append("[H]")
-        if prefix:
-            return f"{' '.join(prefix)} {widget.name}"
         return widget.name
+
+    def _widget_state_summary(self, widget):
+        parts = [widget.widget_type]
+        if getattr(widget, "designer_locked", False):
+            parts.append("locked")
+        if getattr(widget, "designer_hidden", False):
+            parts.append("hidden")
+        if widget.parent is not None and self._parent_has_layout(widget):
+            parts.append("managed")
+        return " | ".join(parts)
+
+    def _parent_has_layout(self, widget):
+        parent = getattr(widget, "parent", None)
+        if parent is None:
+            return False
+        type_info = WidgetRegistry.instance().get(parent.widget_type)
+        return type_info.get("layout_func") is not None
 
     def eventFilter(self, watched, event):
         if watched is self.filter_edit and event.type() == QEvent.KeyPress:
@@ -2127,13 +2156,23 @@ class WidgetTreePanel(QWidget):
         return None
 
     def _on_add_clicked(self):
-        menu = QMenu(self)
-        for display_name, type_name in _get_addable_types():
-            action = QAction(display_name, self)
-            action.setData(type_name)
-            action.triggered.connect(lambda checked, t=type_name: self._add_widget(t))
-            menu.addAction(action)
-        menu.exec_(self.add_btn.mapToGlobal(self.add_btn.rect().bottomLeft()))
+        self.browse_widgets_requested.emit(self._default_insert_parent())
+
+    def _default_insert_parent(self):
+        selected = self._get_selected_widget()
+        if selected is not None and getattr(selected, "is_container", False):
+            return selected
+        if selected is not None and getattr(selected, "parent", None) is not None and getattr(selected.parent, "is_container", False):
+            return selected.parent
+        if self.project and self.project.root_widgets:
+            root = self.project.root_widgets[0]
+            if getattr(root, "is_container", False):
+                return root
+        return None
+
+    def _recent_widget_types(self):
+        valid = {type_name for _display, type_name in _get_addable_types()}
+        return [widget_type for widget_type in self._config.widget_browser_recent if widget_type in valid]
 
     def _on_rename_clicked(self):
         widgets = self.selected_widgets()
@@ -2143,19 +2182,16 @@ class WidgetTreePanel(QWidget):
         if widgets:
             self._rename_widget(widgets[0])
 
-    def _add_widget(self, widget_type):
+    def insert_widget(self, widget_type, parent=None):
         if not self.project:
-            return
+            return None
 
         widget = WidgetModel(widget_type)
         widget.name = self._make_unique_widget_name(widget.name)
 
-        # Find selected container to add to
-        selected = self._get_selected_widget()
-        if selected and selected.is_container:
-            selected.add_child(widget)
-        elif selected and selected.parent and selected.parent.is_container:
-            selected.parent.add_child(widget)
+        target_parent = parent or self._default_insert_parent()
+        if target_parent is not None and getattr(target_parent, "is_container", False):
+            target_parent.add_child(widget)
         elif self.project.root_widgets:
             # Add to first root if it's a container
             root = self.project.root_widgets[0]
@@ -2169,6 +2205,11 @@ class WidgetTreePanel(QWidget):
         self.rebuild_tree()
         self.set_selected_widgets([widget], primary=widget)
         self._emit_tree_changed("widget add")
+        self._config.record_widget_browser_recent(widget_type)
+        return widget
+
+    def _add_widget(self, widget_type):
+        self.insert_widget(widget_type)
 
     def _on_delete_clicked(self):
         widgets = self.selected_widgets()
@@ -2235,15 +2276,22 @@ class WidgetTreePanel(QWidget):
             rename_action.triggered.connect(lambda: self._rename_widget(widget))
         menu.addAction(rename_action)
 
-        # Add child (if container)
-        if widget.is_container:
-            add_menu = menu.addMenu("Add Child")
-            for display_name, type_name in _get_addable_types():
-                action = QAction(display_name, self)
-                action.triggered.connect(
-                    lambda checked, w=widget, t=type_name: self._add_child_to(w, t)
-                )
-                add_menu.addAction(action)
+        preferred_parent = widget if widget.is_container else getattr(widget, "parent", None)
+        insert_action = QAction("Insert Widget...", self)
+        insert_action.setIcon(make_icon("widgets"))
+        insert_action.triggered.connect(lambda: self.browse_widgets_requested.emit(preferred_parent))
+        menu.addAction(insert_action)
+
+        recent_types = self._recent_widget_types()
+        if recent_types:
+            recent_menu = menu.addMenu("Recent Widgets")
+            recent_menu.setToolTipsVisible(True)
+            display_names = {type_name: display_name for display_name, type_name in _get_addable_types()}
+            for type_name in recent_types[:8]:
+                action = QAction(display_names.get(type_name, WidgetRegistry.instance().display_name(type_name)), self)
+                action.setIcon(make_icon(widget_icon_key(type_name)))
+                action.triggered.connect(lambda checked=False, t=type_name, p=preferred_parent: self.insert_widget(t, parent=p))
+                recent_menu.addAction(action)
 
         self._populate_select_menu(menu.addMenu("Select"), widget)
 

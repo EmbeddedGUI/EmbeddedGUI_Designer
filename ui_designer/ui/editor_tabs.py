@@ -61,11 +61,12 @@ class EditorTabs(QWidget):
     mode_changed = pyqtSignal(str)  # MODE_DESIGN / MODE_SPLIT / MODE_CODE
     save_requested = pyqtSignal()    # Ctrl+S pressed in the XML editor
 
-    def __init__(self, preview_panel, parent=None):
+    def __init__(self, preview_panel, parent=None, show_mode_switch=True):
         super().__init__(parent)
         self._preview = preview_panel
         self._mode = MODE_DESIGN
         self._syncing = False  # prevent feedback loops
+        self._show_mode_switch = bool(show_mode_switch)
 
         # Debounce timer for Code → Design sync
         self._parse_timer = QTimer()
@@ -113,31 +114,33 @@ class EditorTabs(QWidget):
         self._stack.addWidget(self._split_container)
 
         # ── Mode switch toolbar (bottom) ──
-        toolbar = QFrame()
-        toolbar.setFrameStyle(QFrame.StyledPanel)
-        toolbar.setMaximumHeight(36)
-        tb_layout = QHBoxLayout(toolbar)
-        tb_layout.setContentsMargins(4, 2, 4, 2)
+        self._btn_group = None
+        if self._show_mode_switch:
+            toolbar = QFrame()
+            toolbar.setFrameStyle(QFrame.StyledPanel)
+            toolbar.setMaximumHeight(36)
+            tb_layout = QHBoxLayout(toolbar)
+            tb_layout.setContentsMargins(4, 2, 4, 2)
 
-        self._btn_group = QButtonGroup(self)
-        self._btn_group.setExclusive(True)
+            self._btn_group = QButtonGroup(self)
+            self._btn_group.setExclusive(True)
 
-        for label, mode in [("Code", MODE_CODE), ("Split", MODE_SPLIT), ("Design", MODE_DESIGN)]:
-            btn = QPushButton(label)
-            btn.setCheckable(True)
-            btn.setMinimumWidth(70)
-            btn.setStyleSheet("""
-                QPushButton { padding: 4px 12px; border: 1px solid #555; border-radius: 3px; }
-                QPushButton:checked { background-color: #0078D4; color: white; border-color: #0078D4; }
-            """)
-            if mode == MODE_DESIGN:
-                btn.setChecked(True)
-            self._btn_group.addButton(btn)
-            tb_layout.addWidget(btn)
-            btn.clicked.connect(lambda checked, m=mode: self.set_mode(m))
+            for label, mode in [("Code", MODE_CODE), ("Split", MODE_SPLIT), ("Design", MODE_DESIGN)]:
+                btn = QPushButton(label)
+                btn.setCheckable(True)
+                btn.setMinimumWidth(70)
+                btn.setStyleSheet("""
+                    QPushButton { padding: 4px 12px; border: 1px solid #555; border-radius: 3px; }
+                    QPushButton:checked { background-color: #0078D4; color: white; border-color: #0078D4; }
+                """)
+                if mode == MODE_DESIGN:
+                    btn.setChecked(True)
+                self._btn_group.addButton(btn)
+                tb_layout.addWidget(btn)
+                btn.clicked.connect(lambda checked, m=mode: self.set_mode(m))
 
-        tb_layout.addStretch()
-        layout.addWidget(toolbar)
+            tb_layout.addStretch()
+            layout.addWidget(toolbar)
 
         # Ctrl+S is handled by the main window QAction (no local QShortcut
         # here — creating one would cause an ambiguous shortcut conflict).

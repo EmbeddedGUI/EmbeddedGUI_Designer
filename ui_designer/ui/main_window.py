@@ -20,7 +20,7 @@ import shutil
 import subprocess
 
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTabWidget, QToolButton, QPushButton, QFrame,
     QAction, QActionGroup, QFileDialog, QStatusBar,
     QMessageBox, QScrollArea, QDockWidget, QMenu,
     QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QIcon
 
-from qfluentwidgets import TabBar, TabCloseButtonDisplayMode
+from qfluentwidgets import PrimaryPushButton, PushButton, TabBar, TabCloseButtonDisplayMode
 
 from .widget_tree import WidgetTreePanel
 from .property_panel import PropertyPanel
@@ -46,8 +46,11 @@ from .app_selector import AppSelectorDialog
 from .new_project_dialog import NewProjectDialog
 from .welcome_page import WelcomePage
 from .debug_panel import DebugPanel
+from .iconography import make_icon
+from .project_workspace import ProjectWorkspacePanel
 from .release_dialogs import ReleaseBuildDialog, ReleaseHistoryDialog, ReleaseProfilesDialog
 from .repo_health_dialog import RepositoryHealthDialog
+from .widget_browser import WidgetBrowserPanel
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
@@ -104,6 +107,9 @@ from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
+
+
+WORKSPACE_LAYOUT_VERSION = 1
 
 
 _DETACHED_WORKERS = set()
@@ -216,6 +222,7 @@ class MainWindow(QMainWindow):
         self._selected_widget = None
         self._selection_state = SelectionState()
         self._current_page = None      # currently-displayed Page object
+        self._pending_insert_parent = None
         self._clipboard_payload = None
         self._paste_serial = 0
         self._async_generation = 0
@@ -269,29 +276,8 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1100, 700)
         self.resize(1400, 800)
 
-        # Allow docks to be nested and overlapped
-        self.setDockNestingEnabled(True)
-
-        # 鈹€鈹€ Left dock: Project Explorer 鈹€鈹€
-        self.project_dock = ProjectExplorerDock(self)
-        self.project_dock.setObjectName("project_explorer_dock")
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.project_dock)
-        self.project_dock.setMinimumWidth(180)
-        # self.project_dock.setMaximumWidth(320)
-
-        self.page_nav_dock = QDockWidget("Page Navigator", self)
-        self.page_nav_dock.setObjectName("page_navigator_dock")
-        self.page_nav_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
-        self.page_navigator = PageNavigator()
-        self.page_nav_dock.setWidget(self.page_navigator)
-        self.page_nav_dock.setMinimumWidth(180)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.page_nav_dock)
-        self.splitDockWidget(self.project_dock, self.page_nav_dock, Qt.Vertical)
-
-        # 鈹€鈹€ Central area: Stacked Widget (Welcome / Editor) 鈹€鈹€
         self._central_stack = QStackedWidget()
 
-        # Welcome page (index 0)
         self._welcome_page = WelcomePage()
         self._welcome_page.open_recent.connect(self._open_recent_project)
         self._welcome_page.new_project.connect(self._new_project)
@@ -301,109 +287,180 @@ class MainWindow(QMainWindow):
         self._welcome_page.download_sdk.connect(self._download_sdk)
         self._central_stack.addWidget(self._welcome_page)
 
-        # Editor container (index 1)
         editor_container = QWidget()
+        editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(0, 0, 0, 0)
-        editor_layout.setSpacing(0)
+        editor_layout.setContentsMargins(12, 12, 12, 12)
+        editor_layout.setSpacing(12)
 
-        # Page tab bar (qfluentwidgets 鈥?movable, closable, scrollable)
+        self._toolbar_host = QFrame()
+        self._toolbar_host.setObjectName("workspace_command_bar")
+        self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
+        self._toolbar_host_layout.setContentsMargins(10, 8, 10, 8)
+        self._toolbar_host_layout.setSpacing(10)
+        editor_layout.addWidget(self._toolbar_host)
+
+        self.project_dock = ProjectExplorerDock(self)
+        self.project_dock.setObjectName("project_explorer_dock")
+        self.project_dock.setMinimumWidth(220)
+        self._prepare_workspace_dock(self.project_dock)
+
+        self.page_navigator = PageNavigator()
+        self.page_navigator.setObjectName("page_navigator_dock")
+        self.page_nav_dock = self.page_navigator
+
+        self.widget_tree = WidgetTreePanel()
+        self.widget_tree.setObjectName("widget_tree_dock")
+        self.tree_dock = self.widget_tree
+
+        self.res_panel = ResourcePanel()
+        self.res_panel.setObjectName("resources_dock")
+        self.res_dock = self.res_panel
+
+        right_scroll = QScrollArea()
+        right_scroll.setWidgetResizable(True)
+        right_scroll.setMinimumWidth(300)
+        right_scroll.setObjectName("properties_dock")
+        self.property_panel = PropertyPanel()
+        right_scroll.setWidget(self.property_panel)
+        self.props_dock = right_scroll
+
+        self.animations_panel = AnimationsPanel()
+        self.animations_panel.setObjectName("animations_dock")
+        self.animations_dock = self.animations_panel
+
+        self.page_fields_panel = PageFieldsPanel()
+        self.page_fields_panel.setObjectName("page_fields_dock")
+        self.page_fields_dock = self.page_fields_panel
+
+        self.page_timers_panel = PageTimersPanel()
+        self.page_timers_panel.setObjectName("page_timers_dock")
+        self.page_timers_dock = self.page_timers_panel
+
+        self.debug_panel = DebugPanel()
+        self.debug_panel.setObjectName("debug_output_dock")
+        self.debug_dock = self.debug_panel
+
+        self.history_panel = HistoryPanel()
+        self.history_panel.setObjectName("history_dock")
+        self.history_dock = self.history_panel
+
+        self.diagnostics_panel = DiagnosticsPanel()
+        self.diagnostics_panel.setObjectName("diagnostics_dock")
+        self.diagnostics_dock = self.diagnostics_panel
+
+        self.widget_browser = WidgetBrowserPanel()
+        self.widget_browser.setObjectName("widgets_browser_panel")
+
+        self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
+        self._project_workspace.setObjectName("project_workspace_panel")
+
+        self._left_panel_stack = QStackedWidget()
+        self._left_panel_pages = {
+            "project": self._project_workspace,
+            "structure": self.widget_tree,
+            "widgets": self.widget_browser,
+            "assets": self.res_panel,
+        }
+        for panel in self._left_panel_pages.values():
+            self._left_panel_stack.addWidget(panel)
+
+        self._workspace_nav_buttons = {}
+        self._workspace_nav_frame = QFrame()
+        self._workspace_nav_frame.setObjectName("workspace_nav_rail")
+        nav_layout = QVBoxLayout(self._workspace_nav_frame)
+        nav_layout.setContentsMargins(8, 10, 8, 10)
+        nav_layout.setSpacing(8)
+        for key, label, icon_key in (
+            ("project", "Project", "project"),
+            ("structure", "Structure", "structure"),
+            ("widgets", "Widgets", "widgets"),
+            ("assets", "Assets", "assets"),
+        ):
+            button = self._create_workspace_nav_button(label, icon_key, key)
+            self._workspace_nav_buttons[key] = button
+            nav_layout.addWidget(button)
+        nav_layout.addStretch()
+
+        self._left_shell = QWidget()
+        self._left_shell.setObjectName("workspace_left_shell")
+        left_shell_layout = QHBoxLayout(self._left_shell)
+        left_shell_layout.setContentsMargins(0, 0, 0, 0)
+        left_shell_layout.setSpacing(12)
+        left_shell_layout.addWidget(self._workspace_nav_frame, 0)
+        left_shell_layout.addWidget(self._left_panel_stack, 1)
+
+        center_shell = QWidget()
+        center_shell.setObjectName("workspace_center_shell")
+        center_layout = QVBoxLayout(center_shell)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+        center_layout.setSpacing(12)
+
         self.page_tab_bar = self._create_page_tab_bar()
-
-        editor_layout.addWidget(self.page_tab_bar)
+        center_layout.addWidget(self.page_tab_bar)
 
         self.preview_panel = PreviewPanel(screen_width=240, screen_height=320)
         self.preview_panel.set_show_grid(self._config.show_grid)
         self.preview_panel.set_grid_size(self._config.grid_size)
-        self.editor_tabs = EditorTabs(self.preview_panel)
-        editor_layout.addWidget(self.editor_tabs, 1)
+        self.editor_tabs = EditorTabs(self.preview_panel, show_mode_switch=False)
+        center_layout.addWidget(self.editor_tabs, 1)
+
+        self._page_tools_tabs = QTabWidget()
+        self._page_tools_tabs.addTab(self.page_fields_panel, make_icon("page"), "Fields")
+        self._page_tools_tabs.addTab(self.page_timers_panel, make_icon("time"), "Timers")
+
+        self._inspector_tabs = QTabWidget()
+        self._inspector_tabs.setObjectName("workspace_inspector_tabs")
+        self._inspector_tabs.addTab(self.props_dock, make_icon("properties"), "Properties")
+        self._inspector_tabs.addTab(self.animations_panel, make_icon("animation"), "Animations")
+        self._inspector_tabs.addTab(self._page_tools_tabs, make_icon("page"), "Page")
+
+        self._top_splitter = QSplitter(Qt.Horizontal)
+        self._top_splitter.setChildrenCollapsible(False)
+        self._top_splitter.addWidget(self._left_shell)
+        self._top_splitter.addWidget(center_shell)
+        self._top_splitter.addWidget(self._inspector_tabs)
+        self._top_splitter.setSizes([350, 920, 360])
+
+        self._bottom_header = QFrame()
+        self._bottom_header.setObjectName("workspace_bottom_header")
+        bottom_header_layout = QHBoxLayout(self._bottom_header)
+        bottom_header_layout.setContentsMargins(10, 8, 10, 8)
+        bottom_header_layout.setSpacing(8)
+        self._bottom_title = QLabel("Tools")
+        self._bottom_title.setObjectName("workspace_section_title")
+        bottom_header_layout.addWidget(self._bottom_title)
+        self._bottom_toggle_button = PushButton("Hide")
+        self._bottom_toggle_button.clicked.connect(lambda: self._set_bottom_panel_visible(not self._bottom_panel_visible))
+        bottom_header_layout.addStretch()
+        bottom_header_layout.addWidget(self._bottom_toggle_button)
+
+        self._bottom_tabs = QTabWidget()
+        self._bottom_tabs.addTab(self.diagnostics_panel, make_icon("diagnostics"), "Diagnostics")
+        self._bottom_tabs.addTab(self.history_panel, make_icon("history"), "History")
+        self._bottom_tabs.addTab(self.debug_panel, make_icon("debug"), "Debug Output")
+        self._bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
+
+        bottom_shell = QWidget()
+        bottom_shell.setObjectName("workspace_bottom_shell")
+        bottom_layout = QVBoxLayout(bottom_shell)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(8)
+        bottom_layout.addWidget(self._bottom_header)
+        bottom_layout.addWidget(self._bottom_tabs, 1)
+
+        self._workspace_splitter = QSplitter(Qt.Vertical)
+        self._workspace_splitter.setChildrenCollapsible(False)
+        self._workspace_splitter.addWidget(self._top_splitter)
+        self._workspace_splitter.addWidget(bottom_shell)
+        self._workspace_splitter.setSizes([900, 0])
+        editor_layout.addWidget(self._workspace_splitter, 1)
 
         self._central_stack.addWidget(editor_container)
-
         self.setCentralWidget(self._central_stack)
 
-        # 鈹€鈹€ Right dock: Widget Tree 鈹€鈹€
-        self.tree_dock = QDockWidget("Widget Tree", self)
-        self.tree_dock.setObjectName("widget_tree_dock")
-        self.tree_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.widget_tree = WidgetTreePanel()
-        self.tree_dock.setWidget(self.widget_tree)
-        self.tree_dock.setMinimumWidth(180)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.tree_dock)
-
-        # 鈹€鈹€ Right dock: Properties 鈹€鈹€
-        self.props_dock = QDockWidget("Properties", self)
-        self.props_dock.setObjectName("properties_dock")
-        self.props_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        right_scroll = QScrollArea()
-        right_scroll.setWidgetResizable(True)
-        right_scroll.setMinimumWidth(260)
-        self.property_panel = PropertyPanel()
-        right_scroll.setWidget(self.property_panel)
-        self.props_dock.setWidget(right_scroll)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.props_dock)
-
-        # Stack the two right docks vertically by default
-        self.splitDockWidget(self.tree_dock, self.props_dock, Qt.Vertical)
-
-        # 鈹€鈹€ Left dock: Resources (independent panel) 鈹€鈹€
-        self.res_dock = QDockWidget("Resources", self)
-        self.res_dock.setObjectName("resources_dock")
-        self.res_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.res_panel = ResourcePanel()
-        self.res_dock.setWidget(self.res_panel)
-        self.res_dock.setMinimumWidth(200)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.res_dock)
-        # Stack below the page navigator
-        self.splitDockWidget(self.page_nav_dock, self.res_dock, Qt.Vertical)
-
-        # 鈹€鈹€ Bottom dock: Debug Output 鈹€鈹€
-        self.debug_dock = QDockWidget("Debug Output", self)
-        self.debug_dock.setObjectName("debug_output_dock")
-        self.debug_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.debug_panel = DebugPanel()
-        self.debug_dock.setWidget(self.debug_panel)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.debug_dock)
-
-        self.history_dock = QDockWidget("History", self)
-        self.history_dock.setObjectName("history_dock")
-        self.history_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.history_panel = HistoryPanel()
-        self.history_dock.setWidget(self.history_panel)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.history_dock)
-        self.tabifyDockWidget(self.debug_dock, self.history_dock)
-
-        self.diagnostics_dock = QDockWidget("Diagnostics", self)
-        self.diagnostics_dock.setObjectName("diagnostics_dock")
-        self.diagnostics_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.diagnostics_panel = DiagnosticsPanel()
-        self.diagnostics_dock.setWidget(self.diagnostics_panel)
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.diagnostics_dock)
-        self.tabifyDockWidget(self.history_dock, self.diagnostics_dock)
-
-        self.animations_dock = QDockWidget("Animations", self)
-        self.animations_dock.setObjectName("animations_dock")
-        self.animations_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.animations_panel = AnimationsPanel()
-        self.animations_dock.setWidget(self.animations_panel)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.animations_dock)
-        self.tabifyDockWidget(self.props_dock, self.animations_dock)
-
-        self.page_fields_dock = QDockWidget("Page Fields", self)
-        self.page_fields_dock.setObjectName("page_fields_dock")
-        self.page_fields_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.page_fields_panel = PageFieldsPanel()
-        self.page_fields_dock.setWidget(self.page_fields_panel)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.page_fields_dock)
-        self.tabifyDockWidget(self.animations_dock, self.page_fields_dock)
-
-        self.page_timers_dock = QDockWidget("Page Timers", self)
-        self.page_timers_dock.setObjectName("page_timers_dock")
-        self.page_timers_dock.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.page_timers_panel = PageTimersPanel()
-        self.page_timers_dock.setWidget(self.page_timers_panel)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.page_timers_dock)
-        self.tabifyDockWidget(self.page_fields_dock, self.page_timers_dock)
+        self._bottom_panel_visible = False
+        self._current_left_panel = "project"
 
         # Status bar
         self._sdk_status_label = QLabel("SDK: missing")
@@ -418,12 +475,15 @@ class MainWindow(QMainWindow):
         self.widget_tree.widget_selected.connect(self._on_widget_selected)
         self.widget_tree.tree_changed.connect(self._on_tree_changed)
         self.widget_tree.feedback_message.connect(self._on_widget_tree_feedback_message)
+        self.widget_tree.browse_widgets_requested.connect(self._show_widget_browser_for_parent)
 
         # Property panel
         self.property_panel.property_changed.connect(self._on_property_changed)
         self.property_panel.resource_imported.connect(self._on_resource_imported)
         self.property_panel.validation_message.connect(self._on_property_validation_message)
         self.property_panel.user_code_requested.connect(self._on_user_code_requested)
+
+        self.widget_browser.insert_requested.connect(self._insert_widget_from_browser)
 
         # Preview panel
         self.preview_panel.selection_changed.connect(self._on_preview_selection_changed)
@@ -440,6 +500,7 @@ class MainWindow(QMainWindow):
         # Editor tabs (Code 鈫?Design sync)
         self.editor_tabs.xml_changed.connect(self._on_xml_changed)
         self.editor_tabs.save_requested.connect(self._save_project)
+        self.editor_tabs.mode_changed.connect(self._sync_editor_mode_controls)
 
         # Project explorer
         self.project_dock.page_selected.connect(self._on_page_selected)
@@ -477,8 +538,177 @@ class MainWindow(QMainWindow):
         self.res_panel.feedback_message.connect(self._on_resource_feedback_message)
         self.res_panel.usage_activated.connect(self._on_resource_usage_activated)
 
+        self._select_left_panel(self._config.workspace_left_panel or "project")
+        self._sync_editor_mode_controls(self.editor_tabs.mode)
+        self._on_bottom_tab_changed(self._bottom_tabs.currentIndex())
+        self._set_bottom_panel_visible(False)
+
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
+
+    def _prepare_workspace_dock(self, dock_widget):
+        if dock_widget is None or not isinstance(dock_widget, QDockWidget):
+            return
+        dock_widget.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        dock_widget.setTitleBarWidget(QWidget(dock_widget))
+
+    def _create_workspace_nav_button(self, label, icon_key, panel_key):
+        button = QToolButton(self)
+        button.setProperty("workspaceNav", True)
+        button.setCheckable(True)
+        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        button.setIcon(make_icon(icon_key, size=22))
+        button.setIconSize(QSize(22, 22))
+        button.setText(label)
+        button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
+        return button
+
+    def _select_left_panel(self, panel_key):
+        if panel_key not in getattr(self, "_left_panel_pages", {}):
+            panel_key = "project"
+        self._current_left_panel = panel_key
+        self._config.workspace_left_panel = panel_key
+        page = self._left_panel_pages[panel_key]
+        self._left_panel_stack.setCurrentWidget(page)
+        for key, button in getattr(self, "_workspace_nav_buttons", {}).items():
+            button.setChecked(key == panel_key)
+        if panel_key == "widgets":
+            self.widget_browser.focus_search()
+
+    def _default_insert_parent(self):
+        primary = self._primary_selected_widget()
+        if primary is not None and getattr(primary, "is_container", False):
+            return primary
+        if primary is not None and getattr(primary, "parent", None) is not None and getattr(primary.parent, "is_container", False):
+            return primary.parent
+        if self._current_page is not None and getattr(self._current_page, "root_widget", None) is not None:
+            return self._current_page.root_widget
+        return None
+
+    def _insert_target_summary(self, widget):
+        if widget is None:
+            return "Current page root"
+        names = []
+        current = widget
+        while current is not None:
+            names.append(current.name or current.widget_type)
+            current = current.parent
+        names.reverse()
+        return " / ".join(names) if names else "Current page root"
+
+    def _update_widget_browser_target(self, preferred_parent=None):
+        parent = preferred_parent or self._default_insert_parent()
+        self._pending_insert_parent = parent
+        if hasattr(self, "widget_browser"):
+            self.widget_browser.set_insert_target_label(self._insert_target_summary(parent))
+
+    def _show_widget_browser_for_parent(self, preferred_parent=None):
+        self._update_widget_browser_target(preferred_parent=preferred_parent)
+        self._select_left_panel("widgets")
+
+    def _insert_widget_from_browser(self, widget_type):
+        if not widget_type or self._current_page is None:
+            return
+        parent = self._pending_insert_parent or self._default_insert_parent()
+        inserted = self.widget_tree.insert_widget(widget_type, parent=parent)
+        if inserted is None:
+            return
+        self.widget_browser.refresh()
+        self._pending_insert_parent = None
+        self._update_widget_browser_target()
+        self.statusBar().showMessage(f"Inserted {WidgetRegistry.instance().display_name(widget_type)}.", 3000)
+
+    def _show_inspector_tab(self, section, inner_section=None):
+        section_map = {
+            "properties": 0,
+            "animations": 1,
+            "page": 2,
+        }
+        index = section_map.get(section, 0)
+        if hasattr(self, "_inspector_tabs"):
+            self._inspector_tabs.setCurrentIndex(index)
+        if section == "page" and inner_section in ("fields", "timers") and hasattr(self, "_page_tools_tabs"):
+            self._page_tools_tabs.setCurrentIndex(0 if inner_section == "fields" else 1)
+
+    def _show_bottom_panel(self, section="Diagnostics"):
+        if not hasattr(self, "_bottom_tabs"):
+            return
+        section_map = {
+            "Diagnostics": 0,
+            "History": 1,
+            "Debug Output": 2,
+        }
+        self._bottom_tabs.setCurrentIndex(section_map.get(section, 0))
+        self._set_bottom_panel_visible(True)
+
+    def _set_bottom_panel_visible(self, visible):
+        if not hasattr(self, "_workspace_splitter"):
+            return
+        self._bottom_panel_visible = bool(visible)
+        self._bottom_tabs.setVisible(self._bottom_panel_visible)
+        if self._bottom_panel_visible:
+            self._workspace_splitter.setSizes([760, 220])
+            self._bottom_toggle_button.setText("Hide")
+        else:
+            self._workspace_splitter.setSizes([1000, 0])
+            self._bottom_toggle_button.setText("Show")
+
+    def _on_bottom_tab_changed(self, index):
+        titles = {0: "Diagnostics", 1: "History", 2: "Debug Output"}
+        if hasattr(self, "_bottom_title"):
+            self._bottom_title.setText(titles.get(index, "Tools"))
+
+    def _sync_editor_mode_controls(self, mode):
+        if hasattr(self, "_mode_buttons"):
+            for key, button in self._mode_buttons.items():
+                button.setChecked(key == mode)
+
+    def _set_chip(self, chip, text, tone=None):
+        if chip is None:
+            return
+        chip.setText(text)
+        if tone is not None:
+            chip.setProperty("chipTone", tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
+    def _update_workspace_chips(self):
+        if hasattr(self, "_sdk_chip"):
+            self._set_chip(self._sdk_chip, "SDK Ready" if self._has_valid_sdk_root() else "SDK Missing", "accent" if self._has_valid_sdk_root() else "warning")
+        dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
+        if hasattr(self, "_dirty_chip"):
+            self._set_chip(self._dirty_chip, f"Dirty {len(dirty_pages)}" if dirty_pages else "Clean", "warning" if dirty_pages else "success")
+        if hasattr(self, "_selection_chip"):
+            count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
+            self._set_chip(self._selection_chip, f"Selection {count}" if count else "No Selection")
+        if hasattr(self, "_preview_chip"):
+            if self.preview_panel.is_python_preview_active():
+                text = "Python Preview"
+                tone = "warning"
+            elif self.compiler is not None and self.compiler.is_preview_running():
+                text = "Live Preview"
+                tone = "success"
+            else:
+                text = "Preview Idle"
+                tone = "accent"
+            self._set_chip(self._preview_chip, text, tone)
+
+    def _apply_workspace_iconography(self):
+        if hasattr(self, "_workspace_nav_buttons"):
+            icon_map = {
+                "project": "project",
+                "structure": "structure",
+                "widgets": "widgets",
+                "assets": "assets",
+            }
+            for key, button in self._workspace_nav_buttons.items():
+                button.setIcon(make_icon(icon_map.get(key, "widgets"), size=22))
+        if hasattr(self, "_insert_widget_button"):
+            self._insert_widget_button.setIcon(make_icon("widgets"))
+        if hasattr(self, "_mode_buttons"):
+            for mode, icon_key in ((MODE_DESIGN, "widgets"), (MODE_SPLIT, "layout"), (MODE_CODE, "page")):
+                self._mode_buttons[mode].setIcon(make_icon(icon_key))
 
     def _apply_saved_window_state(self):
         geometry = (self._config.window_geometry or "").strip()
@@ -488,20 +718,38 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
 
-        state = (self._config.window_state or "").strip()
-        if state:
+        if int(getattr(self._config, "workspace_layout_version", 0) or 0) != WORKSPACE_LAYOUT_VERSION:
+            return
+
+        workspace_state = getattr(self._config, "workspace_state", {}) if isinstance(getattr(self._config, "workspace_state", {}), dict) else {}
+        for splitter, key in (
+            (getattr(self, "_top_splitter", None), "top_splitter"),
+            (getattr(self, "_workspace_splitter", None), "workspace_splitter"),
+        ):
+            state = str(workspace_state.get(key, "") or "").strip()
+            if splitter is None or not state:
+                continue
             try:
-                self.restoreState(QByteArray.fromBase64(state.encode("ascii")))
+                splitter.restoreState(QByteArray.fromBase64(state.encode("ascii")))
             except Exception:
                 pass
+
+        self._select_left_panel(getattr(self._config, "workspace_left_panel", "project"))
 
     def _save_window_state_to_config(self):
         try:
             self._config.window_geometry = bytes(self.saveGeometry().toBase64()).decode("ascii")
-            self._config.window_state = bytes(self.saveState().toBase64()).decode("ascii")
+            self._config.window_state = ""
+            self._config.workspace_layout_version = WORKSPACE_LAYOUT_VERSION
+            self._config.workspace_left_panel = getattr(self, "_current_left_panel", "project")
+            self._config.workspace_state = {
+                "top_splitter": bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
+                "workspace_splitter": bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
+            }
         except Exception:
             self._config.window_geometry = ""
             self._config.window_state = ""
+            self._config.workspace_state = {}
 
     def _restore_diagnostics_view_state(self):
         if not hasattr(self, "diagnostics_panel"):
@@ -730,6 +978,7 @@ class MainWindow(QMainWindow):
                 )
             )
         self._update_edit_actions()
+        self._update_workspace_chips()
 
     def _switch_to_python_preview(self, reason=""):
         if self._current_page is None:
@@ -966,8 +1215,7 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             self._external_reload_pending = True
             self.debug_panel.log_error(f"Project reload failed: {exc}")
-            self.debug_dock.show()
-            self.debug_dock.raise_()
+            self._show_bottom_panel("Debug Output")
             if auto:
                 self.statusBar().showMessage(f"Project reload failed: {exc}", 6000)
             else:
@@ -995,6 +1243,7 @@ class MainWindow(QMainWindow):
         self._active_batch_source = ""
         self._selected_widget = None
         self._selection_state.clear()
+        self._pending_insert_parent = None
         self._current_page = None
         self._clear_page_tabs()
         self.widget_tree.set_project(None)
@@ -1011,6 +1260,8 @@ class MainWindow(QMainWindow):
         self.page_fields_panel.clear()
         self.page_timers_panel.clear()
         self._update_edit_actions()
+        self._update_widget_browser_target(preferred_parent=None)
+        self._update_workspace_chips()
 
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
@@ -1076,33 +1327,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("EmbeddedGUI Designer")
         self._update_sdk_status_label()
 
-        # Hide dock widgets when on welcome page
-        self.project_dock.hide()
-        self.page_nav_dock.hide()
-        self.res_dock.hide()
-        self.tree_dock.hide()
-        self.props_dock.hide()
-        self.animations_dock.hide()
-        self.history_dock.hide()
-        self.diagnostics_dock.hide()
-        self.page_fields_dock.hide()
-        self.page_timers_dock.hide()
-
     def _show_editor(self):
         """Show the editor (hide welcome page)."""
         self._central_stack.setCurrentIndex(1)
-
-        # Show dock widgets
-        self.project_dock.show()
-        self.page_nav_dock.show()
-        self.res_dock.show()
-        self.tree_dock.show()
-        self.props_dock.show()
-        self.animations_dock.show()
-        self.history_dock.show()
-        self.diagnostics_dock.show()
-        self.page_fields_dock.show()
-        self.page_timers_dock.show()
+        self._update_widget_browser_target()
 
     def _create_page_tab_bar(self):
         page_tab_bar = TabBar()
@@ -1494,18 +1722,32 @@ class MainWindow(QMainWindow):
 
         view_menu.addSeparator()
 
-        # Dock panel toggles
-        view_menu.addAction(self.project_dock.toggleViewAction())
-        view_menu.addAction(self.page_nav_dock.toggleViewAction())
-        view_menu.addAction(self.res_dock.toggleViewAction())
-        view_menu.addAction(self.tree_dock.toggleViewAction())
-        view_menu.addAction(self.props_dock.toggleViewAction())
-        view_menu.addAction(self.animations_dock.toggleViewAction())
-        view_menu.addAction(self.page_fields_dock.toggleViewAction())
-        view_menu.addAction(self.page_timers_dock.toggleViewAction())
-        view_menu.addAction(self.history_dock.toggleViewAction())
-        view_menu.addAction(self.diagnostics_dock.toggleViewAction())
-        view_menu.addAction(self.debug_dock.toggleViewAction())
+        workspace_menu = view_menu.addMenu("Workspace")
+        for label, key in (
+            ("Project", "project"),
+            ("Structure", "structure"),
+            ("Widgets", "widgets"),
+            ("Assets", "assets"),
+        ):
+            action = QAction(label, self)
+            action.triggered.connect(lambda checked=False, panel_key=key: self._select_left_panel(panel_key))
+            workspace_menu.addAction(action)
+
+        inspector_menu = view_menu.addMenu("Inspector")
+        for label, key in (
+            ("Properties", "properties"),
+            ("Animations", "animations"),
+            ("Page", "page"),
+        ):
+            action = QAction(label, self)
+            action.triggered.connect(lambda checked=False, section=key: self._show_inspector_tab(section))
+            inspector_menu.addAction(action)
+
+        tools_menu = view_menu.addMenu("Tools")
+        for label in ("Diagnostics", "History", "Debug Output"):
+            action = QAction(label, self)
+            action.triggered.connect(lambda checked=False, section=label: self._show_bottom_panel(section))
+            tools_menu.addAction(action)
         view_menu.addSeparator()
 
         self._overlay_group = QActionGroup(self)
@@ -1624,23 +1866,35 @@ class MainWindow(QMainWindow):
         tb = QToolBar("Main Toolbar", self)
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
-        tb.setIconSize(QSize(16, 16))
+        tb.setIconSize(QSize(18, 18))
         tb.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         tb.setStyleSheet(
-            "QToolBar { spacing: 2px; padding: 2px 4px; }"
-            "QToolButton { padding: 3px 8px; border-radius: 3px; }"
-            "QToolButton:hover { background: rgba(255,255,255,0.08); }"
-            "QToolButton:pressed { background: rgba(255,255,255,0.15); }"
-            "QToolButton:disabled { color: #666; }"
+            "QToolBar { spacing: 6px; background: transparent; border: none; }"
+            "QToolButton { padding: 6px 10px; border-radius: 10px; }"
         )
-        self.addToolBar(Qt.TopToolBarArea, tb)
+        self._toolbar_host_layout.addWidget(tb, 1)
 
-        # File actions
+        for action, icon_key in (
+            (self._save_action, "save"),
+            (self._undo_action, "undo"),
+            (self._redo_action, "redo"),
+            (self._copy_action, "properties"),
+            (self._paste_action, "properties"),
+            (self._compile_action, "compile"),
+            (self._stop_action, "stop"),
+        ):
+            action.setIcon(make_icon(icon_key))
+
+        self._insert_widget_button = PrimaryPushButton("Insert Widget")
+        self._insert_widget_button.setIcon(make_icon("widgets"))
+        self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
+        tb.addWidget(self._insert_widget_button)
+
+        tb.addSeparator()
         tb.addAction(self._save_action)
 
         tb.addSeparator()
 
-        # Edit actions
         tb.addAction(self._undo_action)
         tb.addAction(self._redo_action)
         tb.addAction(self._copy_action)
@@ -1648,13 +1902,50 @@ class MainWindow(QMainWindow):
 
         tb.addSeparator()
 
-        # Build actions
         tb.addAction(self._compile_action)
         tb.addAction(self._stop_action)
+
+        mode_host = QWidget()
+        mode_layout = QHBoxLayout(mode_host)
+        mode_layout.setContentsMargins(0, 0, 0, 0)
+        mode_layout.setSpacing(6)
+        self._mode_buttons = {}
+        for label, mode, icon_key in (
+            ("Design", MODE_DESIGN, "widgets"),
+            ("Split", MODE_SPLIT, "layout"),
+            ("Code", MODE_CODE, "page"),
+        ):
+            button = QPushButton(label)
+            button.setCheckable(True)
+            button.setIcon(make_icon(icon_key))
+            button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
+            self._mode_buttons[mode] = button
+            mode_layout.addWidget(button)
+        self._toolbar_host_layout.addWidget(mode_host, 0)
+
+        chips_host = QWidget()
+        chips_layout = QHBoxLayout(chips_host)
+        chips_layout.setContentsMargins(0, 0, 0, 0)
+        chips_layout.setSpacing(8)
+        self._sdk_chip = QLabel("SDK")
+        self._sdk_chip.setObjectName("workspace_status_chip")
+        self._sdk_chip.setProperty("chipTone", "accent")
+        self._dirty_chip = QLabel("Clean")
+        self._dirty_chip.setObjectName("workspace_status_chip")
+        self._dirty_chip.setProperty("chipTone", "success")
+        self._selection_chip = QLabel("No Selection")
+        self._selection_chip.setObjectName("workspace_status_chip")
+        self._preview_chip = QLabel("Preview")
+        self._preview_chip.setObjectName("workspace_status_chip")
+        for chip in (self._sdk_chip, self._dirty_chip, self._selection_chip, self._preview_chip):
+            chips_layout.addWidget(chip)
+        self._toolbar_host_layout.addWidget(chips_host, 0)
 
         self._toolbar = tb
         self._update_compile_availability()
         self._update_edit_actions()
+        self._apply_workspace_iconography()
+        self._update_workspace_chips()
 
     # 鈹€鈹€ Theme 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -1663,6 +1954,9 @@ class MainWindow(QMainWindow):
         apply_theme(QApplication.instance(), theme)
         self._config.theme = theme
         self._config.save()
+        self._apply_workspace_iconography()
+        if hasattr(self, "widget_browser"):
+            self.widget_browser.refresh()
 
     def _set_font_sizes(self):
         """Set a single font size for the entire UI."""
@@ -1752,6 +2046,7 @@ class MainWindow(QMainWindow):
         sdk_root = self.project_root or self._active_sdk_root()
         self._sdk_status_label.setText(format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT))
         self._sdk_status_label.setToolTip(sdk_root or "No SDK root configured")
+        self._update_workspace_chips()
 
     def _edit_release_profiles(self):
         if self.project is None:
@@ -1956,8 +2251,7 @@ class MainWindow(QMainWindow):
 
         self.debug_panel.log_error(result.message)
         self.debug_panel.log_error(f"Release log: {result.log_path}")
-        self.debug_dock.show()
-        self.debug_dock.raise_()
+        self._show_bottom_panel("Debug Output")
         self.statusBar().showMessage(result.message, 5000)
         summary_lines = [result.message]
         if result.build_id:
@@ -2145,6 +2439,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
         self._update_history_panel()
         self._update_diagnostics_panel()
+        self._update_workspace_chips()
 
     def _update_history_panel(self):
         if self._current_page is None:
@@ -2366,8 +2661,7 @@ class MainWindow(QMainWindow):
         self.debug_panel.log_error(f"{action_name} blocked by diagnostics ({len(blockers)} error(s))")
         if summary:
             self.debug_panel.log_error(summary)
-        self.diagnostics_dock.show()
-        self.diagnostics_dock.raise_()
+        self._show_bottom_panel("Diagnostics")
 
         if switch_to_python_preview:
             self._switch_to_python_preview("Compile blocked by diagnostics")
@@ -2928,7 +3222,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Precompile failed", 5000)
             self.debug_panel.log_error("Background precompile failed")
             self.debug_panel.log_compile_output(False, message)
-            self.debug_dock.show()
+            self._show_bottom_panel("Debug Output")
 
     def _refresh_page_navigator(self):
         if not self.project:
@@ -3445,8 +3739,7 @@ class MainWindow(QMainWindow):
     def _open_page_field_diagnostic(self, page_name, field_name):
         if not field_name or not hasattr(self, "page_fields_panel"):
             return False
-        self.page_fields_dock.show()
-        self.page_fields_dock.raise_()
+        self._show_inspector_tab("page", inner_section="fields")
         if not self.page_fields_panel.select_field(field_name):
             return False
         self.statusBar().showMessage(f"Opened diagnostic field: {page_name}/{field_name}.", 4000)
@@ -3455,8 +3748,7 @@ class MainWindow(QMainWindow):
     def _open_page_timer_diagnostic(self, page_name, timer_name):
         if not timer_name or not hasattr(self, "page_timers_panel"):
             return False
-        self.page_timers_dock.show()
-        self.page_timers_dock.raise_()
+        self._show_inspector_tab("page", inner_section="timers")
         if not self.page_timers_panel.select_timer(timer_name):
             return False
         self.statusBar().showMessage(f"Opened diagnostic timer: {page_name}/{timer_name}.", 4000)
@@ -3495,7 +3787,7 @@ class MainWindow(QMainWindow):
 
         self._set_selection([widget], primary=widget, sync_tree=True, sync_preview=True)
         if diagnostic_entry is not None and getattr(diagnostic_entry, "resource_type", "") and getattr(diagnostic_entry, "resource_name", ""):
-            self.res_dock.show()
+            self._select_left_panel("assets")
             self.res_panel._select_resource_item(diagnostic_entry.resource_type, diagnostic_entry.resource_name)
             self.statusBar().showMessage(
                 f"Opened diagnostic resource check: {diagnostic_entry.resource_type}/{diagnostic_entry.resource_name}.",
@@ -3894,6 +4186,8 @@ class MainWindow(QMainWindow):
         self._update_edit_actions()
         self._update_diagnostics_panel()
         self._show_selection_feedback()
+        self._update_widget_browser_target()
+        self._update_workspace_chips()
 
     def _clear_selection(self, sync_tree=True, sync_preview=True):
         self._set_selection([], primary=None, sync_tree=sync_tree, sync_preview=sync_preview)
@@ -5112,8 +5406,7 @@ class MainWindow(QMainWindow):
                 self.compiler.stop_exe()
             self._switch_to_python_preview(message.splitlines()[0] if message else "Compile failed")
             # Show debug dock on compile failure
-            self.debug_dock.show()
-            self.debug_dock.raise_()
+            self._show_bottom_panel("Debug Output")
         self._update_compile_availability()
 
     def _on_preview_runtime_failed(self, reason):
@@ -5122,8 +5415,7 @@ class MainWindow(QMainWindow):
         if self.compiler is not None:
             self.compiler.stop_exe()
         self.debug_panel.log_error(reason or "Headless preview stopped responding")
-        self.debug_dock.show()
-        self.debug_dock.raise_()
+        self._show_bottom_panel("Debug Output")
         self._switch_to_python_preview(reason or "Headless preview stopped responding")
         self._update_compile_availability()
 

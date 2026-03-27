@@ -15,6 +15,95 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+_CATEGORY_ORDER = (
+    "Basics",
+    "Layout",
+    "Input",
+    "Navigation",
+    "Display & Data",
+    "Media",
+    "Decoration",
+    "Custom",
+)
+
+
+_BROWSER_METADATA = {
+    "button": {"category": "Basics", "keywords": ["tap", "action", "cta"], "icon_key": "button", "preview_kind": "widget", "browse_priority": 10},
+    "label": {"category": "Basics", "keywords": ["text", "caption", "title"], "icon_key": "text", "preview_kind": "widget", "browse_priority": 10},
+    "image": {"category": "Basics", "keywords": ["photo", "asset", "bitmap"], "icon_key": "image", "preview_kind": "widget", "browse_priority": 20},
+    "card": {"category": "Basics", "keywords": ["container", "surface"], "icon_key": "card", "preview_kind": "widget", "browse_priority": 20},
+    "divider": {"category": "Basics", "keywords": ["line", "separator"], "icon_key": "divider", "preview_kind": "widget", "browse_priority": 40},
+    "line": {"category": "Basics", "keywords": ["stroke", "separator"], "icon_key": "divider", "preview_kind": "widget", "browse_priority": 50},
+    "textblock": {"category": "Basics", "keywords": ["rich text", "paragraph"], "icon_key": "text", "preview_kind": "widget", "browse_priority": 30},
+    "group": {"category": "Layout", "keywords": ["container", "nest"], "icon_key": "layout", "preview_kind": "layout", "browse_priority": 10},
+    "linearlayout": {"category": "Layout", "keywords": ["stack", "column", "row"], "icon_key": "layout", "preview_kind": "layout", "browse_priority": 20},
+    "gridlayout": {"category": "Layout", "keywords": ["grid", "matrix"], "icon_key": "grid", "preview_kind": "layout", "browse_priority": 30},
+    "scroll": {"category": "Layout", "keywords": ["scroll", "viewport"], "icon_key": "layout", "preview_kind": "layout", "browse_priority": 40},
+    "list": {"category": "Layout", "keywords": ["list", "repeater"], "icon_key": "list", "preview_kind": "layout", "browse_priority": 50},
+    "table": {"category": "Display & Data", "keywords": ["table", "data", "rows"], "icon_key": "table", "preview_kind": "chart", "browse_priority": 40},
+    "textinput": {"category": "Input", "keywords": ["text", "field", "entry"], "icon_key": "input", "preview_kind": "input", "browse_priority": 10},
+    "combobox": {"category": "Input", "keywords": ["select", "dropdown"], "icon_key": "input", "preview_kind": "input", "browse_priority": 20},
+    "checkbox": {"category": "Input", "keywords": ["boolean", "check"], "icon_key": "toggle", "preview_kind": "input", "browse_priority": 30},
+    "radio_button": {"category": "Input", "keywords": ["choice", "single"], "icon_key": "toggle", "preview_kind": "input", "browse_priority": 40},
+    "slider": {"category": "Input", "keywords": ["range", "scrub"], "icon_key": "input", "preview_kind": "input", "browse_priority": 50},
+    "switch": {"category": "Input", "keywords": ["toggle", "on off"], "icon_key": "toggle", "preview_kind": "input", "browse_priority": 60},
+    "number_picker": {"category": "Input", "keywords": ["numeric", "spinner"], "icon_key": "input", "preview_kind": "input", "browse_priority": 70},
+    "roller": {"category": "Input", "keywords": ["wheel", "picker"], "icon_key": "input", "preview_kind": "input", "browse_priority": 80},
+    "stepper": {"category": "Input", "keywords": ["steps", "wizard"], "icon_key": "input", "preview_kind": "input", "browse_priority": 90},
+    "segmented_control": {"category": "Navigation", "keywords": ["segment", "switch"], "icon_key": "navigation", "preview_kind": "navigation", "browse_priority": 10},
+    "tab_bar": {"category": "Navigation", "keywords": ["tabs", "tab"], "icon_key": "navigation", "preview_kind": "navigation", "browse_priority": 20},
+    "menu": {"category": "Navigation", "keywords": ["menu", "options"], "icon_key": "navigation", "preview_kind": "navigation", "browse_priority": 30},
+    "page_indicator": {"category": "Navigation", "keywords": ["pager", "dots"], "icon_key": "navigation", "preview_kind": "navigation", "browse_priority": 40},
+    "viewpage": {"category": "Navigation", "keywords": ["page", "screen"], "icon_key": "page", "preview_kind": "navigation", "browse_priority": 50},
+    "viewpage_cache": {"category": "Navigation", "keywords": ["page", "cache"], "icon_key": "page", "preview_kind": "navigation", "browse_priority": 60},
+    "chart": {"category": "Display & Data", "keywords": ["trend", "graph"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 10},
+    "chart_bar": {"category": "Display & Data", "keywords": ["bars", "data"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 20},
+    "chart_line": {"category": "Display & Data", "keywords": ["line", "trend"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 30},
+    "chart_pie": {"category": "Display & Data", "keywords": ["pie", "ratio"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 40},
+    "chart_scatter": {"category": "Display & Data", "keywords": ["points", "scatter"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 50},
+    "gauge": {"category": "Display & Data", "keywords": ["meter", "dial"], "icon_key": "chart", "preview_kind": "chart", "browse_priority": 60},
+    "progress_bar": {"category": "Display & Data", "keywords": ["loading", "progress"], "icon_key": "progress", "preview_kind": "widget", "browse_priority": 70},
+    "spinner": {"category": "Display & Data", "keywords": ["busy", "loading"], "icon_key": "progress", "preview_kind": "widget", "browse_priority": 80},
+    "activity_ring": {"category": "Display & Data", "keywords": ["ring", "activity"], "icon_key": "progress", "preview_kind": "widget", "browse_priority": 90},
+    "animated_image": {"category": "Media", "keywords": ["animation", "gif"], "icon_key": "image", "preview_kind": "media", "browse_priority": 20},
+    "mp4": {"category": "Media", "keywords": ["video", "movie"], "icon_key": "media", "preview_kind": "media", "browse_priority": 10},
+    "analog_clock": {"category": "Decoration", "keywords": ["clock", "time"], "icon_key": "time", "preview_kind": "widget", "browse_priority": 20},
+    "digital_clock": {"category": "Decoration", "keywords": ["clock", "time"], "icon_key": "time", "preview_kind": "widget", "browse_priority": 30},
+    "notification_badge": {"category": "Decoration", "keywords": ["badge", "status"], "icon_key": "status", "preview_kind": "widget", "browse_priority": 40},
+    "led": {"category": "Decoration", "keywords": ["status", "indicator"], "icon_key": "status", "preview_kind": "widget", "browse_priority": 50},
+}
+
+
+def _dedupe_strings(values):
+    seen = set()
+    result = []
+    for value in values or []:
+        text = str(value or "").strip()
+        key = text.lower()
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        result.append(text)
+    return result
+
+
+def _infer_category(type_name, descriptor):
+    type_name = str(type_name or "").strip().lower()
+    if descriptor.get("is_container"):
+        return "Layout"
+    if any(token in type_name for token in ("chart", "gauge", "progress", "scale", "meter")):
+        return "Display & Data"
+    if any(token in type_name for token in ("tab", "menu", "page", "nav", "breadcrumb", "indicator")):
+        return "Navigation"
+    if any(token in type_name for token in ("input", "checkbox", "radio", "switch", "slider", "picker", "stepper", "combo", "keyboard", "lock")):
+        return "Input"
+    if any(token in type_name for token in ("video", "mp4", "media", "audio", "wave")):
+        return "Media"
+    if any(token in type_name for token in ("image", "clock", "badge", "led", "decor", "avatar")):
+        return "Decoration"
+    return "Basics"
+
+
 class WidgetRegistry:
     """Central registry for widget type descriptors.
 
@@ -35,6 +124,7 @@ class WidgetRegistry:
         self._tag_map = {}      # XML tag -> type_name
         self._rev_tag_map = {}  # type_name -> XML tag
         self._addable = []      # [(display_name, type_name), ...]
+        self._display_names = {}  # type_name -> display name
 
     @classmethod
     def instance(cls):
@@ -76,6 +166,7 @@ class WidgetRegistry:
         # Display name for menus
         if display_name is None:
             display_name = xml_tag
+        self._display_names[type_name] = display_name
 
         # Add to addable list (avoid duplicates on re-register)
         addable = descriptor.get("addable", True)
@@ -104,6 +195,12 @@ class WidgetRegistry:
         """Return list of (display_name, type_name) for the Add Widget menu."""
         return list(self._addable)
 
+    def display_name(self, type_name):
+        """Return the preferred UI display name for a widget type."""
+        if type_name in self._display_names:
+            return self._display_names[type_name]
+        return str(type_name or "").replace("_", " ").title()
+
     def container_types(self):
         """Return set of type names that are containers."""
         return {tn for tn, desc in self._types.items() if desc.get("is_container")}
@@ -111,6 +208,48 @@ class WidgetRegistry:
     def all_types(self):
         """Return dict of all registered type descriptors."""
         return dict(self._types)
+
+    def browser_item(self, type_name):
+        """Return normalized browser metadata for a widget type."""
+        descriptor = self.get(type_name)
+        if not descriptor:
+            return {}
+
+        browser = dict(_BROWSER_METADATA.get(type_name, {}))
+        browser.update(descriptor.get("browser", {}))
+        browser.setdefault("category", _infer_category(type_name, descriptor))
+        browser.setdefault("icon_key", browser.get("icon_key") or type_name)
+        browser.setdefault("preview_kind", browser.get("preview_kind") or ("layout" if descriptor.get("is_container") else "widget"))
+        browser.setdefault("browse_priority", int(browser.get("browse_priority", 999) or 999))
+        browser["keywords"] = _dedupe_strings(
+            list(browser.get("keywords", []))
+            + [self.display_name(type_name), type_name.replace("_", " "), browser["category"]]
+        )
+        browser["type_name"] = type_name
+        browser["display_name"] = self.display_name(type_name)
+        browser["is_container"] = bool(descriptor.get("is_container"))
+        browser["addable"] = bool(descriptor.get("addable", True))
+        return browser
+
+    def browser_items(self, addable_only=True):
+        """Return sorted widget browser items."""
+        items = []
+        for type_name, descriptor in self._types.items():
+            if addable_only and not descriptor.get("addable", True):
+                continue
+            items.append(self.browser_item(type_name))
+        return sorted(
+            items,
+            key=lambda item: (
+                _CATEGORY_ORDER.index(item.get("category", "Custom")) if item.get("category", "Custom") in _CATEGORY_ORDER else len(_CATEGORY_ORDER),
+                int(item.get("browse_priority", 999)),
+                item.get("display_name", "").lower(),
+            ),
+        )
+
+    def browser_categories(self):
+        """Return the fixed widget browser categories."""
+        return list(_CATEGORY_ORDER)
 
     def load_custom_widgets(self, *dirs):
         """Scan directories for custom widget .py plugin files and execute them.
