@@ -162,6 +162,17 @@ class WidgetBrowserPanel(QWidget):
         ("recent", "Recent"),
         ("containers", "Containers"),
     )
+    _SORT_MODES = (
+        ("relevance", "Recommended"),
+        ("name", "A-Z"),
+        ("complexity", "Complexity"),
+    )
+    _COMPLEXITY_LEVELS = (
+        ("all", "All"),
+        ("basic", "Basic"),
+        ("intermediate", "Intermediate"),
+        ("advanced", "Advanced"),
+    )
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -172,6 +183,10 @@ class WidgetBrowserPanel(QWidget):
         self._cards = {}
         self._tag_buttons = {}
         self._lane_buttons = {}
+        self._sort_buttons = {}
+        self._complexity_buttons = {}
+        self._sort_mode = "relevance"
+        self._complexity_filter = "all"
         self._suspend_filter_persist = False
         self._init_ui()
         self._populate_categories()
@@ -248,6 +263,39 @@ class WidgetBrowserPanel(QWidget):
         lanes_layout.addWidget(self._lanes_grid_host)
         layout.addWidget(lanes_frame)
 
+        organize_frame = QFrame()
+        organize_frame.setObjectName("widget_browser_organize")
+        organize_layout = QVBoxLayout(organize_frame)
+        organize_layout.setContentsMargins(10, 8, 10, 8)
+        organize_layout.setSpacing(8)
+
+        sort_row = QHBoxLayout()
+        sort_row.setContentsMargins(0, 0, 0, 0)
+        sort_row.setSpacing(6)
+        sort_title = QLabel("Sort")
+        sort_title.setObjectName("workspace_section_subtitle")
+        sort_row.addWidget(sort_title)
+        self._sort_host = QWidget()
+        self._sort_layout = QHBoxLayout(self._sort_host)
+        self._sort_layout.setContentsMargins(0, 0, 0, 0)
+        self._sort_layout.setSpacing(6)
+        sort_row.addWidget(self._sort_host, 1)
+        organize_layout.addLayout(sort_row)
+
+        complexity_row = QHBoxLayout()
+        complexity_row.setContentsMargins(0, 0, 0, 0)
+        complexity_row.setSpacing(6)
+        complexity_title = QLabel("Complexity")
+        complexity_title.setObjectName("workspace_section_subtitle")
+        complexity_row.addWidget(complexity_title)
+        self._complexity_host = QWidget()
+        self._complexity_layout = QHBoxLayout(self._complexity_host)
+        self._complexity_layout.setContentsMargins(0, 0, 0, 0)
+        self._complexity_layout.setSpacing(6)
+        complexity_row.addWidget(self._complexity_host, 1)
+        organize_layout.addLayout(complexity_row)
+        layout.addWidget(organize_frame)
+
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(12)
@@ -291,6 +339,7 @@ class WidgetBrowserPanel(QWidget):
         tags_layout.addWidget(self._clear_tags_btn, 0)
         layout.addWidget(tags_frame)
         self._update_insert_target()
+        self._populate_organizers()
 
     def _populate_categories(self):
         self._suspend_filter_persist = True
@@ -378,6 +427,78 @@ class WidgetBrowserPanel(QWidget):
         for col in range(columns):
             self._lanes_grid.setColumnStretch(col, 1)
 
+    def _populate_organizers(self):
+        while self._sort_layout.count():
+            item = self._sort_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._sort_buttons = {}
+        for mode, label in self._SORT_MODES:
+            button = QToolButton()
+            button.setObjectName("widget_browser_sort_button")
+            button.setText(label)
+            button.setCheckable(True)
+            button.clicked.connect(lambda checked=False, value=mode: self._set_sort_mode(value))
+            self._sort_layout.addWidget(button)
+            self._sort_buttons[mode] = button
+        self._sort_layout.addStretch()
+
+        while self._complexity_layout.count():
+            item = self._complexity_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._complexity_buttons = {}
+        for level, label in self._COMPLEXITY_LEVELS:
+            button = QToolButton()
+            button.setObjectName("widget_browser_complexity_button")
+            button.setText(label)
+            button.setProperty("level", level)
+            button.setCheckable(True)
+            button.clicked.connect(lambda checked=False, value=level: self._set_complexity_filter(value))
+            self._complexity_layout.addWidget(button)
+            self._complexity_buttons[level] = button
+        self._complexity_layout.addStretch()
+        self._sync_organizers()
+
+    def _sync_organizers(self):
+        for mode, button in self._sort_buttons.items():
+            button.blockSignals(True)
+            button.setChecked(mode == self._sort_mode)
+            button.blockSignals(False)
+        for level, button in self._complexity_buttons.items():
+            button.blockSignals(True)
+            button.setChecked(level == self._complexity_filter)
+            button.blockSignals(False)
+
+    def _set_sort_mode(self, mode, refresh=True):
+        value = str(mode or "").strip().lower()
+        valid = {key for key, _label in self._SORT_MODES}
+        self._sort_mode = value if value in valid else "relevance"
+        self._sync_organizers()
+        if refresh:
+            self.refresh()
+
+    def _set_complexity_filter(self, level, refresh=True):
+        value = str(level or "").strip().lower()
+        valid = {key for key, _label in self._COMPLEXITY_LEVELS}
+        self._complexity_filter = value if value in valid else "all"
+        self._sync_organizers()
+        if refresh:
+            self.refresh()
+
+    def _reset_organizers(self):
+        changed = False
+        if self._sort_mode != "relevance":
+            self._set_sort_mode("relevance", refresh=False)
+            changed = True
+        if self._complexity_filter != "all":
+            self._set_complexity_filter("all", refresh=False)
+            changed = True
+        if changed:
+            self.refresh()
+
     def _populate_tags(self):
         while self._tags_layout.count():
             item = self._tags_layout.takeAt(0)
@@ -461,6 +582,7 @@ class WidgetBrowserPanel(QWidget):
         return list(self._config.widget_browser_favorites)
 
     def refresh(self):
+        self._sync_organizers()
         self._sync_tags_from_config()
         items = self._filtered_items()
         self._rebuild_cards(items)
@@ -482,7 +604,12 @@ class WidgetBrowserPanel(QWidget):
         total = len(self._registry.browser_items(addable_only=True))
         favorites = len(self._config.widget_browser_favorites)
         recent = len(self._config.widget_browser_recent)
-        active_filters = bool((self._search.text() or "").strip()) or bool(self._active_tag_values()) or self._selected_category() != "all"
+        active_filters = (
+            bool((self._search.text() or "").strip())
+            or bool(self._active_tag_values())
+            or self._selected_category() != "all"
+            or self._complexity_filter != "all"
+        )
         tone = "accent" if active_filters else "success"
         self._set_chip_text(self._visible_count_chip, f"Visible {visible_count}/{total}", tone)
         self._set_chip_text(self._favorites_count_chip, f"Favorites {favorites}", "success" if favorites else "accent")
@@ -573,6 +700,10 @@ class WidgetBrowserPanel(QWidget):
                     tagged_items.append(item)
             items = tagged_items
 
+        if self._complexity_filter != "all":
+            selected_complexity = str(self._complexity_filter or "").strip().lower()
+            items = [item for item in items if str(item.get("complexity", "") or "").strip().lower() == selected_complexity]
+
         if search:
             filtered = []
             for item in items:
@@ -591,11 +722,31 @@ class WidgetBrowserPanel(QWidget):
             items = filtered
 
         if category != "recent":
-            items = self._sort_items(items, search, favorite_types, recent_types)
+            items = self._sort_items(items, search, favorite_types, recent_types, self._sort_mode)
 
         return items
 
-    def _sort_items(self, items, search, favorite_types, recent_types):
+    def _sort_items(self, items, search, favorite_types, recent_types, sort_mode="relevance"):
+        mode = str(sort_mode or "relevance").strip().lower()
+        if mode == "name":
+            return sorted(
+                items,
+                key=lambda item: (
+                    str(item.get("display_name", "")).lower(),
+                    int(item.get("browse_priority", 999) or 999),
+                ),
+            )
+        if mode == "complexity":
+            rank = {"basic": 0, "intermediate": 1, "advanced": 2}
+            return sorted(
+                items,
+                key=lambda item: (
+                    rank.get(str(item.get("complexity", "") or "").strip().lower(), 9),
+                    str(item.get("display_name", "")).lower(),
+                    int(item.get("browse_priority", 999) or 999),
+                ),
+            )
+
         search_text = str(search or "").strip().lower()
         recent_order = {name: index for index, name in enumerate(recent_types)}
 
@@ -648,7 +799,7 @@ class WidgetBrowserPanel(QWidget):
             title.setAlignment(Qt.AlignCenter)
             empty_layout.addWidget(title)
 
-            hint = QLabel("Try clearing search text, removing tags, or switching to All Widgets.")
+            hint = QLabel("Try clearing search text, removing tags, changing complexity, or switching to All Widgets.")
             hint.setObjectName("workspace_section_subtitle")
             hint.setWordWrap(True)
             hint.setAlignment(Qt.AlignCenter)
@@ -663,6 +814,9 @@ class WidgetBrowserPanel(QWidget):
             clear_tags_btn = QPushButton("Clear Tags")
             clear_tags_btn.clicked.connect(self._clear_active_tags)
             action_row.addWidget(clear_tags_btn)
+            reset_organize_btn = QPushButton("Reset Organize")
+            reset_organize_btn.clicked.connect(self._reset_organizers)
+            action_row.addWidget(reset_organize_btn)
             show_all_btn = QPushButton("Show All Widgets")
             show_all_btn.clicked.connect(self._reset_all_filters)
             action_row.addWidget(show_all_btn)
@@ -730,6 +884,8 @@ class WidgetBrowserPanel(QWidget):
         self._suspend_filter_persist = True
         self._config.set_widget_browser_filters(scenario="all", tags=[])
         self._suspend_filter_persist = False
+        self._set_sort_mode("relevance", refresh=False)
+        self._set_complexity_filter("all", refresh=False)
         self._search.setText("")
         self._sync_tags_from_config()
         self._set_category_by_id("all")

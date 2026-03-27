@@ -212,3 +212,45 @@ class TestWidgetBrowserPanel:
         assert "Container" in chips
         assert len(chips) >= 2
         panel.deleteLater()
+
+    def test_complexity_filter_limits_visible_results(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._set_complexity_filter("intermediate")
+
+        assert panel._complexity_filter == "intermediate"
+        assert panel._complexity_buttons["intermediate"].isChecked() is True
+        assert len(panel._cards) > 0
+        for item in panel._filtered_items():
+            assert str(item.get("complexity", "")).lower() == "intermediate"
+        panel.deleteLater()
+
+    def test_sort_mode_name_orders_visible_cards_alphabetically(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._set_sort_mode("name")
+
+        assert panel._sort_mode == "name"
+        assert panel._sort_buttons["name"].isChecked() is True
+        names = [str(card._item.get("display_name", "")).lower() for card in panel._cards.values()]
+        assert names == sorted(names)
+        panel.deleteLater()
+
+    def test_reset_all_filters_also_resets_complexity_and_sort_mode(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._search.setText("slider")
+        panel._set_sort_mode("name")
+        panel._set_complexity_filter("advanced")
+        panel._reset_all_filters()
+
+        assert panel._selected_category() == "all"
+        assert panel._search.text() == ""
+        assert panel._sort_mode == "relevance"
+        assert panel._complexity_filter == "all"
+        assert panel._sort_buttons["relevance"].isChecked() is True
+        assert panel._complexity_buttons["all"].isChecked() is True
+        panel.deleteLater()

@@ -411,6 +411,12 @@ QToolButton#workspace_status_chip:hover {{
     border-radius: 12px;
 }}
 
+#widget_browser_organize {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 12px;
+}}
+
 #widget_browser_lanes {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
@@ -440,6 +446,61 @@ QToolButton#widget_browser_lane:checked {{
 
 QToolButton#widget_browser_lane[emptyLane="true"] {{
     color: {t['text_soft']};
+}}
+
+QToolButton#widget_browser_sort_button {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 8px;
+    color: {t['text_muted']};
+    padding: 4px 10px;
+}}
+
+QToolButton#widget_browser_sort_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QToolButton#widget_browser_sort_button:checked {{
+    background-color: {t['accent_soft']};
+    border-color: {t['accent']};
+    color: {t['accent_hover']};
+}}
+
+QToolButton#widget_browser_complexity_button {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: 999px;
+    color: {t['text_muted']};
+    padding: 3px 10px;
+}}
+
+QToolButton#widget_browser_complexity_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QToolButton#widget_browser_complexity_button:checked {{
+    background-color: {t['accent_soft']};
+    border-color: {t['accent']};
+    color: {t['accent_hover']};
+}}
+
+QToolButton#widget_browser_complexity_button[level="basic"]:checked {{
+    border-color: {t['success']};
+    color: {t['success']};
+}}
+
+QToolButton#widget_browser_complexity_button[level="intermediate"]:checked {{
+    border-color: {t['warning']};
+    color: {t['warning']};
+}}
+
+QToolButton#widget_browser_complexity_button[level="advanced"]:checked {{
+    border-color: {t['danger']};
+    color: {t['danger']};
 }}
 
 QToolButton#widget_browser_tag {{
