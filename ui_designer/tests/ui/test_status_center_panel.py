@@ -128,6 +128,13 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
+        assert panel._recent_actions_label.text() == "Recent actions: Assets, Components, Structure, +1 more."
+        assert panel._recent_actions_label.toolTip() == (
+            "4 recent status center actions: Assets, Components, Structure, Project"
+        )
+        assert panel._repeat_action_button.toolTip() == (
+            "Repeat Assets. 4 recent status center actions saved. Use the menu arrow to replay an older action."
+        )
         assert _menu_labels(panel._repeat_action_menu) == [
             "Assets",
             "Components",
@@ -279,6 +286,11 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: Fields"
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
+        assert panel._recent_actions_label.text() == "Recent actions: Fields, Debug Output."
+        assert panel._recent_actions_label.toolTip() == "2 recent status center actions: Fields, Debug Output"
+        assert panel._repeat_action_button.toolTip() == (
+            "Repeat Fields. 2 recent status center actions saved. Use the menu arrow to replay an older action."
+        )
         assert panel.view_state() == {
             "last_action": "open_page_fields",
             "recent_actions": ["open_page_fields", "open_debug"],
@@ -289,6 +301,9 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
+        assert panel._recent_actions_label.text() == "Recent actions: none saved."
+        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._repeat_action_button.toolTip() == "No recent action to repeat."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.deleteLater()
@@ -375,6 +390,34 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
+        assert panel._recent_actions_label.text() == "Recent actions: none saved."
+        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
+        panel.deleteLater()
+
+    def test_repeat_action_menu_tooltips_reflect_recent_history(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        placeholder = panel._repeat_action_menu.actions()[0]
+        assert placeholder.text() == "No recent actions"
+        assert placeholder.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._repeat_action_button.toolTip() == "No recent action to repeat."
+
+        panel._project_btn.click()
+        panel._assets_btn.click()
+        panel._debug_btn.click()
+
+        menu_actions = [action for action in panel._repeat_action_menu.actions() if not action.isSeparator()]
+        assert [action.text() for action in menu_actions] == [
+            "Debug Output",
+            "Assets",
+            "Project",
+            "Clear Recent Actions",
+        ]
+        assert menu_actions[0].toolTip() == "Repeat the current action: Debug Output."
+        assert menu_actions[1].toolTip() == "Replay Assets from recent status center history."
+        assert menu_actions[-1].toolTip() == "Forget 3 recent status center actions."
         panel.deleteLater()

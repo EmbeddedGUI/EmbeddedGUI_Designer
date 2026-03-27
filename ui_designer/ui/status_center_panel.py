@@ -184,6 +184,10 @@ class StatusCenterPanel(QWidget):
         self._repeat_action_button.clicked.connect(self._repeat_last_action)
         last_action_row.addWidget(self._repeat_action_button, 0)
         quick_layout.addLayout(last_action_row)
+        self._recent_actions_label = QLabel("Recent actions: none saved.")
+        self._recent_actions_label.setObjectName("workspace_section_subtitle")
+        self._recent_actions_label.setWordWrap(True)
+        quick_layout.addWidget(self._recent_actions_label)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -363,18 +367,59 @@ class StatusCenterPanel(QWidget):
         if not self._recent_actions:
             empty_action = self._repeat_action_menu.addAction("No recent actions")
             empty_action.setEnabled(False)
+            empty_action.setToolTip(self._recent_actions_tooltip())
+            empty_action.setStatusTip(empty_action.toolTip())
             return
         for action_key in self._recent_actions:
             action_label = self._action_label(action_key)
             menu_action = self._repeat_action_menu.addAction(action_label)
             menu_action.setIcon(make_icon(self._action_icon_key(action_key), size=16))
-            menu_action.setToolTip(f"Replay {action_label}")
+            if action_key == self._last_action:
+                menu_tooltip = f"Repeat the current action: {action_label}."
+            else:
+                menu_tooltip = f"Replay {action_label} from recent status center history."
+            menu_action.setToolTip(menu_tooltip)
+            menu_action.setStatusTip(menu_tooltip)
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction("Clear Recent Actions")
         clear_action.setIcon(make_icon("history", size=16))
-        clear_action.setToolTip("Forget the recent status center actions.")
+        clear_action.setToolTip(self._clear_recent_actions_tooltip())
+        clear_action.setStatusTip(clear_action.toolTip())
         clear_action.triggered.connect(self._clear_recent_actions)
+
+    def _recent_actions_summary(self):
+        if not self._recent_actions:
+            return "Recent actions: none saved."
+        labels = [self._action_label(action_key) for action_key in self._recent_actions]
+        if len(labels) > 3:
+            labels = labels[:3] + [f"+{len(self._recent_actions) - 3} more"]
+        return f"Recent actions: {', '.join(labels)}."
+
+    def _recent_actions_tooltip(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Status center has not saved any recent actions yet."
+        noun = "action" if count == 1 else "actions"
+        labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
+        return f"{count} recent status center {noun}: {labels}"
+
+    def _clear_recent_actions_tooltip(self):
+        count = len(self._recent_actions)
+        noun = "action" if count == 1 else "actions"
+        return f"Forget {count} recent status center {noun}."
+
+    def _repeat_action_tooltip(self, action_label):
+        if not self._last_action:
+            return "No recent action to repeat."
+        count = len(self._recent_actions)
+        noun = "action" if count == 1 else "actions"
+        if count > 1:
+            return (
+                f"Repeat {action_label}. {count} recent status center {noun} saved. "
+                "Use the menu arrow to replay an older action."
+            )
+        return f"Repeat {action_label}. {count} recent status center {noun} saved."
 
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
@@ -384,12 +429,13 @@ class StatusCenterPanel(QWidget):
         )
         action_label = self._action_label(self._last_action)
         self._last_action_label.setText(f"Last action: {action_label}")
+        self._recent_actions_label.setText(self._recent_actions_summary())
+        self._recent_actions_label.setToolTip(self._recent_actions_tooltip())
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
-        self._repeat_action_button.setToolTip(
-            f"Repeat {action_label}" if has_action else "No recent action to repeat."
-        )
+        self._repeat_action_button.setToolTip(self._repeat_action_tooltip(action_label))
+        self._repeat_action_button.setStatusTip(self._repeat_action_button.toolTip())
         self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):
