@@ -2,6 +2,7 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from .iconography import make_icon
 
 
 _SEVERITY_PREFIX = {
@@ -78,6 +79,7 @@ class DiagnosticsPanel(QWidget):
         layout.setSpacing(6)
 
         self._summary_label = QLabel("")
+        self._summary_label.setObjectName("workspace_section_title")
         self._severity_filter_combo = QComboBox()
         self._severity_filter_combo.addItem("Any", "")
         self._severity_filter_combo.addItem("Errors", "error")
@@ -85,22 +87,31 @@ class DiagnosticsPanel(QWidget):
         self._severity_filter_combo.addItem("Info", "info")
         self._severity_filter_combo.currentIndexChanged.connect(self._apply_filter)
         self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button.setIcon(make_icon("history"))
         self._reset_view_button.clicked.connect(self._reset_view)
         self._open_selected_button = QPushButton("Open Selected")
+        self._open_selected_button.setIcon(make_icon("navigation"))
         self._open_selected_button.clicked.connect(self._open_selected)
         self._open_first_error_button = QPushButton("Open First Error")
+        self._open_first_error_button.setIcon(make_icon("diagnostics"))
         self._open_first_error_button.clicked.connect(self._open_first_error)
         self._open_first_warning_button = QPushButton("Open First Warning")
+        self._open_first_warning_button.setIcon(make_icon("diagnostics"))
         self._open_first_warning_button.clicked.connect(self._open_first_warning)
         self._copy_button = QPushButton("Copy Summary")
+        self._copy_button.setIcon(make_icon("page"))
         self._copy_button.clicked.connect(self.copy_requested.emit)
         self._copy_json_button = QPushButton("Copy JSON")
+        self._copy_json_button.setIcon(make_icon("page"))
         self._copy_json_button.clicked.connect(self.copy_json_requested.emit)
         self._export_button = QPushButton("Export Summary...")
+        self._export_button.setIcon(make_icon("save"))
         self._export_button.clicked.connect(self.export_requested.emit)
         self._export_json_button = QPushButton("Export JSON...")
+        self._export_json_button.setIcon(make_icon("save"))
         self._export_json_button.clicked.connect(self.export_json_requested.emit)
         self._hint_label = QLabel(_DEFAULT_HINT_TEXT)
+        self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
 
         self._list = QListWidget()
@@ -216,6 +227,12 @@ class DiagnosticsPanel(QWidget):
 
         for entry in self._visible_entries:
             item = QListWidgetItem(_format_entry_text(entry))
+            item.setIcon(
+                make_icon(
+                    "diagnostics" if entry.severity in ("error", "warning") else "history",
+                    size=16,
+                )
+            )
             item.setData(Qt.UserRole, _activation_target(entry))
             item.setData(Qt.UserRole + 1, entry)
             self._list.addItem(item)

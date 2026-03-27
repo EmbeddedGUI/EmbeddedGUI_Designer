@@ -1,7 +1,9 @@
 """History dock widget for undo/redo visualization."""
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
+
+from .iconography import make_icon
 
 
 class HistoryPanel(QWidget):
@@ -17,15 +19,29 @@ class HistoryPanel(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
 
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(8)
+
+        page_icon = QLabel()
+        page_icon.setPixmap(make_icon("history", size=20).pixmap(20, 20))
+        top_row.addWidget(page_icon, 0, Qt.AlignTop)
+
         self._page_value = QLabel("")
+        self._page_value.setObjectName("workspace_section_title")
+        top_row.addWidget(self._page_value, 1)
+        layout.addLayout(top_row)
+
         self._stack_value = QLabel("")
+        self._stack_value.setObjectName("workspace_status_chip")
         self._dirty_value = QLabel("")
+        self._dirty_value.setObjectName("workspace_status_chip")
         self._source_value = QLabel("")
+        self._source_value.setObjectName("workspace_section_subtitle")
         self._history_list = QListWidget()
         self._history_list.setSelectionMode(QListWidget.NoSelection)
         self._history_list.setFocusPolicy(Qt.NoFocus)
 
-        layout.addWidget(self._page_value)
         layout.addWidget(self._stack_value)
         layout.addWidget(self._dirty_value)
         layout.addWidget(self._source_value)
@@ -36,6 +52,7 @@ class HistoryPanel(QWidget):
         self._stack_value.setText("History: 0 entries")
         self._dirty_value.setText("Dirty: No")
         self._source_value.setText("Source: Saved state")
+        self._dirty_value.setProperty("chipTone", "success")
         self._history_list.clear()
 
     def set_history(self, page_name, entries, dirty=False, dirty_source="", can_undo=False, can_redo=False):
@@ -49,6 +66,9 @@ class HistoryPanel(QWidget):
         )
         self._dirty_value.setText(f"Dirty: {'Yes' if dirty else 'No'}")
         self._source_value.setText(f"Source: {dirty_source or 'Saved state'}")
+        self._dirty_value.setProperty("chipTone", "warning" if dirty else "success")
+        self._dirty_value.style().unpolish(self._dirty_value)
+        self._dirty_value.style().polish(self._dirty_value)
 
         self._history_list.clear()
         for entry in reversed(entries):
@@ -61,4 +81,10 @@ class HistoryPanel(QWidget):
             marker_prefix = f"[{'/'.join(markers)}] " if markers else ""
             label = entry.get("label") or "State capture"
             item = QListWidgetItem(f"{marker_prefix}{entry.get('index', 0) + 1}. {label}")
+            icon_key = "history"
+            if entry.get("is_current"):
+                icon_key = "navigation"
+            elif entry.get("is_saved"):
+                icon_key = "save"
+            item.setIcon(make_icon(icon_key, size=16))
             self._history_list.addItem(item)

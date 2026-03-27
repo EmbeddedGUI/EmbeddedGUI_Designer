@@ -8,9 +8,12 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
+    QLabel,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
+
+from .iconography import make_icon
 
 
 class DebugPanel(QWidget):
@@ -30,7 +33,16 @@ class DebugPanel(QWidget):
         toolbar.setContentsMargins(4, 2, 4, 2)
         toolbar.setSpacing(4)
 
+        title_icon = QLabel()
+        title_icon.setPixmap(make_icon("debug", size=18).pixmap(18, 18))
+        toolbar.addWidget(title_icon)
+
+        title = QLabel("Debug Output")
+        title.setObjectName("workspace_section_title")
+        toolbar.addWidget(title)
+
         self._clear_btn = QPushButton("Clear")
+        self._clear_btn.setIcon(make_icon("stop"))
         self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
         toolbar.addWidget(self._clear_btn)
