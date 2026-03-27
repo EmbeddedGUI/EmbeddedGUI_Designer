@@ -91,6 +91,8 @@ class DesignerConfig:
         self.widget_browser_favorites = []
         self.widget_browser_active_scenario = "all"
         self.widget_browser_active_tags = []
+        self.widget_browser_sort_mode = "relevance"
+        self.widget_browser_complexity_filter = "all"
         self.workspace_status_panel_state = {}
         self.sdk_setup_prompted = False
         self.release_history_view = {}
@@ -246,6 +248,12 @@ class DesignerConfig:
             self.widget_browser_active_scenario = active_scenario or "all"
             active_tags = data.get("widget_browser_active_tags", [])
             self.widget_browser_active_tags = [str(item).strip() for item in active_tags if str(item).strip()][:24]
+            sort_mode = str(data.get("widget_browser_sort_mode", "relevance") or "relevance").strip().lower()
+            self.widget_browser_sort_mode = sort_mode if sort_mode in {"relevance", "name", "complexity"} else "relevance"
+            complexity_filter = str(data.get("widget_browser_complexity_filter", "all") or "all").strip().lower()
+            self.widget_browser_complexity_filter = (
+                complexity_filter if complexity_filter in {"all", "basic", "intermediate", "advanced"} else "all"
+            )
             status_state = data.get("workspace_status_panel_state", {})
             self.workspace_status_panel_state = status_state if isinstance(status_state, dict) else {}
             self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
@@ -286,6 +294,8 @@ class DesignerConfig:
                 "widget_browser_favorites": self.widget_browser_favorites,
                 "widget_browser_active_scenario": self.widget_browser_active_scenario,
                 "widget_browser_active_tags": self.widget_browser_active_tags,
+                "widget_browser_sort_mode": self.widget_browser_sort_mode,
+                "widget_browser_complexity_filter": self.widget_browser_complexity_filter,
                 "workspace_status_panel_state": self.workspace_status_panel_state,
                 "sdk_setup_prompted": self.sdk_setup_prompted,
                 "release_history_view": self.release_history_view,
@@ -387,6 +397,20 @@ class DesignerConfig:
                 seen.add(key)
                 unique_tags.append(text)
             self.widget_browser_active_tags = unique_tags[:24]
+        self.save()
+
+    def set_widget_browser_organizers(self, sort_mode=None, complexity=None):
+        """Persist widget browser sort mode and complexity filter."""
+        if sort_mode is not None:
+            normalized_sort = str(sort_mode or "relevance").strip().lower()
+            self.widget_browser_sort_mode = (
+                normalized_sort if normalized_sort in {"relevance", "name", "complexity"} else "relevance"
+            )
+        if complexity is not None:
+            normalized_complexity = str(complexity or "all").strip().lower()
+            self.widget_browser_complexity_filter = (
+                normalized_complexity if normalized_complexity in {"all", "basic", "intermediate", "advanced"} else "all"
+            )
         self.save()
 
     def get_app_dir(self, app_name=None, sdk_root=None):

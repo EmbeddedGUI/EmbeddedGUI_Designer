@@ -185,8 +185,10 @@ class WidgetBrowserPanel(QWidget):
         self._lane_buttons = {}
         self._sort_buttons = {}
         self._complexity_buttons = {}
-        self._sort_mode = "relevance"
-        self._complexity_filter = "all"
+        self._sort_mode = self._normalize_sort_mode(getattr(self._config, "widget_browser_sort_mode", "relevance"))
+        self._complexity_filter = self._normalize_complexity_filter(
+            getattr(self._config, "widget_browser_complexity_filter", "all")
+        )
         self._suspend_filter_persist = False
         self._init_ui()
         self._populate_categories()
@@ -472,31 +474,46 @@ class WidgetBrowserPanel(QWidget):
             button.setChecked(level == self._complexity_filter)
             button.blockSignals(False)
 
-    def _set_sort_mode(self, mode, refresh=True):
+    def _normalize_sort_mode(self, mode):
         value = str(mode or "").strip().lower()
         valid = {key for key, _label in self._SORT_MODES}
-        self._sort_mode = value if value in valid else "relevance"
+        return value if value in valid else "relevance"
+
+    def _normalize_complexity_filter(self, level):
+        value = str(level or "").strip().lower()
+        valid = {key for key, _label in self._COMPLEXITY_LEVELS}
+        return value if value in valid else "all"
+
+    def _set_sort_mode(self, mode, refresh=True, persist=True):
+        normalized = self._normalize_sort_mode(mode)
+        changed = normalized != self._sort_mode
+        self._sort_mode = normalized
         self._sync_organizers()
+        if changed and persist:
+            self._config.set_widget_browser_organizers(sort_mode=self._sort_mode)
         if refresh:
             self.refresh()
 
-    def _set_complexity_filter(self, level, refresh=True):
-        value = str(level or "").strip().lower()
-        valid = {key for key, _label in self._COMPLEXITY_LEVELS}
-        self._complexity_filter = value if value in valid else "all"
+    def _set_complexity_filter(self, level, refresh=True, persist=True):
+        normalized = self._normalize_complexity_filter(level)
+        changed = normalized != self._complexity_filter
+        self._complexity_filter = normalized
         self._sync_organizers()
+        if changed and persist:
+            self._config.set_widget_browser_organizers(complexity=self._complexity_filter)
         if refresh:
             self.refresh()
 
     def _reset_organizers(self):
         changed = False
         if self._sort_mode != "relevance":
-            self._set_sort_mode("relevance", refresh=False)
+            self._set_sort_mode("relevance", refresh=False, persist=False)
             changed = True
         if self._complexity_filter != "all":
-            self._set_complexity_filter("all", refresh=False)
+            self._set_complexity_filter("all", refresh=False, persist=False)
             changed = True
         if changed:
+            self._config.set_widget_browser_organizers(sort_mode=self._sort_mode, complexity=self._complexity_filter)
             self.refresh()
 
     def _populate_tags(self):
@@ -884,8 +901,9 @@ class WidgetBrowserPanel(QWidget):
         self._suspend_filter_persist = True
         self._config.set_widget_browser_filters(scenario="all", tags=[])
         self._suspend_filter_persist = False
-        self._set_sort_mode("relevance", refresh=False)
-        self._set_complexity_filter("all", refresh=False)
+        self._set_sort_mode("relevance", refresh=False, persist=False)
+        self._set_complexity_filter("all", refresh=False, persist=False)
+        self._config.set_widget_browser_organizers(sort_mode=self._sort_mode, complexity=self._complexity_filter)
         self._search.setText("")
         self._sync_tags_from_config()
         self._set_category_by_id("all")

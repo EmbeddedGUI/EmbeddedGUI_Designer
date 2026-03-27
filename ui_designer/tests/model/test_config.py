@@ -74,6 +74,8 @@ class TestDefaults:
         assert config.window_state == ""
         assert config.widget_browser_active_scenario == "all"
         assert config.widget_browser_active_tags == []
+        assert config.widget_browser_sort_mode == "relevance"
+        assert config.widget_browser_complexity_filter == "all"
         assert config.workspace_status_panel_state == {}
         assert config.sdk_setup_prompted is False
         assert config.release_history_view == {}
@@ -94,6 +96,8 @@ class TestSaveLoad:
         config.font_size_px = 14
         config.widget_browser_active_scenario = "scenario:layout & containers"
         config.widget_browser_active_tags = ["layout", "container"]
+        config.widget_browser_sort_mode = "name"
+        config.widget_browser_complexity_filter = "intermediate"
         config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
         config.sdk_setup_prompted = True
         config.release_history_view = {
@@ -138,6 +142,8 @@ class TestSaveLoad:
         assert loaded.font_size_px == 14
         assert loaded.widget_browser_active_scenario == "scenario:layout & containers"
         assert loaded.widget_browser_active_tags == ["layout", "container"]
+        assert loaded.widget_browser_sort_mode == "name"
+        assert loaded.widget_browser_complexity_filter == "intermediate"
         assert loaded.workspace_status_panel_state == {"last_action": "open_diagnostics"}
         assert loaded.sdk_setup_prompted is True
         assert loaded.release_history_view == {
@@ -258,6 +264,16 @@ class TestRecentApps:
 
         assert config.widget_browser_active_scenario == "scenario:layout & containers"
         assert config.widget_browser_active_tags == ["Layout", "Container"]
+
+    def test_set_widget_browser_organizers_normalizes_values(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
+                config.set_widget_browser_organizers(sort_mode="NAME", complexity="ADVANCED")
+                config.set_widget_browser_organizers(sort_mode="invalid", complexity="unknown")
+
+        assert config.widget_browser_sort_mode == "relevance"
+        assert config.widget_browser_complexity_filter == "all"
 
 
 class TestPathManagement:

@@ -221,6 +221,7 @@ class TestWidgetBrowserPanel:
 
         assert panel._complexity_filter == "intermediate"
         assert panel._complexity_buttons["intermediate"].isChecked() is True
+        assert isolated_config.widget_browser_complexity_filter == "intermediate"
         assert len(panel._cards) > 0
         for item in panel._filtered_items():
             assert str(item.get("complexity", "")).lower() == "intermediate"
@@ -234,6 +235,7 @@ class TestWidgetBrowserPanel:
 
         assert panel._sort_mode == "name"
         assert panel._sort_buttons["name"].isChecked() is True
+        assert isolated_config.widget_browser_sort_mode == "name"
         names = [str(card._item.get("display_name", "")).lower() for card in panel._cards.values()]
         assert names == sorted(names)
         panel.deleteLater()
@@ -251,6 +253,21 @@ class TestWidgetBrowserPanel:
         assert panel._search.text() == ""
         assert panel._sort_mode == "relevance"
         assert panel._complexity_filter == "all"
+        assert isolated_config.widget_browser_sort_mode == "relevance"
+        assert isolated_config.widget_browser_complexity_filter == "all"
         assert panel._sort_buttons["relevance"].isChecked() is True
         assert panel._complexity_buttons["all"].isChecked() is True
+        panel.deleteLater()
+
+    def test_organizers_restore_from_config(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        isolated_config.widget_browser_sort_mode = "complexity"
+        isolated_config.widget_browser_complexity_filter = "advanced"
+        panel = WidgetBrowserPanel()
+
+        assert panel._sort_mode == "complexity"
+        assert panel._complexity_filter == "advanced"
+        assert panel._sort_buttons["complexity"].isChecked() is True
+        assert panel._complexity_buttons["advanced"].isChecked() is True
         panel.deleteLater()
