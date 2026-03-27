@@ -50,6 +50,8 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.text() == "Open First Warning (1)"
         assert panel._health_chip_action == "open_error_diagnostics"
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
+        assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention."
+        assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
         assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
         assert panel._warning_row.toolTip() == "Open Warnings. 1 warning active."
         assert panel._info_row.toolTip() == "Open Info. 1 info item active."
@@ -67,6 +69,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
+        assert panel._health_summary_label.text() == "Summary: 3 warnings, 1 info item need review."
         assert panel._runtime_label.text() == "Runtime failed"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._first_error_btn.isEnabled() is False
@@ -84,6 +87,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._health_chip_action == "open_info_diagnostics"
         assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
+        assert panel._health_summary_label.text() == "Summary: 2 info items available."
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._first_error_btn.isEnabled() is False
@@ -101,6 +105,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "success"
         assert panel._health_chip_action == "open_diagnostics"
         assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
+        assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
         assert panel._warning_row.toolTip() == "Open Warnings. No warnings active."
@@ -157,6 +162,7 @@ class TestStatusCenterPanel:
 
         panel = StatusCenterPanel()
 
+        assert panel._health_summary_label.accessibleName() == "Diagnostic summary"
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."
         assert panel._components_btn.accessibleName() == "Components action"

@@ -158,6 +158,11 @@ class StatusCenterPanel(QWidget):
         self._info_value, self._info_bar, self._info_row = self._create_health_row(
             health_layout, "Info", "debug", "status_center_health_info_bar", "open_info_diagnostics"
         )
+        self._health_summary_label = QLabel("Summary: Diagnostics are clear.")
+        self._health_summary_label.setObjectName("workspace_section_subtitle")
+        self._health_summary_label.setWordWrap(True)
+        self._health_summary_label.setAccessibleName("Diagnostic summary")
+        health_layout.addWidget(self._health_summary_label)
         layout.addWidget(health)
 
         quick_actions = QFrame()
@@ -444,6 +449,25 @@ class StatusCenterPanel(QWidget):
         value = max(int(count or 0), 0)
         button.setText(f"{base_text} ({value})" if value > 0 else base_text)
 
+    def _diagnostic_summary_text(self, error_count, warning_count, info_count):
+        errors = max(int(error_count or 0), 0)
+        warnings = max(int(warning_count or 0), 0)
+        infos = max(int(info_count or 0), 0)
+        parts = []
+        if errors > 0:
+            parts.append(self._count_label(errors, "error", "errors"))
+        if warnings > 0:
+            parts.append(self._count_label(warnings, "warning", "warnings"))
+        if infos > 0:
+            parts.append(self._count_label(infos, "info item", "info items"))
+        if not parts:
+            return "Summary: Diagnostics are clear."
+        if errors > 0:
+            return f"Summary: {', '.join(parts)} need attention."
+        if warnings > 0:
+            return f"Summary: {', '.join(parts)} need review."
+        return f"Summary: {', '.join(parts)} available."
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -578,6 +602,9 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
+        health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
+        self._health_summary_label.setText(health_summary)
+        self._set_hint(self._health_summary_label, health_summary)
         if error_count > 0:
             self._health_chip_action = "open_error_diagnostics"
             self._set_chip_text(self._health_chip, "Critical", "danger")
