@@ -6146,6 +6146,68 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    def test_build_preview_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewStructureActionDisabledDemo"
+        project = _create_project(project_dir, "PreviewStructureActionDisabledDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        child = WidgetModel("label", name="child", x=8, y=8, width=60, height=20)
+        root.add_child(child)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        def _structure_actions(widget):
+            menu = window._build_preview_context_menu(widget)
+            structure_menu = _context_submenu(menu, "Structure")
+            actions = {action.text(): action for action in structure_menu.actions() if action.text()}
+            return menu, structure_menu, actions
+
+        window._set_selection([root], primary=root, sync_tree=True, sync_preview=True)
+        menu, structure_menu, actions = _structure_actions(root)
+        assert actions["Group Selection"].isEnabled() is False
+        assert actions["Ungroup"].isEnabled() is False
+        assert actions["Move Into..."].isEnabled() is False
+        assert actions["Move Into Last Target"].isEnabled() is False
+        assert actions["Lift To Parent"].isEnabled() is False
+        assert actions["Move Up"].isEnabled() is False
+        assert actions["Move Down"].isEnabled() is False
+        assert actions["Move To Top"].isEnabled() is False
+        assert actions["Move To Bottom"].isEnabled() is False
+        assert "root widgets cannot be regrouped or reordered" in actions["Group Selection"].toolTip()
+        assert "(No eligible target containers)" in [
+            action.text() for action in next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into").actions()
+        ]
+        menu.deleteLater()
+
+        window._set_selection([child], primary=child, sync_tree=True, sync_preview=True)
+        menu, structure_menu, actions = _structure_actions(child)
+        assert actions["Group Selection"].isEnabled() is False
+        assert actions["Ungroup"].isEnabled() is False
+        assert actions["Move Into..."].isEnabled() is False
+        assert actions["Move Into Last Target"].isEnabled() is False
+        assert actions["Lift To Parent"].isEnabled() is False
+        assert actions["Move Up"].isEnabled() is False
+        assert actions["Move Down"].isEnabled() is False
+        assert actions["Move To Top"].isEnabled() is False
+        assert actions["Move To Bottom"].isEnabled() is False
+        assert "no eligible target containers are available" in actions["Move Into..."].toolTip()
+        assert "(No eligible target containers)" in [
+            action.text() for action in next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into").actions()
+        ]
+        menu.deleteLater()
+
+        _close_window(window)
+
     def test_build_preview_context_menu_arrange_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
