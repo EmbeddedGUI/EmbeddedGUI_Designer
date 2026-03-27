@@ -123,6 +123,21 @@ def test_collect_sdk_git_metadata_reads_revision_fields(tmp_path, monkeypatch):
     assert module.describe_sdk_git_revision(metadata) == "416d576"
 
 
+def test_collect_sdk_git_metadata_handles_subprocess_oserror(tmp_path, monkeypatch):
+    module = _load_module()
+    sdk_root = tmp_path / "sdk_root"
+    sdk_root.mkdir()
+
+    monkeypatch.setattr(module.shutil, "which", lambda name: "git" if name == "git" else "")
+
+    def fake_run(*_args, **_kwargs):
+        raise OSError("unsupported handle")
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module.collect_sdk_git_metadata(sdk_root) == {}
+
+
 def test_write_sdk_bundle_metadata_includes_git_revision(tmp_path, monkeypatch):
     module = _load_module()
     bundle_root = tmp_path / "bundle"
