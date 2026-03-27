@@ -6007,6 +6007,95 @@ class TestMainWindowCanvasActions:
         assert "Same Depth" in select_labels
         _close_window(window)
 
+    def test_build_preview_context_menu_select_actions_reflect_widget_relationships(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewSelectMenuRelationshipsDemo"
+        project = _create_project(project_dir, "PreviewSelectMenuRelationshipsDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
+        container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
+        child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
+        child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
+        solo = WidgetModel("label", name="solo", x=140, y=24, width=40, height=16)
+        container.add_child(child_a)
+        container.add_child(child_b)
+        root.add_child(first)
+        root.add_child(container)
+        root.add_child(solo)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        def _select_actions(widget):
+            menu = window._build_preview_context_menu(widget)
+            select_menu = next(action.menu() for action in menu.actions() if action.text() == "Select")
+            actions = {action.text(): action for action in select_menu.actions() if action.text()}
+            return menu, actions
+
+        root_menu, root_actions = _select_actions(root)
+        assert root_actions["Parent"].isEnabled() is False
+        assert root_actions["Previous Sibling"].isEnabled() is False
+        assert root_actions["Previous Siblings"].isEnabled() is False
+        assert root_actions["Previous In Tree"].isEnabled() is False
+        assert root_actions["Ancestors"].isEnabled() is False
+        assert root_actions["Siblings"].isEnabled() is False
+        assert root_actions["Managed"].isEnabled() is False
+        assert "Unavailable: root widgets do not have a parent." in root_actions["Parent"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Sibling"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Previous Siblings"].toolTip()
+        assert "Unavailable: widget is already the first widget in tree order on this page." in root_actions["Previous In Tree"].toolTip()
+        assert "Unavailable: root widgets do not have ancestors." in root_actions["Ancestors"].toolTip()
+        assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
+        assert "Unavailable: no layout-managed widgets exist in this subtree." in root_actions["Managed"].toolTip()
+        root_menu.deleteLater()
+
+        container_menu, container_actions = _select_actions(container)
+        assert container_actions["Parent"].isEnabled() is True
+        assert container_actions["Previous Sibling"].isEnabled() is True
+        assert container_actions["Next Sibling"].isEnabled() is True
+        assert container_actions["Previous Siblings"].isEnabled() is True
+        assert container_actions["Next Siblings"].isEnabled() is True
+        assert container_actions["Children"].isEnabled() is True
+        assert container_actions["Siblings"].isEnabled() is True
+        assert container_actions["Same Depth"].isEnabled() is True
+        container_menu.deleteLater()
+
+        child_menu, child_actions = _select_actions(child_a)
+        assert child_actions["Parent"].isEnabled() is True
+        assert child_actions["Previous Sibling"].isEnabled() is False
+        assert child_actions["Next Sibling"].isEnabled() is True
+        assert child_actions["Previous Siblings"].isEnabled() is False
+        assert child_actions["Next Siblings"].isEnabled() is True
+        assert child_actions["First Child"].isEnabled() is False
+        assert child_actions["Last Child"].isEnabled() is False
+        assert child_actions["Children"].isEnabled() is False
+        assert child_actions["Same Parent Type"].isEnabled() is False
+        assert "Unavailable: widget has no child widgets." in child_actions["First Child"].toolTip()
+        assert "Unavailable: widget has no child widgets." in child_actions["Last Child"].toolTip()
+        assert "Unavailable: widget has no child widgets." in child_actions["Children"].toolTip()
+        assert "Unavailable: widget does not have a previous sibling under the same parent." in child_actions["Previous Sibling"].toolTip()
+        assert "Unavailable: widget does not have any previous siblings under the same parent." in child_actions["Previous Siblings"].toolTip()
+        assert "Unavailable: no other switch widgets exist under the same parent." in child_actions["Same Parent Type"].toolTip()
+        child_menu.deleteLater()
+
+        solo_menu, solo_actions = _select_actions(solo)
+        assert solo_actions["Previous Siblings"].isEnabled() is True
+        assert solo_actions["Next Siblings"].isEnabled() is False
+        assert solo_actions["Previous In Tree"].isEnabled() is True
+        assert solo_actions["Next In Tree"].isEnabled() is False
+        assert "Unavailable: widget does not have any next siblings under the same parent." in solo_actions["Next Siblings"].toolTip()
+        assert "Unavailable: widget is already the last widget in tree order on this page." in solo_actions["Next In Tree"].toolTip()
+        solo_menu.deleteLater()
+
+        _close_window(window)
+
     def test_build_preview_context_menu_without_widget_omits_select_submenu(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
