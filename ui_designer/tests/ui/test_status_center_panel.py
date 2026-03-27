@@ -153,6 +153,27 @@ class TestStatusCenterPanel:
         assert panel._diag_card.accessibleName() == "Diagnostics metric"
         panel.deleteLater()
 
+    def test_health_rows_emit_filtered_diagnostics_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        QTest.mouseClick(panel._error_row, Qt.LeftButton)
+        QTest.mouseClick(panel._warning_row, Qt.LeftButton)
+        QTest.mouseClick(panel._info_row, Qt.LeftButton)
+
+        assert emitted == [
+            "open_error_diagnostics",
+            "open_warning_diagnostics",
+            "open_info_diagnostics",
+        ]
+        assert panel._info_row.accessibleName() == "Info diagnostics"
+        assert panel._last_action_label.text() == "Last action: Info"
+        panel.deleteLater()
+
     def test_restore_view_state_updates_last_action_label(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

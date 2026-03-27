@@ -181,6 +181,11 @@ class DiagnosticsPanel(QWidget):
             return None
         return item.data(Qt.UserRole + 1)
 
+    def set_severity_filter(self, severity):
+        severity_value = str(severity or "")
+        index = self._severity_filter_combo.findData(severity_value)
+        self._severity_filter_combo.setCurrentIndex(index if index >= 0 else 0)
+
     def entries(self):
         return list(self._visible_entries)
 

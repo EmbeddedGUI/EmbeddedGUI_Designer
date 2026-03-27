@@ -807,6 +807,21 @@ class MainWindow(QMainWindow):
         if action == "open_diagnostics":
             self._show_bottom_panel("Diagnostics")
             return
+        if action == "open_error_diagnostics":
+            self._show_bottom_panel("Diagnostics")
+            if hasattr(self, "diagnostics_panel"):
+                self.diagnostics_panel.set_severity_filter("error")
+            return
+        if action == "open_warning_diagnostics":
+            self._show_bottom_panel("Diagnostics")
+            if hasattr(self, "diagnostics_panel"):
+                self.diagnostics_panel.set_severity_filter("warning")
+            return
+        if action == "open_info_diagnostics":
+            self._show_bottom_panel("Diagnostics")
+            if hasattr(self, "diagnostics_panel"):
+                self.diagnostics_panel.set_severity_filter("info")
+            return
         if action == "open_history":
             self._show_bottom_panel("History")
             return

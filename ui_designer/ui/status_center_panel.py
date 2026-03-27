@@ -43,6 +43,9 @@ class StatusCenterPanel(QWidget):
         "open_page_fields": "Fields",
         "open_page_timers": "Timers",
         "open_diagnostics": "Diagnostics",
+        "open_error_diagnostics": "Errors",
+        "open_warning_diagnostics": "Warnings",
+        "open_info_diagnostics": "Info",
         "open_history": "History",
         "open_debug": "Debug Output",
         "open_first_error": "First Error",
@@ -121,9 +124,15 @@ class StatusCenterPanel(QWidget):
         health_title_row.addWidget(self._health_chip)
         health_layout.addLayout(health_title_row)
 
-        self._error_value, self._error_bar = self._create_health_row(health_layout, "Errors", "diagnostics", "status_center_health_error_bar")
-        self._warning_value, self._warning_bar = self._create_health_row(health_layout, "Warnings", "history", "status_center_health_warning_bar")
-        self._info_value, self._info_bar = self._create_health_row(health_layout, "Info", "debug", "status_center_health_info_bar")
+        self._error_value, self._error_bar, self._error_row = self._create_health_row(
+            health_layout, "Errors", "diagnostics", "status_center_health_error_bar", "open_error_diagnostics"
+        )
+        self._warning_value, self._warning_bar, self._warning_row = self._create_health_row(
+            health_layout, "Warnings", "history", "status_center_health_warning_bar", "open_warning_diagnostics"
+        )
+        self._info_value, self._info_bar, self._info_row = self._create_health_row(
+            health_layout, "Info", "debug", "status_center_health_info_bar", "open_info_diagnostics"
+        )
         layout.addWidget(health)
 
         quick_actions = QFrame()
@@ -231,9 +240,13 @@ class StatusCenterPanel(QWidget):
         grid_layout.addWidget(card, row, col)
         return value_label, card
 
-    def _create_health_row(self, host_layout, label, icon_key, bar_object_name):
-        row = QFrame()
+    def _create_health_row(self, host_layout, label, icon_key, bar_object_name, action_key=""):
+        row = _ClickableFrame() if action_key else QFrame()
         row.setObjectName("status_center_health_row")
+        if action_key:
+            row.clicked.connect(lambda key=action_key: self._emit_action(key))
+            row.setToolTip(f"Open {label}")
+            row.setAccessibleName(f"{label} diagnostics")
         row_layout = QVBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
         row_layout.setSpacing(4)
@@ -259,7 +272,7 @@ class StatusCenterPanel(QWidget):
         bar.setValue(0)
         row_layout.addWidget(bar)
         host_layout.addWidget(row)
-        return value_label, bar
+        return value_label, bar, row
 
     def _set_chip_text(self, chip, text, tone=None):
         chip.setText(str(text or ""))

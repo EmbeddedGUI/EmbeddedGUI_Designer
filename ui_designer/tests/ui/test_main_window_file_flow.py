@@ -6041,6 +6041,21 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.currentIndex() == 0
         _close_window(window)
 
+    def test_status_center_diagnostic_mix_actions_apply_severity_filter(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._on_status_center_action_requested("open_error_diagnostics")
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 0
+        assert window.diagnostics_panel._severity_filter_combo.currentData() == "error"
+        window._on_status_center_action_requested("open_warning_diagnostics")
+        assert window.diagnostics_panel._severity_filter_combo.currentData() == "warning"
+        window._on_status_center_action_requested("open_info_diagnostics")
+        assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:
