@@ -52,6 +52,24 @@ class StatusCenterPanel(QWidget):
         "open_first_error": "First Error",
         "open_first_warning": "First Warning",
     }
+    _ACTION_ICONS = {
+        "open_project_panel": "project",
+        "open_structure_panel": "structure",
+        "open_components_panel": "widgets",
+        "open_assets_panel": "assets",
+        "open_properties_inspector": "properties",
+        "open_animations_inspector": "animation",
+        "open_page_fields": "page",
+        "open_page_timers": "time",
+        "open_diagnostics": "diagnostics",
+        "open_error_diagnostics": "diagnostics",
+        "open_warning_diagnostics": "history",
+        "open_info_diagnostics": "debug",
+        "open_history": "history",
+        "open_debug": "debug",
+        "open_first_error": "diagnostics",
+        "open_first_warning": "diagnostics",
+    }
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -317,6 +335,12 @@ class StatusCenterPanel(QWidget):
             return "None"
         return self._ACTION_LABELS.get(action, action.replace("_", " ").title())
 
+    def _action_icon_key(self, action_key):
+        action = str(action_key or "").strip()
+        if not action:
+            return "history"
+        return self._ACTION_ICONS.get(action, "history")
+
     def _normalize_recent_actions(self, recent_actions, prepend_action=""):
         normalized = []
         candidates = []
@@ -343,10 +367,12 @@ class StatusCenterPanel(QWidget):
         for action_key in self._recent_actions:
             action_label = self._action_label(action_key)
             menu_action = self._repeat_action_menu.addAction(action_label)
+            menu_action.setIcon(make_icon(self._action_icon_key(action_key), size=16))
             menu_action.setToolTip(f"Replay {action_label}")
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction("Clear Recent Actions")
+        clear_action.setIcon(make_icon("history", size=16))
         clear_action.setToolTip("Forget the recent status center actions.")
         clear_action.triggered.connect(self._clear_recent_actions)
 

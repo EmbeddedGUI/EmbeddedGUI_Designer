@@ -357,6 +357,9 @@ class TestStatusCenterPanel:
             "Project",
             "Clear Recent Actions",
         ]
+        replay_actions = [action for action in panel._repeat_action_menu.actions() if not action.isSeparator()]
+        assert replay_actions[0].icon().isNull() is False
+        assert replay_actions[-1].icon().isNull() is False
         panel.deleteLater()
 
     def test_repeat_action_menu_can_clear_recent_actions(self, qapp):
