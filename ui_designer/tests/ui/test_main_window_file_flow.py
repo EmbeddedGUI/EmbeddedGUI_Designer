@@ -6028,6 +6028,57 @@ class TestMainWindowCanvasActions:
         assert "Same Depth" in select_labels
         _close_window(window)
 
+    def test_build_preview_context_menu_exposes_expected_shortcuts(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewContextMenuShortcutDemo"
+        project = _create_project(project_dir, "PreviewContextMenuShortcutDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
+
+        menu = window._build_preview_context_menu(first)
+        actions = {action.text(): action for action in menu.actions() if action.text()}
+        structure_actions = {
+            action.text(): action for action in _context_submenu(menu, "Structure").actions() if action.text()
+        }
+
+        assert actions["Select All"].shortcut().toString() == "Ctrl+A"
+        assert actions["Copy"].shortcut().toString() == "Ctrl+C"
+        assert actions["Cut"].shortcut().toString() == "Ctrl+X"
+        assert actions["Paste"].shortcut().toString() == "Ctrl+V"
+        assert actions["Duplicate"].shortcut().toString() == "Ctrl+D"
+        assert actions["Delete"].shortcut().toString() == "Del"
+
+        assert structure_actions["Group Selection"].shortcut().toString() == "Ctrl+G"
+        assert structure_actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
+        assert structure_actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
+        assert structure_actions["Move Into Last Target"].shortcut().toString() == "Ctrl+Alt+I"
+        assert structure_actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
+        assert structure_actions["Move Up"].shortcut().toString() == "Alt+Up"
+        assert structure_actions["Move Down"].shortcut().toString() == "Alt+Down"
+        assert structure_actions["Move To Top"].shortcut().toString() == "Alt+Shift+Up"
+        assert structure_actions["Move To Bottom"].shortcut().toString() == "Alt+Shift+Down"
+
+        menu.deleteLater()
+        _close_window(window)
+
     def test_build_preview_context_menu_structure_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
