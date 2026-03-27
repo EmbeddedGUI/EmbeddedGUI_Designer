@@ -39,7 +39,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
 
-        assert panel._health_chip.text() == "Critical"
+        assert panel._health_chip.text() == "Critical (2)"
         assert panel._health_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
@@ -55,7 +55,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.accessibleName() == "Workspace status: Action Needed (Fix First Error (2))"
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
         assert panel._health_chip.property("iconKey") == "diagnostics"
-        assert panel._health_chip.accessibleName() == "Diagnostic status: Critical"
+        assert panel._health_chip.accessibleName() == "Diagnostic status: Critical (2)"
         assert panel._workspace_chip.toolTip() == "Action Needed. Start with the first error in Diagnostics. 2 errors active."
         assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention."
         assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
@@ -72,7 +72,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=3, diagnostics_infos=1, runtime_error="Runtime failed")
 
-        assert panel._health_chip.text() == "Attention"
+        assert panel._health_chip.text() == "Attention (3)"
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
@@ -94,7 +94,7 @@ class TestStatusCenterPanel:
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
 
-        assert panel._health_chip.text() == "Info"
+        assert panel._health_chip.text() == "Info (2)"
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"

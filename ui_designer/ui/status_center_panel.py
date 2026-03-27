@@ -826,15 +826,15 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._health_summary_label, health_summary)
         if error_count > 0:
             self._health_chip_action = "open_error_diagnostics"
-            self._set_chip_text(self._health_chip, "Critical", "danger")
+            self._set_chip_text(self._health_chip, self._counted_label("Critical", error_count), "danger")
             health_hint = f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}"
         elif warning_count > 0:
             self._health_chip_action = "open_warning_diagnostics"
-            self._set_chip_text(self._health_chip, "Attention", "warning")
+            self._set_chip_text(self._health_chip, self._counted_label("Attention", warning_count), "warning")
             health_hint = f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}"
         elif info_count > 0:
             self._health_chip_action = "open_info_diagnostics"
-            self._set_chip_text(self._health_chip, "Info", "accent")
+            self._set_chip_text(self._health_chip, self._counted_label("Info", info_count), "accent")
             health_hint = f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}"
         else:
             self._health_chip_action = "open_diagnostics"
