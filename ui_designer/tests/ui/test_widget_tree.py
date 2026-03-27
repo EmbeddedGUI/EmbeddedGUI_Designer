@@ -91,6 +91,37 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_context_menu_top_level_actions_appear_in_expected_order(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        leaf = WidgetModel("label", name="leaf")
+        root.add_child(leaf)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        root_menu = panel._build_context_menu(root)
+        assert [action.text() for action in root_menu.actions() if action.text()] == [
+            "Rename",
+            "Add Child",
+            "Select",
+            "Structure",
+            "Delete",
+        ]
+        root_menu.deleteLater()
+
+        leaf_menu = panel._build_context_menu(leaf)
+        assert [action.text() for action in leaf_menu.actions() if action.text()] == [
+            "Rename",
+            "Select",
+            "Structure",
+            "Delete",
+        ]
+        leaf_menu.deleteLater()
+        panel.deleteLater()
+
     def test_context_menu_structure_actions_appear_in_expected_order(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
