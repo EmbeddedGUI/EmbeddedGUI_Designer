@@ -105,6 +105,23 @@ class TestWidgetRegistryBuiltins:
         assert "label" not in containers
         assert "button" not in containers
 
+    def test_browser_item_exposes_scenario_tags_and_complexity(self):
+        reg = WidgetRegistry.instance()
+        item = reg.browser_item("button")
+
+        assert item["scenario"] == "Feedback & Status"
+        assert "tags" in item
+        assert "complexity" in item
+        assert item["complexity"] in {"basic", "intermediate", "advanced"}
+
+    def test_browser_scenarios_returns_task_oriented_groups(self):
+        reg = WidgetRegistry.instance()
+        scenarios = reg.browser_scenarios()
+
+        assert "Layout & Containers" in scenarios
+        assert "Input & Forms" in scenarios
+        assert "Navigation & Flow" in scenarios
+
 
 class TestWidgetRegistryCustom:
     """Test custom widget registration."""

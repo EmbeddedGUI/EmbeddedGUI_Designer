@@ -324,6 +324,19 @@ QToolButton[workspaceNav="true"]:checked {{
     padding: 5px 10px;
 }}
 
+QToolButton#workspace_status_chip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: 999px;
+    color: {t['text_muted']};
+    padding: 5px 10px;
+}}
+
+QToolButton#workspace_status_chip:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
 #workspace_status_chip[chipTone="accent"] {{
     background-color: {t['accent_soft']};
     color: {t['accent_hover']};
@@ -368,6 +381,31 @@ QToolButton[workspaceNav="true"]:checked {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
     border-radius: 14px;
+}}
+
+#widget_browser_tags {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 12px;
+}}
+
+QToolButton#widget_browser_tag {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    color: {t['text_muted']};
+    border-radius: 999px;
+    padding: 4px 10px;
+}}
+
+QToolButton#widget_browser_tag:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
+QToolButton#widget_browser_tag:checked {{
+    background-color: {t['accent_soft']};
+    color: {t['accent_hover']};
+    border-color: {t['accent']};
 }}
 
 #widget_browser_card {{
@@ -416,6 +454,27 @@ QToolButton[workspaceNav="true"]:checked {{
 
 #widget_browser_favorite_button:checked {{
     color: {t['warning']};
+}}
+
+#status_center_header,
+#status_center_metrics,
+#status_center_actions,
+#status_center_runtime {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 14px;
+}}
+
+#status_center_metric_card {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 10px;
+}}
+
+#status_center_metric_value {{
+    color: {t['text']};
+    font-size: 14px;
+    font-weight: 600;
 }}
 """
 

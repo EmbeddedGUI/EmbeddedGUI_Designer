@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import Counter
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (
     QFrame,
@@ -136,6 +138,7 @@ class WidgetBrowserPanel(QWidget):
         ("all", "All Widgets"),
         ("favorites", "Favorites"),
         ("recent", "Recent"),
+        ("containers", "Containers"),
     )
 
     def __init__(self, parent=None):
@@ -145,8 +148,11 @@ class WidgetBrowserPanel(QWidget):
         self._selected_type = ""
         self._insert_target_label = "Current page root"
         self._cards = {}
+        self._tag_buttons = {}
+        self._suspend_filter_persist = False
         self._init_ui()
         self._populate_categories()
+        self._populate_tags()
         self.refresh()
 
     def _init_ui(self):
@@ -164,7 +170,7 @@ class WidgetBrowserPanel(QWidget):
         title.setObjectName("workspace_section_title")
         header_layout.addWidget(title)
 
-        subtitle = QLabel("Browse by category, search by keyword, and insert directly into the current target.")
+        subtitle = QLabel("Browse by scenario, filter by tags, and insert directly into the selected target.")
         subtitle.setObjectName("workspace_section_subtitle")
         subtitle.setWordWrap(True)
         header_layout.addWidget(subtitle)
@@ -192,7 +198,7 @@ class WidgetBrowserPanel(QWidget):
         self._category_list = QListWidget()
         self._category_list.setObjectName("widget_browser_categories")
         self._category_list.setFixedWidth(168)
-        self._category_list.currentRowChanged.connect(lambda _row: self.refresh())
+        self._category_list.currentRowChanged.connect(self._on_category_changed)
         body.addWidget(self._category_list, 0)
 
         self._scroll = QScrollArea()
@@ -208,31 +214,122 @@ class WidgetBrowserPanel(QWidget):
         self._scroll.setWidget(self._cards_container)
 
         layout.addLayout(body, 1)
+
+        tags_frame = QFrame()
+        tags_frame.setObjectName("widget_browser_tags")
+        tags_layout = QHBoxLayout(tags_frame)
+        tags_layout.setContentsMargins(10, 8, 10, 8)
+        tags_layout.setSpacing(6)
+        tags_title = QLabel("Tags")
+        tags_title.setObjectName("workspace_section_subtitle")
+        tags_layout.addWidget(tags_title)
+        self._tags_host = QWidget()
+        self._tags_layout = QHBoxLayout(self._tags_host)
+        self._tags_layout.setContentsMargins(0, 0, 0, 0)
+        self._tags_layout.setSpacing(6)
+        tags_layout.addWidget(self._tags_host, 1)
+        self._clear_tags_btn = QToolButton()
+        self._clear_tags_btn.setText("Clear")
+        self._clear_tags_btn.clicked.connect(self._clear_active_tags)
+        tags_layout.addWidget(self._clear_tags_btn, 0)
+        layout.addWidget(tags_frame)
         self._update_insert_target()
 
     def _populate_categories(self):
+        self._suspend_filter_persist = True
         self._category_list.clear()
         for category_id, label in self._SPECIAL_CATEGORIES:
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, category_id)
-            item.setIcon(make_icon(category_id if category_id != "all" else "widgets", size=18))
-            self._category_list.addItem(item)
-        for label in self._registry.browser_categories():
-            item = QListWidgetItem(label)
-            item.setData(Qt.UserRole, label)
             icon_key = {
-                "Basics": "widgets",
-                "Layout": "layout",
-                "Input": "input",
-                "Navigation": "navigation",
-                "Display & Data": "chart",
-                "Media": "media",
+                "all": "widgets",
+                "favorites": "tag",
+                "recent": "history",
+                "containers": "layout",
+            }.get(category_id, "widgets")
+            item.setIcon(make_icon(icon_key, size=18))
+            self._category_list.addItem(item)
+        for label in self._registry.browser_scenarios():
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, f"scenario:{label}")
+            icon_key = {
+                "Layout & Containers": "layout",
+                "Input & Forms": "input",
+                "Navigation & Flow": "navigation",
+                "Data & Visualization": "chart",
+                "Feedback & Status": "status",
+                "Media & Content": "media",
                 "Decoration": "assets",
-                "Custom": "widget",
             }.get(label, "widgets")
             item.setIcon(make_icon(icon_key, size=18))
             self._category_list.addItem(item)
-        self._category_list.setCurrentRow(0)
+        default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
+        selected_row = 0
+        for row in range(self._category_list.count()):
+            row_item = self._category_list.item(row)
+            if row_item is None:
+                continue
+            if str(row_item.data(Qt.UserRole) or "").strip().lower() == default_id.strip().lower():
+                selected_row = row
+                break
+        self._category_list.setCurrentRow(selected_row)
+        self._suspend_filter_persist = False
+
+    def _populate_tags(self):
+        while self._tags_layout.count():
+            item = self._tags_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._tag_buttons = {}
+        for tag in self._available_tags():
+            button = QToolButton()
+            button.setObjectName("widget_browser_tag")
+            button.setText(tag)
+            button.setCheckable(True)
+            button.toggled.connect(lambda checked, value=tag: self._on_tag_toggled(value, checked))
+            self._tags_layout.addWidget(button)
+            self._tag_buttons[tag.lower()] = button
+        self._tags_layout.addStretch()
+        self._sync_tags_from_config()
+
+    def _available_tags(self):
+        counts = Counter()
+        for item in self._registry.browser_items(addable_only=True):
+            for tag in item.get("tags", []):
+                text = str(tag or "").strip()
+                if text:
+                    counts[text] += 1
+        ranked = sorted(counts.items(), key=lambda entry: (-entry[1], entry[0].lower()))
+        return [text for text, _count in ranked[:18]]
+
+    def _active_tag_values(self):
+        return [str(tag or "").strip().lower() for tag in getattr(self._config, "widget_browser_active_tags", []) if str(tag or "").strip()]
+
+    def _sync_tags_from_config(self):
+        active = set(self._active_tag_values())
+        for tag, button in self._tag_buttons.items():
+            button.blockSignals(True)
+            button.setChecked(tag in active)
+            button.blockSignals(False)
+        self._clear_tags_btn.setEnabled(bool(active))
+
+    def _on_tag_toggled(self, tag, checked):
+        current = self._active_tag_values()
+        tag_key = str(tag or "").strip().lower()
+        if not tag_key:
+            return
+        if checked and tag_key not in current:
+            current.append(tag_key)
+        elif not checked and tag_key in current:
+            current = [item for item in current if item != tag_key]
+        self._config.set_widget_browser_filters(tags=current)
+        self.refresh()
+
+    def _clear_active_tags(self):
+        self._config.set_widget_browser_filters(tags=[])
+        self._sync_tags_from_config()
+        self.refresh()
 
     def set_insert_target_label(self, label):
         self._insert_target_label = (label or "").strip() or "Current page root"
@@ -261,10 +358,18 @@ class WidgetBrowserPanel(QWidget):
         return list(self._config.widget_browser_favorites)
 
     def refresh(self):
+        self._sync_tags_from_config()
         self._rebuild_cards(self._filtered_items())
 
     def _update_insert_target(self):
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
+
+    def _on_category_changed(self, _row):
+        if self._suspend_filter_persist:
+            return
+        category = self._selected_category()
+        self._config.set_widget_browser_filters(scenario=category)
+        self.refresh()
 
     def _selected_category(self):
         item = self._category_list.currentItem()
@@ -286,21 +391,67 @@ class WidgetBrowserPanel(QWidget):
             order = {name: index for index, name in enumerate(recent_types)}
             items = [item for item in items if item.get("type_name") in recent_lookup]
             items.sort(key=lambda item: order.get(item.get("type_name"), 999))
+        elif category == "containers":
+            items = [item for item in items if item.get("is_container")]
+        elif str(category).startswith("scenario:"):
+            selected_scenario = str(category).split(":", 1)[1].strip().lower()
+            items = [item for item in items if str(item.get("scenario", "")).strip().lower() == selected_scenario]
         elif category != "all":
-            items = [item for item in items if item.get("category") == category]
+            items = [item for item in items if str(item.get("category", "")).strip().lower() == str(category).strip().lower()]
+
+        active_tags = set(self._active_tag_values())
+        if active_tags:
+            tagged_items = []
+            for item in items:
+                item_tags = {str(tag or "").strip().lower() for tag in item.get("tags", []) if str(tag or "").strip()}
+                if active_tags.issubset(item_tags):
+                    tagged_items.append(item)
+            items = tagged_items
 
         if search:
             filtered = []
             for item in items:
                 haystack = " ".join(
-                    [item.get("display_name", ""), item.get("type_name", ""), item.get("category", "")]
+                    [
+                        item.get("display_name", ""),
+                        item.get("type_name", ""),
+                        item.get("category", ""),
+                        item.get("scenario", ""),
+                    ]
                     + list(item.get("keywords", []))
+                    + list(item.get("tags", []))
                 ).lower()
                 if search in haystack:
                     filtered.append(item)
             items = filtered
 
+        if category != "recent":
+            items = self._sort_items(items, search, favorite_types, recent_types)
+
         return items
+
+    def _sort_items(self, items, search, favorite_types, recent_types):
+        search_text = str(search or "").strip().lower()
+        recent_order = {name: index for index, name in enumerate(recent_types)}
+
+        def _score(item):
+            display_name = str(item.get("display_name", "") or "").lower()
+            type_name = str(item.get("type_name", "") or "").lower()
+            is_exact = 0 if search_text and search_text in {display_name, type_name} else 1
+            is_prefix = 0 if search_text and (display_name.startswith(search_text) or type_name.startswith(search_text)) else 1
+            favorite_rank = 0 if item.get("type_name") in favorite_types else 1
+            recent_rank = recent_order.get(item.get("type_name"), 999)
+            browse_priority = int(item.get("browse_priority", 999) or 999)
+            return (
+                is_exact,
+                is_prefix,
+                favorite_rank,
+                recent_rank,
+                browse_priority,
+                display_name,
+            )
+
+        return sorted(items, key=_score)
 
     def _clear_cards(self):
         while self._cards_layout.count():

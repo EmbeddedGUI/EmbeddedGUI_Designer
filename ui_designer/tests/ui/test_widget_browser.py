@@ -145,3 +145,40 @@ class TestWidgetBrowserPanel:
         assert panel._selected_type in {card.type_name for card in panel._cards.values()}
         assert panel._selected_type == "slider"
         panel.deleteLater()
+
+    def test_scenario_selection_persists_active_filter(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        scenario_row = None
+        scenario_id = ""
+        for row in range(panel._category_list.count()):
+            item = panel._category_list.item(row)
+            value = str(item.data(0x0100) or "")
+            if value.startswith("scenario:"):
+                scenario_row = row
+                scenario_id = value
+                break
+
+        assert scenario_row is not None
+        panel._category_list.setCurrentRow(scenario_row)
+
+        assert isolated_config.widget_browser_active_scenario == scenario_id.lower()
+        panel.deleteLater()
+
+    def test_tag_filter_updates_config_and_constrains_results(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        assert panel._tag_buttons
+        first_tag = sorted(panel._tag_buttons.keys())[0]
+        panel._tag_buttons[first_tag].setChecked(True)
+
+        assert first_tag in [value.lower() for value in isolated_config.widget_browser_active_tags]
+        for item in panel._filtered_items():
+            item_tags = {str(tag).lower() for tag in item.get("tags", [])}
+            assert first_tag in item_tags
+
+        panel._clear_tags_btn.click()
+        assert isolated_config.widget_browser_active_tags == []
+        panel.deleteLater()

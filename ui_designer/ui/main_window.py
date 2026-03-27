@@ -51,6 +51,7 @@ from .project_workspace import ProjectWorkspacePanel
 from .release_dialogs import ReleaseBuildDialog, ReleaseHistoryDialog, ReleaseProfilesDialog
 from .repo_health_dialog import RepositoryHealthDialog
 from .widget_browser import WidgetBrowserPanel
+from .status_center_panel import StatusCenterPanel
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
@@ -110,7 +111,7 @@ from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 
 
-WORKSPACE_LAYOUT_VERSION = 1
+WORKSPACE_LAYOUT_VERSION = 2
 
 
 _DETACHED_WORKERS = set()
@@ -257,6 +258,7 @@ class MainWindow(QMainWindow):
         self._active_batch_source = ""
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
+        self._last_runtime_error_text = ""
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -352,6 +354,8 @@ class MainWindow(QMainWindow):
 
         self.widget_browser = WidgetBrowserPanel()
         self.widget_browser.setObjectName("widgets_browser_panel")
+        self.status_center_panel = StatusCenterPanel()
+        self.status_center_panel.setObjectName("workspace_status_center_panel")
 
         self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
         self._project_workspace.setObjectName("project_workspace_panel")
@@ -364,6 +368,7 @@ class MainWindow(QMainWindow):
             "structure": self.widget_tree,
             "widgets": self.widget_browser,
             "assets": self.res_panel,
+            "status": self.status_center_panel,
         }
         for panel in self._left_panel_pages.values():
             self._left_panel_stack.addWidget(panel)
@@ -377,8 +382,9 @@ class MainWindow(QMainWindow):
         for key, label, icon_key in (
             ("project", "Project", "project"),
             ("structure", "Structure", "structure"),
-            ("widgets", "Widgets", "widgets"),
+            ("widgets", "Components", "widgets"),
             ("assets", "Assets", "assets"),
+            ("status", "Status", "diagnostics"),
         ):
             button = self._create_workspace_nav_button(label, icon_key, key)
             self._workspace_nav_buttons[key] = button
@@ -488,6 +494,7 @@ class MainWindow(QMainWindow):
 
         self.widget_browser.insert_requested.connect(self._insert_widget_from_browser)
         self.widget_browser.reveal_requested.connect(self._reveal_widget_type_in_structure)
+        self.status_center_panel.action_requested.connect(self._on_status_center_action_requested)
         self._project_workspace.view_changed.connect(self._on_project_workspace_view_changed)
 
         # Preview panel
@@ -547,6 +554,7 @@ class MainWindow(QMainWindow):
         self._sync_editor_mode_controls(self.editor_tabs.mode)
         self._on_bottom_tab_changed(self._bottom_tabs.currentIndex())
         self._set_bottom_panel_visible(False)
+        self.status_center_panel.restore_view_state(getattr(self._config, "workspace_status_panel_state", {}))
 
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
@@ -569,6 +577,8 @@ class MainWindow(QMainWindow):
         return button
 
     def _select_left_panel(self, panel_key):
+        if panel_key == "components":
+            panel_key = "widgets"
         if panel_key not in getattr(self, "_left_panel_pages", {}):
             panel_key = "project"
         self._current_left_panel = panel_key
@@ -704,6 +714,16 @@ class MainWindow(QMainWindow):
         chip.update()
 
     def _update_workspace_chips(self):
+        diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0, "info": 0}
+        preview_text = "Preview Idle"
+        preview_tone = "accent"
+        if self.preview_panel.is_python_preview_active():
+            preview_text = "Python Preview"
+            preview_tone = "warning"
+        elif self.compiler is not None and self.compiler.is_preview_running():
+            preview_text = "Live Preview"
+            preview_tone = "success"
+
         if hasattr(self, "_sdk_chip"):
             self._set_chip(self._sdk_chip, "SDK Ready" if self._has_valid_sdk_root() else "SDK Missing", "accent" if self._has_valid_sdk_root() else "warning")
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
@@ -713,16 +733,25 @@ class MainWindow(QMainWindow):
             count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
             self._set_chip(self._selection_chip, f"Selection {count}" if count else "No Selection")
         if hasattr(self, "_preview_chip"):
-            if self.preview_panel.is_python_preview_active():
-                text = "Python Preview"
+            self._set_chip(self._preview_chip, preview_text, preview_tone)
+        if hasattr(self, "_diagnostics_chip"):
+            error_count = int(diagnostics_counts.get("error", 0) or 0)
+            warning_count = int(diagnostics_counts.get("warning", 0) or 0)
+            if error_count:
+                tone = "danger"
+            elif warning_count:
                 tone = "warning"
-            elif self.compiler is not None and self.compiler.is_preview_running():
-                text = "Live Preview"
-                tone = "success"
             else:
-                text = "Preview Idle"
-                tone = "accent"
-            self._set_chip(self._preview_chip, text, tone)
+                tone = "success"
+            label = f"Diagnostics {error_count}E/{warning_count}W"
+            self._set_chip(self._diagnostics_chip, label, tone)
+
+        self._update_status_center(
+            dirty_pages=len(dirty_pages),
+            selection_count=len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0,
+            preview_text=preview_text,
+            diagnostics_counts=diagnostics_counts,
+        )
 
     def _apply_workspace_iconography(self):
         if hasattr(self, "_workspace_nav_buttons"):
@@ -731,6 +760,7 @@ class MainWindow(QMainWindow):
                 "structure": "structure",
                 "widgets": "widgets",
                 "assets": "assets",
+                "status": "diagnostics",
             }
             for key, button in self._workspace_nav_buttons.items():
                 button.setIcon(make_icon(icon_map.get(key, "widgets"), size=22))
@@ -739,6 +769,49 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_mode_buttons"):
             for mode, icon_key in ((MODE_DESIGN, "widgets"), (MODE_SPLIT, "layout"), (MODE_CODE, "page")):
                 self._mode_buttons[mode].setIcon(make_icon(icon_key))
+
+    def _on_status_center_action_requested(self, action_key):
+        action = str(action_key or "").strip().lower()
+        if action == "open_diagnostics":
+            self._show_bottom_panel("Diagnostics")
+            return
+        if action == "open_history":
+            self._show_bottom_panel("History")
+            return
+        if action == "open_debug":
+            self._show_bottom_panel("Debug Output")
+            return
+        if action == "open_first_error":
+            self._show_bottom_panel("Diagnostics")
+            if hasattr(self, "diagnostics_panel"):
+                self.diagnostics_panel.open_first_error()
+            return
+        if action == "open_first_warning":
+            self._show_bottom_panel("Diagnostics")
+            if hasattr(self, "diagnostics_panel"):
+                self.diagnostics_panel.open_first_warning()
+
+    def _update_status_center(self, *, dirty_pages=0, selection_count=0, preview_text="Preview Idle", diagnostics_counts=None):
+        if not hasattr(self, "status_center_panel"):
+            return
+        counts = diagnostics_counts or {"error": 0, "warning": 0, "info": 0}
+        runtime_error = str(self._last_runtime_error_text or "").strip()
+        if not runtime_error and self.compiler is not None:
+            try:
+                runtime_error = str(self.compiler.get_last_runtime_error() or "").strip()
+            except Exception:
+                runtime_error = ""
+        self.status_center_panel.set_status(
+            sdk_ready=self._has_valid_sdk_root(),
+            can_compile=bool(getattr(self, "_compile_action", None) and self._compile_action.isEnabled()),
+            dirty_pages=int(dirty_pages or 0),
+            selection_count=int(selection_count or 0),
+            preview_label=preview_text,
+            diagnostics_errors=int(counts.get("error", 0) or 0),
+            diagnostics_warnings=int(counts.get("warning", 0) or 0),
+            diagnostics_infos=int(counts.get("info", 0) or 0),
+            runtime_error=runtime_error,
+        )
 
     def _apply_saved_window_state(self):
         geometry = (self._config.window_geometry or "").strip()
@@ -783,10 +856,14 @@ class MainWindow(QMainWindow):
                 "top_splitter": bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
                 "workspace_splitter": bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
             }
+            self._config.workspace_status_panel_state = (
+                self.status_center_panel.view_state() if hasattr(self, "status_center_panel") else {}
+            )
         except Exception:
             self._config.window_geometry = ""
             self._config.window_state = ""
             self._config.workspace_state = {}
+            self._config.workspace_status_panel_state = {}
 
     def _restore_diagnostics_view_state(self):
         if not hasattr(self, "diagnostics_panel"):
@@ -1275,6 +1352,7 @@ class MainWindow(QMainWindow):
     def _clear_editor_state(self):
         self._stop_background_timers()
         self.preview_panel.stop_rendering()
+        self._last_runtime_error_text = ""
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._active_batch_source = ""
@@ -1304,6 +1382,7 @@ class MainWindow(QMainWindow):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
         self._shutdown_async_activity()
+        self._last_runtime_error_text = ""
         resolved_sdk_root = self._resolve_ui_sdk_root(
             preferred_sdk_root or project.sdk_root,
             infer_sdk_root_from_project_dir(project_dir),
@@ -1763,8 +1842,9 @@ class MainWindow(QMainWindow):
         for label, key in (
             ("Project", "project"),
             ("Structure", "structure"),
-            ("Widgets", "widgets"),
+            ("Components", "widgets"),
             ("Assets", "assets"),
+            ("Status", "status"),
         ):
             action = QAction(label, self)
             action.triggered.connect(lambda checked=False, panel_key=key: self._select_left_panel(panel_key))
@@ -1904,7 +1984,7 @@ class MainWindow(QMainWindow):
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
         tb.setIconSize(QSize(18, 18))
-        tb.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
             "QToolBar { spacing: 6px; background: transparent; border: none; }"
             "QToolButton { padding: 6px 10px; border-radius: 10px; }"
@@ -1964,17 +2044,30 @@ class MainWindow(QMainWindow):
         chips_layout = QHBoxLayout(chips_host)
         chips_layout.setContentsMargins(0, 0, 0, 0)
         chips_layout.setSpacing(8)
-        self._sdk_chip = QLabel("SDK")
+        self._sdk_chip = QToolButton()
+        self._sdk_chip.setAutoRaise(True)
+        self._sdk_chip.clicked.connect(lambda checked=False: self._select_left_panel("status"))
         self._sdk_chip.setObjectName("workspace_status_chip")
         self._sdk_chip.setProperty("chipTone", "accent")
-        self._dirty_chip = QLabel("Clean")
+        self._dirty_chip = QToolButton()
+        self._dirty_chip.setAutoRaise(True)
+        self._dirty_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("History"))
         self._dirty_chip.setObjectName("workspace_status_chip")
         self._dirty_chip.setProperty("chipTone", "success")
-        self._selection_chip = QLabel("No Selection")
+        self._selection_chip = QToolButton()
+        self._selection_chip.setAutoRaise(True)
+        self._selection_chip.clicked.connect(lambda checked=False: self._select_left_panel("structure"))
         self._selection_chip.setObjectName("workspace_status_chip")
-        self._preview_chip = QLabel("Preview")
+        self._preview_chip = QToolButton()
+        self._preview_chip.setAutoRaise(True)
+        self._preview_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
         self._preview_chip.setObjectName("workspace_status_chip")
-        for chip in (self._sdk_chip, self._dirty_chip, self._selection_chip, self._preview_chip):
+        self._diagnostics_chip = QToolButton()
+        self._diagnostics_chip.setAutoRaise(True)
+        self._diagnostics_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Diagnostics"))
+        self._diagnostics_chip.setObjectName("workspace_status_chip")
+        self._diagnostics_chip.setProperty("chipTone", "warning")
+        for chip in (self._sdk_chip, self._dirty_chip, self._selection_chip, self._preview_chip, self._diagnostics_chip):
             chips_layout.addWidget(chip)
         self._toolbar_host_layout.addWidget(chips_host, 0)
 
@@ -2499,6 +2592,7 @@ class MainWindow(QMainWindow):
             return
         if self._current_page is None:
             self.diagnostics_panel.clear()
+            self._update_workspace_chips()
             return
 
         resource_dir = self._get_eguiproject_resource_dir()
@@ -2513,6 +2607,7 @@ class MainWindow(QMainWindow):
         entries.extend(analyze_project_callback_conflicts(self.project))
         entries.extend(analyze_selection(self._selection_state.widgets))
         self.diagnostics_panel.set_entries(sort_diagnostic_entries(entries))
+        self._update_workspace_chips()
 
     def _copy_diagnostics_summary(self):
         if not hasattr(self, "diagnostics_panel") or not self.diagnostics_panel.has_entries():
@@ -5357,8 +5452,10 @@ class MainWindow(QMainWindow):
             reason = "SDK unavailable, compile preview disabled"
             if self.compiler is not None and self.compiler.get_build_error():
                 reason = self.compiler.get_build_error()
+            self._last_runtime_error_text = reason
             self._switch_to_python_preview(reason)
             self.statusBar().showMessage("Compile preview unavailable")
+            self._update_workspace_chips()
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
             # Mark that we need to recompile after current one finishes
@@ -5434,12 +5531,14 @@ class MainWindow(QMainWindow):
             self._trigger_compile()
 
         if success:
+            self._last_runtime_error_text = ""
             self.statusBar().showMessage(message)
             self.preview_panel.status_label.setText(f"OK - {message}")
             # Start headless frame rendering
             self.preview_panel.start_rendering(self.compiler)
             self.debug_panel.log_action("Headless preview started")
         else:
+            self._last_runtime_error_text = (message.splitlines()[0] if message else "Compile failed")
             self.statusBar().showMessage("Compile FAILED - see Debug Output")
             if self.compiler is not None:
                 self.compiler.stop_exe()
@@ -5451,6 +5550,7 @@ class MainWindow(QMainWindow):
     def _on_preview_runtime_failed(self, reason):
         if self._is_closing:
             return
+        self._last_runtime_error_text = reason or "Headless preview stopped responding"
         if self.compiler is not None:
             self.compiler.stop_exe()
         self.debug_panel.log_error(reason or "Headless preview stopped responding")
@@ -5465,6 +5565,7 @@ class MainWindow(QMainWindow):
     def _stop_exe(self):
         self._stop_background_timers()
         self.preview_panel.stop_rendering()
+        self._last_runtime_error_text = ""
         if self.compiler is not None:
             self.compiler.stop_exe()
         self.preview_panel.status_label.setText("Preview stopped")

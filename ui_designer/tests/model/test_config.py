@@ -72,6 +72,9 @@ class TestDefaults:
         assert config.show_all_examples is False
         assert config.window_geometry == ""
         assert config.window_state == ""
+        assert config.widget_browser_active_scenario == "all"
+        assert config.widget_browser_active_tags == []
+        assert config.workspace_status_panel_state == {}
         assert config.sdk_setup_prompted is False
         assert config.release_history_view == {}
         assert config.repo_health_view == {}
@@ -89,6 +92,9 @@ class TestSaveLoad:
         config.show_grid = False
         config.grid_size = 12
         config.font_size_px = 14
+        config.widget_browser_active_scenario = "scenario:layout & containers"
+        config.widget_browser_active_tags = ["layout", "container"]
+        config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
         config.sdk_setup_prompted = True
         config.release_history_view = {
             "status_filter": "failed",
@@ -130,6 +136,9 @@ class TestSaveLoad:
         assert loaded.show_grid is False
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
+        assert loaded.widget_browser_active_scenario == "scenario:layout & containers"
+        assert loaded.widget_browser_active_tags == ["layout", "container"]
+        assert loaded.workspace_status_panel_state == {"last_action": "open_diagnostics"}
         assert loaded.sdk_setup_prompted is True
         assert loaded.release_history_view == {
             "status_filter": "failed",
@@ -240,6 +249,15 @@ class TestRecentApps:
 
         assert removed is True
         assert config.last_project_path == ""
+
+    def test_set_widget_browser_filters_normalizes_and_deduplicates(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
+                config.set_widget_browser_filters("SCENARIO:LAYOUT & CONTAINERS", ["Layout", "layout", "", "Container"])
+
+        assert config.widget_browser_active_scenario == "scenario:layout & containers"
+        assert config.widget_browser_active_tags == ["Layout", "Container"]
 
 
 class TestPathManagement:

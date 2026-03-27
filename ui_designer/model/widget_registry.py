@@ -26,6 +26,16 @@ _CATEGORY_ORDER = (
     "Custom",
 )
 
+_SCENARIO_ORDER = (
+    "Layout & Containers",
+    "Input & Forms",
+    "Navigation & Flow",
+    "Data & Visualization",
+    "Feedback & Status",
+    "Media & Content",
+    "Decoration",
+)
+
 
 _BROWSER_METADATA = {
     "button": {"category": "Basics", "keywords": ["tap", "action", "cta"], "icon_key": "button", "preview_kind": "widget", "browse_priority": 10},
@@ -102,6 +112,54 @@ def _infer_category(type_name, descriptor):
     if any(token in type_name for token in ("image", "clock", "badge", "led", "decor", "avatar")):
         return "Decoration"
     return "Basics"
+
+
+def _infer_scenario(type_name, descriptor, category):
+    category = str(category or "")
+    if descriptor.get("is_container") or category == "Layout":
+        return "Layout & Containers"
+    if category == "Input":
+        return "Input & Forms"
+    if category == "Navigation":
+        return "Navigation & Flow"
+    if category == "Display & Data":
+        if any(token in str(type_name or "") for token in ("progress", "spinner", "ring", "badge", "led", "stopwatch", "clock")):
+            return "Feedback & Status"
+        return "Data & Visualization"
+    if category == "Media":
+        return "Media & Content"
+    if category == "Decoration":
+        return "Decoration"
+    return "Feedback & Status"
+
+
+def _infer_tags(type_name, descriptor, browser):
+    type_name = str(type_name or "").strip().lower()
+    category = str(browser.get("category", ""))
+    scenario = str(browser.get("scenario", ""))
+    tags = [category, scenario]
+    if descriptor.get("is_container"):
+        tags.extend(["container", "layout"])
+    if any(token in type_name for token in ("button", "menu", "tab", "segmented", "navigation")):
+        tags.append("interaction")
+    if any(token in type_name for token in ("text", "label", "input", "keyboard", "combo", "picker")):
+        tags.append("text")
+    if any(token in type_name for token in ("chart", "gauge", "table", "progress", "spinner", "ring", "scale")):
+        tags.append("data")
+    if any(token in type_name for token in ("image", "mp4", "media")):
+        tags.append("media")
+    if any(token in type_name for token in ("clock", "badge", "led", "notification", "status")):
+        tags.append("status")
+    return _dedupe_strings(tags)
+
+
+def _infer_complexity(type_name, descriptor):
+    type_name = str(type_name or "").strip().lower()
+    if descriptor.get("is_container"):
+        return "advanced"
+    if any(token in type_name for token in ("chart", "table", "mp4", "keyboard", "viewpage", "grid", "gauge", "calendar")):
+        return "intermediate"
+    return "basic"
 
 
 class WidgetRegistry:
@@ -218,13 +276,16 @@ class WidgetRegistry:
         browser = dict(_BROWSER_METADATA.get(type_name, {}))
         browser.update(descriptor.get("browser", {}))
         browser.setdefault("category", _infer_category(type_name, descriptor))
+        browser.setdefault("scenario", _infer_scenario(type_name, descriptor, browser.get("category", "")))
         browser.setdefault("icon_key", browser.get("icon_key") or type_name)
         browser.setdefault("preview_kind", browser.get("preview_kind") or ("layout" if descriptor.get("is_container") else "widget"))
         browser.setdefault("browse_priority", int(browser.get("browse_priority", 999) or 999))
+        browser.setdefault("complexity", _infer_complexity(type_name, descriptor))
         browser["keywords"] = _dedupe_strings(
             list(browser.get("keywords", []))
-            + [self.display_name(type_name), type_name.replace("_", " "), browser["category"]]
+            + [self.display_name(type_name), type_name.replace("_", " "), browser["category"], browser["scenario"]]
         )
+        browser["tags"] = _dedupe_strings(list(browser.get("tags", [])) + _infer_tags(type_name, descriptor, browser))
         browser["type_name"] = type_name
         browser["display_name"] = self.display_name(type_name)
         browser["is_container"] = bool(descriptor.get("is_container"))
@@ -241,6 +302,7 @@ class WidgetRegistry:
         return sorted(
             items,
             key=lambda item: (
+                _SCENARIO_ORDER.index(item.get("scenario", "")) if item.get("scenario", "") in _SCENARIO_ORDER else len(_SCENARIO_ORDER),
                 _CATEGORY_ORDER.index(item.get("category", "Custom")) if item.get("category", "Custom") in _CATEGORY_ORDER else len(_CATEGORY_ORDER),
                 int(item.get("browse_priority", 999)),
                 item.get("display_name", "").lower(),
@@ -250,6 +312,24 @@ class WidgetRegistry:
     def browser_categories(self):
         """Return the fixed widget browser categories."""
         return list(_CATEGORY_ORDER)
+
+    def browser_scenarios(self):
+        """Return scenarios used for task-oriented widget browsing."""
+        scenarios = []
+        seen = set()
+        for item in self.browser_items(addable_only=True):
+            scenario = str(item.get("scenario", "")).strip()
+            if not scenario:
+                continue
+            key = scenario.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            scenarios.append(scenario)
+
+        ordered = [scenario for scenario in _SCENARIO_ORDER if scenario.lower() in seen]
+        extras = [scenario for scenario in scenarios if scenario not in ordered]
+        return ordered + extras
 
     def load_custom_widgets(self, *dirs):
         """Scan directories for custom widget .py plugin files and execute them.

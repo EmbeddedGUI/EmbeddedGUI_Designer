@@ -184,6 +184,13 @@ class DiagnosticsPanel(QWidget):
     def entries(self):
         return list(self._visible_entries)
 
+    def severity_counts(self):
+        return {
+            "error": sum(1 for entry in self._entries if getattr(entry, "severity", "") == "error"),
+            "warning": sum(1 for entry in self._entries if getattr(entry, "severity", "") == "warning"),
+            "info": sum(1 for entry in self._entries if getattr(entry, "severity", "") == "info"),
+        }
+
     def view_state(self):
         return {"severity_filter": self._current_filter_value()}
 
@@ -289,6 +296,9 @@ class DiagnosticsPanel(QWidget):
                 self._on_item_activated(item)
                 return
 
+    def open_first_error(self):
+        self._open_first_error()
+
     def _open_first_warning(self):
         target_entry = self._first_navigable_warning(self._entries)
         if target_entry is None:
@@ -303,6 +313,9 @@ class DiagnosticsPanel(QWidget):
                 self._list.setCurrentItem(item)
                 self._on_item_activated(item)
                 return
+
+    def open_first_warning(self):
+        self._open_first_warning()
 
     def _open_selected(self):
         item = self._list.currentItem()

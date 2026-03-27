@@ -89,6 +89,9 @@ class DesignerConfig:
         self.workspace_state = {}
         self.widget_browser_recent = []
         self.widget_browser_favorites = []
+        self.widget_browser_active_scenario = "all"
+        self.widget_browser_active_tags = []
+        self.workspace_status_panel_state = {}
         self.sdk_setup_prompted = False
         self.release_history_view = {}
         self.repo_health_view = {}
@@ -229,13 +232,22 @@ class DesignerConfig:
             self.window_geometry = data.get("window_geometry", "")
             self.window_state = data.get("window_state", "")
             self.workspace_layout_version = int(data.get("workspace_layout_version", 0) or 0)
-            self.workspace_left_panel = str(data.get("workspace_left_panel", "project") or "project")
+            workspace_left_panel = str(data.get("workspace_left_panel", "project") or "project")
+            if workspace_left_panel == "components":
+                workspace_left_panel = "widgets"
+            self.workspace_left_panel = workspace_left_panel
             workspace_state = data.get("workspace_state", {})
             self.workspace_state = workspace_state if isinstance(workspace_state, dict) else {}
             recent = data.get("widget_browser_recent", [])
             favorites = data.get("widget_browser_favorites", [])
             self.widget_browser_recent = [str(item).strip() for item in recent if str(item).strip()][:24]
             self.widget_browser_favorites = [str(item).strip() for item in favorites if str(item).strip()][:64]
+            active_scenario = str(data.get("widget_browser_active_scenario", "all") or "all").strip().lower()
+            self.widget_browser_active_scenario = active_scenario or "all"
+            active_tags = data.get("widget_browser_active_tags", [])
+            self.widget_browser_active_tags = [str(item).strip() for item in active_tags if str(item).strip()][:24]
+            status_state = data.get("workspace_status_panel_state", {})
+            self.workspace_status_panel_state = status_state if isinstance(status_state, dict) else {}
             self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
             self.release_history_view = data.get("release_history_view", {}) if isinstance(data.get("release_history_view", {}), dict) else {}
             self.repo_health_view = data.get("repo_health_view", {}) if isinstance(data.get("repo_health_view", {}), dict) else {}
@@ -272,6 +284,9 @@ class DesignerConfig:
                 "workspace_state": self.workspace_state,
                 "widget_browser_recent": self.widget_browser_recent,
                 "widget_browser_favorites": self.widget_browser_favorites,
+                "widget_browser_active_scenario": self.widget_browser_active_scenario,
+                "widget_browser_active_tags": self.widget_browser_active_tags,
+                "workspace_status_panel_state": self.workspace_status_panel_state,
                 "sdk_setup_prompted": self.sdk_setup_prompted,
                 "release_history_view": self.release_history_view,
                 "repo_health_view": self.repo_health_view,
@@ -355,6 +370,24 @@ class DesignerConfig:
         self.widget_browser_favorites = favorites[:64]
         self.save()
         return enabled
+
+    def set_widget_browser_filters(self, scenario=None, tags=None):
+        """Persist widget browser scenario and active tag filters."""
+        if scenario is not None:
+            normalized = str(scenario or "all").strip().lower()
+            self.widget_browser_active_scenario = normalized or "all"
+        if tags is not None:
+            unique_tags = []
+            seen = set()
+            for item in tags:
+                text = str(item or "").strip()
+                key = text.lower()
+                if not text or key in seen:
+                    continue
+                seen.add(key)
+                unique_tags.append(text)
+            self.widget_browser_active_tags = unique_tags[:24]
+        self.save()
 
     def get_app_dir(self, app_name=None, sdk_root=None):
         """Get the default SDK example directory for an app."""
