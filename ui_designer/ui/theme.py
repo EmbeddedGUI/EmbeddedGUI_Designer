@@ -528,6 +528,18 @@ QToolButton#widget_browser_tag:checked {{
     border-radius: 16px;
 }}
 
+#widget_browser_group_header {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 10px;
+}}
+
+#widget_browser_group_title {{
+    color: {t['text']};
+    font-size: 12px;
+    font-weight: 600;
+}}
+
 #widget_browser_card:hover {{
     border-color: {t['border_strong']};
     background-color: {t['panel_alt']};

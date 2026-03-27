@@ -794,6 +794,46 @@ class WidgetBrowserPanel(QWidget):
                 widget.deleteLater()
         self._cards = {}
 
+    def _build_group_header(self, scenario, item_count):
+        frame = QFrame()
+        frame.setObjectName("widget_browser_group_header")
+        layout = QHBoxLayout(frame)
+        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setSpacing(8)
+        icon_label = QLabel()
+        icon_label.setPixmap(make_icon(self._scenario_icon_key(scenario), size=16).pixmap(16, 16))
+        layout.addWidget(icon_label, 0, Qt.AlignVCenter)
+        title = QLabel(str(scenario or "Other"))
+        title.setObjectName("widget_browser_group_title")
+        layout.addWidget(title, 0, Qt.AlignVCenter)
+        count_chip = QLabel(str(max(int(item_count or 0), 0)))
+        count_chip.setObjectName("workspace_status_chip")
+        count_chip.setProperty("chipTone", "accent")
+        layout.addWidget(count_chip, 0, Qt.AlignVCenter)
+        layout.addStretch()
+        return frame
+
+    def _should_group_by_scenario(self):
+        return (
+            self._selected_category() == "all"
+            and not bool((self._search.text() or "").strip())
+            and not bool(self._active_tag_values())
+            and self._complexity_filter == "all"
+            and self._sort_mode == "relevance"
+        )
+
+    def _group_items_by_scenario(self, items):
+        grouped = {}
+        order = []
+        for item in items:
+            scenario = str(item.get("scenario", "") or "").strip() or "Other"
+            key = scenario.lower()
+            if key not in grouped:
+                grouped[key] = (scenario, [])
+                order.append(key)
+            grouped[key][1].append(item)
+        return [grouped[key] for key in order]
+
     def _rebuild_cards(self, items):
         self._clear_cards()
         favorites = set(self._config.widget_browser_favorites)
@@ -845,18 +885,34 @@ class WidgetBrowserPanel(QWidget):
         if self._selected_type not in visible_types:
             self._selected_type = visible_types[0]
 
-        for index, item in enumerate(items):
-            card = WidgetBrowserCard(item)
-            card.set_favorite(item.get("type_name") in favorites)
-            card.clicked.connect(self._select_card)
-            card.insert_requested.connect(self.insert_requested.emit)
-            card.favorite_toggled.connect(self._toggle_favorite)
-            card.menu_requested.connect(self._show_card_menu)
-            row = index // columns
-            column = index % columns
-            self._cards_layout.addWidget(card, row, column)
-            self._cards[index] = card
-            card.set_selected(card.type_name == self._selected_type)
+        grouped = self._group_items_by_scenario(items) if self._should_group_by_scenario() else [("", items)]
+        row = 0
+        column = 0
+        card_index = 0
+        for scenario, group_items in grouped:
+            if scenario:
+                header = self._build_group_header(scenario, len(group_items))
+                self._cards_layout.addWidget(header, row, 0, 1, columns)
+                row += 1
+                column = 0
+            for item in group_items:
+                card = WidgetBrowserCard(item)
+                card.set_favorite(item.get("type_name") in favorites)
+                card.clicked.connect(self._select_card)
+                card.insert_requested.connect(self.insert_requested.emit)
+                card.favorite_toggled.connect(self._toggle_favorite)
+                card.menu_requested.connect(self._show_card_menu)
+                self._cards_layout.addWidget(card, row, column)
+                self._cards[card_index] = card
+                card.set_selected(card.type_name == self._selected_type)
+                card_index += 1
+                column += 1
+                if column >= columns:
+                    column = 0
+                    row += 1
+            if column != 0:
+                row += 1
+                column = 0
 
         self._cards_layout.setColumnStretch(columns, 1)
 

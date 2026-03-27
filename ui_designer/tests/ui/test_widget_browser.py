@@ -61,6 +61,16 @@ def _select_category(panel, category_id):
     raise AssertionError(f"category {category_id!r} not found")
 
 
+def _layout_group_headers(panel):
+    headers = []
+    for index in range(panel._cards_layout.count()):
+        layout_item = panel._cards_layout.itemAt(index)
+        widget = layout_item.widget() if layout_item is not None else None
+        if widget is not None and widget.objectName() == "widget_browser_group_header":
+            headers.append(widget)
+    return headers
+
+
 @_skip_no_qt
 class TestWidgetBrowserPanel:
     def test_favorites_filter_uses_configured_widget_types(self, qapp, isolated_config):
@@ -270,4 +280,23 @@ class TestWidgetBrowserPanel:
         assert panel._complexity_filter == "advanced"
         assert panel._sort_buttons["complexity"].isChecked() is True
         assert panel._complexity_buttons["advanced"].isChecked() is True
+        panel.deleteLater()
+
+    def test_default_recommended_view_groups_cards_by_scenario(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        headers = _layout_group_headers(panel)
+
+        assert len(headers) >= 2
+        panel.deleteLater()
+
+    def test_non_recommended_sort_hides_scenario_group_headers(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._set_sort_mode("name")
+        headers = _layout_group_headers(panel)
+
+        assert headers == []
         panel.deleteLater()
