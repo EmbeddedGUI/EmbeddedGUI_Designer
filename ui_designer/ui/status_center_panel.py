@@ -144,9 +144,18 @@ class StatusCenterPanel(QWidget):
         actions_title = QLabel("Quick Actions")
         actions_title.setObjectName("workspace_section_title")
         quick_layout.addWidget(actions_title)
+        last_action_row = QHBoxLayout()
+        last_action_row.setContentsMargins(0, 0, 0, 0)
+        last_action_row.setSpacing(8)
         self._last_action_label = QLabel("Last action: None")
         self._last_action_label.setObjectName("workspace_section_subtitle")
-        quick_layout.addWidget(self._last_action_label)
+        last_action_row.addWidget(self._last_action_label, 1)
+        self._repeat_action_button = QPushButton("Repeat Action")
+        self._repeat_action_button.setIcon(make_icon("history"))
+        self._repeat_action_button.setEnabled(False)
+        self._repeat_action_button.clicked.connect(self._repeat_last_action)
+        last_action_row.addWidget(self._repeat_action_button, 0)
+        quick_layout.addLayout(last_action_row)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -300,7 +309,16 @@ class StatusCenterPanel(QWidget):
 
     def _set_last_action(self, action_key):
         self._last_action = str(action_key or "").strip()
-        self._last_action_label.setText(f"Last action: {self._action_label(self._last_action)}")
+        action_label = self._action_label(self._last_action)
+        self._last_action_label.setText(f"Last action: {action_label}")
+        has_action = bool(self._last_action)
+        self._repeat_action_button.setEnabled(has_action)
+        self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
+
+    def _repeat_last_action(self):
+        if not self._last_action:
+            return
+        self._emit_action(self._last_action)
 
     def _emit_action(self, action_key):
         self._set_last_action(action_key)

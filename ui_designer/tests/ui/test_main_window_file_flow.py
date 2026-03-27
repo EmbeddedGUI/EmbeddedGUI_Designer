@@ -6056,6 +6056,22 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
         _close_window(window)
 
+    def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        isolated_config.workspace_status_panel_state = {"last_action": "open_assets_panel"}
+
+        window = MainWindow("")
+
+        assert window.status_center_panel._repeat_action_button.isEnabled() is True
+        assert window.status_center_panel._repeat_action_button.text() == "Repeat Assets"
+
+        window.status_center_panel._repeat_action_button.click()
+
+        assert window._current_left_panel == "assets"
+        assert window._left_panel_stack.currentWidget() is window.res_panel
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:

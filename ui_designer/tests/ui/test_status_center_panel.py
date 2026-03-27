@@ -84,6 +84,7 @@ class TestStatusCenterPanel:
             "open_assets_panel",
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
+        assert panel._repeat_action_button.text() == "Repeat Assets"
         panel.deleteLater()
 
     def test_inspector_navigation_buttons_emit_expected_actions(self, qapp):
@@ -105,6 +106,7 @@ class TestStatusCenterPanel:
             "open_page_timers",
         ]
         assert panel._last_action_label.text() == "Last action: Timers"
+        assert panel._repeat_action_button.text() == "Repeat Timers"
         panel.deleteLater()
 
     def test_metric_cards_emit_expected_actions(self, qapp):
@@ -131,6 +133,7 @@ class TestStatusCenterPanel:
             "open_history",
         ]
         assert panel._last_action_label.text() == "Last action: History"
+        assert panel._repeat_action_button.text() == "Repeat History"
         panel.deleteLater()
 
     def test_metric_cards_support_keyboard_activation(self, qapp):
@@ -151,6 +154,7 @@ class TestStatusCenterPanel:
             "open_diagnostics",
         ]
         assert panel._diag_card.accessibleName() == "Diagnostics metric"
+        assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 
     def test_health_rows_emit_filtered_diagnostics_actions(self, qapp):
@@ -172,6 +176,7 @@ class TestStatusCenterPanel:
         ]
         assert panel._info_row.accessibleName() == "Info diagnostics"
         assert panel._last_action_label.text() == "Last action: Info"
+        assert panel._repeat_action_button.text() == "Repeat Info"
         panel.deleteLater()
 
     def test_health_rows_support_keyboard_activation(self, qapp):
@@ -192,6 +197,7 @@ class TestStatusCenterPanel:
             "open_warning_diagnostics",
         ]
         assert panel._warning_row.accessibleName() == "Warnings diagnostics"
+        assert panel._repeat_action_button.text() == "Repeat Warnings"
         panel.deleteLater()
 
     def test_restore_view_state_updates_last_action_label(self, qapp):
@@ -200,12 +206,18 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._last_action_label.text() == "Last action: None"
+        assert panel._repeat_action_button.isEnabled() is False
+        assert panel._repeat_action_button.text() == "Repeat Action"
         panel.restore_view_state({"last_action": "open_page_fields"})
         assert panel._last_action_label.text() == "Last action: Fields"
+        assert panel._repeat_action_button.isEnabled() is True
+        assert panel._repeat_action_button.text() == "Repeat Fields"
         assert panel.view_state() == {"last_action": "open_page_fields"}
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
+        assert panel._repeat_action_button.isEnabled() is False
+        assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel.view_state() == {"last_action": ""}
         panel.deleteLater()
 
@@ -228,4 +240,20 @@ class TestStatusCenterPanel:
         ]
         assert panel._runtime_panel.accessibleName() == "Runtime section"
         assert panel._last_action_label.text() == "Last action: Debug Output"
+        assert panel._repeat_action_button.text() == "Repeat Debug Output"
+        panel.deleteLater()
+
+    def test_repeat_action_button_replays_last_action(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel.restore_view_state({"last_action": "open_components_panel"})
+        panel._repeat_action_button.click()
+
+        assert emitted == ["open_components_panel"]
+        assert panel._last_action_label.text() == "Last action: Components"
+        assert panel._repeat_action_button.text() == "Repeat Components"
         panel.deleteLater()
