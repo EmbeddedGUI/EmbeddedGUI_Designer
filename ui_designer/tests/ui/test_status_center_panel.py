@@ -174,6 +174,26 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: Info"
         panel.deleteLater()
 
+    def test_health_rows_support_keyboard_activation(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel._warning_row.setFocus()
+        assert panel._warning_row.focusPolicy() == Qt.StrongFocus
+        QTest.keyClick(panel._warning_row, Qt.Key_Return)
+        QTest.keyClick(panel._warning_row, Qt.Key_Space)
+
+        assert emitted == [
+            "open_warning_diagnostics",
+            "open_warning_diagnostics",
+        ]
+        assert panel._warning_row.accessibleName() == "Warnings diagnostics"
+        panel.deleteLater()
+
     def test_restore_view_state_updates_last_action_label(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
