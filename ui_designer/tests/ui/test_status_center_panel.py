@@ -51,7 +51,11 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.text() == "Open First Error (2)"
         assert panel._first_warning_btn.text() == "Open First Warning (1)"
         assert panel._health_chip_action == "open_error_diagnostics"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
+        assert panel._workspace_chip.accessibleName() == "Workspace status: Action Needed (Fix First Error (2))"
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
+        assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._health_chip.accessibleName() == "Diagnostic status: Critical"
         assert panel._workspace_chip.toolTip() == "Action Needed. Start with the first error in Diagnostics. 2 errors active."
         assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention."
         assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
@@ -72,8 +76,10 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
+        assert panel._health_chip.property("iconKey") == "history"
         assert panel._health_summary_label.text() == "Summary: 3 warnings, 1 info item need review."
         assert panel._runtime_label.text() == "Runtime failed"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
@@ -92,8 +98,10 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"
+        assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_info_diagnostics"
         assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
+        assert panel._health_chip.property("iconKey") == "debug"
         assert panel._health_summary_label.text() == "Summary: 2 info items available."
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
@@ -112,8 +120,10 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("chipTone") == "success"
         assert panel._workspace_chip.text() == "Check Workspace"
         assert panel._workspace_chip.property("chipTone") == "warning"
+        assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_diagnostics"
         assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
+        assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
@@ -150,6 +160,7 @@ class TestStatusCenterPanel:
         )
         assert panel._workspace_chip.text() == "Action Needed"
         assert panel._workspace_chip.property("chipTone") == "danger"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
@@ -165,7 +176,9 @@ class TestStatusCenterPanel:
         assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._suggested_action_button.text() == "Fix First Error (2)"
+        assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics. 2 errors active."
+        assert panel._suggested_action_button.accessibleName() == "Suggested status action: Fix First Error (2)"
         assert panel._suggested_action_summary_label.text() == (
             "Guidance: Start with the first error in Diagnostics. 2 errors active."
         )
@@ -185,10 +198,11 @@ class TestStatusCenterPanel:
 
         assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
         assert panel._suggested_action_button.text() == "Configure SDK"
+        assert panel._suggested_action_button.property("iconKey") == "project"
         assert panel._suggested_action_button.toolTip() == (
             "Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._suggested_action_button.accessibleName() == "Suggested status action"
+        assert panel._suggested_action_button.accessibleName() == "Suggested status action: Configure SDK"
         assert panel._suggested_action_summary_label.text() == (
             "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
@@ -198,12 +212,16 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.toolTip() == (
             "Check Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._workspace_chip.accessibleName() == "Workspace status: Check Workspace"
+        assert panel._workspace_chip.property("iconKey") == "project"
+        assert panel._workspace_chip.accessibleName() == "Workspace status: Check Workspace (Configure SDK)"
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
+        assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._workspace_summary_label.text() == (
             "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear."
         )
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary"
+        assert panel._health_chip.accessibleName() == "Diagnostic status: Stable"
+        assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."
         assert panel._components_btn.accessibleName() == "Components action"
@@ -226,34 +244,48 @@ class TestStatusCenterPanel:
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
+        assert panel._suggested_action_button.property("iconKey") == "diagnostics"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._suggested_action_summary_label.text() == (
             "Guidance: Start with the first error in Diagnostics. 1 error active."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
         assert panel._suggested_action_button.text() == "Review First Warning (2)"
+        assert panel._suggested_action_button.property("iconKey") == "diagnostics"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._suggested_action_summary_label.text() == (
             "Guidance: Review the first warning in Diagnostics. 2 warnings active."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
+        assert panel._suggested_action_button.property("iconKey") == "debug"
+        assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output. Bridge lost"
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
         assert panel._suggested_action_button.text() == "Review History (2)"
+        assert panel._suggested_action_button.property("iconKey") == "history"
+        assert panel._workspace_chip.property("iconKey") == "history"
         assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History. 2 dirty pages pending."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
+        assert panel._suggested_action_button.property("iconKey") == "structure"
+        assert panel._workspace_chip.property("iconKey") == "structure"
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection. 3 widgets selected."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
+        assert panel._suggested_action_button.property("iconKey") == "debug"
+        assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics. 2 info items active."
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._suggested_action_button.text() == "Open Diagnostics"
+        assert panel._suggested_action_button.property("iconKey") == "diagnostics"
+        assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Diagnostics for a full health review."
         panel.deleteLater()
 
@@ -347,6 +379,7 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
         assert panel._repeat_action_button.accessibleName() == "Repeat Assets action"
+        assert panel._repeat_action_button.property("iconKey") == "assets"
         assert panel._recent_actions_label.text() == "Recent actions: Assets, Components, Structure, +1 more."
         assert panel._recent_actions_label.toolTip() == (
             "4 recent status center actions: Assets, Components, Structure, Project"
@@ -506,6 +539,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
         assert panel._repeat_action_button.accessibleName() == "Repeat Fields action"
+        assert panel._repeat_action_button.property("iconKey") == "page"
         assert panel._recent_actions_label.text() == "Recent actions: Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent status center actions: Fields, Debug Output"
         assert panel._repeat_action_button.toolTip() == (
@@ -564,6 +598,7 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: Components"
         assert panel._repeat_action_button.text() == "Repeat Components"
         assert panel._repeat_action_button.accessibleName() == "Repeat Components action"
+        assert panel._repeat_action_button.property("iconKey") == "widgets"
         assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions (1)"]
         panel.deleteLater()
 

@@ -369,6 +369,11 @@ class StatusCenterPanel(QWidget):
         chip.style().polish(chip)
         chip.update()
 
+    def _set_widget_icon(self, widget, icon_key, size=16):
+        key = str(icon_key or "history").strip() or "history"
+        widget.setProperty("iconKey", key)
+        widget.setIcon(make_icon(key, size=size))
+
     def _build_action_button(self, text, icon_key, action_key):
         button = QPushButton(text)
         button.setProperty("baseText", text)
@@ -637,7 +642,11 @@ class StatusCenterPanel(QWidget):
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
-        self._repeat_action_button.setIcon(make_icon(self._action_icon_key(self._last_action if has_action else "history")))
+        self._set_widget_icon(
+            self._repeat_action_button,
+            self._action_icon_key(self._last_action if has_action else "history"),
+            size=20,
+        )
         self._repeat_action_button.setToolTip(self._repeat_action_tooltip(action_label))
         self._repeat_action_button.setStatusTip(self._repeat_action_button.toolTip())
         self._repeat_action_button.setAccessibleName(
@@ -778,7 +787,8 @@ class StatusCenterPanel(QWidget):
             runtime_text=runtime_text,
         )
         self._suggested_action_button.setText(suggested_label)
-        self._suggested_action_button.setIcon(make_icon(suggested_icon))
+        self._set_widget_icon(self._suggested_action_button, suggested_icon)
+        self._suggested_action_button.setAccessibleName(f"Suggested status action: {suggested_label}")
         self._set_hint(self._suggested_action_button, suggested_hint)
         suggested_summary = f"Guidance: {suggested_hint}"
         self._suggested_action_summary_label.setText(suggested_summary)
@@ -794,7 +804,8 @@ class StatusCenterPanel(QWidget):
             runtime_text=runtime_text,
         )
         self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)
-        self._workspace_chip.setAccessibleName(f"Workspace status: {workspace_chip_label}")
+        self._set_widget_icon(self._workspace_chip, suggested_icon, size=16)
+        self._workspace_chip.setAccessibleName(f"Workspace status: {workspace_chip_label} ({suggested_label})")
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
@@ -829,6 +840,8 @@ class StatusCenterPanel(QWidget):
             self._health_chip_action = "open_diagnostics"
             self._set_chip_text(self._health_chip, "Stable", "success")
             health_hint = "Open Diagnostics. No active diagnostics."
+        self._set_widget_icon(self._health_chip, self._action_icon_key(self._health_chip_action), size=16)
+        self._health_chip.setAccessibleName(f"Diagnostic status: {self._health_chip.text()}")
         self._set_hint(self._health_chip, health_hint)
         self._first_error_btn.setEnabled(error_count > 0)
         self._first_error_btn.setText(
