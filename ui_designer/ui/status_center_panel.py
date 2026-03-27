@@ -190,9 +190,10 @@ class StatusCenterPanel(QWidget):
         quick_layout.setContentsMargins(12, 12, 12, 12)
         quick_layout.setSpacing(8)
 
-        actions_title = QLabel("Quick Actions")
-        actions_title.setObjectName("workspace_section_title")
-        quick_layout.addWidget(actions_title)
+        self._actions_title = QLabel("Quick Actions")
+        self._actions_title.setObjectName("workspace_section_title")
+        self._actions_title.setAccessibleName("Quick actions title")
+        quick_layout.addWidget(self._actions_title)
         last_action_row = QHBoxLayout()
         last_action_row.setContentsMargins(0, 0, 0, 0)
         last_action_row.setSpacing(8)
@@ -462,6 +463,20 @@ class StatusCenterPanel(QWidget):
             labels = labels[:3] + [f"+{len(self._recent_actions) - 3} more"]
         return f"Recent actions: {', '.join(labels)}."
 
+    def _recent_actions_title(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Quick Actions"
+        noun = "recent action" if count == 1 else "recent actions"
+        return f"Quick Actions ({count} {noun})"
+
+    def _recent_actions_title_tooltip(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Quick actions with no saved recent status center actions."
+        noun = "action" if count == 1 else "actions"
+        return f"Quick actions with {count} saved recent status center {noun}."
+
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
@@ -682,6 +697,9 @@ class StatusCenterPanel(QWidget):
         )
         action_label = self._action_label(self._last_action)
         self._last_action_label.setText(f"Last action: {action_label}")
+        self._actions_title.setText(self._recent_actions_title())
+        self._set_hint(self._actions_title, self._recent_actions_title_tooltip())
+        self._actions_title.setAccessibleName(self._actions_title.text())
         self._recent_actions_label.setText(self._recent_actions_summary())
         self._recent_actions_label.setToolTip(self._recent_actions_tooltip())
         has_action = bool(self._last_action)
