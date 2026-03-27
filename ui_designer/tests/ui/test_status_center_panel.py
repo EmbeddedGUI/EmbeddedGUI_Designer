@@ -136,6 +136,9 @@ class TestStatusCenterPanel:
             runtime_error="Bridge disconnected",
         )
 
+        assert panel._workspace_summary_label.text() == (
+            "Workspace: SDK ready, compile available, Preview Running, 2 dirty pages, 1 widget selected."
+        )
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
@@ -155,6 +158,7 @@ class TestStatusCenterPanel:
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
         assert panel._diag_btn.statusTip() == panel._diag_btn.toolTip()
         assert panel._history_btn.statusTip() == panel._history_btn.toolTip()
+        assert panel._workspace_summary_label.toolTip() == panel._workspace_summary_label.text()
         panel.deleteLater()
 
     def test_static_quick_action_buttons_expose_default_hints(self, qapp):
@@ -162,6 +166,10 @@ class TestStatusCenterPanel:
 
         panel = StatusCenterPanel()
 
+        assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
+        assert panel._workspace_summary_label.text() == (
+            "Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected."
+        )
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary"
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."

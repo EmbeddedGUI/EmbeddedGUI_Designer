@@ -99,6 +99,11 @@ class StatusCenterPanel(QWidget):
         subtitle.setObjectName("workspace_section_subtitle")
         subtitle.setWordWrap(True)
         header_layout.addWidget(subtitle)
+        self._workspace_summary_label = QLabel("Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected.")
+        self._workspace_summary_label.setObjectName("workspace_section_subtitle")
+        self._workspace_summary_label.setWordWrap(True)
+        self._workspace_summary_label.setAccessibleName("Workspace summary")
+        header_layout.addWidget(self._workspace_summary_label)
         layout.addWidget(header)
 
         metrics = QFrame()
@@ -468,6 +473,16 @@ class StatusCenterPanel(QWidget):
             return f"Summary: {', '.join(parts)} need review."
         return f"Summary: {', '.join(parts)} available."
 
+    def _workspace_summary_text(self, sdk_ready, can_compile, dirty_count, selection_total, preview_text):
+        sdk_text = "SDK ready" if sdk_ready else "SDK missing"
+        compile_text = "compile available" if can_compile else "compile unavailable"
+        preview_value = str(preview_text or "Preview Idle").strip() or "Preview Idle"
+        return (
+            f"Workspace: {sdk_text}, {compile_text}, {preview_value}, "
+            f"{self._count_label(dirty_count, 'dirty page', 'dirty pages')}, "
+            f"{self._count_label(selection_total, 'widget', 'widgets')} selected."
+        )
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -599,6 +614,15 @@ class StatusCenterPanel(QWidget):
             self._structure_btn,
             f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
         )
+        workspace_summary = self._workspace_summary_text(
+            sdk_ready,
+            can_compile,
+            dirty_count,
+            selection_total,
+            preview_text,
+        )
+        self._workspace_summary_label.setText(workspace_summary)
+        self._set_hint(self._workspace_summary_label, workspace_summary)
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
