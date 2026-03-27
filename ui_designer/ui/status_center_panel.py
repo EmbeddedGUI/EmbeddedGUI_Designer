@@ -399,7 +399,7 @@ class StatusCenterPanel(QWidget):
         button = QPushButton(text)
         button.setProperty("baseText", text)
         button.setIcon(make_icon(icon_key))
-        button.setAccessibleName(f"{self._action_label(action_key)} action")
+        button.setAccessibleName(self._action_button_accessible_name(action_key, text))
         self._set_hint(button, f"Open {self._action_label(action_key)}.")
         button.clicked.connect(lambda checked=False, key=action_key: self._emit_action(key))
         return button
@@ -702,6 +702,13 @@ class StatusCenterPanel(QWidget):
         summary = str(summary_text or "").strip()
         return f"{prefix}: {summary}" if summary else prefix
 
+    def _action_button_accessible_name(self, action_key, button_text, available=True):
+        label = self._action_label(action_key)
+        text = str(button_text or "").strip() or label
+        if not available:
+            return f"{label} action unavailable: {text}"
+        return f"{label} action: {text}"
+
     def _suggested_action_state(
         self,
         *,
@@ -902,6 +909,15 @@ class StatusCenterPanel(QWidget):
         self._set_button_count_text(self._diag_btn, diag_total)
         self._set_button_count_text(self._history_btn, dirty_count)
         self._set_button_count_text(self._structure_btn, selection_total)
+        self._diag_btn.setAccessibleName(
+            self._action_button_accessible_name("open_diagnostics", self._diag_btn.text())
+        )
+        self._history_btn.setAccessibleName(
+            self._action_button_accessible_name("open_history", self._history_btn.text())
+        )
+        self._structure_btn.setAccessibleName(
+            self._action_button_accessible_name("open_structure_panel", self._structure_btn.text())
+        )
         self._set_metric_context("SDK", self._sdk_value, self._sdk_card, self._sdk_value.text())
         self._set_metric_context("Compile", self._compile_value, self._compile_card, self._compile_value.text())
         self._set_metric_context("Diagnostics", self._diag_value, self._diag_card, self._diag_value.text())
@@ -1081,6 +1097,13 @@ class StatusCenterPanel(QWidget):
             if error_count > 0
             else "Unavailable: no errors are active.",
         )
+        self._first_error_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_first_error",
+                self._first_error_btn.text(),
+                error_count > 0,
+            )
+        )
         self._first_warning_btn.setEnabled(warning_count > 0)
         self._first_warning_btn.setText(
             f"Open First Warning ({warning_count})" if warning_count > 0 else "Open First Warning"
@@ -1091,6 +1114,13 @@ class StatusCenterPanel(QWidget):
             f"{self._active_count_hint(warning_count, 'warning', 'warnings')}"
             if warning_count > 0
             else "Unavailable: no warnings are active.",
+        )
+        self._first_warning_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_first_warning",
+                self._first_warning_btn.text(),
+                warning_count > 0,
+            )
         )
         if runtime_text:
             self._runtime_title.setText(self._runtime_title_text(runtime_text))

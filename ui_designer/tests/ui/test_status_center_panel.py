@@ -88,6 +88,8 @@ class TestStatusCenterPanel:
         assert panel._info_row.toolTip() == "Open Info. 1 info item active."
         assert panel._first_error_btn.toolTip() == "Jump to the first error in Diagnostics. 2 errors active."
         assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 1 warning active."
+        assert panel._first_error_btn.accessibleName() == "First Error action: Open First Error (2)"
+        assert panel._first_warning_btn.accessibleName() == "First Warning action: Open First Warning (1)"
         panel.deleteLater()
 
     def test_health_chip_runtime_and_buttons_update_across_status_changes(self, qapp):
@@ -128,6 +130,10 @@ class TestStatusCenterPanel:
         assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 3 warnings active."
+        assert panel._diag_btn.accessibleName() == "Diagnostics action: Diagnostics (4)"
+        assert panel._history_btn.accessibleName() == "History action: History"
+        assert panel._first_error_btn.accessibleName() == "First Error action unavailable: Open First Error"
+        assert panel._first_warning_btn.accessibleName() == "First Warning action: Open First Warning (3)"
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
 
@@ -161,6 +167,9 @@ class TestStatusCenterPanel:
         assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
+        assert panel._diag_btn.accessibleName() == "Diagnostics action: Diagnostics (2)"
+        assert panel._first_error_btn.accessibleName() == "First Error action unavailable: Open First Error"
+        assert panel._first_warning_btn.accessibleName() == "First Warning action unavailable: Open First Warning"
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0, runtime_error="")
 
@@ -196,6 +205,10 @@ class TestStatusCenterPanel:
         assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
+        assert panel._diag_btn.accessibleName() == "Diagnostics action: Diagnostics"
+        assert panel._history_btn.accessibleName() == "History action: History"
+        assert panel._first_error_btn.accessibleName() == "First Error action unavailable: Open First Error"
+        assert panel._first_warning_btn.accessibleName() == "First Warning action unavailable: Open First Warning"
         panel.deleteLater()
 
     def test_metric_and_runtime_tooltips_reflect_workspace_state(self, qapp):
@@ -253,12 +266,15 @@ class TestStatusCenterPanel:
         assert panel._info_value.accessibleName() == "Info value: 3 info items (50%)"
         assert panel._diag_btn.text() == "Diagnostics (6)"
         assert panel._diag_btn.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
+        assert panel._diag_btn.accessibleName() == "Diagnostics action: Diagnostics (6)"
         assert panel._history_btn.text() == "History (2)"
         assert panel._history_btn.toolTip() == "Open History. 2 dirty pages."
+        assert panel._history_btn.accessibleName() == "History action: History (2)"
         assert panel._debug_btn.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._project_btn.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
+        assert panel._structure_btn.accessibleName() == "Structure action: Structure (1)"
         assert panel._suggested_action_button.text() == "Fix First Error (2)"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics. 2 errors active."
@@ -350,7 +366,12 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._components_btn.toolTip() == "Open Components."
         assert panel._components_btn.statusTip() == "Open Components."
-        assert panel._components_btn.accessibleName() == "Components action"
+        assert panel._components_btn.accessibleName() == "Components action: Components"
+        assert panel._diag_btn.accessibleName() == "Diagnostics action: Diagnostics"
+        assert panel._history_btn.accessibleName() == "History action: History"
+        assert panel._structure_btn.accessibleName() == "Structure action: Structure"
+        assert panel._first_error_btn.accessibleName() == "First Error action unavailable: Open First Error"
+        assert panel._first_warning_btn.accessibleName() == "First Warning action unavailable: Open First Warning"
         assert panel._assets_btn.toolTip() == "Open Assets."
         assert panel._properties_btn.toolTip() == "Open Properties."
         assert panel._animations_btn.toolTip() == "Open Animations."
