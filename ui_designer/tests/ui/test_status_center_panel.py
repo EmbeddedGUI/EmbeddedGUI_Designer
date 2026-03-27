@@ -153,6 +153,8 @@ class TestStatusCenterPanel:
         assert panel._project_btn.toolTip() == "Open Project. SDK workspace is ready."
         assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
+        assert panel._suggested_action_button.text() == "Fix First Error"
+        assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics."
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
@@ -167,6 +169,9 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._workspace_summary_label.accessibleName() == "Workspace summary"
+        assert panel._suggested_action_button.text() == "Configure SDK"
+        assert panel._suggested_action_button.toolTip() == "Open Project to configure the SDK workspace."
+        assert panel._suggested_action_button.accessibleName() == "Suggested status action"
         assert panel._workspace_summary_label.text() == (
             "Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected."
         )
@@ -179,6 +184,57 @@ class TestStatusCenterPanel:
         assert panel._animations_btn.toolTip() == "Open Animations."
         assert panel._fields_btn.toolTip() == "Open Fields."
         assert panel._timers_btn.toolTip() == "Open Timers."
+        panel.deleteLater()
+
+    def test_suggested_action_updates_with_workspace_state(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        assert panel._suggested_action_button.text() == "Configure SDK"
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert panel._suggested_action_button.text() == "Fix First Error"
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
+        assert panel._suggested_action_button.text() == "Review First Warning"
+
+        panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
+        assert panel._suggested_action_button.text() == "Inspect Debug Output"
+
+        panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        assert panel._suggested_action_button.text() == "Review History"
+
+        panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
+        assert panel._suggested_action_button.text() == "Inspect Selection"
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
+        assert panel._suggested_action_button.text() == "Inspect Info"
+
+        panel.set_status(sdk_ready=True, can_compile=True)
+        assert panel._suggested_action_button.text() == "Open Diagnostics"
+        panel.deleteLater()
+
+    def test_suggested_action_button_emits_contextual_action(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        panel._suggested_action_button.click()
+        panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        panel._suggested_action_button.click()
+        panel.set_status(sdk_ready=True, can_compile=True, selection_count=1)
+        panel._suggested_action_button.click()
+
+        assert emitted == [
+            "open_first_error",
+            "open_history",
+            "open_structure_panel",
+        ]
+        assert panel._repeat_action_button.text() == "Repeat Structure"
         panel.deleteLater()
 
     def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):

@@ -76,6 +76,7 @@ class StatusCenterPanel(QWidget):
         self._last_action = ""
         self._recent_actions = []
         self._health_chip_action = "open_diagnostics"
+        self._suggested_action_key = "open_diagnostics"
         self._init_ui()
         self._set_last_action("", [])
         self.set_status()
@@ -198,6 +199,19 @@ class StatusCenterPanel(QWidget):
         self._recent_actions_label.setObjectName("workspace_section_subtitle")
         self._recent_actions_label.setWordWrap(True)
         quick_layout.addWidget(self._recent_actions_label)
+        suggested_row = QHBoxLayout()
+        suggested_row.setContentsMargins(0, 0, 0, 0)
+        suggested_row.setSpacing(8)
+        self._suggested_action_label = QLabel("Suggested next step:")
+        self._suggested_action_label.setObjectName("workspace_section_subtitle")
+        suggested_row.addWidget(self._suggested_action_label, 0)
+        self._suggested_action_button = QPushButton("Open Diagnostics")
+        self._suggested_action_button.setIcon(make_icon("diagnostics"))
+        self._suggested_action_button.setAccessibleName("Suggested status action")
+        self._suggested_action_button.clicked.connect(self._trigger_suggested_action)
+        suggested_row.addWidget(self._suggested_action_button, 0)
+        suggested_row.addStretch()
+        quick_layout.addLayout(suggested_row)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -483,6 +497,41 @@ class StatusCenterPanel(QWidget):
             f"{self._count_label(selection_total, 'widget', 'widgets')} selected."
         )
 
+    def _suggested_action_state(
+        self,
+        *,
+        sdk_ready,
+        can_compile,
+        dirty_count,
+        selection_total,
+        error_count,
+        warning_count,
+        info_count,
+        runtime_text,
+    ):
+        if error_count > 0:
+            return ("open_first_error", "Fix First Error", "diagnostics", "Start with the first error in Diagnostics.")
+        if warning_count > 0:
+            return (
+                "open_first_warning",
+                "Review First Warning",
+                "diagnostics",
+                "Review the first warning in Diagnostics.",
+            )
+        if runtime_text:
+            return ("open_debug", "Inspect Debug Output", "debug", "Inspect the latest runtime output.")
+        if not sdk_ready:
+            return ("open_project_panel", "Configure SDK", "project", "Open Project to configure the SDK workspace.")
+        if not can_compile:
+            return ("open_debug", "Check Compile Output", "debug", "Open Debug Output to inspect compile availability.")
+        if dirty_count > 0:
+            return ("open_history", "Review History", "history", "Review unsaved changes in History.")
+        if selection_total > 0:
+            return ("open_structure_panel", "Inspect Selection", "structure", "Open Structure for the current selection.")
+        if info_count > 0:
+            return ("open_info_diagnostics", "Inspect Info", "debug", "Inspect informational diagnostics.")
+        return ("open_diagnostics", "Open Diagnostics", "diagnostics", "Open Diagnostics for a full health review.")
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -510,6 +559,9 @@ class StatusCenterPanel(QWidget):
 
     def _open_health_chip_target(self):
         self._emit_action(self._health_chip_action or "open_diagnostics")
+
+    def _trigger_suggested_action(self):
+        self._emit_action(self._suggested_action_key or "open_diagnostics")
 
     def _emit_action(self, action_key):
         self._set_last_action(action_key)
@@ -614,6 +666,24 @@ class StatusCenterPanel(QWidget):
             self._structure_btn,
             f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
         )
+        (
+            self._suggested_action_key,
+            suggested_label,
+            suggested_icon,
+            suggested_hint,
+        ) = self._suggested_action_state(
+            sdk_ready=sdk_ready,
+            can_compile=can_compile,
+            dirty_count=dirty_count,
+            selection_total=selection_total,
+            error_count=error_count,
+            warning_count=warning_count,
+            info_count=info_count,
+            runtime_text=runtime_text,
+        )
+        self._suggested_action_button.setText(suggested_label)
+        self._suggested_action_button.setIcon(make_icon(suggested_icon))
+        self._set_hint(self._suggested_action_button, suggested_hint)
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
             can_compile,
