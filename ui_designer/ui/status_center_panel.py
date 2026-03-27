@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QToolButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QProgressBar, QPushButton, QToolButton, QVBoxLayout, QWidget
 
 from .iconography import make_icon
 
@@ -33,6 +33,7 @@ class StatusCenterPanel(QWidget):
     """Workspace status dashboard with quick-open actions."""
 
     action_requested = pyqtSignal(str)
+    _MAX_RECENT_ACTIONS = 6
     _ACTION_LABELS = {
         "open_project_panel": "Project",
         "open_structure_panel": "Structure",
@@ -55,8 +56,10 @@ class StatusCenterPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._last_action = ""
+        self._recent_actions = []
         self._health_chip_action = "open_diagnostics"
         self._init_ui()
+        self._set_last_action("", [])
         self.set_status()
 
     def _init_ui(self):
@@ -154,8 +157,11 @@ class StatusCenterPanel(QWidget):
         self._last_action_label = QLabel("Last action: None")
         self._last_action_label.setObjectName("workspace_section_subtitle")
         last_action_row.addWidget(self._last_action_label, 1)
-        self._repeat_action_button = QPushButton("Repeat Action")
+        self._repeat_action_menu = QMenu(self)
+        self._repeat_action_button = QToolButton()
         self._repeat_action_button.setIcon(make_icon("history"))
+        self._repeat_action_button.setPopupMode(QToolButton.MenuButtonPopup)
+        self._repeat_action_button.setMenu(self._repeat_action_menu)
         self._repeat_action_button.setEnabled(False)
         self._repeat_action_button.clicked.connect(self._repeat_last_action)
         last_action_row.addWidget(self._repeat_action_button, 0)
@@ -311,13 +317,50 @@ class StatusCenterPanel(QWidget):
             return "None"
         return self._ACTION_LABELS.get(action, action.replace("_", " ").title())
 
-    def _set_last_action(self, action_key):
+    def _normalize_recent_actions(self, recent_actions, prepend_action=""):
+        normalized = []
+        candidates = []
+        prepend = str(prepend_action or "").strip()
+        if prepend:
+            candidates.append(prepend)
+        if isinstance(recent_actions, (list, tuple)):
+            candidates.extend(recent_actions)
+        for raw_action in candidates:
+            action = str(raw_action or "").strip()
+            if not action or action in normalized:
+                continue
+            normalized.append(action)
+            if len(normalized) >= self._MAX_RECENT_ACTIONS:
+                break
+        return normalized
+
+    def _refresh_repeat_action_menu(self):
+        self._repeat_action_menu.clear()
+        if not self._recent_actions:
+            empty_action = self._repeat_action_menu.addAction("No recent actions")
+            empty_action.setEnabled(False)
+            return
+        for action_key in self._recent_actions:
+            action_label = self._action_label(action_key)
+            menu_action = self._repeat_action_menu.addAction(action_label)
+            menu_action.setToolTip(f"Replay {action_label}")
+            menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
+
+    def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
+        self._recent_actions = self._normalize_recent_actions(
+            self._recent_actions if recent_actions is None else recent_actions,
+            prepend_action=self._last_action,
+        )
         action_label = self._action_label(self._last_action)
         self._last_action_label.setText(f"Last action: {action_label}")
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
+        self._repeat_action_button.setToolTip(
+            f"Repeat {action_label}" if has_action else "No recent action to repeat."
+        )
+        self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):
         if not self._last_action:
@@ -332,13 +375,16 @@ class StatusCenterPanel(QWidget):
         self.action_requested.emit(action_key)
 
     def view_state(self):
-        return {"last_action": self._last_action}
+        return {
+            "last_action": self._last_action,
+            "recent_actions": list(self._recent_actions),
+        }
 
     def restore_view_state(self, state):
         if not isinstance(state, dict):
-            self._set_last_action("")
+            self._set_last_action("", [])
             return
-        self._set_last_action(state.get("last_action", ""))
+        self._set_last_action(state.get("last_action", ""), state.get("recent_actions", []))
 
     def set_status(
         self,

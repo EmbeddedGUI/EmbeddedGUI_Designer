@@ -115,6 +115,7 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
         assert panel._repeat_action_button.text() == "Repeat Assets"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Assets", "Components", "Structure", "Project"]
         panel.deleteLater()
 
     def test_inspector_navigation_buttons_emit_expected_actions(self, qapp):
@@ -137,6 +138,7 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: Timers"
         assert panel._repeat_action_button.text() == "Repeat Timers"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Timers", "Fields", "Animations", "Properties"]
         panel.deleteLater()
 
     def test_metric_cards_emit_expected_actions(self, qapp):
@@ -164,6 +166,13 @@ class TestStatusCenterPanel:
         ]
         assert panel._last_action_label.text() == "Last action: History"
         assert panel._repeat_action_button.text() == "Repeat History"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == [
+            "History",
+            "Structure",
+            "Debug Output",
+            "Diagnostics",
+            "Project",
+        ]
         panel.deleteLater()
 
     def test_metric_cards_support_keyboard_activation(self, qapp):
@@ -207,6 +216,7 @@ class TestStatusCenterPanel:
         assert panel._info_row.accessibleName() == "Info diagnostics"
         assert panel._last_action_label.text() == "Last action: Info"
         assert panel._repeat_action_button.text() == "Repeat Info"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Info", "Warnings", "Errors"]
         panel.deleteLater()
 
     def test_health_rows_support_keyboard_activation(self, qapp):
@@ -238,17 +248,23 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
-        panel.restore_view_state({"last_action": "open_page_fields"})
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["No recent actions"]
+        panel.restore_view_state({"last_action": "open_page_fields", "recent_actions": ["open_page_fields", "open_debug"]})
         assert panel._last_action_label.text() == "Last action: Fields"
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
-        assert panel.view_state() == {"last_action": "open_page_fields"}
+        assert panel.view_state() == {
+            "last_action": "open_page_fields",
+            "recent_actions": ["open_page_fields", "open_debug"],
+        }
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Fields", "Debug Output"]
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
-        assert panel.view_state() == {"last_action": ""}
+        assert panel.view_state() == {"last_action": "", "recent_actions": []}
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["No recent actions"]
         panel.deleteLater()
 
     def test_runtime_panel_emits_debug_action(self, qapp):
@@ -286,4 +302,32 @@ class TestStatusCenterPanel:
         assert emitted == ["open_components_panel"]
         assert panel._last_action_label.text() == "Last action: Components"
         assert panel._repeat_action_button.text() == "Repeat Components"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == ["Components"]
+        panel.deleteLater()
+
+    def test_repeat_action_menu_replays_selected_recent_action(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        panel._project_btn.click()
+        panel._assets_btn.click()
+        panel._debug_btn.click()
+        panel._repeat_action_menu.actions()[1].trigger()
+
+        assert emitted == [
+            "open_project_panel",
+            "open_assets_panel",
+            "open_debug",
+            "open_assets_panel",
+        ]
+        assert panel._last_action_label.text() == "Last action: Assets"
+        assert panel._repeat_action_button.text() == "Repeat Assets"
+        assert [action.text() for action in panel._repeat_action_menu.actions()] == [
+            "Assets",
+            "Debug Output",
+            "Project",
+        ]
         panel.deleteLater()
