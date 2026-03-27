@@ -307,11 +307,16 @@ class WidgetBrowserPanel(QWidget):
         favorites = set(self._config.widget_browser_favorites)
         columns = 2
         if not items:
+            self._selected_type = ""
             empty = QLabel("No widgets match the current filters.")
             empty.setObjectName("workspace_empty_state")
             empty.setAlignment(Qt.AlignCenter)
             self._cards_layout.addWidget(empty, 0, 0, 1, columns)
             return
+
+        visible_types = [item.get("type_name", "") for item in items]
+        if self._selected_type not in visible_types:
+            self._selected_type = visible_types[0]
 
         for index, item in enumerate(items):
             card = WidgetBrowserCard(item)
@@ -324,8 +329,6 @@ class WidgetBrowserPanel(QWidget):
             column = index % columns
             self._cards_layout.addWidget(card, row, column)
             self._cards[index] = card
-            if not self._selected_type:
-                self._selected_type = item.get("type_name", "")
             card.set_selected(card.type_name == self._selected_type)
 
         self._cards_layout.setColumnStretch(columns, 1)

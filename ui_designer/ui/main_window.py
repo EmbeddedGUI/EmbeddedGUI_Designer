@@ -487,7 +487,7 @@ class MainWindow(QMainWindow):
         self.property_panel.user_code_requested.connect(self._on_user_code_requested)
 
         self.widget_browser.insert_requested.connect(self._insert_widget_from_browser)
-        self.widget_browser.reveal_requested.connect(lambda _widget_type: self._select_left_panel("structure"))
+        self.widget_browser.reveal_requested.connect(self._reveal_widget_type_in_structure)
         self._project_workspace.view_changed.connect(self._on_project_workspace_view_changed)
 
         # Preview panel
@@ -622,6 +622,26 @@ class MainWindow(QMainWindow):
         self._pending_insert_parent = None
         self._update_widget_browser_target()
         self.statusBar().showMessage(f"Inserted {WidgetRegistry.instance().display_name(widget_type)}.", 3000)
+
+    def _reveal_widget_type_in_structure(self, widget_type):
+        self._select_left_panel("structure")
+        if self._current_page is None or not widget_type:
+            return
+
+        widgets = [widget for widget in self._current_page.get_all_widgets() if getattr(widget, "widget_type", "") == widget_type]
+        if not widgets:
+            self.statusBar().showMessage(
+                f"No {WidgetRegistry.instance().display_name(widget_type)} widgets exist on this page.",
+                3000,
+            )
+            return
+
+        primary = next((widget for widget in widgets if widget is not getattr(self._current_page, "root_widget", None)), widgets[0])
+        self._set_selection([primary], primary=primary, sync_tree=True, sync_preview=True)
+        self.statusBar().showMessage(
+            f"Revealed {WidgetRegistry.instance().display_name(widget_type)} in structure.",
+            3000,
+        )
 
     def _on_project_workspace_view_changed(self, view_name):
         if not isinstance(self._config.workspace_state, dict):

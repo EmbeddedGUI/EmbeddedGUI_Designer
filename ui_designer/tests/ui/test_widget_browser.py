@@ -132,3 +132,16 @@ class TestWidgetBrowserPanel:
         panel._show_card_menu("button", None)
         assert emitted == ["button"]
         panel.deleteLater()
+
+    def test_filtering_selects_first_visible_card_when_previous_selection_disappears(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._select_card("button")
+
+        panel._search.setText("slider")
+        panel.refresh()
+
+        assert panel._selected_type in {card.type_name for card in panel._cards.values()}
+        assert panel._selected_type == "slider"
+        panel.deleteLater()
