@@ -3810,6 +3810,12 @@ class MainWindow(QMainWindow):
         quick_move_menu = structure_menu.addMenu("Quick Move Into")
         quick_move_menu.setToolTipsVisible(True)
         self._populate_quick_move_into_menu(quick_move_menu)
+        if hasattr(self, "_quick_move_into_menu"):
+            source_quick_move_action = self._quick_move_into_menu.menuAction()
+            preview_quick_move_action = quick_move_menu.menuAction()
+            preview_quick_move_action.setEnabled(source_quick_move_action.isEnabled())
+            preview_quick_move_action.setToolTip(source_quick_move_action.toolTip())
+            preview_quick_move_action.setStatusTip(source_quick_move_action.statusTip())
         structure_menu.addSeparator()
         for action in (
             self._lift_to_parent_action,
@@ -3819,6 +3825,30 @@ class MainWindow(QMainWindow):
             self._move_bottom_action,
         ):
             structure_menu.addAction(action)
+        structure_enabled = any(
+            action.isEnabled()
+            for action in (
+                self._group_selection_action,
+                self._ungroup_selection_action,
+                self._move_into_container_action,
+                self._move_into_last_target_action,
+                self._clear_move_target_history_action,
+                quick_move_menu.menuAction(),
+                self._lift_to_parent_action,
+                self._move_up_action,
+                self._move_down_action,
+                self._move_top_action,
+                self._move_bottom_action,
+            )
+        )
+        structure_menu.setEnabled(structure_enabled)
+        structure_hint = ""
+        if not structure_enabled:
+            structure_hint = self._structure_action_state().blocked_reason
+            if structure_hint:
+                structure_hint = f"Structure unavailable: {structure_hint}"
+        structure_menu.menuAction().setToolTip(structure_hint)
+        structure_menu.menuAction().setStatusTip(structure_hint)
         return menu
 
     def _show_preview_context_menu(self, widget, global_pos):

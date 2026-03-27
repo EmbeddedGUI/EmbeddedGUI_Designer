@@ -6214,11 +6214,15 @@ class TestMainWindowCanvasActions:
 
         window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
         menu, actions = _structure_actions(first)
+        structure_action = next(action for action in menu.actions() if action.text() == "Structure")
+        assert structure_action.isEnabled() is True
         assert actions["Group Selection"].isEnabled() is True
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is True
         assert actions["Move Into Last Target"].isEnabled() is False
         assert actions["Quick Move Into"].menu() is not None
+        assert actions["Quick Move Into"].isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
+        assert actions["Quick Move Into"].toolTip() == window._quick_move_into_menu.menuAction().toolTip()
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
@@ -6283,16 +6287,22 @@ class TestMainWindowCanvasActions:
 
         window._set_selection([root], primary=root, sync_tree=True, sync_preview=True)
         menu, structure_menu, actions = _structure_actions(root)
+        structure_action = next(action for action in menu.actions() if action.text() == "Structure")
         assert actions["Group Selection"].isEnabled() is False
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is False
         assert actions["Move Into Last Target"].isEnabled() is False
+        assert actions["Quick Move Into"].isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
+        assert actions["Quick Move Into"].toolTip() == window._quick_move_into_menu.menuAction().toolTip()
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is False
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is False
         assert "root widgets cannot be regrouped or reordered" in actions["Group Selection"].toolTip()
+        assert structure_action.isEnabled() is False
+        assert structure_action.toolTip() == "Structure unavailable: root widgets cannot be regrouped or reordered."
+        assert structure_action.statusTip() == structure_action.toolTip()
         assert "(No eligible target containers)" in [
             action.text() for action in next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into").actions()
         ]
@@ -6300,16 +6310,25 @@ class TestMainWindowCanvasActions:
 
         window._set_selection([child], primary=child, sync_tree=True, sync_preview=True)
         menu, structure_menu, actions = _structure_actions(child)
+        structure_action = next(action for action in menu.actions() if action.text() == "Structure")
         assert actions["Group Selection"].isEnabled() is False
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is False
         assert actions["Move Into Last Target"].isEnabled() is False
+        assert actions["Quick Move Into"].isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
+        assert actions["Quick Move Into"].toolTip() == window._quick_move_into_menu.menuAction().toolTip()
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is False
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is False
         assert "no eligible target containers are available" in actions["Move Into..."].toolTip()
+        assert structure_action.isEnabled() is False
+        assert (
+            structure_action.toolTip()
+            == "Structure unavailable: select another sibling or target container to move this widget."
+        )
+        assert structure_action.statusTip() == structure_action.toolTip()
         assert "(No eligible target containers)" in [
             action.text() for action in next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into").actions()
         ]
@@ -6635,6 +6654,7 @@ class TestMainWindowCanvasActions:
         assert actions["Paste"].isEnabled() is False
         assert actions["Duplicate"].isEnabled() is False
         assert actions["Delete"].isEnabled() is False
+        assert actions["Structure"].isEnabled() is False
 
         assert arrange_actions["Align Left"].isEnabled() is False
         assert arrange_actions["Distribute Horizontally"].isEnabled() is False
@@ -6653,7 +6673,9 @@ class TestMainWindowCanvasActions:
         assert structure_actions["Move To Bottom"].isEnabled() is False
         quick_move_menu = next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into")
         quick_move_texts = [action.text() for action in quick_move_menu.actions() if action.text()]
-        assert next(action for action in structure_menu.actions() if action.text() == "Quick Move Into").isEnabled() is True
+        quick_move_action = next(action for action in structure_menu.actions() if action.text() == "Quick Move Into")
+        assert quick_move_action.isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
+        assert quick_move_action.toolTip() == window._quick_move_into_menu.menuAction().toolTip()
         assert "(No eligible target containers)" in quick_move_texts
         assert "History" in quick_move_texts
         menu.deleteLater()
@@ -6742,13 +6764,17 @@ class TestMainWindowCanvasActions:
         window._set_selection([target], primary=target, sync_tree=True, sync_preview=True)
         menu = window._build_preview_context_menu(target)
         structure_menu = _context_submenu(menu, "Structure")
+        structure_action = next(action for action in menu.actions() if action.text() == "Structure")
         structure_actions = {action.text(): action for action in structure_menu.actions() if action.text()}
         quick_move_menu = next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into")
         quick_action_texts = [action.text() for action in quick_move_menu.actions()]
         repeat_action = next(action for action in quick_move_menu.actions() if action.text() == "Move Into Last Target")
         clear_action = next(action for action in quick_move_menu.actions() if action.text() == "Clear Move Target History")
 
+        assert structure_action.isEnabled() is True
         assert structure_actions["Quick Move Into"].menu() is not None
+        assert structure_actions["Quick Move Into"].isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
+        assert structure_actions["Quick Move Into"].toolTip() == window._quick_move_into_menu.menuAction().toolTip()
         assert "(No eligible target containers)" in quick_action_texts
         assert "History" in quick_action_texts
         assert repeat_action.isEnabled() is False
