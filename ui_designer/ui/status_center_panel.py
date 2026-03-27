@@ -565,6 +565,21 @@ class StatusCenterPanel(QWidget):
             ]
         )
 
+    def _debug_button_text(self, can_compile, runtime_text):
+        if str(runtime_text or "").strip():
+            return "Debug Output (Issue)"
+        if not can_compile:
+            return "Debug Output (Build)"
+        return "Debug Output"
+
+    def _debug_button_hint(self, can_compile, runtime_text, preview_text):
+        message = str(runtime_text or "").strip()
+        if message:
+            return f"Open Debug Output. Runtime issue: {message}"
+        if not can_compile:
+            return "Open Debug Output. Compile pipeline is unavailable."
+        return f"Open Debug Output. {preview_text}."
+
     def _set_button_count_text(self, button, count=0):
         base_text = str(button.property("baseText") or button.text() or "").strip()
         value = max(int(count or 0), 0)
@@ -937,6 +952,10 @@ class StatusCenterPanel(QWidget):
         self._history_btn.setAccessibleName(
             self._action_button_accessible_name("open_history", self._history_btn.text())
         )
+        self._debug_btn.setText(self._debug_button_text(can_compile, runtime_text))
+        self._debug_btn.setAccessibleName(
+            self._action_button_accessible_name("open_debug", self._debug_btn.text())
+        )
         self._structure_btn.setAccessibleName(
             self._action_button_accessible_name("open_structure_panel", self._structure_btn.text())
         )
@@ -973,7 +992,7 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
         self._set_hint(
             self._debug_btn,
-            f"Open Debug Output. Runtime issue: {runtime_text}" if runtime_text else f"Open Debug Output. {preview_text}.",
+            self._debug_button_hint(can_compile, runtime_text, preview_text),
         )
         self._set_hint(
             self._selection_card,
