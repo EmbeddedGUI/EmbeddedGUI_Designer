@@ -6028,6 +6028,64 @@ class TestMainWindowCanvasActions:
         assert "Same Depth" in select_labels
         _close_window(window)
 
+    def test_build_preview_context_menu_select_actions_appear_in_expected_order(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewSelectMenuOrderDemo"
+        project = _create_project(project_dir, "PreviewSelectMenuOrderDemo", sdk_root)
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        project.get_startup_page().root_widget.add_child(first)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        menu = window._build_preview_context_menu(first)
+        select_labels = [action.text() for action in _context_submenu(menu, "Select").actions() if action.text()]
+
+        assert select_labels == [
+            "Parent",
+            "Previous Sibling",
+            "Next Sibling",
+            "Previous Siblings",
+            "Next Siblings",
+            "Previous In Tree",
+            "Next In Tree",
+            "Ancestors",
+            "Root",
+            "Path",
+            "Top-Level",
+            "First Child",
+            "Last Child",
+            "Children",
+            "Descendants",
+            "Subtree",
+            "Leaves",
+            "Containers",
+            "Layout Containers",
+            "Visible",
+            "Hidden",
+            "Unlocked",
+            "Locked",
+            "Managed",
+            "Free Position",
+            "Siblings",
+            "Same Parent Type",
+            "Subtree Type",
+            "Same Type",
+            "Same Depth",
+        ]
+
+        menu.deleteLater()
+        _close_window(window)
+
     def test_build_preview_context_menu_exposes_expected_shortcuts(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
