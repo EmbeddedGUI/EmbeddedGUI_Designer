@@ -458,12 +458,13 @@ class StatusCenterPanel(QWidget):
         clear_action.triggered.connect(self._clear_recent_actions)
 
     def _recent_actions_summary(self):
-        if not self._recent_actions:
+        count = len(self._recent_actions)
+        if count <= 0:
             return "Recent actions: none saved."
         labels = [self._action_label(action_key) for action_key in self._recent_actions]
         if len(labels) > 3:
-            labels = labels[:3] + [f"+{len(self._recent_actions) - 3} more"]
-        return f"Recent actions: {', '.join(labels)}."
+            labels = labels[:3] + [f"+{count - 3} more"]
+        return f"Recent actions ({count}): {', '.join(labels)}."
 
     def _recent_actions_title(self):
         count = len(self._recent_actions)
@@ -487,6 +488,14 @@ class StatusCenterPanel(QWidget):
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
         return f"{count} recent status center {noun}: {labels}"
 
+    def _recent_actions_accessible_name(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Recent actions: none saved."
+        noun = "recent action" if count == 1 else "recent actions"
+        labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
+        return f"Recent actions summary: {count} {noun} saved. {labels}."
+
     def _clear_recent_actions_tooltip(self):
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
@@ -507,6 +516,20 @@ class StatusCenterPanel(QWidget):
                 "Use the menu arrow to replay an older action."
             )
         return f"Repeat {action_label}. {count} recent status center {noun} saved."
+
+    def _last_action_tooltip(self, action_label):
+        if not self._last_action:
+            return "No recent status center action is available yet."
+        count = len(self._recent_actions)
+        noun = "recent action" if count == 1 else "recent actions"
+        return f"Current status center action: {action_label}. {count} {noun} saved."
+
+    def _last_action_accessible_name(self, action_label):
+        if not self._last_action:
+            return "Last action: None. No recent actions saved."
+        count = len(self._recent_actions)
+        noun = "recent action" if count == 1 else "recent actions"
+        return f"Last action: {action_label}. {count} {noun} saved."
 
     def _set_hint(self, widget, text):
         hint = str(text or "").strip()
@@ -723,11 +746,14 @@ class StatusCenterPanel(QWidget):
         )
         action_label = self._action_label(self._last_action)
         self._last_action_label.setText(f"Last action: {action_label}")
+        self._set_hint(self._last_action_label, self._last_action_tooltip(action_label))
+        self._last_action_label.setAccessibleName(self._last_action_accessible_name(action_label))
         self._actions_title.setText(self._recent_actions_title())
         self._set_hint(self._actions_title, self._recent_actions_title_tooltip())
         self._actions_title.setAccessibleName(self._actions_title.text())
         self._recent_actions_label.setText(self._recent_actions_summary())
-        self._recent_actions_label.setToolTip(self._recent_actions_tooltip())
+        self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
+        self._recent_actions_label.setAccessibleName(self._recent_actions_accessible_name())
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")

@@ -274,6 +274,12 @@ class TestStatusCenterPanel:
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no saved recent status center actions."
         assert panel._actions_title.accessibleName() == "Quick Actions"
+        assert panel._last_action_label.text() == "Last action: None"
+        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions saved."
+        assert panel._recent_actions_label.text() == "Recent actions: none saved."
+        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.accessibleName() == "Recent actions: none saved."
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.property("iconKey") == "project"
         assert panel._suggested_action_button.toolTip() == (
@@ -462,14 +468,19 @@ class TestStatusCenterPanel:
             "open_assets_panel",
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
+        assert panel._last_action_label.toolTip() == "Current status center action: Assets. 4 recent actions saved."
+        assert panel._last_action_label.accessibleName() == "Last action: Assets. 4 recent actions saved."
         assert panel._actions_title.text() == "Quick Actions (4 recent actions)"
         assert panel._actions_title.toolTip() == "Quick actions with 4 saved recent status center actions."
         assert panel._repeat_action_button.text() == "Repeat Assets"
         assert panel._repeat_action_button.accessibleName() == "Repeat Assets action"
         assert panel._repeat_action_button.property("iconKey") == "assets"
-        assert panel._recent_actions_label.text() == "Recent actions: Assets, Components, Structure, +1 more."
+        assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Components, Structure, +1 more."
         assert panel._recent_actions_label.toolTip() == (
             "4 recent status center actions: Assets, Components, Structure, Project"
+        )
+        assert panel._recent_actions_label.accessibleName() == (
+            "Recent actions summary: 4 recent actions saved. Assets, Components, Structure, Project."
         )
         assert panel._repeat_action_button.toolTip() == (
             "Repeat Assets. 4 recent status center actions saved. Use the menu arrow to replay an older action."
@@ -618,18 +629,25 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._last_action_label.text() == "Last action: None"
+        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions saved."
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.restore_view_state({"last_action": "open_page_fields", "recent_actions": ["open_page_fields", "open_debug"]})
         assert panel._last_action_label.text() == "Last action: Fields"
+        assert panel._last_action_label.toolTip() == "Current status center action: Fields. 2 recent actions saved."
+        assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions saved."
         assert panel._actions_title.text() == "Quick Actions (2 recent actions)"
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
         assert panel._repeat_action_button.accessibleName() == "Repeat Fields action"
         assert panel._repeat_action_button.property("iconKey") == "page"
-        assert panel._recent_actions_label.text() == "Recent actions: Fields, Debug Output."
+        assert panel._recent_actions_label.text() == "Recent actions (2): Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent status center actions: Fields, Debug Output"
+        assert panel._recent_actions_label.accessibleName() == (
+            "Recent actions summary: 2 recent actions saved. Fields, Debug Output."
+        )
         assert panel._repeat_action_button.toolTip() == (
             "Repeat Fields. 2 recent status center actions saved. Use the menu arrow to replay an older action."
         )
@@ -641,11 +659,14 @@ class TestStatusCenterPanel:
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
+        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions saved."
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel._recent_actions_label.text() == "Recent actions: none saved."
         assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.accessibleName() == "Recent actions: none saved."
         assert panel._repeat_action_button.toolTip() == "No recent action to repeat."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
@@ -737,11 +758,13 @@ class TestStatusCenterPanel:
         clear_action.trigger()
 
         assert panel._last_action_label.text() == "Last action: None"
+        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel._recent_actions_label.text() == "Recent actions: none saved."
         assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.accessibleName() == "Recent actions: none saved."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions"]
         panel.deleteLater()
