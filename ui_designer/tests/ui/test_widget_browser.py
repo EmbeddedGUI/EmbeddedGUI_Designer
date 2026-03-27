@@ -106,3 +106,29 @@ class TestWidgetBrowserPanel:
 
         assert inserted == ["slider"]
         panel.deleteLater()
+
+    def test_card_context_menu_can_reveal_and_toggle_favorite(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        card = next(card for card in panel._cards.values() if card.type_name == "button")
+        emitted = []
+        panel.reveal_requested.connect(emitted.append)
+
+        chosen_labels = iter(["Favorite", "Reveal in Structure"])
+
+        def fake_exec(menu, *_args, **_kwargs):
+            target = next(chosen_labels)
+            for action in menu.actions():
+                if action.text() == target:
+                    return action
+            return None
+
+        monkeypatch.setattr("ui_designer.ui.widget_browser.QMenu.exec_", fake_exec)
+
+        panel._show_card_menu("button", None)
+        assert "button" in isolated_config.widget_browser_favorites
+
+        panel._show_card_menu("button", None)
+        assert emitted == ["button"]
+        panel.deleteLater()

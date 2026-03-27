@@ -5897,6 +5897,51 @@ class TestMainWindowFileFlow:
         assert window._toolbar.objectName() == "main_toolbar"
         _close_window(window)
 
+    def test_workspace_panel_preferences_restore_from_config(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        isolated_config.workspace_left_panel = "widgets"
+        isolated_config.workspace_state = {"project_workspace_view": ProjectWorkspacePanel.VIEW_THUMBNAILS}
+        isolated_config.workspace_layout_version = 1
+
+        window = MainWindow("")
+
+        assert window._current_left_panel == "widgets"
+        assert window._left_panel_stack.currentWidget() is window.widget_browser
+        assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        _close_window(window)
+
+    def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WidgetBrowserInsertDemo"
+        project = _create_project(project_dir, "WidgetBrowserInsertDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        container = WidgetModel("group", name="container", x=0, y=0, width=200, height=200)
+        root.add_child(container)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([container], primary=container, sync_tree=True, sync_preview=True)
+
+        window._show_widget_browser_for_parent(container)
+        window._insert_widget_from_browser("button")
+
+        assert window._current_left_panel == "widgets"
+        assert len(container.children) == 1
+        inserted = container.children[0]
+        assert inserted.widget_type == "button"
+        assert window._selection_state.primary is inserted
+        assert isolated_config.widget_browser_recent[0] == "button"
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:

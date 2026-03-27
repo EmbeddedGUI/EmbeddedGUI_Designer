@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QMenu,
     QScrollArea,
     QSizePolicy,
     QToolButton,
@@ -30,6 +31,7 @@ class WidgetBrowserCard(QFrame):
     clicked = pyqtSignal(str)
     insert_requested = pyqtSignal(str)
     favorite_toggled = pyqtSignal(str)
+    menu_requested = pyqtSignal(str, object)
 
     def __init__(self, item, parent=None):
         super().__init__(parent)
@@ -72,7 +74,7 @@ class WidgetBrowserCard(QFrame):
         self._favorite_btn = QToolButton()
         self._favorite_btn.setObjectName("widget_browser_favorite_button")
         self._favorite_btn.setCheckable(True)
-        self._favorite_btn.setText("★")
+        self._favorite_btn.setText("*")
         self._favorite_btn.toggled.connect(lambda _checked: self.favorite_toggled.emit(self.type_name))
         header.addWidget(self._favorite_btn, 0, Qt.AlignTop)
         layout.addLayout(header)
@@ -119,11 +121,16 @@ class WidgetBrowserCard(QFrame):
             self.insert_requested.emit(self.type_name)
         super().mouseDoubleClickEvent(event)
 
+    def contextMenuEvent(self, event):
+        self.menu_requested.emit(self.type_name, event.globalPos())
+        event.accept()
+
 
 class WidgetBrowserPanel(QWidget):
     """Panel that organizes widgets with search, favorites, and recents."""
 
     insert_requested = pyqtSignal(str)
+    reveal_requested = pyqtSignal(str)
 
     _SPECIAL_CATEGORIES = (
         ("all", "All Widgets"),
@@ -312,6 +319,7 @@ class WidgetBrowserPanel(QWidget):
             card.clicked.connect(self._select_card)
             card.insert_requested.connect(self.insert_requested.emit)
             card.favorite_toggled.connect(self._toggle_favorite)
+            card.menu_requested.connect(self._show_card_menu)
             row = index // columns
             column = index % columns
             self._cards_layout.addWidget(card, row, column)
@@ -330,3 +338,18 @@ class WidgetBrowserPanel(QWidget):
     def _toggle_favorite(self, widget_type):
         self._config.toggle_widget_browser_favorite(widget_type)
         self.refresh()
+
+    def _show_card_menu(self, widget_type, global_pos):
+        self._select_card(widget_type)
+        is_favorite = widget_type in set(self._config.widget_browser_favorites)
+        menu = QMenu(self)
+        insert_action = menu.addAction("Insert")
+        favorite_action = menu.addAction("Unfavorite" if is_favorite else "Favorite")
+        reveal_action = menu.addAction("Reveal in Structure")
+        chosen = menu.exec_(global_pos)
+        if chosen == insert_action:
+            self.insert_requested.emit(widget_type)
+        elif chosen == favorite_action:
+            self._toggle_favorite(widget_type)
+        elif chosen == reveal_action:
+            self.reveal_requested.emit(widget_type)

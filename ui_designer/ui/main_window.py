@@ -71,6 +71,7 @@ from ..model.resource_usage import (
     rewrite_project_resource_references,
     rewrite_project_string_references,
 )
+from ..model.widget_registry import WidgetRegistry
 from ..model.structure_ops import (
     available_move_targets,
     describe_structure_actions,
@@ -354,6 +355,8 @@ class MainWindow(QMainWindow):
 
         self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
         self._project_workspace.setObjectName("project_workspace_panel")
+        saved_workspace_state = self._config.workspace_state if isinstance(self._config.workspace_state, dict) else {}
+        self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
 
         self._left_panel_stack = QStackedWidget()
         self._left_panel_pages = {
@@ -484,6 +487,8 @@ class MainWindow(QMainWindow):
         self.property_panel.user_code_requested.connect(self._on_user_code_requested)
 
         self.widget_browser.insert_requested.connect(self._insert_widget_from_browser)
+        self.widget_browser.reveal_requested.connect(lambda _widget_type: self._select_left_panel("structure"))
+        self._project_workspace.view_changed.connect(self._on_project_workspace_view_changed)
 
         # Preview panel
         self.preview_panel.selection_changed.connect(self._on_preview_selection_changed)
@@ -617,6 +622,11 @@ class MainWindow(QMainWindow):
         self._pending_insert_parent = None
         self._update_widget_browser_target()
         self.statusBar().showMessage(f"Inserted {WidgetRegistry.instance().display_name(widget_type)}.", 3000)
+
+    def _on_project_workspace_view_changed(self, view_name):
+        if not isinstance(self._config.workspace_state, dict):
+            self._config.workspace_state = {}
+        self._config.workspace_state["project_workspace_view"] = view_name or ProjectWorkspacePanel.VIEW_LIST
 
     def _show_inspector_tab(self, section, inner_section=None):
         section_map = {

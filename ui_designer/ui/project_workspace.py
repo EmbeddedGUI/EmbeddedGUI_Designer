@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QButtonGroup, QFrame, QPushButton, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
+
+from .iconography import make_icon
 
 
 class ProjectWorkspacePanel(QWidget):
     """Hosts project explorer list and page thumbnails in one panel."""
+
+    view_changed = pyqtSignal(str)
 
     VIEW_LIST = "list"
     VIEW_THUMBNAILS = "thumbnails"
@@ -36,8 +41,10 @@ class ProjectWorkspacePanel(QWidget):
         self._button_group.setExclusive(True)
         self._list_btn = QPushButton("List")
         self._list_btn.setCheckable(True)
+        self._list_btn.setIcon(make_icon("project"))
         self._thumb_btn = QPushButton("Thumbnails")
         self._thumb_btn.setCheckable(True)
+        self._thumb_btn.setIcon(make_icon("image"))
         self._button_group.addButton(self._list_btn)
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
@@ -62,6 +69,8 @@ class ProjectWorkspacePanel(QWidget):
         else:
             self._list_btn.setChecked(True)
             self._stack.setCurrentWidget(self._list_view)
+            view_name = self.VIEW_LIST
+        self.view_changed.emit(view_name)
 
     def current_view(self):
         if self._stack.currentWidget() is self._thumbnail_view:
