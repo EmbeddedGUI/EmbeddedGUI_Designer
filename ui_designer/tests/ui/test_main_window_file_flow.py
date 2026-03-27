@@ -5978,6 +5978,7 @@ class TestMainWindowCanvasActions:
         assert "Delete" in labels
         assert "Arrange" in labels
         assert "Structure" in labels
+        assert "Parent" in select_labels
         assert "Previous Sibling" in select_labels
         assert "Next Sibling" in select_labels
         assert "Previous Siblings" in select_labels
@@ -5990,6 +5991,7 @@ class TestMainWindowCanvasActions:
         assert "Path" in select_labels
         assert "Top-Level" in select_labels
         assert "Ancestors" in select_labels
+        assert "Children" in select_labels
         assert "Descendants" in select_labels
         assert "Subtree" in select_labels
         assert "Leaves" in select_labels
@@ -6001,6 +6003,7 @@ class TestMainWindowCanvasActions:
         assert "Locked" in select_labels
         assert "Managed" in select_labels
         assert "Free Position" in select_labels
+        assert "Siblings" in select_labels
         assert "Same Parent Type" in select_labels
         assert "Subtree Type" in select_labels
         assert "Same Type" in select_labels
