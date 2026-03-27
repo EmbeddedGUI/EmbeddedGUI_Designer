@@ -6354,6 +6354,73 @@ class TestMainWindowCanvasActions:
         assert "Structure" in labels
         _close_window(window)
 
+    def test_build_preview_context_menu_without_widget_reflects_empty_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewNoWidgetContextMenuStateDemo"
+        project = _create_project(project_dir, "PreviewNoWidgetContextMenuStateDemo", sdk_root)
+        project.get_startup_page().root_widget.add_child(WidgetModel("label", name="first"))
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._selection_state.set_widgets([], primary=None)
+        window._selected_widget = None
+        window._update_edit_actions()
+
+        menu = window._build_preview_context_menu(None)
+        actions = {action.text(): action for action in menu.actions() if action.text()}
+        arrange_actions = {
+            action.text(): action for action in _context_submenu(menu, "Arrange").actions() if action.text()
+        }
+        structure_menu = _context_submenu(menu, "Structure")
+        structure_actions = {action.text(): action for action in structure_menu.actions() if action.text()}
+
+        assert "Select" not in actions
+        assert actions["Select All"].isEnabled() is True
+        assert actions["Copy"].isEnabled() is False
+        assert actions["Cut"].isEnabled() is False
+        assert actions["Paste"].isEnabled() is False
+        assert actions["Duplicate"].isEnabled() is False
+        assert actions["Delete"].isEnabled() is False
+
+        assert arrange_actions["Align Left"].isEnabled() is False
+        assert arrange_actions["Distribute Horizontally"].isEnabled() is False
+        assert arrange_actions["Bring to Front"].isEnabled() is False
+        assert arrange_actions["Toggle Lock"].isEnabled() is False
+
+        assert structure_actions["Group Selection"].isEnabled() is False
+        assert structure_actions["Ungroup"].isEnabled() is False
+        assert structure_actions["Move Into..."].isEnabled() is False
+        assert structure_actions["Move Into Last Target"].isEnabled() is False
+        assert structure_actions["Clear Move Target History"].isEnabled() is False
+        assert structure_actions["Lift To Parent"].isEnabled() is False
+        assert structure_actions["Move Up"].isEnabled() is False
+        assert structure_actions["Move Down"].isEnabled() is False
+        assert structure_actions["Move To Top"].isEnabled() is False
+        assert structure_actions["Move To Bottom"].isEnabled() is False
+        quick_move_menu = next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into")
+        quick_move_texts = [action.text() for action in quick_move_menu.actions() if action.text()]
+        assert next(action for action in structure_menu.actions() if action.text() == "Quick Move Into").isEnabled() is True
+        assert "(No eligible target containers)" in quick_move_texts
+        assert "History" in quick_move_texts
+        menu.deleteLater()
+
+        window._clipboard_payload = {"widgets": []}
+        window._update_edit_actions()
+        menu = window._build_preview_context_menu(None)
+        actions = {action.text(): action for action in menu.actions() if action.text()}
+        assert actions["Paste"].isEnabled() is True
+        menu.deleteLater()
+
+        _close_window(window)
+
     def test_preview_context_menu_select_actions_sync_selection(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
