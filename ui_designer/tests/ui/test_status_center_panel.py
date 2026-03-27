@@ -7,6 +7,8 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
@@ -100,5 +102,30 @@ class TestStatusCenterPanel:
             "open_animations_inspector",
             "open_page_fields",
             "open_page_timers",
+        ]
+        panel.deleteLater()
+
+    def test_metric_cards_emit_expected_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        QTest.mouseClick(panel._sdk_card, Qt.LeftButton)
+        QTest.mouseClick(panel._compile_card, Qt.LeftButton)
+        QTest.mouseClick(panel._diag_card, Qt.LeftButton)
+        QTest.mouseClick(panel._preview_card, Qt.LeftButton)
+        QTest.mouseClick(panel._selection_card, Qt.LeftButton)
+        QTest.mouseClick(panel._dirty_card, Qt.LeftButton)
+
+        assert emitted == [
+            "open_project_panel",
+            "open_debug",
+            "open_diagnostics",
+            "open_debug",
+            "open_structure_panel",
+            "open_history",
         ]
         panel.deleteLater()

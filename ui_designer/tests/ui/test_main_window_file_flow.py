@@ -6025,6 +6025,20 @@ class TestMainWindowFileFlow:
         assert window._page_tools_tabs.currentIndex() == 0
         _close_window(window)
 
+    def test_status_center_tool_actions_switch_bottom_tabs(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._on_status_center_action_requested("open_history")
+        assert window._bottom_panel_visible is True
+        assert window._bottom_tabs.currentIndex() == 1
+        window._on_status_center_action_requested("open_debug")
+        assert window._bottom_tabs.currentIndex() == 2
+        window._on_status_center_action_requested("open_diagnostics")
+        assert window._bottom_tabs.currentIndex() == 0
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:

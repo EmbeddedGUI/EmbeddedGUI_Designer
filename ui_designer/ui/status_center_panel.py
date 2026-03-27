@@ -8,6 +8,19 @@ from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QProgressB
 from .iconography import make_icon
 
 
+class _ClickableFrame(QFrame):
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
+
+
 class StatusCenterPanel(QWidget):
     """Workspace status dashboard with quick-open actions."""
 
@@ -46,12 +59,24 @@ class StatusCenterPanel(QWidget):
         metrics_layout.setContentsMargins(10, 10, 10, 10)
         metrics_layout.setHorizontalSpacing(10)
         metrics_layout.setVerticalSpacing(10)
-        self._sdk_value = self._create_metric(metrics_layout, 0, 0, "SDK", "SDK Missing", "assets")
-        self._compile_value = self._create_metric(metrics_layout, 0, 1, "Compile", "Unavailable", "compile")
-        self._diag_value = self._create_metric(metrics_layout, 1, 0, "Diagnostics", "0 errors", "diagnostics")
-        self._preview_value = self._create_metric(metrics_layout, 1, 1, "Preview", "Preview Idle", "debug")
-        self._selection_value = self._create_metric(metrics_layout, 2, 0, "Selection", "0 widgets", "structure")
-        self._dirty_value = self._create_metric(metrics_layout, 2, 1, "Dirty Pages", "0", "history")
+        self._sdk_value, self._sdk_card = self._create_metric(
+            metrics_layout, 0, 0, "SDK", "SDK Missing", "assets", "open_project_panel"
+        )
+        self._compile_value, self._compile_card = self._create_metric(
+            metrics_layout, 0, 1, "Compile", "Unavailable", "compile", "open_debug"
+        )
+        self._diag_value, self._diag_card = self._create_metric(
+            metrics_layout, 1, 0, "Diagnostics", "0 errors", "diagnostics", "open_diagnostics"
+        )
+        self._preview_value, self._preview_card = self._create_metric(
+            metrics_layout, 1, 1, "Preview", "Preview Idle", "debug", "open_debug"
+        )
+        self._selection_value, self._selection_card = self._create_metric(
+            metrics_layout, 2, 0, "Selection", "0 widgets", "structure", "open_structure_panel"
+        )
+        self._dirty_value, self._dirty_card = self._create_metric(
+            metrics_layout, 2, 1, "Dirty Pages", "0", "history", "open_history"
+        )
         layout.addWidget(metrics)
 
         health = QFrame()
@@ -154,9 +179,12 @@ class StatusCenterPanel(QWidget):
 
         layout.addStretch()
 
-    def _create_metric(self, grid_layout, row, col, label, value, icon_key):
-        card = QFrame()
+    def _create_metric(self, grid_layout, row, col, label, value, icon_key, action_key=""):
+        card = _ClickableFrame() if action_key else QFrame()
         card.setObjectName("status_center_metric_card")
+        if action_key:
+            card.clicked.connect(lambda key=action_key: self._emit_action(key))
+            card.setToolTip(f"Open {label}")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(10, 10, 10, 10)
         card_layout.setSpacing(6)
@@ -174,7 +202,7 @@ class StatusCenterPanel(QWidget):
         value_label.setObjectName("status_center_metric_value")
         card_layout.addWidget(value_label)
         grid_layout.addWidget(card, row, col)
-        return value_label
+        return value_label, card
 
     def _create_health_row(self, host_layout, label, icon_key, bar_object_name):
         row = QFrame()
