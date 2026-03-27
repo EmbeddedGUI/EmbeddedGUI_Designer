@@ -697,6 +697,11 @@ class StatusCenterPanel(QWidget):
         status = str(workspace_chip_label or "").strip() or "Ready"
         return f"Status Center focused on {context}. {status}."
 
+    def _summary_accessible_name(self, label, summary_text):
+        prefix = str(label or "").strip() or "Summary"
+        summary = str(summary_text or "").strip()
+        return f"{prefix}: {summary}" if summary else prefix
+
     def _suggested_action_state(
         self,
         *,
@@ -974,6 +979,9 @@ class StatusCenterPanel(QWidget):
         suggested_summary = f"Guidance: {suggested_hint}"
         self._suggested_action_summary_label.setText(suggested_summary)
         self._set_hint(self._suggested_action_summary_label, suggested_summary)
+        self._suggested_action_summary_label.setAccessibleName(
+            self._summary_accessible_name("Suggested action guidance", suggested_summary)
+        )
         workspace_chip_label, workspace_chip_tone = self._workspace_chip_state(
             sdk_ready=sdk_ready,
             can_compile=can_compile,
@@ -1013,6 +1021,9 @@ class StatusCenterPanel(QWidget):
         )
         self._workspace_summary_label.setText(workspace_summary)
         self._set_hint(self._workspace_summary_label, workspace_summary)
+        self._workspace_summary_label.setAccessibleName(
+            self._summary_accessible_name("Workspace summary", workspace_summary)
+        )
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
@@ -1037,6 +1048,9 @@ class StatusCenterPanel(QWidget):
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
         self._set_hint(self._health_summary_label, health_summary)
+        self._health_summary_label.setAccessibleName(
+            self._summary_accessible_name("Diagnostic summary", health_summary)
+        )
         if error_count > 0:
             self._health_chip_action = "open_error_diagnostics"
             self._set_chip_text(self._health_chip, self._counted_label("Critical", error_count), "danger")
@@ -1083,6 +1097,8 @@ class StatusCenterPanel(QWidget):
             self._set_hint(self._runtime_title, self._runtime_title_tooltip(runtime_text))
             self._runtime_title.setAccessibleName(self._runtime_title.text())
             self._runtime_label.setText(runtime_text)
+            self._set_hint(self._runtime_label, runtime_text)
+            self._runtime_label.setAccessibleName(f"Runtime details: {runtime_text}")
             self._set_chip_text(self._runtime_chip, "Issue", "danger")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
             self._runtime_chip.setAccessibleName("Runtime status: Issue")
@@ -1093,6 +1109,8 @@ class StatusCenterPanel(QWidget):
             self._set_hint(self._runtime_title, self._runtime_title_tooltip(""))
             self._runtime_title.setAccessibleName(self._runtime_title.text())
             self._runtime_label.setText("No runtime errors.")
+            self._set_hint(self._runtime_label, "No runtime errors.")
+            self._runtime_label.setAccessibleName("Runtime details: No runtime errors.")
             self._set_chip_text(self._runtime_chip, "Clear", "success")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
             self._runtime_chip.setAccessibleName("Runtime status: Clear")
