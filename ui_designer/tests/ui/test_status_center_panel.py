@@ -143,12 +143,28 @@ class TestStatusCenterPanel:
         assert panel._history_btn.toolTip() == "Open History. 2 dirty pages."
         assert panel._debug_btn.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._project_btn.toolTip() == "Open Project. SDK workspace is ready."
+        assert panel._structure_btn.text() == "Structure (1)"
         assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
         assert panel._diag_btn.statusTip() == panel._diag_btn.toolTip()
         assert panel._history_btn.statusTip() == panel._history_btn.toolTip()
+        panel.deleteLater()
+
+    def test_static_quick_action_buttons_expose_default_hints(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        assert panel._components_btn.toolTip() == "Open Components."
+        assert panel._components_btn.statusTip() == "Open Components."
+        assert panel._components_btn.accessibleName() == "Components action"
+        assert panel._assets_btn.toolTip() == "Open Assets."
+        assert panel._properties_btn.toolTip() == "Open Properties."
+        assert panel._animations_btn.toolTip() == "Open Animations."
+        assert panel._fields_btn.toolTip() == "Open Fields."
+        assert panel._timers_btn.toolTip() == "Open Timers."
         panel.deleteLater()
 
     def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):

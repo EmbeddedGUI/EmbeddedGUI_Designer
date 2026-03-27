@@ -331,6 +331,8 @@ class StatusCenterPanel(QWidget):
         button = QPushButton(text)
         button.setProperty("baseText", text)
         button.setIcon(make_icon(icon_key))
+        button.setAccessibleName(f"{self._action_label(action_key)} action")
+        self._set_hint(button, f"Open {self._action_label(action_key)}.")
         button.clicked.connect(lambda checked=False, key=action_key: self._emit_action(key))
         return button
 
@@ -529,6 +531,7 @@ class StatusCenterPanel(QWidget):
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
         self._set_button_count_text(self._diag_btn, diag_total)
         self._set_button_count_text(self._history_btn, dirty_count)
+        self._set_button_count_text(self._structure_btn, selection_total)
         self._set_hint(
             self._sdk_card,
             "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
