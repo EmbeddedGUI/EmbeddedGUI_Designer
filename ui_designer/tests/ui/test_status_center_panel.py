@@ -280,6 +280,11 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions: none saved."
         assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none saved."
+        assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
+        assert panel._suggested_action_label.toolTip() == (
+            "Suggested next step in Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
+        assert panel._suggested_action_label.accessibleName() == "Suggested next step (Workspace): Configure SDK"
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.property("iconKey") == "project"
         assert panel._suggested_action_button.toolTip() == (
@@ -328,12 +333,14 @@ class TestStatusCenterPanel:
 
         panel = StatusCenterPanel()
 
+        assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_summary_label.text() == (
             "Guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
@@ -342,6 +349,7 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
+        assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Review First Warning (2)"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
@@ -350,30 +358,44 @@ class TestStatusCenterPanel:
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
+        assert panel._suggested_action_label.text() == "Suggested next step (Runtime):"
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect the latest runtime output. Bridge lost"
 
+        panel.set_status(sdk_ready=True, can_compile=False)
+        assert panel._suggested_action_label.text() == "Suggested next step (Build):"
+        assert panel._suggested_action_button.text() == "Check Compile Output"
+        assert panel._suggested_action_button.property("iconKey") == "debug"
+        assert panel._workspace_chip.property("iconKey") == "debug"
+        assert panel._suggested_action_summary_label.text() == (
+            "Guidance: Open Debug Output to inspect compile availability. Compile pipeline is unavailable."
+        )
+
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        assert panel._suggested_action_label.text() == "Suggested next step (History):"
         assert panel._suggested_action_button.text() == "Review History (2)"
         assert panel._suggested_action_button.property("iconKey") == "history"
         assert panel._workspace_chip.property("iconKey") == "history"
         assert panel._suggested_action_summary_label.text() == "Guidance: Review unsaved changes in History. 2 dirty pages pending."
 
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
+        assert panel._suggested_action_label.text() == "Suggested next step (Selection):"
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
         assert panel._suggested_action_button.property("iconKey") == "structure"
         assert panel._workspace_chip.property("iconKey") == "structure"
         assert panel._suggested_action_summary_label.text() == "Guidance: Open Structure for the current selection. 3 widgets selected."
 
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
+        assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == "Guidance: Inspect informational diagnostics. 2 info items active."
 
         panel.set_status(sdk_ready=True, can_compile=True)
+        assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Open Diagnostics"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"

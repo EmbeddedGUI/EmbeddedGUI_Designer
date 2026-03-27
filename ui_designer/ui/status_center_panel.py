@@ -684,6 +684,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_first_error",
                 self._counted_label("Fix First Error", error_count),
+                "Diagnostics",
                 "diagnostics",
                 f"Start with the first error in Diagnostics. {self._active_count_hint(error_count, 'error', 'errors')}",
             )
@@ -691,6 +692,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_first_warning",
                 self._counted_label("Review First Warning", warning_count),
+                "Diagnostics",
                 "diagnostics",
                 f"Review the first warning in Diagnostics. {self._active_count_hint(warning_count, 'warning', 'warnings')}",
             )
@@ -698,6 +700,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_debug",
                 "Inspect Debug Output",
+                "Runtime",
                 "debug",
                 f"Inspect the latest runtime output. {runtime_text}",
             )
@@ -705,6 +708,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_project_panel",
                 "Configure SDK",
+                "Workspace",
                 "project",
                 "Open Project to configure the SDK workspace. SDK root is missing or invalid.",
             )
@@ -712,6 +716,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_debug",
                 "Check Compile Output",
+                "Build",
                 "debug",
                 "Open Debug Output to inspect compile availability. Compile pipeline is unavailable.",
             )
@@ -719,6 +724,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_history",
                 self._counted_label("Review History", dirty_count),
+                "History",
                 "history",
                 f"Review unsaved changes in History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')} pending.",
             )
@@ -726,6 +732,7 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_structure_panel",
                 self._counted_label("Inspect Selection", selection_total),
+                "Selection",
                 "structure",
                 f"Open Structure for the current selection. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
             )
@@ -733,10 +740,28 @@ class StatusCenterPanel(QWidget):
             return (
                 "open_info_diagnostics",
                 self._counted_label("Inspect Info", info_count),
+                "Diagnostics",
                 "debug",
                 f"Inspect informational diagnostics. {self._active_count_hint(info_count, 'info item', 'info items')}",
             )
-        return ("open_diagnostics", "Open Diagnostics", "diagnostics", "Open Diagnostics for a full health review.")
+        return (
+            "open_diagnostics",
+            "Open Diagnostics",
+            "Diagnostics",
+            "diagnostics",
+            "Open Diagnostics for a full health review.",
+        )
+
+    def _suggested_action_title_text(self, suggested_context):
+        context = str(suggested_context or "").strip() or "Status"
+        return f"Suggested next step ({context}):"
+
+    def _suggested_action_title_tooltip(self, suggested_context, suggested_hint):
+        context = str(suggested_context or "").strip() or "status"
+        hint = str(suggested_hint or "").strip()
+        if hint:
+            return f"Suggested next step in {context}. {hint}"
+        return f"Suggested next step in {context}."
 
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
@@ -895,6 +920,7 @@ class StatusCenterPanel(QWidget):
         (
             self._suggested_action_key,
             suggested_label,
+            suggested_context,
             suggested_icon,
             suggested_hint,
         ) = self._suggested_action_state(
@@ -906,6 +932,11 @@ class StatusCenterPanel(QWidget):
             warning_count=warning_count,
             info_count=info_count,
             runtime_text=runtime_text,
+        )
+        self._suggested_action_label.setText(self._suggested_action_title_text(suggested_context))
+        self._set_hint(self._suggested_action_label, self._suggested_action_title_tooltip(suggested_context, suggested_hint))
+        self._suggested_action_label.setAccessibleName(
+            f"{self._suggested_action_label.text()} {suggested_label}"
         )
         self._suggested_action_button.setText(suggested_label)
         self._set_widget_icon(self._suggested_action_button, suggested_icon)
