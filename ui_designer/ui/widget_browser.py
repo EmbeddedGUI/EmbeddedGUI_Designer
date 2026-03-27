@@ -242,6 +242,14 @@ class WidgetBrowserPanel(QWidget):
         self._search.setFocus()
         self._search.selectAll()
 
+    def select_widget_type(self, widget_type):
+        widget_type = str(widget_type or "").strip()
+        if not widget_type:
+            return
+        self._selected_type = widget_type
+        for card in self._cards.values():
+            card.set_selected(card.type_name == widget_type)
+
     def record_insert(self, widget_type):
         self._config.record_widget_browser_recent(widget_type)
         self.refresh()

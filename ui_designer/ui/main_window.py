@@ -4224,6 +4224,8 @@ class MainWindow(QMainWindow):
         self._update_diagnostics_panel()
         self._show_selection_feedback()
         self._update_widget_browser_target()
+        if hasattr(self, "widget_browser") and self._selection_state.primary is not None:
+            self.widget_browser.select_widget_type(self._selection_state.primary.widget_type)
         self._update_workspace_chips()
 
     def _clear_selection(self, sync_tree=True, sync_preview=True):

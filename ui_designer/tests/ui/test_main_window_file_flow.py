@@ -5970,6 +5970,29 @@ class TestMainWindowFileFlow:
         assert "Revealed Button in structure." == window.statusBar().currentMessage()
         _close_window(window)
 
+    def test_widget_browser_highlights_selected_widget_type(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WidgetBrowserSelectionDemo"
+        project = _create_project(project_dir, "WidgetBrowserSelectionDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
+        root.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._set_selection([label], primary=label, sync_tree=True, sync_preview=True)
+
+        assert window.widget_browser._selected_type == "label"
+        _close_window(window)
+
 
 @_skip_no_qt
 class TestMainWindowCanvasActions:
