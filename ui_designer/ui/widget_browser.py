@@ -88,6 +88,21 @@ class WidgetBrowserCard(QFrame):
         preview.setPixmap(make_widget_preview(self._item.get("preview_kind", "widget"), size=(180, 104)))
         layout.addWidget(preview)
 
+        chips_row = QHBoxLayout()
+        chips_row.setContentsMargins(0, 0, 0, 0)
+        chips_row.setSpacing(6)
+        scenario = str(self._item.get("scenario", "") or "").strip()
+        if scenario:
+            chips_row.addWidget(self._build_info_chip(scenario, "accent"))
+        complexity = str(self._item.get("complexity", "") or "").strip().lower()
+        complexity_tone = {"basic": "success", "intermediate": "warning", "advanced": "danger"}.get(complexity, "accent")
+        if complexity:
+            chips_row.addWidget(self._build_info_chip(complexity.title(), complexity_tone))
+        if bool(self._item.get("is_container")):
+            chips_row.addWidget(self._build_info_chip("Container", "success"))
+        chips_row.addStretch()
+        layout.addLayout(chips_row)
+
         keywords = ", ".join(self._item.get("keywords", [])[:4])
         keywords_label = QLabel(keywords)
         keywords_label.setObjectName("widget_browser_keywords")
@@ -101,6 +116,12 @@ class WidgetBrowserCard(QFrame):
         action_row.addWidget(insert_btn)
         action_row.addStretch()
         layout.addLayout(action_row)
+
+    def _build_info_chip(self, text, tone):
+        chip = QLabel(str(text or "").strip())
+        chip.setObjectName("widget_browser_card_chip")
+        chip.setProperty("chipTone", str(tone or "accent"))
+        return chip
 
     def set_selected(self, selected):
         self._selected = bool(selected)
@@ -150,9 +171,11 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target_label = "Current page root"
         self._cards = {}
         self._tag_buttons = {}
+        self._lane_buttons = {}
         self._suspend_filter_persist = False
         self._init_ui()
         self._populate_categories()
+        self._populate_quick_lanes()
         self._populate_tags()
         self.refresh()
 
@@ -208,6 +231,22 @@ class WidgetBrowserPanel(QWidget):
         self._search.textChanged.connect(self.refresh)
         search_row.addWidget(self._search, 1)
         layout.addLayout(search_row)
+
+        lanes_frame = QFrame()
+        lanes_frame.setObjectName("widget_browser_lanes")
+        lanes_layout = QVBoxLayout(lanes_frame)
+        lanes_layout.setContentsMargins(10, 10, 10, 10)
+        lanes_layout.setSpacing(8)
+        lanes_title = QLabel("Quick Lanes")
+        lanes_title.setObjectName("workspace_section_subtitle")
+        lanes_layout.addWidget(lanes_title)
+        self._lanes_grid_host = QWidget()
+        self._lanes_grid = QGridLayout(self._lanes_grid_host)
+        self._lanes_grid.setContentsMargins(0, 0, 0, 0)
+        self._lanes_grid.setHorizontalSpacing(8)
+        self._lanes_grid.setVerticalSpacing(8)
+        lanes_layout.addWidget(self._lanes_grid_host)
+        layout.addWidget(lanes_frame)
 
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
@@ -270,15 +309,7 @@ class WidgetBrowserPanel(QWidget):
         for label in self._registry.browser_scenarios():
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, f"scenario:{label}")
-            icon_key = {
-                "Layout & Containers": "layout",
-                "Input & Forms": "input",
-                "Navigation & Flow": "navigation",
-                "Data & Visualization": "chart",
-                "Feedback & Status": "status",
-                "Media & Content": "media",
-                "Decoration": "assets",
-            }.get(label, "widgets")
+            icon_key = self._scenario_icon_key(label)
             item.setIcon(make_icon(icon_key, size=18))
             self._category_list.addItem(item)
         default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
@@ -292,6 +323,60 @@ class WidgetBrowserPanel(QWidget):
                 break
         self._category_list.setCurrentRow(selected_row)
         self._suspend_filter_persist = False
+
+    @staticmethod
+    def _scenario_icon_key(label):
+        return {
+            "Layout & Containers": "layout",
+            "Input & Forms": "input",
+            "Navigation & Flow": "navigation",
+            "Data & Visualization": "chart",
+            "Feedback & Status": "status",
+            "Media & Content": "media",
+            "Decoration": "assets",
+        }.get(label, "widgets")
+
+    @staticmethod
+    def _scenario_short_label(label):
+        text = str(label or "").strip()
+        if not text:
+            return "Scenario"
+        return text.split("&", 1)[0].strip().split(" ", 1)[0]
+
+    def _lane_definitions(self):
+        lanes = [
+            ("all", "All", "widgets"),
+            ("favorites", "Favorites", "tag"),
+            ("recent", "Recent", "history"),
+            ("containers", "Containers", "layout"),
+        ]
+        for scenario in self._registry.browser_scenarios():
+            lane_id = f"scenario:{scenario}"
+            lanes.append((lane_id, self._scenario_short_label(scenario), self._scenario_icon_key(scenario)))
+        return lanes[:8]
+
+    def _populate_quick_lanes(self):
+        while self._lanes_grid.count():
+            item = self._lanes_grid.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._lane_buttons = {}
+        columns = 4
+        for index, (lane_id, label, icon_key) in enumerate(self._lane_definitions()):
+            button = QToolButton()
+            button.setObjectName("widget_browser_lane")
+            button.setCheckable(True)
+            button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            button.setIcon(make_icon(icon_key, size=18))
+            button.setText(str(label))
+            button.clicked.connect(lambda checked=False, value=lane_id: self._set_category_by_id(value))
+            row = index // columns
+            column = index % columns
+            self._lanes_grid.addWidget(button, row, column)
+            self._lane_buttons[lane_id.lower()] = button
+        for col in range(columns):
+            self._lanes_grid.setColumnStretch(col, 1)
 
     def _populate_tags(self):
         while self._tags_layout.count():
@@ -380,6 +465,7 @@ class WidgetBrowserPanel(QWidget):
         items = self._filtered_items()
         self._rebuild_cards(items)
         self._update_browser_stats(len(items))
+        self._update_quick_lanes()
 
     def _update_insert_target(self):
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
@@ -401,6 +487,47 @@ class WidgetBrowserPanel(QWidget):
         self._set_chip_text(self._visible_count_chip, f"Visible {visible_count}/{total}", tone)
         self._set_chip_text(self._favorites_count_chip, f"Favorites {favorites}", "success" if favorites else "accent")
         self._set_chip_text(self._recent_count_chip, f"Recent {recent}", "warning" if recent else "accent")
+
+    def _lane_counts(self):
+        items = self._registry.browser_items(addable_only=True)
+        favorites = set(self._config.widget_browser_favorites)
+        recent = set(self._config.widget_browser_recent)
+        counts = {
+            "all": len(items),
+            "favorites": 0,
+            "recent": 0,
+            "containers": 0,
+        }
+        for item in items:
+            type_name = item.get("type_name")
+            if type_name in favorites:
+                counts["favorites"] += 1
+            if type_name in recent:
+                counts["recent"] += 1
+            if bool(item.get("is_container")):
+                counts["containers"] += 1
+            scenario = str(item.get("scenario", "") or "").strip()
+            if scenario:
+                lane_id = f"scenario:{scenario}".lower()
+                counts[lane_id] = counts.get(lane_id, 0) + 1
+        return counts
+
+    def _update_quick_lanes(self):
+        if not self._lane_buttons:
+            return
+        selected = str(self._selected_category() or "all").strip().lower()
+        counts = self._lane_counts()
+        for lane_id, button in self._lane_buttons.items():
+            base_label = button.text().split("\n", 1)[0]
+            count = int(counts.get(lane_id, 0) or 0)
+            button.setText(f"{base_label}\n{count}")
+            button.blockSignals(True)
+            button.setChecked(lane_id == selected)
+            button.blockSignals(False)
+            button.setProperty("emptyLane", count == 0)
+            button.style().unpolish(button)
+            button.style().polish(button)
+            button.update()
 
     def _on_category_changed(self, _row):
         if self._suspend_filter_persist:
@@ -510,6 +637,11 @@ class WidgetBrowserPanel(QWidget):
             empty_layout = QVBoxLayout(empty)
             empty_layout.setContentsMargins(20, 20, 20, 20)
             empty_layout.setSpacing(10)
+
+            icon_label = QLabel()
+            icon_label.setAlignment(Qt.AlignCenter)
+            icon_label.setPixmap(make_icon("widgets", size=36).pixmap(36, 36))
+            empty_layout.addWidget(icon_label)
 
             title = QLabel("No widgets match the current filters.")
             title.setObjectName("workspace_section_title")

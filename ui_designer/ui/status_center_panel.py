@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
 from .iconography import make_icon
 
@@ -53,6 +53,30 @@ class StatusCenterPanel(QWidget):
         self._selection_value = self._create_metric(metrics_layout, 2, 0, "Selection", "0 widgets", "structure")
         self._dirty_value = self._create_metric(metrics_layout, 2, 1, "Dirty Pages", "0", "history")
         layout.addWidget(metrics)
+
+        health = QFrame()
+        health.setObjectName("status_center_health")
+        health_layout = QVBoxLayout(health)
+        health_layout.setContentsMargins(12, 12, 12, 12)
+        health_layout.setSpacing(8)
+
+        health_title_row = QHBoxLayout()
+        health_title_row.setContentsMargins(0, 0, 0, 0)
+        health_title_row.setSpacing(8)
+        health_title = QLabel("Diagnostic Mix")
+        health_title.setObjectName("workspace_section_title")
+        health_title_row.addWidget(health_title)
+        self._health_chip = QLabel("Stable")
+        self._health_chip.setObjectName("workspace_status_chip")
+        self._health_chip.setProperty("chipTone", "success")
+        health_title_row.addStretch()
+        health_title_row.addWidget(self._health_chip)
+        health_layout.addLayout(health_title_row)
+
+        self._error_value, self._error_bar = self._create_health_row(health_layout, "Errors", "diagnostics", "status_center_health_error_bar")
+        self._warning_value, self._warning_bar = self._create_health_row(health_layout, "Warnings", "history", "status_center_health_warning_bar")
+        self._info_value, self._info_bar = self._create_health_row(health_layout, "Info", "debug", "status_center_health_info_bar")
+        layout.addWidget(health)
 
         quick_actions = QFrame()
         quick_actions.setObjectName("status_center_actions")
@@ -124,6 +148,44 @@ class StatusCenterPanel(QWidget):
         grid_layout.addWidget(card, row, col)
         return value_label
 
+    def _create_health_row(self, host_layout, label, icon_key, bar_object_name):
+        row = QFrame()
+        row.setObjectName("status_center_health_row")
+        row_layout = QVBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(4)
+
+        top = QHBoxLayout()
+        top.setContentsMargins(0, 0, 0, 0)
+        top.setSpacing(6)
+        icon_label = QLabel()
+        icon_label.setPixmap(make_icon(icon_key, size=14).pixmap(14, 14))
+        top.addWidget(icon_label, 0, Qt.AlignVCenter)
+        title = QLabel(label)
+        title.setObjectName("workspace_section_subtitle")
+        top.addWidget(title, 1)
+        value_label = QLabel("0")
+        value_label.setObjectName("status_center_health_value")
+        top.addWidget(value_label, 0, Qt.AlignRight)
+        row_layout.addLayout(top)
+
+        bar = QProgressBar()
+        bar.setObjectName(bar_object_name)
+        bar.setTextVisible(False)
+        bar.setRange(0, 100)
+        bar.setValue(0)
+        row_layout.addWidget(bar)
+        host_layout.addWidget(row)
+        return value_label, bar
+
+    def _set_chip_text(self, chip, text, tone=None):
+        chip.setText(str(text or ""))
+        if tone is not None:
+            chip.setProperty("chipTone", str(tone or "accent"))
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
     def _build_action_button(self, text, icon_key, action_key):
         button = QPushButton(text)
         button.setIcon(make_icon(icon_key))
@@ -166,6 +228,22 @@ class StatusCenterPanel(QWidget):
             f"{max(int(diagnostics_warnings or 0), 0)} warnings, "
             f"{max(int(diagnostics_infos or 0), 0)} info"
         )
+        error_count = max(int(diagnostics_errors or 0), 0)
+        warning_count = max(int(diagnostics_warnings or 0), 0)
+        info_count = max(int(diagnostics_infos or 0), 0)
+        total = max(error_count + warning_count + info_count, 1)
+        self._error_value.setText(str(error_count))
+        self._warning_value.setText(str(warning_count))
+        self._info_value.setText(str(info_count))
+        self._error_bar.setValue(int(round((error_count * 100.0) / total)))
+        self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
+        self._info_bar.setValue(int(round((info_count * 100.0) / total)))
+        if error_count > 0:
+            self._set_chip_text(self._health_chip, "Critical", "danger")
+        elif warning_count > 0:
+            self._set_chip_text(self._health_chip, "Attention", "warning")
+        else:
+            self._set_chip_text(self._health_chip, "Stable", "success")
         self._first_error_btn.setEnabled(int(diagnostics_errors or 0) > 0)
         self._first_warning_btn.setEnabled(int(diagnostics_warnings or 0) > 0)
         runtime_text = str(runtime_error or "").strip()

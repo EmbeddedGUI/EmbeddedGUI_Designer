@@ -389,6 +389,37 @@ QToolButton#workspace_status_chip:hover {{
     border-radius: 12px;
 }}
 
+#widget_browser_lanes {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 12px;
+}}
+
+QToolButton#widget_browser_lane {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 10px;
+    color: {t['text_muted']};
+    padding: 8px 10px;
+    text-align: left;
+}}
+
+QToolButton#widget_browser_lane:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QToolButton#widget_browser_lane:checked {{
+    background-color: {t['accent_soft']};
+    border-color: {t['accent']};
+    color: {t['accent_hover']};
+}}
+
+QToolButton#widget_browser_lane[emptyLane="true"] {{
+    color: {t['text_soft']};
+}}
+
 QToolButton#widget_browser_tag {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
@@ -440,6 +471,36 @@ QToolButton#widget_browser_tag:checked {{
     font-size: 11px;
 }}
 
+#widget_browser_card_chip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: 999px;
+    color: {t['text_muted']};
+    padding: 2px 8px;
+    font-size: 10px;
+}}
+
+#widget_browser_card_chip[chipTone="accent"] {{
+    background-color: {t['accent_soft']};
+    color: {t['accent_hover']};
+    border-color: {t['accent']};
+}}
+
+#widget_browser_card_chip[chipTone="success"] {{
+    color: {t['success']};
+    border-color: {t['success']};
+}}
+
+#widget_browser_card_chip[chipTone="warning"] {{
+    color: {t['warning']};
+    border-color: {t['warning']};
+}}
+
+#widget_browser_card_chip[chipTone="danger"] {{
+    color: {t['danger']};
+    border-color: {t['danger']};
+}}
+
 #widget_browser_preview {{
     background-color: transparent;
 }}
@@ -458,6 +519,7 @@ QToolButton#widget_browser_tag:checked {{
 
 #status_center_header,
 #status_center_metrics,
+#status_center_health,
 #status_center_actions,
 #status_center_runtime {{
     background-color: {t['panel']};
@@ -475,6 +537,37 @@ QToolButton#widget_browser_tag:checked {{
     color: {t['text']};
     font-size: 14px;
     font-weight: 600;
+}}
+
+#status_center_health_value {{
+    color: {t['text']};
+    font-size: 12px;
+    font-weight: 600;
+}}
+
+QProgressBar#status_center_health_error_bar,
+QProgressBar#status_center_health_warning_bar,
+QProgressBar#status_center_health_info_bar {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 5px;
+    min-height: 10px;
+    max-height: 10px;
+}}
+
+QProgressBar#status_center_health_error_bar::chunk {{
+    background-color: {t['danger']};
+    border-radius: 4px;
+}}
+
+QProgressBar#status_center_health_warning_bar::chunk {{
+    background-color: {t['warning']};
+    border-radius: 4px;
+}}
+
+QProgressBar#status_center_health_info_bar::chunk {{
+    background-color: {t['accent']};
+    border-radius: 4px;
 }}
 """
 

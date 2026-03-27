@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QLabel
 
     _has_pyqt5 = True
 except ImportError:
@@ -181,4 +181,34 @@ class TestWidgetBrowserPanel:
 
         panel._clear_tags_btn.click()
         assert isolated_config.widget_browser_active_tags == []
+        panel.deleteLater()
+
+    def test_quick_lane_click_updates_active_category_and_results(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        isolated_config.widget_browser_favorites = ["button"]
+        panel = WidgetBrowserPanel()
+        favorites_lane = panel._lane_buttons.get("favorites")
+
+        assert favorites_lane is not None
+        favorites_lane.click()
+
+        assert panel._selected_category() == "favorites"
+        assert [card.type_name for card in panel._cards.values()] == ["button"]
+        assert favorites_lane.isChecked() is True
+        panel.deleteLater()
+
+    def test_container_cards_include_visual_info_chips(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        container_card = next(card for card in panel._cards.values() if card.type_name == "linearlayout")
+        chips = [
+            label.text()
+            for label in container_card.findChildren(QLabel)
+            if label.objectName() == "widget_browser_card_chip"
+        ]
+
+        assert "Container" in chips
+        assert len(chips) >= 2
         panel.deleteLater()
