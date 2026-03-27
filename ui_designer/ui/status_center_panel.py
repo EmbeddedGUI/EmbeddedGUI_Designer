@@ -513,6 +513,7 @@ class StatusCenterPanel(QWidget):
         errors = max(int(error_count or 0), 0)
         warnings = max(int(warning_count or 0), 0)
         infos = max(int(info_count or 0), 0)
+        total = errors + warnings + infos
         parts = []
         if errors > 0:
             parts.append(self._count_label(errors, "error", "errors"))
@@ -522,11 +523,23 @@ class StatusCenterPanel(QWidget):
             parts.append(self._count_label(infos, "info item", "info items"))
         if not parts:
             return "Summary: Diagnostics are clear."
+        dominant_label = ""
+        dominant_count = 0
+        if errors >= warnings and errors >= infos:
+            dominant_label = "Errors"
+            dominant_count = errors
+        elif warnings >= infos:
+            dominant_label = "Warnings"
+            dominant_count = warnings
+        else:
+            dominant_label = "Info"
+            dominant_count = infos
+        dominant_share = int(round((dominant_count * 100.0) / max(total, 1)))
         if errors > 0:
-            return f"Summary: {', '.join(parts)} need attention."
+            return f"Summary: {', '.join(parts)} need attention. {dominant_label} lead at {dominant_share}%."
         if warnings > 0:
-            return f"Summary: {', '.join(parts)} need review."
-        return f"Summary: {', '.join(parts)} available."
+            return f"Summary: {', '.join(parts)} need review. {dominant_label} lead at {dominant_share}%."
+        return f"Summary: {', '.join(parts)} available. {dominant_label} lead at {dominant_share}%."
 
     def _workspace_summary_text(
         self,
