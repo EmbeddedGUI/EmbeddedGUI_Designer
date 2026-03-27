@@ -198,8 +198,11 @@ class StatusCenterPanel(QWidget):
         quick_layout.addLayout(row4)
         layout.addWidget(quick_actions)
 
-        runtime = QFrame()
+        runtime = _ClickableFrame()
         runtime.setObjectName("status_center_runtime")
+        runtime.clicked.connect(lambda: self._emit_action("open_debug"))
+        runtime.setToolTip("Open Debug Output")
+        runtime.setAccessibleName("Runtime section")
         runtime_layout = QVBoxLayout(runtime)
         runtime_layout.setContentsMargins(12, 12, 12, 12)
         runtime_layout.setSpacing(6)
@@ -210,6 +213,7 @@ class StatusCenterPanel(QWidget):
         self._runtime_label.setObjectName("workspace_section_subtitle")
         self._runtime_label.setWordWrap(True)
         runtime_layout.addWidget(self._runtime_label)
+        self._runtime_panel = runtime
         layout.addWidget(runtime)
 
         layout.addStretch()

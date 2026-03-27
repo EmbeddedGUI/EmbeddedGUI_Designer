@@ -208,3 +208,24 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.text() == "Last action: None"
         assert panel.view_state() == {"last_action": ""}
         panel.deleteLater()
+
+    def test_runtime_panel_emits_debug_action(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel.show()
+        emitted = []
+        panel.action_requested.connect(emitted.append)
+
+        QTest.mouseClick(panel._runtime_panel, Qt.LeftButton)
+        panel._runtime_panel.setFocus()
+        assert panel._runtime_panel.focusPolicy() == Qt.StrongFocus
+        QTest.keyClick(panel._runtime_panel, Qt.Key_Return)
+
+        assert emitted == [
+            "open_debug",
+            "open_debug",
+        ]
+        assert panel._runtime_panel.accessibleName() == "Runtime section"
+        assert panel._last_action_label.text() == "Last action: Debug Output"
+        panel.deleteLater()
