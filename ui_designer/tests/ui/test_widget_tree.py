@@ -105,7 +105,7 @@ class TestWidgetTreePanel:
         root_menu = panel._build_context_menu(root)
         assert [action.text() for action in root_menu.actions() if action.text()] == [
             "Rename",
-            "Add Child",
+            "Insert Widget...",
             "Select",
             "Structure",
             "Delete",
@@ -115,6 +115,7 @@ class TestWidgetTreePanel:
         leaf_menu = panel._build_context_menu(leaf)
         assert [action.text() for action in leaf_menu.actions() if action.text()] == [
             "Rename",
+            "Insert Widget...",
             "Select",
             "Structure",
             "Delete",
@@ -203,22 +204,45 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
-    def test_context_menu_add_child_actions_follow_registry_order(self, qapp):
+    def test_insert_button_emits_browser_request_with_expected_parent(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        leaf = WidgetModel("label", name="leaf")
+        root.add_child(leaf)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([leaf], primary=leaf)
+
+        requests = []
+        panel.browse_widgets_requested.connect(requests.append)
+
+        panel._on_add_clicked()
+
+        assert requests == [root]
+        panel.deleteLater()
+
+    def test_context_menu_recent_widgets_follow_browser_history(self, qapp):
+        from ui_designer.model.config import DesignerConfig
         from ui_designer.model.widget_registry import WidgetRegistry
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
         project, root = _build_project_with_root()
-
         panel = WidgetTreePanel()
         panel.set_project(project)
+        DesignerConfig.instance().widget_browser_recent = ["label", "button", "missing_widget"]
 
         menu = panel._build_context_menu(root)
-        add_child_menu = _context_submenu(menu, "Add Child")
+        recent_menu = _context_submenu(menu, "Recent Widgets")
 
-        assert [action.text() for action in add_child_menu.actions() if action.text()] == [
-            display_name for display_name, _ in WidgetRegistry.instance().addable_types()
+        assert [action.text() for action in recent_menu.actions() if action.text()] == [
+            WidgetRegistry.instance().display_name("label"),
+            WidgetRegistry.instance().display_name("button"),
         ]
 
+        DesignerConfig.instance().widget_browser_recent = []
         menu.deleteLater()
         panel.deleteLater()
 
