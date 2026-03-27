@@ -329,6 +329,7 @@ class StatusCenterPanel(QWidget):
 
     def _build_action_button(self, text, icon_key, action_key):
         button = QPushButton(text)
+        button.setProperty("baseText", text)
         button.setIcon(make_icon(icon_key))
         button.clicked.connect(lambda checked=False, key=action_key: self._emit_action(key))
         return button
@@ -436,6 +437,11 @@ class StatusCenterPanel(QWidget):
             return f"No {plural} active."
         return f"{self._count_label(value, singular, plural)} active."
 
+    def _set_button_count_text(self, button, count=0):
+        base_text = str(button.property("baseText") or button.text() or "").strip()
+        value = max(int(count or 0), 0)
+        button.setText(f"{base_text} ({value})" if value > 0 else base_text)
+
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
         self._recent_actions = self._normalize_recent_actions(
@@ -501,6 +507,8 @@ class StatusCenterPanel(QWidget):
         error_count = max(int(diagnostics_errors or 0), 0)
         warning_count = max(int(diagnostics_warnings or 0), 0)
         info_count = max(int(diagnostics_infos or 0), 0)
+        diag_total = error_count + warning_count + info_count
+        runtime_text = str(runtime_error or "").strip()
 
         self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
         self._compile_value.setText("Available" if can_compile else "Unavailable")
@@ -519,6 +527,8 @@ class StatusCenterPanel(QWidget):
         self._error_bar.setValue(int(round((error_count * 100.0) / total)))
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
+        self._set_button_count_text(self._diag_btn, diag_total)
+        self._set_button_count_text(self._history_btn, dirty_count)
         self._set_hint(
             self._sdk_card,
             "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
@@ -536,12 +546,32 @@ class StatusCenterPanel(QWidget):
             f"{self._count_label(warning_count, 'warning', 'warnings')}, "
             f"{self._count_label(info_count, 'info item', 'info items')}.",
         )
+        self._set_hint(
+            self._diag_btn,
+            "Open Diagnostics. "
+            f"{self._count_label(error_count, 'error', 'errors')}, "
+            f"{self._count_label(warning_count, 'warning', 'warnings')}, "
+            f"{self._count_label(info_count, 'info item', 'info items')}.",
+        )
         self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
+        self._set_hint(
+            self._debug_btn,
+            f"Open Debug Output. Runtime issue: {runtime_text}" if runtime_text else f"Open Debug Output. {preview_text}.",
+        )
         self._set_hint(
             self._selection_card,
             f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
         )
         self._set_hint(self._dirty_card, f"Open History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')}.")
+        self._set_hint(self._history_btn, f"Open History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')}.")
+        self._set_hint(
+            self._project_btn,
+            "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
+        )
+        self._set_hint(
+            self._structure_btn,
+            f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
+        )
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
@@ -584,7 +614,6 @@ class StatusCenterPanel(QWidget):
             if warning_count > 0
             else "Unavailable: no warnings are active.",
         )
-        runtime_text = str(runtime_error or "").strip()
         if runtime_text:
             self._runtime_label.setText(runtime_text)
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")

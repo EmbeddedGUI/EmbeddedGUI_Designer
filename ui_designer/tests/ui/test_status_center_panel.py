@@ -73,6 +73,8 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.isEnabled() is True
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning (3)"
+        assert panel._diag_btn.text() == "Diagnostics (4)"
+        assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Jump to the first warning in Diagnostics. 3 warnings active."
 
@@ -88,6 +90,8 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning"
+        assert panel._diag_btn.text() == "Diagnostics (2)"
+        assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
 
@@ -105,6 +109,8 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning"
+        assert panel._diag_btn.text() == "Diagnostics"
+        assert panel._history_btn.text() == "History"
         assert panel._first_error_btn.toolTip() == "Unavailable: no errors are active."
         assert panel._first_warning_btn.toolTip() == "Unavailable: no warnings are active."
         panel.deleteLater()
@@ -131,9 +137,18 @@ class TestStatusCenterPanel:
         assert panel._preview_card.toolTip() == "Open Debug Output. Preview Running."
         assert panel._selection_card.toolTip() == "Open Structure. 1 widget selected."
         assert panel._dirty_card.toolTip() == "Open History. 2 dirty pages."
+        assert panel._diag_btn.text() == "Diagnostics (6)"
+        assert panel._diag_btn.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
+        assert panel._history_btn.text() == "History (2)"
+        assert panel._history_btn.toolTip() == "Open History. 2 dirty pages."
+        assert panel._debug_btn.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
+        assert panel._project_btn.toolTip() == "Open Project. SDK workspace is ready."
+        assert panel._structure_btn.toolTip() == "Open Structure. 1 widget selected."
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._sdk_card.statusTip() == panel._sdk_card.toolTip()
         assert panel._dirty_card.statusTip() == panel._dirty_card.toolTip()
+        assert panel._diag_btn.statusTip() == panel._diag_btn.toolTip()
+        assert panel._history_btn.statusTip() == panel._history_btn.toolTip()
         panel.deleteLater()
 
     def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):
