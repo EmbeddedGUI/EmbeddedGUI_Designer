@@ -6177,6 +6177,62 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    def test_build_preview_context_menu_edit_actions_reflect_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewEditMenuStateDemo"
+        project = _create_project(project_dir, "PreviewEditMenuStateDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        locked = WidgetModel("button", name="locked", x=72, y=8, width=60, height=20)
+        locked.designer_locked = True
+        root.add_child(first)
+        root.add_child(locked)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        def _menu_actions(widget):
+            menu = window._build_preview_context_menu(widget)
+            actions = {action.text(): action for action in menu.actions() if action.text()}
+            return menu, actions
+
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        menu, actions = _menu_actions(first)
+        assert actions["Select All"].isEnabled() is True
+        assert actions["Copy"].isEnabled() is True
+        assert actions["Cut"].isEnabled() is True
+        assert actions["Paste"].isEnabled() is False
+        assert actions["Duplicate"].isEnabled() is True
+        assert actions["Delete"].isEnabled() is True
+        menu.deleteLater()
+
+        window._set_selection([locked], primary=locked, sync_tree=True, sync_preview=True)
+        menu, actions = _menu_actions(locked)
+        assert actions["Select All"].isEnabled() is True
+        assert actions["Copy"].isEnabled() is True
+        assert actions["Cut"].isEnabled() is False
+        assert actions["Paste"].isEnabled() is False
+        assert actions["Duplicate"].isEnabled() is True
+        assert actions["Delete"].isEnabled() is False
+        menu.deleteLater()
+
+        window._clipboard_payload = {"widgets": []}
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        menu, actions = _menu_actions(first)
+        assert actions["Paste"].isEnabled() is True
+        menu.deleteLater()
+
+        _close_window(window)
+
     def test_build_preview_context_menu_select_actions_reflect_widget_relationships(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
