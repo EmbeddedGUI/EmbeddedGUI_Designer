@@ -654,17 +654,17 @@ class ReleaseBuildDialog(QDialog):
         )
         _set_widget_metadata(
             self._sdk_label,
-            tooltip=self._sdk_label.text(),
+            tooltip=f"{self._sdk_label.text()}. {release_context}",
             accessible_name=f"Release SDK: {self._sdk_label.text()}",
         )
         _set_widget_metadata(
             self._output_label,
-            tooltip=f"Release output root: {self._output_label.text() or 'none'}",
+            tooltip=f"Release output root: {output_root}. Current profile: {profile_text}. Diagnostics: {diagnostics_text}.",
             accessible_name=f"Release output root: {self._output_label.text() or 'none'}",
         )
         _set_widget_metadata(
             self._warnings_label,
-            tooltip=f"Release diagnostics summary: {self._warnings_label.text()}",
+            tooltip=f"Release diagnostics summary: {diagnostics_text}. Current profile: {profile_text}. Output root: {output_root}.",
             accessible_name=f"Release diagnostics summary: {self._warnings_label.text()}",
         )
         _set_widget_metadata(

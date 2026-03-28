@@ -522,6 +522,18 @@ def test_release_build_dialog_exposes_accessibility_metadata(qapp):
         "Choose the release profile. Current profile: Windows PC (windows-pc). "
         "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
     )
+    assert dialog._sdk_label.toolTip() == (
+        "SDK: ready. Current profile: Windows PC (windows-pc). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._output_label.toolTip() == (
+        "Release output root: D:/workspace/output/ui_designer_release. "
+        "Current profile: Windows PC (windows-pc). Diagnostics: 2 warning(s)."
+    )
+    assert dialog._warnings_label.toolTip() == (
+        "Release diagnostics summary: 2 warning(s). "
+        "Current profile: Windows PC (windows-pc). Output root: D:/workspace/output/ui_designer_release."
+    )
     assert dialog._warnings_as_errors.toolTip() == (
         "Allow release builds to continue when warnings are present. Current profile: Windows PC (windows-pc). "
         "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
@@ -546,6 +558,10 @@ def test_release_build_dialog_exposes_accessibility_metadata(qapp):
     qapp.processEvents()
 
     assert "Release build: profile ESP32 (esp32)." in dialog.accessibleName()
+    assert dialog._sdk_label.toolTip() == (
+        "SDK: ready. Current profile: ESP32 (esp32). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
     assert dialog._warnings_as_errors.toolTip() == (
         "Treat release warnings as build errors. Current profile: ESP32 (esp32). "
         "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
