@@ -777,6 +777,29 @@ class MainWindow(QMainWindow):
                 f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Panel {visibility}."
             )
 
+    def _update_page_tab_bar_metadata(self):
+        if not hasattr(self, "page_tab_bar"):
+            return
+        count = self.page_tab_bar.count()
+        page_label = f"{count} open page" if count == 1 else f"{count} open pages"
+        current_page = "none"
+        current_index = self.page_tab_bar.currentIndex()
+        if count > 0 and current_index >= 0:
+            current_page = self._page_tab_name(current_index)
+        elif self._current_page is not None and getattr(self._current_page, "name", ""):
+            current_page = self._current_page.name
+        dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
+        dirty_count = len(dirty_pages)
+        dirty_label = (
+            "No dirty pages"
+            if dirty_count == 0
+            else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        )
+        summary = f"Page tabs: {page_label}. Current page: {current_page}. {dirty_label}."
+        self.page_tab_bar.setToolTip(summary)
+        self.page_tab_bar.setStatusTip(summary)
+        self.page_tab_bar.setAccessibleName(summary)
+
     def _sync_editor_mode_controls(self, mode):
         if hasattr(self, "_mode_buttons"):
             for key, button in self._mode_buttons.items():
@@ -1652,6 +1675,8 @@ class MainWindow(QMainWindow):
         page_tab_bar.currentChanged.connect(self._on_page_tab_changed)
         page_tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
         page_tab_bar.customContextMenuRequested.connect(self._show_tab_context_menu)
+        page_tab_bar.currentChanged.connect(lambda _index: self._update_page_tab_bar_metadata())
+        self._update_page_tab_bar_metadata()
         return page_tab_bar
 
     def _replace_page_tab_bar(self):
@@ -1675,6 +1700,7 @@ class MainWindow(QMainWindow):
             self.page_tab_bar.clear()
         except RuntimeError:
             self._replace_page_tab_bar()
+        self._update_page_tab_bar_metadata()
 
     def _init_menus(self):
         menubar = self.menuBar()
@@ -2751,6 +2777,7 @@ class MainWindow(QMainWindow):
         for i in range(self.page_tab_bar.count()):
             page_name = self._page_tab_name(i)
             self.page_tab_bar.setTabText(i, self._page_tab_label(page_name, dirty_pages))
+        self._update_page_tab_bar_metadata()
 
         title = f"EmbeddedGUI Designer - {self.app_name}"
         if self._project_dir:
@@ -4269,12 +4296,14 @@ class MainWindow(QMainWindow):
                 return i
         # routeKey = page_name (unique per page)
         self.page_tab_bar.addTab(page_name, self._page_tab_label(page_name), None)
+        self._update_page_tab_bar_metadata()
         return self.page_tab_bar.count() - 1
 
     def _remove_page_tab(self, page_name):
         for i in range(self.page_tab_bar.count()):
             if self._page_tab_name(i) == page_name:
                 self.page_tab_bar.removeTab(i)
+                self._update_page_tab_bar_metadata()
                 return
 
     def _rename_page_tab(self, old_name, new_name):
@@ -4284,15 +4313,18 @@ class MainWindow(QMainWindow):
                 if item is not None and hasattr(item, "setRouteKey"):
                     item.setRouteKey(new_name)
                 self.page_tab_bar.setTabText(i, self._page_tab_label(new_name))
+                self._update_page_tab_bar_metadata()
                 return
 
     def _on_page_tab_changed(self, index):
         if self._syncing_tabs:
             return
         if index < 0:
+            self._update_page_tab_bar_metadata()
             return
         page_name = self._page_tab_name(index)
         if self._current_page and page_name == self._current_page.name:
+            self._update_page_tab_bar_metadata()
             return
         self._switch_page(page_name)
 
@@ -4301,6 +4333,7 @@ class MainWindow(QMainWindow):
             return
         page_name = self._page_tab_name(index)
         self.page_tab_bar.removeTab(index)
+        self._update_page_tab_bar_metadata()
         # If current page tab closed, switch to another open tab or fallback
         if self._current_page and self._current_page.name == page_name:
             if self.page_tab_bar.count() > 0:

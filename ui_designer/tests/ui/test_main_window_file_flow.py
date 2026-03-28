@@ -4291,6 +4291,11 @@ class TestMainWindowFileFlow:
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 1 open page. Current page: main_page. No dirty pages."
+        )
+        assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
+
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
         window._undo_manager.get_stack("detail_page").push("<Page dirty='detail' />")
         window._update_window_title()
@@ -4305,10 +4310,16 @@ class TestMainWindowFileFlow:
             texts_by_page[item.data(0, Qt.UserRole)] = item.text(0)
         assert texts_by_page["main_page"].endswith("main_page*")
         assert texts_by_page["detail_page"].endswith("detail_page*")
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 1 open page. Current page: main_page. 2 dirty pages."
+        )
 
         window._switch_page("detail_page")
         assert window._current_page.name == "detail_page"
         assert any(window.page_tab_bar.tabText(i) == "detail_page*" for i in range(window.page_tab_bar.count()))
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. 2 dirty pages."
+        )
 
         window._undo_manager.mark_all_saved()
         window._update_window_title()
@@ -4316,6 +4327,9 @@ class TestMainWindowFileFlow:
         assert all(not window.page_tab_bar.tabText(i).endswith("*") for i in range(window.page_tab_bar.count()))
         assert window.page_navigator._thumbnails["main_page"]._name_label.text() == "main_page"
         assert window.page_navigator._thumbnails["detail_page"]._name_label.text() == "detail_page"
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. No dirty pages."
+        )
         _close_window(window)
 
     def test_copy_and_paste_selection_creates_unique_widget_names(self, qapp, isolated_config, tmp_path, monkeypatch):
