@@ -2308,6 +2308,7 @@ class MainWindow(QMainWindow):
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         latest_release_sdk_summary = self._latest_release_sdk_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
+        profiles_summary = self._release_profiles_build_summary()
         can_browse_release_history = self.project is not None and bool(self._project_dir)
         release_root_exists = bool(release_root and os.path.isdir(release_root))
         dist_dir_exists = bool(dist_dir and os.path.isdir(dist_dir))
@@ -2398,6 +2399,7 @@ class MainWindow(QMainWindow):
                     "Inspect the Designer repository health summary. "
                     f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
                     f"Release output root: {repo_release_root}. {output_root_state_summary} Source resources: {repo_resources_state}. "
+                    f"{profiles_summary} "
                     f"{history_file_state_summary} "
                     f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                 ),

@@ -2922,7 +2922,7 @@ class TestMainWindowFileFlow:
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             "Project: none. SDK: invalid. Release output root: none. Output root state: unavailable. Source resources: missing. "
-            "History file state: unavailable. Release records: unavailable. "
+            "Release profiles: unavailable. History file state: unavailable. Release records: unavailable. "
             "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
         )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
@@ -2975,7 +2975,8 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {window._release_output_root()}. Output root state: missing. Source resources: available. "
-            "History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
+            "Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). History file state: missing. Release records: 0 entries. "
+            "Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
@@ -3199,7 +3200,8 @@ class TestMainWindowFileFlow:
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {output_root}. Output root state: available. Source resources: available. "
-            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
+            "Release profiles: 2 profiles. Default: windows-pc (Windows PC). History file state: available. Release records: 1 entry. "
+            "Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
