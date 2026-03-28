@@ -2812,6 +2812,51 @@ class TestMainWindowFileFlow:
         assert actions["Set SDK Root..."].statusTip() == actions["Set SDK Root..."].toolTip()
         _close_window(window)
 
+    def test_file_menu_secondary_actions_expose_status_hints(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Save As...",
+                "Reload Project From Disk",
+                "Close Project",
+                "Export C Code...",
+                "Quit",
+            }
+        }
+
+        assert actions["Save As..."].toolTip() == "Save the current project to a new file (Ctrl+Shift+S)."
+        assert actions["Save As..."].statusTip() == actions["Save As..."].toolTip()
+        assert actions["Reload Project From Disk"].toolTip() == (
+            "Reload the current project from disk (Ctrl+Shift+R). Unavailable: open a project first."
+        )
+        assert actions["Reload Project From Disk"].statusTip() == actions["Reload Project From Disk"].toolTip()
+        assert actions["Close Project"].toolTip() == "Close the current project (Ctrl+W)."
+        assert actions["Close Project"].statusTip() == actions["Close Project"].toolTip()
+        assert actions["Export C Code..."].toolTip() == "Export generated C code for the current project (Ctrl+E)."
+        assert actions["Export C Code..."].statusTip() == actions["Export C Code..."].toolTip()
+        assert actions["Quit"].toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q)."
+        assert actions["Quit"].statusTip() == actions["Quit"].toolTip()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReloadDemo"
+        project = _create_project(project_dir, "ReloadDemo", sdk_root)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._update_compile_availability()
+
+        reloaded_actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() == "Reload Project From Disk"
+        }
+        assert reloaded_actions["Reload Project From Disk"].toolTip() == "Reload the current project from disk (Ctrl+Shift+R)."
+        assert reloaded_actions["Reload Project From Disk"].statusTip() == reloaded_actions["Reload Project From Disk"].toolTip()
+        _close_window(window)
+
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

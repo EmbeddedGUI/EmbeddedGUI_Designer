@@ -1379,6 +1379,14 @@ class MainWindow(QMainWindow):
         self.auto_compile_action.setEnabled(can_compile)
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
         self._reload_project_action.setEnabled(self.project is not None and bool(self._project_dir))
+        self._apply_action_hint(
+            self._reload_project_action,
+            self._action_hint(
+                "Reload the current project from disk (Ctrl+Shift+R).",
+                self._reload_project_action.isEnabled(),
+                "open a project first",
+            ),
+        )
         if hasattr(self, "_release_build_action"):
             self._release_build_action.setEnabled(can_release)
             self._release_profiles_action.setEnabled(self.project is not None)
@@ -1885,6 +1893,7 @@ class MainWindow(QMainWindow):
 
         save_as_action = QAction("Save As...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
+        self._apply_action_hint(save_as_action, "Save the current project to a new file (Ctrl+Shift+S).")
         save_as_action.triggered.connect(self._save_project_as)
         file_menu.addAction(save_as_action)
 
@@ -1892,12 +1901,17 @@ class MainWindow(QMainWindow):
         self._reload_project_action.setShortcut("Ctrl+Shift+R")
         self._reload_project_action.triggered.connect(self._reload_project_from_disk)
         self._reload_project_action.setEnabled(False)
+        self._apply_action_hint(
+            self._reload_project_action,
+            self._action_hint("Reload the current project from disk (Ctrl+Shift+R).", False, "open a project first"),
+        )
         file_menu.addAction(self._reload_project_action)
 
         file_menu.addSeparator()
 
         close_project_action = QAction("Close Project", self)
         close_project_action.setShortcut("Ctrl+W")
+        self._apply_action_hint(close_project_action, "Close the current project (Ctrl+W).")
         close_project_action.triggered.connect(self._close_project)
         file_menu.addAction(close_project_action)
 
@@ -1905,6 +1919,7 @@ class MainWindow(QMainWindow):
 
         export_action = QAction("Export C Code...", self)
         export_action.setShortcut("Ctrl+E")
+        self._apply_action_hint(export_action, "Export generated C code for the current project (Ctrl+E).")
         export_action.triggered.connect(self._export_code)
         file_menu.addAction(export_action)
 
@@ -1912,6 +1927,7 @@ class MainWindow(QMainWindow):
 
         quit_action = QAction("Quit", self)
         quit_action.setShortcut("Ctrl+Q")
+        self._apply_action_hint(quit_action, "Quit EmbeddedGUI Designer (Ctrl+Q).")
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
