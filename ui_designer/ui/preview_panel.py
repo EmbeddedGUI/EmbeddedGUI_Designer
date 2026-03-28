@@ -1330,23 +1330,23 @@ class PreviewPanel(QWidget):
         )
         _set_widget_metadata(
             self.preview_frame,
-            tooltip=f"Rendered preview surface. {status_text}",
-            accessible_name=f"Preview frame: {status_text}",
+            tooltip=f"Rendered preview surface. {status_text}. Mode: {mode_text}.",
+            accessible_name=f"Preview frame: {status_text}. Mode: {mode_text}.",
         )
         _set_widget_metadata(
             self._preview_label,
-            tooltip="Rendered preview surface.",
-            accessible_name="Rendered preview surface",
+            tooltip=f"Rendered preview surface. {status_text}.",
+            accessible_name=f"Rendered preview surface: {status_text}",
         )
         _set_widget_metadata(
             self.overlay,
-            tooltip=f"Preview overlay. Mode: {mode_text}.",
-            accessible_name=f"Preview overlay: {mode_text}",
+            tooltip=f"Preview overlay. Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
+            accessible_name=f"Preview overlay: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
         )
         _set_widget_metadata(
             self._overlay_scroll,
-            tooltip=f"Preview overlay canvas. Mode: {mode_text}.",
-            accessible_name=f"Preview overlay canvas: {mode_text}",
+            tooltip=f"Preview overlay canvas. Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
+            accessible_name=f"Preview overlay canvas: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
         )
         _set_widget_metadata(
             self._status_bar,

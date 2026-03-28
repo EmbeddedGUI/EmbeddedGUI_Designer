@@ -43,6 +43,10 @@ class TestPreviewPanelFallback:
             "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
         )
         assert panel.status_label.accessibleName() == "Preview status: Preview - waiting for exe..."
+        assert panel.preview_frame.accessibleName() == "Preview frame: Preview - waiting for exe.... Mode: Horizontal split."
+        assert panel._preview_label.accessibleName() == "Rendered preview surface: Preview - waiting for exe..."
+        assert panel.overlay.accessibleName() == "Preview overlay: Horizontal split. Zoom: 100% (8px). Grid: on."
+        assert panel._overlay_scroll.accessibleName() == "Preview overlay canvas: Horizontal split. Zoom: 100% (8px). Grid: on."
         assert panel._status_bar.accessibleName() == "Preview controls: Zoom 100% (8px). Pointer Pointer idle."
         assert panel._btn_zoom_out.toolTip() == "Zoom out preview (Ctrl+-). Current zoom: 100% (8px)."
         assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (8px)."
@@ -86,6 +90,10 @@ class TestPreviewPanelFallback:
 
         assert panel._zoom_label.text() == "100% (12px)"
         assert panel.status_label.accessibleName() == "Preview status: Preview - Python fallback (fallback)"
+        assert panel.preview_frame.accessibleName() == (
+            "Preview frame: Preview - Python fallback (fallback). Mode: Horizontal split."
+        )
+        assert panel.overlay.accessibleName() == "Preview overlay: Horizontal split. Zoom: 100% (12px). Grid: on."
         assert panel._status_label.accessibleName() == (
             "Preview pointer status: (12, 18)  |  label: label  [10, 10, 100×20]"
         )
