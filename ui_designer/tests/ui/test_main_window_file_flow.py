@@ -3007,6 +3007,68 @@ class TestMainWindowFileFlow:
         assert actions["100%"].statusTip() == actions["100%"].toolTip()
         _close_window(window)
 
+    def test_edit_menu_secondary_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "EditHintsDemo"
+        project = _create_project(project_dir, "EditHintsDemo", sdk_root)
+        widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        project.get_startup_page().root_widget.add_child(widget)
+        project.save(str(project_dir))
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Select All",
+                "Cut",
+                "Duplicate",
+                "Delete",
+            }
+        }
+
+        assert actions["Select All"].toolTip() == (
+            "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A). "
+            "Unavailable: focus a text field or open a page with selectable widgets."
+        )
+        assert actions["Select All"].statusTip() == actions["Select All"].toolTip()
+        assert actions["Cut"].toolTip() == "Cut the current selection (Ctrl+X). Unavailable: select at least 1 widget."
+        assert actions["Cut"].statusTip() == actions["Cut"].toolTip()
+        assert actions["Duplicate"].toolTip() == (
+            "Duplicate the current selection (Ctrl+D). Unavailable: select at least 1 widget."
+        )
+        assert actions["Duplicate"].statusTip() == actions["Duplicate"].toolTip()
+        assert actions["Delete"].toolTip() == "Delete the current selection (Del). Unavailable: select at least 1 widget."
+        assert actions["Delete"].statusTip() == actions["Delete"].toolTip()
+
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        loaded_widget = window._current_page.root_widget.children[0]
+        window._set_selection([loaded_widget], primary=loaded_widget, sync_tree=True, sync_preview=True)
+        window._update_edit_actions()
+
+        refreshed_actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in actions
+        }
+        assert refreshed_actions["Select All"].toolTip() == (
+            "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A)."
+        )
+        assert refreshed_actions["Select All"].statusTip() == refreshed_actions["Select All"].toolTip()
+        assert refreshed_actions["Cut"].toolTip() == "Cut the current selection (Ctrl+X)."
+        assert refreshed_actions["Cut"].statusTip() == refreshed_actions["Cut"].toolTip()
+        assert refreshed_actions["Duplicate"].toolTip() == "Duplicate the current selection (Ctrl+D)."
+        assert refreshed_actions["Duplicate"].statusTip() == refreshed_actions["Duplicate"].toolTip()
+        assert refreshed_actions["Delete"].toolTip() == "Delete the current selection (Del)."
+        assert refreshed_actions["Delete"].statusTip() == refreshed_actions["Delete"].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

@@ -5594,6 +5594,40 @@ class MainWindow(QMainWindow):
         self._send_back_action.setEnabled(has_selection)
         self._toggle_lock_action.setEnabled(has_selection)
         self._toggle_hide_action.setEnabled(has_selection)
+        self._apply_action_hint(
+            self._select_all_action,
+            self._action_hint(
+                "Select all visible widgets on the current page or all text in the focused editor (Ctrl+A).",
+                self._select_all_action.isEnabled(),
+                "focus a text field or open a page with selectable widgets"
+                if self._current_page is None
+                else "page has no selectable widgets",
+            ),
+        )
+        self._apply_action_hint(
+            self._cut_action,
+            self._action_hint(
+                "Cut the current selection (Ctrl+X).",
+                self._cut_action.isEnabled(),
+                "select at least 1 widget" if not has_selection else "locked widgets cannot be cut",
+            ),
+        )
+        self._apply_action_hint(
+            self._duplicate_action,
+            self._action_hint(
+                "Duplicate the current selection (Ctrl+D).",
+                self._duplicate_action.isEnabled(),
+                "select at least 1 widget",
+            ),
+        )
+        self._apply_action_hint(
+            self._delete_action,
+            self._action_hint(
+                "Delete the current selection (Del).",
+                self._delete_action.isEnabled(),
+                "select at least 1 widget" if not has_selection else "locked widgets cannot be deleted",
+            ),
+        )
 
         self._group_selection_action.setEnabled(structure_state.can_group)
         self._ungroup_selection_action.setEnabled(structure_state.can_ungroup)
