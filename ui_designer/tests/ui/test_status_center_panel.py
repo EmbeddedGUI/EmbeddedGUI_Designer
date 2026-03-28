@@ -406,6 +406,7 @@ class TestStatusCenterPanel:
         assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
         assert panel._preview_value.toolTip() == "Preview: Preview Idle"
+        assert panel._diag_value.text() == "No active diagnostics"
         assert panel._diag_value.toolTip() == "Diagnostics: No active diagnostics"
         assert panel._diag_value.accessibleName() == "Diagnostics value: No active diagnostics"
         assert panel._diag_card.accessibleName() == "Diagnostics metric: No active diagnostics"

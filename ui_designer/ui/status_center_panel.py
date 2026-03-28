@@ -137,7 +137,7 @@ class StatusCenterPanel(QWidget):
             metrics_layout, 0, 1, "Compile", "Unavailable", "compile", "open_debug"
         )
         self._diag_value, self._diag_card = self._create_metric(
-            metrics_layout, 1, 0, "Diagnostics", "0 errors", "diagnostics", "open_diagnostics"
+            metrics_layout, 1, 0, "Diagnostics", "No active diagnostics", "diagnostics", "open_diagnostics"
         )
         self._preview_value, self._preview_card = self._create_metric(
             metrics_layout, 1, 1, "Preview", "Preview Idle", "debug", "open_debug"
@@ -561,6 +561,9 @@ class StatusCenterPanel(QWidget):
         return f"{self._count_label(value, singular, plural)} ({percent}%)"
 
     def _diagnostic_metric_text(self, error_count, warning_count, info_count):
+        total = max(int(error_count or 0), 0) + max(int(warning_count or 0), 0) + max(int(info_count or 0), 0)
+        if total <= 0:
+            return "No active diagnostics"
         return ", ".join(
             [
                 self._count_label(error_count, "error", "errors"),
