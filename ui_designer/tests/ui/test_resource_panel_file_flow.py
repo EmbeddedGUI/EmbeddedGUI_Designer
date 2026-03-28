@@ -270,6 +270,8 @@ class TestResourcePanelFileFlow:
         assert panel._usage_table.item(0, 1).toolTip() == (
             "Page: main_page. Widget: hero_image (image). Property: image_file."
         )
+        assert panel._usage_table.item(0, 1).statusTip() == panel._usage_table.item(0, 1).toolTip()
+        assert panel._usage_table.item(0, 1).data(Qt.AccessibleTextRole) == panel._usage_table.item(0, 1).toolTip()
         assert panel._usage_table.item(1, 0).text() == "detail_page"
         panel.deleteLater()
 
@@ -313,6 +315,8 @@ class TestResourcePanelFileFlow:
             "Resource usage table: 1 row. Current selection: detail_page/badge (image) [image_file]."
         )
         assert panel._usage_table.item(0, 0).text() == "detail_page"
+        assert panel._usage_table.item(0, 1).statusTip() == panel._usage_table.item(0, 1).toolTip()
+        assert panel._usage_table.item(0, 1).data(Qt.AccessibleTextRole) == panel._usage_table.item(0, 1).toolTip()
         panel.deleteLater()
 
     def test_usage_table_double_click_emits_navigation_signal(self, qapp, tmp_path):

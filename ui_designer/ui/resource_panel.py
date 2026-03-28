@@ -1759,9 +1759,9 @@ class ResourcePanel(QWidget):
             item_tooltip = (
                 f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
             )
-            page_item.setToolTip(item_tooltip)
-            widget_item.setToolTip(item_tooltip)
-            prop_item.setToolTip(item_tooltip)
+            _set_item_metadata(page_item, item_tooltip)
+            _set_item_metadata(widget_item, item_tooltip)
+            _set_item_metadata(prop_item, item_tooltip)
             self._usage_table.setItem(row, 0, page_item)
             self._usage_table.setItem(row, 1, widget_item)
             self._usage_table.setItem(row, 2, prop_item)
