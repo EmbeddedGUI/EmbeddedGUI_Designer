@@ -481,19 +481,19 @@ def test_open_last_release_actions_report_missing_targets(qapp, isolated_config,
     assert window._open_release_history_file_action.isEnabled() is False
 
     window._open_last_release_folder()
-    assert window.statusBar().currentMessage() == f"No release folder available. Expected folder: {release_root}."
+    assert window.statusBar().currentMessage() == f"No release folder available. Output root state: missing. Expected folder: {release_root}."
     window._open_last_release_dist()
-    assert window.statusBar().currentMessage() == f"No release dist directory available. Expected folder: {dist_dir}."
+    assert window.statusBar().currentMessage() == f"No release dist directory available. Output root state: missing. Expected folder: {dist_dir}."
     window._open_last_release_manifest()
-    assert window.statusBar().currentMessage() == f"No release manifest available. Expected file: {manifest_path}."
+    assert window.statusBar().currentMessage() == f"No release manifest available. Output root state: missing. Expected file: {manifest_path}."
     window._open_last_release_version()
-    assert window.statusBar().currentMessage() == f"No release version file available. Expected file: {dist_dir / 'VERSION.txt'}."
+    assert window.statusBar().currentMessage() == f"No release version file available. Output root state: missing. Expected file: {dist_dir / 'VERSION.txt'}."
     window._open_last_release_package()
-    assert window.statusBar().currentMessage() == f"No release package available. Expected file: {zip_path}."
+    assert window.statusBar().currentMessage() == f"No release package available. Output root state: missing. Expected file: {zip_path}."
     window._open_last_release_log()
-    assert window.statusBar().currentMessage() == f"No release log available. Expected file: {log_path}."
+    assert window.statusBar().currentMessage() == f"No release log available. Output root state: missing. Expected file: {log_path}."
     window._open_release_history_file()
-    assert window.statusBar().currentMessage() == f"No release history file available. Expected file: {history_path}."
+    assert window.statusBar().currentMessage() == f"No release history file available. History file state: missing. Expected file: {history_path}."
     assert opened_paths == []
 
 

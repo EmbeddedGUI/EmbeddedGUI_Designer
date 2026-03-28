@@ -3858,12 +3858,14 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         release_root = normalize_path(entry.get("release_root", "")) if isinstance(entry, dict) else ""
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not release_root or not os.path.isdir(release_root):
             self.statusBar().showMessage(
                 (
-                    f"No release folder available. Expected folder: {release_root}."
+                    f"No release folder available. {output_root_state_summary} Expected folder: {release_root}."
                     if release_root
-                    else f"No release folder available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release folder available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3878,12 +3880,14 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         dist_dir = normalize_path(entry.get("dist_dir", "")) if isinstance(entry, dict) else ""
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not dist_dir or not os.path.isdir(dist_dir):
             self.statusBar().showMessage(
                 (
-                    f"No release dist directory available. Expected folder: {dist_dir}."
+                    f"No release dist directory available. {output_root_state_summary} Expected folder: {dist_dir}."
                     if dist_dir
-                    else f"No release dist directory available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release dist directory available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3898,12 +3902,14 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         manifest_path = normalize_path(entry.get("manifest_path", "")) if isinstance(entry, dict) else ""
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not manifest_path or not os.path.isfile(manifest_path):
             self.statusBar().showMessage(
                 (
-                    f"No release manifest available. Expected file: {manifest_path}."
+                    f"No release manifest available. {output_root_state_summary} Expected file: {manifest_path}."
                     if manifest_path
-                    else f"No release manifest available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release manifest available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3918,13 +3924,15 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         version_path = self._latest_release_version_path(entry)
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not version_path:
             version_expected_path = self._latest_release_version_path(entry, require_exists=False)
             self.statusBar().showMessage(
                 (
-                    f"No release version file available. Expected file: {version_expected_path}."
+                    f"No release version file available. {output_root_state_summary} Expected file: {version_expected_path}."
                     if version_expected_path
-                    else f"No release version file available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release version file available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3939,12 +3947,14 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         zip_path = normalize_path(entry.get("zip_path", "")) if isinstance(entry, dict) else ""
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not zip_path or not os.path.isfile(zip_path):
             self.statusBar().showMessage(
                 (
-                    f"No release package available. Expected file: {zip_path}."
+                    f"No release package available. {output_root_state_summary} Expected file: {zip_path}."
                     if zip_path
-                    else f"No release package available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release package available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3959,12 +3969,14 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         log_path = normalize_path(entry.get("log_path", "")) if isinstance(entry, dict) else ""
+        output_root = self._release_output_root() or "none"
+        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         if not log_path or not os.path.isfile(log_path):
             self.statusBar().showMessage(
                 (
-                    f"No release log available. Expected file: {log_path}."
+                    f"No release log available. {output_root_state_summary} Expected file: {log_path}."
                     if log_path
-                    else f"No release log available. Output root: {self._release_output_root() or 'none'}."
+                    else f"No release log available. {output_root_state_summary} Output root: {output_root}."
                 ),
                 4000,
             )
@@ -3978,9 +3990,10 @@ class MainWindow(QMainWindow):
         if not self._project_dir:
             return
         history_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
+        history_file_state_summary = self._release_history_file_state_summary(history_path)
         if not history_path or not os.path.isfile(history_path):
             self.statusBar().showMessage(
-                f"No release history file available. Expected file: {history_path or 'none'}.",
+                f"No release history file available. {history_file_state_summary} Expected file: {history_path or 'none'}.",
                 4000,
             )
             return
