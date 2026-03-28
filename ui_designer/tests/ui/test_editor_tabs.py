@@ -37,7 +37,8 @@ class TestEditorTabsAccessibility:
 
         assert tabs.accessibleName() == "Editor tabs: Design mode. XML source is empty. Mode switch visible."
         assert tabs._stack.accessibleName() == "Editor view stack: Design mode."
-        assert tabs._design_container.accessibleName() == "Design editor surface"
+        assert tabs._design_container.accessibleName() == "Design editor surface: visible."
+        assert tabs._design_container.toolTip() == "Design editor surface. Current state: visible."
         assert tabs._mode_toolbar.accessibleName() == "Editor mode switcher: Design mode."
         assert tabs._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
         assert tabs._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
@@ -65,8 +66,9 @@ class TestEditorTabsAccessibility:
         assert tabs._stack.currentWidget() is tabs._split_container
         assert tabs.preview.parent() is tabs._split_preview_container
         assert tabs._mode_toolbar.accessibleName() == "Editor mode switcher: Split mode."
-        assert tabs._split_container.accessibleName() == "Split editor view"
-        assert tabs._split_preview_container.accessibleName() == "Split preview surface"
+        assert tabs._split_container.accessibleName() == f"Split editor view: visible. {xml_summary}"
+        assert tabs._split_container.statusTip() == tabs._split_container.toolTip()
+        assert tabs._split_preview_container.accessibleName() == "Split preview surface: visible."
         assert tabs._mode_buttons[MODE_SPLIT].toolTip() == "Currently showing Split mode."
         tabs.deleteLater()
 

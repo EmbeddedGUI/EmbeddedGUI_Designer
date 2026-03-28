@@ -216,11 +216,18 @@ class EditorTabs(QWidget):
         xml_summary = self._xml_source_summary()
         switch_text = "visible" if self._show_mode_switch else "hidden"
         summary = f"Editor tabs: {mode_label} mode. {xml_summary} Mode switch {switch_text}."
+        design_state = "visible" if self._mode == MODE_DESIGN else "hidden"
+        split_state = "visible" if self._mode == MODE_SPLIT else "hidden"
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._stack,
             tooltip=f"Editor view stack. Current mode: {mode_label}.",
             accessible_name=f"Editor view stack: {mode_label} mode.",
+        )
+        _set_widget_metadata(
+            self._design_container,
+            tooltip=f"Design editor surface. Current state: {design_state}.",
+            accessible_name=f"Design editor surface: {design_state}.",
         )
         _set_widget_metadata(
             self._code_editor,
@@ -234,8 +241,13 @@ class EditorTabs(QWidget):
         )
         _set_widget_metadata(
             self._split_container,
-            tooltip="Split editor view with XML source and preview.",
-            accessible_name="Split editor view",
+            tooltip=f"Split editor view with XML source and preview. Current state: {split_state}. {xml_summary}",
+            accessible_name=f"Split editor view: {split_state}. {xml_summary}",
+        )
+        _set_widget_metadata(
+            self._split_preview_container,
+            tooltip=f"Split preview surface. Current state: {split_state}.",
+            accessible_name=f"Split preview surface: {split_state}.",
         )
         if self._mode_toolbar is not None:
             _set_widget_metadata(
