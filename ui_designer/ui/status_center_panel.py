@@ -921,6 +921,19 @@ class StatusCenterPanel(QWidget):
             return f"Runtime section: Issue. {message}"
         return "Runtime section: Clear. No runtime errors."
 
+    def _runtime_chip_accessible_name(self, runtime_text):
+        message = str(runtime_text or "").strip()
+        if message:
+            return f"Runtime status: Issue. Open Debug Output. Runtime issue: {message}"
+        return "Runtime status: Clear. Open Debug Output. No runtime errors."
+
+    def _health_chip_accessible_name(self, status_text, health_hint):
+        status = str(status_text or "").strip() or "Stable"
+        hint = str(health_hint or "").strip()
+        if hint:
+            return f"Diagnostic status: {status}. {hint}"
+        return f"Diagnostic status: {status}"
+
     def _suggested_action_state(
         self,
         *,
@@ -1362,8 +1375,10 @@ class StatusCenterPanel(QWidget):
             self._set_chip_text(self._health_chip, "Stable", "success")
             health_hint = "Open Diagnostics. No active diagnostics."
         self._set_widget_icon(self._health_chip, self._action_icon_key(self._health_chip_action), size=16)
-        self._health_chip.setAccessibleName(f"Diagnostic status: {self._health_chip.text()}")
         self._set_hint(self._health_chip, health_hint)
+        self._health_chip.setAccessibleName(
+            self._health_chip_accessible_name(self._health_chip.text(), health_hint)
+        )
         self._first_error_btn.setEnabled(error_count > 0)
         self._first_error_btn.setText(
             f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
@@ -1410,8 +1425,8 @@ class StatusCenterPanel(QWidget):
             self._runtime_panel.setAccessibleName(self._runtime_panel_accessible_name(runtime_text))
             self._set_chip_text(self._runtime_chip, "Issue", "danger")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
-            self._runtime_chip.setAccessibleName("Runtime status: Issue")
             self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
+            self._runtime_chip.setAccessibleName(self._runtime_chip_accessible_name(runtime_text))
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
             self._runtime_title.setText(self._runtime_title_text(""))
@@ -1423,6 +1438,6 @@ class StatusCenterPanel(QWidget):
             self._runtime_panel.setAccessibleName(self._runtime_panel_accessible_name(""))
             self._set_chip_text(self._runtime_chip, "Clear", "success")
             self._set_widget_icon(self._runtime_chip, "debug", size=16)
-            self._runtime_chip.setAccessibleName("Runtime status: Clear")
             self._set_hint(self._runtime_chip, "Open Debug Output. No runtime errors.")
+            self._runtime_chip.setAccessibleName(self._runtime_chip_accessible_name(""))
             self._set_hint(self._runtime_panel, "Open Debug Output. No runtime errors.")

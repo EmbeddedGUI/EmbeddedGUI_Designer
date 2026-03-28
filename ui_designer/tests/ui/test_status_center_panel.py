@@ -82,7 +82,9 @@ class TestStatusCenterPanel:
         )
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
         assert panel._health_chip.property("iconKey") == "diagnostics"
-        assert panel._health_chip.accessibleName() == "Diagnostic status: Critical (2)"
+        assert panel._health_chip.accessibleName() == (
+            "Diagnostic status: Critical (2). Open Errors. 2 errors active."
+        )
         assert panel._workspace_chip.toolTip() == (
             "Action Needed (Diagnostics). Start with the first error in Diagnostics. 2 errors active."
         )
@@ -142,7 +144,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.property("chipTone") == "danger"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._runtime_chip.statusTip() == panel._runtime_chip.toolTip()
-        assert panel._runtime_chip.accessibleName() == "Runtime status: Issue"
+        assert panel._runtime_chip.accessibleName() == (
+            "Runtime status: Issue. Open Debug Output. Runtime issue: Runtime failed"
+        )
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._runtime_panel.statusTip() == panel._runtime_panel.toolTip()
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Runtime failed"
@@ -187,7 +191,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.property("chipTone") == "success"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_chip.statusTip() == panel._runtime_chip.toolTip()
-        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
+        assert panel._runtime_chip.accessibleName() == (
+            "Runtime status: Clear. Open Debug Output. No runtime errors."
+        )
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_panel.statusTip() == panel._runtime_panel.toolTip()
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
@@ -459,13 +465,17 @@ class TestStatusCenterPanel:
         assert panel._dirty_value.accessibleName() == "Dirty Pages value: No dirty pages"
         assert panel._dirty_card.accessibleName() == "Dirty Pages metric: No dirty pages"
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary: Summary: Diagnostics are clear."
-        assert panel._health_chip.accessibleName() == "Diagnostic status: Stable"
+        assert panel._health_chip.accessibleName() == (
+            "Diagnostic status: Stable. Open Diagnostics. No active diagnostics."
+        )
         assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
-        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
+        assert panel._runtime_chip.accessibleName() == (
+            "Runtime status: Clear. Open Debug Output. No runtime errors."
+        )
         assert panel._debug_btn.text() == "Debug Output (Build)"
         assert panel._debug_btn.toolTip() == "Open Debug Output. Compile is unavailable."
         assert panel._debug_btn.accessibleName() == "Debug Output action: Debug Output (Build)"
@@ -932,7 +942,9 @@ class TestStatusCenterPanel:
         ]
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._runtime_chip.text() == "Clear"
-        assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
+        assert panel._runtime_chip.accessibleName() == (
+            "Runtime status: Clear. Open Debug Output. No runtime errors."
+        )
         assert panel._last_action_label.text() == "Last action: Debug Output"
         assert panel._repeat_action_button.text() == "Repeat Debug Output"
         panel.deleteLater()
