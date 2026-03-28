@@ -2920,7 +2920,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release History..."].statusTip() == actions["Release History..."].toolTip()
         assert actions["Repository Health..."].toolTip() == (
-            "Inspect the Designer repository health summary. Project: none. SDK: invalid."
+            "Inspect the Designer repository health summary. Project: none. SDK: invalid. Release output root: none."
         )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
@@ -2966,7 +2966,8 @@ class TestMainWindowFileFlow:
         )
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == (
-            "Inspect the Designer repository health summary. Project: open. SDK: valid."
+            "Inspect the Designer repository health summary. "
+            f"Project: open. SDK: valid. Release output root: {window._release_output_root()}."
         )
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (

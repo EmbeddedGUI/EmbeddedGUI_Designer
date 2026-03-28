@@ -2225,9 +2225,13 @@ class MainWindow(QMainWindow):
             )
             repo_project_state = "open" if self.project is not None else "none"
             repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+            repo_release_root = self._release_output_root() if self.project is not None and self._project_dir else "none"
             self._apply_action_hint(
                 self._repo_health_action,
-                f"Inspect the Designer repository health summary. Project: {repo_project_state}. SDK: {repo_sdk_state}.",
+                (
+                    "Inspect the Designer repository health summary. "
+                    f"Project: {repo_project_state}. SDK: {repo_sdk_state}. Release output root: {repo_release_root}."
+                ),
             )
             self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
             self._open_last_release_dist_action.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
