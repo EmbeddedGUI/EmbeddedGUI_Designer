@@ -153,7 +153,7 @@ class ProjectExplorerDock(QDockWidget):
         _set_widget_metadata(
             self._mode_label,
             tooltip=mode_hint,
-            accessible_name=f"Page mode label. Current mode: {mode}",
+            accessible_name=f"Page mode label. Current mode: {mode}. {mode_hint}",
         )
         _set_widget_metadata(
             self._pages_label,
@@ -168,12 +168,12 @@ class ProjectExplorerDock(QDockWidget):
         _set_widget_metadata(
             self._mode_combo,
             tooltip=mode_hint,
-            accessible_name=f"Project page mode: {mode}",
+            accessible_name=f"Project page mode: {mode}. {mode_hint}",
         )
         _set_widget_metadata(
             self._add_page_button,
             tooltip=add_page_hint,
-            accessible_name=f"New page action: {mode} mode",
+            accessible_name=f"New page action: {mode} mode. {add_page_hint}",
         )
 
     def _apply_page_item_metadata(self, item, page_name):
