@@ -93,9 +93,7 @@ class DebugPanel(QWidget):
         line_label = f"{line_count} line" if line_count == 1 else f"{line_count} lines"
         last_summary = str(last_message or "").strip() or "blank line"
         summary = f"Debug output: {line_label}. Last message: {last_summary}"
-        self.setAccessibleName(summary)
-        self.setToolTip(summary)
-        self.setStatusTip(summary)
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,

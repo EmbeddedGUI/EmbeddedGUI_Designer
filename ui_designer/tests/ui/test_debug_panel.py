@@ -33,11 +33,16 @@ class TestDebugPanel:
         panel = DebugPanel()
 
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel.statusTip() == panel.toolTip()
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
         assert panel._clear_btn.statusTip() == panel._clear_btn.toolTip()
         assert panel._clear_btn.accessibleName() == "Clear debug output: 0 lines"
         assert panel._title_label.toolTip() == "Debug output: 0 lines. Last message: No output yet."
+        assert panel._title_label.statusTip() == panel._title_label.toolTip()
         assert panel._title_label.accessibleName() == "Debug output title: 0 lines"
+        assert panel._output.toolTip() == "Debug output: 0 lines. Last message: No output yet."
+        assert panel._output.statusTip() == panel._output.toolTip()
         assert panel._output.accessibleName() == "Debug output log: 0 lines. Last message: No output yet."
         panel.deleteLater()
 
@@ -48,8 +53,10 @@ class TestDebugPanel:
 
         panel.append_text("Build started", "action")
         assert panel.accessibleName() == "Debug output: 1 line. Last message: Build started"
+        assert panel.toolTip() == panel.accessibleName()
         assert panel._clear_btn.toolTip() == "Clear 1 line of debug output."
         assert panel._clear_btn.accessibleName() == "Clear debug output: 1 line"
+        assert panel._output.toolTip() == "Debug output: 1 line. Last message: Build started"
         assert panel._output.accessibleName() == "Debug output log: 1 line. Last message: Build started"
 
         panel.append_text("", "info")
