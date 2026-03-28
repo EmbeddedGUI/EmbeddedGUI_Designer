@@ -4854,6 +4854,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: main_page. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.accessibleName() == "Workspace center shell. Current page: main_page. Mode: Design."
         assert window._top_splitter.accessibleName() == (
             "Workspace columns. Left panel: Project. Editor mode: Design. Inspector section: Properties. Current page: main_page."
         )
@@ -4861,6 +4862,9 @@ class TestMainWindowFileFlow:
             "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: main_page."
         )
         assert window._bottom_header.accessibleName() == "Bottom tools header. Current section: Diagnostics. Panel hidden."
+        assert window._bottom_shell.accessibleName() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: main_page."
+        )
 
         window._switch_page("detail_page")
 
@@ -4880,11 +4884,15 @@ class TestMainWindowFileFlow:
         assert window._editor_container.toolTip() == (
             "Editor workspace. Left panel: Project. Current page: detail_page. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.toolTip() == "Workspace center shell. Current page: detail_page. Mode: Design."
         assert window._top_splitter.toolTip() == (
             "Workspace columns. Left panel: Project. Editor mode: Design. Inspector section: Properties. Current page: detail_page."
         )
         assert window._workspace_splitter.toolTip() == (
             "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: detail_page."
+        )
+        assert window._bottom_shell.toolTip() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: detail_page."
         )
 
         window._on_startup_changed("detail_page")
@@ -4908,6 +4916,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: detail_page. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.accessibleName() == "Workspace center shell. Current page: detail_page. Mode: Design."
         _close_window(window)
 
     def test_page_navigator_copy_and_template_add_keep_pages_in_sync(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -6846,6 +6855,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: none. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.accessibleName() == "Workspace center shell. Current page: none. Mode: Design."
         assert window._top_splitter.accessibleName() == (
             "Workspace columns. Left panel: Project. Editor mode: Design. Inspector section: Properties. Current page: none."
         )
@@ -6853,6 +6863,9 @@ class TestMainWindowFileFlow:
             "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: none."
         )
         assert window._bottom_header.accessibleName() == "Bottom tools header. Current section: Diagnostics. Panel hidden."
+        assert window._bottom_shell.accessibleName() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: none."
+        )
 
         window.editor_tabs.set_mode(MODE_CODE)
 
@@ -6862,6 +6875,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.toolTip() == (
             "Editor workspace. Left panel: Project. Current page: none. Mode: Code. Bottom tools hidden."
         )
+        assert window._center_shell.toolTip() == "Workspace center shell. Current page: none. Mode: Code."
         assert window._top_splitter.toolTip() == (
             "Workspace columns. Left panel: Project. Editor mode: Code. Inspector section: Properties. Current page: none."
         )
@@ -6874,6 +6888,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: none. Mode: Split. Bottom tools hidden."
         )
+        assert window._center_shell.accessibleName() == "Workspace center shell. Current page: none. Mode: Split."
         assert window._top_splitter.accessibleName() == (
             "Workspace columns. Left panel: Project. Editor mode: Split. Inspector section: Properties. Current page: none."
         )
@@ -6924,6 +6939,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.toolTip() == (
             "Editor workspace. Left panel: Project. Current page: none. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.toolTip() == "Workspace center shell. Current page: none. Mode: Design."
         assert window._top_splitter.toolTip() == (
             "Workspace columns. Left panel: Project. Editor mode: Design. Inspector section: Properties. Current page: none."
         )
@@ -6931,6 +6947,9 @@ class TestMainWindowFileFlow:
             "Workspace rows. Editor area visible. Bottom tools hidden. Current section: Diagnostics. Current page: none."
         )
         assert window._bottom_header.toolTip() == "Bottom tools header. Current section: Diagnostics. Panel hidden."
+        assert window._bottom_shell.toolTip() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: none."
+        )
         assert window._bottom_toggle_button.text() == "Show"
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
@@ -6956,6 +6975,7 @@ class TestMainWindowFileFlow:
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Status. Current page: none. Mode: Design. Bottom tools hidden."
         )
+        assert window._center_shell.accessibleName() == "Workspace center shell. Current page: none. Mode: Design."
         assert window._top_splitter.accessibleName() == (
             "Workspace columns. Left panel: Status. Editor mode: Design. Inspector section: Properties. Current page: none."
         )
@@ -6973,6 +6993,9 @@ class TestMainWindowFileFlow:
             "Workspace rows. Editor area visible. Bottom tools visible. Current section: Diagnostics. Current page: none."
         )
         assert window._bottom_header.accessibleName() == "Bottom tools header. Current section: Diagnostics. Panel visible."
+        assert window._bottom_shell.accessibleName() == (
+            "Workspace bottom shell. Current section: Diagnostics. Panel visible. Current page: none."
+        )
         _close_window(window)
 
     def test_workspace_tab_widgets_expose_current_section_metadata(self, qapp, isolated_config):

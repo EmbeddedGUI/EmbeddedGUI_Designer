@@ -407,6 +407,7 @@ class MainWindow(QMainWindow):
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
         center_shell = QWidget()
+        self._center_shell = center_shell
         center_shell.setObjectName("workspace_center_shell")
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
@@ -460,6 +461,7 @@ class MainWindow(QMainWindow):
         self._bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
         bottom_shell = QWidget()
+        self._bottom_shell = bottom_shell
         bottom_shell.setObjectName("workspace_bottom_shell")
         bottom_layout = QVBoxLayout(bottom_shell)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
@@ -1139,6 +1141,11 @@ class MainWindow(QMainWindow):
             self._editor_container.setToolTip(editor_summary)
             self._editor_container.setStatusTip(editor_summary)
             self._editor_container.setAccessibleName(editor_summary)
+        if hasattr(self, "_center_shell"):
+            center_summary = f"Workspace center shell. Current page: {current_page}. Mode: {current_mode}."
+            self._center_shell.setToolTip(center_summary)
+            self._center_shell.setStatusTip(center_summary)
+            self._center_shell.setAccessibleName(center_summary)
         if hasattr(self, "_top_splitter"):
             top_splitter_summary = (
                 f"Workspace columns. Left panel: {current_panel}. Editor mode: {current_mode}. "
@@ -1160,6 +1167,14 @@ class MainWindow(QMainWindow):
             self._bottom_header.setToolTip(bottom_header_summary)
             self._bottom_header.setStatusTip(bottom_header_summary)
             self._bottom_header.setAccessibleName(bottom_header_summary)
+        if hasattr(self, "_bottom_shell"):
+            bottom_shell_summary = (
+                f"Workspace bottom shell. Current section: {bottom_section}. Panel {visibility}. "
+                f"Current page: {current_page}."
+            )
+            self._bottom_shell.setToolTip(bottom_shell_summary)
+            self._bottom_shell.setStatusTip(bottom_shell_summary)
+            self._bottom_shell.setAccessibleName(bottom_shell_summary)
 
     def _update_page_tab_bar_metadata(self):
         if not hasattr(self, "page_tab_bar"):
