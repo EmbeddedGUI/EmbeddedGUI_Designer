@@ -291,6 +291,7 @@ class MainWindow(QMainWindow):
         self._central_stack.addWidget(self._welcome_page)
 
         editor_container = QWidget()
+        self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
         editor_layout.setContentsMargins(12, 12, 12, 12)
@@ -469,6 +470,7 @@ class MainWindow(QMainWindow):
 
         self._central_stack.addWidget(editor_container)
         self.setCentralWidget(self._central_stack)
+        self._update_main_view_metadata()
 
         self._bottom_panel_visible = False
         self._current_left_panel = "project"
@@ -799,6 +801,20 @@ class MainWindow(QMainWindow):
         self.page_tab_bar.setToolTip(summary)
         self.page_tab_bar.setStatusTip(summary)
         self.page_tab_bar.setAccessibleName(summary)
+
+    def _update_main_view_metadata(self):
+        if not hasattr(self, "_central_stack"):
+            return
+        current_index = self._central_stack.currentIndex()
+        view_label = "Welcome page" if current_index == 0 else "Editor workspace"
+        summary = f"Main view stack: {view_label} visible."
+        self._central_stack.setToolTip(summary)
+        self._central_stack.setStatusTip(summary)
+        self._central_stack.setAccessibleName(summary)
+        if hasattr(self, "_editor_container"):
+            self._editor_container.setToolTip("Editor workspace")
+            self._editor_container.setStatusTip("Editor workspace")
+            self._editor_container.setAccessibleName("Editor workspace")
 
     def _sync_editor_mode_controls(self, mode):
         if hasattr(self, "_mode_buttons"):
@@ -1654,12 +1670,14 @@ class MainWindow(QMainWindow):
         self._central_stack.setCurrentIndex(0)
         self._welcome_page.refresh()
         self.setWindowTitle("EmbeddedGUI Designer")
+        self._update_main_view_metadata()
         self._update_sdk_status_label()
 
     def _show_editor(self):
         """Show the editor (hide welcome page)."""
         self._central_stack.setCurrentIndex(1)
         self._update_widget_browser_target()
+        self._update_main_view_metadata()
 
     def _create_page_tab_bar(self):
         page_tab_bar = TabBar()
@@ -2391,8 +2409,12 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_sdk_status_label"):
             return
         sdk_root = self.project_root or self._active_sdk_root()
-        self._sdk_status_label.setText(format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT))
-        self._sdk_status_label.setToolTip(sdk_root or "No SDK root configured")
+        binding_label = format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT)
+        tooltip = sdk_root or "No SDK root configured"
+        self._sdk_status_label.setText(binding_label)
+        self._sdk_status_label.setToolTip(tooltip)
+        self._sdk_status_label.setStatusTip(tooltip)
+        self._sdk_status_label.setAccessibleName(f"SDK binding: {binding_label}.")
         self._update_workspace_chips()
 
     def _edit_release_profiles(self):

@@ -5953,6 +5953,10 @@ class TestMainWindowFileFlow:
         assert window._sdk_chip.text() == "SDK ready"
         assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
         assert window._sdk_chip.toolTip() == "Open Status Center to review SDK readiness."
+        assert window._central_stack.accessibleName() == "Main view stack: Editor workspace visible."
+        assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
+        assert window._sdk_status_label.toolTip() == str(sdk_root)
+        assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._selection_chip.text() == "No selection"
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
@@ -5976,6 +5980,19 @@ class TestMainWindowFileFlow:
         assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
         assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
+        _close_window(window)
+
+    def test_welcome_view_and_sdk_status_label_expose_accessible_metadata(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._central_stack.accessibleName() == "Main view stack: Welcome page visible."
+        assert window._central_stack.toolTip() == window._central_stack.accessibleName()
+        assert window._sdk_status_label.text() == "SDK: missing"
+        assert window._sdk_status_label.toolTip() == "No SDK root configured"
+        assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
+        assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
         _close_window(window)
 
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
