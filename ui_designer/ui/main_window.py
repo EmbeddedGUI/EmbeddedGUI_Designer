@@ -2360,7 +2360,8 @@ class MainWindow(QMainWindow):
                     "Build a release package for the current project. "
                     f"Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
                     f"History file: {history_file_path or 'not created yet'}. "
-                    f"Source resources: {resources_state}. {output_root_state_summary} {history_file_state_summary} {history_summary} "
+                    f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
+                    f"{output_root_state_summary} {history_file_state_summary} {history_summary} "
                     f"{latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                     if self._release_build_action.isEnabled()
                     else self._action_hint(

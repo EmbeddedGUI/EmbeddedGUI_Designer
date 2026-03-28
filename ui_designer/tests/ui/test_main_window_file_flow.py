@@ -2958,7 +2958,8 @@ class TestMainWindowFileFlow:
             "Build a release package for the current project. "
             f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
-            "Source resources: available. Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
+            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
@@ -3092,7 +3093,8 @@ class TestMainWindowFileFlow:
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             f"History file: {history_path}. "
-            "Source resources: available. Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
+            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -3195,7 +3197,8 @@ class TestMainWindowFileFlow:
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
-            f"History file: {history_path}. Source resources: available. Output root state: available. History file state: available. Release records: 1 entry. "
+            f"History file: {history_path}. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
+            "Output root state: available. History file state: available. Release records: 1 entry. "
             "Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
         assert actions["Release History..."].toolTip() == (
