@@ -73,15 +73,21 @@ class PageThumbnail(QWidget):
     def _update_accessibility(self):
         summary = self._state_summary()
         tooltip = f"Open page: {self.page_name}. {summary}"
-        self.setToolTip(tooltip)
-        self.setStatusTip(tooltip)
-        self.setAccessibleName(f"Page thumbnail: {self.page_name}. {summary}")
-        self._thumb_label.setToolTip(tooltip)
-        self._thumb_label.setStatusTip(tooltip)
-        self._thumb_label.setAccessibleName(f"Page preview: {self.page_name}. {summary}")
-        self._name_label.setToolTip(tooltip)
-        self._name_label.setStatusTip(tooltip)
-        self._name_label.setAccessibleName(f"Page name: {self._name_label.text()}. {summary}")
+        _set_widget_metadata(
+            self,
+            tooltip=tooltip,
+            accessible_name=f"Page thumbnail: {self.page_name}. {summary}",
+        )
+        _set_widget_metadata(
+            self._thumb_label,
+            tooltip=tooltip,
+            accessible_name=f"Page preview: {self.page_name}. {summary}",
+        )
+        _set_widget_metadata(
+            self._name_label,
+            tooltip=tooltip,
+            accessible_name=f"Page name: {self._name_label.text()}. {summary}",
+        )
 
     def set_selected(self, selected):
         self._selected = selected
@@ -185,9 +191,7 @@ class PageNavigator(QWidget):
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         summary = f"Page navigator: {page_label}. Current page: {current_page}. {dirty_label}."
-        self.setAccessibleName(summary)
-        self.setToolTip(summary)
-        self.setStatusTip(summary)
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,

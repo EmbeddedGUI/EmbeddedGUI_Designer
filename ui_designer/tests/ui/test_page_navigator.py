@@ -35,7 +35,11 @@ class TestPageNavigator:
         assert thumb.toolTip() == "Open page: main_page. Available. No unsaved changes."
         assert thumb.statusTip() == thumb.toolTip()
         assert thumb.accessibleName() == "Page thumbnail: main_page. Available. No unsaved changes."
+        assert thumb._thumb_label.toolTip() == thumb.toolTip()
+        assert thumb._thumb_label.statusTip() == thumb._thumb_label.toolTip()
         assert thumb._thumb_label.accessibleName() == "Page preview: main_page. Available. No unsaved changes."
+        assert thumb._name_label.toolTip() == thumb.toolTip()
+        assert thumb._name_label.statusTip() == thumb._name_label.toolTip()
         assert thumb._name_label.accessibleName() == "Page name: main_page. Available. No unsaved changes."
 
         thumb.set_selected(True)
@@ -54,6 +58,7 @@ class TestPageNavigator:
 
         assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. No dirty pages."
         assert navigator.toolTip() == navigator.accessibleName()
+        assert navigator.statusTip() == navigator.toolTip()
         assert navigator._scroll_area.accessibleName() == "Page thumbnails"
         assert navigator._container.accessibleName() == "Page thumbnail list"
         assert navigator._scroll_area.toolTip() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
@@ -62,6 +67,7 @@ class TestPageNavigator:
         navigator.set_pages({"main_page": object(), "detail_page": object()})
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: none. No dirty pages."
         assert navigator._title_label.toolTip() == navigator.accessibleName()
+        assert navigator._title_label.statusTip() == navigator._title_label.toolTip()
         assert navigator._title_label.accessibleName() == "Pages: 2 pages. Current page: none."
 
         navigator.set_current_page("detail_page")
