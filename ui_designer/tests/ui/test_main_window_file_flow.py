@@ -3427,7 +3427,10 @@ class TestMainWindowFileFlow:
         window = MainWindow("")
         actions = {action.text(): action for action in window.menuBar().actions() if action.text()}
 
-        assert actions["File"].toolTip() == "Create, open, save, export, and close projects."
+        assert actions["File"].toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: none. Unsaved changes: none. Reload: unavailable. Recent projects: none."
+        )
         assert actions["File"].statusTip() == actions["File"].toolTip()
         assert actions["Edit"].toolTip() == (
             "Undo changes and work with the current selection. "
@@ -3506,6 +3509,46 @@ class TestMainWindowFileFlow:
             "Page: main_page. Undo: available. Redo: available. Selection: title (label)."
         )
         assert edit_action.statusTip() == edit_action.toolTip()
+        _close_window(window)
+
+    def test_file_menu_category_exposes_project_dirty_and_recent_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "FileCategoryHintsDemo"
+        project = _create_project(project_dir, "FileCategoryHintsDemo", sdk_root)
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: none. Unsaved changes: none. Reload: unavailable. Recent projects: none."
+        )
+        assert file_action.statusTip() == file_action.toolTip()
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: open. Unsaved changes: none. Reload: available. Recent projects: 1 project."
+        )
+        assert file_action.statusTip() == file_action.toolTip()
+
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_window_title()
+
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: open. Unsaved changes: present. Reload: available. Recent projects: 1 project."
+        )
+        assert file_action.statusTip() == file_action.toolTip()
         _close_window(window)
 
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):

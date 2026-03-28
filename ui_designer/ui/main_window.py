@@ -915,6 +915,23 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_file_menu_metadata(self):
+        if not hasattr(self, "_file_menu"):
+            return
+        project_state = "open" if getattr(self, "project", None) is not None else "none"
+        dirty_state = "present" if hasattr(self, "_undo_manager") and self._undo_manager.is_any_dirty() else "none"
+        reload_state = "available" if getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)() else "unavailable"
+        recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
+        recent_count = min(len(recent), 10)
+        recent_label = "none" if recent_count == 0 else f"{recent_count} project" if recent_count == 1 else f"{recent_count} projects"
+        self._apply_action_hint(
+            self._file_menu.menuAction(),
+            (
+                "Create, open, save, export, and close projects. "
+                f"Project: {project_state}. Unsaved changes: {dirty_state}. Reload: {reload_state}. Recent projects: {recent_label}."
+            ),
+        )
+
     def _update_edit_menu_metadata(self):
         if not hasattr(self, "_edit_menu"):
             return
@@ -2022,6 +2039,7 @@ class MainWindow(QMainWindow):
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
         self._update_build_menu_metadata()
+        self._update_file_menu_metadata()
         self._update_generate_resources_action_metadata()
         self._update_edit_actions()
         self._update_workspace_chips()
@@ -2429,6 +2447,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ File menu 鈹€鈹€
         file_menu = menubar.addMenu("File")
+        self._file_menu = file_menu
         self._apply_action_hint(file_menu.menuAction(), "Create, open, save, export, and close projects.")
 
         new_action = QAction("New Project", self)
@@ -3209,6 +3228,7 @@ class MainWindow(QMainWindow):
             action.setToolTip("No recent projects are available.")
             action.setStatusTip(action.toolTip())
             self._recent_menu.addAction(action)
+            self._update_file_menu_metadata()
             return
 
         recent_count = min(len(recent), 10)
@@ -3235,6 +3255,7 @@ class MainWindow(QMainWindow):
                 lambda checked, p=project_path, r=sdk_root: self._open_recent_project(p, r)
             )
             self._recent_menu.addAction(action)
+        self._update_file_menu_metadata()
 
     def _release_output_root(self):
         if not self._project_dir:
@@ -3659,6 +3680,7 @@ class MainWindow(QMainWindow):
         self._update_history_panel()
         self._update_diagnostics_panel()
         self._update_workspace_chips()
+        self._update_file_menu_metadata()
 
     def _update_history_panel(self):
         if self._current_page is None:
