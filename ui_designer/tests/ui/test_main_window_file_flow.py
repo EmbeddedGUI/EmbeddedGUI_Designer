@@ -2802,11 +2802,11 @@ class TestMainWindowFileFlow:
         assert file_actions["Recent Projects"].statusTip() == file_actions["Recent Projects"].toolTip()
         assert view_actions["Theme"].toolTip() == "Choose the Designer theme."
         assert view_actions["Theme"].statusTip() == view_actions["Theme"].toolTip()
-        assert view_actions["Workspace"].toolTip() == "Choose a workspace panel to show."
+        assert view_actions["Workspace"].toolTip() == "Choose a workspace panel to show. Current panel: Project."
         assert view_actions["Workspace"].statusTip() == view_actions["Workspace"].toolTip()
-        assert view_actions["Inspector"].toolTip() == "Choose an inspector section to show."
+        assert view_actions["Inspector"].toolTip() == "Choose an inspector section to show. Current section: Properties."
         assert view_actions["Inspector"].statusTip() == view_actions["Inspector"].toolTip()
-        assert view_actions["Tools"].toolTip() == "Choose a bottom tools panel to show."
+        assert view_actions["Tools"].toolTip() == "Choose a bottom tools panel to show. Current section: Diagnostics. Panel hidden."
         assert view_actions["Tools"].statusTip() == view_actions["Tools"].toolTip()
         assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size."
         assert view_actions["Grid Size"].statusTip() == view_actions["Grid Size"].toolTip()
@@ -2924,28 +2924,57 @@ class TestMainWindowFileFlow:
             }
         }
 
-        assert actions["Project"].toolTip() == "Show the Project workspace panel."
+        assert actions["Project"].toolTip() == (
+            "Currently showing the Project workspace panel. "
+            "View: List view. Active page: none. Startup page: none."
+        )
         assert actions["Project"].statusTip() == actions["Project"].toolTip()
-        assert actions["Structure"].toolTip() == "Show the Structure workspace panel."
+        assert actions["Structure"].toolTip() == "Show the Structure workspace panel. Current page: none. Selection: none."
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
-        assert actions["Components"].toolTip() == "Show the Components workspace panel."
+        assert actions["Components"].toolTip() == "Show the Components workspace panel. Current page: none. Insert target: unavailable."
         assert actions["Components"].statusTip() == actions["Components"].toolTip()
-        assert actions["Assets"].toolTip() == "Show the Assets workspace panel."
+        assert actions["Assets"].toolTip() == "Show the Assets workspace panel. Current page: none."
         assert actions["Assets"].statusTip() == actions["Assets"].toolTip()
-        assert actions["Status"].toolTip() == "Show the Status workspace panel."
+        assert actions["Status"].toolTip() == (
+            "Show the Status workspace panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
         assert actions["Status"].statusTip() == actions["Status"].toolTip()
-        assert actions["Properties"].toolTip() == "Show the Properties inspector section."
+        assert actions["Properties"].toolTip() == (
+            "Currently showing the Properties inspector section. Current page: none. Selection: none."
+        )
         assert actions["Properties"].statusTip() == actions["Properties"].toolTip()
-        assert actions["Animations"].toolTip() == "Show the Animations inspector section."
+        assert actions["Animations"].toolTip() == (
+            "Show the Animations inspector section. Current page: none. Selection: none."
+        )
         assert actions["Animations"].statusTip() == actions["Animations"].toolTip()
-        assert actions["Page"].toolTip() == "Show the Page inspector section."
+        assert actions["Page"].toolTip() == "Show the Page inspector section. Current page: none. Selection: none."
         assert actions["Page"].statusTip() == actions["Page"].toolTip()
-        assert actions["Diagnostics"].toolTip() == "Show the Diagnostics tools panel."
+        assert actions["Diagnostics"].toolTip() == "Show the Diagnostics tools panel. Current page: none. Panel hidden."
         assert actions["Diagnostics"].statusTip() == actions["Diagnostics"].toolTip()
-        assert actions["History"].toolTip() == "Show the History tools panel."
+        assert actions["History"].toolTip() == "Show the History tools panel. Current page: none. Panel hidden."
         assert actions["History"].statusTip() == actions["History"].toolTip()
-        assert actions["Debug Output"].toolTip() == "Show the Debug Output tools panel."
+        assert actions["Debug Output"].toolTip() == "Show the Debug Output tools panel. Current page: none. Panel hidden."
         assert actions["Debug Output"].statusTip() == actions["Debug Output"].toolTip()
+
+        window._select_left_panel("status")
+        window._show_inspector_tab("page")
+        window._show_bottom_panel("History")
+
+        assert actions["Project"].toolTip() == (
+            "Show the Project workspace panel. View: List view. Active page: none. Startup page: none."
+        )
+        assert actions["Status"].toolTip() == (
+            "Currently showing the Status workspace panel. "
+            "Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
+        assert actions["Properties"].toolTip() == (
+            "Show the Properties inspector section. Current page: none. Selection: none."
+        )
+        assert actions["Page"].toolTip() == (
+            "Currently showing the Page inspector section. Current page: none. Selection: none."
+        )
+        assert actions["Diagnostics"].toolTip() == "Show the Diagnostics tools panel. Current page: none. Panel visible."
+        assert actions["History"].toolTip() == "Currently showing the History tools panel. Current page: none. Panel visible."
         _close_window(window)
 
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config):

@@ -677,6 +677,76 @@ class MainWindow(QMainWindow):
             button.setStatusTip(tooltip)
             button.setAccessibleName(accessible_name)
 
+    def _workspace_menu_action_context(self, panel_key):
+        if panel_key == "project":
+            return self._project_workspace_nav_context()
+        if panel_key == "structure":
+            return self._structure_workspace_nav_context()
+        if panel_key == "widgets":
+            return self._components_workspace_nav_context()
+        if panel_key == "assets":
+            return self._assets_workspace_nav_context()
+        if panel_key == "status":
+            return self._status_workspace_nav_context()
+        return ""
+
+    def _inspector_menu_action_context(self):
+        current_page = self._current_page_accessibility_text() if hasattr(self, "_current_page_accessibility_text") else "none"
+        selection_text = self._selection_accessibility_text() if hasattr(self, "_selection_accessibility_text") else "Selection: none."
+        return f"Current page: {current_page}. {selection_text}"
+
+    def _tools_menu_action_context(self):
+        current_page = self._current_page_accessibility_text() if hasattr(self, "_current_page_accessibility_text") else "none"
+        visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
+        return f"Current page: {current_page}. Panel {visibility}."
+
+    def _update_view_panel_navigation_action_metadata(self):
+        if hasattr(self, "_workspace_menu"):
+            current_panel = getattr(self, "_current_left_panel", "project")
+            self._apply_action_hint(
+                self._workspace_menu.menuAction(),
+                f"Choose a workspace panel to show. Current panel: {self._workspace_panel_label(current_panel)}.",
+            )
+            for key, action in getattr(self, "_workspace_view_actions", {}).items():
+                label = self._workspace_panel_label(key)
+                context = self._workspace_menu_action_context(key)
+                base = (
+                    f"Currently showing the {label} workspace panel."
+                    if key == current_panel
+                    else f"Show the {label} workspace panel."
+                )
+                self._apply_action_hint(action, f"{base} {context}".strip())
+        if hasattr(self, "_inspector_menu"):
+            current_section = self._current_tab_text(self._inspector_tabs, "Properties") if hasattr(self, "_inspector_tabs") else "Properties"
+            self._apply_action_hint(
+                self._inspector_menu.menuAction(),
+                f"Choose an inspector section to show. Current section: {current_section}.",
+            )
+            context = self._inspector_menu_action_context()
+            for label, action in getattr(self, "_inspector_view_actions", {}).items():
+                base = (
+                    f"Currently showing the {label} inspector section."
+                    if label == current_section
+                    else f"Show the {label} inspector section."
+                )
+                self._apply_action_hint(action, f"{base} {context}".strip())
+        if hasattr(self, "_tools_menu"):
+            current_section = self._current_tab_text(self._bottom_tabs, "Diagnostics") if hasattr(self, "_bottom_tabs") else "Diagnostics"
+            visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
+            self._apply_action_hint(
+                self._tools_menu.menuAction(),
+                f"Choose a bottom tools panel to show. Current section: {current_section}. Panel {visibility}.",
+            )
+            context = self._tools_menu_action_context()
+            for label, action in getattr(self, "_tools_view_actions", {}).items():
+                is_current = label == current_section and getattr(self, "_bottom_panel_visible", False)
+                base = (
+                    f"Currently showing the {label} tools panel."
+                    if is_current
+                    else f"Show the {label} tools panel."
+                )
+                self._apply_action_hint(action, f"{base} {context}".strip())
+
     def _select_left_panel(self, panel_key):
         if panel_key == "components":
             panel_key = "widgets"
@@ -689,6 +759,7 @@ class MainWindow(QMainWindow):
         for key, button in getattr(self, "_workspace_nav_buttons", {}).items():
             button.setChecked(key == panel_key)
         self._update_workspace_nav_button_metadata(panel_key)
+        self._update_view_panel_navigation_action_metadata()
         if panel_key == "widgets":
             self.widget_browser.focus_search()
 
@@ -917,6 +988,7 @@ class MainWindow(QMainWindow):
             self._config.workspace_state = {}
         self._config.workspace_state["project_workspace_view"] = view_name or ProjectWorkspacePanel.VIEW_LIST
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
+        self._update_view_panel_navigation_action_metadata()
 
     def _show_inspector_tab(self, section, inner_section=None):
         section_map = {
@@ -929,6 +1001,7 @@ class MainWindow(QMainWindow):
             self._inspector_tabs.setCurrentIndex(index)
         if section == "page" and inner_section in ("fields", "timers") and hasattr(self, "_page_tools_tabs"):
             self._page_tools_tabs.setCurrentIndex(0 if inner_section == "fields" else 1)
+        self._update_view_panel_navigation_action_metadata()
 
     def _show_bottom_panel(self, section="Diagnostics"):
         if not hasattr(self, "_bottom_tabs"):
@@ -940,6 +1013,7 @@ class MainWindow(QMainWindow):
         }
         self._bottom_tabs.setCurrentIndex(section_map.get(section, 0))
         self._set_bottom_panel_visible(True)
+        self._update_view_panel_navigation_action_metadata()
 
     def _set_bottom_panel_visible(self, visible):
         if not hasattr(self, "_workspace_splitter"):
@@ -1203,6 +1277,7 @@ class MainWindow(QMainWindow):
         )
         self._update_workspace_tab_metadata()
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
+        self._update_view_panel_navigation_action_metadata()
 
     def _apply_workspace_iconography(self):
         if hasattr(self, "_workspace_nav_buttons"):
@@ -2471,6 +2546,8 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         workspace_menu = view_menu.addMenu("Workspace")
+        self._workspace_menu = workspace_menu
+        self._workspace_view_actions = {}
         self._apply_action_hint(workspace_menu.menuAction(), "Choose a workspace panel to show.")
         for label, key in (
             ("Project", "project"),
@@ -2483,8 +2560,11 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(action, f"Show the {label} workspace panel.")
             action.triggered.connect(lambda checked=False, panel_key=key: self._select_left_panel(panel_key))
             workspace_menu.addAction(action)
+            self._workspace_view_actions[key] = action
 
         inspector_menu = view_menu.addMenu("Inspector")
+        self._inspector_menu = inspector_menu
+        self._inspector_view_actions = {}
         self._apply_action_hint(inspector_menu.menuAction(), "Choose an inspector section to show.")
         for label, key in (
             ("Properties", "properties"),
@@ -2495,14 +2575,18 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(action, f"Show the {label} inspector section.")
             action.triggered.connect(lambda checked=False, section=key: self._show_inspector_tab(section))
             inspector_menu.addAction(action)
+            self._inspector_view_actions[label] = action
 
         tools_menu = view_menu.addMenu("Tools")
+        self._tools_menu = tools_menu
+        self._tools_view_actions = {}
         self._apply_action_hint(tools_menu.menuAction(), "Choose a bottom tools panel to show.")
         for label in ("Diagnostics", "History", "Debug Output"):
             action = QAction(label, self)
             self._apply_action_hint(action, f"Show the {label} tools panel.")
             action.triggered.connect(lambda checked=False, section=label: self._show_bottom_panel(section))
             tools_menu.addAction(action)
+            self._tools_view_actions[label] = action
         view_menu.addSeparator()
 
         self._overlay_group = QActionGroup(self)
