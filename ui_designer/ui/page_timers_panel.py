@@ -98,19 +98,18 @@ class PageTimersPanel(QWidget):
         self._update_actions()
 
     def _update_accessibility_summary(self, summary_text):
-        self.setAccessibleName(summary_text)
-        self.setToolTip(summary_text)
-        self.setStatusTip(summary_text)
-        self._summary_label.setToolTip(summary_text)
-        self._summary_label.setStatusTip(summary_text)
-        self._summary_label.setAccessibleName(summary_text)
+        _set_widget_metadata(self, tooltip=summary_text, accessible_name=summary_text)
+        _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         _set_widget_metadata(
             self._hint_label,
             tooltip=self._hint_label.text(),
             accessible_name=self._hint_label.text(),
         )
-        self._table.setToolTip(summary_text)
-        self._table.setStatusTip(summary_text)
+        _set_widget_metadata(
+            self._table,
+            tooltip=summary_text,
+            accessible_name=f"Page timers table: {summary_text}",
+        )
 
     def _update_button_metadata(self, button, tooltip, accessible_name):
         _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)

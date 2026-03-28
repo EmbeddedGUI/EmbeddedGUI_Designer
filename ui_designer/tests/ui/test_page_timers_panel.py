@@ -50,7 +50,13 @@ class TestPageTimersPanel:
 
         assert panel._summary_label.text() == "Page Timers: 1 timer on main_page"
         assert panel.accessibleName() == "Page Timers: 1 timer on main_page"
-        assert panel._table.accessibleName() == "Page timers table"
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel._summary_label.toolTip() == panel._summary_label.text()
+        assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
+        assert panel._summary_label.accessibleName() == panel._summary_label.text()
+        assert panel._table.toolTip() == panel._summary_label.text()
+        assert panel._table.statusTip() == panel._table.toolTip()
+        assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page"
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._remove_button.toolTip() == "Select a timer to remove it."
@@ -68,6 +74,9 @@ class TestPageTimersPanel:
         panel = PageTimersPanel()
 
         assert panel.accessibleName() == "Page Timers: no active page"
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel._table.toolTip() == "Page Timers: no active page"
+        assert panel._table.accessibleName() == "Page timers table: Page Timers: no active page"
         assert panel._add_button.toolTip() == "Open a page to manage timers."
         assert panel._add_button.accessibleName() == "Add page timer unavailable"
         assert panel._remove_button.toolTip() == "Open a page to manage timers."
