@@ -44,6 +44,13 @@ class TestProjectWorkspacePanel:
         assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Available."
         assert panel._stack.accessibleName() == "Project workspace view stack: List view visible."
         assert panel._stack.toolTip() == panel._stack.accessibleName()
+        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._header.statusTip() == panel._header.toolTip()
+        assert panel._title_label.toolTip() == panel.accessibleName()
+        assert panel._title_label.accessibleName() == "Project Workspace. List view."
+        assert panel._subtitle_label.accessibleName() == (
+            "Switch between fast list management and visual page thumbnails."
+        )
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Dirty state: No dirty pages."
         )
@@ -60,6 +67,8 @@ class TestProjectWorkspacePanel:
         assert panel._thumb_btn.toolTip() == "Currently showing page thumbnails for a visual scan."
         assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Current view."
         assert panel._stack.accessibleName() == "Project workspace view stack: Thumbnails visible."
+        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._title_label.accessibleName() == "Project Workspace. Thumbnails."
         assert panel.accessibleName() == (
             "Project workspace: Thumbnails. Pages: 0 pages. Active page: none. Dirty state: No dirty pages."
         )
@@ -94,6 +103,8 @@ class TestProjectWorkspacePanel:
         assert panel._active_page_chip.accessibleName() == "Workspace active page: main_page."
         assert panel._dirty_pages_chip.text() == "2 dirty pages"
         assert panel._dirty_pages_chip.accessibleName() == "Workspace dirty pages: 2 dirty pages."
+        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._title_label.accessibleName() == "Project Workspace. List view."
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 3 pages. Active page: main_page. Dirty state: 2 dirty pages."
         )

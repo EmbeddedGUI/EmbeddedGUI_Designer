@@ -38,20 +38,20 @@ class ProjectWorkspacePanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
 
-        header = QFrame()
-        header.setObjectName("workspace_panel_header")
-        header_layout = QVBoxLayout(header)
+        self._header = QFrame()
+        self._header.setObjectName("workspace_panel_header")
+        header_layout = QVBoxLayout(self._header)
         header_layout.setContentsMargins(14, 14, 14, 14)
         header_layout.setSpacing(8)
 
-        title = QLabel("Project Workspace")
-        title.setObjectName("workspace_section_title")
-        header_layout.addWidget(title)
+        self._title_label = QLabel("Project Workspace")
+        self._title_label.setObjectName("workspace_section_title")
+        header_layout.addWidget(self._title_label)
 
-        subtitle = QLabel("Switch between fast list management and visual page thumbnails.")
-        subtitle.setObjectName("workspace_section_subtitle")
-        subtitle.setWordWrap(True)
-        header_layout.addWidget(subtitle)
+        self._subtitle_label = QLabel("Switch between fast list management and visual page thumbnails.")
+        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        header_layout.addWidget(self._subtitle_label)
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
@@ -106,7 +106,7 @@ class ProjectWorkspacePanel(QWidget):
         toggle_row.addWidget(self._thumb_btn)
         toggle_row.addStretch()
         header_layout.addLayout(toggle_row)
-        layout.addWidget(header)
+        layout.addWidget(self._header)
 
         self._stack = QStackedWidget()
         self._stack.addWidget(self._list_view)
@@ -136,6 +136,17 @@ class ProjectWorkspacePanel(QWidget):
             f"Pages: {page_label}. Active page: {active_text}. Dirty state: {dirty_text}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(self._header, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=summary,
+            accessible_name=f"Project Workspace. {view_label}.",
+        )
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
 
     def _update_view_button_metadata(self, current_view):
         button_specs = (
