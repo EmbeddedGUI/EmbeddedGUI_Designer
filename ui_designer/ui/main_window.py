@@ -2151,6 +2151,7 @@ class MainWindow(QMainWindow):
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config."
         )
+        gen_res_action.setStatusTip(gen_res_action.toolTip())
         gen_res_action.triggered.connect(self._generate_resources)
         build_menu.addAction(gen_res_action)
 

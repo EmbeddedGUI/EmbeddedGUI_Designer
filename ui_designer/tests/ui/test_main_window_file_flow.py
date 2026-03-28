@@ -2769,6 +2769,19 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    def test_generate_resources_action_exposes_status_hint(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
+
+        assert action.toolTip() == (
+            "Run resource generation (app_resource_generate.py) to produce\n"
+            "C source files from .eguiproject/resources/ assets and widget config."
+        )
+        assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
