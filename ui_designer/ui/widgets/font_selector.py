@@ -15,6 +15,14 @@ from ...model.widget_model import FONTS
 _FONT_RE = re.compile(r'&egui_res_font_(\w+?)_(\d+)_(\d+)$')
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 def _font_display_info(font_expr):
     """Extract human-readable info from a font expression.
 
@@ -49,6 +57,8 @@ class EguiFontSelector(QWidget):
         self._preview = self._create_preview_label()
         self._preview.setFixedWidth(80)
         layout.addWidget(self._preview)
+        self._update_preview(self.value())
+        self._update_accessibility_metadata(self.value())
 
     @staticmethod
     def _create_preview_label():
@@ -65,12 +75,14 @@ class EguiFontSelector(QWidget):
             self._combo.addItem(value)
         self._combo.setCurrentText(value)
         self._update_preview(value)
+        self._update_accessibility_metadata(value)
 
     def value(self):
         return self._combo.currentText()
 
     def _on_changed(self, text):
         self._update_preview(text)
+        self._update_accessibility_metadata(text)
         self.font_changed.emit(text)
 
     def _update_preview(self, text):
@@ -89,3 +101,35 @@ class EguiFontSelector(QWidget):
         else:
             self._preview.setText("Custom")
             self._preview.setStyleSheet("")
+
+    def _font_summary(self, text):
+        text = str(text or "").strip()
+        info = _font_display_info(text)
+        if info:
+            family, size, bpp = info
+            return f"{family} {size}px {bpp}bpp"
+        if text == "EGUI_CONFIG_FONT_DEFAULT":
+            return "Default font"
+        if text:
+            return f"Custom font expression: {text}"
+        return "No font selected"
+
+    def _update_accessibility_metadata(self, text):
+        value_text = str(text or "").strip() or "none"
+        summary = self._font_summary(text)
+        preview_text = str(self._preview.text() or "Custom").strip() or "Custom"
+        _set_widget_metadata(
+            self,
+            tooltip=f"Font selector. {summary}.",
+            accessible_name=f"Font selector: {summary}.",
+        )
+        _set_widget_metadata(
+            self._combo,
+            tooltip=f"Choose or type an EGUI font. Current value: {value_text}.",
+            accessible_name=f"Font value: {value_text}",
+        )
+        _set_widget_metadata(
+            self._preview,
+            tooltip=f"Font preview: {preview_text}.",
+            accessible_name=f"Font preview: {preview_text}. {summary}.",
+        )

@@ -13,6 +13,14 @@ from ...model.widget_model import COLORS, COLOR_RGB
 _HEX_RE = re.compile(r'^EGUI_COLOR_HEX\(\s*0x([0-9A-Fa-f]{6})\s*\)$')
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 def egui_color_to_qcolor(value):
     """Convert an EGUI color string to a QColor.
 
@@ -45,6 +53,11 @@ class ColorSwatch(QWidget):
         super().__init__(parent)
         self._color = QColor(Qt.white)
         self.setFixedSize(QSize(22, 22))
+        _set_widget_metadata(
+            self,
+            tooltip="Color swatch preview.",
+            accessible_name="Color swatch preview",
+        )
 
     def set_color(self, qcolor):
         if qcolor and qcolor.isValid():
@@ -88,9 +101,9 @@ class EguiColorPicker(QWidget):
 
         self._btn = ToolButton()
         self._btn.setText("...")
-        self._btn.setToolTip("Pick custom color")
         self._btn.clicked.connect(self._open_dialog)
         layout.addWidget(self._btn)
+        self._update_accessibility_metadata(self.value())
 
     def set_value(self, value):
         """Set the current color value (EGUI expression)."""
@@ -99,12 +112,14 @@ class EguiColorPicker(QWidget):
             self._combo.addItem(value)
         self._combo.setCurrentText(value)
         self._update_swatch(value)
+        self._update_accessibility_metadata(value)
 
     def value(self):
         return self._combo.currentText()
 
     def _on_text_changed(self, text):
         self._update_swatch(text)
+        self._update_accessibility_metadata(text)
         self.color_changed.emit(text)
 
     def _update_swatch(self, text):
@@ -121,3 +136,36 @@ class EguiColorPicker(QWidget):
                     self.set_value(name)
                     return
             self.set_value(qcolor_to_egui_hex(color))
+
+    def _color_summary(self, text):
+        value_text = str(text or "").strip()
+        qc = egui_color_to_qcolor(value_text)
+        if qc is None:
+            if value_text:
+                return f"{value_text}. Preview unavailable."
+            return "No color selected. Preview unavailable."
+        return f"{value_text} ({qc.name().upper()})"
+
+    def _update_accessibility_metadata(self, text):
+        value_text = str(text or "").strip() or str(COLORS[0])
+        summary = self._color_summary(text)
+        _set_widget_metadata(
+            self,
+            tooltip=f"Color picker. Current color: {summary}",
+            accessible_name=f"Color picker: {summary}",
+        )
+        _set_widget_metadata(
+            self._combo,
+            tooltip=f"Choose or type an EGUI color. Current value: {value_text}.",
+            accessible_name=f"Color value: {value_text}",
+        )
+        _set_widget_metadata(
+            self._swatch,
+            tooltip=f"Color swatch preview: {summary}",
+            accessible_name=f"Color swatch: {summary}",
+        )
+        _set_widget_metadata(
+            self._btn,
+            tooltip=f"Open the custom color dialog. Current color: {summary}",
+            accessible_name=f"Open color dialog: {summary}",
+        )

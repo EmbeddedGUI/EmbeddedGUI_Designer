@@ -145,3 +145,51 @@ class TestEguiFontSelector:
 
         assert isinstance(selector._preview, QLabel)
         selector.deleteLater()
+
+    def test_accessibility_metadata_updates_with_font_value(self, qapp):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
+
+        selector.set_value("&egui_res_font_montserrat_14_4")
+
+        assert selector.accessibleName() == "Font selector: montserrat 14px 4bpp."
+        assert selector._combo.toolTip() == (
+            "Choose or type an EGUI font. Current value: &egui_res_font_montserrat_14_4."
+        )
+        assert selector._combo.statusTip() == selector._combo.toolTip()
+        assert selector._combo.accessibleName() == "Font value: &egui_res_font_montserrat_14_4"
+        assert selector._preview.toolTip() == "Font preview: montserrat 14px."
+        assert selector._preview.accessibleName() == "Font preview: montserrat 14px. montserrat 14px 4bpp."
+
+        selector.set_value("custom_font_expr")
+
+        assert selector.accessibleName() == "Font selector: Custom font expression: custom_font_expr."
+        assert selector._preview.accessibleName() == (
+            "Font preview: Custom. Custom font expression: custom_font_expr."
+        )
+        selector.deleteLater()
+
+
+@_skip_no_qt
+class TestEguiColorPicker:
+    def test_accessibility_metadata_updates_with_color_value(self, qapp):
+        from ui_designer.ui.widgets.color_picker import EguiColorPicker
+
+        picker = EguiColorPicker()
+
+        picker.set_value("EGUI_COLOR_RED")
+
+        assert picker.accessibleName() == "Color picker: EGUI_COLOR_RED (#FF0000)"
+        assert picker._combo.toolTip() == "Choose or type an EGUI color. Current value: EGUI_COLOR_RED."
+        assert picker._combo.statusTip() == picker._combo.toolTip()
+        assert picker._combo.accessibleName() == "Color value: EGUI_COLOR_RED"
+        assert picker._swatch.accessibleName() == "Color swatch: EGUI_COLOR_RED (#FF0000)"
+        assert picker._btn.toolTip() == "Open the custom color dialog. Current color: EGUI_COLOR_RED (#FF0000)"
+        assert picker._btn.accessibleName() == "Open color dialog: EGUI_COLOR_RED (#FF0000)"
+
+        picker.set_value("NOT_A_COLOR")
+
+        assert picker.accessibleName() == "Color picker: NOT_A_COLOR. Preview unavailable."
+        assert picker._swatch.accessibleName() == "Color swatch: NOT_A_COLOR. Preview unavailable."
+        picker.deleteLater()
