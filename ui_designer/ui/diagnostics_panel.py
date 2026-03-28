@@ -136,6 +136,15 @@ class DiagnosticsPanel(QWidget):
         layout.addWidget(self._hint_label)
         layout.addWidget(self._list, 1)
 
+        self._reset_view_button.setAccessibleName("Reset diagnostics view")
+        self._open_selected_button.setAccessibleName("Open selected diagnostic")
+        self._open_first_error_button.setAccessibleName("Open first error diagnostic")
+        self._open_first_warning_button.setAccessibleName("Open first warning diagnostic")
+        self._copy_button.setAccessibleName("Copy diagnostics summary")
+        self._copy_json_button.setAccessibleName("Copy diagnostics JSON")
+        self._export_button.setAccessibleName("Export diagnostics summary")
+        self._export_json_button.setAccessibleName("Export diagnostics JSON")
+
     def clear(self):
         self._entries = []
         self._visible_entries = []
@@ -152,6 +161,7 @@ class DiagnosticsPanel(QWidget):
         self._export_button.setEnabled(False)
         self._export_json_button.setEnabled(False)
         self._list.clear()
+        self._update_accessibility_summary()
 
     def set_entries(self, entries):
         self._entries = list(entries or [])
@@ -205,6 +215,118 @@ class DiagnosticsPanel(QWidget):
         index = self._severity_filter_combo.findData(severity_value)
         self._severity_filter_combo.setCurrentIndex(index if index >= 0 else 0)
 
+    def _set_widget_metadata(self, widget, *, tooltip=None, accessible_name=None):
+        if tooltip is not None:
+            widget.setToolTip(tooltip)
+            widget.setStatusTip(tooltip)
+        if accessible_name is not None:
+            widget.setAccessibleName(accessible_name)
+
+    def _count_label(self, count, singular, plural=None):
+        value = max(int(count or 0), 0)
+        noun = singular if value == 1 else (plural or f"{singular}s")
+        return f"{value} {noun}"
+
+    def _current_filter_label(self):
+        return str(self._severity_filter_combo.currentText() or "Any")
+
+    def _entry_tooltip(self, entry):
+        prefix = _SEVERITY_PREFIX.get(getattr(entry, "severity", ""), str(getattr(entry, "severity", "") or "").title())
+        page_name = str(getattr(entry, "page_name", "") or "")
+        widget_name = str(getattr(entry, "widget_name", "") or "")
+        if page_name == "project":
+            location = "project"
+        elif page_name and widget_name:
+            location = f"{page_name}/{widget_name}"
+        else:
+            location = page_name or widget_name or "selection"
+        navigation_hint = "Double-click to open." if _is_navigable_entry(entry) else "Navigation unavailable."
+        return f"{prefix} diagnostic: {location}. {entry.message} {navigation_hint}"
+
+    def _reset_view_hint(self):
+        if self._current_filter_value():
+            return "Reset the diagnostics filter and show every severity."
+        return "Diagnostics already show every severity."
+
+    def _open_selected_hint(self):
+        current_item = self._list.currentItem()
+        if current_item is None:
+            return "Select a diagnostic to open its target."
+        entry = current_item.data(Qt.UserRole + 1)
+        if not _is_navigable_entry(entry):
+            return "The selected diagnostic has no page or widget target to open."
+        return "Open the selected diagnostic target."
+
+    def _copy_summary_hint(self):
+        if self._visible_entries:
+            return "Copy the visible diagnostics as summary text."
+        if self._entries and self._current_filter_value():
+            return "No diagnostics match the current filter to copy."
+        return "No diagnostics available to copy."
+
+    def _copy_json_hint(self):
+        if self._visible_entries:
+            return "Copy the visible diagnostics as JSON."
+        if self._entries and self._current_filter_value():
+            return "No diagnostics match the current filter to copy as JSON."
+        return "No diagnostics available to copy as JSON."
+
+    def _export_summary_hint(self):
+        if self._visible_entries:
+            return "Export the visible diagnostics summary to a text file."
+        if self._entries and self._current_filter_value():
+            return "No diagnostics match the current filter to export."
+        return "No diagnostics available to export."
+
+    def _export_json_hint(self):
+        if self._visible_entries:
+            return "Export the visible diagnostics as JSON."
+        if self._entries and self._current_filter_value():
+            return "No diagnostics match the current filter to export as JSON."
+        return "No diagnostics available to export as JSON."
+
+    def _update_accessibility_summary(self):
+        summary_text = str(self._summary_label.text() or "Diagnostics: no active issues").strip() or "Diagnostics: no active issues"
+        hint_text = str(self._hint_label.text() or _DEFAULT_HINT_TEXT).strip() or _DEFAULT_HINT_TEXT
+        filter_label = self._current_filter_label()
+        visible_summary = self._count_label(len(self._visible_entries), "visible item", "visible items")
+        panel_summary = f"{summary_text}. Severity filter: {filter_label}. {visible_summary}."
+        list_summary = f"Diagnostics list: {visible_summary}. Severity filter: {filter_label}."
+        if self._visible_entries:
+            list_summary += " Double-click a diagnostic to open its target when available."
+
+        self.setAccessibleName(panel_summary)
+        self.setToolTip(panel_summary)
+        self.setStatusTip(panel_summary)
+        self._set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
+        self._set_widget_metadata(
+            self._hint_label,
+            tooltip=hint_text,
+            accessible_name=f"Diagnostics hint: {hint_text}",
+        )
+        self._set_widget_metadata(
+            self._severity_filter_combo,
+            tooltip=f"Filter diagnostics by severity. Current filter: {filter_label}.",
+            accessible_name=f"Diagnostics severity filter: {filter_label}",
+        )
+        self._set_widget_metadata(self._reset_view_button, tooltip=self._reset_view_hint())
+        self._set_widget_metadata(self._open_selected_button, tooltip=self._open_selected_hint())
+        self._set_widget_metadata(self._open_first_error_button, tooltip=(
+            "Open the first navigable error diagnostic."
+            if self._first_navigable_error(self._entries) is not None
+            else "No navigable error diagnostics available."
+        ))
+        self._set_widget_metadata(self._open_first_warning_button, tooltip=(
+            "Open the first navigable warning diagnostic."
+            if self._first_navigable_warning(self._entries) is not None
+            else "No navigable warning diagnostics available."
+        ))
+        self._set_widget_metadata(self._copy_button, tooltip=self._copy_summary_hint())
+        self._set_widget_metadata(self._copy_json_button, tooltip=self._copy_json_hint())
+        self._set_widget_metadata(self._export_button, tooltip=self._export_summary_hint())
+        self._set_widget_metadata(self._export_json_button, tooltip=self._export_json_hint())
+        self._set_widget_metadata(self._list, tooltip=list_summary, accessible_name=list_summary)
+
     def _current_filter_value(self):
         return str(self._severity_filter_combo.currentData() or "")
 
@@ -226,6 +348,9 @@ class DiagnosticsPanel(QWidget):
         if not self._entries:
             self._summary_label.setText("Diagnostics: no active issues")
             self._hint_label.setText(_DEFAULT_HINT_TEXT)
+            self._selection_anchor_key = None
+            self._open_selected_button.setEnabled(False)
+            self._update_accessibility_summary()
             return
 
         errors = sum(1 for entry in self._entries if entry.severity == "error")
@@ -247,6 +372,9 @@ class DiagnosticsPanel(QWidget):
             )
             item.setData(Qt.UserRole, _activation_target(entry))
             item.setData(Qt.UserRole + 1, entry)
+            item_tooltip = self._entry_tooltip(entry)
+            item.setToolTip(item_tooltip)
+            item.setStatusTip(item_tooltip)
             self._list.addItem(item)
         self._restore_selection(selection_key)
         self._update_selection_actions()
@@ -260,6 +388,7 @@ class DiagnosticsPanel(QWidget):
         if current_item is not None:
             self._selection_anchor_key = _entry_key(current_entry)
         self._open_selected_button.setEnabled(current_item is not None and _is_navigable_entry(current_entry))
+        self._update_accessibility_summary()
 
     def _restore_selection(self, selection_key):
         if selection_key is None:
