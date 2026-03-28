@@ -143,10 +143,10 @@ class StatusCenterPanel(QWidget):
             metrics_layout, 1, 1, "Preview", "Preview Idle", "debug", "open_debug"
         )
         self._selection_value, self._selection_card = self._create_metric(
-            metrics_layout, 2, 0, "Selection", "0 widgets", "structure", "open_structure_panel"
+            metrics_layout, 2, 0, "Selection", "No widgets selected", "structure", "open_structure_panel"
         )
         self._dirty_value, self._dirty_card = self._create_metric(
-            metrics_layout, 2, 1, "Dirty Pages", "0", "history", "open_history"
+            metrics_layout, 2, 1, "Dirty Pages", "No dirty pages", "history", "open_history"
         )
         layout.addWidget(metrics)
 
@@ -642,6 +642,18 @@ class StatusCenterPanel(QWidget):
             return "No dirty pages"
         return self._count_label(total, "dirty page", "dirty pages")
 
+    def _selection_metric_text(self, selection_total):
+        total = max(int(selection_total or 0), 0)
+        if total <= 0:
+            return "No widgets selected"
+        return self._count_label(total, "widget", "widgets")
+
+    def _dirty_metric_text(self, dirty_count):
+        total = max(int(dirty_count or 0), 0)
+        if total <= 0:
+            return "No dirty pages"
+        return self._count_label(total, "dirty page", "dirty pages")
+
     def _set_metric_context(self, label, value_label, card, summary):
         summary_text = str(summary or "").strip()
         label_text = str(label or "").strip() or "Metric"
@@ -1016,8 +1028,8 @@ class StatusCenterPanel(QWidget):
 
         self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
         self._compile_value.setText("Available" if can_compile else "Unavailable")
-        self._dirty_value.setText(self._count_label(dirty_count, "dirty page", "dirty pages"))
-        self._selection_value.setText(self._count_label(selection_total, "widget", "widgets"))
+        self._dirty_value.setText(self._dirty_metric_text(dirty_count))
+        self._selection_value.setText(self._selection_metric_text(selection_total))
         self._preview_value.setText(preview_text)
         self._diag_value.setText(self._diagnostic_metric_text(error_count, warning_count, info_count))
         total = max(error_count + warning_count + info_count, 1)
