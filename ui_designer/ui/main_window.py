@@ -907,6 +907,8 @@ class MainWindow(QMainWindow):
     def _update_build_menu_metadata(self, latest_entry=None, history_entries=None, history_file_path=""):
         if not hasattr(self, "_build_menu"):
             return
+        if not history_file_path and getattr(self, "_project_dir", ""):
+            history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
@@ -931,7 +933,8 @@ class MainWindow(QMainWindow):
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
                 f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
-                f"{profiles_summary} Output root: {output_root or 'none'}. {output_root_state_summary} {history_file_state_summary} "
+                f"{profiles_summary} Output root: {output_root or 'none'}. History file: {history_file_path or 'none'}. "
+                f"{output_root_state_summary} {history_file_state_summary} "
                 f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
             ),
         )

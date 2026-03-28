@@ -2929,7 +2929,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root: none. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
+            "Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root: none. History file: none. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
             "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
@@ -2987,7 +2987,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Output root: {window._release_output_root()}. "
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Output root: {window._release_output_root()}. History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             "Output root state: missing. "
             "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
@@ -3003,7 +3003,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
-            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Output root: {window._release_output_root()}. "
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Output root: {window._release_output_root()}. History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             "Output root state: missing. "
             "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
@@ -3101,7 +3101,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: windows-pc (Windows PC). Output root: {output_root}. "
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: windows-pc (Windows PC). Output root: {output_root}. History file: {history_path}. "
             "Output root state: missing. "
             "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
@@ -3219,7 +3219,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: windows-pc (Windows PC). Output root: {output_root}. "
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: windows-pc (Windows PC). Output root: {output_root}. History file: {history_path}. "
             "Output root state: available. "
             "History file state: available. "
             "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
@@ -3728,7 +3728,7 @@ class TestMainWindowFileFlow:
         assert actions["Build"].toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root: none. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
+            "Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root: none. History file: none. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
             "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
         )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
