@@ -163,8 +163,10 @@ class ProjectExplorerDock(QDockWidget):
 
     def _apply_page_item_metadata(self, item, page_name):
         item.setText(0, self._page_item_text(page_name))
-        item.setToolTip(0, self._page_item_tooltip(page_name))
-        item.setStatusTip(0, item.toolTip(0))
+        tooltip = self._page_item_tooltip(page_name)
+        item.setToolTip(0, tooltip)
+        item.setStatusTip(0, tooltip)
+        item.setData(0, Qt.AccessibleTextRole, tooltip)
 
     def _new_page_action_hint(self):
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"

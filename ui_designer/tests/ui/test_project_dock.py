@@ -8,6 +8,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
@@ -81,6 +82,8 @@ class TestProjectExplorerDock:
         second = dock._page_tree.topLevelItem(1)
         assert first.toolTip(0) == "Page: main_page. Startup page. Current page. No unsaved changes."
         assert second.toolTip(0) == "Page: detail_page. Unsaved changes."
+        assert first.data(0, Qt.AccessibleTextRole) == first.toolTip(0)
+        assert second.data(0, Qt.AccessibleTextRole) == second.toolTip(0)
         dock.deleteLater()
 
     def test_page_context_menu_actions_expose_dynamic_hints(self, qapp):
