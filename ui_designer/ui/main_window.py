@@ -1269,7 +1269,14 @@ class MainWindow(QMainWindow):
             return current_id or normalized_profile_id
         return normalized_profile_id
 
-    def _update_release_profiles_action_metadata(self, history_file_state_summary="", history_summary="", latest_release_summary="", latest_release_sdk_summary=""):
+    def _update_release_profiles_action_metadata(
+        self,
+        output_root_state_summary="",
+        history_file_state_summary="",
+        history_summary="",
+        latest_release_summary="",
+        latest_release_sdk_summary="",
+    ):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
             return
@@ -1283,6 +1290,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             return
+        output_root_state_summary = str(output_root_state_summary or self._release_output_root_state_summary())
         history_file_state_summary = str(history_file_state_summary or self._release_history_file_state_summary())
         history_summary = str(history_summary or self._release_history_records_summary())
         latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
@@ -1291,7 +1299,8 @@ class MainWindow(QMainWindow):
             action,
             (
                 "Edit release profiles for the current project. "
-                f"{self._release_profiles_summary_suffix()} {history_file_state_summary} {history_summary} {latest_release_summary} {latest_release_sdk_summary}"
+                f"{self._release_profiles_summary_suffix()} {output_root_state_summary} {history_file_state_summary} "
+                f"{history_summary} {latest_release_summary} {latest_release_sdk_summary}"
             ),
         )
 
@@ -2354,6 +2363,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             self._update_release_profiles_action_metadata(
+                output_root_state_summary=output_root_state_summary,
                 history_file_state_summary=history_file_state_summary,
                 history_summary=history_summary,
                 latest_release_summary=latest_release_summary,
