@@ -32,7 +32,9 @@ class TestHistoryPanel:
 
         panel = HistoryPanel()
 
-        assert panel.accessibleName() == "History panel: Page -. 0 entries. Dirty no. Source Saved state."
+        assert panel.accessibleName() == (
+            "History panel: Page -. 0 entries. Current entry none. Undo no. Redo no. Dirty no. Source Saved state."
+        )
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
         assert panel._page_value.toolTip() == "History page: -"
@@ -65,7 +67,9 @@ class TestHistoryPanel:
             can_redo=False,
         )
 
-        assert panel.accessibleName() == "History panel: Page main_page. 2 entries. Dirty yes. Source xml edit."
+        assert panel.accessibleName() == (
+            "History panel: Page main_page. 2 entries. Current entry xml edit. Undo yes. Redo no. Dirty yes. Source xml edit."
+        )
         assert panel.toolTip() == panel.accessibleName()
         assert panel._stack_value.toolTip() == "History entries: 2. Undo: Yes. Redo: No."
         assert panel._history_list.accessibleName() == "History entries for main_page: 2 items. Current entry: xml edit"

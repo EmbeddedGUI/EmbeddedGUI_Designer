@@ -72,7 +72,8 @@ class HistoryPanel(QWidget):
     ):
         summary = (
             f"History panel: Page {page_name}. {entry_count} entries. "
-            f"Dirty {'yes' if dirty else 'no'}. Source {dirty_source}."
+            f"Current entry {current_entry}. Undo {'yes' if can_undo else 'no'}. "
+            f"Redo {'yes' if can_redo else 'no'}. Dirty {'yes' if dirty else 'no'}. Source {dirty_source}."
         )
         self._set_label_metadata(
             self,
