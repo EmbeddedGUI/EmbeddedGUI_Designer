@@ -1445,6 +1445,8 @@ class ReleaseHistoryDialog(QDialog):
         history_exists = self._history_file_exists()
         preview_label_text, preview_path = self._current_preview_target()
         preview_label_lower = preview_label_text.lower()
+        has_filters = self._filters_are_active()
+        default_view_active = self._default_view_is_active()
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
         _set_widget_metadata(
@@ -1506,16 +1508,26 @@ class ReleaseHistoryDialog(QDialog):
             self._clear_filters_button,
             tooltip=(
                 "Clear the current release history filters and search text."
-                if self._filters_are_active()
+                if has_filters
                 else "Release history filters already show every entry."
+            ),
+            accessible_name=(
+                "Clear release history filters"
+                if has_filters
+                else "Clear release history filters unavailable"
             ),
         )
         _set_widget_metadata(
             self._reset_view_button,
             tooltip=(
                 "Reset release history filters, preview mode, and selection."
-                if not self._default_view_is_active()
+                if not default_view_active
                 else "Release history already shows the default view."
+            ),
+            accessible_name=(
+                "Reset release history view"
+                if not default_view_active
+                else "Reset release history view unavailable"
             ),
         )
         _set_widget_metadata(
@@ -1525,6 +1537,11 @@ class ReleaseHistoryDialog(QDialog):
                 if self._filtered_history_entries
                 else "No filtered release entries are available to copy."
             ),
+            accessible_name=(
+                "Copy filtered release history summary"
+                if self._filtered_history_entries
+                else "Copy filtered release history summary unavailable"
+            ),
         )
         _set_widget_metadata(
             self._copy_filtered_json_button,
@@ -1532,6 +1549,11 @@ class ReleaseHistoryDialog(QDialog):
                 "Copy the filtered release history as JSON."
                 if self._filtered_history_entries
                 else "No filtered release entries are available to copy as JSON."
+            ),
+            accessible_name=(
+                "Copy filtered release history JSON"
+                if self._filtered_history_entries
+                else "Copy filtered release history JSON unavailable"
             ),
         )
         _set_widget_metadata(
@@ -1541,14 +1563,32 @@ class ReleaseHistoryDialog(QDialog):
                 if self._filtered_history_entries
                 else "No filtered release entries are available to export."
             ),
+            accessible_name=(
+                "Export filtered release history"
+                if self._filtered_history_entries
+                else "Export filtered release history unavailable"
+            ),
         )
-        _set_widget_metadata(self._copy_history_file_button, tooltip=self._copy_path_hint("release history file", self._history_path))
+        _set_widget_metadata(
+            self._copy_history_file_button,
+            tooltip=self._copy_path_hint("release history file", self._history_path),
+            accessible_name=(
+                "Copy release history file path"
+                if self._history_path
+                else "Copy release history file path unavailable"
+            ),
+        )
         _set_widget_metadata(
             self._copy_history_json_button,
             tooltip=(
                 "Copy the release history JSON file."
                 if history_exists
                 else "No readable release history JSON file is available to copy."
+            ),
+            accessible_name=(
+                "Copy release history JSON"
+                if history_exists
+                else "Copy release history JSON unavailable"
             ),
         )
         _set_widget_metadata(
@@ -1558,6 +1598,11 @@ class ReleaseHistoryDialog(QDialog):
                 if history_exists
                 else "No readable release history JSON file is available to export."
             ),
+            accessible_name=(
+                "Export release history JSON"
+                if history_exists
+                else "Export release history JSON unavailable"
+            ),
         )
         _set_widget_metadata(
             self._open_history_file_button,
@@ -1565,6 +1610,11 @@ class ReleaseHistoryDialog(QDialog):
                 "Open the release history JSON file."
                 if history_exists and self._open_path_callback is not None
                 else "The release history JSON file is unavailable or cannot be opened here."
+            ),
+            accessible_name=(
+                "Open release history file"
+                if history_exists and self._open_path_callback is not None
+                else "Open release history file unavailable"
             ),
         )
         _set_widget_metadata(
@@ -1574,16 +1624,37 @@ class ReleaseHistoryDialog(QDialog):
                 if self._refresh_history_callback is not None
                 else "Refresh unavailable because no history reload callback was provided."
             ),
+            accessible_name=(
+                "Refresh release history"
+                if self._refresh_history_callback is not None
+                else "Refresh release history unavailable"
+            ),
         )
         _set_widget_metadata(self._history_list, tooltip=list_summary, accessible_name=list_summary)
         _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=f"Selected release summary: {summary_text}")
         _set_widget_metadata(self._details_edit, tooltip=details_summary, accessible_name=details_summary)
         _set_widget_metadata(self._preview_label, tooltip=preview_title, accessible_name=f"Release preview label: {preview_title}")
         _set_widget_metadata(self._preview_edit, tooltip=preview_summary, accessible_name=preview_summary)
-        _set_widget_metadata(self._preview_auto_button, tooltip=self._preview_mode_hint("auto"))
-        _set_widget_metadata(self._preview_manifest_button, tooltip=self._preview_mode_hint("manifest"))
-        _set_widget_metadata(self._preview_log_button, tooltip=self._preview_mode_hint("log"))
-        _set_widget_metadata(self._preview_version_button, tooltip=self._preview_mode_hint("version"))
+        _set_widget_metadata(
+            self._preview_auto_button,
+            tooltip=self._preview_mode_hint("auto"),
+            accessible_name="Auto preview" if self._preview_auto_button.isEnabled() else "Auto preview unavailable",
+        )
+        _set_widget_metadata(
+            self._preview_manifest_button,
+            tooltip=self._preview_mode_hint("manifest"),
+            accessible_name="Preview manifest" if self._preview_manifest_button.isEnabled() else "Preview manifest unavailable",
+        )
+        _set_widget_metadata(
+            self._preview_log_button,
+            tooltip=self._preview_mode_hint("log"),
+            accessible_name="Preview build log" if self._preview_log_button.isEnabled() else "Preview build log unavailable",
+        )
+        _set_widget_metadata(
+            self._preview_version_button,
+            tooltip=self._preview_mode_hint("version"),
+            accessible_name="Preview version file" if self._preview_version_button.isEnabled() else "Preview version file unavailable",
+        )
         _set_widget_metadata(
             self._copy_summary_button,
             tooltip=(
@@ -1623,6 +1694,11 @@ class ReleaseHistoryDialog(QDialog):
                 if preview_path
                 else f"No {preview_label_lower} preview path is available to copy."
             ),
+            accessible_name=(
+                "Copy current preview path"
+                if preview_path
+                else "Copy current preview path unavailable"
+            ),
         )
         _set_widget_metadata(
             self._export_preview_button,
@@ -1638,6 +1714,11 @@ class ReleaseHistoryDialog(QDialog):
                 f"Open the current {preview_label_lower} preview file."
                 if self._open_path_callback is not None and preview_path and os.path.isfile(preview_path)
                 else f"The current {preview_label_lower} preview file is unavailable or missing."
+            ),
+            accessible_name=(
+                "Open current preview file"
+                if self._open_path_callback is not None and preview_path and os.path.isfile(preview_path)
+                else "Open current preview file unavailable"
             ),
         )
         entry = self._current_entry() or {}
