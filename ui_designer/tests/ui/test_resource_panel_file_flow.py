@@ -131,6 +131,9 @@ class TestResourcePanelFileFlow:
         assert panel._tabs.tabText(2) == "Text (1)"
 
         item = panel._text_list.item(0)
+        assert item.toolTip() == "supported_text.txt"
+        assert item.statusTip() == item.toolTip()
+        assert item.data(Qt.AccessibleTextRole) == item.toolTip()
         panel._on_text_clicked(item)
 
         assert captured == [("text", "supported_text.txt")]
@@ -685,6 +688,8 @@ class TestResourcePanelFileFlow:
         assert imported == [True]
         item = panel._image_list.item(0)
         assert "File not found!" not in item.toolTip()
+        assert item.statusTip() == item.toolTip()
+        assert item.data(Qt.AccessibleTextRole) == item.toolTip()
         panel.deleteLater()
 
     def test_restore_missing_font_rejects_extension_mismatch(self, qapp, tmp_path, monkeypatch):
@@ -761,6 +766,8 @@ class TestResourcePanelFileFlow:
         second_item = panel._image_list.item(1)
         assert "File not found!" not in first_item.toolTip()
         assert "File not found!" in second_item.toolTip()
+        assert first_item.statusTip() == first_item.toolTip()
+        assert second_item.data(Qt.AccessibleTextRole) == second_item.toolTip()
         panel.deleteLater()
 
     def test_restore_missing_resources_warns_when_no_matching_files_selected(self, qapp, tmp_path, monkeypatch):

@@ -1325,7 +1325,7 @@ class ResourcePanel(QWidget):
             if not exists:
                 tooltip += "\n\u26a0 File not found!"
                 item.setForeground(QColor(255, 100, 100))
-            item.setToolTip(tooltip)
+            _set_item_metadata(item, tooltip)
             self._image_list.addItem(item)
 
         # Populate font list from catalog
@@ -1342,7 +1342,7 @@ class ResourcePanel(QWidget):
             if not os.path.isfile(full_path):
                 tooltip += "\n\u26a0 File not found!"
                 item.setForeground(QColor(255, 100, 100))
-            item.setToolTip(tooltip)
+            _set_item_metadata(item, tooltip)
             self._font_list.addItem(item)
 
         # Populate text file list from catalog
@@ -1356,7 +1356,7 @@ class ResourcePanel(QWidget):
             if not os.path.isfile(full_path):
                 tooltip += "\n\u26a0 File not found!"
                 item.setForeground(QColor(255, 100, 100))
-            item.setToolTip(tooltip)
+            _set_item_metadata(item, tooltip)
             self._text_list.addItem(item)
 
         self._update_tab_titles()
