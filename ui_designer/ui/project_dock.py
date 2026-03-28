@@ -137,10 +137,13 @@ class ProjectExplorerDock(QDockWidget):
         page_count = len(getattr(self._project, "pages", []) or [])
         page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
         current_page = self._current_page_name or "none"
+        project_pages = getattr(self._project, "pages", []) or []
+        startup_value = str(getattr(self._project, "startup_page", "") or "").strip()
+        startup_page = startup_value if any(getattr(page, "name", None) == startup_value for page in project_pages) else "none"
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
-        summary = f"Project Explorer: {page_label}. Current page: {current_page}. {dirty_label}."
+        summary = f"Project Explorer: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
         settings_summary = f"Project settings: {page_label}. Current mode: {mode}."
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
         add_page_hint = self._new_page_action_hint()
@@ -158,12 +161,12 @@ class ProjectExplorerDock(QDockWidget):
         _set_widget_metadata(
             self._pages_label,
             tooltip=summary,
-            accessible_name=f"Pages: {page_label}. Current page: {current_page}.",
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.",
         )
         _set_widget_metadata(
             self._page_tree,
             tooltip=summary,
-            accessible_name=f"Project pages: {page_label}. Current page: {current_page}. {dirty_label}.",
+            accessible_name=f"Project pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
         )
         _set_widget_metadata(
             self._mode_combo,
