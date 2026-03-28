@@ -45,7 +45,13 @@ class TestAnimationsPanel:
 
         assert panel._summary_label.text() == "Animations: 1 animation on label title"
         assert panel.accessibleName() == "Animations: 1 animation on label title"
-        assert panel._table.accessibleName() == "Animations table"
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel._summary_label.toolTip() == panel._summary_label.text()
+        assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
+        assert panel._summary_label.accessibleName() == panel._summary_label.text()
+        assert panel._table.toolTip() == panel._summary_label.text()
+        assert panel._table.statusTip() == panel._table.toolTip()
+        assert panel._table.accessibleName() == "Animations table: Animations: 1 animation on label title"
         assert panel._add_button.toolTip() == "Add an animation to the selected widget."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
@@ -157,6 +163,11 @@ class TestAnimationsPanel:
 
         assert "select a single widget" in panel._summary_label.text().lower()
         assert panel.accessibleName() == "Animations: select a single widget (2 selected)"
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel._table.toolTip() == "Animations: select a single widget (2 selected)"
+        assert panel._table.accessibleName() == (
+            "Animations table: Animations: select a single widget (2 selected)"
+        )
         assert panel._add_button.isEnabled() is False
         assert panel._add_button.toolTip() == "Select a single widget to add an animation."
         assert panel._add_button.accessibleName() == "Add animation unavailable"

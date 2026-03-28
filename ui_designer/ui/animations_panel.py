@@ -117,14 +117,13 @@ class AnimationsPanel(QWidget):
         self._update_detail_group_metadata("Selected animation details unavailable. Select a widget to edit animations.")
 
     def _update_accessibility_summary(self, summary_text):
-        self.setAccessibleName(summary_text)
-        self.setToolTip(summary_text)
-        self.setStatusTip(summary_text)
-        self._summary_label.setToolTip(summary_text)
-        self._summary_label.setStatusTip(summary_text)
-        self._summary_label.setAccessibleName(summary_text)
-        self._table.setToolTip(summary_text)
-        self._table.setStatusTip(summary_text)
+        _set_widget_metadata(self, tooltip=summary_text, accessible_name=summary_text)
+        _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
+        _set_widget_metadata(
+            self._table,
+            tooltip=summary_text,
+            accessible_name=f"Animations table: {summary_text}",
+        )
 
     def _update_action_button_metadata(self, button, label, tooltip, enabled):
         accessible_name = label if enabled else f"{label} unavailable"
