@@ -397,17 +397,18 @@ class WelcomePage(QWidget):
         _set_widget_metadata(
             self._open_app_btn,
             tooltip=open_app_hint,
-            accessible_name="Open SDK example",
+            accessible_name=f"Open SDK example action. {open_app_hint}",
         )
         _set_widget_metadata(
             self._set_sdk_root_btn,
             tooltip=set_sdk_hint,
-            accessible_name="Set SDK root",
+            accessible_name=f"Set SDK root action. {set_sdk_hint}",
         )
+        download_hint = describe_auto_download_plan(default_sdk_install_dir())
         _set_widget_metadata(
             self._download_sdk_btn,
-            tooltip=describe_auto_download_plan(default_sdk_install_dir()),
-            accessible_name="Download SDK",
+            tooltip=download_hint,
+            accessible_name=f"Download SDK action. {download_hint}",
         )
         recent_label_summary = f"Recent Projects: {recent_text}."
         _set_widget_metadata(

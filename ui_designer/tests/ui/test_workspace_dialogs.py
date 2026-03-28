@@ -660,8 +660,17 @@ class TestWelcomePage:
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
         assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
+        assert page._open_app_btn.accessibleName() == (
+            "Open SDK example action. Open an SDK example project or legacy example."
+        )
         assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."
+        assert page._set_sdk_root_btn.accessibleName() == (
+            "Set SDK root action. Change the EmbeddedGUI SDK root used for compile preview."
+        )
         assert page._download_sdk_btn.statusTip() == page._download_sdk_btn.toolTip()
+        assert page._download_sdk_btn.accessibleName() == (
+            f"Download SDK action. {page._download_sdk_btn.toolTip()}"
+        )
         page.deleteLater()
 
     def test_recent_project_item_exposes_accessibility_summary(self, qapp, isolated_config, tmp_path):
@@ -795,7 +804,13 @@ class TestWelcomePage:
         assert str(cache_dir) in page._sdk_hint_label.text()
         assert "GitHub archive" in page._sdk_hint_label.text()
         assert page._open_app_btn.toolTip() == "Set or download an SDK before browsing SDK examples."
+        assert page._open_app_btn.accessibleName() == (
+            "Open SDK example action. Set or download an SDK before browsing SDK examples."
+        )
         assert page._set_sdk_root_btn.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview."
+        assert page._set_sdk_root_btn.accessibleName() == (
+            "Set SDK root action. Choose the EmbeddedGUI SDK root used for compile preview."
+        )
         page.deleteLater()
 
     def test_refresh_uses_default_sdk_cache_when_config_is_invalid(self, qapp, isolated_config, tmp_path, monkeypatch):
