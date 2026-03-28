@@ -53,12 +53,15 @@ class TestAnimationsPanel:
         assert panel._table.toolTip() == panel._summary_label.text()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Animations table: Animations: 1 animation on label title"
-        assert panel._add_button.toolTip() == "Add an animation to the selected widget."
+        assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
-        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
+        assert panel._add_button.accessibleName() == "Add animation to label title"
+        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation: alpha."
         assert panel._duplicate_button.statusTip() == panel._duplicate_button.toolTip()
-        assert panel._remove_button.toolTip() == "Remove the selected animation."
+        assert panel._duplicate_button.accessibleName() == "Duplicate animation: alpha"
+        assert panel._remove_button.toolTip() == "Remove the selected animation: alpha."
         assert panel._remove_button.statusTip() == panel._remove_button.toolTip()
+        assert panel._remove_button.accessibleName() == "Remove animation: alpha"
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
         assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
         assert panel._table.rowCount() == 1
@@ -83,8 +86,10 @@ class TestAnimationsPanel:
         panel._on_add_animation()
         qapp.processEvents()
         assert panel._table.rowCount() == 1
-        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
-        assert panel._remove_button.toolTip() == "Remove the selected animation."
+        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation: alpha."
+        assert panel._duplicate_button.accessibleName() == "Duplicate animation: alpha"
+        assert panel._remove_button.toolTip() == "Remove the selected animation: alpha."
+        assert panel._remove_button.accessibleName() == "Remove animation: alpha"
         assert captured[-1][0].anim_type == "alpha"
 
         panel._on_duplicate_animation()

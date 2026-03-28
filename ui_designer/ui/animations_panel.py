@@ -142,6 +142,12 @@ class AnimationsPanel(QWidget):
             accessible_name=summary_text,
         )
 
+    def _selected_animation_label(self):
+        row = self._selected_row()
+        if row < 0 or row >= len(self._animations):
+            return ""
+        return str(self._animations[row].anim_type or "").strip()
+
     def clear(self):
         self.set_selection([], primary=None)
 
@@ -221,35 +227,43 @@ class AnimationsPanel(QWidget):
 
     def _update_actions(self):
         has_widget = self._primary_widget is not None
-        has_selection = self._selected_row() >= 0
+        selected_animation = self._selected_animation_label()
+        has_selection = bool(selected_animation)
         self._table.setEnabled(has_widget)
         self._detail_group.setEnabled(has_widget and has_selection)
         self._add_button.setEnabled(has_widget)
         self._duplicate_button.setEnabled(has_widget and has_selection)
         self._remove_button.setEnabled(has_widget and has_selection)
         if has_widget:
-            add_hint = "Add an animation to the selected widget."
+            widget_label = f"{self._primary_widget.widget_type} {self._primary_widget.name}"
+            add_hint = f"Add an animation to {widget_label}."
         else:
             add_hint = "Select a single widget to add an animation."
+            widget_label = ""
         if has_widget and has_selection:
-            duplicate_hint = "Duplicate the selected animation."
-            remove_hint = "Remove the selected animation."
+            duplicate_hint = f"Duplicate the selected animation: {selected_animation}."
+            remove_hint = f"Remove the selected animation: {selected_animation}."
         elif has_widget:
             duplicate_hint = "Select an animation to duplicate it."
             remove_hint = "Select an animation to remove it."
         else:
             duplicate_hint = "Select a single widget to duplicate an animation."
             remove_hint = "Select a single widget to remove an animation."
-        self._update_action_button_metadata(self._add_button, "Add animation", add_hint, has_widget)
+        self._update_action_button_metadata(
+            self._add_button,
+            f"Add animation to {widget_label}" if has_widget else "Add animation",
+            add_hint,
+            has_widget,
+        )
         self._update_action_button_metadata(
             self._duplicate_button,
-            "Duplicate animation",
+            f"Duplicate animation: {selected_animation}" if has_widget and has_selection else "Duplicate animation",
             duplicate_hint,
             has_widget and has_selection,
         )
         self._update_action_button_metadata(
             self._remove_button,
-            "Remove animation",
+            f"Remove animation: {selected_animation}" if has_widget and has_selection else "Remove animation",
             remove_hint,
             has_widget and has_selection,
         )
