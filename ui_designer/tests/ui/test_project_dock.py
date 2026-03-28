@@ -52,6 +52,12 @@ class TestProjectExplorerDock:
         dock = ProjectExplorerDock()
 
         assert dock.accessibleName() == "Project Explorer: 0 pages. Current page: none. No dirty pages."
+        assert dock._settings_group.toolTip() == "Project settings: 0 pages. Current mode: easy_page."
+        assert dock._settings_group.statusTip() == dock._settings_group.toolTip()
+        assert dock._settings_group.accessibleName() == "Project settings: 0 pages. Current mode: easy_page."
+        assert dock._mode_label.toolTip() == "Choose how pages are generated for the current project. Current mode: easy_page."
+        assert dock._mode_label.statusTip() == dock._mode_label.toolTip()
+        assert dock._mode_label.accessibleName() == "Page mode label. Current mode: easy_page"
         assert dock._page_tree.accessibleName() == "Project pages: 0 pages. Current page: none. No dirty pages."
         assert dock._mode_combo.toolTip() == "Choose how pages are generated for the current project. Current mode: easy_page."
         assert dock._mode_combo.statusTip() == dock._mode_combo.toolTip()
@@ -65,6 +71,9 @@ class TestProjectExplorerDock:
         dock.set_dirty_pages({"detail_page"})
 
         assert dock.accessibleName() == "Project Explorer: 2 pages. Current page: main_page. 1 dirty page."
+        assert dock._settings_group.toolTip() == "Project settings: 2 pages. Current mode: easy_page."
+        assert dock._settings_group.accessibleName() == "Project settings: 2 pages. Current mode: easy_page."
+        assert dock._mode_label.accessibleName() == "Page mode label. Current mode: easy_page"
         assert dock._pages_label.toolTip() == dock.accessibleName()
         assert dock._pages_label.accessibleName() == "Pages: 2 pages. Current page: main_page."
         assert dock._page_tree.toolTip() == dock.accessibleName()
@@ -75,6 +84,10 @@ class TestProjectExplorerDock:
 
         assert dock._mode_combo.toolTip() == "Choose how pages are generated for the current project. Current mode: activity."
         assert dock._mode_combo.accessibleName() == "Project page mode: activity"
+        assert dock._settings_group.toolTip() == "Project settings: 2 pages. Current mode: activity."
+        assert dock._settings_group.accessibleName() == "Project settings: 2 pages. Current mode: activity."
+        assert dock._mode_label.toolTip() == "Choose how pages are generated for the current project. Current mode: activity."
+        assert dock._mode_label.accessibleName() == "Page mode label. Current mode: activity"
         assert dock._add_page_button.toolTip() == "Create a new page in the current project. Current mode: activity."
         assert dock._add_page_button.accessibleName() == "New page action: activity mode"
 

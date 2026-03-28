@@ -87,23 +87,27 @@ class ProjectExplorerDock(QDockWidget):
         layout.setSpacing(4)
 
         # Project settings group
-        settings_group = QGroupBox("Project")
-        settings_group.setAccessibleName("Project settings")
+        self._settings_group = QGroupBox("Project")
+        self._settings_group.setAccessibleName("Project settings")
         # settings_group.setStyleSheet(_GROUPBOX_STYLE)
-        settings_layout = QVBoxLayout(settings_group)
+        settings_layout = QVBoxLayout(self._settings_group)
         settings_layout.setContentsMargins(4, 4, 4, 4)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
-        mode_label = QLabel("Mode:")
-        _set_widget_metadata(mode_label, tooltip="Project page generation mode.", accessible_name="Page mode label")
-        mode_layout.addWidget(mode_label)
+        self._mode_label = QLabel("Mode:")
+        _set_widget_metadata(
+            self._mode_label,
+            tooltip="Project page generation mode.",
+            accessible_name="Page mode label",
+        )
+        mode_layout.addWidget(self._mode_label)
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["easy_page", "activity"])
         self._mode_combo.currentTextChanged.connect(self._on_mode_changed)
         mode_layout.addWidget(self._mode_combo)
         settings_layout.addLayout(mode_layout)
-        layout.addWidget(settings_group)
+        layout.addWidget(self._settings_group)
 
         # Page tree
         self._pages_label = QLabel("Pages")
@@ -137,9 +141,20 @@ class ProjectExplorerDock(QDockWidget):
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
         summary = f"Project Explorer: {page_label}. Current page: {current_page}. {dirty_label}."
+        settings_summary = f"Project settings: {page_label}. Current mode: {mode}."
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
         add_page_hint = self._new_page_action_hint()
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._settings_group,
+            tooltip=settings_summary,
+            accessible_name=settings_summary,
+        )
+        _set_widget_metadata(
+            self._mode_label,
+            tooltip=mode_hint,
+            accessible_name=f"Page mode label. Current mode: {mode}",
+        )
         _set_widget_metadata(
             self._pages_label,
             tooltip=summary,
