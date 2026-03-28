@@ -3440,9 +3440,14 @@ class MainWindow(QMainWindow):
             project_exists = bool(project_path) and os.path.exists(project_path)
             action_label = display_name if project_exists else f"[Missing] {display_name}"
             action = QAction(action_label, self)
-            tooltip = project_path
+            sdk_label = sdk_root or "not recorded"
+            tooltip = f"Project: {project_path}\nSDK root: {sdk_label}."
             if not project_exists:
-                tooltip = f"{project_path}\nProject path is missing. Selecting it will offer to remove the stale entry."
+                tooltip = (
+                    f"Project: {project_path}\n"
+                    f"SDK root: {sdk_label}.\n"
+                    "Project path is missing. Selecting it will offer to remove the stale entry."
+                )
             action.setToolTip(tooltip)
             action.setStatusTip(tooltip)
             action.triggered.connect(

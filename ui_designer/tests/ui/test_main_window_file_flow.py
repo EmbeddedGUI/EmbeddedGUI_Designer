@@ -2730,6 +2730,8 @@ class TestMainWindowFileFlow:
         cached_sdk = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cached_sdk)
         project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir(parents=True)
+        project_path.write_text("<egui />\n", encoding="utf-8")
         isolated_config.recent_projects = [
             {
                 "project_path": str(project_path),
@@ -2748,6 +2750,10 @@ class TestMainWindowFileFlow:
 
         assert captured["path"] == str(project_path)
         assert captured["sdk_root"] == os.path.normpath(os.path.abspath(cached_sdk))
+        assert window._recent_menu.actions()[0].toolTip() == (
+            f"Project: {project_path}\nSDK root: {os.path.normpath(os.path.abspath(cached_sdk))}."
+        )
+        assert window._recent_menu.actions()[0].statusTip() == window._recent_menu.actions()[0].toolTip()
         _close_window(window)
 
     def test_recent_menu_marks_missing_project_entries(self, qapp, isolated_config, tmp_path):
@@ -2787,6 +2793,8 @@ class TestMainWindowFileFlow:
         assert window._recent_menu.menuAction().statusTip() == window._recent_menu.menuAction().toolTip()
 
         project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir(parents=True)
+        project_path.write_text("<egui />\n", encoding="utf-8")
         isolated_config.recent_projects = [
             {
                 "project_path": str(project_path),
@@ -2794,9 +2802,12 @@ class TestMainWindowFileFlow:
                 "display_name": "DemoApp",
             }
         ]
+        monkeypatch.setattr(window, "_resolve_ui_sdk_root", lambda *args: "")
         window._update_recent_menu()
         assert window._recent_menu.menuAction().toolTip() == "Open a recently used project. 1 recent project available."
         assert window._recent_menu.menuAction().statusTip() == window._recent_menu.menuAction().toolTip()
+        assert window._recent_menu.actions()[0].toolTip() == f"Project: {project_path}\nSDK root: not recorded."
+        assert window._recent_menu.actions()[0].statusTip() == window._recent_menu.actions()[0].toolTip()
 
         file_actions = {action.text(): action for action in file_menu.actions() if action.text()}
         view_actions = {action.text(): action for action in view_menu.actions() if action.text()}
