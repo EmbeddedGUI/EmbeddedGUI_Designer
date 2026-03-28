@@ -450,7 +450,7 @@ class StatusCenterPanel(QWidget):
             if action_key == self._last_action:
                 menu_tooltip = f"Repeat the current action: {action_label}."
             else:
-                menu_tooltip = f"Replay {action_label} from recent status center history."
+                menu_tooltip = f"Replay {action_label} from recent history."
             menu_action.setToolTip(menu_tooltip)
             menu_action.setStatusTip(menu_tooltip)
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
