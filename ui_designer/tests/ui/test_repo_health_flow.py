@@ -9,6 +9,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication, QDialog
     _has_pyqt5 = True
 except ImportError:
@@ -167,6 +168,13 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
         "Stale temp directories: Select a stale temp directory to copy or open. 1 entry. "
         "Current selection: .pytest-tmp-codex [permission_denied]."
     )
+    assert dialog._stale_dir_combo.itemData(0, Qt.ToolTipRole) == (
+        f".pytest-tmp-codex [permission_denied]\n{tmp_path / '.pytest-tmp-codex'}"
+    )
+    assert dialog._stale_dir_combo.itemData(0, Qt.AccessibleTextRole) == (
+        f"Stale temp directory: .pytest-tmp-codex [permission_denied]. "
+        f"Path: {tmp_path / '.pytest-tmp-codex'}. Issue: permission_denied."
+    )
     assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path"
     assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
 
@@ -317,6 +325,13 @@ def test_repository_health_dialog_updates_accessibility_metadata_for_view_change
     dialog._stale_dir_combo.setCurrentIndex(1)
     qapp.processEvents()
 
+    assert dialog._stale_dir_combo.itemData(0, Qt.AccessibleTextRole) == (
+        f"Stale temp directory: .pytest-tmp-codex. Path: {accessible_stale_dir}."
+    )
+    assert dialog._stale_dir_combo.itemData(1, Qt.AccessibleTextRole) == (
+        f"Stale temp directory: tmpxtayw0f6 [permission_denied]. "
+        f"Path: {missing_stale_dir}. Issue: permission_denied."
+    )
     assert dialog._copy_stale_path_button.toolTip() == "Copy the selected stale temp directory path."
     assert dialog._open_stale_button.toolTip() == "The selected stale temp directory path is unavailable or missing."
     assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path"

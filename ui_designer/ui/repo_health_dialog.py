@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from ..model.config import get_config
@@ -534,10 +535,17 @@ class RepositoryHealthDialog(QDialog):
             if not path:
                 continue
             label = Path(path).name or path
+            accessible_text = f"Stale temp directory: {label}. Path: {path}."
             if not bool(entry.get("accessible", False)):
                 issue = str(entry.get("issue") or "blocked")
                 label = f"{label} [{issue}]"
+                accessible_text = f"Stale temp directory: {label}. Path: {path}. Issue: {issue}."
             self._stale_dir_combo.addItem(label, path)
+            index = self._stale_dir_combo.count() - 1
+            tooltip = f"{label}\n{path}"
+            self._stale_dir_combo.setItemData(index, tooltip, Qt.ToolTipRole)
+            self._stale_dir_combo.setItemData(index, tooltip, Qt.StatusTipRole)
+            self._stale_dir_combo.setItemData(index, accessible_text, Qt.AccessibleTextRole)
         match_index = self._stale_dir_combo.findData(selected_path) if selected_path else -1
         if match_index >= 0:
             self._stale_dir_combo.setCurrentIndex(match_index)
