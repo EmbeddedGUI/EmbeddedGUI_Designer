@@ -36,6 +36,14 @@ _RESERVED_PAGE_NAMES = {
 }
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class ProjectExplorerDock(QDockWidget):
     """Dock widget showing project pages and resources.
 
@@ -83,13 +91,11 @@ class ProjectExplorerDock(QDockWidget):
         # Page mode selector
         mode_layout = QHBoxLayout()
         mode_label = QLabel("Mode:")
-        mode_label.setAccessibleName("Page mode label")
+        _set_widget_metadata(mode_label, tooltip="Project page generation mode.", accessible_name="Page mode label")
         mode_layout.addWidget(mode_label)
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["easy_page", "activity"])
         self._mode_combo.currentTextChanged.connect(self._on_mode_changed)
-        self._mode_combo.setToolTip("Choose how pages are generated for the current project.")
-        self._mode_combo.setAccessibleName("Project page mode")
         mode_layout.addWidget(self._mode_combo)
         settings_layout.addLayout(mode_layout)
         layout.addWidget(settings_group)
@@ -98,7 +104,6 @@ class ProjectExplorerDock(QDockWidget):
         self._pages_label = QLabel("Pages")
         self._pages_label.setFont(QFont("", -1, QFont.Bold))
         self._pages_label.setObjectName("workspace_section_title")
-        self._pages_label.setAccessibleName("Pages")
         layout.addWidget(self._pages_label)
 
         self._page_tree = QTreeWidget()
@@ -106,14 +111,11 @@ class ProjectExplorerDock(QDockWidget):
         self._page_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._page_tree.customContextMenuRequested.connect(self._on_page_context_menu)
         self._page_tree.currentItemChanged.connect(self._on_page_item_changed)
-        self._page_tree.setAccessibleName("Project pages")
         layout.addWidget(self._page_tree)
 
         # Add page button
         self._add_page_button = QPushButton("+ New Page")
         self._add_page_button.setIcon(make_icon("page"))
-        self._add_page_button.setToolTip("Create a new page in the current project.")
-        self._add_page_button.setAccessibleName("New page")
         self._add_page_button.clicked.connect(self._on_add_page)
         layout.addWidget(self._add_page_button)
 
@@ -128,14 +130,35 @@ class ProjectExplorerDock(QDockWidget):
         current_page = self._current_page_name or "none"
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
         summary = f"Project Explorer: {page_label}. Current page: {current_page}. {dirty_label}."
-        self.setAccessibleName(summary)
-        self.setToolTip(summary)
-        self.setStatusTip(summary)
-        self._pages_label.setToolTip(summary)
-        self._pages_label.setStatusTip(summary)
-        self._page_tree.setToolTip(summary)
-        self._page_tree.setStatusTip(summary)
+        mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
+        add_page_hint = (
+            f"Create a new page in the current project. Current mode: {mode}."
+            if self._project
+            else f"Create the first page for a new project. Current mode: {mode}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._pages_label,
+            tooltip=summary,
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}.",
+        )
+        _set_widget_metadata(
+            self._page_tree,
+            tooltip=summary,
+            accessible_name=f"Project pages: {page_label}. Current page: {current_page}. {dirty_label}.",
+        )
+        _set_widget_metadata(
+            self._mode_combo,
+            tooltip=mode_hint,
+            accessible_name=f"Project page mode: {mode}",
+        )
+        _set_widget_metadata(
+            self._add_page_button,
+            tooltip=add_page_hint,
+            accessible_name=f"New page action: {mode} mode",
+        )
 
     def _apply_page_item_metadata(self, item, page_name):
         item.setText(0, self._page_item_text(page_name))
@@ -315,4 +338,5 @@ class ProjectExplorerDock(QDockWidget):
         self.startup_changed.emit(name)
 
     def _on_mode_changed(self, mode):
+        self._update_accessibility_summary()
         self.page_mode_changed.emit(mode)
