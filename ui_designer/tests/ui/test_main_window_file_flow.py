@@ -3113,27 +3113,27 @@ class TestMainWindowFileFlow:
         window._update_compile_availability()
 
         assert actions["Open Last Release Folder"].toolTip() == (
-            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release folder unavailable\nExpected folder: {release_root}"
         )
         assert actions["Open Last Release Dist"].toolTip() == (
-            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release dist unavailable\nExpected folder: {dist_dir}"
         )
         assert actions["Open Last Release Manifest"].toolTip() == (
-            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release manifest unavailable\nExpected file: {manifest_path}"
         )
         assert actions["Open Last Release Version"].toolTip() == (
-            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release version unavailable\nExpected file: {dist_dir / 'VERSION.txt'}"
         )
         assert actions["Open Last Release Package"].toolTip() == (
-            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release package unavailable\nExpected file: {zip_path}"
         )
         assert actions["Open Last Release Log"].toolTip() == (
-            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"Release log unavailable\nExpected file: {log_path}"
         )
 
@@ -3146,32 +3146,32 @@ class TestMainWindowFileFlow:
         window._update_compile_availability()
 
         assert actions["Open Last Release Folder"].toolTip() == (
-            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{release_root}"
         )
         assert actions["Open Last Release Folder"].isEnabled() is True
         assert actions["Open Last Release Dist"].toolTip() == (
-            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{dist_dir}"
         )
         assert actions["Open Last Release Manifest"].toolTip() == (
-            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{manifest_path}"
         )
         assert actions["Open Last Release Version"].toolTip() == (
-            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{version_path}"
         )
         assert actions["Open Last Release Package"].toolTip() == (
-            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{zip_path}"
         )
         assert actions["Open Last Release Log"].toolTip() == (
-            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{log_path}"
         )
         assert actions["Open Release History File"].toolTip() == (
-            "Open release history file\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            "Open release history file\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
             f"{history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (

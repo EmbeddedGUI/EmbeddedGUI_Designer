@@ -148,22 +148,23 @@ def _release_sdk_summary(sdk) -> str:
     return "unknown"
 
 
-def _latest_release_summary(entry):
+def _latest_release_summary(entry, profile_label=""):
     if not isinstance(entry, dict) or not entry:
         return "No release history available"
     build_id = str(entry.get("build_id") or entry.get("created_at_utc") or "unknown-build").strip()
     profile_id = str(entry.get("profile_id") or "unknown-profile").strip()
+    profile_label = str(profile_label or profile_id).strip() or profile_id
     status = str(entry.get("status") or "").strip()
     if not status:
         if "success" in entry:
             status = "success" if bool(entry.get("success")) else "failed"
         else:
             status = "unknown"
-    return f"Latest release: {build_id} | {profile_id} | {status} | sdk {_release_sdk_summary(entry.get('sdk'))}"
+    return f"Latest release: {build_id} | {profile_label} | {status} | sdk {_release_sdk_summary(entry.get('sdk'))}"
 
 
-def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="", fallback_hint="") -> str:
-    lines = [action_label, "", _latest_release_summary(latest_entry)]
+def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="", fallback_hint="", profile_label="") -> str:
+    lines = [action_label, "", _latest_release_summary(latest_entry, profile_label=profile_label)]
     if path:
         lines.extend(["", path])
     else:
@@ -2257,6 +2258,7 @@ class MainWindow(QMainWindow):
         log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
         version_path = self._latest_release_version_path(latest_entry)
         version_expected_path = self._latest_release_version_path(latest_entry, require_exists=False)
+        latest_release_profile_label = self._release_profile_label(latest_entry.get("profile_id")) if isinstance(latest_entry, dict) else ""
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
@@ -2361,6 +2363,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=release_root if release_root_exists else "",
                     unavailable_label="Release folder unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected folder: {release_root}"
                         if release_root
@@ -2375,6 +2378,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=dist_dir if dist_dir_exists else "",
                     unavailable_label="Release dist unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected folder: {dist_dir}"
                         if dist_dir
@@ -2389,6 +2393,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=manifest_path if manifest_exists else "",
                     unavailable_label="Release manifest unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected file: {manifest_path}"
                         if manifest_path
@@ -2403,6 +2408,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=version_path if version_exists else "",
                     unavailable_label="Release version unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected file: {version_expected_path}"
                         if version_expected_path
@@ -2417,6 +2423,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=zip_path if zip_exists else "",
                     unavailable_label="Release package unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected file: {zip_path}"
                         if zip_path
@@ -2431,6 +2438,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=log_path if log_exists else "",
                     unavailable_label="Release log unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=(
                         f"Expected file: {log_path}"
                         if log_path
@@ -2445,6 +2453,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=history_file_path if history_file_path and os.path.isfile(history_file_path) else "",
                     unavailable_label="Release history file unavailable",
+                    profile_label=latest_release_profile_label,
                     fallback_hint=f"Expected file: {history_file_path or 'none'}",
                 )
             )
