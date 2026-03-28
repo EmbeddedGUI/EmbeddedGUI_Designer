@@ -98,9 +98,11 @@ class AppSelectorDialog(QDialog):
 
         self._download_btn = PushButton("Download SDK...")
         self._download_btn.clicked.connect(self._download_sdk)
-        self._download_btn.setToolTip(describe_auto_download_plan())
-        self._download_btn.setAccessibleName("Download SDK")
-        self._download_btn.setStatusTip(self._download_btn.toolTip())
+        _set_widget_metadata(
+            self._download_btn,
+            tooltip=describe_auto_download_plan(),
+            accessible_name="Download SDK",
+        )
         root_row.addWidget(self._download_btn)
 
         self._root_status_label = QLabel("")

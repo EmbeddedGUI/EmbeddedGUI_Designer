@@ -86,6 +86,7 @@ class TestAppSelectorDialog:
         assert dialog._download_btn.toolTip() == (
             "Download SDK unavailable because this dialog was opened without an SDK download handler."
         )
+        assert dialog._download_btn.statusTip() == dialog._download_btn.toolTip()
         assert dialog._download_btn.accessibleName() == "Download SDK unavailable"
         assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
@@ -355,6 +356,7 @@ class TestAppSelectorDialog:
         dialog = AppSelectorDialog(egui_root="", on_download_sdk=lambda: str(sdk_root))
 
         assert "GitHub archive" in dialog._download_btn.toolTip()
+        assert dialog._download_btn.statusTip() == dialog._download_btn.toolTip()
         assert dialog._download_btn.accessibleName() == "Download SDK"
         dialog._download_btn.click()
 
