@@ -16,6 +16,14 @@ from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class DebugPanel(QWidget):
     """Panel for displaying compile output and debug information."""
 
@@ -46,8 +54,6 @@ class DebugPanel(QWidget):
         self._clear_btn = QPushButton("Clear")
         self._clear_btn.setIcon(make_icon("stop"))
         self._clear_btn.setFixedWidth(80)
-        self._clear_btn.setToolTip("Clear debug output.")
-        self._clear_btn.setAccessibleName("Clear debug output")
         self._clear_btn.clicked.connect(self.clear)
         toolbar.addWidget(self._clear_btn)
 
@@ -90,11 +96,25 @@ class DebugPanel(QWidget):
         self.setAccessibleName(summary)
         self.setToolTip(summary)
         self.setStatusTip(summary)
-        self._title_label.setToolTip(summary)
-        self._title_label.setStatusTip(summary)
-        self._output.setToolTip(summary)
-        self._output.setStatusTip(summary)
-        self._output.setAccessibleName(f"Debug output log: {line_label}. Last message: {last_summary}")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=summary,
+            accessible_name=f"Debug output title: {line_label}",
+        )
+        _set_widget_metadata(
+            self._output,
+            tooltip=summary,
+            accessible_name=f"Debug output log: {line_label}. Last message: {last_summary}",
+        )
+        if line_count == 0:
+            clear_tooltip = "Debug output is already clear."
+        else:
+            clear_tooltip = f"Clear {line_label} of debug output."
+        _set_widget_metadata(
+            self._clear_btn,
+            tooltip=clear_tooltip,
+            accessible_name=f"Clear debug output: {line_label}",
+        )
 
     def _timestamp(self):
         """Get current timestamp string with milliseconds."""
