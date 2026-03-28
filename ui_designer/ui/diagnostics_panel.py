@@ -55,6 +55,16 @@ def _is_navigable_entry(entry):
     return bool(page_name)
 
 
+def _entry_location_label(entry):
+    page_name = str(getattr(entry, "page_name", "") or "")
+    widget_name = str(getattr(entry, "widget_name", "") or "")
+    if page_name == "project":
+        return "project"
+    if page_name and widget_name:
+        return f"{page_name}/{widget_name}"
+    return page_name or widget_name or "selection"
+
+
 class DiagnosticsPanel(QWidget):
     """Read-only list of diagnostics with optional widget focusing."""
 
@@ -285,6 +295,9 @@ class DiagnosticsPanel(QWidget):
             return "No diagnostics match the current filter to export as JSON."
         return "No diagnostics available to export as JSON."
 
+    def _visible_items_accessible_label(self):
+        return self._count_label(len(self._visible_entries), "visible item", "visible items")
+
     def _update_accessibility_summary(self):
         summary_text = str(self._summary_label.text() or "Diagnostics: no active issues").strip() or "Diagnostics: no active issues"
         hint_text = str(self._hint_label.text() or _DEFAULT_HINT_TEXT).strip() or _DEFAULT_HINT_TEXT
@@ -301,6 +314,10 @@ class DiagnosticsPanel(QWidget):
         has_navigable_warning = self._first_navigable_warning(self._entries) is not None
         can_open_selected = current_item is not None and _is_navigable_entry(current_entry)
         has_visible_entries = bool(self._visible_entries)
+        first_error_entry = self._first_navigable_error(self._entries)
+        first_warning_entry = self._first_navigable_warning(self._entries)
+        selected_location = _entry_location_label(current_entry) if can_open_selected else ""
+        visible_accessible_label = self._visible_items_accessible_label()
 
         self._set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
         self._set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
@@ -317,12 +334,20 @@ class DiagnosticsPanel(QWidget):
         self._set_widget_metadata(
             self._reset_view_button,
             tooltip=self._reset_view_hint(),
-            accessible_name="Reset diagnostics view" if has_filter else "Reset diagnostics view unavailable",
+            accessible_name=(
+                f"Reset diagnostics view: {filter_label}"
+                if has_filter
+                else "Reset diagnostics view unavailable"
+            ),
         )
         self._set_widget_metadata(
             self._open_selected_button,
             tooltip=self._open_selected_hint(),
-            accessible_name="Open selected diagnostic" if can_open_selected else "Open selected diagnostic unavailable",
+            accessible_name=(
+                f"Open selected diagnostic: {selected_location}"
+                if can_open_selected
+                else "Open selected diagnostic unavailable"
+            ),
         )
         self._set_widget_metadata(
             self._open_first_error_button,
@@ -332,7 +357,7 @@ class DiagnosticsPanel(QWidget):
                 else "No navigable error diagnostics available."
             ),
             accessible_name=(
-                "Open first error diagnostic"
+                f"Open first error diagnostic: {_entry_location_label(first_error_entry)}"
                 if has_navigable_error
                 else "Open first error diagnostic unavailable"
             ),
@@ -345,7 +370,7 @@ class DiagnosticsPanel(QWidget):
                 else "No navigable warning diagnostics available."
             ),
             accessible_name=(
-                "Open first warning diagnostic"
+                f"Open first warning diagnostic: {_entry_location_label(first_warning_entry)}"
                 if has_navigable_warning
                 else "Open first warning diagnostic unavailable"
             ),
@@ -353,22 +378,38 @@ class DiagnosticsPanel(QWidget):
         self._set_widget_metadata(
             self._copy_button,
             tooltip=self._copy_summary_hint(),
-            accessible_name="Copy diagnostics summary" if has_visible_entries else "Copy diagnostics summary unavailable",
+            accessible_name=(
+                f"Copy diagnostics summary: {visible_accessible_label}"
+                if has_visible_entries
+                else "Copy diagnostics summary unavailable"
+            ),
         )
         self._set_widget_metadata(
             self._copy_json_button,
             tooltip=self._copy_json_hint(),
-            accessible_name="Copy diagnostics JSON" if has_visible_entries else "Copy diagnostics JSON unavailable",
+            accessible_name=(
+                f"Copy diagnostics JSON: {visible_accessible_label}"
+                if has_visible_entries
+                else "Copy diagnostics JSON unavailable"
+            ),
         )
         self._set_widget_metadata(
             self._export_button,
             tooltip=self._export_summary_hint(),
-            accessible_name="Export diagnostics summary" if has_visible_entries else "Export diagnostics summary unavailable",
+            accessible_name=(
+                f"Export diagnostics summary: {visible_accessible_label}"
+                if has_visible_entries
+                else "Export diagnostics summary unavailable"
+            ),
         )
         self._set_widget_metadata(
             self._export_json_button,
             tooltip=self._export_json_hint(),
-            accessible_name="Export diagnostics JSON" if has_visible_entries else "Export diagnostics JSON unavailable",
+            accessible_name=(
+                f"Export diagnostics JSON: {visible_accessible_label}"
+                if has_visible_entries
+                else "Export diagnostics JSON unavailable"
+            ),
         )
         self._set_widget_metadata(self._list, tooltip=list_summary, accessible_name=list_summary)
 

@@ -96,14 +96,14 @@ class TestDiagnosticsPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel._open_first_error_button.toolTip() == "Open the first navigable error diagnostic."
         assert panel._open_first_warning_button.toolTip() == "Open the first navigable warning diagnostic."
-        assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic"
-        assert panel._open_first_warning_button.accessibleName() == "Open first warning diagnostic"
+        assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic: main_page/title"
+        assert panel._open_first_warning_button.accessibleName() == "Open first warning diagnostic: main_page/hero"
         assert panel._copy_json_button.toolTip() == "Copy the visible diagnostics as JSON."
-        assert panel._copy_button.accessibleName() == "Copy diagnostics summary"
-        assert panel._copy_json_button.accessibleName() == "Copy diagnostics JSON"
+        assert panel._copy_button.accessibleName() == "Copy diagnostics summary: 3 visible items"
+        assert panel._copy_json_button.accessibleName() == "Copy diagnostics JSON: 3 visible items"
         assert panel._export_button.toolTip() == "Export the visible diagnostics summary to a text file."
-        assert panel._export_button.accessibleName() == "Export diagnostics summary"
-        assert panel._export_json_button.accessibleName() == "Export diagnostics JSON"
+        assert panel._export_button.accessibleName() == "Export diagnostics summary: 3 visible items"
+        assert panel._export_json_button.accessibleName() == "Export diagnostics JSON: 3 visible items"
         assert panel._list.accessibleName() == (
             "Diagnostics list: 3 visible items. Severity filter: Any. Double-click a diagnostic to open its target when available."
         )
@@ -122,7 +122,7 @@ class TestDiagnosticsPanel:
         qapp.processEvents()
         assert panel._open_selected_button.isEnabled() is True
         assert panel._open_selected_button.toolTip() == "Open the selected diagnostic target."
-        assert panel._open_selected_button.accessibleName() == "Open selected diagnostic"
+        assert panel._open_selected_button.accessibleName() == "Open selected diagnostic: main_page/title"
 
         panel._list.setCurrentRow(2)
         qapp.processEvents()
@@ -145,7 +145,7 @@ class TestDiagnosticsPanel:
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"
         assert panel._reset_view_button.isEnabled() is True
         assert panel._reset_view_button.toolTip() == "Reset the diagnostics filter and show every severity."
-        assert panel._reset_view_button.accessibleName() == "Reset diagnostics view"
+        assert panel._reset_view_button.accessibleName() == "Reset diagnostics view: Info"
         assert panel._copy_button.toolTip() == "No diagnostics match the current filter to copy."
         assert panel._copy_json_button.toolTip() == "No diagnostics match the current filter to copy as JSON."
         assert panel._export_button.toolTip() == "No diagnostics match the current filter to export."
