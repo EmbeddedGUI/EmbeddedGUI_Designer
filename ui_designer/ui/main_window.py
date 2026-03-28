@@ -930,7 +930,8 @@ class MainWindow(QMainWindow):
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
-                f"Source resources: {resources_state}. {profiles_summary} {output_root_state_summary} {history_file_state_summary} "
+                f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
+                f"{profiles_summary} {output_root_state_summary} {history_file_state_summary} "
                 f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
             ),
         )
