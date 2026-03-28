@@ -1566,12 +1566,12 @@ class ResourcePanel(QWidget):
         _set_widget_metadata(
             self._add_locale_btn,
             tooltip=add_locale_tooltip,
-            accessible_name=f"Add locale. {locale_count_label.capitalize()} configured.",
+            accessible_name=f"Add locale from {locale_label}. {locale_count_label.capitalize()} configured.",
         )
 
         if self._get_selected_locale() == DEFAULT_LOCALE:
             remove_locale_tooltip = "Select a non-default locale to remove it."
-            remove_locale_name = "Remove locale unavailable"
+            remove_locale_name = f"Remove locale unavailable: {locale_label}"
         else:
             remove_locale_tooltip = f"Remove locale {locale_label} and all its translations."
             remove_locale_name = f"Remove locale: {locale_label}"
@@ -1585,7 +1585,7 @@ class ResourcePanel(QWidget):
         _set_widget_metadata(
             self._add_key_btn,
             tooltip=add_key_tooltip,
-            accessible_name=f"Add string key. {key_count_label.capitalize()} defined.",
+            accessible_name=f"Add string key in {locale_label}. {key_count_label.capitalize()} defined.",
         )
 
         if selected_key:

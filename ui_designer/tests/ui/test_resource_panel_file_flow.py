@@ -506,11 +506,11 @@ class TestResourcePanelFileFlow:
             "String resource table: 0 string keys. Current locale: Default. Current key: none."
         )
         assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 0 locales configured."
-        assert panel._add_locale_btn.accessibleName() == "Add locale. 0 locales configured."
+        assert panel._add_locale_btn.accessibleName() == "Add locale from Default. 0 locales configured."
         assert panel._remove_locale_btn.toolTip() == "Select a non-default locale to remove it."
-        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable"
+        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable: Default"
         assert panel._add_key_btn.toolTip() == "Add a new string key across all locales. 0 string keys defined."
-        assert panel._add_key_btn.accessibleName() == "Add string key. 0 string keys defined."
+        assert panel._add_key_btn.accessibleName() == "Add string key in Default. 0 string keys defined."
         assert panel._rename_key_btn.toolTip() == "Select a string key to rename it across all locales."
         assert panel._rename_key_btn.accessibleName() == "Rename string key unavailable"
         assert panel._remove_key_btn.toolTip() == "Select a string key to remove it from all locales."
@@ -545,11 +545,11 @@ class TestResourcePanelFileFlow:
         )
         assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 2 locales configured."
         assert panel._add_locale_btn.statusTip() == panel._add_locale_btn.toolTip()
-        assert panel._add_locale_btn.accessibleName() == "Add locale. 2 locales configured."
+        assert panel._add_locale_btn.accessibleName() == "Add locale from Default. 2 locales configured."
         assert panel._remove_locale_btn.toolTip() == "Select a non-default locale to remove it."
-        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable"
+        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable: Default"
         assert panel._add_key_btn.toolTip() == "Add a new string key across all locales. 2 string keys defined."
-        assert panel._add_key_btn.accessibleName() == "Add string key. 2 string keys defined."
+        assert panel._add_key_btn.accessibleName() == "Add string key in Default. 2 string keys defined."
         assert panel._rename_key_btn.toolTip() == "Rename string key greeting across all locales. 2 usages will be updated."
         assert panel._rename_key_btn.statusTip() == panel._rename_key_btn.toolTip()
         assert panel._rename_key_btn.accessibleName() == "Rename string key: greeting. 2 usages."
@@ -563,9 +563,11 @@ class TestResourcePanelFileFlow:
         assert panel._string_table.accessibleName() == (
             "String resource table: 2 string keys. Current locale: zh. Current key: greeting."
         )
+        assert panel._add_locale_btn.accessibleName() == "Add locale from zh. 2 locales configured."
         assert panel._remove_locale_btn.toolTip() == "Remove locale zh and all its translations."
         assert panel._remove_locale_btn.statusTip() == panel._remove_locale_btn.toolTip()
         assert panel._remove_locale_btn.accessibleName() == "Remove locale: zh"
+        assert panel._add_key_btn.accessibleName() == "Add string key in zh. 2 string keys defined."
         panel.deleteLater()
 
     def test_tab_title_shows_missing_resource_count(self, qapp, tmp_path):
