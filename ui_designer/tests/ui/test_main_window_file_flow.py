@@ -2929,7 +2929,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Source resources: missing. Release profiles: unavailable. Release records: unavailable. "
+            "Source resources: missing. Release profiles: unavailable. History file state: unavailable. Release records: unavailable. "
             "Latest release: none. Release open targets: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
@@ -2981,6 +2981,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
         assert generate_resources_action.toolTip() == (
@@ -2995,6 +2996,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
         _close_window(window)
@@ -3087,6 +3089,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            "History file state: missing. "
             "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
 
@@ -3197,6 +3200,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            "History file state: available. "
             "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Release open targets: 7 of 7 available."
         )
         for action in actions.values():

@@ -917,6 +917,7 @@ class MainWindow(QMainWindow):
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         profiles_summary = self._release_profiles_build_summary()
+        history_file_state_summary = self._release_history_file_state_summary(history_file_path)
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
@@ -926,7 +927,8 @@ class MainWindow(QMainWindow):
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
-                f"Source resources: {resources_state}. {profiles_summary} {history_summary} {latest_release_summary} {release_targets_summary}"
+                f"Source resources: {resources_state}. {profiles_summary} {history_file_state_summary} "
+                f"{history_summary} {latest_release_summary} {release_targets_summary}"
             ),
         )
 
