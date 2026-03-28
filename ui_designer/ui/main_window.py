@@ -903,7 +903,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_font_size_action"):
             self._apply_action_hint(self._font_size_action, f"Adjust the Designer font size. Current size: {font_label}.")
 
-    def _update_build_menu_metadata(self, latest_entry=None, history_file_path=""):
+    def _update_build_menu_metadata(self, latest_entry=None, history_entries=None, history_file_path=""):
         if not hasattr(self, "_build_menu"):
             return
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
@@ -916,6 +916,7 @@ class MainWindow(QMainWindow):
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         profiles_summary = self._release_profiles_build_summary()
+        history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
         self._apply_action_hint(
@@ -924,7 +925,7 @@ class MainWindow(QMainWindow):
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
-                f"Source resources: {resources_state}. {profiles_summary} {latest_release_summary} {release_targets_summary}"
+                f"Source resources: {resources_state}. {profiles_summary} {history_summary} {latest_release_summary} {release_targets_summary}"
             ),
         )
 
@@ -1157,6 +1158,17 @@ class MainWindow(QMainWindow):
             else:
                 status = "unknown"
         return f"Latest release: {build_id} ({profile_id}, {status})."
+
+    def _release_history_records_summary(self, history_entries=None, latest_entry=None):
+        if getattr(self, "project", None) is None or not self._project_dir:
+            return "Release records: unavailable."
+        if history_entries is None:
+            history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root())
+        entry_count = len(history_entries) if isinstance(history_entries, list) else 0
+        if entry_count == 0 and isinstance(latest_entry, dict) and latest_entry:
+            entry_count = 1
+        noun = "entry" if entry_count == 1 else "entries"
+        return f"Release records: {entry_count} {noun}."
 
     def _release_open_targets_summary(self, latest_entry=None, history_file_path=""):
         if latest_entry is None:
@@ -2222,7 +2234,7 @@ class MainWindow(QMainWindow):
         )
         can_release = self.project is not None and bool(self._project_dir) and self._has_valid_sdk_root()
         latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root()) if self.project is not None and self._project_dir else {}
-        has_release_history = bool(latest_entry)
+        history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root()) if self.project is not None and self._project_dir else []
         release_root = normalize_path(latest_entry.get("release_root", "")) if isinstance(latest_entry, dict) else ""
         dist_dir = normalize_path(latest_entry.get("dist_dir", "")) if isinstance(latest_entry, dict) else ""
         manifest_path = normalize_path(latest_entry.get("manifest_path", "")) if isinstance(latest_entry, dict) else ""
@@ -2230,6 +2242,7 @@ class MainWindow(QMainWindow):
         log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
         version_path = self._latest_release_version_path(latest_entry)
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
+        history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
         can_browse_release_history = self.project is not None and bool(self._project_dir)
@@ -2286,7 +2299,7 @@ class MainWindow(QMainWindow):
                 (
                     "Browse recorded release builds for the current project. "
                     f"History file: {history_file_path or 'not created yet'}. Output root: {self._release_output_root()}. "
-                    f"{latest_release_summary}"
+                    f"{history_summary} {latest_release_summary}"
                     if self._release_history_action.isEnabled()
                     else self._action_hint(
                         "Browse recorded release builds for the current project.",
@@ -2306,7 +2319,7 @@ class MainWindow(QMainWindow):
                     "Inspect the Designer repository health summary. "
                     f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
                     f"Release output root: {repo_release_root}. Source resources: {repo_resources_state}. "
-                    f"{latest_release_summary} {release_targets_summary}"
+                    f"{history_summary} {latest_release_summary} {release_targets_summary}"
                 ),
             )
             self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
@@ -2386,7 +2399,7 @@ class MainWindow(QMainWindow):
                 )
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
-        self._update_build_menu_metadata(latest_entry=latest_entry, history_file_path=history_file_path)
+        self._update_build_menu_metadata(latest_entry=latest_entry, history_entries=history_entries, history_file_path=history_file_path)
         self._update_file_menu_metadata()
         self._update_file_project_action_metadata()
         self._update_generate_resources_action_metadata()

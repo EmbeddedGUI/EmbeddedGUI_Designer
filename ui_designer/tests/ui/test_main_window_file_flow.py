@@ -2922,13 +2922,15 @@ class TestMainWindowFileFlow:
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             "Project: none. SDK: invalid. Release output root: none. Source resources: missing. "
+            "Release records: unavailable. "
             "Latest release: none. Release open targets: 0 of 7 available."
         )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Source resources: missing. Release profiles: unavailable. Latest release: none. Release open targets: 0 of 7 available."
+            "Source resources: missing. Release profiles: unavailable. Release records: unavailable. "
+            "Latest release: none. Release open targets: 0 of 7 available."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
         assert generate_resources_action.toolTip() == (
@@ -2964,20 +2966,20 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
-            f"Output root: {window._release_output_root()}. Latest release: none."
+            f"Output root: {window._release_output_root()}. Release records: 0 entries. Latest release: none."
         )
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {window._release_output_root()}. Source resources: available. "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -2991,7 +2993,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
         _close_window(window)
 
@@ -3064,7 +3066,7 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
 
         release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
@@ -3080,8 +3082,6 @@ class TestMainWindowFileFlow:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text("build log\n", encoding="utf-8")
         Path(history_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(history_path).write_text("[]\n", encoding="utf-8")
-
         latest_entry = {
             "build_id": "20260329-010203",
             "profile_id": "stm32-sim",
@@ -3093,6 +3093,7 @@ class TestMainWindowFileFlow:
             "log_path": str(log_path),
             "zip_path": str(zip_path),
         }
+        Path(history_path).write_text(json.dumps([latest_entry], indent=2) + "\n", encoding="utf-8")
         monkeypatch.setattr(main_window_module, "latest_release_entry", lambda *args, **kwargs: latest_entry)
         window._update_compile_availability()
 
@@ -3128,18 +3129,18 @@ class TestMainWindowFileFlow:
         assert actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             f"History file: {history_path}. Output root: {output_root}. "
-            "Latest release: 20260329-010203 (stm32-sim, success)."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success)."
         )
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {output_root}. Source resources: available. "
-            "Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). "
-            "Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
         )
         for action in actions.values():
             assert action.statusTip() == action.toolTip()
