@@ -753,6 +753,12 @@ class StatusCenterPanel(QWidget):
             return "Diagnostic mix with no active diagnostics."
         return f"Diagnostic mix with {total} total diagnostics."
 
+    def _diagnostic_title_accessible_name(self, total_count):
+        total = max(int(total_count or 0), 0)
+        if total <= 0:
+            return "Diagnostic mix title: No active diagnostics."
+        return f"Diagnostic mix title: {total} total diagnostics."
+
     def _runtime_title_text(self, runtime_text):
         return "Runtime (Issue)" if str(runtime_text or "").strip() else "Runtime (Clear)"
 
@@ -761,6 +767,12 @@ class StatusCenterPanel(QWidget):
         if message:
             return f"Runtime status: issue detected. {message}"
         return "Runtime status: clear."
+
+    def _runtime_title_accessible_name(self, runtime_text):
+        message = str(runtime_text or "").strip()
+        if message:
+            return f"Runtime title: Issue detected. {message}"
+        return "Runtime title: Clear. No runtime errors."
 
     def _workspace_summary_text(
         self,
@@ -1292,7 +1304,7 @@ class StatusCenterPanel(QWidget):
         self._info_bar.setAccessibleName(info_share)
         self._health_title.setText(self._diagnostic_title_text(diag_total))
         self._set_hint(self._health_title, self._diagnostic_title_tooltip(diag_total))
-        self._health_title.setAccessibleName(self._health_title.text())
+        self._health_title.setAccessibleName(self._diagnostic_title_accessible_name(diag_total))
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
         self._set_hint(self._health_summary_label, health_summary)
@@ -1357,7 +1369,7 @@ class StatusCenterPanel(QWidget):
         if runtime_text:
             self._runtime_title.setText(self._runtime_title_text(runtime_text))
             self._set_hint(self._runtime_title, self._runtime_title_tooltip(runtime_text))
-            self._runtime_title.setAccessibleName(self._runtime_title.text())
+            self._runtime_title.setAccessibleName(self._runtime_title_accessible_name(runtime_text))
             self._runtime_label.setText(runtime_text)
             self._set_hint(self._runtime_label, runtime_text)
             self._runtime_label.setAccessibleName(f"Runtime details: {runtime_text}")
@@ -1370,7 +1382,7 @@ class StatusCenterPanel(QWidget):
         else:
             self._runtime_title.setText(self._runtime_title_text(""))
             self._set_hint(self._runtime_title, self._runtime_title_tooltip(""))
-            self._runtime_title.setAccessibleName(self._runtime_title.text())
+            self._runtime_title.setAccessibleName(self._runtime_title_accessible_name(""))
             self._runtime_label.setText("No runtime errors.")
             self._set_hint(self._runtime_label, "No runtime errors.")
             self._runtime_label.setAccessibleName("Runtime details: No runtime errors.")
