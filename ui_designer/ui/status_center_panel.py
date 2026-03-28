@@ -984,11 +984,28 @@ class StatusCenterPanel(QWidget):
             return f"Suggested next step in {context}. {hint}"
         return f"Suggested next step in {context}."
 
+    def _suggested_action_title_accessible_name(self, suggested_context, suggested_label, suggested_hint):
+        title = self._suggested_action_title_text(suggested_context)
+        label = str(suggested_label or "").strip()
+        hint = str(suggested_hint or "").strip()
+        summary = f"{title} {label}".strip()
+        if hint:
+            return f"{summary}. {hint}"
+        return summary
+
     def _suggested_action_summary_text(self, suggested_context, suggested_hint):
         context = str(suggested_context or "").strip()
         prefix = f"{context} guidance" if context else "Guidance"
         hint = str(suggested_hint or "").strip()
         return f"{prefix}: {hint}" if hint else f"{prefix}:"
+
+    def _suggested_action_button_accessible_name(self, suggested_context, suggested_label, suggested_hint):
+        label = str(suggested_label or "").strip() or "Open Diagnostics"
+        context = str(suggested_context or "").strip() or "Status"
+        hint = str(suggested_hint or "").strip()
+        if hint:
+            return f"Suggested status action: {label}. Context: {context}. {hint}"
+        return f"Suggested status action: {label}. Context: {context}."
 
     def _set_last_action(self, action_key, recent_actions=None):
         self._last_action = str(action_key or "").strip()
@@ -1170,11 +1187,21 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_label.setText(self._suggested_action_title_text(suggested_context))
         self._set_hint(self._suggested_action_label, self._suggested_action_title_tooltip(suggested_context, suggested_hint))
         self._suggested_action_label.setAccessibleName(
-            f"{self._suggested_action_label.text()} {suggested_label}"
+            self._suggested_action_title_accessible_name(
+                suggested_context,
+                suggested_label,
+                suggested_hint,
+            )
         )
         self._suggested_action_button.setText(suggested_label)
         self._set_widget_icon(self._suggested_action_button, suggested_icon)
-        self._suggested_action_button.setAccessibleName(f"Suggested status action: {suggested_label}")
+        self._suggested_action_button.setAccessibleName(
+            self._suggested_action_button_accessible_name(
+                suggested_context,
+                suggested_label,
+                suggested_hint,
+            )
+        )
         self._set_hint(self._suggested_action_button, suggested_hint)
         suggested_summary = self._suggested_action_summary_text(suggested_context, suggested_hint)
         self._suggested_action_summary_label.setText(suggested_summary)

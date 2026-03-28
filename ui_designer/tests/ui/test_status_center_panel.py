@@ -335,7 +335,14 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.text() == "Fix First Error (2)"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
         assert panel._suggested_action_button.toolTip() == "Start with the first error in Diagnostics. 2 errors active."
-        assert panel._suggested_action_button.accessibleName() == "Suggested status action: Fix First Error (2)"
+        assert panel._suggested_action_label.accessibleName() == (
+            "Suggested next step (Diagnostics): Fix First Error (2). "
+            "Start with the first error in Diagnostics. 2 errors active."
+        )
+        assert panel._suggested_action_button.accessibleName() == (
+            "Suggested status action: Fix First Error (2). Context: Diagnostics. "
+            "Start with the first error in Diagnostics. 2 errors active."
+        )
         assert panel._suggested_action_summary_label.text() == (
             "Diagnostics guidance: Start with the first error in Diagnostics. 2 errors active."
         )
@@ -388,13 +395,19 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_label.toolTip() == (
             "Suggested next step in Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._suggested_action_label.accessibleName() == "Suggested next step (Workspace): Configure SDK"
+        assert panel._suggested_action_label.accessibleName() == (
+            "Suggested next step (Workspace): Configure SDK. "
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.property("iconKey") == "project"
         assert panel._suggested_action_button.toolTip() == (
             "Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._suggested_action_button.accessibleName() == "Suggested status action: Configure SDK"
+        assert panel._suggested_action_button.accessibleName() == (
+            "Suggested status action: Configure SDK. Context: Workspace. "
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._suggested_action_summary_label.text() == (
             "Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
@@ -478,6 +491,10 @@ class TestStatusCenterPanel:
 
         assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
         assert panel._suggested_action_button.text() == "Configure SDK"
+        assert panel._suggested_action_button.accessibleName() == (
+            "Suggested status action: Configure SDK. Context: Workspace. "
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._suggested_action_summary_label.text() == (
             "Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
@@ -487,6 +504,10 @@ class TestStatusCenterPanel:
         assert panel._header_subtitle.text() == "Action needed now. Focus on Fix First Error (1)."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
+        assert panel._suggested_action_button.accessibleName() == (
+            "Suggested status action: Fix First Error (1). Context: Diagnostics. "
+            "Start with the first error in Diagnostics. 1 error active."
+        )
         assert panel._debug_btn.text() == "Debug Output"
         assert panel._project_btn.text() == "Project"
         assert panel._diag_btn.text() == "Diagnostics (1 active)"
@@ -512,6 +533,10 @@ class TestStatusCenterPanel:
         assert panel._header_subtitle.text() == "Action needed now. Focus on Inspect Debug Output."
         assert panel._suggested_action_label.text() == "Suggested next step (Runtime):"
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
+        assert panel._suggested_action_button.accessibleName() == (
+            "Suggested status action: Inspect Debug Output. Context: Runtime. "
+            "Inspect the latest runtime output. Bridge lost"
+        )
         assert panel._debug_btn.text() == "Debug Output (Issue)"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
