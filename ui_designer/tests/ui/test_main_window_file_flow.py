@@ -2851,6 +2851,7 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_build_menu_actions_expose_status_hints(self, qapp, isolated_config, tmp_path):
+        from ui_designer.engine.release_engine import release_history_path
         from ui_designer.ui.main_window import MainWindow
 
         class _BuildReadyCompiler:
@@ -2926,11 +2927,16 @@ class TestMainWindowFileFlow:
         }
         assert refreshed_actions["Auto Compile"].toolTip() == "Automatically compile and rerun the preview after changes."
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
-        assert refreshed_actions["Release Build..."].toolTip() == "Build a release package for the current project."
+        assert refreshed_actions["Release Build..."].toolTip() == (
+            f"Build a release package for the current project. Output root: {window._release_output_root()}."
+        )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == "Edit release profiles for the current project."
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
-        assert refreshed_actions["Release History..."].toolTip() == "Browse recorded release builds for the current project."
+        assert refreshed_actions["Release History..."].toolTip() == (
+            "Browse recorded release builds for the current project. "
+            f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}."
+        )
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. Project: open. SDK: valid."

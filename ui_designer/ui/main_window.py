@@ -2100,14 +2100,18 @@ class MainWindow(QMainWindow):
             self._release_history_action.setEnabled(can_browse_release_history)
             self._apply_action_hint(
                 self._release_build_action,
-                self._action_hint(
-                    "Build a release package for the current project.",
-                    self._release_build_action.isEnabled(),
-                    "open a project first"
-                    if self.project is None
-                    else "save the project to disk first"
-                    if not self._project_dir
-                    else "set a valid SDK root first",
+                (
+                    f"Build a release package for the current project. Output root: {self._release_output_root()}."
+                    if self._release_build_action.isEnabled()
+                    else self._action_hint(
+                        "Build a release package for the current project.",
+                        False,
+                        "open a project first"
+                        if self.project is None
+                        else "save the project to disk first"
+                        if not self._project_dir
+                        else "set a valid SDK root first",
+                    )
                 ),
             )
             self._apply_action_hint(
@@ -2120,10 +2124,14 @@ class MainWindow(QMainWindow):
             )
             self._apply_action_hint(
                 self._release_history_action,
-                self._action_hint(
-                    "Browse recorded release builds for the current project.",
-                    self._release_history_action.isEnabled(),
-                    "open a project first" if self.project is None else "save the project to disk first",
+                (
+                    f"Browse recorded release builds for the current project. History file: {history_file_path or 'not created yet'}."
+                    if self._release_history_action.isEnabled()
+                    else self._action_hint(
+                        "Browse recorded release builds for the current project.",
+                        False,
+                        "open a project first" if self.project is None else "save the project to disk first",
+                    )
                 ),
             )
             repo_project_state = "open" if self.project is not None else "none"
