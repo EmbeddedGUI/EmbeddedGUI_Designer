@@ -1226,7 +1226,7 @@ class MainWindow(QMainWindow):
             return f"{profile_id} ({profile_name})"
         return profile_id
 
-    def _update_release_profiles_action_metadata(self):
+    def _update_release_profiles_action_metadata(self, history_summary="", latest_release_summary=""):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
             return
@@ -1240,11 +1240,13 @@ class MainWindow(QMainWindow):
                 ),
             )
             return
+        history_summary = str(history_summary or self._release_history_records_summary())
+        latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
         self._apply_action_hint(
             action,
             (
                 "Edit release profiles for the current project. "
-                f"{self._release_profiles_summary_suffix()}"
+                f"{self._release_profiles_summary_suffix()} {history_summary} {latest_release_summary}"
             ),
         )
 
@@ -2301,7 +2303,10 @@ class MainWindow(QMainWindow):
                     )
                 ),
             )
-            self._update_release_profiles_action_metadata()
+            self._update_release_profiles_action_metadata(
+                history_summary=history_summary,
+                latest_release_summary=latest_release_summary,
+            )
             self._apply_action_hint(
                 self._release_history_action,
                 (
