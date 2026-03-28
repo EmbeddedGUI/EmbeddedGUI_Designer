@@ -2481,6 +2481,8 @@ class MainWindow(QMainWindow):
         if not recent:
             action = QAction("(No recent projects)", self)
             action.setEnabled(False)
+            action.setToolTip("No recent projects are available.")
+            action.setStatusTip(action.toolTip())
             self._recent_menu.addAction(action)
             return
 

@@ -2716,6 +2716,8 @@ class TestMainWindowFileFlow:
         assert isolated_config.recent_projects == []
         assert isolated_config.last_project_path == ""
         assert window._recent_menu.actions()[0].text() == "(No recent projects)"
+        assert window._recent_menu.actions()[0].toolTip() == "No recent projects are available."
+        assert window._recent_menu.actions()[0].statusTip() == window._recent_menu.actions()[0].toolTip()
         recent_widget = window._welcome_page._recent_list.itemAt(0).widget()
         assert recent_widget is not None
         assert "No recent projects" in recent_widget.text()
