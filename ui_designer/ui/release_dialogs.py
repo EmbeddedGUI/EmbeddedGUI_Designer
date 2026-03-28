@@ -685,8 +685,8 @@ class ReleaseBuildDialog(QDialog):
         if self._ok_button is not None:
             _set_widget_metadata(
                 self._ok_button,
-                tooltip="Start the release build with the selected profile.",
-                accessible_name=self._ok_button.text() or "OK",
+                tooltip=f"Start the release build with profile {profile_text}.",
+                accessible_name=f"Start release build: {profile_text}",
             )
         if self._cancel_button is not None:
             _set_widget_metadata(
