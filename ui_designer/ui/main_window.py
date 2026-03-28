@@ -1133,11 +1133,7 @@ class MainWindow(QMainWindow):
         profiles = list(getattr(release_config, "profiles", []) or [])
         profile_count = len(profiles)
         profile_label = f"{profile_count} profile" if profile_count == 1 else f"{profile_count} profiles"
-        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
-        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
-        if default_profile not in profile_ids and profiles:
-            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
-        return f"Profiles: {profile_label}. Default: {default_profile or 'none'}."
+        return f"Profiles: {profile_label}. Default: {self._default_release_profile_label()}."
 
     def _release_profiles_build_summary(self):
         if getattr(self, "project", None) is None:
@@ -1152,7 +1148,13 @@ class MainWindow(QMainWindow):
             return "Latest release: none."
         build_id = str(latest_entry.get("build_id") or latest_entry.get("created_at_utc") or "unknown-build").strip()
         profile_id = str(latest_entry.get("profile_id") or "unknown-profile").strip()
-        return f"Latest release: {build_id} ({profile_id})."
+        status = str(latest_entry.get("status") or "").strip()
+        if not status:
+            if "success" in latest_entry:
+                status = "success" if bool(latest_entry.get("success")) else "failed"
+            else:
+                status = "unknown"
+        return f"Latest release: {build_id} ({profile_id}, {status})."
 
     def _default_release_profile_label(self):
         if getattr(self, "project", None) is None:
@@ -1160,10 +1162,21 @@ class MainWindow(QMainWindow):
         release_config = getattr(self.project, "release_config", None)
         profiles = list(getattr(release_config, "profiles", []) or [])
         default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
-        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
-        if default_profile not in profile_ids and profiles:
-            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
-        return default_profile or "none"
+        selected_profile = None
+        for profile in profiles:
+            profile_id = str(getattr(profile, "id", "") or "").strip()
+            if profile_id == default_profile:
+                selected_profile = profile
+                break
+        if selected_profile is None and profiles:
+            selected_profile = profiles[0]
+        if selected_profile is None:
+            return default_profile or "none"
+        profile_id = str(getattr(selected_profile, "id", "") or "").strip() or "none"
+        profile_name = str(getattr(selected_profile, "name", "") or "").strip()
+        if profile_name and profile_name != profile_id:
+            return f"{profile_id} ({profile_name})"
+        return profile_id
 
     def _update_release_profiles_action_metadata(self):
         action = getattr(self, "_release_profiles_action", None)

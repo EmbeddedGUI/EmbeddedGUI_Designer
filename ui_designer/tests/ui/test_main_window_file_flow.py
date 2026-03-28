@@ -2953,11 +2953,11 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
         assert refreshed_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
-            f"Output root: {window._release_output_root()}. Default profile: stm32-sim."
+            f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator)."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim."
+            "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator)."
         )
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == (
@@ -2974,7 +2974,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim. Latest release: none."
+            "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Latest release: none."
         )
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -2987,7 +2987,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim. Latest release: none."
+            "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). Latest release: none."
         )
         _close_window(window)
 
@@ -3057,7 +3057,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 1 profile. Default: windows-pc. Latest release: none."
+            "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). Latest release: none."
         )
 
         release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
@@ -3121,7 +3121,8 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 1 profile. Default: windows-pc. Latest release: 20260329-010203 (stm32-sim)."
+            "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). "
+            "Latest release: 20260329-010203 (stm32-sim, success)."
         )
         for action in actions.values():
             assert action.statusTip() == action.toolTip()
