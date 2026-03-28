@@ -400,6 +400,9 @@ class TestStatusCenterPanel:
         assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
         assert panel._preview_value.toolTip() == "Preview: Preview Idle"
+        assert panel._diag_value.toolTip() == "Diagnostics: No active diagnostics"
+        assert panel._diag_value.accessibleName() == "Diagnostics value: No active diagnostics"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: No active diagnostics"
         assert panel._selection_value.toolTip() == "Selection: No widgets selected"
         assert panel._selection_value.accessibleName() == "Selection value: No widgets selected"
         assert panel._selection_card.accessibleName() == "Selection metric: No widgets selected"
@@ -748,7 +751,7 @@ class TestStatusCenterPanel:
             "open_diagnostics",
             "open_diagnostics",
         ]
-        assert panel._diag_card.accessibleName() == "Diagnostics metric: 0 errors, 0 warnings, 0 info items"
+        assert panel._diag_card.accessibleName() == "Diagnostics metric: No active diagnostics"
         assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 

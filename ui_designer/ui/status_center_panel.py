@@ -567,6 +567,12 @@ class StatusCenterPanel(QWidget):
             ]
         )
 
+    def _diagnostic_metric_summary(self, error_count, warning_count, info_count):
+        total = max(int(error_count or 0), 0) + max(int(warning_count or 0), 0) + max(int(info_count or 0), 0)
+        if total <= 0:
+            return "No active diagnostics"
+        return self._diagnostic_metric_text(error_count, warning_count, info_count)
+
     def _debug_button_text(self, can_compile, runtime_text):
         if str(runtime_text or "").strip():
             return "Debug Output (Issue)"
@@ -1033,7 +1039,12 @@ class StatusCenterPanel(QWidget):
         )
         self._set_metric_context("SDK", self._sdk_value, self._sdk_card, self._sdk_value.text())
         self._set_metric_context("Compile", self._compile_value, self._compile_card, self._compile_value.text())
-        self._set_metric_context("Diagnostics", self._diag_value, self._diag_card, self._diag_value.text())
+        self._set_metric_context(
+            "Diagnostics",
+            self._diag_value,
+            self._diag_card,
+            self._diagnostic_metric_summary(error_count, warning_count, info_count),
+        )
         self._set_metric_context("Preview", self._preview_value, self._preview_card, self._preview_value.text())
         self._set_metric_context(
             "Selection",
