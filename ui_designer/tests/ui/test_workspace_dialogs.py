@@ -562,6 +562,52 @@ class TestNewProjectDialog:
 
 @_skip_no_qt
 class TestWelcomePage:
+    def test_exposes_welcome_page_accessibility_summary(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
+
+        page = WelcomePage()
+
+        assert page.accessibleName() == (
+            f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. 1 recent item."
+        )
+        assert page._sdk_status_label.accessibleName() == "SDK status: Ready: using selected SDK root"
+        assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
+        assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
+        page.deleteLater()
+
+    def test_recent_project_item_exposes_accessibility_summary(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir()
+        project_path.write_text("")
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": str(sdk_root),
+                "display_name": "DemoApp",
+            }
+        ]
+
+        page = WelcomePage()
+        widget = page._recent_list.itemAt(0).widget()
+
+        assert widget is not None
+        assert widget.accessibleName() == (
+            f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."
+        )
+        assert widget._status_label.accessibleName() == (
+            "Recent project status: Project: ready  |  SDK: ready (selected SDK root)"
+        )
+        assert "1 recent item." in page.accessibleName()
+        page.deleteLater()
+
     def test_refresh_shows_no_recent_state(self, qapp, isolated_config):
         from ui_designer.ui.welcome_page import WelcomePage
 

@@ -22,6 +22,14 @@ from ..model.workspace import describe_sdk_root, resolve_configured_sdk_root
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class RecentProjectItem(QWidget):
     """Card widget for a recent project entry."""
 
@@ -49,25 +57,27 @@ class RecentProjectItem(QWidget):
         text_layout = QVBoxLayout()
         text_layout.setSpacing(4)
 
-        name_label = QLabel(display_name)
-        name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
-        name_label.setObjectName("workspace_section_title")
-        text_layout.addWidget(name_label)
+        self._name_label = QLabel(display_name)
+        self._name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
+        self._name_label.setObjectName("workspace_section_title")
+        text_layout.addWidget(self._name_label)
 
-        path_label = QLabel(project_path)
-        path_label.setObjectName("workspace_section_subtitle")
-        text_layout.addWidget(path_label)
+        self._path_label = QLabel(project_path)
+        self._path_label.setObjectName("workspace_section_subtitle")
+        text_layout.addWidget(self._path_label)
 
-        project_status = "ready" if os.path.exists(project_path) else "missing"
-        sdk_status = describe_sdk_root(sdk_root)
-        sdk_source = describe_sdk_source(sdk_root) if sdk_status == "ready" else sdk_status
-        self._status_label = QLabel(f"Project: {project_status}  |  SDK: {sdk_status} ({sdk_source})")
+        self._project_status = "ready" if os.path.exists(project_path) else "missing"
+        self._sdk_status = describe_sdk_root(sdk_root)
+        sdk_source = describe_sdk_source(sdk_root) if self._sdk_status == "ready" else self._sdk_status
+        self._status_label = QLabel(
+            f"Project: {self._project_status}  |  SDK: {self._sdk_status} ({sdk_source})"
+        )
         self._status_label.setObjectName("workspace_status_chip")
-        if project_status != "ready":
+        if self._project_status != "ready":
             self._status_label.setProperty("chipTone", "danger")
-        elif sdk_status == "ready":
+        elif self._sdk_status == "ready":
             self._status_label.setProperty("chipTone", "success")
-        elif sdk_status == "invalid":
+        elif self._sdk_status == "invalid":
             self._status_label.setProperty("chipTone", "warning")
         else:
             self._status_label.setProperty("chipTone", "danger")
@@ -76,6 +86,29 @@ class RecentProjectItem(QWidget):
         text_layout.addWidget(self._status_label)
 
         layout.addLayout(text_layout, 1)
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        summary = (
+            f"Recent project: {self.display_name}. Project {self._project_status}. "
+            f"SDK {self._sdk_status}. Path: {self.project_path}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._name_label,
+            tooltip=summary,
+            accessible_name=f"Recent project name: {self.display_name}",
+        )
+        _set_widget_metadata(
+            self._path_label,
+            tooltip=f"Recent project path: {self.project_path}",
+            accessible_name=f"Recent project path: {self.project_path}",
+        )
+        _set_widget_metadata(
+            self._status_label,
+            tooltip=self._status_label.text(),
+            accessible_name=f"Recent project status: {self._status_label.text()}",
+        )
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -108,15 +141,15 @@ class WelcomePage(QWidget):
         center_layout.setContentsMargins(40, 40, 40, 40)
         center_layout.setSpacing(24)
 
-        title = QLabel("EmbeddedGUI Designer")
-        title.setFont(QFont("Segoe UI", 28, QFont.Light))
-        title.setObjectName("workspace_section_title")
-        center_layout.addWidget(title)
+        self._title_label = QLabel("EmbeddedGUI Designer")
+        self._title_label.setFont(QFont("Segoe UI", 28, QFont.Light))
+        self._title_label.setObjectName("workspace_section_title")
+        center_layout.addWidget(self._title_label)
 
-        subtitle = QLabel("Visual designer with SDK-backed preview and external app workspace support")
-        subtitle.setFont(QFont("Segoe UI", 12))
-        subtitle.setObjectName("workspace_section_subtitle")
-        center_layout.addWidget(subtitle)
+        self._subtitle_label = QLabel("Visual designer with SDK-backed preview and external app workspace support")
+        self._subtitle_label.setFont(QFont("Segoe UI", 12))
+        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        center_layout.addWidget(self._subtitle_label)
 
         center_layout.addSpacing(20)
 
@@ -126,10 +159,10 @@ class WelcomePage(QWidget):
         left_col = QVBoxLayout()
         left_col.setSpacing(12)
 
-        start_label = QLabel("Start")
-        start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
-        start_label.setObjectName("workspace_section_title")
-        left_col.addWidget(start_label)
+        self._start_label = QLabel("Start")
+        self._start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
+        self._start_label.setObjectName("workspace_section_title")
+        left_col.addWidget(self._start_label)
 
         self._new_project_btn = PrimaryPushButton("New Project...")
         self._new_project_btn.setFixedWidth(220)
@@ -160,6 +193,7 @@ class WelcomePage(QWidget):
         self._download_sdk_btn.setIcon(make_icon("compile"))
         self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
         self._download_sdk_btn.setToolTip(describe_auto_download_plan())
+        self._download_sdk_btn.setStatusTip(self._download_sdk_btn.toolTip())
         left_col.addWidget(self._download_sdk_btn)
 
         self._sdk_card = QWidget()
@@ -168,10 +202,10 @@ class WelcomePage(QWidget):
         sdk_layout.setContentsMargins(16, 14, 16, 14)
         sdk_layout.setSpacing(6)
 
-        sdk_title = QLabel("SDK Status")
-        sdk_title.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
-        sdk_title.setObjectName("workspace_section_title")
-        sdk_layout.addWidget(sdk_title)
+        self._sdk_title_label = QLabel("SDK Status")
+        self._sdk_title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
+        self._sdk_title_label.setObjectName("workspace_section_title")
+        sdk_layout.addWidget(self._sdk_title_label)
 
         self._sdk_status_label = QLabel("")
         self._sdk_status_label.setObjectName("workspace_status_chip")
@@ -197,10 +231,10 @@ class WelcomePage(QWidget):
         right_col = QVBoxLayout()
         right_col.setSpacing(12)
 
-        recent_label = QLabel("Recent Projects")
-        recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
-        recent_label.setObjectName("workspace_section_title")
-        right_col.addWidget(recent_label)
+        self._recent_label = QLabel("Recent Projects")
+        self._recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
+        self._recent_label.setObjectName("workspace_section_title")
+        right_col.addWidget(self._recent_label)
 
         self._recent_list = QVBoxLayout()
         self._recent_list.setSpacing(8)
@@ -210,14 +244,23 @@ class WelcomePage(QWidget):
 
         center_layout.addLayout(content_layout, 1)
 
-        footer = QLabel("Press Ctrl+Shift+O to open an SDK example, Ctrl+O to open a .egui project, or Ctrl+N to create a new project")
-        footer.setObjectName("workspace_section_subtitle")
-        footer.setAlignment(Qt.AlignCenter)
-        center_layout.addWidget(footer)
+        self._footer_label = QLabel("Press Ctrl+Shift+O to open an SDK example, Ctrl+O to open a .egui project, or Ctrl+N to create a new project")
+        self._footer_label.setObjectName("workspace_section_subtitle")
+        self._footer_label.setAlignment(Qt.AlignCenter)
+        center_layout.addWidget(self._footer_label)
 
         main_layout.addStretch()
         main_layout.addWidget(center_widget)
         main_layout.addStretch()
+        self._new_project_btn.setAccessibleName("Create new project")
+        self._open_project_btn.setAccessibleName("Open project file")
+        self._open_app_btn.setAccessibleName("Open SDK example")
+        self._set_sdk_root_btn.setAccessibleName("Set SDK root")
+        self._download_sdk_btn.setAccessibleName("Download SDK")
+        _set_widget_metadata(self._new_project_btn, tooltip="Create a new EmbeddedGUI Designer project.", accessible_name="Create new project")
+        _set_widget_metadata(self._open_project_btn, tooltip="Open an existing .egui project file.", accessible_name="Open project file")
+        _set_widget_metadata(self._open_app_btn, tooltip="Open an SDK example project or legacy example.", accessible_name="Open SDK example")
+        _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 
         self._refresh_sdk_status()
         self._refresh_recent_list()
@@ -266,6 +309,7 @@ class WelcomePage(QWidget):
             )
 
         self._sdk_path_label.setText(sdk_root or "No SDK root configured")
+        self._update_accessibility_summary()
 
     def _resolve_display_sdk_root(self, sdk_root=""):
         return resolve_configured_sdk_root(
@@ -284,7 +328,9 @@ class WelcomePage(QWidget):
         if not recent:
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_empty_state")
+            _set_widget_metadata(no_recent, tooltip=no_recent.text(), accessible_name=no_recent.text())
             self._recent_list.addWidget(no_recent)
+            self._update_accessibility_summary()
             return
 
         for item_data in recent[:8]:
@@ -294,6 +340,7 @@ class WelcomePage(QWidget):
             item = RecentProjectItem(project_path, sdk_root, display_name)
             item.item_clicked.connect(self._on_recent_clicked)
             self._recent_list.addWidget(item)
+        self._update_accessibility_summary()
 
     def _on_recent_clicked(self, project_path, sdk_root):
         self.open_recent.emit(project_path, sdk_root)
@@ -301,3 +348,33 @@ class WelcomePage(QWidget):
     def refresh(self):
         self._refresh_sdk_status()
         self._refresh_recent_list()
+
+    def _update_accessibility_summary(self):
+        recent_count = self._recent_list.count()
+        recent_text = "1 recent item" if recent_count == 1 else f"{recent_count} recent items"
+        sdk_status = self._sdk_status_label.text().strip() or "SDK status unavailable."
+        sdk_path = self._sdk_path_label.text().strip() or "No SDK root configured"
+        summary = f"Welcome page: {sdk_status}. SDK path: {sdk_path}. {recent_text}."
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=self._title_label.text())
+        _set_widget_metadata(self._subtitle_label, tooltip=self._subtitle_label.text(), accessible_name=self._subtitle_label.text())
+        _set_widget_metadata(self._start_label, tooltip=self._start_label.text(), accessible_name=self._start_label.text())
+        _set_widget_metadata(self._sdk_card, tooltip=sdk_status, accessible_name=f"SDK card: {sdk_status}")
+        _set_widget_metadata(self._sdk_title_label, tooltip=self._sdk_title_label.text(), accessible_name=self._sdk_title_label.text())
+        _set_widget_metadata(
+            self._sdk_status_label,
+            tooltip=self._sdk_status_label.text(),
+            accessible_name=f"SDK status: {self._sdk_status_label.text()}",
+        )
+        _set_widget_metadata(
+            self._sdk_path_label,
+            tooltip=self._sdk_path_label.text(),
+            accessible_name=f"SDK path: {self._sdk_path_label.text()}",
+        )
+        _set_widget_metadata(
+            self._sdk_hint_label,
+            tooltip=self._sdk_hint_label.text(),
+            accessible_name=f"SDK hint: {self._sdk_hint_label.text()}",
+        )
+        _set_widget_metadata(self._recent_label, tooltip=self._recent_label.text(), accessible_name=self._recent_label.text())
+        _set_widget_metadata(self._footer_label, tooltip=self._footer_label.text(), accessible_name=self._footer_label.text())
