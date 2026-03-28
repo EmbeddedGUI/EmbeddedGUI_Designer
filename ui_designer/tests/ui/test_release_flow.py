@@ -358,8 +358,10 @@ def test_open_last_release_actions_use_latest_entry(qapp, isolated_config, tmp_p
     assert window._open_release_history_file_action.isEnabled() is True
     assert "Latest release: 20260326T000000Z | windows-pc | success | sdk submodule v1.0.0-310-g416d576" in window._open_last_release_manifest_action.toolTip()
     assert str(manifest_path) in window._open_last_release_manifest_action.toolTip()
+    assert window._open_last_release_manifest_action.statusTip() == window._open_last_release_manifest_action.toolTip()
     assert "Latest release: 20260326T000000Z | windows-pc | success | sdk submodule v1.0.0-310-g416d576" in window._open_release_history_file_action.toolTip()
     assert str(history_path) in window._open_release_history_file_action.toolTip()
+    assert window._open_release_history_file_action.statusTip() == window._open_release_history_file_action.toolTip()
 
     window._open_last_release_folder()
     window._open_last_release_dist()

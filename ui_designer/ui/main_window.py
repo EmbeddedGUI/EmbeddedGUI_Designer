@@ -1386,9 +1386,11 @@ class MainWindow(QMainWindow):
             self._open_last_release_dir_action.setToolTip(
                 _release_action_tooltip("Open last release folder", latest_entry, path=release_root, unavailable_label="Release folder unavailable")
             )
+            self._open_last_release_dir_action.setStatusTip(self._open_last_release_dir_action.toolTip())
             self._open_last_release_dist_action.setToolTip(
                 _release_action_tooltip("Open last release dist", latest_entry, path=dist_dir, unavailable_label="Release dist unavailable")
             )
+            self._open_last_release_dist_action.setStatusTip(self._open_last_release_dist_action.toolTip())
             self._open_last_release_manifest_action.setToolTip(
                 _release_action_tooltip(
                     "Open last release manifest",
@@ -1397,6 +1399,7 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release manifest unavailable",
                 )
             )
+            self._open_last_release_manifest_action.setStatusTip(self._open_last_release_manifest_action.toolTip())
             self._open_last_release_version_action.setToolTip(
                 _release_action_tooltip(
                     "Open last release version",
@@ -1405,6 +1408,7 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release version unavailable",
                 )
             )
+            self._open_last_release_version_action.setStatusTip(self._open_last_release_version_action.toolTip())
             self._open_last_release_package_action.setToolTip(
                 _release_action_tooltip(
                     "Open last release package",
@@ -1413,9 +1417,11 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release package unavailable",
                 )
             )
+            self._open_last_release_package_action.setStatusTip(self._open_last_release_package_action.toolTip())
             self._open_last_release_log_action.setToolTip(
                 _release_action_tooltip("Open last release log", latest_entry, path=log_path, unavailable_label="Release log unavailable")
             )
+            self._open_last_release_log_action.setStatusTip(self._open_last_release_log_action.toolTip())
             self._open_release_history_file_action.setToolTip(
                 _release_action_tooltip(
                     "Open release history file",
@@ -1424,6 +1430,7 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release history file unavailable",
                 )
             )
+            self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
         self._update_edit_actions()
         self._update_workspace_chips()
 
