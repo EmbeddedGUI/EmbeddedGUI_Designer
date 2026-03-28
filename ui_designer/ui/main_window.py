@@ -2388,7 +2388,8 @@ class MainWindow(QMainWindow):
                         f"SDK: {sdk_state}. Output root: {self._release_output_root()}. "
                         f"History file: {history_file_path or 'not created yet'}. "
                         f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
-                        f"{profiles_summary} "
+                        f"{profiles_summary} {output_root_state_summary} {history_file_state_summary} "
+                        f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
                         f"Unavailable: {release_build_blocked_reason}."
                         if release_build_blocked_reason == "set a valid SDK root first"
                         else self._action_hint(

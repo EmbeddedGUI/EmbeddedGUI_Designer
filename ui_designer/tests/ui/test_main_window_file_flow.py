@@ -3028,6 +3028,7 @@ class TestMainWindowFileFlow:
             f"SDK: invalid. Output root: {window._release_output_root()}. "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available. "
             "Unavailable: set a valid SDK root first."
         )
         assert invalid_actions["Release Build..."].statusTip() == invalid_actions["Release Build..."].toolTip()
