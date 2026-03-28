@@ -861,6 +861,11 @@ class MainWindow(QMainWindow):
                 else f"Show the preview grid overlay. Current snap: {current_snap}."
             )
             self._apply_action_hint(self._show_grid_action, grid_hint)
+        if hasattr(self, "_grid_menu"):
+            self._apply_action_hint(
+                self._grid_menu.menuAction(),
+                f"Choose the grid snap size. Current snap: {current_snap}. Grid {grid_visibility}.",
+            )
         for size, action in getattr(self, "_grid_size_actions", {}).items():
             if size <= 0:
                 hint = (
@@ -877,6 +882,10 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(action, hint)
 
         has_mockup, mockup_visible, opacity, mockup_context = self._preview_mockup_action_context()
+        if hasattr(self, "_bg_menu"):
+            self._apply_action_hint(self._bg_menu.menuAction(), f"Manage the preview background mockup image. {mockup_context}")
+        if hasattr(self, "_opacity_menu"):
+            self._apply_action_hint(self._opacity_menu.menuAction(), f"Choose the mockup image opacity. {mockup_context}")
         if hasattr(self, "_load_bg_action"):
             self._apply_action_hint(self._load_bg_action, f"Load a mockup image behind the preview. {mockup_context}")
         if hasattr(self, "_toggle_bg_action"):
@@ -2864,8 +2873,8 @@ class MainWindow(QMainWindow):
         self._show_grid_action.toggled.connect(self._set_show_grid)
         view_menu.addAction(self._show_grid_action)
 
-        grid_menu = view_menu.addMenu("Grid Size")
-        self._apply_action_hint(grid_menu.menuAction(), "Choose the grid snap size.")
+        self._grid_menu = view_menu.addMenu("Grid Size")
+        self._apply_action_hint(self._grid_menu.menuAction(), "Choose the grid snap size.")
         self._grid_size_group = QActionGroup(self)
         self._grid_size_group.setExclusive(True)
         self._grid_size_actions = {}
@@ -2881,18 +2890,18 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda checked, s=size: self._set_grid_size(s))
             self._grid_size_group.addAction(action)
             self._grid_size_actions[size] = action
-            grid_menu.addAction(action)
+            self._grid_menu.addAction(action)
 
         view_menu.addSeparator()
 
         # 鈹€鈹€ Background Mockup submenu 鈹€鈹€
-        bg_menu = view_menu.addMenu("Background Mockup")
-        self._apply_action_hint(bg_menu.menuAction(), "Manage the preview background mockup image.")
+        self._bg_menu = view_menu.addMenu("Background Mockup")
+        self._apply_action_hint(self._bg_menu.menuAction(), "Manage the preview background mockup image.")
 
         self._load_bg_action = QAction("Load Mockup Image...", self)
         self._apply_action_hint(self._load_bg_action, "Load a mockup image behind the preview.")
         self._load_bg_action.triggered.connect(self._load_background_image)
-        bg_menu.addAction(self._load_bg_action)
+        self._bg_menu.addAction(self._load_bg_action)
 
         self._toggle_bg_action = QAction("Show Mockup", self)
         self._toggle_bg_action.setCheckable(True)
@@ -2900,18 +2909,18 @@ class MainWindow(QMainWindow):
         self._toggle_bg_action.setShortcut("Ctrl+M")
         self._apply_action_hint(self._toggle_bg_action, "Toggle the background mockup image (Ctrl+M).")
         self._toggle_bg_action.toggled.connect(self._toggle_background_image)
-        bg_menu.addAction(self._toggle_bg_action)
+        self._bg_menu.addAction(self._toggle_bg_action)
 
         self._clear_bg_action = QAction("Clear Mockup Image", self)
         self._apply_action_hint(self._clear_bg_action, "Remove the current background mockup image.")
         self._clear_bg_action.triggered.connect(self._clear_background_image)
-        bg_menu.addAction(self._clear_bg_action)
+        self._bg_menu.addAction(self._clear_bg_action)
 
-        bg_menu.addSeparator()
+        self._bg_menu.addSeparator()
 
         # Opacity sub-menu with preset values
-        opacity_menu = bg_menu.addMenu("Opacity")
-        self._apply_action_hint(opacity_menu.menuAction(), "Choose the mockup image opacity.")
+        self._opacity_menu = self._bg_menu.addMenu("Opacity")
+        self._apply_action_hint(self._opacity_menu.menuAction(), "Choose the mockup image opacity.")
         self._opacity_group = QActionGroup(self)
         self._opacity_group.setExclusive(True)
         self._opacity_actions = {}
@@ -2926,7 +2935,7 @@ class MainWindow(QMainWindow):
             )
             self._opacity_group.addAction(act)
             self._opacity_actions[pct] = act
-            opacity_menu.addAction(act)
+            self._opacity_menu.addAction(act)
         self._update_preview_grid_and_mockup_action_metadata()
 
     # 鈹€鈹€ Toolbar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€

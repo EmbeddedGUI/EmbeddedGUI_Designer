@@ -2772,6 +2772,7 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_recent_and_view_submenu_categories_expose_status_hints(self, qapp, isolated_config, tmp_path):
+        from PyQt5.QtGui import QPixmap
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
@@ -2808,12 +2809,26 @@ class TestMainWindowFileFlow:
         assert view_actions["Inspector"].statusTip() == view_actions["Inspector"].toolTip()
         assert view_actions["Tools"].toolTip() == "Choose a bottom tools panel to show. Current section: Diagnostics. Panel hidden."
         assert view_actions["Tools"].statusTip() == view_actions["Tools"].toolTip()
-        assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size."
+        assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size. Current snap: 8px. Grid visible."
         assert view_actions["Grid Size"].statusTip() == view_actions["Grid Size"].toolTip()
-        assert view_actions["Background Mockup"].toolTip() == "Manage the preview background mockup image."
+        assert view_actions["Background Mockup"].toolTip() == (
+            "Manage the preview background mockup image. Current mockup: none loaded. Opacity: 30%."
+        )
         assert view_actions["Background Mockup"].statusTip() == view_actions["Background Mockup"].toolTip()
-        assert background_actions["Opacity"].toolTip() == "Choose the mockup image opacity."
+        assert background_actions["Opacity"].toolTip() == "Choose the mockup image opacity. Current mockup: none loaded. Opacity: 30%."
         assert background_actions["Opacity"].statusTip() == background_actions["Opacity"].toolTip()
+
+        window._set_show_grid(False)
+        window._set_grid_size(12)
+        window.preview_panel.set_background_image(QPixmap(8, 8))
+        window.preview_panel.set_background_image_visible(False)
+        window._set_background_opacity(0.7)
+
+        assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size. Current snap: 12px. Grid hidden."
+        assert view_actions["Background Mockup"].toolTip() == (
+            "Manage the preview background mockup image. Current mockup: hidden. Opacity: 70%."
+        )
+        assert background_actions["Opacity"].toolTip() == "Choose the mockup image opacity. Current mockup: hidden. Opacity: 70%."
         _close_window(window)
 
     def test_generate_resources_action_exposes_status_hint(self, qapp, isolated_config):
