@@ -50,14 +50,17 @@ class TestPageTimersPanel:
         panel.set_page(page)
 
         assert panel._summary_label.text() == "Page Timers: 1 timer on main_page"
-        assert panel.accessibleName() == "Page Timers: 1 timer on main_page"
+        assert panel.accessibleName() == "Page Timers: 1 timer on main_page. Selected timer: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
-        assert panel._table.toolTip() == panel._summary_label.text()
+        assert panel._hint_label.toolTip() == panel._hint_label.text()
+        assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
+        assert panel._hint_label.accessibleName() == panel._hint_label.text()
+        assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
-        assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page"
+        assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
@@ -107,6 +110,8 @@ class TestPageTimersPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
+        assert panel.accessibleName() == "Page Timers: 1 timer on main_page. Selected timer: timer."
+        assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: timer."
         assert panel._remove_button.toolTip() == "Remove the selected page timer: timer."
         assert panel._remove_button.accessibleName() == "Remove page timer: timer"
         assert panel._open_code_button.toolTip() == "Open user code for timer callback: egui_main_page_timer_callback."
@@ -121,6 +126,7 @@ class TestPageTimersPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 0
+        assert panel.accessibleName() == "Page Timers: 0 timers on main_page. Selected timer: none."
         assert captured[-1] == []
 
     def test_panel_open_user_code_emits_selected_timer_callback(self, qapp):

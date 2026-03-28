@@ -104,7 +104,9 @@ class PageTimersPanel(QWidget):
         self._update_actions()
 
     def _update_accessibility_summary(self, summary_text):
-        _set_widget_metadata(self, tooltip=summary_text, accessible_name=summary_text)
+        selection_summary = self._selection_accessibility_summary()
+        panel_summary = summary_text if not selection_summary else f"{summary_text}. {selection_summary}"
+        _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
         _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         _set_widget_metadata(
             self._hint_label,
@@ -113,8 +115,8 @@ class PageTimersPanel(QWidget):
         )
         _set_widget_metadata(
             self._table,
-            tooltip=summary_text,
-            accessible_name=f"Page timers table: {summary_text}",
+            tooltip=panel_summary,
+            accessible_name=f"Page timers table: {panel_summary}",
         )
 
     def _update_button_metadata(self, button, tooltip, accessible_name):
@@ -130,6 +132,13 @@ class PageTimersPanel(QWidget):
         if row < 0 or row >= len(self._timers):
             return {}
         return dict(self._timers[row])
+
+    def _selection_accessibility_summary(self):
+        if self._page is None:
+            return ""
+        selected_timer = self._selected_timer()
+        selected_timer_name = str(selected_timer.get("name", "") or "").strip() or "none"
+        return f"Selected timer: {selected_timer_name}."
 
     def clear(self):
         self.set_page(None)
@@ -220,6 +229,9 @@ class PageTimersPanel(QWidget):
                 else "Open timer user code unavailable"
             ),
         )
+        summary_text = self._summary_label.text().strip()
+        if summary_text:
+            self._update_accessibility_summary(summary_text)
 
     def _table_timers(self):
         timers = []

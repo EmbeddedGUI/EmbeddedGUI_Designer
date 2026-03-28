@@ -51,14 +51,20 @@ class TestPageFieldsPanel:
         panel.set_page(page)
 
         assert panel._summary_label.text() == "Page Fields: 2 fields on main_page"
-        assert panel.accessibleName() == "Page Fields: 2 fields on main_page"
+        assert panel.accessibleName() == "Page Fields: 2 fields on main_page. Selected field: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
-        assert panel._table.toolTip() == panel._summary_label.text()
+        assert panel._hint_label.toolTip() == panel._hint_label.text()
+        assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
+        assert panel._hint_label.accessibleName() == panel._hint_label.text()
+        assert panel._code_hint_label.toolTip() == panel._code_hint_label.text()
+        assert panel._code_hint_label.statusTip() == panel._code_hint_label.toolTip()
+        assert panel._code_hint_label.accessibleName() == panel._code_hint_label.text()
+        assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
-        assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page"
+        assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page. Selected field: none."
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
@@ -115,6 +121,8 @@ class TestPageFieldsPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
+        assert panel.accessibleName() == "Page Fields: 1 field on main_page. Selected field: field."
+        assert panel._table.accessibleName() == "Page fields table: Page Fields: 1 field on main_page. Selected field: field."
         assert panel._remove_button.toolTip() == "Remove the selected page field: field."
         assert panel._remove_button.accessibleName() == "Remove page field: field"
         assert captured[-1] == [{"name": "field", "type": "int", "default": "0"}]
@@ -125,6 +133,7 @@ class TestPageFieldsPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 0
+        assert panel.accessibleName() == "Page Fields: 0 fields on main_page. Selected field: none."
         assert captured[-1] == []
 
     def test_panel_rejects_conflicting_field_name(self, qapp):

@@ -67,7 +67,7 @@ class PageFieldsPanel(QWidget):
         _set_widget_metadata(
             self._code_hint_label,
             tooltip=self._code_hint_label.text(),
-            accessible_name="Page lifecycle code hint",
+            accessible_name=self._code_hint_label.text(),
         )
 
         code_buttons = QHBoxLayout()
@@ -121,7 +121,9 @@ class PageFieldsPanel(QWidget):
         self._update_actions()
 
     def _update_accessibility_summary(self, summary_text):
-        _set_widget_metadata(self, tooltip=summary_text, accessible_name=summary_text)
+        selection_summary = self._selection_accessibility_summary()
+        panel_summary = summary_text if not selection_summary else f"{summary_text}. {selection_summary}"
+        _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
         _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         _set_widget_metadata(
             self._hint_label,
@@ -131,12 +133,12 @@ class PageFieldsPanel(QWidget):
         _set_widget_metadata(
             self._code_hint_label,
             tooltip=self._code_hint_label.text(),
-            accessible_name="Page lifecycle code hint",
+            accessible_name=self._code_hint_label.text(),
         )
         _set_widget_metadata(
             self._table,
-            tooltip=summary_text,
-            accessible_name=f"Page fields table: {summary_text}",
+            tooltip=panel_summary,
+            accessible_name=f"Page fields table: {panel_summary}",
         )
 
     def _update_button_metadata(self, button, tooltip, accessible_name):
@@ -152,6 +154,12 @@ class PageFieldsPanel(QWidget):
         if row < 0 or row >= len(self._fields):
             return ""
         return str(self._fields[row].get("name", "") or "").strip()
+
+    def _selection_accessibility_summary(self):
+        if self._page is None:
+            return ""
+        selected_field_name = self._selected_field_name() or "none"
+        return f"Selected field: {selected_field_name}."
 
     def clear(self):
         self.set_page(None)
@@ -247,6 +255,9 @@ class PageFieldsPanel(QWidget):
             init_hint,
             f"Open init user code for {page_name}" if has_page else "Open init user code unavailable",
         )
+        summary_text = self._summary_label.text().strip()
+        if summary_text:
+            self._update_accessibility_summary(summary_text)
 
     def _table_fields(self):
         fields = []
