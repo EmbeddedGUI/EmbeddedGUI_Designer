@@ -718,10 +718,10 @@ class MainWindow(QMainWindow):
         preview_text = "Preview idle"
         preview_tone = "accent"
         if self.preview_panel.is_python_preview_active():
-            preview_text = "Python Preview"
+            preview_text = "Python preview"
             preview_tone = "warning"
         elif self.compiler is not None and self.compiler.is_preview_running():
-            preview_text = "Live Preview"
+            preview_text = "Live preview"
             preview_tone = "success"
 
         if hasattr(self, "_sdk_chip"):
