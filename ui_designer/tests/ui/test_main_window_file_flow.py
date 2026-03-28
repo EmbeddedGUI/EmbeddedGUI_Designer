@@ -3019,6 +3019,10 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
+        assert invalid_actions["Auto Compile"].toolTip() == (
+            "Automatically compile and rerun the preview after changes. "
+            "Project: open. SDK: invalid. Preview: stopped. Unavailable: set a valid SDK root first."
+        )
         assert invalid_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"SDK: invalid. Output root: {window._release_output_root()}. "
@@ -3039,6 +3043,12 @@ class TestMainWindowFileFlow:
             f"SDK: invalid. History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             f"History file state: missing. Output root: {window._release_output_root()}. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Output root state: missing. "
             "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
+        )
+        assert invalid_actions["Repository Health..."].toolTip() == (
+            "Inspect the Designer repository health summary. "
+            f"Project: open. SDK: invalid. Release output root: {window._release_output_root()}. Output root state: missing. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
+            f"Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
+            "History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
