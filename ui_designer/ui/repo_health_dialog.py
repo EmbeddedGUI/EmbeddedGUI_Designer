@@ -269,7 +269,11 @@ class RepositoryHealthDialog(QDialog):
         )
         _set_widget_metadata(self._overview_label, tooltip=counts_text, accessible_name=counts_text)
         _set_widget_metadata(self._details_edit, tooltip=details_summary, accessible_name=details_summary)
-        _set_widget_metadata(self._refresh_button, tooltip=self._refresh_hint())
+        _set_widget_metadata(
+            self._refresh_button,
+            tooltip=self._refresh_hint(),
+            accessible_name=f"Refresh repository health: {report_mode} view",
+        )
         _set_widget_metadata(
             self._reset_view_button,
             tooltip=self._reset_view_hint(),

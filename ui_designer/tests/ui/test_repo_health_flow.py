@@ -147,6 +147,7 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
     )
     assert dialog._details_edit.accessibleName() == "Repository health details: text view. Filters: critical off, blocked off."
     assert dialog._refresh_button.toolTip() == "Refresh repository health, runtime path checks, and stale temp directory scan."
+    assert dialog._refresh_button.accessibleName() == "Refresh repository health: text view"
     assert dialog._reset_view_button.toolTip() == "Repository health already shows the full text report."
     assert dialog._reset_view_button.accessibleName() == "Reset repository health view unavailable"
     assert dialog._critical_only_check.toolTip() == "Filter the report to critical repository health issues."
@@ -364,6 +365,7 @@ def test_repository_health_dialog_updates_accessibility_metadata_for_view_change
 
     assert dialog._show_json_check.toolTip() == "Showing the repository health report as JSON."
     assert dialog._details_edit.accessibleName() == "Repository health details: JSON view. Filters: critical on, blocked off."
+    assert dialog._refresh_button.accessibleName() == "Refresh repository health: JSON view"
     assert dialog._copy_report_button.toolTip() == "Copy the current repository health JSON report."
     assert dialog._copy_report_button.accessibleName() == "Copy repository health JSON report"
     assert "View: JSON." in dialog.accessibleName()
