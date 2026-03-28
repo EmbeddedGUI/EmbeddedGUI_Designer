@@ -512,9 +512,9 @@ class TestResourcePanelFileFlow:
         assert panel._add_key_btn.toolTip() == "Add a new string key across all locales. 0 string keys defined."
         assert panel._add_key_btn.accessibleName() == "Add string key in Default. 0 string keys defined."
         assert panel._rename_key_btn.toolTip() == "Select a string key to rename it across all locales."
-        assert panel._rename_key_btn.accessibleName() == "Rename string key unavailable"
+        assert panel._rename_key_btn.accessibleName() == "Rename string key unavailable in Default"
         assert panel._remove_key_btn.toolTip() == "Select a string key to remove it from all locales."
-        assert panel._remove_key_btn.accessibleName() == "Remove string key unavailable"
+        assert panel._remove_key_btn.accessibleName() == "Remove string key unavailable in Default"
         panel.deleteLater()
 
     def test_string_action_buttons_update_accessibility_metadata_for_selected_key_and_locale(self, qapp):
@@ -552,9 +552,9 @@ class TestResourcePanelFileFlow:
         assert panel._add_key_btn.accessibleName() == "Add string key in Default. 2 string keys defined."
         assert panel._rename_key_btn.toolTip() == "Rename string key greeting across all locales. 2 usages will be updated."
         assert panel._rename_key_btn.statusTip() == panel._rename_key_btn.toolTip()
-        assert panel._rename_key_btn.accessibleName() == "Rename string key: greeting. 2 usages."
+        assert panel._rename_key_btn.accessibleName() == "Rename string key: greeting in Default. 2 usages."
         assert panel._remove_key_btn.toolTip() == "Remove string key greeting from all locales. 2 usages will be updated."
-        assert panel._remove_key_btn.accessibleName() == "Remove string key: greeting. 2 usages."
+        assert panel._remove_key_btn.accessibleName() == "Remove string key: greeting in Default. 2 usages."
 
         panel._locale_combo.setCurrentIndex(panel._locale_combo.findData("zh"))
         qapp.processEvents()
@@ -568,6 +568,8 @@ class TestResourcePanelFileFlow:
         assert panel._remove_locale_btn.statusTip() == panel._remove_locale_btn.toolTip()
         assert panel._remove_locale_btn.accessibleName() == "Remove locale: zh"
         assert panel._add_key_btn.accessibleName() == "Add string key in zh. 2 string keys defined."
+        assert panel._rename_key_btn.accessibleName() == "Rename string key: greeting in zh. 2 usages."
+        assert panel._remove_key_btn.accessibleName() == "Remove string key: greeting in zh. 2 usages."
         panel.deleteLater()
 
     def test_tab_title_shows_missing_resource_count(self, qapp, tmp_path):

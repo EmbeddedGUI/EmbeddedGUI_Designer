@@ -1591,8 +1591,8 @@ class ResourcePanel(QWidget):
         if selected_key:
             rename_key_tooltip = f"Rename string key {selected_key} across all locales."
             remove_key_tooltip = f"Remove string key {selected_key} from all locales."
-            rename_key_name = f"Rename string key: {selected_key}"
-            remove_key_name = f"Remove string key: {selected_key}"
+            rename_key_name = f"Rename string key: {selected_key} in {locale_label}"
+            remove_key_name = f"Remove string key: {selected_key} in {locale_label}"
             if usage_count:
                 rename_key_tooltip += f" {usage_label.capitalize()} will be updated."
                 remove_key_tooltip += f" {usage_label.capitalize()} will be updated."
@@ -1601,8 +1601,8 @@ class ResourcePanel(QWidget):
         else:
             rename_key_tooltip = "Select a string key to rename it across all locales."
             remove_key_tooltip = "Select a string key to remove it from all locales."
-            rename_key_name = "Rename string key unavailable"
-            remove_key_name = "Remove string key unavailable"
+            rename_key_name = f"Rename string key unavailable in {locale_label}"
+            remove_key_name = f"Remove string key unavailable in {locale_label}"
         _set_widget_metadata(
             self._rename_key_btn,
             tooltip=rename_key_tooltip,
