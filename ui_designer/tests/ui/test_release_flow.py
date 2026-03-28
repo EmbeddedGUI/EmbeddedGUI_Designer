@@ -603,6 +603,13 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
         "Discard the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
         "Current profile: Windows PC [windows-pc] default."
     )
+    assert dialog._id_edit.toolTip() == "Release profile ID: windows-pc. Current profile: Windows PC [windows-pc] default."
+    assert dialog._package_format_combo.toolTip() == (
+        "Release package format: Directory + Zip. Current profile: Windows PC [windows-pc] default."
+    )
+    assert dialog._copy_resource_check.toolTip() == (
+        "Copy the resource directory into the release dist output. Current profile: Windows PC [windows-pc] default."
+    )
     assert dialog._set_default_btn.accessibleName() == "Set default release profile unavailable"
     assert dialog._id_edit.accessibleName() == "Release profile ID: windows-pc"
 
@@ -614,6 +621,8 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
         "Save the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
         "Current profile: ESP32 [esp32]."
     )
+    assert dialog._name_edit.toolTip() == "Release profile name: ESP32. Current profile: ESP32 [esp32]."
+    assert dialog._package_format_combo.toolTip() == "Release package format: Directory + Zip. Current profile: ESP32 [esp32]."
     assert dialog._set_default_btn.toolTip() == (
         "Set the current profile as the default release profile. Current profile: ESP32 [esp32]."
     )

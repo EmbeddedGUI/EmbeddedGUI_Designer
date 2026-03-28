@@ -949,26 +949,42 @@ class ReleaseProfilesDialog(QDialog):
                 else "Set default release profile unavailable"
             ),
         )
-        _set_widget_metadata(self._id_edit, tooltip=f"Release profile ID: {self._id_edit.text() or 'empty'}", accessible_name=f"Release profile ID: {self._id_edit.text() or 'empty'}")
-        _set_widget_metadata(self._name_edit, tooltip=f"Release profile name: {self._name_edit.text() or 'empty'}", accessible_name=f"Release profile name: {self._name_edit.text() or 'empty'}")
-        _set_widget_metadata(self._port_edit, tooltip=f"Release port: {self._port_edit.text() or 'pc'}", accessible_name=f"Release port: {self._port_edit.text() or 'pc'}")
-        _set_widget_metadata(self._make_target_edit, tooltip=f"Release make target: {self._make_target_edit.text() or 'all'}", accessible_name=f"Release make target: {self._make_target_edit.text() or 'all'}")
+        _set_widget_metadata(
+            self._id_edit,
+            tooltip=f"Release profile ID: {self._id_edit.text() or 'empty'}. {current_profile_context}",
+            accessible_name=f"Release profile ID: {self._id_edit.text() or 'empty'}",
+        )
+        _set_widget_metadata(
+            self._name_edit,
+            tooltip=f"Release profile name: {self._name_edit.text() or 'empty'}. {current_profile_context}",
+            accessible_name=f"Release profile name: {self._name_edit.text() or 'empty'}",
+        )
+        _set_widget_metadata(
+            self._port_edit,
+            tooltip=f"Release port: {self._port_edit.text() or 'pc'}. {current_profile_context}",
+            accessible_name=f"Release port: {self._port_edit.text() or 'pc'}",
+        )
+        _set_widget_metadata(
+            self._make_target_edit,
+            tooltip=f"Release make target: {self._make_target_edit.text() or 'all'}. {current_profile_context}",
+            accessible_name=f"Release make target: {self._make_target_edit.text() or 'all'}",
+        )
         _set_widget_metadata(
             self._package_format_combo,
-            tooltip=f"Release package format: {self._package_format_combo.currentText() or 'Directory + Zip'}.",
+            tooltip=f"Release package format: {self._package_format_combo.currentText() or 'Directory + Zip'}. {current_profile_context}",
             accessible_name=f"Release package format: {self._package_format_combo.currentText() or 'Directory + Zip'}",
         )
         _set_widget_metadata(
             self._extra_args_edit,
-            tooltip=f"Extra make arguments: {self._extra_args_edit.text() or 'none'}",
+            tooltip=f"Extra make arguments: {self._extra_args_edit.text() or 'none'}. {current_profile_context}",
             accessible_name=f"Extra make arguments: {self._extra_args_edit.text() or 'none'}",
         )
         _set_widget_metadata(
             self._copy_resource_check,
             tooltip=(
-                "Copy the resource directory into the release dist output."
+                f"Copy the resource directory into the release dist output. {current_profile_context}"
                 if self._copy_resource_check.isChecked()
-                else "Do not copy the resource directory into the release dist output."
+                else f"Do not copy the resource directory into the release dist output. {current_profile_context}"
             ),
             accessible_name=f"Copy resource directory into dist: {'on' if self._copy_resource_check.isChecked() else 'off'}",
         )
