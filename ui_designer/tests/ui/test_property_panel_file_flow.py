@@ -457,6 +457,8 @@ class TestPropertyPanelFileFlow:
         assert text_editor.text() == ""
         assert text_editor.placeholderText() == "Mixed values"
         assert "different values" in text_editor.toolTip()
+        assert text_editor.statusTip() == text_editor.toolTip()
+        assert text_editor.accessibleName() == "Text property: mixed values"
         panel.deleteLater()
 
     def test_multi_selection_marks_mixed_bool_state(self, qapp):
@@ -479,6 +481,8 @@ class TestPropertyPanelFileFlow:
         assert editor.isTristate() is True
         assert editor.checkState() == Qt.PartiallyChecked
         assert "different values" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Is Checked property: mixed values"
         panel.deleteLater()
 
     def test_multi_selection_marks_mixed_file_state(self, qapp):
@@ -500,6 +504,29 @@ class TestPropertyPanelFileFlow:
         assert editor.currentIndex() == -1
         assert editor.placeholderText() == "Mixed values"
         assert "different values" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Font File selector: mixed values"
+        panel.deleteLater()
+
+    def test_multi_selection_marks_mixed_geometry_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first", x=10, y=20, width=80, height=24)
+        second = WidgetModel("label", name="second", x=10, y=20, width=96, height=24)
+
+        panel = PropertyPanel()
+        panel.set_selection([first, second], primary=second)
+
+        summary_group = _find_group(panel, "Selection - 2 Widgets")
+        geometry_group = _find_group(panel, "Batch Geometry")
+        editor = panel._editors["multi_width"]
+
+        assert _form_value_text(summary_group, "Mixed:") == "1"
+        assert "Width (Mixed):" in _form_labels(geometry_group)
+        assert "different values" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Batch Width: mixed values"
         panel.deleteLater()
 
     def test_single_selection_shows_interaction_notes_for_locked_hidden_layout_widget(self, qapp):

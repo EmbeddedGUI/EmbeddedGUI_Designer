@@ -394,6 +394,16 @@ class PropertyPanel(QWidget):
         browse_target = (file_filter or "").split("(")[0].strip().lower() or "files"
         return f"Browse {browse_target} for {self._property_label(prop_name)}."
 
+    def _mixed_value_tooltip(self):
+        return "Selected widgets currently have different values. Editing here will normalize them."
+
+    def _update_mixed_editor_metadata(self, editor, label, tooltip=None):
+        _set_widget_metadata(
+            editor,
+            tooltip=tooltip or self._mixed_value_tooltip(),
+            accessible_name=f"{label}: mixed values",
+        )
+
     def _update_panel_metadata(self):
         search_summary = self._current_search_summary()
         _set_widget_metadata(
@@ -643,7 +653,7 @@ class PropertyPanel(QWidget):
             spin.setValue(getattr(self._primary_widget, field))
             is_mixed = self._is_mixed_values(getattr(widget, field) for widget in self._selection)
             if is_mixed:
-                spin.setToolTip("Selected widgets currently have different values. Editing here will normalize them.")
+                self._update_mixed_editor_metadata(spin, f"Batch {label[:-1]}")
             spin.valueChanged.connect(lambda value, f=field: self._on_multi_common_changed(f, value))
             geometry_form.addRow(f"{label[:-1]} (Mixed):" if is_mixed else label, spin)
             self._editors[f"multi_{field}"] = spin
@@ -809,19 +819,26 @@ class PropertyPanel(QWidget):
     def _apply_mixed_editor_state(self, editor, prop_name, prop_info, values):
         del values
 
-        tooltip = "Selected widgets currently have different values. Editing here will normalize them."
-        editor.setToolTip(tooltip)
+        tooltip = self._mixed_value_tooltip()
+        _set_widget_metadata(editor, tooltip=tooltip)
 
         ptype = prop_info.get("type", "string")
         target = editor
         if ptype in {"image_file", "font_file", "text_file"}:
             target = self._editors.get(f"prop_{prop_name}", editor)
+            with QSignalBlocker(target):
+                if hasattr(target, "setPlaceholderText"):
+                    target.setPlaceholderText("Mixed values")
+                if hasattr(target, "setCurrentIndex"):
+                    target.setCurrentIndex(-1)
+            self._update_file_selector_metadata(prop_name, target, tooltip=tooltip)
+            return
 
         if isinstance(target, LineEdit):
             with QSignalBlocker(target):
                 target.clear()
                 target.setPlaceholderText("Mixed values")
-            target.setToolTip(tooltip)
+            self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
             return
 
         if isinstance(target, EditableComboBox):
@@ -830,10 +847,7 @@ class PropertyPanel(QWidget):
                     target.setPlaceholderText("Mixed values")
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
-            if ptype in {"image_file", "font_file", "text_file"}:
-                self._update_file_selector_metadata(prop_name, target, tooltip=tooltip)
-            else:
-                target.setToolTip(tooltip)
+            self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
             return
 
         if isinstance(target, ComboBox):
@@ -842,15 +856,17 @@ class PropertyPanel(QWidget):
                     target.setPlaceholderText("Mixed values")
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
-            target.setToolTip(tooltip)
+            self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
             return
 
         if isinstance(target, CheckBox):
             with QSignalBlocker(target):
                 target.setTristate(True)
                 target.setCheckState(Qt.PartiallyChecked)
-            target.setToolTip(tooltip)
+            self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
             return
+
+        self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
 
     def _is_missing_file_property(self, prop_name, prop_info, value):
         return bool(self._missing_file_property_reason(prop_name, prop_info, value))
