@@ -149,6 +149,86 @@ class TestResourcePanelFileFlow:
         assert panel.get_resource_catalog().images == ["star.png"]
         panel.deleteLater()
 
+    def test_resource_action_buttons_expose_unavailable_accessibility_metadata_without_resource_dir(self, qapp):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+        buttons = panel._resource_action_buttons["text"]
+
+        assert buttons["import"].toolTip() == "Save or open a project first to import text resources."
+        assert buttons["import"].statusTip() == buttons["import"].toolTip()
+        assert buttons["import"].accessibleName() == "Import text resources unavailable"
+        assert buttons["restore"].toolTip() == "Save or open a project first to restore missing text resources."
+        assert buttons["restore"].statusTip() == buttons["restore"].toolTip()
+        assert buttons["restore"].accessibleName() == "Restore missing text resources unavailable"
+        assert buttons["replace"].toolTip() == "Save or open a project first to replace missing text resources."
+        assert buttons["replace"].statusTip() == buttons["replace"].toolTip()
+        assert buttons["replace"].accessibleName() == "Replace missing text resources unavailable"
+        assert buttons["next_missing"].toolTip() == "Save or open a project first to navigate missing text resources."
+        assert buttons["next_missing"].statusTip() == buttons["next_missing"].toolTip()
+        assert buttons["next_missing"].accessibleName() == "Next missing text resource unavailable"
+        panel.deleteLater()
+
+    def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "present.png").write_bytes(b"PNG")
+
+        restore_source = tmp_path / "restore_sources" / "missing.png"
+        restore_source.parent.mkdir(parents=True)
+        restore_source.write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("present.png")
+        catalog.add_image("missing.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        buttons = panel._resource_action_buttons["image"]
+
+        assert buttons["import"].toolTip() == (
+            "Import image files into the project resource catalog. 2 image resources listed. "
+            "1 missing image resource."
+        )
+        assert buttons["import"].statusTip() == buttons["import"].toolTip()
+        assert buttons["import"].accessibleName() == (
+            "Import image resources. 2 image resources listed. 1 missing image resource."
+        )
+        assert buttons["restore"].toolTip() == (
+            "Restore missing image files by matching selected filenames against missing catalog entries. "
+            "1 missing image resource."
+        )
+        assert buttons["restore"].accessibleName() == "Restore missing image resources. 1 missing image resource."
+        assert buttons["replace"].toolTip() == (
+            "Replace missing image resources with new files and rewrite widget references to the new filenames. "
+            "1 missing image resource."
+        )
+        assert buttons["replace"].accessibleName() == "Replace missing image resources. 1 missing image resource."
+        assert buttons["next_missing"].toolTip() == (
+            "Select the next missing image resource in this tab. 1 missing image resource."
+        )
+        assert buttons["next_missing"].accessibleName() == "Next missing image resource. 1 missing image resource."
+
+        restored, unmatched, failures = panel._restore_missing_resources_from_paths("image", [str(restore_source)])
+
+        assert restored == ["missing.png"]
+        assert unmatched == []
+        assert failures == []
+        assert buttons["restore"].toolTip() == "No missing image resources to restore in this tab."
+        assert buttons["restore"].statusTip() == buttons["restore"].toolTip()
+        assert buttons["restore"].accessibleName() == "Restore missing image resources unavailable"
+        assert buttons["replace"].toolTip() == "No missing image resources to replace in this tab."
+        assert buttons["replace"].accessibleName() == "Replace missing image resources unavailable"
+        assert buttons["next_missing"].toolTip() == "No missing image resources to select in this tab."
+        assert buttons["next_missing"].accessibleName() == "Next missing image resource unavailable"
+        panel.deleteLater()
+
     def test_usage_table_updates_for_selected_resource(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.model.resource_usage import ResourceUsageEntry

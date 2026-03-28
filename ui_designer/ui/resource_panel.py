@@ -1014,6 +1014,7 @@ class ResourcePanel(QWidget):
         self._current_resource_type = ""
         self._current_resource_name = ""
         self._usage_page_name = ""
+        self._resource_action_buttons = {}
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -1059,21 +1060,24 @@ class ResourcePanel(QWidget):
         img_btn_layout.addWidget(import_img_btn)
         restore_img_btn = PushButton("Restore Missing...")
         restore_img_btn.setIcon(make_icon("history"))
-        restore_img_btn.setToolTip("Restore missing image files by matching selected filenames against missing catalog entries.")
         restore_img_btn.clicked.connect(lambda: self._restore_missing_resources("image"))
         img_btn_layout.addWidget(restore_img_btn)
         replace_img_btn = PushButton("Replace Missing...")
         replace_img_btn.setIcon(make_icon("properties"))
-        replace_img_btn.setToolTip("Replace missing image resources with new files and rewrite widget references to the new filenames.")
         replace_img_btn.clicked.connect(lambda: self._replace_missing_resources("image"))
         img_btn_layout.addWidget(replace_img_btn)
         next_missing_img_btn = PushButton("Next Missing")
         next_missing_img_btn.setIcon(make_icon("navigation"))
-        next_missing_img_btn.setToolTip("Select the next missing image resource in this tab.")
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
         img_btn_layout.addStretch()
         img_tab_layout.addLayout(img_btn_layout)
+        self._resource_action_buttons["image"] = {
+            "import": import_img_btn,
+            "restore": restore_img_btn,
+            "replace": replace_img_btn,
+            "next_missing": next_missing_img_btn,
+        }
         self._tabs.addTab(img_tab, "Images")
         self._tabs.setTabIcon(0, make_icon("image"))
 
@@ -1099,21 +1103,24 @@ class ResourcePanel(QWidget):
         font_btn_layout.addWidget(import_font_btn)
         restore_font_btn = PushButton("Restore Missing...")
         restore_font_btn.setIcon(make_icon("history"))
-        restore_font_btn.setToolTip("Restore missing font files by matching selected filenames against missing catalog entries.")
         restore_font_btn.clicked.connect(lambda: self._restore_missing_resources("font"))
         font_btn_layout.addWidget(restore_font_btn)
         replace_font_btn = PushButton("Replace Missing...")
         replace_font_btn.setIcon(make_icon("properties"))
-        replace_font_btn.setToolTip("Replace missing font resources with new files and rewrite widget references to the new filenames.")
         replace_font_btn.clicked.connect(lambda: self._replace_missing_resources("font"))
         font_btn_layout.addWidget(replace_font_btn)
         next_missing_font_btn = PushButton("Next Missing")
         next_missing_font_btn.setIcon(make_icon("navigation"))
-        next_missing_font_btn.setToolTip("Select the next missing font resource in this tab.")
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
         font_btn_layout.addStretch()
         font_tab_layout.addLayout(font_btn_layout)
+        self._resource_action_buttons["font"] = {
+            "import": import_font_btn,
+            "restore": restore_font_btn,
+            "replace": replace_font_btn,
+            "next_missing": next_missing_font_btn,
+        }
         self._tabs.addTab(font_tab, "Fonts")
         self._tabs.setTabIcon(1, make_icon("text"))
 
@@ -1135,26 +1142,28 @@ class ResourcePanel(QWidget):
         text_btn_layout = QHBoxLayout()
         import_text_btn = PushButton("Import Text...")
         import_text_btn.setIcon(make_icon("text"))
-        import_text_btn.setToolTip("Import supported-text .txt file into .eguiproject/resources/")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
         restore_text_btn = PushButton("Restore Missing...")
         restore_text_btn.setIcon(make_icon("history"))
-        restore_text_btn.setToolTip("Restore missing text files by matching selected filenames against missing catalog entries.")
         restore_text_btn.clicked.connect(lambda: self._restore_missing_resources("text"))
         text_btn_layout.addWidget(restore_text_btn)
         replace_text_btn = PushButton("Replace Missing...")
         replace_text_btn.setIcon(make_icon("properties"))
-        replace_text_btn.setToolTip("Replace missing text resources with new files and rewrite widget references to the new filenames.")
         replace_text_btn.clicked.connect(lambda: self._replace_missing_resources("text"))
         text_btn_layout.addWidget(replace_text_btn)
         next_missing_text_btn = PushButton("Next Missing")
         next_missing_text_btn.setIcon(make_icon("navigation"))
-        next_missing_text_btn.setToolTip("Select the next missing text resource in this tab.")
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
         text_btn_layout.addStretch()
         text_tab_layout.addLayout(text_btn_layout)
+        self._resource_action_buttons["text"] = {
+            "import": import_text_btn,
+            "restore": restore_text_btn,
+            "replace": replace_text_btn,
+            "next_missing": next_missing_text_btn,
+        }
         self._tabs.addTab(text_tab, "Text")
         self._tabs.setTabIcon(2, make_icon("text"))
 
@@ -1266,6 +1275,7 @@ class ResourcePanel(QWidget):
 
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
+        self._update_resource_action_metadata()
 
     # -- Public API --
 
@@ -1389,6 +1399,106 @@ class ResourcePanel(QWidget):
             return f"{label} ({total})"
         return f"{label} ({total}, {missing} missing)"
 
+    def _resource_names_for_type(self, resource_type):
+        if resource_type == "image":
+            return list(self._catalog.images)
+        if resource_type == "font":
+            return list(self._catalog.fonts)
+        if resource_type == "text":
+            return list(self._catalog.text_files)
+        return []
+
+    def _resource_count_label(self, resource_type, count, *, missing=False):
+        singular = {
+            "image": "image resource",
+            "font": "font resource",
+            "text": "text resource",
+        }.get(resource_type, "resource")
+        plural = {
+            "image": "image resources",
+            "font": "font resources",
+            "text": "text resources",
+        }.get(resource_type, "resources")
+        if missing:
+            singular = f"missing {singular}"
+            plural = f"missing {plural}"
+        return _count_label(count, singular, plural)
+
+    def _resource_action_label(self, action, resource_type):
+        if action == "import":
+            return f"Import {resource_type} resources"
+        if action == "restore":
+            return f"Restore missing {resource_type} resources"
+        if action == "replace":
+            return f"Replace missing {resource_type} resources"
+        return f"Next missing {resource_type} resource"
+
+    def _resource_action_base_tooltip(self, action, resource_type):
+        action_tooltips = {
+            "import": {
+                "image": "Import image files into the project resource catalog.",
+                "font": "Import font files into the project resource catalog.",
+                "text": "Import supported-text .txt files into the project resource catalog.",
+            },
+            "restore": {
+                "image": "Restore missing image files by matching selected filenames against missing catalog entries.",
+                "font": "Restore missing font files by matching selected filenames against missing catalog entries.",
+                "text": "Restore missing text files by matching selected filenames against missing catalog entries.",
+            },
+            "replace": {
+                "image": "Replace missing image resources with new files and rewrite widget references to the new filenames.",
+                "font": "Replace missing font resources with new files and rewrite widget references to the new filenames.",
+                "text": "Replace missing text resources with new files and rewrite widget references to the new filenames.",
+            },
+            "next_missing": {
+                "image": "Select the next missing image resource in this tab.",
+                "font": "Select the next missing font resource in this tab.",
+                "text": "Select the next missing text resource in this tab.",
+            },
+        }
+        return action_tooltips.get(action, {}).get(resource_type, "")
+
+    def _resource_action_unavailable_tooltip(self, action, resource_type):
+        if not self._resource_dir:
+            if action == "next_missing":
+                return f"Save or open a project first to navigate missing {resource_type} resources."
+            action_label = self._resource_action_label(action, resource_type).lower()
+            return f"Save or open a project first to {action_label}."
+        if action == "next_missing":
+            return f"No missing {resource_type} resources to select in this tab."
+        return f"No missing {resource_type} resources to {action} in this tab."
+
+    def _update_resource_action_metadata(self):
+        if not self._resource_action_buttons:
+            return
+
+        for resource_type, buttons in self._resource_action_buttons.items():
+            total_count = len(self._resource_names_for_type(resource_type))
+            missing_count = len(self._missing_resource_names(resource_type))
+            total_label = self._resource_count_label(resource_type, total_count)
+            missing_label = self._resource_count_label(resource_type, missing_count, missing=True)
+
+            import_tooltip = self._resource_action_unavailable_tooltip("import", resource_type)
+            import_accessible_name = f"Import {resource_type} resources unavailable"
+            if self._resource_dir:
+                import_tooltip = f"{self._resource_action_base_tooltip('import', resource_type)} {total_label.capitalize()} listed."
+                if missing_count:
+                    import_tooltip += f" {missing_label.capitalize()}."
+                import_accessible_name = f"Import {resource_type} resources. {total_label.capitalize()} listed."
+                if missing_count:
+                    import_accessible_name += f" {missing_label.capitalize()}."
+            _set_widget_metadata(buttons["import"], tooltip=import_tooltip, accessible_name=import_accessible_name)
+
+            for action in ("restore", "replace", "next_missing"):
+                action_label = self._resource_action_label(action, resource_type)
+                if self._resource_dir and missing_count > 0:
+                    tooltip = f"{self._resource_action_base_tooltip(action, resource_type)} {missing_label.capitalize()}."
+                    accessible_name = f"{action_label}. {missing_label.capitalize()}."
+                else:
+                    tooltip = self._resource_action_unavailable_tooltip(action, resource_type)
+                    accessible_name = f"{action_label} unavailable"
+                _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
+
     def _update_tab_titles(self):
         n_img = len(self._catalog.images)
         n_font = len(self._catalog.fonts)
@@ -1401,6 +1511,7 @@ class ResourcePanel(QWidget):
         self._tabs.setTabText(1, self._format_resource_tab_title("Fonts", n_font, missing_font))
         self._tabs.setTabText(2, self._format_resource_tab_title("Text", n_text, missing_text))
         self._tabs.setTabText(3, f"Strings ({n_str})")
+        self._update_resource_action_metadata()
 
     def _selected_resource_for_active_tab(self):
         current_index = self._tabs.currentIndex()
