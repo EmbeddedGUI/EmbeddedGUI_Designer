@@ -41,13 +41,14 @@ class TestProjectWorkspacePanel:
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
         assert panel._stack.currentWidget() is thumb_view
         assert panel._view_chip.text() == "Thumbnails"
+        assert panel._list_btn.text() == "List\nStructure first"
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_THUMBNAILS
 
         panel.set_view("unknown")
 
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_LIST
         assert panel._stack.currentWidget() is list_view
-        assert panel._view_chip.text() == "List View"
+        assert panel._view_chip.text() == "List view"
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_LIST
         panel.deleteLater()
 
@@ -58,7 +59,7 @@ class TestProjectWorkspacePanel:
 
         panel.set_workspace_snapshot(page_count=3, active_page="main_page", dirty_pages=2)
         assert panel._page_count_chip.text() == "3 pages"
-        assert panel._active_page_chip.text() == "Active main_page"
+        assert panel._active_page_chip.text() == "Active: main_page"
         assert panel._dirty_pages_chip.text() == "2 dirty pages"
 
         panel.set_workspace_snapshot(page_count=1, active_page="main_page", dirty_pages=1)

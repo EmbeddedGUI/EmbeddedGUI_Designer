@@ -5940,7 +5940,7 @@ class TestMainWindowFileFlow:
         assert window._selection_chip.text() == "No selection"
         assert window._preview_chip.text() == "Preview idle"
         assert window._project_workspace._page_count_chip.text() == "1 page"
-        assert window._project_workspace._active_page_chip.text() == "Active main_page"
+        assert window._project_workspace._active_page_chip.text() == "Active: main_page"
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)

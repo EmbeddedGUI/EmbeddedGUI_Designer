@@ -56,7 +56,7 @@ class ProjectWorkspacePanel(QWidget):
         self._dirty_pages_chip.setObjectName("workspace_status_chip")
         self._dirty_pages_chip.setProperty("chipTone", "success")
         chips_row.addWidget(self._dirty_pages_chip)
-        self._view_chip = QLabel("List View")
+        self._view_chip = QLabel("List view")
         self._view_chip.setObjectName("workspace_status_chip")
         self._view_chip.setProperty("chipTone", "accent")
         chips_row.addWidget(self._view_chip)
@@ -69,7 +69,7 @@ class ProjectWorkspacePanel(QWidget):
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self._list_btn = QPushButton("List\nStructure-first")
+        self._list_btn = QPushButton("List\nStructure first")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         self._list_btn.setIcon(make_icon("project"))
@@ -111,7 +111,7 @@ class ProjectWorkspacePanel(QWidget):
             self._list_btn.setChecked(True)
             self._stack.setCurrentWidget(self._list_view)
             view_name = self.VIEW_LIST
-        self._set_chip(self._view_chip, "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List View", "accent")
+        self._set_chip(self._view_chip, "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view", "accent")
         self.view_changed.emit(view_name)
 
     def current_view(self):
@@ -126,7 +126,7 @@ class ProjectWorkspacePanel(QWidget):
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
         self._set_chip(self._page_count_chip, page_label, "success" if pages > 0 else "warning")
         if active != "None":
-            self._set_chip(self._active_page_chip, f"Active {active}", "accent")
+            self._set_chip(self._active_page_chip, f"Active: {active}", "accent")
         else:
             self._set_chip(self._active_page_chip, "No active page", "warning")
         if dirty > 0:
