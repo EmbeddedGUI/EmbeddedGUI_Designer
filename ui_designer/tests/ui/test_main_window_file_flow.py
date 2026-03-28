@@ -2961,7 +2961,8 @@ class TestMainWindowFileFlow:
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            f"Edit release profiles for the current project. Output root: {window._release_output_root()}. "
+            "Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
@@ -3081,7 +3082,8 @@ class TestMainWindowFileFlow:
             f"Release history file unavailable\nExpected file: {history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            f"Edit release profiles for the current project. Output root: {output_root}. "
+            "Profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert actions["Release Build..."].toolTip() == (
@@ -3183,7 +3185,8 @@ class TestMainWindowFileFlow:
             f"{history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            f"Edit release profiles for the current project. Output root: {output_root}. "
+            "Profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Output root state: available. History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
         assert actions["Release Build..."].toolTip() == (

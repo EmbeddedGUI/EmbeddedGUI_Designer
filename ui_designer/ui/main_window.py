@@ -1301,7 +1301,8 @@ class MainWindow(QMainWindow):
             action,
             (
                 "Edit release profiles for the current project. "
-                f"{self._release_profiles_summary_suffix()} {output_root_state_summary} {history_file_state_summary} "
+                f"Output root: {self._release_output_root()}. {self._release_profiles_summary_suffix()} "
+                f"{output_root_state_summary} {history_file_state_summary} "
                 f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
             ),
         )
