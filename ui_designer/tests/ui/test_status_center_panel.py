@@ -960,6 +960,10 @@ class TestStatusCenterPanel:
         placeholder = panel._repeat_action_menu.actions()[0]
         assert placeholder.text() == "No recent actions yet"
         assert placeholder.toolTip() == "No recent actions yet."
+        assert placeholder.statusTip() == placeholder.toolTip()
+        assert placeholder.whatsThis() == placeholder.toolTip()
+        assert panel._repeat_action_menu.accessibleName() == "Repeat action menu: no recent actions yet."
+        assert panel._repeat_action_menu.toolTip() == panel._repeat_action_menu.accessibleName()
         assert panel._repeat_action_button.toolTip() == "No recent action to repeat yet."
 
         panel._project_btn.click()
@@ -974,6 +978,17 @@ class TestStatusCenterPanel:
             "Clear Recent Actions (3)",
         ]
         assert menu_actions[0].toolTip() == "Repeat the current action: Debug Output."
+        assert menu_actions[0].statusTip() == menu_actions[0].toolTip()
+        assert menu_actions[0].whatsThis() == menu_actions[0].toolTip()
         assert menu_actions[1].toolTip() == "Replay Assets from recent history."
+        assert menu_actions[1].statusTip() == menu_actions[1].toolTip()
+        assert menu_actions[1].whatsThis() == menu_actions[1].toolTip()
         assert menu_actions[-1].toolTip() == "Clear 3 recent actions."
+        assert menu_actions[-1].statusTip() == menu_actions[-1].toolTip()
+        assert menu_actions[-1].whatsThis() == menu_actions[-1].toolTip()
+        assert panel._repeat_action_menu.accessibleName() == (
+            "Repeat action menu: 3 recent actions. Current action: Debug Output. "
+            "Actions: Debug Output, Assets, Project."
+        )
+        assert panel._repeat_action_menu.statusTip() == panel._repeat_action_menu.toolTip()
         panel.deleteLater()

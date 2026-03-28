@@ -442,6 +442,8 @@ class StatusCenterPanel(QWidget):
             empty_action.setEnabled(False)
             empty_action.setToolTip(self._recent_actions_tooltip())
             empty_action.setStatusTip(empty_action.toolTip())
+            empty_action.setWhatsThis(empty_action.toolTip())
+            self._update_repeat_action_menu_metadata()
             return
         for action_key in self._recent_actions:
             action_label = self._action_label(action_key)
@@ -453,13 +455,16 @@ class StatusCenterPanel(QWidget):
                 menu_tooltip = f"Replay {action_label} from recent history."
             menu_action.setToolTip(menu_tooltip)
             menu_action.setStatusTip(menu_tooltip)
+            menu_action.setWhatsThis(menu_tooltip)
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
         clear_action.setIcon(make_icon("history", size=16))
         clear_action.setToolTip(self._clear_recent_actions_tooltip())
         clear_action.setStatusTip(clear_action.toolTip())
+        clear_action.setWhatsThis(clear_action.toolTip())
         clear_action.triggered.connect(self._clear_recent_actions)
+        self._update_repeat_action_menu_metadata()
 
     def _recent_actions_summary(self):
         count = len(self._recent_actions)
@@ -491,6 +496,24 @@ class StatusCenterPanel(QWidget):
         noun = "action" if count == 1 else "actions"
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
         return f"{count} recent {noun}: {labels}"
+
+    def _repeat_action_menu_summary(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Repeat action menu: no recent actions yet."
+        noun = "action" if count == 1 else "actions"
+        labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
+        current_label = self._action_label(self._last_action)
+        return (
+            f"Repeat action menu: {count} recent {noun}. "
+            f"Current action: {current_label}. Actions: {labels}."
+        )
+
+    def _update_repeat_action_menu_metadata(self):
+        summary = self._repeat_action_menu_summary()
+        self._repeat_action_menu.setToolTip(summary)
+        self._repeat_action_menu.setStatusTip(summary)
+        self._repeat_action_menu.setAccessibleName(summary)
 
     def _recent_actions_accessible_name(self):
         count = len(self._recent_actions)
