@@ -82,3 +82,39 @@ class TestProjectExplorerDock:
         assert first.toolTip(0) == "Page: main_page. Startup page. Current page. No unsaved changes."
         assert second.toolTip(0) == "Page: detail_page. Unsaved changes."
         dock.deleteLater()
+
+    def test_page_context_menu_actions_expose_dynamic_hints(self, qapp):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+
+        empty_menu = dock._build_page_context_menu(None)
+        empty_actions = {action.text(): action for action in empty_menu.actions()}
+        assert empty_actions["New Page..."].toolTip() == "Create the first page for a new project. Current mode: easy_page."
+        assert empty_actions["New Page..."].statusTip() == empty_actions["New Page..."].toolTip()
+        empty_menu.deleteLater()
+
+        dock.set_project(_build_project())
+        dock.set_current_page("main_page")
+        dock.set_dirty_pages({"detail_page"})
+
+        current_item = dock._page_tree.topLevelItem(0)
+        current_menu = dock._build_page_context_menu(current_item)
+        current_actions = {action.text(): action for action in current_menu.actions() if action.text()}
+        assert current_actions["Rename"].toolTip() == "Rename page: main_page."
+        assert current_actions["Duplicate"].toolTip() == "Duplicate page: main_page."
+        assert current_actions["Set as Startup Page"].toolTip() == "Current startup page: main_page."
+        assert current_actions["Delete"].toolTip() == "Delete page: main_page. This cannot be undone."
+        assert current_actions["Delete"].statusTip() == current_actions["Delete"].toolTip()
+        current_menu.deleteLater()
+
+        dirty_item = dock._page_tree.topLevelItem(1)
+        dirty_menu = dock._build_page_context_menu(dirty_item)
+        dirty_actions = {action.text(): action for action in dirty_menu.actions() if action.text()}
+        assert dirty_actions["Rename"].toolTip() == "Rename page: detail_page."
+        assert dirty_actions["Duplicate"].toolTip() == "Duplicate page: detail_page."
+        assert dirty_actions["Set as Startup Page"].toolTip() == "Set detail_page as the startup page."
+        assert dirty_actions["Delete"].toolTip() == "Delete page: detail_page. Unsaved changes will be lost."
+        assert dirty_actions["Delete"].statusTip() == dirty_actions["Delete"].toolTip()
+        dirty_menu.deleteLater()
+        dock.deleteLater()

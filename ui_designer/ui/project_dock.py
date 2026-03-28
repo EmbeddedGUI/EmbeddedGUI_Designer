@@ -44,6 +44,11 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_action_metadata(action, tooltip):
+    action.setToolTip(tooltip)
+    action.setStatusTip(tooltip)
+
+
 class ProjectExplorerDock(QDockWidget):
     """Dock widget showing project pages and resources.
 
@@ -133,11 +138,7 @@ class ProjectExplorerDock(QDockWidget):
         mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
         summary = f"Project Explorer: {page_label}. Current page: {current_page}. {dirty_label}."
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
-        add_page_hint = (
-            f"Create a new page in the current project. Current mode: {mode}."
-            if self._project
-            else f"Create the first page for a new project. Current mode: {mode}."
-        )
+        add_page_hint = self._new_page_action_hint()
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._pages_label,
@@ -165,6 +166,12 @@ class ProjectExplorerDock(QDockWidget):
         item.setToolTip(0, self._page_item_tooltip(page_name))
         item.setStatusTip(0, item.toolTip(0))
 
+    def _new_page_action_hint(self):
+        mode = str(self._mode_combo.currentText() or "easy_page").strip() or "easy_page"
+        if self._project:
+            return f"Create a new page in the current project. Current mode: {mode}."
+        return f"Create the first page for a new project. Current mode: {mode}."
+
     def _page_item_tooltip(self, page_name):
         parts = [f"Page: {page_name}."]
         startup = self._project.startup_page if self._project else ""
@@ -174,6 +181,25 @@ class ProjectExplorerDock(QDockWidget):
             parts.append("Current page.")
         parts.append("Unsaved changes." if page_name in self._dirty_pages else "No unsaved changes.")
         return " ".join(parts)
+
+    def _page_context_action_hint(self, action_key, page_name=""):
+        page_label = str(page_name or "").strip() or "current page"
+        startup = self._project.startup_page if self._project else ""
+        if action_key == "rename":
+            return f"Rename page: {page_label}."
+        if action_key == "duplicate":
+            return f"Duplicate page: {page_label}."
+        if action_key == "startup":
+            if page_label == startup:
+                return f"Current startup page: {page_label}."
+            return f"Set {page_label} as the startup page."
+        if action_key == "delete":
+            if self._project and len(getattr(self._project, "pages", []) or []) <= 1:
+                return f"Cannot delete the last page: {page_label}."
+            if page_label in self._dirty_pages:
+                return f"Delete page: {page_label}. Unsaved changes will be lost."
+            return f"Delete page: {page_label}. This cannot be undone."
+        return self._new_page_action_hint()
 
     # ── Public API ─────────────────────────────────────────────────
 
@@ -248,34 +274,44 @@ class ProjectExplorerDock(QDockWidget):
 
     def _on_page_context_menu(self, pos):
         item = self._page_tree.itemAt(pos)
+        menu = self._build_page_context_menu(item)
+        menu.exec_(self._page_tree.viewport().mapToGlobal(pos))
+
+    def _build_page_context_menu(self, item=None):
         menu = QMenu(self)
+        menu.setToolTipsVisible(True)
 
         if item:
             name = item.data(0, Qt.UserRole)
 
             rename_act = QAction("Rename", self)
+            _set_action_metadata(rename_act, self._page_context_action_hint("rename", name))
             rename_act.triggered.connect(lambda: self._rename_page(name))
             menu.addAction(rename_act)
 
             dup_act = QAction("Duplicate", self)
+            _set_action_metadata(dup_act, self._page_context_action_hint("duplicate", name))
             dup_act.triggered.connect(lambda: self._duplicate_page(name))
             menu.addAction(dup_act)
 
             startup_act = QAction("Set as Startup Page", self)
+            _set_action_metadata(startup_act, self._page_context_action_hint("startup", name))
             startup_act.triggered.connect(lambda: self._set_startup(name))
             menu.addAction(startup_act)
 
             menu.addSeparator()
 
             del_act = QAction("Delete", self)
+            _set_action_metadata(del_act, self._page_context_action_hint("delete", name))
             del_act.triggered.connect(lambda: self._delete_page(name))
             menu.addAction(del_act)
-        else:
-            add_act = QAction("New Page...", self)
-            add_act.triggered.connect(self._on_add_page)
-            menu.addAction(add_act)
+            return menu
 
-        menu.exec_(self._page_tree.viewport().mapToGlobal(pos))
+        add_act = QAction("New Page...", self)
+        _set_action_metadata(add_act, self._new_page_action_hint())
+        add_act.triggered.connect(self._on_add_page)
+        menu.addAction(add_act)
+        return menu
 
     def _on_add_page(self):
         name, ok = QInputDialog.getText(
