@@ -2903,6 +2903,49 @@ class TestMainWindowFileFlow:
         assert actions["Debug Output"].statusTip() == actions["Debug Output"].toolTip()
         _close_window(window)
 
+    def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Dark",
+                "Light",
+                "Font Size...",
+                "Vertical",
+                "Horizontal",
+                "Overlay Only",
+                "Swap Preview/Overlay",
+                "Zoom In",
+                "Zoom Out",
+                "Zoom Reset (100%)",
+            }
+        }
+
+        assert actions["Dark"].toolTip() == "Switch the Designer theme to dark."
+        assert actions["Dark"].statusTip() == actions["Dark"].toolTip()
+        assert actions["Light"].toolTip() == "Switch the Designer theme to light."
+        assert actions["Light"].statusTip() == actions["Light"].toolTip()
+        assert actions["Font Size..."].toolTip() == "Adjust the Designer font size."
+        assert actions["Font Size..."].statusTip() == actions["Font Size..."].toolTip()
+        assert actions["Vertical"].toolTip() == "Show preview and overlay stacked vertically (Ctrl+1)."
+        assert actions["Vertical"].statusTip() == actions["Vertical"].toolTip()
+        assert actions["Horizontal"].toolTip() == "Show preview and overlay side by side (Ctrl+2)."
+        assert actions["Horizontal"].statusTip() == actions["Horizontal"].toolTip()
+        assert actions["Overlay Only"].toolTip() == "Show only the overlay workspace (Ctrl+3)."
+        assert actions["Overlay Only"].statusTip() == actions["Overlay Only"].toolTip()
+        assert actions["Swap Preview/Overlay"].toolTip() == "Swap the preview and overlay positions (Ctrl+4)."
+        assert actions["Swap Preview/Overlay"].statusTip() == actions["Swap Preview/Overlay"].toolTip()
+        assert actions["Zoom In"].toolTip() == "Zoom in on the preview overlay (Ctrl+=)."
+        assert actions["Zoom In"].statusTip() == actions["Zoom In"].toolTip()
+        assert actions["Zoom Out"].toolTip() == "Zoom out on the preview overlay (Ctrl+-)."
+        assert actions["Zoom Out"].statusTip() == actions["Zoom Out"].toolTip()
+        assert actions["Zoom Reset (100%)"].toolTip() == "Reset the preview overlay zoom to 100% (Ctrl+0)."
+        assert actions["Zoom Reset (100%)"].statusTip() == actions["Zoom Reset (100%)"].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

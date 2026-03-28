@@ -2232,12 +2232,14 @@ class MainWindow(QMainWindow):
 
         # Theme Submenu
         theme_menu = view_menu.addMenu("Theme")
+        self._apply_action_hint(theme_menu.menuAction(), "Choose the Designer theme.")
         theme_group = QActionGroup(self)
         theme_group.setExclusive(True)
 
         self.theme_dark_action = QAction("Dark", self)
         self.theme_dark_action.setCheckable(True)
         self.theme_dark_action.setChecked(self._config.theme == 'dark')
+        self._apply_action_hint(self.theme_dark_action, "Switch the Designer theme to dark.")
         self.theme_dark_action.triggered.connect(lambda: self._set_theme('dark'))
         theme_group.addAction(self.theme_dark_action)
         theme_menu.addAction(self.theme_dark_action)
@@ -2245,6 +2247,7 @@ class MainWindow(QMainWindow):
         self.theme_light_action = QAction("Light", self)
         self.theme_light_action.setCheckable(True)
         self.theme_light_action.setChecked(self._config.theme == 'light')
+        self._apply_action_hint(self.theme_light_action, "Switch the Designer theme to light.")
         self.theme_light_action.triggered.connect(lambda: self._set_theme('light'))
         theme_group.addAction(self.theme_light_action)
         theme_menu.addAction(self.theme_light_action)
@@ -2252,6 +2255,7 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         font_size_action = QAction("Font Size...", self)
+        self._apply_action_hint(font_size_action, "Adjust the Designer font size.")
         font_size_action.triggered.connect(self._set_font_sizes)
         view_menu.addAction(font_size_action)
 
@@ -2312,6 +2316,12 @@ class MainWindow(QMainWindow):
             action = QAction(label, self)
             action.setCheckable(True)
             action.setShortcut(shortcut)
+            overlay_hint = {
+                MODE_VERTICAL: "Show preview and overlay stacked vertically (Ctrl+1).",
+                MODE_HORIZONTAL: "Show preview and overlay side by side (Ctrl+2).",
+                MODE_HIDDEN: "Show only the overlay workspace (Ctrl+3).",
+            }[mode]
+            self._apply_action_hint(action, overlay_hint)
             if mode == saved_mode:
                 action.setChecked(True)
             action.triggered.connect(
@@ -2323,6 +2333,7 @@ class MainWindow(QMainWindow):
 
         swap_action = QAction("Swap Preview/Overlay", self)
         swap_action.setShortcut("Ctrl+4")
+        self._apply_action_hint(swap_action, "Swap the preview and overlay positions (Ctrl+4).")
         swap_action.triggered.connect(self._flip_overlay_layout)
         view_menu.addAction(swap_action)
 
@@ -2330,16 +2341,19 @@ class MainWindow(QMainWindow):
 
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl+=")
+        self._apply_action_hint(zoom_in_action, "Zoom in on the preview overlay (Ctrl+=).")
         zoom_in_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_in())
         view_menu.addAction(zoom_in_action)
 
         zoom_out_action = QAction("Zoom Out", self)
         zoom_out_action.setShortcut("Ctrl+-")
+        self._apply_action_hint(zoom_out_action, "Zoom out on the preview overlay (Ctrl+-).")
         zoom_out_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_out())
         view_menu.addAction(zoom_out_action)
 
         zoom_reset_action = QAction("Zoom Reset (100%)", self)
         zoom_reset_action.setShortcut("Ctrl+0")
+        self._apply_action_hint(zoom_reset_action, "Reset the preview overlay zoom to 100% (Ctrl+0).")
         zoom_reset_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_reset())
         view_menu.addAction(zoom_reset_action)
 
