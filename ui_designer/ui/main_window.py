@@ -1228,7 +1228,15 @@ class MainWindow(QMainWindow):
             self._toolbar.setStatusTip(toolbar_summary)
             self._toolbar.setAccessibleName(toolbar_summary)
         if hasattr(self, "_save_action"):
-            self._apply_action_hint(self._save_action, "Save the current project (Ctrl+S).")
+            has_project = getattr(self, "project", None) is not None
+            self._save_action.setEnabled(has_project)
+            if has_project:
+                dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+                dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
+                save_hint = f"Save the current project (Ctrl+S). Unsaved pages: {dirty_label}."
+            else:
+                save_hint = self._action_hint("Save the current project (Ctrl+S).", False, "open a project first")
+            self._apply_action_hint(self._save_action, save_hint)
         if hasattr(self, "_undo_action"):
             undo_hint = self._action_hint(
                 "Undo the last change on the current page (Ctrl+Z).",

@@ -7188,8 +7188,9 @@ class TestMainWindowFileFlow:
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
         assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, edit, preview, mode, and status controls."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
-        assert window._save_action.toolTip() == "Save the current project (Ctrl+S)."
+        assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unavailable: open a project first."
         assert window._save_action.statusTip() == window._save_action.toolTip()
+        assert window._save_action.isEnabled() is False
         assert window._undo_action.toolTip() == "Undo the last change on the current page (Ctrl+Z). Unavailable: open a page first."
         assert window._redo_action.toolTip() == "Redo the next change on the current page (Ctrl+Shift+Z). Unavailable: open a page first."
         assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C). Unavailable: select at least 1 widget."
@@ -7211,6 +7212,9 @@ class TestMainWindowFileFlow:
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
+        assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unsaved pages: none."
+        assert window._save_action.statusTip() == window._save_action.toolTip()
+        assert window._save_action.isEnabled() is True
         assert window._compile_action.toolTip() == (
             "Compile the current project and run the preview (F5). Unavailable: preview disabled for test."
         )
@@ -7233,6 +7237,30 @@ class TestMainWindowFileFlow:
 
         assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V)."
         assert window._paste_action.statusTip() == window._paste_action.toolTip()
+        _close_window(window)
+
+    def test_save_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveHintDemo"
+        project = _create_project(project_dir, "SaveHintDemo", sdk_root)
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_toolbar_action_metadata()
+
+        assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unsaved pages: 1 page."
+        assert window._save_action.statusTip() == window._save_action.toolTip()
+        assert window._save_action.isEnabled() is True
         _close_window(window)
 
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
