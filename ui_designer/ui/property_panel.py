@@ -453,6 +453,13 @@ class PropertyPanel(QWidget):
         )
         _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
+    def _update_name_editor_metadata(self, editor, tooltip=None):
+        name_text = editor.text().strip() or "none"
+        accessible_name = f"Widget name: {name_text}"
+        if tooltip:
+            accessible_name = f"{accessible_name}. {tooltip}"
+        _set_widget_metadata(editor, tooltip=tooltip, accessible_name=accessible_name)
+
     def _build_single_selection_header(self, widget):
         header = QFrame()
         header.setObjectName("workspace_panel_header")
@@ -520,6 +527,7 @@ class PropertyPanel(QWidget):
         name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
         common_form.addRow("Name:", name_edit)
         self._editors["name"] = name_edit
+        self._update_name_editor_metadata(name_edit)
 
         # Position/Size
         for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
@@ -1642,7 +1650,7 @@ class PropertyPanel(QWidget):
         if not ok:
             with QSignalBlocker(editor):
                 editor.setText(current_name)
-            editor.setToolTip(message)
+            self._update_name_editor_metadata(editor, message)
             self.validation_message.emit(message)
             return
 
@@ -1657,9 +1665,9 @@ class PropertyPanel(QWidget):
             self._updating = False
             refreshed = self._editors.get("name")
             if refreshed is not None and message:
-                refreshed.setToolTip(message)
+                self._update_name_editor_metadata(refreshed, message)
         elif message:
-            editor.setToolTip(message)
+            self._update_name_editor_metadata(editor, message)
 
         if message:
             self.validation_message.emit(message)

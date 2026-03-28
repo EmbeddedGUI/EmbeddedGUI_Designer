@@ -580,12 +580,15 @@ class TestPropertyPanelFileFlow:
         panel.set_widget(widget)
 
         editor = panel._editors["name"]
+        assert editor.accessibleName() == "Widget name: title"
         editor.setText("123 bad-name")
         editor.editingFinished.emit()
 
         assert widget.name == "title"
         assert panel._editors["name"].text() == "title"
         assert messages[-1].startswith("Widget name must be a valid C identifier")
+        assert panel._editors["name"].statusTip() == panel._editors["name"].toolTip()
+        assert panel._editors["name"].accessibleName().startswith("Widget name: title. Widget name must be a valid C identifier")
         panel.deleteLater()
 
     def test_single_selection_name_edit_resolves_duplicate_identifier(self, qapp):
@@ -604,12 +607,17 @@ class TestPropertyPanelFileFlow:
         panel.set_widget(second)
 
         editor = panel._editors["name"]
+        assert editor.accessibleName() == "Widget name: subtitle"
         editor.setText("title")
         editor.editingFinished.emit()
 
         assert second.name == "title_2"
         assert panel._editors["name"].text() == "title_2"
         assert messages[-1] == "Widget name 'title' already exists. Renamed to 'title_2'."
+        assert panel._editors["name"].statusTip() == panel._editors["name"].toolTip()
+        assert panel._editors["name"].accessibleName() == (
+            "Widget name: title_2. Widget name 'title' already exists. Renamed to 'title_2'."
+        )
         panel.deleteLater()
 
     def test_single_selection_shows_callback_editors_for_click_and_widget_events(self, qapp):
