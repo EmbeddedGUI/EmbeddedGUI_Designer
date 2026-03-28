@@ -186,7 +186,7 @@ class TestStatusCenterPanel:
         assert panel._diag_btn.text() == "Diagnostics (2 active)"
         assert panel._history_btn.text() == "History (Clean)"
         assert panel._debug_btn.text() == "Debug Output (Build)"
-        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile pipeline is unavailable."
+        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile is unavailable."
         assert panel._debug_btn.accessibleName() == "Debug Output action: Debug Output (Build)"
         assert panel._project_btn.text() == "Project (Setup)"
         assert panel._project_btn.accessibleName() == "Project action: Project (Setup)"
@@ -243,7 +243,7 @@ class TestStatusCenterPanel:
         assert panel._dirty_card.toolTip() == "Open History. No dirty pages."
         assert panel._selection_card.toolTip() == "Open Structure. No widgets selected."
         assert panel._debug_btn.text() == "Debug Output (Build)"
-        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile pipeline is unavailable."
+        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile is unavailable."
         assert panel._debug_btn.accessibleName() == "Debug Output action: Debug Output (Build)"
         assert panel._project_btn.text() == "Project (Setup)"
         assert panel._project_btn.accessibleName() == "Project action: Project (Setup)"
@@ -299,7 +299,7 @@ class TestStatusCenterPanel:
         assert panel._dirty_value.toolTip() == "Dirty Pages: 2 dirty pages"
         assert panel._dirty_card.accessibleName() == "Dirty Pages metric: 2 dirty pages"
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
-        assert panel._compile_card.toolTip() == "Open Debug Output. Compile pipeline is available."
+        assert panel._compile_card.toolTip() == "Open Debug Output. Compile is available."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
         assert panel._preview_card.toolTip() == "Open Debug Output. Preview Running."
         assert panel._selection_card.toolTip() == "Open Structure. 1 widget selected."
@@ -427,7 +427,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_chip.accessibleName() == "Runtime status: Clear"
         assert panel._debug_btn.text() == "Debug Output (Build)"
-        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile pipeline is unavailable."
+        assert panel._debug_btn.toolTip() == "Open Debug Output. Compile is unavailable."
         assert panel._debug_btn.accessibleName() == "Debug Output action: Debug Output (Build)"
         assert panel._project_btn.text() == "Project (Setup)"
         assert panel._project_btn.accessibleName() == "Project action: Project (Setup)"
@@ -513,7 +513,7 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == (
-            "Build guidance: Open Debug Output to inspect compile availability. Compile pipeline is unavailable."
+            "Build guidance: Open Debug Output to inspect why compile is unavailable."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)

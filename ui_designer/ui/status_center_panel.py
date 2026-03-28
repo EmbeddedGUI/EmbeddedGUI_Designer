@@ -590,7 +590,7 @@ class StatusCenterPanel(QWidget):
         if message:
             return f"Open Debug Output. Runtime issue: {message}"
         if not can_compile:
-            return "Open Debug Output. Compile pipeline is unavailable."
+            return "Open Debug Output. Compile is unavailable."
         return f"Open Debug Output. {preview_text}."
 
     def _project_button_text(self, sdk_ready):
@@ -895,7 +895,7 @@ class StatusCenterPanel(QWidget):
                 "Check Compile Output",
                 "Build",
                 "debug",
-                "Open Debug Output to inspect compile availability. Compile pipeline is unavailable.",
+                "Open Debug Output to inspect why compile is unavailable.",
             )
         if dirty_count > 0:
             return (
@@ -1091,9 +1091,9 @@ class StatusCenterPanel(QWidget):
         )
         self._set_hint(
             self._compile_card,
-            "Open Debug Output. Compile pipeline is available."
+            "Open Debug Output. Compile is available."
             if can_compile
-            else "Open Debug Output. Compile pipeline is unavailable.",
+            else "Open Debug Output. Compile is unavailable.",
         )
         self._set_hint(self._diag_card, self._diagnostics_hint(error_count, warning_count, info_count))
         self._set_hint(self._diag_btn, self._diagnostics_hint(error_count, warning_count, info_count))
