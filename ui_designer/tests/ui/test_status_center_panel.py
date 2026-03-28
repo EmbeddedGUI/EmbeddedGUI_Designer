@@ -367,10 +367,10 @@ class TestStatusCenterPanel:
         assert panel._actions_title.toolTip() == "Quick actions with no recent status center actions yet."
         assert panel._actions_title.accessibleName() == "Quick Actions"
         assert panel._last_action_label.text() == "Last action: None"
-        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.toolTip() == "No recent status center action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
-        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.toolTip() == "Status center has no recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
         assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
         assert panel._suggested_action_label.toolTip() == (
@@ -814,7 +814,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._last_action_label.text() == "Last action: None"
-        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.toolTip() == "No recent status center action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
@@ -844,15 +844,15 @@ class TestStatusCenterPanel:
 
         panel.restore_view_state(None)
         assert panel._last_action_label.text() == "Last action: None"
-        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.toolTip() == "No recent status center action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
-        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.toolTip() == "Status center has no recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
-        assert panel._repeat_action_button.toolTip() == "No recent action to repeat."
+        assert panel._repeat_action_button.toolTip() == "No recent action is available to repeat yet."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
         panel.deleteLater()
@@ -943,12 +943,12 @@ class TestStatusCenterPanel:
         clear_action.trigger()
 
         assert panel._last_action_label.text() == "Last action: None"
-        assert panel._last_action_label.toolTip() == "No recent status center action is available yet."
+        assert panel._last_action_label.toolTip() == "No recent status center action yet."
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._repeat_action_button.isEnabled() is False
         assert panel._repeat_action_button.text() == "Repeat Action"
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
-        assert panel._recent_actions_label.toolTip() == "Status center has not saved any recent actions yet."
+        assert panel._recent_actions_label.toolTip() == "Status center has no recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
@@ -961,8 +961,8 @@ class TestStatusCenterPanel:
 
         placeholder = panel._repeat_action_menu.actions()[0]
         assert placeholder.text() == "No recent actions yet"
-        assert placeholder.toolTip() == "Status center has not saved any recent actions yet."
-        assert panel._repeat_action_button.toolTip() == "No recent action to repeat."
+        assert placeholder.toolTip() == "Status center has no recent actions yet."
+        assert panel._repeat_action_button.toolTip() == "No recent action is available to repeat yet."
 
         panel._project_btn.click()
         panel._assets_btn.click()

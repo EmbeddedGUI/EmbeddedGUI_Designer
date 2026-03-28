@@ -487,7 +487,7 @@ class StatusCenterPanel(QWidget):
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Status center has not saved any recent actions yet."
+            return "Status center has no recent actions yet."
         noun = "action" if count == 1 else "actions"
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
         return f"{count} recent status center {noun}: {labels}"
@@ -511,7 +511,7 @@ class StatusCenterPanel(QWidget):
 
     def _repeat_action_tooltip(self, action_label):
         if not self._last_action:
-            return "No recent action to repeat."
+            return "No recent action is available to repeat yet."
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
         if count > 1:
@@ -523,7 +523,7 @@ class StatusCenterPanel(QWidget):
 
     def _last_action_tooltip(self, action_label):
         if not self._last_action:
-            return "No recent status center action is available yet."
+            return "No recent status center action yet."
         count = len(self._recent_actions)
         noun = "recent action" if count == 1 else "recent actions"
         return f"Current status center action: {action_label}. {count} {noun} saved."
