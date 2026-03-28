@@ -554,7 +554,7 @@ class TestStatusCenterPanel:
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
-        assert panel._header_subtitle.text() == "Workspace looks ready. Open Diagnostics remains available."
+        assert panel._header_subtitle.text() == "Workspace looks ready. Open Diagnostics is available."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Open Diagnostics"
         assert panel._debug_btn.text() == "Debug Output"

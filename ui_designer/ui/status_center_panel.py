@@ -797,7 +797,7 @@ class StatusCenterPanel(QWidget):
             return f"Workspace checks are pending. Focus on {focus}."
         if status.startswith("In Progress"):
             return f"Work is in progress. Focus on {focus}."
-        return f"Workspace looks ready. {focus} remains available."
+        return f"Workspace looks ready. {focus} is available."
 
     def _header_subtitle_tooltip(self, workspace_chip_label, suggested_hint):
         status = str(workspace_chip_label or "").strip() or "Ready"
