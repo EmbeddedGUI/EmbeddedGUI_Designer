@@ -2957,12 +2957,12 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
-            "Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
-            "Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none."
         )
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == (
@@ -3078,12 +3078,12 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
-            "Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none."
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
-            "Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -3179,12 +3179,12 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
+            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
+            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
         )
         assert actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "

@@ -1251,7 +1251,7 @@ class MainWindow(QMainWindow):
             return current_id or normalized_profile_id
         return normalized_profile_id
 
-    def _update_release_profiles_action_metadata(self, history_summary="", latest_release_summary=""):
+    def _update_release_profiles_action_metadata(self, history_file_state_summary="", history_summary="", latest_release_summary=""):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
             return
@@ -1265,13 +1265,14 @@ class MainWindow(QMainWindow):
                 ),
             )
             return
+        history_file_state_summary = str(history_file_state_summary or self._release_history_file_state_summary())
         history_summary = str(history_summary or self._release_history_records_summary())
         latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
         self._apply_action_hint(
             action,
             (
                 "Edit release profiles for the current project. "
-                f"{self._release_profiles_summary_suffix()} {history_summary} {latest_release_summary}"
+                f"{self._release_profiles_summary_suffix()} {history_file_state_summary} {history_summary} {latest_release_summary}"
             ),
         )
 
@@ -2317,7 +2318,7 @@ class MainWindow(QMainWindow):
                 (
                     "Build a release package for the current project. "
                     f"Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
-                    f"{history_summary} {latest_release_summary}"
+                    f"{history_file_state_summary} {history_summary} {latest_release_summary}"
                     if self._release_build_action.isEnabled()
                     else self._action_hint(
                         "Build a release package for the current project.",
@@ -2331,6 +2332,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             self._update_release_profiles_action_metadata(
+                history_file_state_summary=history_file_state_summary,
                 history_summary=history_summary,
                 latest_release_summary=latest_release_summary,
             )
