@@ -913,6 +913,8 @@ class MainWindow(QMainWindow):
         release_build_state = "available" if getattr(getattr(self, "_release_build_action", None), "isEnabled", lambda: False)() else "unavailable"
         release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
+        resources_dir = self._get_eguiproject_resource_dir()
+        resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         profiles_summary = self._release_profiles_build_summary()
         latest_release_summary = self._build_menu_latest_release_summary()
         self._apply_action_hint(
@@ -921,7 +923,7 @@ class MainWindow(QMainWindow):
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
-                f"{profiles_summary} {latest_release_summary}"
+                f"Source resources: {resources_state}. {profiles_summary} {latest_release_summary}"
             ),
         )
 
@@ -2244,11 +2246,14 @@ class MainWindow(QMainWindow):
             repo_project_state = "open" if self.project is not None else "none"
             repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
             repo_release_root = self._release_output_root() if self.project is not None and self._project_dir else "none"
+            repo_resources_dir = self._get_eguiproject_resource_dir()
+            repo_resources_state = "available" if repo_resources_dir and os.path.isdir(repo_resources_dir) else "missing"
             self._apply_action_hint(
                 self._repo_health_action,
                 (
                     "Inspect the Designer repository health summary. "
-                    f"Project: {repo_project_state}. SDK: {repo_sdk_state}. Release output root: {repo_release_root}."
+                    f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
+                    f"Release output root: {repo_release_root}. Source resources: {repo_resources_state}."
                 ),
             )
             self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
