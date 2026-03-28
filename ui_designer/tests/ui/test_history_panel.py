@@ -37,10 +37,14 @@ class TestHistoryPanel:
         assert panel._stack_value.accessibleName() == "History summary: 0 entries. Undo no. Redo no."
         assert panel._dirty_value.accessibleName() == "History dirty state: No"
         assert panel._source_value.accessibleName() == "History source: Saved state"
-        assert panel._history_list.toolTip() == "History entries: 0 items for page -."
+        assert panel._history_list.toolTip() == "History entries: 0 items for page -. Current entry: none."
+        assert panel._history_list.statusTip() == panel._history_list.toolTip()
+        assert panel._history_list.accessibleName() == "History entries for -: 0 items. Current entry: none"
+        assert panel._history_list.count() == 0
         panel.deleteLater()
 
     def test_history_entries_expose_tooltips_and_accessibility(self, qapp):
+        from PyQt5.QtCore import Qt
         from ui_designer.ui.history_panel import HistoryPanel
 
         panel = HistoryPanel()
@@ -60,7 +64,10 @@ class TestHistoryPanel:
 
         assert panel.accessibleName() == "History panel: Page main_page. 2 entries. Dirty yes. Source xml edit."
         assert panel._stack_value.toolTip() == "History entries: 2. Undo: Yes. Redo: No."
-        assert panel._history_list.accessibleName() == "History entries for main_page: 2 items"
+        assert panel._history_list.accessibleName() == "History entries for main_page: 2 items. Current entry: xml edit"
+        assert panel._history_list.toolTip() == "History entries: 2 items for page main_page. Current entry: xml edit."
         assert panel._history_list.item(0).toolTip() == "History entry 2. Current. xml edit"
         assert panel._history_list.item(1).toolTip() == "History entry 1. Saved. Saved state"
+        assert panel._history_list.item(0).data(Qt.AccessibleTextRole) == "History entry 2. Current. xml edit"
+        assert panel._history_list.item(1).data(Qt.AccessibleTextRole) == "History entry 1. Saved. Saved state"
         panel.deleteLater()

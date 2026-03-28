@@ -53,7 +53,23 @@ class HistoryPanel(QWidget):
         widget.setStatusTip(tooltip)
         widget.setAccessibleName(accessible_name)
 
-    def _update_accessibility_summary(self, *, page_name, entry_count, dirty, dirty_source, can_undo=False, can_redo=False):
+    def _current_entry_label(self, entries):
+        for entry in entries or []:
+            if entry.get("is_current"):
+                return str(entry.get("label") or "State capture")
+        return "none"
+
+    def _update_accessibility_summary(
+        self,
+        *,
+        page_name,
+        entry_count,
+        dirty,
+        dirty_source,
+        can_undo=False,
+        can_redo=False,
+        current_entry="none",
+    ):
         summary = (
             f"History panel: Page {page_name}. {entry_count} entries. "
             f"Dirty {'yes' if dirty else 'no'}. Source {dirty_source}."
@@ -81,10 +97,12 @@ class HistoryPanel(QWidget):
             tooltip=f"History source: {dirty_source}",
             accessible_name=f"History source: {dirty_source}",
         )
-        list_tooltip = f"History entries: {entry_count} items for page {page_name}."
+        list_tooltip = f"History entries: {entry_count} items for page {page_name}. Current entry: {current_entry}."
         self._history_list.setToolTip(list_tooltip)
         self._history_list.setStatusTip(list_tooltip)
-        self._history_list.setAccessibleName(f"History entries for {page_name}: {entry_count} items")
+        self._history_list.setAccessibleName(
+            f"History entries for {page_name}: {entry_count} items. Current entry: {current_entry}"
+        )
 
     def clear(self):
         self._page_value.setText("Page: -")
@@ -98,6 +116,7 @@ class HistoryPanel(QWidget):
             entry_count=0,
             dirty=False,
             dirty_source="Saved state",
+            current_entry="none",
         )
 
     def set_history(self, page_name, entries, dirty=False, dirty_source="", can_undo=False, can_redo=False):
@@ -121,6 +140,7 @@ class HistoryPanel(QWidget):
             dirty_source=dirty_source or "Saved state",
             can_undo=can_undo,
             can_redo=can_redo,
+            current_entry=self._current_entry_label(entries),
         )
 
         self._history_list.clear()
@@ -144,4 +164,5 @@ class HistoryPanel(QWidget):
             item_tooltip = f"History entry {entry.get('index', 0) + 1}. {marker_summary}{label}"
             item.setToolTip(item_tooltip)
             item.setStatusTip(item_tooltip)
+            item.setData(Qt.AccessibleTextRole, item_tooltip)
             self._history_list.addItem(item)
