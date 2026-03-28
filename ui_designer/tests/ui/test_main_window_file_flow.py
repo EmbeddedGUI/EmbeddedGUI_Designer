@@ -2771,6 +2771,51 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    def test_recent_and_view_submenu_categories_expose_status_hints(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        file_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "File")
+        view_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "View")
+        background_menu = next(action.menu() for action in view_menu.actions() if action.text() == "Background Mockup")
+
+        assert window._recent_menu.menuAction().toolTip() == "Open a recently used project. No recent projects are available."
+        assert window._recent_menu.menuAction().statusTip() == window._recent_menu.menuAction().toolTip()
+
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": "",
+                "display_name": "DemoApp",
+            }
+        ]
+        window._update_recent_menu()
+        assert window._recent_menu.menuAction().toolTip() == "Open a recently used project. 1 recent project available."
+        assert window._recent_menu.menuAction().statusTip() == window._recent_menu.menuAction().toolTip()
+
+        file_actions = {action.text(): action for action in file_menu.actions() if action.text()}
+        view_actions = {action.text(): action for action in view_menu.actions() if action.text()}
+        background_actions = {action.text(): action for action in background_menu.actions() if action.text()}
+
+        assert file_actions["Recent Projects"].toolTip() == window._recent_menu.menuAction().toolTip()
+        assert file_actions["Recent Projects"].statusTip() == file_actions["Recent Projects"].toolTip()
+        assert view_actions["Theme"].toolTip() == "Choose the Designer theme."
+        assert view_actions["Theme"].statusTip() == view_actions["Theme"].toolTip()
+        assert view_actions["Workspace"].toolTip() == "Choose a workspace panel to show."
+        assert view_actions["Workspace"].statusTip() == view_actions["Workspace"].toolTip()
+        assert view_actions["Inspector"].toolTip() == "Choose an inspector section to show."
+        assert view_actions["Inspector"].statusTip() == view_actions["Inspector"].toolTip()
+        assert view_actions["Tools"].toolTip() == "Choose a bottom tools panel to show."
+        assert view_actions["Tools"].statusTip() == view_actions["Tools"].toolTip()
+        assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size."
+        assert view_actions["Grid Size"].statusTip() == view_actions["Grid Size"].toolTip()
+        assert view_actions["Background Mockup"].toolTip() == "Manage the preview background mockup image."
+        assert view_actions["Background Mockup"].statusTip() == view_actions["Background Mockup"].toolTip()
+        assert background_actions["Opacity"].toolTip() == "Choose the mockup image opacity."
+        assert background_actions["Opacity"].statusTip() == background_actions["Opacity"].toolTip()
+        _close_window(window)
+
     def test_generate_resources_action_exposes_status_hint(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

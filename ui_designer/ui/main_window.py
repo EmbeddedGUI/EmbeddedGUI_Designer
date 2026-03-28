@@ -1953,6 +1953,7 @@ class MainWindow(QMainWindow):
 
         # Recent Projects submenu
         self._recent_menu = file_menu.addMenu("Recent Projects")
+        self._apply_action_hint(self._recent_menu.menuAction(), "Open a recently used project.")
         self._update_recent_menu()
 
         file_menu.addSeparator()
@@ -2670,12 +2671,21 @@ class MainWindow(QMainWindow):
         self._recent_menu.clear()
         recent = self._config.recent_projects
         if not recent:
+            hint = "Open a recently used project. No recent projects are available."
+            self._recent_menu.menuAction().setToolTip(hint)
+            self._recent_menu.menuAction().setStatusTip(hint)
             action = QAction("(No recent projects)", self)
             action.setEnabled(False)
             action.setToolTip("No recent projects are available.")
             action.setStatusTip(action.toolTip())
             self._recent_menu.addAction(action)
             return
+
+        recent_count = min(len(recent), 10)
+        noun = "project" if recent_count == 1 else "projects"
+        hint = f"Open a recently used project. {recent_count} recent {noun} available."
+        self._recent_menu.menuAction().setToolTip(hint)
+        self._recent_menu.menuAction().setStatusTip(hint)
 
         for item in recent[:10]:
             project_path = item.get("project_path", "")
