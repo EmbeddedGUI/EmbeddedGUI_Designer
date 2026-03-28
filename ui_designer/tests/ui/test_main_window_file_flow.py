@@ -5964,6 +5964,31 @@ class TestMainWindowFileFlow:
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
         _close_window(window)
 
+    def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
+        from ui_designer.ui.editor_tabs import MODE_CODE, MODE_DESIGN, MODE_SPLIT
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
+        assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
+        assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
+        assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()
+        assert window._mode_buttons[MODE_SPLIT].accessibleName() == "Editor mode button: Split."
+
+        window.editor_tabs.set_mode(MODE_CODE)
+
+        assert window._mode_buttons[MODE_CODE].toolTip() == "Currently showing Code mode."
+        assert window._mode_buttons[MODE_CODE].accessibleName() == "Editor mode button: Code. Current mode."
+        assert window._mode_buttons[MODE_DESIGN].toolTip() == "Switch the workspace editor to Design mode."
+
+        window.editor_tabs.set_mode(MODE_SPLIT)
+
+        assert window._mode_buttons[MODE_SPLIT].toolTip() == "Currently showing Split mode."
+        assert window._mode_buttons[MODE_SPLIT].accessibleName() == "Editor mode button: Split. Current mode."
+        assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
+        _close_window(window)
+
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

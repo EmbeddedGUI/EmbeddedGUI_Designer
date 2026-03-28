@@ -702,6 +702,30 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_mode_buttons"):
             for key, button in self._mode_buttons.items():
                 button.setChecked(key == mode)
+            self._update_editor_mode_button_metadata(mode)
+
+    def _editor_mode_label(self, mode):
+        return {
+            MODE_DESIGN: "Design",
+            MODE_SPLIT: "Split",
+            MODE_CODE: "Code",
+        }.get(mode, str(mode or "Unknown"))
+
+    def _update_editor_mode_button_metadata(self, current_mode):
+        if not hasattr(self, "_mode_buttons"):
+            return
+        current_mode = current_mode or MODE_DESIGN
+        for key, button in self._mode_buttons.items():
+            label = self._editor_mode_label(key)
+            if key == current_mode:
+                tooltip = f"Currently showing {label} mode."
+                accessible_name = f"Editor mode button: {label}. Current mode."
+            else:
+                tooltip = f"Switch the workspace editor to {label} mode."
+                accessible_name = f"Editor mode button: {label}."
+            button.setToolTip(tooltip)
+            button.setStatusTip(tooltip)
+            button.setAccessibleName(accessible_name)
 
     def _set_chip(self, chip, text, tone=None, accessible_name=None, tool_tip=None):
         if chip is None:
@@ -2126,6 +2150,7 @@ class MainWindow(QMainWindow):
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)
         self._toolbar_host_layout.addWidget(mode_host, 0)
+        self._update_editor_mode_button_metadata(self.editor_tabs.mode)
 
         chips_host = QWidget()
         chips_layout = QHBoxLayout(chips_host)
