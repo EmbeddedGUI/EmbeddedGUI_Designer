@@ -256,9 +256,20 @@ class TestResourcePanelFileFlow:
         panel._select_resource_item("image", "star.png")
 
         assert panel._usage_summary.text() == "'star.png' is used by 2 widgets across 2 pages."
+        assert panel._usage_current_page_only.toolTip() == "Open or select a page to filter usages to the current page."
+        assert panel._usage_current_page_only.accessibleName() == "Usage filter unavailable: Current Page Only"
+        assert panel._usage_summary.accessibleName() == (
+            "Resource usage summary: 'star.png' is used by 2 widgets across 2 pages."
+        )
         assert panel._usage_table.rowCount() == 2
+        assert panel._usage_table.accessibleName() == (
+            "Resource usage table: 2 rows. Current selection: main_page/hero_image (image) [image_file]."
+        )
         assert panel._usage_table.item(0, 0).text() == "main_page"
         assert panel._usage_table.item(0, 1).text() == "hero_image (image)"
+        assert panel._usage_table.item(0, 1).toolTip() == (
+            "Page: main_page. Widget: hero_image (image). Property: image_file."
+        )
         assert panel._usage_table.item(1, 0).text() == "detail_page"
         panel.deleteLater()
 
@@ -291,7 +302,16 @@ class TestResourcePanelFileFlow:
         panel._usage_current_page_only.setChecked(True)
 
         assert panel._usage_summary.text() == "'star.png' is used by 1 widget on the current page (2 total across 2 pages)."
+        assert panel._usage_current_page_only.toolTip() == "Showing only usages on the current page: detail_page."
+        assert panel._usage_current_page_only.accessibleName() == "Usage filter: current page only on for detail_page"
+        assert panel._usage_summary.accessibleName() == (
+            "Resource usage summary: 'star.png' is used by 1 widget on the current page "
+            "(2 total across 2 pages)."
+        )
         assert panel._usage_table.rowCount() == 1
+        assert panel._usage_table.accessibleName() == (
+            "Resource usage table: 1 row. Current selection: detail_page/badge (image) [image_file]."
+        )
         assert panel._usage_table.item(0, 0).text() == "detail_page"
         panel.deleteLater()
 

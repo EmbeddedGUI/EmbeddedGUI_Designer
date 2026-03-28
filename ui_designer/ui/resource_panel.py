@@ -1250,6 +1250,7 @@ class ResourcePanel(QWidget):
         usage_filter_row = QHBoxLayout()
         self._usage_current_page_only = QCheckBox("Current Page Only")
         self._usage_current_page_only.toggled.connect(self._refresh_usage_view)
+        self._usage_current_page_only.toggled.connect(self._update_usage_accessibility_metadata)
         usage_filter_row.addWidget(self._usage_current_page_only)
         usage_filter_row.addStretch()
         bottom_layout.addLayout(usage_filter_row)
@@ -1269,6 +1270,7 @@ class ResourcePanel(QWidget):
         self._usage_table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._usage_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._usage_table.itemDoubleClicked.connect(self._on_usage_item_activated)
+        self._usage_table.itemSelectionChanged.connect(self._update_usage_accessibility_metadata)
         bottom_layout.addWidget(self._usage_table, 1)
 
         splitter.addWidget(bottom_widget)
@@ -1277,6 +1279,7 @@ class ResourcePanel(QWidget):
         splitter.setStretchFactor(1, 2)
         self._update_resource_action_metadata()
         self._update_string_action_metadata()
+        self._update_usage_accessibility_metadata()
 
     # -- Public API --
 
@@ -1604,6 +1607,51 @@ class ResourcePanel(QWidget):
             accessible_name=remove_key_name,
         )
 
+    def _current_usage_selection_label(self):
+        if not hasattr(self, "_usage_table"):
+            return "none"
+        row = self._usage_table.currentRow()
+        if row < 0:
+            return "none"
+        page_item = self._usage_table.item(row, 0)
+        widget_item = self._usage_table.item(row, 1)
+        prop_item = self._usage_table.item(row, 2)
+        if page_item is None or widget_item is None or prop_item is None:
+            return "none"
+        return f"{page_item.text()}/{widget_item.text()} [{prop_item.text()}]"
+
+    def _update_usage_accessibility_metadata(self):
+        if not hasattr(self, "_usage_table"):
+            return
+
+        if self._usage_page_name:
+            if self._usage_current_page_only.isChecked():
+                usage_filter_tooltip = f"Showing only usages on the current page: {self._usage_page_name}."
+                usage_filter_name = f"Usage filter: current page only on for {self._usage_page_name}"
+            else:
+                usage_filter_tooltip = f"Filter usages to the current page: {self._usage_page_name}."
+                usage_filter_name = f"Usage filter: current page only off for {self._usage_page_name}"
+        else:
+            usage_filter_tooltip = "Open or select a page to filter usages to the current page."
+            usage_filter_name = "Usage filter unavailable: Current Page Only"
+        _set_widget_metadata(
+            self._usage_current_page_only,
+            tooltip=usage_filter_tooltip,
+            accessible_name=usage_filter_name,
+        )
+
+        summary_text = (self._usage_summary.text() or "").strip() or "No usage summary available."
+        _set_widget_metadata(
+            self._usage_summary,
+            tooltip=summary_text,
+            accessible_name=f"Resource usage summary: {summary_text}",
+        )
+
+        row_count = self._usage_table.rowCount()
+        selection_label = self._current_usage_selection_label()
+        table_summary = f"Resource usage table: {_count_label(row_count, 'row')}. Current selection: {selection_label}."
+        _set_widget_metadata(self._usage_table, tooltip=table_summary, accessible_name=table_summary)
+
     def _update_tab_titles(self):
         n_img = len(self._catalog.images)
         n_font = len(self._catalog.fonts)
@@ -1643,6 +1691,7 @@ class ResourcePanel(QWidget):
     def _clear_usage_view(self, summary):
         self._usage_summary.setText(summary)
         self._usage_table.setRowCount(0)
+        self._update_usage_accessibility_metadata()
 
     def _refresh_usage_view(self):
         if not hasattr(self, "_usage_table"):
@@ -1700,11 +1749,18 @@ class ResourcePanel(QWidget):
                 widget_text = f"{entry.widget_name} ({entry.widget_type})"
             widget_item = QTableWidgetItem(widget_text)
             prop_item = QTableWidgetItem(entry.property_name)
+            item_tooltip = (
+                f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
+            )
+            page_item.setToolTip(item_tooltip)
+            widget_item.setToolTip(item_tooltip)
+            prop_item.setToolTip(item_tooltip)
             self._usage_table.setItem(row, 0, page_item)
             self._usage_table.setItem(row, 1, widget_item)
             self._usage_table.setItem(row, 2, prop_item)
         if self._usage_table.rowCount() > 0:
             self._usage_table.selectRow(0)
+        self._update_usage_accessibility_metadata()
 
     def _on_usage_item_activated(self, item):
         if item is None:
