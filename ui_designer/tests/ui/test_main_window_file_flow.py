@@ -2844,7 +2844,8 @@ class TestMainWindowFileFlow:
 
         assert action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config."
+            "C source files from .eguiproject/resources/ assets and widget config. "
+            "Project: none. SDK: invalid. Source resources: missing."
         )
         assert action.statusTip() == action.toolTip()
         _close_window(window)
@@ -2903,6 +2904,12 @@ class TestMainWindowFileFlow:
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable."
         )
+        generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
+        assert generate_resources_action.toolTip() == (
+            "Run resource generation (app_resource_generate.py) to produce\n"
+            "C source files from .eguiproject/resources/ assets and widget config. "
+            "Project: none. SDK: invalid. Source resources: missing."
+        )
 
         window.project = project
         window._project_dir = str(project_dir)
@@ -2928,6 +2935,11 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release history: available."
+        )
+        assert generate_resources_action.toolTip() == (
+            "Run resource generation (app_resource_generate.py) to produce\n"
+            "C source files from .eguiproject/resources/ assets and widget config. "
+            "Project: open. SDK: valid. Source resources: available."
         )
 
         window.auto_compile_action.setChecked(False)

@@ -915,6 +915,20 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_generate_resources_action_metadata(self):
+        if not hasattr(self, "_generate_resources_action"):
+            return
+        project_state = "open" if getattr(self, "project", None) is not None and bool(self._project_dir) else "none"
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+        resources_dir = self._get_eguiproject_resource_dir()
+        resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
+        hint = (
+            "Run resource generation (app_resource_generate.py) to produce\n"
+            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"Project: {project_state}. SDK: {sdk_state}. Source resources: {resources_state}."
+        )
+        self._apply_action_hint(self._generate_resources_action, hint)
+
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
@@ -1993,6 +2007,7 @@ class MainWindow(QMainWindow):
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
         self._update_build_menu_metadata()
+        self._update_generate_resources_action_metadata()
         self._update_edit_actions()
         self._update_workspace_chips()
 
@@ -2781,14 +2796,15 @@ class MainWindow(QMainWindow):
 
         build_menu.addSeparator()
 
-        gen_res_action = QAction("Generate Resources", self)
-        gen_res_action.setToolTip(
+        self._generate_resources_action = QAction("Generate Resources", self)
+        self._generate_resources_action.setToolTip(
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config."
         )
-        gen_res_action.setStatusTip(gen_res_action.toolTip())
-        gen_res_action.triggered.connect(self._generate_resources)
-        build_menu.addAction(gen_res_action)
+        self._generate_resources_action.setStatusTip(self._generate_resources_action.toolTip())
+        self._generate_resources_action.triggered.connect(self._generate_resources)
+        build_menu.addAction(self._generate_resources_action)
+        self._update_generate_resources_action_metadata()
         self._update_build_menu_metadata()
 
         # 鈹€鈹€ View menu 鈹€鈹€
