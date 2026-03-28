@@ -2856,7 +2856,7 @@ class TestMainWindowFileFlow:
         assert action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
-            "Project: none. SDK: invalid. Source resources: missing."
+            "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
         assert action.statusTip() == action.toolTip()
         _close_window(window)
@@ -2932,7 +2932,7 @@ class TestMainWindowFileFlow:
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
-            "Project: none. SDK: invalid. Source resources: missing."
+            "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
 
         window.project = project
@@ -2975,7 +2975,7 @@ class TestMainWindowFileFlow:
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
-            "Project: open. SDK: valid. Source resources: available."
+            f"Project: open. SDK: valid. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
         )
 
         window.auto_compile_action.setChecked(False)

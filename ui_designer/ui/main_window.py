@@ -1106,10 +1106,11 @@ class MainWindow(QMainWindow):
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
+        resource_dir_label = resources_dir or "none"
         hint = (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
-            f"Project: {project_state}. SDK: {sdk_state}. Source resources: {resources_state}."
+            f"Project: {project_state}. SDK: {sdk_state}. Source resources: {resources_state}. Resource directory: {resource_dir_label}."
         )
         self._apply_action_hint(self._generate_resources_action, hint)
 
