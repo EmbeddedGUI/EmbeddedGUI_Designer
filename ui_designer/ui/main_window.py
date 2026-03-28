@@ -930,6 +930,10 @@ class MainWindow(QMainWindow):
             current_page = self._page_tab_name(current_index)
         elif self._current_page is not None and getattr(self._current_page, "name", ""):
             current_page = self._current_page.name
+        project = getattr(self, "project", None)
+        project_pages = getattr(project, "pages", []) or []
+        startup_value = str(getattr(project, "startup_page", "") or "").strip()
+        startup_page = startup_value if any(getattr(page, "name", None) == startup_value for page in project_pages) else "none"
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         dirty_count = len(dirty_pages)
         dirty_label = (
@@ -937,7 +941,7 @@ class MainWindow(QMainWindow):
             if dirty_count == 0
             else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         )
-        summary = f"Page tabs: {page_label}. Current page: {current_page}. {dirty_label}."
+        summary = f"Page tabs: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
         self.page_tab_bar.setToolTip(summary)
         self.page_tab_bar.setStatusTip(summary)
         self.page_tab_bar.setAccessibleName(summary)
@@ -4610,6 +4614,7 @@ class MainWindow(QMainWindow):
             self.project.startup_page = page_name
             self.project_dock.set_project(self.project)
             self.page_navigator.set_startup_page(page_name)
+            self._update_page_tab_bar_metadata()
             self._trigger_compile()
 
     def _on_page_mode_changed(self, mode):
