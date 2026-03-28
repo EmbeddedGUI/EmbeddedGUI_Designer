@@ -80,6 +80,20 @@ def _validate_english_filename(name):
     return bool(_VALID_FILENAME_RE.match(name))
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
+def _count_label(count, singular, plural=None):
+    value = max(int(count or 0), 0)
+    noun = singular if value == 1 else (plural or f"{singular}s")
+    return f"{value} {noun}"
+
+
 # -- Lazy-loading image list --------------------------------------------
 
 class _LazyImageList(QListWidget):
@@ -365,12 +379,12 @@ class _MissingResourceReplaceDialog(QDialog):
 
         layout = QVBoxLayout(self)
 
-        caption = CaptionLabel(
+        self._caption = CaptionLabel(
             "Choose replacement files for missing resources. "
             "The selected file names become the new project resource names."
         )
-        caption.setWordWrap(True)
-        layout.addWidget(caption)
+        self._caption.setWordWrap(True)
+        layout.addWidget(self._caption)
 
         self._table = QTableWidget(len(self._missing_names), 2, self)
         self._table.setHorizontalHeaderLabels(["Missing Resource", "Replacement File"])
@@ -400,14 +414,81 @@ class _MissingResourceReplaceDialog(QDialog):
             if exact_index == 0 and len(self._missing_names) == 1 and len(self._source_paths) == 1:
                 exact_index = 1
             combo.setCurrentIndex(exact_index)
+            combo.currentIndexChanged.connect(self._update_accessibility_summary)
 
             self._table.setCellWidget(row, 1, combo)
             self._combos.append((missing_name, combo))
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
+        self._ok_button = buttons.button(QDialogButtonBox.Ok)
+        self._cancel_button = buttons.button(QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._update_accessibility_summary()
+
+    def _selected_paths(self):
+        return [combo.currentData() for _, combo in self._combos if combo.currentData()]
+
+    def _duplicate_selected_paths(self):
+        seen = set()
+        duplicates = set()
+        for path in self._selected_paths():
+            if path in seen:
+                duplicates.add(path)
+            else:
+                seen.add(path)
+        return duplicates
+
+    def _update_accessibility_summary(self):
+        selected_count = len(self._selected_paths())
+        duplicate_count = len(self._duplicate_selected_paths())
+        summary = (
+            f"Replace missing resources: {_count_label(len(self._missing_names), 'missing resource')}. "
+            f"{_count_label(len(self._source_paths), 'candidate file')} available. "
+            f"{_count_label(selected_count, 'replacement')} selected."
+        )
+        if duplicate_count:
+            summary += f" {_count_label(duplicate_count, 'duplicate replacement file')} selected."
+
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._caption,
+            tooltip=self._caption.text(),
+            accessible_name=f"Replace missing resources help: {self._caption.text()}",
+        )
+        _set_widget_metadata(
+            self._table,
+            tooltip=(
+                f"Missing resource replacement table: {_count_label(len(self._missing_names), 'row')}. "
+                f"{_count_label(selected_count, 'replacement')} selected."
+            ),
+            accessible_name=(
+                f"Missing resource replacement table: {_count_label(len(self._missing_names), 'row')}. "
+                f"{_count_label(selected_count, 'replacement')} selected."
+            ),
+        )
+        for missing_name, combo in self._combos:
+            selection_text = combo.currentText() or "(Skip)"
+            _set_widget_metadata(
+                combo,
+                tooltip=f"Choose replacement file for {missing_name}. Current selection: {selection_text}.",
+                accessible_name=f"Replacement for {missing_name}: {selection_text}",
+            )
+        if self._ok_button is not None:
+            if duplicate_count:
+                tooltip = "Resolve duplicate replacement files before continuing."
+            elif selected_count:
+                tooltip = "Apply the selected replacement files."
+            else:
+                tooltip = "Choose at least one replacement file to continue."
+            _set_widget_metadata(self._ok_button, tooltip=tooltip, accessible_name="Confirm replacement files")
+        if self._cancel_button is not None:
+            _set_widget_metadata(
+                self._cancel_button,
+                tooltip="Cancel replacing missing resources.",
+                accessible_name="Cancel replacing missing resources",
+            )
 
     def selected_mapping(self):
         mapping = {}
@@ -459,9 +540,9 @@ class _ReferenceImpactDialog(QDialog):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(8)
 
-        summary_label = QLabel(summary)
-        summary_label.setWordWrap(True)
-        layout.addWidget(summary_label)
+        self._summary_label = QLabel(summary)
+        self._summary_label.setWordWrap(True)
+        layout.addWidget(self._summary_label)
 
         self._table = QTableWidget(len(usages), 3, self)
         self._table.setHorizontalHeaderLabels(["Page", "Widget", "Property"])
@@ -480,6 +561,10 @@ class _ReferenceImpactDialog(QDialog):
                 widget_text = f"{entry.widget_name} ({entry.widget_type})"
             widget_item = QTableWidgetItem(widget_text)
             prop_item = QTableWidgetItem(entry.property_name)
+            item_tooltip = f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
+            page_item.setToolTip(item_tooltip)
+            widget_item.setToolTip(item_tooltip)
+            prop_item.setToolTip(item_tooltip)
             self._table.setItem(row, 0, page_item)
             self._table.setItem(row, 1, widget_item)
             self._table.setItem(row, 2, prop_item)
@@ -487,23 +572,66 @@ class _ReferenceImpactDialog(QDialog):
         if usages:
             self._table.selectRow(0)
         self._table.itemDoubleClicked.connect(lambda *_args: self._open_selected_usage())
+        self._table.itemSelectionChanged.connect(self._update_accessibility_summary)
         layout.addWidget(self._table, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
-        ok_button = buttons.button(QDialogButtonBox.Ok)
-        if ok_button is not None:
-            ok_button.setText(confirm_text or "Continue")
-        cancel_button = buttons.button(QDialogButtonBox.Cancel)
-        if cancel_button is not None:
-            cancel_button.setText("Cancel")
+        self._ok_button = buttons.button(QDialogButtonBox.Ok)
+        if self._ok_button is not None:
+            self._ok_button.setText(confirm_text or "Continue")
+        self._cancel_button = buttons.button(QDialogButtonBox.Cancel)
+        if self._cancel_button is not None:
+            self._cancel_button.setText("Cancel")
         self._open_usage_button.clicked.connect(self._open_selected_usage)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._update_accessibility_summary()
 
     def selected_usage(self):
         return self._selected_usage
+
+    def _current_usage_label(self):
+        row = self._table.currentRow()
+        if row < 0 or row >= len(self._usages):
+            return "none"
+        entry = self._usages[row]
+        widget_text = entry.widget_name
+        if entry.widget_type:
+            widget_text = f"{entry.widget_name} ({entry.widget_type})"
+        return f"{entry.page_name}/{widget_text}"
+
+    def _update_accessibility_summary(self):
+        selection_label = self._current_usage_label()
+        summary = (
+            f"{self.windowTitle()}: {_count_label(len(self._usages), 'affected usage')}. "
+            f"Current selection: {selection_label}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._summary_label,
+            tooltip=self._summary_label.text(),
+            accessible_name=f"Reference impact summary: {self._summary_label.text()}",
+        )
+        _set_widget_metadata(
+            self._table,
+            tooltip=f"Affected usages table: {_count_label(len(self._usages), 'row')}. Current selection: {selection_label}.",
+            accessible_name=f"Affected usages table: {_count_label(len(self._usages), 'row')}. Current selection: {selection_label}.",
+        )
+        _set_widget_metadata(
+            self._open_usage_button,
+            tooltip=(
+                "Open the selected usage to review it in the editor."
+                if selection_label != "none"
+                else "Select a usage to open it in the editor."
+            ),
+            accessible_name="Open selected usage",
+        )
+        if self._ok_button is not None:
+            _set_widget_metadata(self._ok_button, tooltip="Continue with this action.", accessible_name=self._ok_button.text() or "Continue")
+        if self._cancel_button is not None:
+            _set_widget_metadata(self._cancel_button, tooltip="Cancel this action.", accessible_name="Cancel")
 
     def _open_selected_usage(self):
         row = self._table.currentRow()
@@ -548,8 +676,8 @@ class _BatchReplaceImpactDialog(QDialog):
         else:
             self._current_page_only = None
 
-        group_caption = QLabel("Rename Impact Summary")
-        layout.addWidget(group_caption)
+        self._group_caption = QLabel("Rename Impact Summary")
+        layout.addWidget(self._group_caption)
 
         self._impact_table = QTableWidget(0, 4, self)
         self._impact_table.setHorizontalHeaderLabels(["Missing Resource", "Replacement File", "Widgets", "Pages"])
@@ -565,8 +693,8 @@ class _BatchReplaceImpactDialog(QDialog):
         self._impact_table.itemSelectionChanged.connect(self._refresh_usage_view)
         layout.addWidget(self._impact_table)
 
-        usage_caption = QLabel("Affected Usages")
-        layout.addWidget(usage_caption)
+        self._usage_caption = QLabel("Affected Usages")
+        layout.addWidget(self._usage_caption)
 
         self._usage_table = QTableWidget(0, 3, self)
         self._usage_table.setHorizontalHeaderLabels(["Page", "Widget", "Property"])
@@ -578,16 +706,17 @@ class _BatchReplaceImpactDialog(QDialog):
         self._usage_table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._usage_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._usage_table.itemDoubleClicked.connect(lambda *_args: self._open_selected_usage())
+        self._usage_table.itemSelectionChanged.connect(self._update_accessibility_summary)
         layout.addWidget(self._usage_table, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
-        ok_button = buttons.button(QDialogButtonBox.Ok)
-        if ok_button is not None:
-            ok_button.setText(confirm_text or "Continue")
-        cancel_button = buttons.button(QDialogButtonBox.Cancel)
-        if cancel_button is not None:
-            cancel_button.setText("Cancel")
+        self._ok_button = buttons.button(QDialogButtonBox.Ok)
+        if self._ok_button is not None:
+            self._ok_button.setText(confirm_text or "Continue")
+        self._cancel_button = buttons.button(QDialogButtonBox.Cancel)
+        if self._cancel_button is not None:
+            self._cancel_button.setText("Cancel")
         self._open_usage_button.clicked.connect(self._open_selected_usage)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -600,6 +729,89 @@ class _BatchReplaceImpactDialog(QDialog):
 
     def _filter_to_current_page(self):
         return self._current_page_only is not None and self._current_page_only.isChecked() and bool(self._current_page_name)
+
+    def _current_impact_label(self):
+        impact = self._current_impact()
+        if impact is None:
+            return "none"
+        return f"{impact['old_name']} -> {impact['new_name']}"
+
+    def _current_usage_label(self):
+        row = self._usage_table.currentRow()
+        impact = self._current_impact()
+        usages = [] if impact is None else impact["usages"]
+        if row < 0 or row >= len(usages):
+            return "none"
+        entry = usages[row]
+        widget_text = entry.widget_name
+        if entry.widget_type:
+            widget_text = f"{entry.widget_name} ({entry.widget_type})"
+        return f"{entry.page_name}/{widget_text} [{entry.property_name}]"
+
+    def _update_accessibility_summary(self):
+        impact_label = self._current_impact_label()
+        usage_label = self._current_usage_label()
+        total_usage_count = sum(len(entry["usages"]) for entry in self._visible_impacts)
+        current_usage_count = self._usage_table.rowCount()
+        filter_summary = (
+            f"Current page only: {'on' if self._filter_to_current_page() else 'off'}."
+            if self._current_page_only is not None
+            else "Current page filter unavailable."
+        )
+        dialog_summary = (
+            f"{self.windowTitle()}: {_count_label(len(self._visible_impacts), 'visible rename impact')}. "
+            f"{_count_label(total_usage_count, 'visible usage')} shown. "
+            f"{filter_summary} Current rename: {impact_label}. Current usage: {usage_label}."
+        )
+        _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._summary_label,
+            tooltip=self._summary_label.text(),
+            accessible_name=f"Batch replace summary: {self._summary_label.text()}",
+        )
+        if self._current_page_only is not None:
+            _set_widget_metadata(
+                self._current_page_only,
+                tooltip=(
+                    f"Showing only impacts on the current page: {self._current_page_name}."
+                    if self._current_page_only.isChecked()
+                    else f"Filter impacts to the current page: {self._current_page_name}."
+                ),
+                accessible_name=f"Current page only filter: {'on' if self._current_page_only.isChecked() else 'off'}",
+            )
+        _set_widget_metadata(self._group_caption, tooltip=self._group_caption.text(), accessible_name=self._group_caption.text())
+        _set_widget_metadata(self._usage_caption, tooltip=self._usage_caption.text(), accessible_name=self._usage_caption.text())
+        _set_widget_metadata(
+            self._impact_table,
+            tooltip=f"Rename impact table: {_count_label(len(self._visible_impacts), 'row')}. Current selection: {impact_label}.",
+            accessible_name=f"Rename impact table: {_count_label(len(self._visible_impacts), 'row')}. Current selection: {impact_label}.",
+        )
+        _set_widget_metadata(
+            self._usage_table,
+            tooltip=f"Affected usages table: {_count_label(current_usage_count, 'row')}. Current selection: {usage_label}.",
+            accessible_name=f"Affected usages table: {_count_label(current_usage_count, 'row')}. Current selection: {usage_label}.",
+        )
+        _set_widget_metadata(
+            self._open_usage_button,
+            tooltip=(
+                "Open the selected affected usage in the editor."
+                if usage_label != "none"
+                else "Select an affected usage to open it in the editor."
+            ),
+            accessible_name="Open selected affected usage",
+        )
+        if self._ok_button is not None:
+            _set_widget_metadata(
+                self._ok_button,
+                tooltip="Apply the selected batch replacements.",
+                accessible_name=self._ok_button.text() or "Continue",
+            )
+        if self._cancel_button is not None:
+            _set_widget_metadata(
+                self._cancel_button,
+                tooltip="Cancel reviewing batch replacement impacts.",
+                accessible_name="Cancel batch replacement impact review",
+            )
 
     def _build_visible_impacts(self):
         impacts = []
@@ -679,10 +891,22 @@ class _BatchReplaceImpactDialog(QDialog):
         target_row = 0
         matched_row = False
         for row, entry in enumerate(self._visible_impacts):
-            self._impact_table.setItem(row, 0, QTableWidgetItem(entry["old_name"]))
-            self._impact_table.setItem(row, 1, QTableWidgetItem(entry["new_name"]))
-            self._impact_table.setItem(row, 2, QTableWidgetItem(str(entry["widget_count"])))
-            self._impact_table.setItem(row, 3, QTableWidgetItem(str(entry["page_count"])))
+            old_item = QTableWidgetItem(entry["old_name"])
+            new_item = QTableWidgetItem(entry["new_name"])
+            widget_item = QTableWidgetItem(str(entry["widget_count"]))
+            page_item = QTableWidgetItem(str(entry["page_count"]))
+            item_tooltip = (
+                f"Rename {entry['old_name']} to {entry['new_name']}. "
+                f"{_count_label(entry['widget_count'], 'widget')} affected across {_count_label(entry['page_count'], 'page')}."
+            )
+            old_item.setToolTip(item_tooltip)
+            new_item.setToolTip(item_tooltip)
+            widget_item.setToolTip(item_tooltip)
+            page_item.setToolTip(item_tooltip)
+            self._impact_table.setItem(row, 0, old_item)
+            self._impact_table.setItem(row, 1, new_item)
+            self._impact_table.setItem(row, 2, widget_item)
+            self._impact_table.setItem(row, 3, page_item)
             if selected_key == (entry["old_name"], entry["new_name"]):
                 target_row = row
                 matched_row = True
@@ -709,6 +933,10 @@ class _BatchReplaceImpactDialog(QDialog):
                 widget_text = f"{entry.widget_name} ({entry.widget_type})"
             widget_item = QTableWidgetItem(widget_text)
             prop_item = QTableWidgetItem(entry.property_name)
+            item_tooltip = f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
+            page_item.setToolTip(item_tooltip)
+            widget_item.setToolTip(item_tooltip)
+            prop_item.setToolTip(item_tooltip)
             self._usage_table.setItem(row, 0, page_item)
             self._usage_table.setItem(row, 1, widget_item)
             self._usage_table.setItem(row, 2, prop_item)
@@ -716,6 +944,7 @@ class _BatchReplaceImpactDialog(QDialog):
         self._open_usage_button.setEnabled(has_usages)
         if has_usages:
             self._usage_table.selectRow(0)
+        self._update_accessibility_summary()
 
     def _open_selected_usage(self):
         impact = self._current_impact()

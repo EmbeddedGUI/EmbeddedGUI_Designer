@@ -743,6 +743,134 @@ class TestResourcePanelFileFlow:
         assert activated == [("detail_page", "hero")]
         panel.deleteLater()
 
+    def test_missing_resource_replace_dialog_exposes_accessibility_metadata(self, qapp, monkeypatch):
+        from PyQt5.QtWidgets import QLabel
+        from ui_designer.ui.resource_panel import _MissingResourceReplaceDialog
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel.CaptionLabel", QLabel)
+
+        source_a = os.path.join("C:\\temp", "missing.png")
+        source_b = os.path.join("C:\\temp", "hero.png")
+
+        dialog = _MissingResourceReplaceDialog(
+            ["missing.png", "icon.png"],
+            [source_a, source_b],
+        )
+
+        first_combo = dialog._combos[0][1]
+        second_combo = dialog._combos[1][1]
+
+        assert "2 missing resources." in dialog.accessibleName()
+        assert "2 candidate files available." in dialog.accessibleName()
+        assert "1 replacement selected." in dialog.accessibleName()
+        assert dialog._table.accessibleName() == "Missing resource replacement table: 2 rows. 1 replacement selected."
+        assert first_combo.toolTip() == "Choose replacement file for missing.png. Current selection: missing.png."
+        assert second_combo.toolTip() == "Choose replacement file for icon.png. Current selection: (Skip)."
+        assert dialog._ok_button.toolTip() == "Apply the selected replacement files."
+
+        second_combo.setCurrentIndex(1)
+        qapp.processEvents()
+
+        assert "1 duplicate replacement file selected." in dialog.accessibleName()
+        assert dialog._ok_button.toolTip() == "Resolve duplicate replacement files before continuing."
+        dialog.deleteLater()
+
+    def test_reference_impact_dialog_exposes_accessibility_metadata(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import _ReferenceImpactDialog
+
+        usages = [
+            ResourceUsageEntry("image", "missing.png", "main_page", "hero", "image_file", "image"),
+            ResourceUsageEntry("image", "missing.png", "detail_page", "title", "image_file", "label"),
+        ]
+
+        dialog = _ReferenceImpactDialog(
+            None,
+            "Delete Resource",
+            "This action updates 2 widget references.",
+            usages,
+            "Delete",
+        )
+
+        assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
+        assert dialog._summary_label.accessibleName() == (
+            "Reference impact summary: This action updates 2 widget references."
+        )
+        assert dialog._table.accessibleName() == (
+            "Affected usages table: 2 rows. Current selection: main_page/hero (image)."
+        )
+        assert dialog._table.item(0, 1).toolTip() == (
+            "Page: main_page. Widget: hero (image). Property: image_file."
+        )
+        assert dialog._open_usage_button.toolTip() == "Open the selected usage to review it in the editor."
+
+        dialog._table.selectRow(1)
+        qapp.processEvents()
+
+        assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: detail_page/title (label)."
+        dialog.deleteLater()
+
+    def test_batch_replace_impact_dialog_exposes_accessibility_metadata(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import _BatchReplaceImpactDialog
+
+        impacts = [
+            {
+                "old_name": "missing_a.png",
+                "new_name": "renamed_a.png",
+                "usages": [
+                    ResourceUsageEntry("image", "missing_a.png", "main_page", "hero_main", "image_file", "image"),
+                ],
+                "widget_count": 1,
+                "page_count": 1,
+            },
+            {
+                "old_name": "missing_b.png",
+                "new_name": "renamed_b.png",
+                "usages": [
+                    ResourceUsageEntry("image", "missing_b.png", "detail_page", "hero_detail", "image_file", "image"),
+                ],
+                "widget_count": 1,
+                "page_count": 1,
+            },
+        ]
+
+        dialog = _BatchReplaceImpactDialog(
+            None,
+            "Replace Missing Resources",
+            "image",
+            impacts,
+            2,
+            "Replace",
+            current_page_name="detail_page",
+        )
+
+        assert "2 visible rename impacts." in dialog.accessibleName()
+        assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
+        assert dialog._current_page_only.toolTip() == "Filter impacts to the current page: detail_page."
+        assert dialog._impact_table.accessibleName() == (
+            "Rename impact table: 2 rows. Current selection: missing_a.png -> renamed_a.png."
+        )
+        assert dialog._usage_table.accessibleName() == (
+            "Affected usages table: 1 row. Current selection: main_page/hero_main (image) [image_file]."
+        )
+        assert dialog._impact_table.item(0, 0).toolTip() == (
+            "Rename missing_a.png to renamed_a.png. 1 widget affected across 1 page."
+        )
+        assert dialog._open_usage_button.toolTip() == "Open the selected affected usage in the editor."
+
+        dialog._current_page_only.setChecked(True)
+        qapp.processEvents()
+
+        assert dialog._current_page_only.toolTip() == "Showing only impacts on the current page: detail_page."
+        assert dialog._impact_table.accessibleName() == (
+            "Rename impact table: 1 row. Current selection: missing_b.png -> renamed_b.png."
+        )
+        assert dialog._usage_table.accessibleName() == (
+            "Affected usages table: 1 row. Current selection: detail_page/hero_detail (image) [image_file]."
+        )
+        dialog.deleteLater()
+
     def test_batch_replace_impact_dialog_can_filter_to_current_page(self, qapp):
         from ui_designer.model.resource_usage import ResourceUsageEntry
         from ui_designer.ui.resource_panel import _BatchReplaceImpactDialog
