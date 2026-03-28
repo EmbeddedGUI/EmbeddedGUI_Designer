@@ -814,6 +814,14 @@ class StatusCenterPanel(QWidget):
         value = str(value_text or "").strip()
         return f"{row_label} diagnostics: {value}" if value else f"{row_label} diagnostics"
 
+    def _health_share_summary(self, label, value_text, total_count):
+        share_label = str(label or "").strip() or "Diagnostics"
+        total = max(int(total_count or 0), 0)
+        if total <= 0:
+            return f"{share_label} share: No active diagnostics"
+        value = str(value_text or "").strip()
+        return f"{share_label} share: {value}" if value else f"{share_label} share"
+
     def _runtime_panel_accessible_name(self, runtime_text):
         message = str(runtime_text or "").strip()
         if message:
@@ -1191,12 +1199,15 @@ class StatusCenterPanel(QWidget):
         self._error_value.setAccessibleName(f"Errors value: {self._error_value.text()}")
         self._warning_value.setAccessibleName(f"Warnings value: {self._warning_value.text()}")
         self._info_value.setAccessibleName(f"Info value: {self._info_value.text()}")
-        self._set_hint(self._error_bar, f"Errors share: {self._error_value.text()}")
-        self._set_hint(self._warning_bar, f"Warnings share: {self._warning_value.text()}")
-        self._set_hint(self._info_bar, f"Info share: {self._info_value.text()}")
-        self._error_bar.setAccessibleName(f"Errors share: {self._error_value.text()}")
-        self._warning_bar.setAccessibleName(f"Warnings share: {self._warning_value.text()}")
-        self._info_bar.setAccessibleName(f"Info share: {self._info_value.text()}")
+        error_share = self._health_share_summary("Errors", self._error_value.text(), diag_total)
+        warning_share = self._health_share_summary("Warnings", self._warning_value.text(), diag_total)
+        info_share = self._health_share_summary("Info", self._info_value.text(), diag_total)
+        self._set_hint(self._error_bar, error_share)
+        self._set_hint(self._warning_bar, warning_share)
+        self._set_hint(self._info_bar, info_share)
+        self._error_bar.setAccessibleName(error_share)
+        self._warning_bar.setAccessibleName(warning_share)
+        self._info_bar.setAccessibleName(info_share)
         self._health_title.setText(self._diagnostic_title_text(diag_total))
         self._set_hint(self._health_title, self._diagnostic_title_tooltip(diag_total))
         self._health_title.setAccessibleName(self._health_title.text())
