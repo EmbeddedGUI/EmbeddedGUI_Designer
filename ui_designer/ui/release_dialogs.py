@@ -44,6 +44,12 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None) -> None:
         widget.setAccessibleName(accessible_name)
 
 
+def _count_label(count: int, singular: str, plural: str | None = None) -> str:
+    value = max(int(count or 0), 0)
+    noun = singular if value == 1 else (plural or f"{singular}s")
+    return f"{value} {noun}"
+
+
 def _history_string(entry: dict[str, object], key: str) -> str:
     value = entry.get(key, "")
     return str(value).strip() if value is not None else ""
@@ -594,6 +600,7 @@ class ReleaseBuildDialog(QDialog):
         index = self._profile_combo.findData(selected_profile)
         if index >= 0:
             self._profile_combo.setCurrentIndex(index)
+        self._profile_combo.currentIndexChanged.connect(self._update_accessibility_summary)
         form.addRow("Profile", self._profile_combo)
 
         self._sdk_label = QLabel(sdk_label or "SDK: unknown")
@@ -610,16 +617,83 @@ class ReleaseBuildDialog(QDialog):
         layout.addLayout(form)
 
         self._warnings_as_errors = QCheckBox("Treat warnings as errors")
+        self._warnings_as_errors.toggled.connect(self._update_accessibility_summary)
         layout.addWidget(self._warnings_as_errors)
 
         self._package_release = QCheckBox("Create zip package")
         self._package_release.setChecked(True)
+        self._package_release.toggled.connect(self._update_accessibility_summary)
         layout.addWidget(self._package_release)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self._ok_button = button_box.button(QDialogButtonBox.Ok)
+        self._cancel_button = button_box.button(QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self) -> None:
+        profile_text = self._profile_combo.currentText() or "none"
+        summary = (
+            f"Release build: profile {profile_text}. "
+            f"{self._sdk_label.text() or 'SDK: unknown'}. "
+            f"Output: {self._output_label.text() or 'none'}. "
+            f"Diagnostics: {self._warnings_label.text()}. "
+            f"Warnings as errors {'on' if self._warnings_as_errors.isChecked() else 'off'}. "
+            f"Create zip package {'on' if self._package_release.isChecked() else 'off'}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._profile_combo,
+            tooltip=f"Choose the release profile. Current profile: {profile_text}.",
+            accessible_name=f"Release profile: {profile_text}",
+        )
+        _set_widget_metadata(
+            self._sdk_label,
+            tooltip=self._sdk_label.text(),
+            accessible_name=f"Release SDK: {self._sdk_label.text()}",
+        )
+        _set_widget_metadata(
+            self._output_label,
+            tooltip=f"Release output root: {self._output_label.text() or 'none'}",
+            accessible_name=f"Release output root: {self._output_label.text() or 'none'}",
+        )
+        _set_widget_metadata(
+            self._warnings_label,
+            tooltip=f"Release diagnostics summary: {self._warnings_label.text()}",
+            accessible_name=f"Release diagnostics summary: {self._warnings_label.text()}",
+        )
+        _set_widget_metadata(
+            self._warnings_as_errors,
+            tooltip=(
+                "Treat release warnings as build errors."
+                if self._warnings_as_errors.isChecked()
+                else "Allow release builds to continue when warnings are present."
+            ),
+            accessible_name=f"Treat warnings as errors: {'on' if self._warnings_as_errors.isChecked() else 'off'}",
+        )
+        _set_widget_metadata(
+            self._package_release,
+            tooltip=(
+                "Create a zip package in addition to the release directory."
+                if self._package_release.isChecked()
+                else "Create only the release directory without a zip package."
+            ),
+            accessible_name=f"Create zip package: {'on' if self._package_release.isChecked() else 'off'}",
+        )
+        if self._ok_button is not None:
+            _set_widget_metadata(
+                self._ok_button,
+                tooltip="Start the release build with the selected profile.",
+                accessible_name=self._ok_button.text() or "OK",
+            )
+        if self._cancel_button is not None:
+            _set_widget_metadata(
+                self._cancel_button,
+                tooltip="Cancel the release build.",
+                accessible_name="Cancel release build",
+            )
 
     @property
     def selected_profile_id(self) -> str:
@@ -655,15 +729,15 @@ class ReleaseProfilesDialog(QDialog):
         left_panel.addWidget(self._profile_list, 1)
 
         left_actions = QHBoxLayout()
-        add_btn = QPushButton("Add")
-        copy_btn = QPushButton("Copy")
-        delete_btn = QPushButton("Delete")
-        set_default_btn = QPushButton("Set Default")
-        add_btn.clicked.connect(self._add_profile)
-        copy_btn.clicked.connect(self._copy_profile)
-        delete_btn.clicked.connect(self._delete_profile)
-        set_default_btn.clicked.connect(self._set_default_profile)
-        for button in (add_btn, copy_btn, delete_btn, set_default_btn):
+        self._add_btn = QPushButton("Add")
+        self._copy_btn = QPushButton("Copy")
+        self._delete_btn = QPushButton("Delete")
+        self._set_default_btn = QPushButton("Set Default")
+        self._add_btn.clicked.connect(self._add_profile)
+        self._copy_btn.clicked.connect(self._copy_profile)
+        self._delete_btn.clicked.connect(self._delete_profile)
+        self._set_default_btn.clicked.connect(self._set_default_profile)
+        for button in (self._add_btn, self._copy_btn, self._delete_btn, self._set_default_btn):
             left_actions.addWidget(button)
         left_panel.addLayout(left_actions)
 
@@ -702,6 +776,8 @@ class ReleaseProfilesDialog(QDialog):
         root_layout.addWidget(self._default_label)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self._ok_button = button_box.button(QDialogButtonBox.Ok)
+        self._cancel_button = button_box.button(QDialogButtonBox.Cancel)
         button_box.accepted.connect(self._accept_with_validation)
         button_box.rejected.connect(self.reject)
         root_layout.addWidget(button_box)
@@ -709,6 +785,7 @@ class ReleaseProfilesDialog(QDialog):
         self._rebuild_profile_list()
         if self._profile_list.count():
             self._profile_list.setCurrentRow(0)
+        self._update_accessibility_summary()
 
     @property
     def release_config(self) -> ReleaseConfig:
@@ -731,6 +808,15 @@ class ReleaseProfilesDialog(QDialog):
                 label += " [default]"
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, profile.id)
+            item_tooltip = (
+                f"Release profile {profile.id}: {profile.name or profile.id}. "
+                f"Port {profile.port or 'pc'}. Target {profile.make_target or 'all'}. "
+                f"Package {profile.package_format or 'dir+zip'}."
+            )
+            if profile.id == self._release_config.default_profile:
+                item_tooltip += " Default profile."
+            item.setToolTip(item_tooltip)
+            item.setStatusTip(item_tooltip)
             self._profile_list.addItem(item)
         self._profile_list.blockSignals(False)
 
@@ -741,9 +827,11 @@ class ReleaseProfilesDialog(QDialog):
                     self._profile_list.setCurrentRow(row)
                     break
         self._default_label.setText(f"Default Profile: {self._release_config.default_profile}")
+        self._update_accessibility_summary()
 
     def _load_profile_into_form(self, row: int) -> None:
         if row < 0 or row >= len(self._release_config.profiles):
+            self._update_accessibility_summary()
             return
         profile = self._release_config.profiles[row]
         self._id_edit.blockSignals(True)
@@ -770,10 +858,12 @@ class ReleaseProfilesDialog(QDialog):
         self._package_format_combo.blockSignals(False)
         self._extra_args_edit.blockSignals(False)
         self._copy_resource_check.blockSignals(False)
+        self._update_accessibility_summary()
 
     def _sync_current_profile(self) -> None:
         profile = self._current_profile()
         if profile is None:
+            self._update_accessibility_summary()
             return
         profile.id = self._id_edit.text().strip()
         profile.name = self._name_edit.text().strip()
@@ -786,6 +876,86 @@ class ReleaseProfilesDialog(QDialog):
             profile.extra_make_args = [token for token in self._extra_args_edit.text().split(" ") if token]
         profile.copy_resource_dir = self._copy_resource_check.isChecked()
         self._rebuild_profile_list()
+
+    def _current_profile_label(self) -> str:
+        profile = self._current_profile()
+        if profile is None:
+            return "none"
+        name = profile.name or profile.id or "unnamed"
+        label = f"{name} [{profile.id or 'missing id'}]"
+        if profile.id == self._release_config.default_profile:
+            label += " default"
+        return label
+
+    def _update_accessibility_summary(self) -> None:
+        current_profile_label = self._current_profile_label()
+        summary = (
+            f"Release profiles: {_count_label(len(self._release_config.profiles), 'profile')}. "
+            f"Default profile: {self._release_config.default_profile}. "
+            f"Current profile: {current_profile_label}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._profile_list,
+            tooltip=f"Release profile list: {_count_label(self._profile_list.count(), 'entry', 'entries')}. Current profile: {current_profile_label}.",
+            accessible_name=f"Release profile list: {_count_label(self._profile_list.count(), 'entry', 'entries')}. Current profile: {current_profile_label}.",
+        )
+        _set_widget_metadata(self._default_label, tooltip=self._default_label.text(), accessible_name=self._default_label.text())
+        _set_widget_metadata(self._add_btn, tooltip="Add a new release profile.", accessible_name="Add release profile")
+        _set_widget_metadata(
+            self._copy_btn,
+            tooltip=(
+                "Copy the current release profile."
+                if self._current_profile() is not None
+                else "Select a release profile to copy it."
+            ),
+            accessible_name="Copy release profile",
+        )
+        _set_widget_metadata(
+            self._delete_btn,
+            tooltip=(
+                "At least one release profile is required."
+                if len(self._release_config.profiles) <= 1
+                else "Delete the current release profile."
+            ),
+            accessible_name="Delete release profile",
+        )
+        _set_widget_metadata(
+            self._set_default_btn,
+            tooltip=(
+                "The current profile is already the default release profile."
+                if self._current_profile() is not None and self._current_profile().id == self._release_config.default_profile
+                else "Set the current profile as the default release profile."
+            ),
+            accessible_name="Set default release profile",
+        )
+        _set_widget_metadata(self._id_edit, tooltip=f"Release profile ID: {self._id_edit.text() or 'empty'}", accessible_name=f"Release profile ID: {self._id_edit.text() or 'empty'}")
+        _set_widget_metadata(self._name_edit, tooltip=f"Release profile name: {self._name_edit.text() or 'empty'}", accessible_name=f"Release profile name: {self._name_edit.text() or 'empty'}")
+        _set_widget_metadata(self._port_edit, tooltip=f"Release port: {self._port_edit.text() or 'pc'}", accessible_name=f"Release port: {self._port_edit.text() or 'pc'}")
+        _set_widget_metadata(self._make_target_edit, tooltip=f"Release make target: {self._make_target_edit.text() or 'all'}", accessible_name=f"Release make target: {self._make_target_edit.text() or 'all'}")
+        _set_widget_metadata(
+            self._package_format_combo,
+            tooltip=f"Release package format: {self._package_format_combo.currentText() or 'Directory + Zip'}.",
+            accessible_name=f"Release package format: {self._package_format_combo.currentText() or 'Directory + Zip'}",
+        )
+        _set_widget_metadata(
+            self._extra_args_edit,
+            tooltip=f"Extra make arguments: {self._extra_args_edit.text() or 'none'}",
+            accessible_name=f"Extra make arguments: {self._extra_args_edit.text() or 'none'}",
+        )
+        _set_widget_metadata(
+            self._copy_resource_check,
+            tooltip=(
+                "Copy the resource directory into the release dist output."
+                if self._copy_resource_check.isChecked()
+                else "Do not copy the resource directory into the release dist output."
+            ),
+            accessible_name=f"Copy resource directory into dist: {'on' if self._copy_resource_check.isChecked() else 'off'}",
+        )
+        if self._ok_button is not None:
+            _set_widget_metadata(self._ok_button, tooltip="Save the release profile changes.", accessible_name=self._ok_button.text() or "OK")
+        if self._cancel_button is not None:
+            _set_widget_metadata(self._cancel_button, tooltip="Discard the release profile changes.", accessible_name="Cancel release profile changes")
 
     def _add_profile(self) -> None:
         base = "windows-pc"

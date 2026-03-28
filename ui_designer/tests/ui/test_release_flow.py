@@ -423,6 +423,75 @@ def test_open_last_release_actions_reflect_available_artifacts(qapp, isolated_co
 
 
 @_skip_no_qt
+def test_release_build_dialog_exposes_accessibility_metadata(qapp):
+    from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+    from ui_designer.ui.release_dialogs import ReleaseBuildDialog
+
+    release_config = ReleaseConfig(
+        default_profile="windows-pc",
+        profiles=[
+            ReleaseProfile(id="windows-pc", name="Windows PC"),
+            ReleaseProfile(id="esp32", name="ESP32", port="esp32", make_target="release"),
+        ],
+    )
+
+    dialog = ReleaseBuildDialog(
+        release_config,
+        "SDK: ready",
+        "D:/workspace/output/ui_designer_release",
+        2,
+    )
+
+    assert "Release build: profile Windows PC (windows-pc)." in dialog.accessibleName()
+    assert dialog._profile_combo.toolTip() == "Choose the release profile. Current profile: Windows PC (windows-pc)."
+    assert dialog._warnings_as_errors.toolTip() == "Allow release builds to continue when warnings are present."
+    assert dialog._package_release.toolTip() == "Create a zip package in addition to the release directory."
+
+    dialog._profile_combo.setCurrentIndex(1)
+    dialog._warnings_as_errors.setChecked(True)
+    dialog._package_release.setChecked(False)
+    qapp.processEvents()
+
+    assert "Release build: profile ESP32 (esp32)." in dialog.accessibleName()
+    assert dialog._warnings_as_errors.toolTip() == "Treat release warnings as build errors."
+    assert dialog._package_release.toolTip() == "Create only the release directory without a zip package."
+
+
+@_skip_no_qt
+def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
+    from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+    from ui_designer.ui.release_dialogs import ReleaseProfilesDialog
+
+    release_config = ReleaseConfig(
+        default_profile="windows-pc",
+        profiles=[
+            ReleaseProfile(id="windows-pc", name="Windows PC"),
+            ReleaseProfile(id="esp32", name="ESP32", port="esp32", make_target="release"),
+        ],
+    )
+
+    dialog = ReleaseProfilesDialog(release_config)
+
+    assert dialog.accessibleName() == (
+        "Release profiles: 2 profiles. Default profile: windows-pc. Current profile: Windows PC [windows-pc] default."
+    )
+    assert dialog._profile_list.accessibleName() == (
+        "Release profile list: 2 entries. Current profile: Windows PC [windows-pc] default."
+    )
+    assert "Default profile." in dialog._profile_list.item(0).toolTip()
+    assert dialog._delete_btn.toolTip() == "Delete the current release profile."
+    assert dialog._set_default_btn.toolTip() == "The current profile is already the default release profile."
+    assert dialog._id_edit.accessibleName() == "Release profile ID: windows-pc"
+
+    dialog._profile_list.setCurrentRow(1)
+    qapp.processEvents()
+
+    assert dialog._set_default_btn.toolTip() == "Set the current profile as the default release profile."
+    assert dialog._name_edit.accessibleName() == "Release profile name: ESP32"
+    assert dialog._package_format_combo.accessibleName() == "Release package format: Directory + Zip"
+
+
+@_skip_no_qt
 def test_release_history_dialog_previews_manifest_and_log(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
