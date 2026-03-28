@@ -881,8 +881,8 @@ class MainWindow(QMainWindow):
                 self._view_menu.menuAction(),
                 (
                     "Change workspace layout, themes, preview modes, and mockup options. "
-                    f"Theme: {theme_label}. Layout: {layout_label}. Grid: {grid_state}. "
-                    f"Snap: {snap_label}. Mockup: {mockup_state}."
+                    f"Theme: {theme_label}. Font size: {font_label}. Layout: {layout_label}. "
+                    f"Grid: {grid_state}. Snap: {snap_label}. Mockup: {mockup_state}."
                 ),
             )
         if hasattr(self, "_theme_menu"):

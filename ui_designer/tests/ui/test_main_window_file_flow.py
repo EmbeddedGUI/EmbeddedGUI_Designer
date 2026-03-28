@@ -3411,17 +3411,19 @@ class TestMainWindowFileFlow:
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (
             "Change workspace layout, themes, preview modes, and mockup options. "
-            "Theme: Dark. Layout: Horizontal, overlay first. Grid: visible. Snap: 8px. Mockup: none loaded."
+            "Theme: Dark. Font size: app default. Layout: Horizontal, overlay first. Grid: visible. Snap: 8px. Mockup: none loaded."
         )
         assert actions["View"].statusTip() == actions["View"].toolTip()
 
         window._set_theme("light")
         window._set_show_grid(False)
         window._set_overlay_mode("hidden")
+        isolated_config.font_size_px = 11
+        window._update_view_and_theme_action_metadata()
 
         assert actions["View"].toolTip() == (
             "Change workspace layout, themes, preview modes, and mockup options. "
-            "Theme: Light. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
+            "Theme: Light. Font size: 11pt. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
         )
         _close_window(window)
 
