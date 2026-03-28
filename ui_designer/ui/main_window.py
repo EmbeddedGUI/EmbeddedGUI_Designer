@@ -1068,9 +1068,10 @@ class MainWindow(QMainWindow):
         if action is None:
             return
         label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+        target_dir = normalize_path(default_sdk_install_dir()) or "default location"
         self._apply_action_hint(
             action,
-            f"{describe_auto_download_plan()} Current binding: {label}.",
+            f"{describe_auto_download_plan()} Current binding: {label}. Install target: {target_dir}.",
         )
 
     def _update_sdk_root_action_metadata(self, binding_label=""):

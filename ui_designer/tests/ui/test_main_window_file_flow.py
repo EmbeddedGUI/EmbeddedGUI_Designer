@@ -3684,6 +3684,7 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
@@ -3716,6 +3717,7 @@ class TestMainWindowFileFlow:
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
         assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
         assert "Current binding: SDK: missing." in actions["Download SDK Copy..."].toolTip()
+        assert f"Install target: {main_window_module.default_sdk_install_dir()}." in actions["Download SDK Copy..."].toolTip()
         assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
         assert actions["Set SDK Root..."].toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: missing."
@@ -3820,6 +3822,7 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
         monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: download-test")
+        monkeypatch.setattr(main_window_module, "default_sdk_install_dir", lambda: "C:/sdk-target")
 
         window.project_root = "C:/sdk"
         window._update_sdk_status_label()
@@ -3829,6 +3832,7 @@ class TestMainWindowFileFlow:
             if action.text() == "Download SDK Copy..."
         )
         assert "Current binding: SDK: download-test." in action.toolTip()
+        assert f"Install target: {os.path.normpath('C:/sdk-target')}." in action.toolTip()
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
