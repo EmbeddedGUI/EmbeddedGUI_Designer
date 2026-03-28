@@ -2990,6 +2990,131 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_release_artifact_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.engine.release_engine import release_history_path
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BuildReadyCompiler:
+            def can_build(self):
+                return True
+
+            def is_preview_running(self):
+                return False
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReleaseArtifactsDemo"
+        project = _create_project(project_dir, "ReleaseArtifactsDemo", sdk_root)
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Open Last Release Folder",
+                "Open Last Release Dist",
+                "Open Last Release Manifest",
+                "Open Last Release Version",
+                "Open Last Release Package",
+                "Open Last Release Log",
+                "Open Release History File",
+            }
+        }
+
+        assert actions["Open Last Release Folder"].toolTip() == (
+            "Open last release folder\n\nNo release history available\n\nRelease folder unavailable\nOutput root: none"
+        )
+        assert actions["Open Last Release Folder"].statusTip() == actions["Open Last Release Folder"].toolTip()
+        assert actions["Open Last Release Folder"].isEnabled() is False
+        assert actions["Open Release History File"].toolTip() == (
+            "Open release history file\n\nNo release history available\n\nRelease history file unavailable\nExpected file: none"
+        )
+        assert actions["Open Release History File"].statusTip() == actions["Open Release History File"].toolTip()
+        assert actions["Open Release History File"].isEnabled() is False
+
+        window.project = project
+        window._project_dir = str(project_dir)
+        window.project_root = str(sdk_root)
+        window.compiler = _BuildReadyCompiler()
+        window._update_compile_availability()
+
+        output_root = window._release_output_root()
+        history_path = release_history_path(str(project_dir), output_dir=output_root)
+        assert actions["Open Last Release Folder"].toolTip() == (
+            "Open last release folder\n\nNo release history available\n\n"
+            f"Release folder unavailable\nOutput root: {output_root}"
+        )
+        assert actions["Open Release History File"].toolTip() == (
+            "Open release history file\n\nNo release history available\n\n"
+            f"Release history file unavailable\nExpected file: {history_path}"
+        )
+
+        release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
+        dist_dir = release_root / "dist"
+        manifest_path = release_root / "release-manifest.json"
+        version_path = release_root / "VERSION.txt"
+        zip_path = release_root / "ReleaseArtifactsDemo.zip"
+        log_path = release_root / "logs" / "build.log"
+        dist_dir.mkdir(parents=True)
+        manifest_path.write_text("{}", encoding="utf-8")
+        version_path.write_text("1.0.0\n", encoding="utf-8")
+        zip_path.write_text("zip\n", encoding="utf-8")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text("build log\n", encoding="utf-8")
+        Path(history_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(history_path).write_text("[]\n", encoding="utf-8")
+
+        latest_entry = {
+            "build_id": "20260329-010203",
+            "profile_id": "stm32-sim",
+            "status": "success",
+            "sdk": {"source_kind": "git", "commit_short": "abc1234"},
+            "release_root": str(release_root),
+            "dist_dir": str(dist_dir),
+            "manifest_path": str(manifest_path),
+            "log_path": str(log_path),
+            "zip_path": str(zip_path),
+        }
+        monkeypatch.setattr(main_window_module, "latest_release_entry", lambda *args, **kwargs: latest_entry)
+        window._update_compile_availability()
+
+        assert actions["Open Last Release Folder"].toolTip() == (
+            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{release_root}"
+        )
+        assert actions["Open Last Release Folder"].isEnabled() is True
+        assert actions["Open Last Release Dist"].toolTip() == (
+            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{dist_dir}"
+        )
+        assert actions["Open Last Release Manifest"].toolTip() == (
+            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{manifest_path}"
+        )
+        assert actions["Open Last Release Version"].toolTip() == (
+            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{version_path}"
+        )
+        assert actions["Open Last Release Package"].toolTip() == (
+            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{zip_path}"
+        )
+        assert actions["Open Last Release Log"].toolTip() == (
+            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{log_path}"
+        )
+        assert actions["Open Release History File"].toolTip() == (
+            "Open release history file\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"{history_path}"
+        )
+        for action in actions.values():
+            assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
     def test_view_panel_navigation_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

@@ -162,12 +162,18 @@ def _latest_release_summary(entry):
     return f"Latest release: {build_id} | {profile_id} | {status} | sdk {_release_sdk_summary(entry.get('sdk'))}"
 
 
-def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="") -> str:
+def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="", fallback_hint="") -> str:
     lines = [action_label, "", _latest_release_summary(latest_entry)]
     if path:
         lines.extend(["", path])
-    elif unavailable_label:
-        lines.extend(["", unavailable_label])
+    else:
+        detail_lines = []
+        if unavailable_label:
+            detail_lines.append(unavailable_label)
+        if fallback_hint:
+            detail_lines.append(fallback_hint)
+        if detail_lines:
+            lines.extend(["", *detail_lines])
     return "\n".join(lines)
 
 
@@ -2241,11 +2247,23 @@ class MainWindow(QMainWindow):
             self._open_last_release_log_action.setEnabled(bool(log_path and os.path.isfile(log_path)))
             self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
             self._open_last_release_dir_action.setToolTip(
-                _release_action_tooltip("Open last release folder", latest_entry, path=release_root, unavailable_label="Release folder unavailable")
+                _release_action_tooltip(
+                    "Open last release folder",
+                    latest_entry,
+                    path=release_root,
+                    unavailable_label="Release folder unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                )
             )
             self._open_last_release_dir_action.setStatusTip(self._open_last_release_dir_action.toolTip())
             self._open_last_release_dist_action.setToolTip(
-                _release_action_tooltip("Open last release dist", latest_entry, path=dist_dir, unavailable_label="Release dist unavailable")
+                _release_action_tooltip(
+                    "Open last release dist",
+                    latest_entry,
+                    path=dist_dir,
+                    unavailable_label="Release dist unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                )
             )
             self._open_last_release_dist_action.setStatusTip(self._open_last_release_dist_action.toolTip())
             self._open_last_release_manifest_action.setToolTip(
@@ -2254,6 +2272,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=manifest_path,
                     unavailable_label="Release manifest unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
                 )
             )
             self._open_last_release_manifest_action.setStatusTip(self._open_last_release_manifest_action.toolTip())
@@ -2263,6 +2282,7 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=version_path,
                     unavailable_label="Release version unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
                 )
             )
             self._open_last_release_version_action.setStatusTip(self._open_last_release_version_action.toolTip())
@@ -2272,19 +2292,27 @@ class MainWindow(QMainWindow):
                     latest_entry,
                     path=zip_path,
                     unavailable_label="Release package unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
                 )
             )
             self._open_last_release_package_action.setStatusTip(self._open_last_release_package_action.toolTip())
             self._open_last_release_log_action.setToolTip(
-                _release_action_tooltip("Open last release log", latest_entry, path=log_path, unavailable_label="Release log unavailable")
+                _release_action_tooltip(
+                    "Open last release log",
+                    latest_entry,
+                    path=log_path,
+                    unavailable_label="Release log unavailable",
+                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                )
             )
             self._open_last_release_log_action.setStatusTip(self._open_last_release_log_action.toolTip())
             self._open_release_history_file_action.setToolTip(
                 _release_action_tooltip(
                     "Open release history file",
                     latest_entry,
-                    path=history_file_path,
+                    path=history_file_path if history_file_path and os.path.isfile(history_file_path) else "",
                     unavailable_label="Release history file unavailable",
+                    fallback_hint=f"Expected file: {history_file_path or 'none'}",
                 )
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
