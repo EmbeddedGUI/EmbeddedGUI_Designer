@@ -1398,14 +1398,16 @@ class ReleaseHistoryDialog(QDialog):
 
     def _copy_path_hint(self, label: str, path: str) -> str:
         if path:
-            return f"Copy the {label} path."
-        return f"No {label} path is available to copy."
+            return f"Copy the {label} path. Current path: {path}."
+        return f"No {label} path is available to copy. Current path: none."
 
     def _open_path_hint(self, label: str, path: str, *, directory: bool = False) -> str:
         exists = os.path.isdir(path) if directory else os.path.isfile(path)
         if path and exists:
-            return f"Open the {label}."
-        return f"The {label} is unavailable or missing."
+            return f"Open the {label}. Path state: available. Current path: {path}."
+        if path:
+            return f"The {label} is unavailable or missing. Path state: missing. Current path: {path}."
+        return f"The {label} is unavailable or missing. Path state: unavailable. Current path: none."
 
     def _preview_mode_hint(self, mode: str) -> str:
         entry = self._current_entry()
@@ -1618,9 +1620,12 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._open_history_file_button,
             tooltip=(
-                "Open the release history JSON file."
-                if history_exists and self._open_path_callback is not None
-                else "The release history JSON file is unavailable or cannot be opened here."
+                self._open_path_hint("release history JSON file", self._history_path)
+                if self._open_path_callback is not None
+                else (
+                    f"The release history JSON file is unavailable or cannot be opened here. "
+                    f"Path state: {'missing' if self._history_path else 'unavailable'}. Current path: {self._history_path or 'none'}."
+                )
             ),
             accessible_name=(
                 "Open release history file"

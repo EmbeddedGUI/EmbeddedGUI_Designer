@@ -676,9 +676,12 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._preview_manifest_button.toolTip() == "Preview the selected release manifest."
     assert dialog._preview_manifest_button.accessibleName() == "Preview manifest"
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
-    assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy."
+    assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
     assert dialog._copy_history_file_button.accessibleName() == "Copy release history file path unavailable"
     assert dialog._copy_history_json_button.accessibleName() == "Copy release history JSON unavailable"
+    assert dialog._open_history_file_button.toolTip() == (
+        "The release history JSON file is unavailable or cannot be opened here. Path state: unavailable. Current path: none."
+    )
     assert dialog._open_history_file_button.accessibleName() == "Open release history file unavailable"
     assert dialog._refresh_button.toolTip() == "Refresh unavailable because no history reload callback was provided."
     assert dialog._refresh_button.accessibleName() == "Refresh release history unavailable"
@@ -722,7 +725,8 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._reset_view_button.accessibleName() == "Reset release history view"
     assert dialog._copy_history_json_button.toolTip() == "Copy the release history JSON file."
     assert dialog._copy_history_json_button.accessibleName() == "Copy release history JSON"
-    assert dialog._open_history_file_button.toolTip() == "Open the release history JSON file."
+    assert dialog._copy_history_file_button.toolTip() == f"Copy the release history file path. Current path: {history_path}."
+    assert dialog._open_history_file_button.toolTip() == f"Open the release history JSON file. Path state: available. Current path: {history_path}."
     assert dialog._open_history_file_button.accessibleName() == "Open release history file"
     assert dialog._refresh_button.toolTip() == "Reload release history from disk."
     assert dialog._refresh_button.accessibleName() == "Refresh release history"
