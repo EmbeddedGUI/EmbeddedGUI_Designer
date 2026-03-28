@@ -850,7 +850,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
         assert panel._recent_actions_label.toolTip() == "No recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
-        assert panel._repeat_action_button.toolTip() == "No recent action is available to repeat yet."
+        assert panel._repeat_action_button.toolTip() == "No recent action to repeat yet."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
         panel.deleteLater()
@@ -960,7 +960,7 @@ class TestStatusCenterPanel:
         placeholder = panel._repeat_action_menu.actions()[0]
         assert placeholder.text() == "No recent actions yet"
         assert placeholder.toolTip() == "No recent actions yet."
-        assert panel._repeat_action_button.toolTip() == "No recent action is available to repeat yet."
+        assert panel._repeat_action_button.toolTip() == "No recent action to repeat yet."
 
         panel._project_btn.click()
         panel._assets_btn.click()

@@ -511,7 +511,7 @@ class StatusCenterPanel(QWidget):
 
     def _repeat_action_tooltip(self, action_label):
         if not self._last_action:
-            return "No recent action is available to repeat yet."
+            return "No recent action to repeat yet."
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
         if count > 1:
