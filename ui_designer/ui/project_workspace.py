@@ -73,10 +73,14 @@ class ProjectWorkspacePanel(QWidget):
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         self._list_btn.setIcon(make_icon("project"))
+        self._list_btn.setToolTip("Show the page list for structure-first editing.")
+        self._list_btn.setAccessibleName("Workspace view button: List. Structure first.")
         self._thumb_btn = QPushButton("Thumbnails\nVisual scan")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         self._thumb_btn.setIcon(make_icon("image"))
+        self._thumb_btn.setToolTip("Show page thumbnails for a visual scan.")
+        self._thumb_btn.setAccessibleName("Workspace view button: Thumbnails. Visual scan.")
         self._button_group.addButton(self._list_btn)
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
@@ -95,8 +99,9 @@ class ProjectWorkspacePanel(QWidget):
         self.set_view(self.VIEW_LIST)
         self.set_workspace_snapshot()
 
-    def _set_chip(self, chip, text, tone=None):
+    def _set_chip(self, chip, text, tone=None, accessible_name=None):
         chip.setText(str(text or ""))
+        chip.setAccessibleName(str(accessible_name or text or ""))
         if tone is not None:
             chip.setProperty("chipTone", str(tone or "accent"))
         chip.style().unpolish(chip)
@@ -111,7 +116,8 @@ class ProjectWorkspacePanel(QWidget):
             self._list_btn.setChecked(True)
             self._stack.setCurrentWidget(self._list_view)
             view_name = self.VIEW_LIST
-        self._set_chip(self._view_chip, "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view", "accent")
+        view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
+        self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
         self.view_changed.emit(view_name)
 
     def current_view(self):
@@ -124,13 +130,38 @@ class ProjectWorkspacePanel(QWidget):
         dirty = max(int(dirty_pages or 0), 0)
         active = str(active_page or "").strip() or "None"
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
-        self._set_chip(self._page_count_chip, page_label, "success" if pages > 0 else "warning")
+        self._set_chip(
+            self._page_count_chip,
+            page_label,
+            "success" if pages > 0 else "warning",
+            accessible_name=f"Workspace pages: {page_label}.",
+        )
         if active != "None":
-            self._set_chip(self._active_page_chip, f"Active: {active}", "accent")
+            self._set_chip(
+                self._active_page_chip,
+                f"Active: {active}",
+                "accent",
+                accessible_name=f"Workspace active page: {active}.",
+            )
         else:
-            self._set_chip(self._active_page_chip, "No active page", "warning")
+            self._set_chip(
+                self._active_page_chip,
+                "No active page",
+                "warning",
+                accessible_name="Workspace active page: none.",
+            )
         if dirty > 0:
             dirty_label = f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages"
-            self._set_chip(self._dirty_pages_chip, dirty_label, "warning")
+            self._set_chip(
+                self._dirty_pages_chip,
+                dirty_label,
+                "warning",
+                accessible_name=f"Workspace dirty pages: {dirty_label}.",
+            )
         else:
-            self._set_chip(self._dirty_pages_chip, "No dirty pages", "success")
+            self._set_chip(
+                self._dirty_pages_chip,
+                "No dirty pages",
+                "success",
+                accessible_name="Workspace dirty pages: no dirty pages.",
+            )
