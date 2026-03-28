@@ -253,13 +253,21 @@ class WelcomePage(QWidget):
         main_layout.addStretch()
         main_layout.addWidget(center_widget)
         main_layout.addStretch()
-        self._new_project_btn.setAccessibleName("Create new project")
-        self._open_project_btn.setAccessibleName("Open project file")
+        self._new_project_btn.setAccessibleName("Create new project action")
+        self._open_project_btn.setAccessibleName("Open project file action")
         self._open_app_btn.setAccessibleName("Open SDK example")
         self._set_sdk_root_btn.setAccessibleName("Set SDK root")
         self._download_sdk_btn.setAccessibleName("Download SDK")
-        _set_widget_metadata(self._new_project_btn, tooltip="Create a new EmbeddedGUI Designer project.", accessible_name="Create new project")
-        _set_widget_metadata(self._open_project_btn, tooltip="Open an existing .egui project file.", accessible_name="Open project file")
+        _set_widget_metadata(
+            self._new_project_btn,
+            tooltip="Create a new EmbeddedGUI Designer project.",
+            accessible_name="Create new project action. Create a new EmbeddedGUI Designer project.",
+        )
+        _set_widget_metadata(
+            self._open_project_btn,
+            tooltip="Open an existing .egui project file.",
+            accessible_name="Open project file action. Open an existing .egui project file.",
+        )
         _set_widget_metadata(self._open_app_btn, tooltip="Open an SDK example project or legacy example.", accessible_name="Open SDK example")
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 

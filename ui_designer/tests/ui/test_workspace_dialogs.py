@@ -658,6 +658,13 @@ class TestWelcomePage:
         assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
+        assert page._new_project_btn.accessibleName() == (
+            "Create new project action. Create a new EmbeddedGUI Designer project."
+        )
+        assert page._open_project_btn.toolTip() == "Open an existing .egui project file."
+        assert page._open_project_btn.accessibleName() == (
+            "Open project file action. Open an existing .egui project file."
+        )
         assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
         assert page._open_app_btn.accessibleName() == (
