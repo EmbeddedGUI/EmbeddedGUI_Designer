@@ -47,8 +47,13 @@ class TestAnimationsPanel:
         assert panel.accessibleName() == "Animations: 1 animation on label title"
         assert panel._table.accessibleName() == "Animations table"
         assert panel._add_button.toolTip() == "Add an animation to the selected widget."
+        assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
+        assert panel._duplicate_button.statusTip() == panel._duplicate_button.toolTip()
         assert panel._remove_button.toolTip() == "Remove the selected animation."
+        assert panel._remove_button.statusTip() == panel._remove_button.toolTip()
+        assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
+        assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
         assert panel._table.rowCount() == 1
         assert panel._table.item(0, 0).text() == "alpha"
         assert panel._table.item(0, 2).text() == "linear"
@@ -130,6 +135,18 @@ class TestAnimationsPanel:
 
         assert captured[-1][0].params["to_y"] == "64"
 
+    def test_panel_marks_detail_group_when_selected_widget_has_no_animations(self, qapp):
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        widget = _make_widget()
+        panel = AnimationsPanel()
+        panel.set_selection([widget], primary=widget)
+
+        assert panel._detail_group.toolTip() == (
+            "Selected animation details unavailable. No animations on the selected widget."
+        )
+        assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
+
     def test_panel_disables_multi_selection_editing(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel
 
@@ -141,5 +158,13 @@ class TestAnimationsPanel:
         assert "select a single widget" in panel._summary_label.text().lower()
         assert panel.accessibleName() == "Animations: select a single widget (2 selected)"
         assert panel._add_button.isEnabled() is False
+        assert panel._add_button.toolTip() == "Select a single widget to add an animation."
+        assert panel._add_button.accessibleName() == "Add animation unavailable"
         assert panel._duplicate_button.toolTip() == "Select a single widget to duplicate an animation."
+        assert panel._duplicate_button.accessibleName() == "Duplicate animation unavailable"
         assert panel._remove_button.toolTip() == "Select a single widget to remove an animation."
+        assert panel._remove_button.accessibleName() == "Remove animation unavailable"
+        assert panel._detail_group.accessibleName() == (
+            "Selected animation details unavailable. "
+            "Animation editing is available for a single selected widget only."
+        )

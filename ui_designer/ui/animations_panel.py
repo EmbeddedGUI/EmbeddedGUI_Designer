@@ -34,6 +34,14 @@ from ..model.widget_animations import (
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class AnimationsPanel(QWidget):
     """Editable list of animations for the currently selected widget."""
 
@@ -60,8 +68,11 @@ class AnimationsPanel(QWidget):
         )
         self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
-        self._hint_label.setAccessibleName(self._hint_label.text())
-        self._hint_label.setToolTip(self._hint_label.text())
+        _set_widget_metadata(
+            self._hint_label,
+            tooltip=self._hint_label.text(),
+            accessible_name=self._hint_label.text(),
+        )
 
         self._table = QTableWidget(0, 4, self)
         self._table.setHorizontalHeaderLabels(["Type", "Duration", "Interpolator", "Auto Start"])
@@ -81,14 +92,10 @@ class AnimationsPanel(QWidget):
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Animation")
         self._add_button.setIcon(make_icon("animation"))
-        self._add_button.setToolTip("Add an animation to the selected widget.")
-        self._add_button.setAccessibleName("Add animation")
         self._duplicate_button = QPushButton("Duplicate")
         self._duplicate_button.setIcon(make_icon("page"))
-        self._duplicate_button.setAccessibleName("Duplicate animation")
         self._remove_button = QPushButton("Remove")
         self._remove_button.setIcon(make_icon("stop"))
-        self._remove_button.setAccessibleName("Remove animation")
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)
@@ -98,7 +105,6 @@ class AnimationsPanel(QWidget):
         buttons.addStretch(1)
 
         self._detail_group = QGroupBox("Selected Animation")
-        self._detail_group.setAccessibleName("Selected Animation")
         self._detail_form = QFormLayout()
         self._detail_group.setLayout(self._detail_form)
 
@@ -107,6 +113,8 @@ class AnimationsPanel(QWidget):
         layout.addWidget(self._table, 1)
         layout.addLayout(buttons)
         layout.addWidget(self._detail_group)
+        self._update_actions()
+        self._update_detail_group_metadata("Selected animation details unavailable. Select a widget to edit animations.")
 
     def _update_accessibility_summary(self, summary_text):
         self.setAccessibleName(summary_text)
@@ -117,6 +125,17 @@ class AnimationsPanel(QWidget):
         self._summary_label.setAccessibleName(summary_text)
         self._table.setToolTip(summary_text)
         self._table.setStatusTip(summary_text)
+
+    def _update_action_button_metadata(self, button, label, tooltip, enabled):
+        accessible_name = label if enabled else f"{label} unavailable"
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
+
+    def _update_detail_group_metadata(self, summary_text):
+        _set_widget_metadata(
+            self._detail_group,
+            tooltip=summary_text,
+            accessible_name=summary_text,
+        )
 
     def clear(self):
         self.set_selection([], primary=None)
@@ -196,6 +215,10 @@ class AnimationsPanel(QWidget):
         self._add_button.setEnabled(has_widget)
         self._duplicate_button.setEnabled(has_widget and has_selection)
         self._remove_button.setEnabled(has_widget and has_selection)
+        if has_widget:
+            add_hint = "Add an animation to the selected widget."
+        else:
+            add_hint = "Select a single widget to add an animation."
         if has_widget and has_selection:
             duplicate_hint = "Duplicate the selected animation."
             remove_hint = "Remove the selected animation."
@@ -205,29 +228,50 @@ class AnimationsPanel(QWidget):
         else:
             duplicate_hint = "Select a single widget to duplicate an animation."
             remove_hint = "Select a single widget to remove an animation."
-        self._duplicate_button.setToolTip(duplicate_hint)
-        self._remove_button.setToolTip(remove_hint)
+        self._update_action_button_metadata(self._add_button, "Add animation", add_hint, has_widget)
+        self._update_action_button_metadata(
+            self._duplicate_button,
+            "Duplicate animation",
+            duplicate_hint,
+            has_widget and has_selection,
+        )
+        self._update_action_button_metadata(
+            self._remove_button,
+            "Remove animation",
+            remove_hint,
+            has_widget and has_selection,
+        )
 
     def _rebuild_detail_form(self):
         self._clear_form_layout()
 
         if not self._selection:
-            self._detail_form.addRow(QLabel("Select a widget to edit animations."))
+            message = "Select a widget to edit animations."
+            self._detail_form.addRow(QLabel(message))
+            self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
         if len(self._selection) > 1 or self._primary_widget is None:
-            self._detail_form.addRow(QLabel("Animation editing is available for a single selected widget only."))
+            message = "Animation editing is available for a single selected widget only."
+            self._detail_form.addRow(QLabel(message))
+            self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
         row = self._selected_row()
         if row < 0 or row >= len(self._animations):
             if self._animations:
-                self._detail_form.addRow(QLabel("Select an animation from the table above."))
+                message = "Select an animation from the table above."
             else:
-                self._detail_form.addRow(QLabel("No animations on the selected widget."))
+                message = "No animations on the selected widget."
+            self._detail_form.addRow(QLabel(message))
+            self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
         animation = self._animations[row]
+        self._update_detail_group_metadata(
+            f"Selected animation details: {animation.anim_type}. "
+            f"Duration {animation.duration} ms. Interpolator {animation.interpolator}."
+        )
 
         type_combo = QComboBox()
         type_combo.addItems(animation_type_names())
