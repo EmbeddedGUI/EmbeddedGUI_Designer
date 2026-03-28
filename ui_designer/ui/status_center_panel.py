@@ -1262,7 +1262,7 @@ class StatusCenterPanel(QWidget):
             "Jump to the first error in Diagnostics. "
             f"{self._active_count_hint(error_count, 'error', 'errors')}"
             if error_count > 0
-            else "Unavailable: no errors are active.",
+            else "No errors are active.",
         )
         self._first_error_btn.setAccessibleName(
             self._action_button_accessible_name(
@@ -1280,7 +1280,7 @@ class StatusCenterPanel(QWidget):
             "Jump to the first warning in Diagnostics. "
             f"{self._active_count_hint(warning_count, 'warning', 'warnings')}"
             if warning_count > 0
-            else "Unavailable: no warnings are active.",
+            else "No warnings are active.",
         )
         self._first_warning_btn.setAccessibleName(
             self._action_button_accessible_name(
