@@ -7360,6 +7360,8 @@ class TestMainWindowCanvasActions:
         menu, actions = _structure_actions(first)
         structure_action = next(action for action in menu.actions() if action.text() == "Structure")
         assert structure_action.isEnabled() is True
+        assert structure_action.toolTip() == "Group, move, and reorder widgets relative to the current selection."
+        assert structure_action.statusTip() == structure_action.toolTip()
         assert actions["Group Selection"].isEnabled() is True
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is True
@@ -7556,6 +7558,8 @@ class TestMainWindowCanvasActions:
         menu, actions = _arrange_actions()
         arrange_action = next(action for action in menu.actions() if action.text() == "Arrange")
         assert arrange_action.isEnabled() is True
+        assert arrange_action.toolTip() == "Arrange selected widgets by alignment, order, lock, and visibility."
+        assert arrange_action.statusTip() == arrange_action.toolTip()
         assert actions["Align Left"].isEnabled() is False
         assert actions["Align Vertical Center"].isEnabled() is False
         assert actions["Distribute Horizontally"].isEnabled() is False

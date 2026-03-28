@@ -4828,7 +4828,7 @@ class MainWindow(QMainWindow):
             )
         )
         arrange_menu.setEnabled(arrange_enabled)
-        arrange_hint = ""
+        arrange_hint = "Arrange selected widgets by alignment, order, lock, and visibility."
         if not arrange_enabled:
             arrange_hint = "Arrange unavailable: select at least 1 widget."
         arrange_menu.menuAction().setToolTip(arrange_hint)
@@ -4879,7 +4879,7 @@ class MainWindow(QMainWindow):
             )
         )
         structure_menu.setEnabled(structure_enabled)
-        structure_hint = ""
+        structure_hint = "Group, move, and reorder widgets relative to the current selection."
         if not structure_enabled:
             structure_hint = self._structure_action_state().blocked_reason
             if structure_hint:
