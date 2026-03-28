@@ -5937,19 +5937,30 @@ class TestMainWindowFileFlow:
         window._clear_selection(sync_tree=False, sync_preview=False)
 
         assert window._sdk_chip.text() == "SDK ready"
+        assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
+        assert window._sdk_chip.toolTip() == "Open Status Center to review SDK readiness."
         assert window._selection_chip.text() == "No selection"
+        assert window._selection_chip.accessibleName() == "Workspace status: no selection."
+        assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
         assert window._preview_chip.text() == "Preview idle"
+        assert window._preview_chip.accessibleName() == "Workspace status: Preview idle."
+        assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."
+        assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 0 errors and 0 warnings."
+        assert window._diagnostics_chip.toolTip() == "Open Diagnostics to review issues and warnings."
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
         assert window._selection_chip.text() == "1 selected"
+        assert window._selection_chip.accessibleName() == "Workspace status: 1 selected."
 
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
         window._update_window_title()
 
         assert window._dirty_chip.text() == "Dirty 1"
+        assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
+        assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
         _close_window(window)
 

@@ -703,10 +703,13 @@ class MainWindow(QMainWindow):
             for key, button in self._mode_buttons.items():
                 button.setChecked(key == mode)
 
-    def _set_chip(self, chip, text, tone=None):
+    def _set_chip(self, chip, text, tone=None, accessible_name=None, tool_tip=None):
         if chip is None:
             return
         chip.setText(text)
+        chip.setAccessibleName(accessible_name or text)
+        if tool_tip is not None:
+            chip.setToolTip(tool_tip)
         if tone is not None:
             chip.setProperty("chipTone", tone)
         chip.style().unpolish(chip)
@@ -725,10 +728,28 @@ class MainWindow(QMainWindow):
             preview_tone = "success"
 
         if hasattr(self, "_sdk_chip"):
-            self._set_chip(self._sdk_chip, "SDK ready" if self._has_valid_sdk_root() else "SDK missing", "accent" if self._has_valid_sdk_root() else "warning")
+            sdk_text = "SDK ready" if self._has_valid_sdk_root() else "SDK missing"
+            self._set_chip(
+                self._sdk_chip,
+                sdk_text,
+                "accent" if self._has_valid_sdk_root() else "warning",
+                accessible_name=f"Workspace status: {sdk_text}.",
+                tool_tip="Open Status Center to review SDK readiness.",
+            )
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         if hasattr(self, "_dirty_chip"):
-            self._set_chip(self._dirty_chip, f"Dirty {len(dirty_pages)}" if dirty_pages else "Clean", "warning" if dirty_pages else "success")
+            dirty_count = len(dirty_pages)
+            dirty_text = f"Dirty {dirty_count}" if dirty_pages else "Clean"
+            dirty_summary = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
+            if not dirty_pages:
+                dirty_summary = "no dirty pages"
+            self._set_chip(
+                self._dirty_chip,
+                dirty_text,
+                "warning" if dirty_pages else "success",
+                accessible_name=f"Workspace status: {dirty_summary}.",
+                tool_tip="Open History to review unsaved changes.",
+            )
         page_count = len(getattr(self.project, "pages", [])) if getattr(self, "project", None) is not None else 0
         active_page_name = str(getattr(getattr(self, "_current_page", None), "name", "") or "")
         if hasattr(self, "_project_workspace"):
@@ -739,9 +760,22 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "_selection_chip"):
             count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
-            self._set_chip(self._selection_chip, f"{count} selected" if count else "No selection")
+            selection_text = f"{count} selected" if count else "No selection"
+            selection_summary = f"{count} selected" if count else "no selection"
+            self._set_chip(
+                self._selection_chip,
+                selection_text,
+                accessible_name=f"Workspace status: {selection_summary}.",
+                tool_tip="Open Structure to review the current selection.",
+            )
         if hasattr(self, "_preview_chip"):
-            self._set_chip(self._preview_chip, preview_text, preview_tone)
+            self._set_chip(
+                self._preview_chip,
+                preview_text,
+                preview_tone,
+                accessible_name=f"Workspace status: {preview_text}.",
+                tool_tip="Open Debug Output to inspect preview runtime details.",
+            )
         if hasattr(self, "_diagnostics_chip"):
             error_count = int(diagnostics_counts.get("error", 0) or 0)
             warning_count = int(diagnostics_counts.get("warning", 0) or 0)
@@ -752,7 +786,13 @@ class MainWindow(QMainWindow):
             else:
                 tone = "success"
             label = f"Diagnostics {error_count}E/{warning_count}W"
-            self._set_chip(self._diagnostics_chip, label, tone)
+            self._set_chip(
+                self._diagnostics_chip,
+                label,
+                tone,
+                accessible_name=f"Workspace diagnostics: {error_count} errors and {warning_count} warnings.",
+                tool_tip="Open Diagnostics to review issues and warnings.",
+            )
 
         self._update_status_center(
             dirty_pages=len(dirty_pages),
