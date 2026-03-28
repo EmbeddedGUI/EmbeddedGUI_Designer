@@ -223,6 +223,9 @@ class TestStatusCenterPanel:
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
         assert panel._warning_row.toolTip() == "Open Warnings. No warnings active."
         assert panel._info_row.toolTip() == "Open Info. No info items active."
+        assert panel._error_row.accessibleName() == "Errors diagnostics: No errors active"
+        assert panel._warning_row.accessibleName() == "Warnings diagnostics: No warnings active"
+        assert panel._info_row.accessibleName() == "Info diagnostics: No info items active"
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
@@ -772,7 +775,7 @@ class TestStatusCenterPanel:
             "open_warning_diagnostics",
             "open_info_diagnostics",
         ]
-        assert panel._info_row.accessibleName() == "Info diagnostics: 0 info items"
+        assert panel._info_row.accessibleName() == "Info diagnostics: No info items active"
         assert panel._last_action_label.text() == "Last action: Info"
         assert panel._repeat_action_button.text() == "Repeat Info"
         assert _menu_labels(panel._repeat_action_menu) == ["Info", "Warnings", "Errors", "Clear Recent Actions (3)"]
@@ -795,7 +798,7 @@ class TestStatusCenterPanel:
             "open_warning_diagnostics",
             "open_warning_diagnostics",
         ]
-        assert panel._warning_row.accessibleName() == "Warnings diagnostics: 0 warnings"
+        assert panel._warning_row.accessibleName() == "Warnings diagnostics: No warnings active"
         assert panel._repeat_action_button.text() == "Repeat Warnings"
         panel.deleteLater()
 

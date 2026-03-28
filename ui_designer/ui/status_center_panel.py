@@ -807,8 +807,10 @@ class StatusCenterPanel(QWidget):
             return f"{label} action unavailable: {text}"
         return f"{label} action: {text}"
 
-    def _health_row_accessible_name(self, label, value_text):
+    def _health_row_accessible_name(self, label, value_text, inactive_hint=""):
         row_label = str(label or "").strip() or "Diagnostics"
+        if str(inactive_hint or "").strip():
+            return f"{row_label} diagnostics: {str(inactive_hint).strip()}"
         value = str(value_text or "").strip()
         return f"{row_label} diagnostics: {value}" if value else f"{row_label} diagnostics"
 
@@ -1159,9 +1161,27 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
-        self._error_row.setAccessibleName(self._health_row_accessible_name("Errors", self._error_value.text()))
-        self._warning_row.setAccessibleName(self._health_row_accessible_name("Warnings", self._warning_value.text()))
-        self._info_row.setAccessibleName(self._health_row_accessible_name("Info", self._info_value.text()))
+        self._error_row.setAccessibleName(
+            self._health_row_accessible_name(
+                "Errors",
+                self._error_value.text(),
+                "No errors active" if error_count <= 0 else "",
+            )
+        )
+        self._warning_row.setAccessibleName(
+            self._health_row_accessible_name(
+                "Warnings",
+                self._warning_value.text(),
+                "No warnings active" if warning_count <= 0 else "",
+            )
+        )
+        self._info_row.setAccessibleName(
+            self._health_row_accessible_name(
+                "Info",
+                self._info_value.text(),
+                "No info items active" if info_count <= 0 else "",
+            )
+        )
         self._error_value.setToolTip("Errors: " + self._error_value.text())
         self._warning_value.setToolTip("Warnings: " + self._warning_value.text())
         self._info_value.setToolTip("Info: " + self._info_value.text())
