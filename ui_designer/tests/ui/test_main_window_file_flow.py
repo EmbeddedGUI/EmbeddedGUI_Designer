@@ -2946,6 +2946,67 @@ class TestMainWindowFileFlow:
         assert actions["Zoom Reset (100%)"].statusTip() == actions["Zoom Reset (100%)"].toolTip()
         _close_window(window)
 
+    def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Show Grid",
+                "No Snap",
+                "4px",
+                "8px",
+                "12px",
+                "16px",
+                "24px",
+                "Load Mockup Image...",
+                "Show Mockup",
+                "Clear Mockup Image",
+                "10%",
+                "20%",
+                "30%",
+                "50%",
+                "70%",
+                "100%",
+            }
+        }
+
+        assert actions["Show Grid"].toolTip() == "Toggle the preview grid overlay."
+        assert actions["Show Grid"].statusTip() == actions["Show Grid"].toolTip()
+        assert actions["No Snap"].toolTip() == "Disable grid snapping."
+        assert actions["No Snap"].statusTip() == actions["No Snap"].toolTip()
+        assert actions["4px"].toolTip() == "Snap the overlay grid to 4px."
+        assert actions["4px"].statusTip() == actions["4px"].toolTip()
+        assert actions["8px"].toolTip() == "Snap the overlay grid to 8px."
+        assert actions["8px"].statusTip() == actions["8px"].toolTip()
+        assert actions["12px"].toolTip() == "Snap the overlay grid to 12px."
+        assert actions["12px"].statusTip() == actions["12px"].toolTip()
+        assert actions["16px"].toolTip() == "Snap the overlay grid to 16px."
+        assert actions["16px"].statusTip() == actions["16px"].toolTip()
+        assert actions["24px"].toolTip() == "Snap the overlay grid to 24px."
+        assert actions["24px"].statusTip() == actions["24px"].toolTip()
+        assert actions["Load Mockup Image..."].toolTip() == "Load a mockup image behind the preview."
+        assert actions["Load Mockup Image..."].statusTip() == actions["Load Mockup Image..."].toolTip()
+        assert actions["Show Mockup"].toolTip() == "Toggle the background mockup image (Ctrl+M)."
+        assert actions["Show Mockup"].statusTip() == actions["Show Mockup"].toolTip()
+        assert actions["Clear Mockup Image"].toolTip() == "Remove the current background mockup image."
+        assert actions["Clear Mockup Image"].statusTip() == actions["Clear Mockup Image"].toolTip()
+        assert actions["10%"].toolTip() == "Set the mockup image opacity to 10%."
+        assert actions["10%"].statusTip() == actions["10%"].toolTip()
+        assert actions["20%"].toolTip() == "Set the mockup image opacity to 20%."
+        assert actions["20%"].statusTip() == actions["20%"].toolTip()
+        assert actions["30%"].toolTip() == "Set the mockup image opacity to 30%."
+        assert actions["30%"].statusTip() == actions["30%"].toolTip()
+        assert actions["50%"].toolTip() == "Set the mockup image opacity to 50%."
+        assert actions["50%"].statusTip() == actions["50%"].toolTip()
+        assert actions["70%"].toolTip() == "Set the mockup image opacity to 70%."
+        assert actions["70%"].statusTip() == actions["70%"].toolTip()
+        assert actions["100%"].toolTip() == "Set the mockup image opacity to 100%."
+        assert actions["100%"].statusTip() == actions["100%"].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
