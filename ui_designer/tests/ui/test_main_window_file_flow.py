@@ -3638,6 +3638,47 @@ class TestMainWindowFileFlow:
         assert structure_action.statusTip() == structure_action.toolTip()
         _close_window(window)
 
+    def test_quick_move_submenu_exposes_available_and_history_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QuickMoveHintsDemo"
+        project = _create_project(project_dir, "QuickMoveHintsDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        target = WidgetModel("group", name="target")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        assert window._quick_move_into_menu.menuAction().toolTip() == (
+            "Move directly into an available container target, or manage move-target history. "
+            "Targets: 1 available. Remembered target: none. Recent history: none."
+        )
+        assert window._quick_move_into_menu.menuAction().statusTip() == window._quick_move_into_menu.menuAction().toolTip()
+
+        window._move_selection_into_target(target, target_label="root_group / target (group)")
+        window._set_selection([second], primary=second, sync_tree=True, sync_preview=True)
+
+        assert window._quick_move_into_menu.menuAction().toolTip() == (
+            "Move directly into an available container target, or manage move-target history. "
+            "Targets: 1 available. Remembered target: target. Recent history: 1 target."
+        )
+        assert window._quick_move_into_menu.menuAction().statusTip() == window._quick_move_into_menu.menuAction().toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

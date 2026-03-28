@@ -5788,7 +5788,19 @@ class MainWindow(QMainWindow):
         return "Forget recent move-into targets for the current page"
 
     def _quick_move_into_menu_hint(self):
-        return "Move directly into an available container target, or manage move-target history."
+        available_count = len(self._quick_move_into_choices())
+        available_label = "none" if available_count == 0 else f"{available_count} available"
+        remembered_target = self._repeat_move_target_summary() or "none"
+        recent_count = len(self._recent_move_target_labels())
+        recent_label = (
+            "none"
+            if recent_count == 0
+            else f"{recent_count} target" if recent_count == 1 else f"{recent_count} targets"
+        )
+        return (
+            "Move directly into an available container target, or manage move-target history. "
+            f"Targets: {available_label}. Remembered target: {remembered_target}. Recent history: {recent_label}."
+        )
 
     def _repeat_move_target_summary(self, widgets=None):
         choice = self._remembered_move_target_choice(widgets)
