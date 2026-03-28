@@ -6120,12 +6120,12 @@ class TestMainWindowFileFlow:
         opened = []
         monkeypatch.setattr(window.diagnostics_panel, "open_first_error", lambda: opened.append("error"))
 
-        assert window.status_center_panel._workspace_chip.text() == "Check Workspace"
+        assert window.status_center_panel._workspace_chip.text() == "Check Workspace (Setup)"
         window.status_center_panel._workspace_chip.click()
         assert window._current_left_panel == "project"
 
         window.status_center_panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
-        assert window.status_center_panel._workspace_chip.text() == "Action Needed"
+        assert window.status_center_panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         window.status_center_panel._workspace_chip.click()
         assert window._bottom_tabs.currentIndex() == 0
         assert opened == ["error"]

@@ -41,7 +41,7 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Critical (2)"
         assert panel._health_chip.property("chipTone") == "danger"
-        assert panel._workspace_chip.text() == "Action Needed"
+        assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._health_title.text() == "Diagnostic Mix (4 total)"
         assert panel._health_title.toolTip() == "Diagnostic mix with 4 total diagnostics."
@@ -71,11 +71,15 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.text() == "Open First Warning (1)"
         assert panel._health_chip_action == "open_error_diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
-        assert panel._workspace_chip.accessibleName() == "Workspace status: Action Needed (Fix First Error (2))"
+        assert panel._workspace_chip.accessibleName() == (
+            "Workspace status: Action Needed (Diagnostics). Suggested: Fix First Error (2)"
+        )
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
         assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._health_chip.accessibleName() == "Diagnostic status: Critical (2)"
-        assert panel._workspace_chip.toolTip() == "Action Needed. Start with the first error in Diagnostics. 2 errors active."
+        assert panel._workspace_chip.toolTip() == (
+            "Action Needed (Diagnostics). Start with the first error in Diagnostics. 2 errors active."
+        )
         assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention. Errors lead at 50%."
         assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
         assert panel._health_summary_label.accessibleName() == (
@@ -103,7 +107,7 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Attention (3)"
         assert panel._health_chip.property("chipTone") == "warning"
-        assert panel._workspace_chip.text() == "Action Needed"
+        assert panel._workspace_chip.text() == "Check Workspace (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._health_chip_action == "open_warning_diagnostics"
@@ -148,7 +152,7 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Info (2)"
         assert panel._health_chip.property("chipTone") == "accent"
-        assert panel._workspace_chip.text() == "Check Workspace"
+        assert panel._workspace_chip.text() == "Check Workspace (Setup)"
         assert panel._workspace_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_info_diagnostics"
@@ -190,7 +194,7 @@ class TestStatusCenterPanel:
 
         assert panel._health_chip.text() == "Stable"
         assert panel._health_chip.property("chipTone") == "success"
-        assert panel._workspace_chip.text() == "Check Workspace"
+        assert panel._workspace_chip.text() == "Check Workspace (Setup)"
         assert panel._workspace_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_diagnostics"
@@ -254,7 +258,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_summary_label.accessibleName() == (
             "Workspace summary: Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
         )
-        assert panel._workspace_chip.text() == "Action Needed"
+        assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._health_title.text() == "Diagnostic Mix (6 total)"
@@ -328,11 +332,11 @@ class TestStatusCenterPanel:
             "Workspace summary: Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._header_title.text() == "Status Center (Workspace)"
-        assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace."
+        assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace (Setup)."
         assert panel._header_title.accessibleName() == "Status Center (Workspace)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Configure SDK."
         assert panel._header_subtitle.toolTip() == (
-            "Status Center: Check Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
+            "Status Center: Check Workspace (Setup). Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
         assert panel._header_subtitle.accessibleName() == "Workspace checks are pending. Focus on Configure SDK."
         assert panel._health_title.text() == "Diagnostic Mix"
@@ -365,13 +369,15 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.accessibleName() == (
             "Suggested action guidance: Workspace guidance: Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._workspace_chip.text() == "Check Workspace"
+        assert panel._workspace_chip.text() == "Check Workspace (Setup)"
         assert panel._workspace_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.toolTip() == (
-            "Check Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
+            "Check Workspace (Setup). Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
         assert panel._workspace_chip.property("iconKey") == "project"
-        assert panel._workspace_chip.accessibleName() == "Workspace status: Check Workspace (Configure SDK)"
+        assert panel._workspace_chip.accessibleName() == (
+            "Workspace status: Check Workspace (Setup). Suggested: Configure SDK"
+        )
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._workspace_summary_label.text() == (
