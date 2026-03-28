@@ -916,6 +916,7 @@ class MainWindow(QMainWindow):
         release_build_state = "available" if getattr(getattr(self, "_release_build_action", None), "isEnabled", lambda: False)() else "unavailable"
         release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         output_root = self._release_output_root()
@@ -930,7 +931,7 @@ class MainWindow(QMainWindow):
             self._build_menu.menuAction(),
             (
                 "Compile previews, generate resources, and manage release builds. "
-                f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
+                f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
                 f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
                 f"{profiles_summary} Output root: {output_root or 'none'}. History file: {history_file_path or 'none'}. "
