@@ -596,17 +596,39 @@ class MainWindow(QMainWindow):
             "status": "Status",
         }.get(panel_key, str(panel_key or "Project").title())
 
+    def _project_workspace_nav_context(self):
+        view_label = "List view"
+        if hasattr(self, "_project_workspace"):
+            try:
+                view_name = self._project_workspace.current_view()
+            except Exception:
+                view_name = ProjectWorkspacePanel.VIEW_LIST
+            if view_name == ProjectWorkspacePanel.VIEW_THUMBNAILS:
+                view_label = "Thumbnails"
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+        startup_page = "none"
+        project = getattr(self, "project", None)
+        if project is not None:
+            startup_value = str(getattr(project, "startup_page", "") or "").strip()
+            if any(getattr(page, "name", None) == startup_value for page in getattr(project, "pages", []) or []):
+                startup_page = startup_value
+        return f"View: {view_label}. Active page: {current_page}. Startup page: {startup_page}."
+
     def _update_workspace_nav_button_metadata(self, current_panel):
         if not hasattr(self, "_workspace_nav_buttons"):
             return
         for key, button in self._workspace_nav_buttons.items():
             label = self._workspace_panel_label(key)
+            context = self._project_workspace_nav_context() if key == "project" else ""
             if key == current_panel:
                 tooltip = f"Currently showing {label} panel."
                 accessible_name = f"Workspace panel button: {label}. Current panel."
             else:
                 tooltip = f"Open {label} panel."
                 accessible_name = f"Workspace panel button: {label}."
+            if context:
+                tooltip = f"{tooltip} {context}"
+                accessible_name = f"{accessible_name} {context}"
             button.setToolTip(tooltip)
             button.setStatusTip(tooltip)
             button.setAccessibleName(accessible_name)
@@ -850,6 +872,7 @@ class MainWindow(QMainWindow):
         if not isinstance(self._config.workspace_state, dict):
             self._config.workspace_state = {}
         self._config.workspace_state["project_workspace_view"] = view_name or ProjectWorkspacePanel.VIEW_LIST
+        self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
 
     def _show_inspector_tab(self, section, inner_section=None):
         section_map = {
@@ -1117,6 +1140,7 @@ class MainWindow(QMainWindow):
             preview_text=preview_text,
             diagnostics_counts=diagnostics_counts,
         )
+        self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
 
     def _apply_workspace_iconography(self):
         if hasattr(self, "_workspace_nav_buttons"):

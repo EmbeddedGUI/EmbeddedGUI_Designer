@@ -4808,12 +4808,18 @@ class TestMainWindowFileFlow:
         assert "Startup page: main_page." in window.page_tab_bar.accessibleName()
         assert "Startup page: main_page." in window._project_workspace.accessibleName()
         assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: main_page."
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page."
+        )
 
         window._switch_page("detail_page")
 
         assert window.page_navigator._current_page == "detail_page"
         assert window.page_navigator._startup_page == "main_page"
         assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: detail_page."
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
+        )
 
         window._on_startup_changed("detail_page")
 
@@ -4824,6 +4830,9 @@ class TestMainWindowFileFlow:
         assert "Startup page" not in window.page_navigator._thumbnails["main_page"].accessibleName()
         assert "Startup page: detail_page." in window.page_tab_bar.accessibleName()
         assert "Startup page: detail_page." in window._project_workspace.accessibleName()
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: detail_page."
+        )
         _close_window(window)
 
     def test_page_navigator_copy_and_template_add_keep_pages_in_sync(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -6559,6 +6568,9 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
+        )
         assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
 
@@ -6727,9 +6739,11 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
 
-        assert window._workspace_nav_buttons["project"].toolTip() == "Currently showing Project panel."
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Currently showing Project panel. View: List view. Active page: none. Startup page: none."
+        )
         assert window._workspace_nav_buttons["project"].accessibleName() == (
-            "Workspace panel button: Project. Current panel."
+            "Workspace panel button: Project. Current panel. View: List view. Active page: none. Startup page: none."
         )
         assert window._workspace_nav_buttons["status"].toolTip() == "Open Status panel."
         assert window._workspace_nav_buttons["status"].statusTip() == window._workspace_nav_buttons["status"].toolTip()
@@ -6744,7 +6758,9 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["status"].accessibleName() == (
             "Workspace panel button: Status. Current panel."
         )
-        assert window._workspace_nav_buttons["project"].toolTip() == "Open Project panel."
+        assert window._workspace_nav_buttons["project"].toolTip() == (
+            "Open Project panel. View: List view. Active page: none. Startup page: none."
+        )
 
         window._set_bottom_panel_visible(True)
 
