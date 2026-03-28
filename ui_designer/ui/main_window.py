@@ -4609,6 +4609,7 @@ class MainWindow(QMainWindow):
         if self.project:
             self.project.startup_page = page_name
             self.project_dock.set_project(self.project)
+            self.page_navigator.set_startup_page(page_name)
             self._trigger_compile()
 
     def _on_page_mode_changed(self, mode):
