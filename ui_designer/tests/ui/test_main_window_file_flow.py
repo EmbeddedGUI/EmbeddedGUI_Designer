@@ -3875,7 +3875,10 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in {"Save As...", "Reload Project From Disk", "Close Project", "Export C Code..."}
         }
-        assert reloaded_actions["Save As..."].toolTip() == "Save the current project to a new file (Ctrl+Shift+S)."
+        assert reloaded_actions["Save As..."].toolTip() == (
+            "Save the current project to a new file (Ctrl+Shift+S). "
+            f"Default parent: {window._default_save_project_as_dir()}."
+        )
         assert reloaded_actions["Save As..."].statusTip() == reloaded_actions["Save As..."].toolTip()
         assert reloaded_actions["Save As..."].isEnabled() is True
         assert reloaded_actions["Reload Project From Disk"].toolTip() == "Reload the current project from disk (Ctrl+Shift+R)."
@@ -3883,7 +3886,10 @@ class TestMainWindowFileFlow:
         assert reloaded_actions["Close Project"].toolTip() == "Close the current project (Ctrl+W)."
         assert reloaded_actions["Close Project"].statusTip() == reloaded_actions["Close Project"].toolTip()
         assert reloaded_actions["Close Project"].isEnabled() is True
-        assert reloaded_actions["Export C Code..."].toolTip() == "Export generated C code for the current project (Ctrl+E)."
+        assert reloaded_actions["Export C Code..."].toolTip() == (
+            "Export generated C code for the current project (Ctrl+E). "
+            f"Default export directory: {window._default_export_code_dir()}."
+        )
         assert reloaded_actions["Export C Code..."].statusTip() == reloaded_actions["Export C Code..."].toolTip()
         assert reloaded_actions["Export C Code..."].isEnabled() is True
         _close_window(window)

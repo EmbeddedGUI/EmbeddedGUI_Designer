@@ -1013,7 +1013,15 @@ class MainWindow(QMainWindow):
             if action is None:
                 continue
             action.setEnabled(has_project)
-            hint = base_text if has_project else self._action_hint(base_text, False, "open a project first")
+            if has_project:
+                if attr_name == "_save_as_action":
+                    hint = f"{base_text} Default parent: {self._default_save_project_as_dir()}."
+                elif attr_name == "_export_action":
+                    hint = f"{base_text} Default export directory: {self._default_export_code_dir()}."
+                else:
+                    hint = base_text
+            else:
+                hint = self._action_hint(base_text, False, "open a project first")
             self._apply_action_hint(action, hint)
 
     def _update_file_open_action_metadata(self, binding_label=""):
