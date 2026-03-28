@@ -34,6 +34,14 @@ from ..model.workspace import (
 )
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class AppSelectorDialog(QDialog):
     """Dialog for opening Designer-aware or legacy SDK examples."""
 
@@ -73,11 +81,18 @@ class AppSelectorDialog(QDialog):
 
         browse_btn = PushButton("Browse...")
         browse_btn.clicked.connect(self._browse_root)
+        _set_widget_metadata(
+            browse_btn,
+            tooltip="Browse to an EmbeddedGUI SDK root.",
+            accessible_name="Browse SDK root",
+        )
         root_row.addWidget(browse_btn)
 
         self._download_btn = PushButton("Download SDK...")
         self._download_btn.clicked.connect(self._download_sdk)
         self._download_btn.setToolTip(describe_auto_download_plan())
+        self._download_btn.setAccessibleName("Download SDK")
+        self._download_btn.setStatusTip(self._download_btn.toolTip())
         root_row.addWidget(self._download_btn)
 
         self._root_status_label = QLabel("")
@@ -93,16 +108,23 @@ class AppSelectorDialog(QDialog):
         self._show_legacy = QCheckBox("Show legacy examples without .egui")
         self._show_legacy.setChecked(self._config.show_all_examples)
         self._show_legacy.toggled.connect(self._on_toggle_legacy)
+        _set_widget_metadata(
+            self._show_legacy,
+            tooltip="Include legacy SDK examples that do not yet have Designer project files.",
+            accessible_name="Show legacy SDK examples",
+        )
         app_layout.addWidget(self._show_legacy)
 
         self._search_edit = LineEdit()
         self._search_edit.setPlaceholderText("Filter examples by name...")
         self._search_edit.textChanged.connect(self._refresh_app_list)
+        self._search_edit.setAccessibleName("SDK example search")
         app_layout.addWidget(self._search_edit)
 
         self._app_list = QListWidget()
         self._app_list.itemDoubleClicked.connect(self._on_item_double_clicked)
         self._app_list.currentItemChanged.connect(self._on_selection_changed)
+        self._app_list.setAccessibleName("SDK examples")
         app_layout.addWidget(self._app_list)
 
         self._selection_hint_label = QLabel("")
@@ -114,13 +136,19 @@ class AppSelectorDialog(QDialog):
         buttons.addStretch()
         cancel_btn = PushButton("Cancel")
         cancel_btn.clicked.connect(self.reject)
+        _set_widget_metadata(cancel_btn, tooltip="Close this dialog without opening an example.", accessible_name="Cancel")
         buttons.addWidget(cancel_btn)
 
         self._open_btn = PrimaryPushButton("Open")
         self._open_btn.clicked.connect(self._on_open)
         self._open_btn.setEnabled(False)
+        self._open_btn.setAccessibleName("Open selected SDK example")
         buttons.addWidget(self._open_btn)
         layout.addLayout(buttons)
+        self._root_edit.setAccessibleName("EmbeddedGUI SDK root")
+        self._root_status_label.setAccessibleName("SDK root status")
+        self._selection_hint_label.setAccessibleName("SDK example selection hint")
+        self._update_accessibility_summary()
 
     def _browse_root(self):
         path = QFileDialog.getExistingDirectory(self, "Select EmbeddedGUI SDK Root", self._egui_root or "")
@@ -173,13 +201,19 @@ class AppSelectorDialog(QDialog):
         if not self._egui_root:
             item = QListWidgetItem("(Set or download an SDK root first)")
             item.setFlags(Qt.NoItemFlags)
+            item.setToolTip("Set or download an SDK root first.")
+            item.setStatusTip(item.toolTip())
             self._app_list.addItem(item)
+            self._update_accessibility_summary()
             return
 
         if not is_valid_sdk_root(self._egui_root):
             item = QListWidgetItem("(Current SDK root is invalid)")
             item.setFlags(Qt.NoItemFlags)
+            item.setToolTip("Current SDK root is invalid.")
+            item.setStatusTip(item.toolTip())
             self._app_list.addItem(item)
+            self._update_accessibility_summary()
             return
 
         search_text = self._search_edit.text().strip().lower()
@@ -199,12 +233,16 @@ class AppSelectorDialog(QDialog):
                 item.setToolTip(entry["project_path"])
             else:
                 item.setToolTip(f"{entry['app_dir']}\nLegacy example without .egui. Opening it will initialize a Designer project.")
+            item.setStatusTip(item.toolTip())
             self._app_list.addItem(item)
 
         if self._app_list.count() == 0:
             item = QListWidgetItem("(No matching examples)" if search_text else "(No SDK examples found)")
             item.setFlags(Qt.NoItemFlags)
+            item.setToolTip(item.text())
+            item.setStatusTip(item.toolTip())
             self._app_list.addItem(item)
+            self._update_accessibility_summary()
             return
 
         preferred_app = previous_app or self._config.last_app
@@ -216,6 +254,7 @@ class AppSelectorDialog(QDialog):
                 break
         else:
             self._app_list.setCurrentRow(0)
+        self._update_accessibility_summary()
 
     def _refresh_root_status(self):
         status = describe_sdk_root(self._egui_root)
@@ -250,6 +289,7 @@ class AppSelectorDialog(QDialog):
         self._root_status_label.setStyleSheet("color: #f44336;")
 
     def _on_selection_changed(self, current, previous):
+        del previous
         self._set_selection_feedback(current.data(Qt.UserRole) if current else None)
 
     def _on_item_double_clicked(self, item):
@@ -272,6 +312,7 @@ class AppSelectorDialog(QDialog):
                 "Select a Designer project or a legacy example from the list."
             )
             self._selection_hint_label.setStyleSheet("color: #888;")
+            self._update_accessibility_summary()
             return
 
         if entry.get("is_legacy"):
@@ -281,6 +322,7 @@ class AppSelectorDialog(QDialog):
                 "Opening it will initialize a Designer project in this app directory."
             )
             self._selection_hint_label.setStyleSheet("color: #ff9800;")
+            self._update_accessibility_summary()
             return
 
         self._open_btn.setText("Open")
@@ -288,6 +330,56 @@ class AppSelectorDialog(QDialog):
             f"Designer project path:\n{entry.get('project_path', '')}"
         )
         self._selection_hint_label.setStyleSheet("color: #4caf50;")
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        root_value = self._egui_root or "none"
+        root_status = self._root_status_label.text().strip() or "SDK root status unavailable."
+        search_text = self._search_edit.text().strip() or "none"
+        selection_name = self._selected_entry.get("app_name", "none") if self._selected_entry else "none"
+        list_count = self._app_list.count()
+        list_text = "1 entry" if list_count == 1 else f"{list_count} entries"
+        legacy_text = "on" if self._show_legacy.isChecked() else "off"
+        summary = (
+            f"Open SDK Example dialog: SDK root {root_value}. Search {search_text}. "
+            f"Legacy examples {legacy_text}. Examples list: {list_text}. Selection: {selection_name}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._root_edit,
+            tooltip=f"EmbeddedGUI SDK root: {root_value}",
+            accessible_name=f"EmbeddedGUI SDK root: {root_value}",
+        )
+        _set_widget_metadata(
+            self._root_status_label,
+            tooltip=root_status,
+            accessible_name=f"SDK root status: {root_status}",
+        )
+        _set_widget_metadata(
+            self._search_edit,
+            tooltip=f"Filter SDK examples by name. Current search: {search_text}.",
+            accessible_name=f"SDK example search: {search_text}",
+        )
+        _set_widget_metadata(
+            self._app_list,
+            tooltip=f"SDK examples list: {list_text}. Current selection: {selection_name}.",
+            accessible_name=f"SDK examples list: {list_text}. Current selection: {selection_name}.",
+        )
+        _set_widget_metadata(
+            self._selection_hint_label,
+            tooltip=self._selection_hint_label.text(),
+            accessible_name=f"Selection hint: {self._selection_hint_label.text()}",
+        )
+        open_hint = (
+            f"{self._open_btn.text()} the selected example."
+            if self._selected_entry
+            else "Select an SDK example to open it."
+        )
+        _set_widget_metadata(
+            self._open_btn,
+            tooltip=open_hint,
+            accessible_name=f"Open action: {self._open_btn.text()}",
+        )
 
     @property
     def selected_entry(self):

@@ -68,6 +68,23 @@ def _mark_bundled_sdk(root):
 
 @_skip_no_qt
 class TestAppSelectorDialog:
+    def test_exposes_accessibility_metadata_when_sdk_root_is_missing(self, qapp, isolated_config):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        isolated_config.sdk_root = ""
+        isolated_config.egui_root = ""
+        dialog = AppSelectorDialog(egui_root="")
+
+        assert dialog.accessibleName() == (
+            "Open SDK Example dialog: SDK root none. Search none. "
+            "Legacy examples off. Examples list: 1 entry. Selection: none."
+        )
+        assert dialog._search_edit.toolTip() == "Filter SDK examples by name. Current search: none."
+        assert dialog._app_list.accessibleName() == "SDK examples list: 1 entry. Current selection: none."
+        assert dialog._open_btn.toolTip() == "Select an SDK example to open it."
+        assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
+        dialog.deleteLater()
+
     def test_filters_legacy_examples_by_default(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.app_selector import AppSelectorDialog
 
@@ -367,6 +384,34 @@ class TestAppSelectorDialog:
 
 @_skip_no_qt
 class TestNewProjectDialog:
+    def test_exposes_accessibility_metadata_and_updates_with_form_values(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
+            dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
+
+        normalized_parent = os.path.normpath(os.path.abspath(tmp_path))
+        assert dialog.accessibleName() == (
+            f"New Project dialog: SDK root none. Parent directory {normalized_parent}. "
+            "App name none. Size 240 by 320."
+        )
+        assert dialog._sdk_browse_btn.toolTip() == "Browse to an EmbeddedGUI SDK root."
+        assert dialog._parent_edit.accessibleName() == f"Project parent directory: {normalized_parent}"
+
+        dialog._app_name_edit.setText("DemoApp")
+        dialog._width_spin.setValue(320)
+        dialog._height_spin.setValue(240)
+
+        assert dialog._app_name_edit.accessibleName() == "Application name: DemoApp"
+        assert dialog._width_spin.accessibleName() == "Project width: 320"
+        assert dialog._height_spin.accessibleName() == "Project height: 240"
+        assert dialog.accessibleName() == (
+            f"New Project dialog: SDK root none. Parent directory {normalized_parent}. "
+            "App name DemoApp. Size 320 by 240."
+        )
+        dialog.deleteLater()
+
     def test_accept_requires_parent_directory(self, qapp, isolated_config):
         from ui_designer.ui.new_project_dialog import NewProjectDialog
 

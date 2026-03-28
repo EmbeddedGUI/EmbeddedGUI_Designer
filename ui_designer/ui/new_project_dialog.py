@@ -22,6 +22,14 @@ from ..model.sdk_bootstrap import default_sdk_install_dir
 from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_configured_sdk_root, resolve_sdk_root_candidate
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class NewProjectDialog(QDialog):
     """Collect parameters for a new project."""
 
@@ -61,12 +69,12 @@ class NewProjectDialog(QDialog):
         self._sdk_edit.setText(self._sdk_root)
         sdk_row = QHBoxLayout()
         sdk_row.addWidget(self._sdk_edit, 1)
-        sdk_browse = PushButton("Browse...")
-        sdk_browse.clicked.connect(self._browse_sdk_root)
-        sdk_row.addWidget(sdk_browse)
-        sdk_clear = PushButton("Clear")
-        sdk_clear.clicked.connect(self._clear_sdk_root)
-        sdk_row.addWidget(sdk_clear)
+        self._sdk_browse_btn = PushButton("Browse...")
+        self._sdk_browse_btn.clicked.connect(self._browse_sdk_root)
+        sdk_row.addWidget(self._sdk_browse_btn)
+        self._sdk_clear_btn = PushButton("Clear")
+        self._sdk_clear_btn.clicked.connect(self._clear_sdk_root)
+        sdk_row.addWidget(self._sdk_clear_btn)
         form.addRow("SDK Root", sdk_row)
 
         self._sdk_hint_label = QLabel("Optional. Leave empty to create an editing-only project and set the SDK later.")
@@ -79,36 +87,62 @@ class NewProjectDialog(QDialog):
         self._parent_edit.setText(self._parent_dir)
         parent_row = QHBoxLayout()
         parent_row.addWidget(self._parent_edit, 1)
-        parent_browse = PushButton("Browse...")
-        parent_browse.clicked.connect(self._browse_parent_dir)
-        parent_row.addWidget(parent_browse)
+        self._parent_browse_btn = PushButton("Browse...")
+        self._parent_browse_btn.clicked.connect(self._browse_parent_dir)
+        parent_row.addWidget(self._parent_browse_btn)
         form.addRow("Parent Dir", parent_row)
 
         self._app_name_edit = LineEdit()
         self._app_name_edit.setPlaceholderText("e.g. MyDashboard")
+        self._app_name_edit.textChanged.connect(self._update_accessibility_summary)
         form.addRow("App Name", self._app_name_edit)
 
         self._width_spin = QSpinBox()
         self._width_spin.setRange(16, 4096)
         self._width_spin.setValue(240)
+        self._width_spin.valueChanged.connect(self._update_accessibility_summary)
         form.addRow("Width", self._width_spin)
 
         self._height_spin = QSpinBox()
         self._height_spin.setRange(16, 4096)
         self._height_spin.setValue(320)
+        self._height_spin.valueChanged.connect(self._update_accessibility_summary)
         form.addRow("Height", self._height_spin)
 
         layout.addLayout(form)
 
         buttons = QHBoxLayout()
         buttons.addStretch()
-        cancel_btn = PushButton("Cancel")
-        cancel_btn.clicked.connect(self.reject)
-        buttons.addWidget(cancel_btn)
-        create_btn = PrimaryPushButton("Create")
-        create_btn.clicked.connect(self._accept_if_valid)
-        buttons.addWidget(create_btn)
+        self._cancel_btn = PushButton("Cancel")
+        self._cancel_btn.clicked.connect(self.reject)
+        buttons.addWidget(self._cancel_btn)
+        self._create_btn = PrimaryPushButton("Create")
+        self._create_btn.clicked.connect(self._accept_if_valid)
+        buttons.addWidget(self._create_btn)
         layout.addLayout(buttons)
+        self._sdk_edit.setAccessibleName("SDK root")
+        self._parent_edit.setAccessibleName("Project parent directory")
+        self._app_name_edit.setAccessibleName("Application name")
+        self._width_spin.setAccessibleName("Project width")
+        self._height_spin.setAccessibleName("Project height")
+        _set_widget_metadata(
+            self._sdk_browse_btn,
+            tooltip="Browse to an EmbeddedGUI SDK root.",
+            accessible_name="Browse SDK root",
+        )
+        _set_widget_metadata(
+            self._sdk_clear_btn,
+            tooltip="Clear the current SDK root and create an editing-only project.",
+            accessible_name="Clear SDK root",
+        )
+        _set_widget_metadata(
+            self._parent_browse_btn,
+            tooltip="Browse to the parent directory where the new project will be created.",
+            accessible_name="Browse parent directory",
+        )
+        _set_widget_metadata(self._cancel_btn, tooltip="Close this dialog without creating a project.", accessible_name="Cancel")
+        _set_widget_metadata(self._create_btn, tooltip="Validate the form and create the project.", accessible_name="Create project")
+        self._update_accessibility_summary()
 
     def _browse_sdk_root(self):
         previous_default_parent = self._default_parent_dir_for_sdk(self._sdk_root)
@@ -129,10 +163,12 @@ class NewProjectDialog(QDialog):
             self._parent_dir = self._default_parent_dir_for_sdk(path)
             self._parent_edit.setText(self._parent_dir)
             self._parent_dir_auto_managed = True
+        self._update_accessibility_summary()
 
     def _clear_sdk_root(self):
         self._sdk_root = ""
         self._sdk_edit.setText("")
+        self._update_accessibility_summary()
 
     def _browse_parent_dir(self):
         path = QFileDialog.getExistingDirectory(self, "Select Parent Directory", self._parent_dir or "")
@@ -141,6 +177,47 @@ class NewProjectDialog(QDialog):
         self._parent_dir = normalize_path(path)
         self._parent_edit.setText(self._parent_dir)
         self._parent_dir_auto_managed = False
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        sdk_root = self._sdk_root or "none"
+        parent_dir = self._parent_dir or "none"
+        app_name = self.app_name or "none"
+        summary = (
+            f"New Project dialog: SDK root {sdk_root}. Parent directory {parent_dir}. "
+            f"App name {app_name}. Size {self.screen_width} by {self.screen_height}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._sdk_edit,
+            tooltip=f"SDK root: {sdk_root}",
+            accessible_name=f"SDK root: {sdk_root}",
+        )
+        _set_widget_metadata(
+            self._sdk_hint_label,
+            tooltip=self._sdk_hint_label.text(),
+            accessible_name=self._sdk_hint_label.text(),
+        )
+        _set_widget_metadata(
+            self._parent_edit,
+            tooltip=f"Project parent directory: {parent_dir}",
+            accessible_name=f"Project parent directory: {parent_dir}",
+        )
+        _set_widget_metadata(
+            self._app_name_edit,
+            tooltip=f"Application name: {app_name}",
+            accessible_name=f"Application name: {app_name}",
+        )
+        _set_widget_metadata(
+            self._width_spin,
+            tooltip=f"Project width: {self.screen_width}",
+            accessible_name=f"Project width: {self.screen_width}",
+        )
+        _set_widget_metadata(
+            self._height_spin,
+            tooltip=f"Project height: {self.screen_height}",
+            accessible_name=f"Project height: {self.screen_height}",
+        )
 
     def _accept_if_valid(self):
         app_name = self.app_name
