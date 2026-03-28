@@ -2852,6 +2852,7 @@ class TestMainWindowFileFlow:
 
     def test_build_menu_actions_expose_status_hints(self, qapp, isolated_config, tmp_path):
         from ui_designer.engine.release_engine import release_history_path
+        from ui_designer.model.release import ReleaseConfig, ReleaseProfile
         from ui_designer.ui.main_window import MainWindow
 
         class _BuildReadyCompiler:
@@ -2868,6 +2869,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "BuildHintsDemo"
         project = _create_project(project_dir, "BuildHintsDemo", sdk_root)
+        project.release_config = ReleaseConfig(
+            profiles=[
+                ReleaseProfile(id="windows-pc", name="Windows PC"),
+                ReleaseProfile(id="stm32-sim", name="STM32 Simulator", port="stm32"),
+            ],
+            default_profile="stm32-sim",
+        )
 
         window = MainWindow("")
         actions = {
@@ -2931,7 +2939,9 @@ class TestMainWindowFileFlow:
             f"Build a release package for the current project. Output root: {window._release_output_root()}."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
-        assert refreshed_actions["Release Profiles..."].toolTip() == "Edit release profiles for the current project."
+        assert refreshed_actions["Release Profiles..."].toolTip() == (
+            "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim."
+        )
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "

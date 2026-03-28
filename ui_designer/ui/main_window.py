@@ -1099,6 +1099,36 @@ class MainWindow(QMainWindow):
         )
         self._apply_action_hint(self._generate_resources_action, hint)
 
+    def _update_release_profiles_action_metadata(self):
+        action = getattr(self, "_release_profiles_action", None)
+        if action is None:
+            return
+        if getattr(self, "project", None) is None:
+            self._apply_action_hint(
+                action,
+                self._action_hint(
+                    "Edit release profiles for the current project.",
+                    False,
+                    "open a project first",
+                ),
+            )
+            return
+        release_config = getattr(self.project, "release_config", None)
+        profiles = list(getattr(release_config, "profiles", []) or [])
+        profile_count = len(profiles)
+        profile_label = f"{profile_count} profile" if profile_count == 1 else f"{profile_count} profiles"
+        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
+        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
+        if default_profile not in profile_ids and profiles:
+            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
+        self._apply_action_hint(
+            action,
+            (
+                "Edit release profiles for the current project. "
+                f"Profiles: {profile_label}. Default: {default_profile or 'none'}."
+            ),
+        )
+
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
@@ -2114,14 +2144,7 @@ class MainWindow(QMainWindow):
                     )
                 ),
             )
-            self._apply_action_hint(
-                self._release_profiles_action,
-                self._action_hint(
-                    "Edit release profiles for the current project.",
-                    self._release_profiles_action.isEnabled(),
-                    "open a project first",
-                ),
-            )
+            self._update_release_profiles_action_metadata()
             self._apply_action_hint(
                 self._release_history_action,
                 (
