@@ -793,6 +793,9 @@ class TestWidgetTreePanel:
         assert recent_placeholder.isEnabled() is False
         assert repeat_action.isEnabled() is False
         assert clear_action.isEnabled() is False
+        assert recent_placeholder.statusTip() == recent_placeholder.toolTip()
+        assert repeat_action.statusTip() == repeat_action.toolTip()
+        assert clear_action.statusTip() == clear_action.toolTip()
         assert _menu_target_labels(panel.into_btn.menu()) == ["root_group / target (group)"]
 
         menu = panel._build_context_menu(child)
@@ -839,6 +842,8 @@ class TestWidgetTreePanel:
         assert repeat_action.isEnabled() is True
         assert clear_action.isEnabled() is True
         assert "root_group / target (group)" in repeat_action.toolTip()
+        assert repeat_action.statusTip() == repeat_action.toolTip()
+        assert clear_action.statusTip() == clear_action.toolTip()
 
         repeat_action.trigger()
 
@@ -1009,6 +1014,7 @@ class TestWidgetTreePanel:
         assert actions["Move Into Last Target"].isEnabled() is False
         assert actions["Quick Move Into"].menu() is not None
         assert actions["Quick Move Into"].toolTip() == "Move directly into an available container target, or manage move-target history."
+        assert actions["Quick Move Into"].statusTip() == actions["Quick Move Into"].toolTip()
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
@@ -1016,6 +1022,7 @@ class TestWidgetTreePanel:
         assert actions["Move To Bottom"].isEnabled() is True
         assert "Unavailable: selection must only include groups." in actions["Ungroup"].toolTip()
         assert "Unavailable: move something into a container first." in actions["Move Into Last Target"].toolTip()
+        assert actions["Move Into Last Target"].statusTip() == actions["Move Into Last Target"].toolTip()
         assert "Unavailable: selected widgets already belong to the top container." in actions["Lift To Parent"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move Up"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move To Top"].toolTip()
@@ -1700,6 +1707,7 @@ class TestWidgetTreePanel:
 
         assert actions["Move Into Last Target"].isEnabled() is True
         assert "root_group / target_b (group)" in actions["Move Into Last Target"].toolTip()
+        assert actions["Move Into Last Target"].statusTip() == actions["Move Into Last Target"].toolTip()
 
         actions["Move Into Last Target"].trigger()
 
@@ -1738,6 +1746,7 @@ class TestWidgetTreePanel:
 
         assert actions["Clear Move Target History"].isEnabled() is True
         assert "Forget 1 recent move-into target" in actions["Clear Move Target History"].toolTip()
+        assert actions["Clear Move Target History"].statusTip() == actions["Clear Move Target History"].toolTip()
 
         actions["Clear Move Target History"].trigger()
 
@@ -1749,6 +1758,7 @@ class TestWidgetTreePanel:
         actions = _structure_menu_actions(menu)
         assert actions["Clear Move Target History"].isEnabled() is False
         assert "Unavailable: no recent move targets are saved." in actions["Clear Move Target History"].toolTip()
+        assert actions["Clear Move Target History"].statusTip() == actions["Clear Move Target History"].toolTip()
 
         menu.deleteLater()
         panel.deleteLater()

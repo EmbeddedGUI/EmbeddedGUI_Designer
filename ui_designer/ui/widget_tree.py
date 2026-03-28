@@ -42,6 +42,14 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_action_metadata(action, *, tooltip=None, whats_this=None):
+    if tooltip is not None:
+        action.setToolTip(tooltip)
+        action.setStatusTip(tooltip)
+    if whats_this is not None:
+        action.setWhatsThis(whats_this)
+
+
 def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
@@ -2109,7 +2117,7 @@ class WidgetTreePanel(QWidget):
 
     def _add_move_target_menu_action(self, menu, choice, widgets):
         action = QAction(choice.label, self)
-        action.setToolTip(f"Move the current selection into {choice.label}.")
+        _set_action_metadata(action, tooltip=f"Move the current selection into {choice.label}.")
         action.triggered.connect(
             lambda checked=False, target=choice.widget, target_label=choice.label, selected_widgets=list(widgets): self._move_selected_widgets_into(
                 target_widget=target,
@@ -2128,32 +2136,33 @@ class WidgetTreePanel(QWidget):
         note_action = QAction(text, menu)
         note_action.setEnabled(False)
         if tooltip:
-            note_action.setToolTip(tooltip)
-            note_action.setStatusTip(tooltip)
+            _set_action_metadata(note_action, tooltip=tooltip)
         menu.addAction(note_action)
 
     def _add_into_button_management_actions(self, menu, widgets):
         move_into_last_target_action = QAction("Move Into Last Target", self)
         move_into_last_target_choice = self._remembered_move_target_choice(widgets)
         move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
-        move_into_last_target_action.setToolTip(
-            self._structure_tooltip(
+        _set_action_metadata(
+            move_into_last_target_action,
+            tooltip=self._structure_tooltip(
                 self._move_into_last_target_hint(widgets),
                 move_into_last_target_choice is not None,
                 self._move_into_last_target_reason(widgets),
-            )
+            ),
         )
         move_into_last_target_action.triggered.connect(lambda checked=False, selected_widgets=list(widgets): self._move_selected_widgets_into_last_target(selected_widgets))
         menu.addAction(move_into_last_target_action)
 
         clear_move_target_history_action = QAction("Clear Move Target History", self)
         clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
-        clear_move_target_history_action.setToolTip(
-            self._structure_tooltip(
+        _set_action_metadata(
+            clear_move_target_history_action,
+            tooltip=self._structure_tooltip(
                 self._clear_move_target_history_hint(),
                 self.has_recent_move_targets(),
                 "no recent move targets are saved.",
-            )
+            ),
         )
         clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
         menu.addAction(clear_move_target_history_action)
@@ -2548,23 +2557,25 @@ class WidgetTreePanel(QWidget):
         move_into_last_target_action.setShortcut("Ctrl+Alt+I")
         move_into_last_target_choice = self._remembered_move_target_choice(context_widgets)
         move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
-        move_into_last_target_action.setToolTip(
-            self._structure_tooltip(
+        _set_action_metadata(
+            move_into_last_target_action,
+            tooltip=self._structure_tooltip(
                 self._move_into_last_target_hint(context_widgets),
                 move_into_last_target_choice is not None,
                 self._move_into_last_target_reason(context_widgets),
-            )
+            ),
         )
         move_into_last_target_action.triggered.connect(lambda: self._move_selected_widgets_into_last_target(context_widgets))
         structure_menu.addAction(move_into_last_target_action)
         clear_move_target_history_action = QAction("Clear Move Target History", self)
         clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
-        clear_move_target_history_action.setToolTip(
-            self._structure_tooltip(
+        _set_action_metadata(
+            clear_move_target_history_action,
+            tooltip=self._structure_tooltip(
                 self._clear_move_target_history_hint(),
                 self.has_recent_move_targets(),
                 "no recent move targets are saved.",
-            )
+            ),
         )
         clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
         structure_menu.addAction(clear_move_target_history_action)
@@ -2572,7 +2583,7 @@ class WidgetTreePanel(QWidget):
         if quick_targets or self.remembered_move_target_label() or self.has_recent_move_targets():
             quick_move_menu = structure_menu.addMenu("Quick Move Into")
             quick_move_menu.setToolTipsVisible(True)
-            quick_move_menu.menuAction().setToolTip(self._quick_move_menu_hint())
+            _set_action_metadata(quick_move_menu.menuAction(), tooltip=self._quick_move_menu_hint())
             self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5, include_management_actions=True)
 
         lift_action = QAction("Lift To Parent", self)
