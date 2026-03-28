@@ -75,3 +75,31 @@ class TestPageNavigator:
         assert navigator._thumbnails["main_page"]._name_label.text() == "main_page*"
         assert navigator._container.toolTip() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
         navigator.deleteLater()
+
+    def test_page_thumbnail_context_menu_actions_expose_dynamic_hints(self, qapp):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+        navigator.set_pages({"main_page": object(), "detail_page": object()})
+        navigator.set_current_page("detail_page")
+        navigator.set_dirty_pages({"main_page"})
+
+        dirty_menu = navigator._build_context_menu("main_page")
+        dirty_actions = {action.text(): action for action in dirty_menu.actions() if action.text()}
+        assert dirty_actions["Copy Page"].toolTip() == "Duplicate page: main_page."
+        assert dirty_actions["Copy Page"].statusTip() == dirty_actions["Copy Page"].toolTip()
+        assert dirty_actions["Delete Page"].toolTip() == "Delete page: main_page. Unsaved changes will be lost."
+        assert dirty_actions["Delete Page"].statusTip() == dirty_actions["Delete Page"].toolTip()
+        template_menu = dirty_actions["Add Page from Template"].menu()
+        assert dirty_actions["Add Page from Template"].toolTip() == (
+            "Add a new page from a built-in template after main_page."
+        )
+        assert template_menu.actions()[0].toolTip() == "Add Blank after main_page."
+        assert template_menu.actions()[0].statusTip() == template_menu.actions()[0].toolTip()
+        dirty_menu.deleteLater()
+
+        clean_menu = navigator._build_context_menu("detail_page")
+        clean_actions = {action.text(): action for action in clean_menu.actions() if action.text()}
+        assert clean_actions["Delete Page"].toolTip() == "Delete page: detail_page. This cannot be undone."
+        clean_menu.deleteLater()
+        navigator.deleteLater()

@@ -30,6 +30,11 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_action_metadata(action, tooltip):
+    action.setToolTip(tooltip)
+    action.setStatusTip(tooltip)
+
+
 class PageThumbnail(QWidget):
     """Single page thumbnail with label and click selection."""
 
@@ -274,23 +279,50 @@ class PageNavigator(QWidget):
         self.page_selected.emit(page_name)
 
     def _on_context_menu(self, page_name, pos):
+        menu = self._build_context_menu(page_name)
+        chosen = menu.exec_(pos)
+        if chosen is None:
+            return
+        action_key = chosen.data()
+        if action_key == "copy":
+            self.page_copy_requested.emit(page_name)
+        elif action_key == "delete":
+            self.page_delete_requested.emit(page_name)
+        elif isinstance(action_key, str) and action_key.startswith("template:"):
+            self.page_add_requested.emit(action_key.split(":", 1)[1], page_name)
+
+    def _context_action_hint(self, action_key, page_name="", template_name=""):
+        page_label = str(page_name or "").strip() or "current page"
+        if action_key == "copy":
+            return f"Duplicate page: {page_label}."
+        if action_key == "delete":
+            if page_label in self._dirty_pages:
+                return f"Delete page: {page_label}. Unsaved changes will be lost."
+            return f"Delete page: {page_label}. This cannot be undone."
+        if action_key == "template_menu":
+            return f"Add a new page from a built-in template after {page_label}."
+        return f"Add {template_name or 'page'} after {page_label}."
+
+    def _build_context_menu(self, page_name):
         menu = QMenu(self)
+        menu.setToolTipsVisible(True)
 
         copy_action = menu.addAction("Copy Page")
+        copy_action.setData("copy")
+        _set_action_metadata(copy_action, self._context_action_hint("copy", page_name))
+
         delete_action = menu.addAction("Delete Page")
+        delete_action.setData("delete")
+        _set_action_metadata(delete_action, self._context_action_hint("delete", page_name))
+
         menu.addSeparator()
 
-        # Add from template submenu
         template_menu = menu.addMenu("Add Page from Template")
-        template_actions = {}
+        template_menu.setToolTipsVisible(True)
+        _set_action_metadata(template_menu.menuAction(), self._context_action_hint("template_menu", page_name))
         for key, tmpl in PAGE_TEMPLATES.items():
             action = template_menu.addAction(tmpl["name"])
-            template_actions[action] = key
+            action.setData(f"template:{key}")
+            _set_action_metadata(action, self._context_action_hint("template", page_name, tmpl["name"]))
 
-        chosen = menu.exec_(pos)
-        if chosen == copy_action:
-            self.page_copy_requested.emit(page_name)
-        elif chosen == delete_action:
-            self.page_delete_requested.emit(page_name)
-        elif chosen in template_actions:
-            self.page_add_requested.emit(template_actions[chosen], page_name)
+        return menu
