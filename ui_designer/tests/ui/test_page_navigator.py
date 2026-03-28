@@ -59,8 +59,8 @@ class TestPageNavigator:
         assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. No dirty pages."
         assert navigator.toolTip() == navigator.accessibleName()
         assert navigator.statusTip() == navigator.toolTip()
-        assert navigator._scroll_area.accessibleName() == "Page thumbnails"
-        assert navigator._container.accessibleName() == "Page thumbnail list"
+        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
+        assert navigator._container.accessibleName() == "Page thumbnail list: 0 pages. Current page: none. No dirty pages."
         assert navigator._scroll_area.toolTip() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
         assert navigator._container.toolTip() == "Page thumbnail list: 0 pages. Current page: none. No dirty pages."
 
@@ -74,12 +74,14 @@ class TestPageNavigator:
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. No dirty pages."
         assert navigator._thumbnails["detail_page"].accessibleName() == "Page thumbnail: detail_page. Current page. No unsaved changes."
         assert navigator._scroll_area.statusTip() == navigator._scroll_area.toolTip()
+        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 2 pages. Current page: detail_page. No dirty pages."
 
         navigator.set_dirty_pages({"main_page"})
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. 1 dirty page."
         assert navigator._thumbnails["main_page"].accessibleName() == "Page thumbnail: main_page. Available. Unsaved changes."
         assert navigator._thumbnails["main_page"]._name_label.text() == "main_page*"
         assert navigator._container.toolTip() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
+        assert navigator._container.accessibleName() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
         navigator.deleteLater()
 
     def test_page_thumbnail_context_menu_actions_expose_dynamic_hints(self, qapp):

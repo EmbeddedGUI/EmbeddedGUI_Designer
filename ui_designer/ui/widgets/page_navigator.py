@@ -200,12 +200,12 @@ class PageNavigator(QWidget):
         _set_widget_metadata(
             self._scroll_area,
             tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. {dirty_label}.",
-            accessible_name="Page thumbnails",
+            accessible_name=f"Page thumbnails view: {page_label}. Current page: {current_page}. {dirty_label}.",
         )
         _set_widget_metadata(
             self._container,
             tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. {dirty_label}.",
-            accessible_name="Page thumbnail list",
+            accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. {dirty_label}.",
         )
 
     def set_screen_size(self, w, h):
