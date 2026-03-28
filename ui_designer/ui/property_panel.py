@@ -952,7 +952,7 @@ class PropertyPanel(QWidget):
         if prop_info.get("type", "") in {"image_file", "font_file", "text_file"}:
             self._update_file_selector_metadata(prop_name, target, tooltip=message)
         else:
-            target.setToolTip(message)
+            _set_widget_metadata(target, tooltip=message)
 
     def _collect_multi_common_properties(self):
         if not self._selection:

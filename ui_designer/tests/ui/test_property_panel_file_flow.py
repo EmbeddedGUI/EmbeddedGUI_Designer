@@ -335,6 +335,8 @@ class TestPropertyPanelFileFlow:
 
         assert "File (Missing):" in _form_labels(font_group)
         assert "not present in the project catalog" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Font File selector: missing.ttf"
         panel.deleteLater()
 
     def test_single_selection_marks_disk_missing_file_property(self, qapp, tmp_path):
@@ -361,6 +363,8 @@ class TestPropertyPanelFileFlow:
 
         assert "File (Missing):" in _form_labels(font_group)
         assert "source file is missing on disk" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Font File selector: missing.ttf"
         panel.deleteLater()
 
     def test_multi_selection_marks_missing_when_any_disk_file_is_missing(self, qapp, tmp_path):
@@ -391,6 +395,8 @@ class TestPropertyPanelFileFlow:
 
         assert any(label.startswith("Font File") and "(Missing)" in label for label in _form_labels(common_group))
         assert "missing from the project catalog or source directory" in editor.toolTip()
+        assert editor.statusTip() == editor.toolTip()
+        assert editor.accessibleName() == "Font File selector: mixed values"
         panel.deleteLater()
 
     def test_multi_selection_form_toggles_designer_flags_for_all_widgets(self, qapp):
