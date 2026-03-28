@@ -778,6 +778,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     dialog._search_edit.setText("sdk-fail")
     qapp.processEvents()
 
+    assert dialog._copy_filtered_button.toolTip() == "Copy the filtered release history summary. Visible entries: 1 of 1."
+    assert dialog._copy_filtered_json_button.toolTip() == "Copy the filtered release history as JSON. Visible entries: 1 of 1."
+    assert dialog._export_filtered_button.toolTip() == "Export the filtered release history. Visible entries: 1 of 1."
     assert dialog._clear_filters_button.toolTip() == "Clear the current release history filters and search text."
     assert dialog._clear_filters_button.accessibleName() == "Clear release history filters"
     assert dialog._reset_view_button.toolTip() == "Reset release history filters, preview mode, and selection."
@@ -815,7 +818,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     qapp.processEvents()
 
     assert dialog._history_list.toolTip() == "Release history list: 0 visible entries. Current selection: none."
-    assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy."
+    assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy. Visible entries: 0 of 1."
+    assert dialog._copy_filtered_json_button.toolTip() == "No filtered release entries are available to copy as JSON. Visible entries: 0 of 1."
+    assert dialog._export_filtered_button.toolTip() == "No filtered release entries are available to export. Visible entries: 0 of 1."
     assert dialog._copy_filtered_button.accessibleName() == "Copy filtered release history summary unavailable"
     assert dialog._copy_summary_button.toolTip() == "Select a release entry to copy its summary. Current selection: none."
     assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."

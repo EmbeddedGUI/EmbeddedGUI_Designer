@@ -1469,6 +1469,7 @@ class ReleaseHistoryDialog(QDialog):
         visible_entries = len(self._filtered_history_entries)
         total_entries = len(self._all_history_entries)
         result_summary = f"{visible_entries} of {total_entries} entries"
+        visible_entries_context = f"Visible entries: {visible_entries} of {total_entries}."
         selection_label = self._current_selection_label()
         dialog_summary = (
             f"Release history: {result_summary}. "
@@ -1579,9 +1580,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._copy_filtered_button,
             tooltip=(
-                "Copy the filtered release history summary."
+                f"Copy the filtered release history summary. {visible_entries_context}"
                 if self._filtered_history_entries
-                else "No filtered release entries are available to copy."
+                else f"No filtered release entries are available to copy. {visible_entries_context}"
             ),
             accessible_name=(
                 "Copy filtered release history summary"
@@ -1592,9 +1593,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._copy_filtered_json_button,
             tooltip=(
-                "Copy the filtered release history as JSON."
+                f"Copy the filtered release history as JSON. {visible_entries_context}"
                 if self._filtered_history_entries
-                else "No filtered release entries are available to copy as JSON."
+                else f"No filtered release entries are available to copy as JSON. {visible_entries_context}"
             ),
             accessible_name=(
                 "Copy filtered release history JSON"
@@ -1605,9 +1606,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._export_filtered_button,
             tooltip=(
-                "Export the filtered release history."
+                f"Export the filtered release history. {visible_entries_context}"
                 if self._filtered_history_entries
-                else "No filtered release entries are available to export."
+                else f"No filtered release entries are available to export. {visible_entries_context}"
             ),
             accessible_name=(
                 "Export filtered release history"
