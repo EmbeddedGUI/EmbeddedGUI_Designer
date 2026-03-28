@@ -3708,7 +3708,10 @@ class TestMainWindowFileFlow:
             "Open an SDK example project or legacy example. Current binding: SDK: missing."
         )
         assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
-        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file. Recent projects: none."
+        assert actions["Open Project File..."].toolTip() == (
+            "Open an existing .egui project file. "
+            f"Recent projects: none. Default directory: {window._default_open_project_dir()}."
+        )
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
         assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
         assert "Current binding: SDK: missing." in actions["Download SDK Copy..."].toolTip()
@@ -3760,8 +3763,33 @@ class TestMainWindowFileFlow:
             "Open an SDK example project or legacy example. Current binding: SDK: cached."
         )
         assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
-        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file. Recent projects: 1 project."
+        assert actions["Open Project File..."].toolTip() == (
+            "Open an existing .egui project file. "
+            f"Recent projects: 1 project. Default directory: {window._default_open_project_dir()}."
+        )
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
+        _close_window(window)
+
+    def test_open_project_action_tracks_default_directory(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.main_window import MainWindow
+
+        workspace_dir = tmp_path / "workspace"
+        project_dir = workspace_dir / "CurrentApp"
+        project_dir.mkdir(parents=True)
+
+        window = MainWindow("")
+        window._project_dir = str(project_dir)
+        window._update_window_title()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "Open Project File..."
+        )
+        assert action.toolTip() == (
+            "Open an existing .egui project file. "
+            f"Recent projects: none. Default directory: {os.path.normpath(os.path.abspath(project_dir))}."
+        )
+        assert action.statusTip() == action.toolTip()
         _close_window(window)
 
     def test_download_sdk_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
@@ -3883,7 +3911,7 @@ class TestMainWindowFileFlow:
         assert reloaded_actions["Save As..."].isEnabled() is True
         assert reloaded_actions["Reload Project From Disk"].toolTip() == "Reload the current project from disk (Ctrl+Shift+R)."
         assert reloaded_actions["Reload Project From Disk"].statusTip() == reloaded_actions["Reload Project From Disk"].toolTip()
-        assert reloaded_actions["Close Project"].toolTip() == "Close the current project (Ctrl+W)."
+        assert reloaded_actions["Close Project"].toolTip() == "Close the current project (Ctrl+W). Unsaved pages: none."
         assert reloaded_actions["Close Project"].statusTip() == reloaded_actions["Close Project"].toolTip()
         assert reloaded_actions["Close Project"].isEnabled() is True
         assert reloaded_actions["Export C Code..."].toolTip() == (
@@ -3892,6 +3920,30 @@ class TestMainWindowFileFlow:
         )
         assert reloaded_actions["Export C Code..."].statusTip() == reloaded_actions["Export C Code..."].toolTip()
         assert reloaded_actions["Export C Code..."].isEnabled() is True
+        _close_window(window)
+
+    def test_close_project_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CloseHintDemo"
+        project = _create_project(project_dir, "CloseHintDemo", sdk_root)
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_window_title()
+
+        assert window._close_project_action.toolTip() == "Close the current project (Ctrl+W). Unsaved pages: 1 page."
+        assert window._close_project_action.statusTip() == window._close_project_action.toolTip()
+        assert window._close_project_action.isEnabled() is True
         _close_window(window)
 
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):

@@ -1016,6 +1016,10 @@ class MainWindow(QMainWindow):
             if has_project:
                 if attr_name == "_save_as_action":
                     hint = f"{base_text} Default parent: {self._default_save_project_as_dir()}."
+                elif attr_name == "_close_project_action":
+                    dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+                    dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
+                    hint = f"{base_text} Unsaved pages: {dirty_label}."
                 elif attr_name == "_export_action":
                     hint = f"{base_text} Default export directory: {self._default_export_code_dir()}."
                 else:
@@ -1041,9 +1045,10 @@ class MainWindow(QMainWindow):
                 if recent_count == 0
                 else f"{recent_count} project" if recent_count == 1 else f"{recent_count} projects"
             )
+            default_dir = self._default_open_project_dir()
             self._apply_action_hint(
                 open_project_action,
-                f"Open an existing .egui project file. Recent projects: {recent_label}.",
+                f"Open an existing .egui project file. Recent projects: {recent_label}. Default directory: {default_dir}.",
             )
 
     def _update_new_project_action_metadata(self, binding_label=""):
@@ -3829,6 +3834,8 @@ class MainWindow(QMainWindow):
         self._update_diagnostics_panel()
         self._update_workspace_chips()
         self._update_new_project_action_metadata()
+        self._update_file_open_action_metadata()
+        self._update_file_project_action_metadata()
         self._update_file_menu_metadata()
 
     def _update_history_panel(self):
