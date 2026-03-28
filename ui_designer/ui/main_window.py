@@ -1032,9 +1032,10 @@ class MainWindow(QMainWindow):
         open_app_action = getattr(self, "_open_app_action", None)
         if open_app_action is not None:
             label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+            default_sdk_root = self._active_sdk_root() or "none"
             self._apply_action_hint(
                 open_app_action,
-                f"Open an SDK example project or legacy example. Current binding: {label}.",
+                f"Open an SDK example project or legacy example. Current binding: {label}. Default SDK root: {default_sdk_root}.",
             )
         open_project_action = getattr(self, "_open_project_action", None)
         if open_project_action is not None:

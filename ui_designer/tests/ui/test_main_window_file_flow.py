@@ -3705,7 +3705,8 @@ class TestMainWindowFileFlow:
         )
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
         assert actions["Open SDK Example..."].toolTip() == (
-            "Open an SDK example project or legacy example. Current binding: SDK: missing."
+            "Open an SDK example project or legacy example. "
+            f"Current binding: SDK: missing. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
         assert actions["Open Project File..."].toolTip() == (
@@ -3760,7 +3761,8 @@ class TestMainWindowFileFlow:
             if action.text() in {"Open SDK Example...", "Open Project File..."}
         }
         assert actions["Open SDK Example..."].toolTip() == (
-            "Open an SDK example project or legacy example. Current binding: SDK: cached."
+            "Open an SDK example project or legacy example. "
+            f"Current binding: SDK: cached. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
         assert actions["Open Project File..."].toolTip() == (
@@ -3768,6 +3770,26 @@ class TestMainWindowFileFlow:
             f"Recent projects: 1 project. Default directory: {window._default_open_project_dir()}."
         )
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
+        _close_window(window)
+
+    def test_open_sdk_example_action_tracks_default_sdk_root(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: sdk-example")
+        window.project_root = "C:/sdk"
+        window._update_sdk_status_label()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "Open SDK Example..."
+        )
+        assert action.toolTip() == (
+            "Open an SDK example project or legacy example. "
+            f"Current binding: SDK: sdk-example. Default SDK root: {window._active_sdk_root() or 'none'}."
+        )
+        assert action.statusTip() == action.toolTip()
         _close_window(window)
 
     def test_open_project_action_tracks_default_directory(self, qapp, isolated_config, tmp_path):
