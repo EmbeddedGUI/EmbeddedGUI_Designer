@@ -2898,7 +2898,9 @@ class TestMainWindowFileFlow:
             "Browse recorded release builds for the current project. Unavailable: open a project first."
         )
         assert actions["Release History..."].statusTip() == actions["Release History..."].toolTip()
-        assert actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
+        assert actions["Repository Health..."].toolTip() == (
+            "Inspect the Designer repository health summary. Project: none. SDK: invalid."
+        )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -2930,7 +2932,9 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == "Browse recorded release builds for the current project."
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
-        assert refreshed_actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
+        assert refreshed_actions["Repository Health..."].toolTip() == (
+            "Inspect the Designer repository health summary. Project: open. SDK: valid."
+        )
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "

@@ -2108,9 +2108,11 @@ class MainWindow(QMainWindow):
                     "open a project first" if self.project is None else "save the project to disk first",
                 ),
             )
+            repo_project_state = "open" if self.project is not None else "none"
+            repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
             self._apply_action_hint(
                 self._repo_health_action,
-                "Inspect the Designer repository health summary.",
+                f"Inspect the Designer repository health summary. Project: {repo_project_state}. SDK: {repo_sdk_state}.",
             )
             self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
             self._open_last_release_dist_action.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
