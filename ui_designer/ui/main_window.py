@@ -1921,6 +1921,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ File menu 鈹€鈹€
         file_menu = menubar.addMenu("File")
+        self._apply_action_hint(file_menu.menuAction(), "Create, open, save, export, and close projects.")
 
         new_action = QAction("New Project", self)
         new_action.setShortcut("Ctrl+N")
@@ -2003,6 +2004,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ Edit menu 鈹€鈹€
         edit_menu = menubar.addMenu("Edit")
+        self._apply_action_hint(edit_menu.menuAction(), "Undo changes and work with the current selection.")
 
         self._undo_action = QAction("Undo", self)
         self._undo_action.setShortcut("Ctrl+Z")
@@ -2049,6 +2051,10 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self._delete_action)
 
         arrange_menu = menubar.addMenu("Arrange")
+        self._apply_action_hint(
+            arrange_menu.menuAction(),
+            "Align, distribute, reorder, lock, and hide selected widgets.",
+        )
 
         self._align_left_action = QAction("Align Left", self)
         self._apply_action_hint(self._align_left_action, "Align the current selection to the left edge of the primary widget.")
@@ -2144,6 +2150,10 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._toggle_hide_action)
 
         structure_menu = menubar.addMenu("Structure")
+        self._apply_action_hint(
+            structure_menu.menuAction(),
+            "Group, move, and reorder widgets in the page hierarchy.",
+        )
         self._structure_menu = structure_menu
 
         self._group_selection_action = QAction("Group Selection", self)
@@ -2218,6 +2228,10 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
+        self._apply_action_hint(
+            build_menu.menuAction(),
+            "Compile previews, generate resources, and manage release builds.",
+        )
 
         self._compile_action = QAction("Compile && Run", self)
         self._compile_action.setShortcut("F5")
@@ -2298,6 +2312,10 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ View menu 鈹€鈹€
         view_menu = menubar.addMenu("View")
+        self._apply_action_hint(
+            view_menu.menuAction(),
+            "Change workspace layout, themes, preview modes, and mockup options.",
+        )
 
         # Theme Submenu
         theme_menu = view_menu.addMenu("Theme")

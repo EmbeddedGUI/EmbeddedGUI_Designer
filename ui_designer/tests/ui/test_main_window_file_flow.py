@@ -3191,6 +3191,26 @@ class TestMainWindowFileFlow:
         assert window._send_back_action.statusTip() == window._send_back_action.toolTip()
         _close_window(window)
 
+    def test_menu_bar_categories_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {action.text(): action for action in window.menuBar().actions() if action.text()}
+
+        assert actions["File"].toolTip() == "Create, open, save, export, and close projects."
+        assert actions["File"].statusTip() == actions["File"].toolTip()
+        assert actions["Edit"].toolTip() == "Undo changes and work with the current selection."
+        assert actions["Edit"].statusTip() == actions["Edit"].toolTip()
+        assert actions["Arrange"].toolTip() == "Align, distribute, reorder, lock, and hide selected widgets."
+        assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
+        assert actions["Structure"].toolTip() == "Group, move, and reorder widgets in the page hierarchy."
+        assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
+        assert actions["Build"].toolTip() == "Compile previews, generate resources, and manage release builds."
+        assert actions["Build"].statusTip() == actions["Build"].toolTip()
+        assert actions["View"].toolTip() == "Change workspace layout, themes, preview modes, and mockup options."
+        assert actions["View"].statusTip() == actions["View"].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
