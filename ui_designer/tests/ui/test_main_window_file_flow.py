@@ -2940,6 +2940,26 @@ class TestMainWindowFileFlow:
         )
 
         window.project = project
+        window.project_root = str(sdk_root)
+        window.compiler = _BuildReadyCompiler()
+        window._update_compile_availability()
+
+        unsaved_actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in actions
+        }
+        assert unsaved_actions["Release Build..."].toolTip() == (
+            "Build a release package for the current project. "
+            "SDK: valid. Output root: none. History file: not created yet. "
+            "Source resources: missing. Resource directory: none. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            "Output root state: unavailable. History file state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
+            "Unavailable: save the project to disk first."
+        )
+        assert unsaved_actions["Release Build..."].statusTip() == unsaved_actions["Release Build..."].toolTip()
+        assert unsaved_actions["Release Build..."].isEnabled() is False
+
+        window.project = project
         window._project_dir = str(project_dir)
         window.project_root = str(sdk_root)
         window.compiler = _BuildReadyCompiler()
