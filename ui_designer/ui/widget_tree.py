@@ -347,8 +347,16 @@ class WidgetTreePanel(QWidget):
         self.filter_next_btn.setAccessibleName("Next widget filter match")
         self.filter_select_btn.setAccessibleName("Select widget filter matches")
         self.tree.setAccessibleName("Widget tree")
-        _set_widget_metadata(self.expand_btn, tooltip="Expand all widgets in the tree.")
-        _set_widget_metadata(self.collapse_btn, tooltip="Collapse all widgets in the tree.")
+        _set_widget_metadata(
+            self.expand_btn,
+            tooltip="Expand all widgets in the tree.",
+            accessible_name="Expand all widget tree items",
+        )
+        _set_widget_metadata(
+            self.collapse_btn,
+            tooltip="Collapse all widgets in the tree.",
+            accessible_name="Collapse all widget tree items",
+        )
         self._update_structure_controls()
         self._update_filter_accessibility()
         self._update_accessibility_summary()

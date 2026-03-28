@@ -2443,6 +2443,12 @@ class TestWidgetTreePanel:
         assert panel.del_btn.toolTip() == "Delete the current selection (Del)\nUnavailable: select at least 1 widget."
         assert panel.del_btn.statusTip() == panel.del_btn.toolTip()
         assert panel.del_btn.accessibleName() == "Delete selected widget unavailable"
+        assert panel.expand_btn.toolTip() == "Expand all widgets in the tree."
+        assert panel.expand_btn.statusTip() == panel.expand_btn.toolTip()
+        assert panel.expand_btn.accessibleName() == "Expand all widget tree items"
+        assert panel.collapse_btn.toolTip() == "Collapse all widgets in the tree."
+        assert panel.collapse_btn.statusTip() == panel.collapse_btn.toolTip()
+        assert panel.collapse_btn.accessibleName() == "Collapse all widget tree items"
         assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
         assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
         assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
