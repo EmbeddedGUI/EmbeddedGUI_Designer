@@ -2956,7 +2956,7 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
         assert refreshed_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
-            f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
+            f"SDK: valid. Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
@@ -3093,7 +3093,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
-            f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
+            f"SDK: valid. Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             f"History file: {history_path}. "
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
@@ -3199,7 +3199,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
-            f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
+            f"SDK: valid. Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             f"History file: {history_path}. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
             "Output root state: available. History file state: available. Release records: 1 entry. "
             "Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."

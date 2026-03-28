@@ -2316,6 +2316,7 @@ class MainWindow(QMainWindow):
         version_expected_path = self._latest_release_version_path(latest_entry, require_exists=False)
         latest_release_profile_label = self._release_profile_label(latest_entry.get("profile_id")) if isinstance(latest_entry, dict) else ""
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
         history_file_state_summary = self._release_history_file_state_summary(history_file_path)
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
@@ -2366,7 +2367,7 @@ class MainWindow(QMainWindow):
                 self._release_build_action,
                 (
                     "Build a release package for the current project. "
-                    f"Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
+                    f"SDK: {sdk_state}. Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
                     f"History file: {history_file_path or 'not created yet'}. "
                     f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
                     f"{output_root_state_summary} {history_file_state_summary} {history_summary} "
