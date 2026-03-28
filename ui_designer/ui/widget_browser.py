@@ -28,6 +28,20 @@ from ..model.widget_registry import WidgetRegistry
 from .iconography import make_icon, make_widget_preview, widget_icon_key
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
+def _count_label(count, singular, plural=None):
+    value = max(int(count or 0), 0)
+    noun = singular if value == 1 else (plural or f"{singular}s")
+    return f"{value} {noun}"
+
+
 class WidgetBrowserCard(QFrame):
     """Single widget entry card used by the browser grid."""
 
@@ -65,13 +79,13 @@ class WidgetBrowserCard(QFrame):
 
         title_layout = QVBoxLayout()
         title_layout.setSpacing(2)
-        title = QLabel(self._item.get("display_name", self.type_name))
-        title.setObjectName("widget_browser_card_title")
-        title_layout.addWidget(title)
+        self._title_label = QLabel(self._item.get("display_name", self.type_name))
+        self._title_label.setObjectName("widget_browser_card_title")
+        title_layout.addWidget(self._title_label)
 
-        meta = QLabel(self._item.get("category", ""))
-        meta.setObjectName("widget_browser_card_meta")
-        title_layout.addWidget(meta)
+        self._meta_label = QLabel(self._item.get("category", ""))
+        self._meta_label.setObjectName("widget_browser_card_meta")
+        title_layout.addWidget(self._meta_label)
         header.addLayout(title_layout, 1)
 
         self._favorite_btn = QToolButton()
@@ -82,11 +96,11 @@ class WidgetBrowserCard(QFrame):
         header.addWidget(self._favorite_btn, 0, Qt.AlignTop)
         layout.addLayout(header)
 
-        preview = QLabel()
-        preview.setObjectName("widget_browser_preview")
-        preview.setAlignment(Qt.AlignCenter)
-        preview.setPixmap(make_widget_preview(self._item.get("preview_kind", "widget"), size=(180, 104)))
-        layout.addWidget(preview)
+        self._preview_label = QLabel()
+        self._preview_label.setObjectName("widget_browser_preview")
+        self._preview_label.setAlignment(Qt.AlignCenter)
+        self._preview_label.setPixmap(make_widget_preview(self._item.get("preview_kind", "widget"), size=(180, 104)))
+        layout.addWidget(self._preview_label)
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
@@ -104,24 +118,86 @@ class WidgetBrowserCard(QFrame):
         layout.addLayout(chips_row)
 
         keywords = ", ".join(self._item.get("keywords", [])[:4])
-        keywords_label = QLabel(keywords)
-        keywords_label.setObjectName("widget_browser_keywords")
-        keywords_label.setWordWrap(True)
-        layout.addWidget(keywords_label)
+        self._keywords_label = QLabel(keywords)
+        self._keywords_label.setObjectName("widget_browser_keywords")
+        self._keywords_label.setWordWrap(True)
+        layout.addWidget(self._keywords_label)
 
         action_row = QHBoxLayout()
         action_row.setSpacing(8)
-        insert_btn = PrimaryPushButton("Insert")
-        insert_btn.clicked.connect(lambda: self.insert_requested.emit(self.type_name))
-        action_row.addWidget(insert_btn)
+        self._insert_btn = PrimaryPushButton("Insert")
+        self._insert_btn.clicked.connect(lambda: self.insert_requested.emit(self.type_name))
+        action_row.addWidget(self._insert_btn)
         action_row.addStretch()
         layout.addLayout(action_row)
+        self._update_accessibility_summary()
 
     def _build_info_chip(self, text, tone):
         chip = QLabel(str(text or "").strip())
         chip.setObjectName("widget_browser_card_chip")
         chip.setProperty("chipTone", str(tone or "accent"))
+        _set_widget_metadata(
+            chip,
+            tooltip=f"Widget trait: {chip.text()}",
+            accessible_name=f"Widget trait: {chip.text()}",
+        )
         return chip
+
+    def _display_name(self):
+        return str(self._item.get("display_name", self.type_name) or self.type_name)
+
+    def _card_summary(self):
+        category = str(self._item.get("category", "") or "Uncategorized").strip() or "Uncategorized"
+        scenario = str(self._item.get("scenario", "") or "General").strip() or "General"
+        complexity = str(self._item.get("complexity", "") or "unknown").strip().title() or "Unknown"
+        container_text = "yes" if bool(self._item.get("is_container")) else "no"
+        favorite_text = "yes" if self._favorite_btn.isChecked() else "no"
+        selected_text = "yes" if self._selected else "no"
+        return (
+            f"Widget card: {self._display_name()}. Category {category}. Scenario {scenario}. "
+            f"Complexity {complexity}. Container {container_text}. Favorite {favorite_text}. Selected {selected_text}."
+        )
+
+    def _update_accessibility_summary(self):
+        display_name = self._display_name()
+        summary = self._card_summary()
+        keywords = str(self._keywords_label.text() or "").strip() or "No keywords"
+        favorite_hint = (
+            f"Remove {display_name} from favorites."
+            if self._favorite_btn.isChecked()
+            else f"Add {display_name} to favorites."
+        )
+        _set_widget_metadata(
+            self,
+            tooltip=f"{summary} Click to select. Double-click to insert.",
+            accessible_name=summary,
+        )
+        _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=f"Widget name: {display_name}")
+        _set_widget_metadata(
+            self._meta_label,
+            tooltip=summary,
+            accessible_name=f"Widget category: {str(self._meta_label.text() or 'Uncategorized').strip() or 'Uncategorized'}",
+        )
+        _set_widget_metadata(
+            self._preview_label,
+            tooltip=f"Preview for {display_name}",
+            accessible_name=f"Widget preview: {display_name}",
+        )
+        _set_widget_metadata(
+            self._keywords_label,
+            tooltip=f"Widget keywords: {keywords}",
+            accessible_name=f"Widget keywords: {keywords}",
+        )
+        _set_widget_metadata(
+            self._favorite_btn,
+            tooltip=favorite_hint,
+            accessible_name=f"Favorite toggle: {display_name}",
+        )
+        _set_widget_metadata(
+            self._insert_btn,
+            tooltip=f"Insert {display_name} into the current target.",
+            accessible_name=f"Insert {display_name}",
+        )
 
     def set_selected(self, selected):
         self._selected = bool(selected)
@@ -129,11 +205,13 @@ class WidgetBrowserCard(QFrame):
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
+        self._update_accessibility_summary()
 
     def set_favorite(self, favorite):
         self._favorite_btn.blockSignals(True)
         self._favorite_btn.setChecked(bool(favorite))
         self._favorite_btn.blockSignals(False)
+        self._update_accessibility_summary()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -207,14 +285,14 @@ class WidgetBrowserPanel(QWidget):
         header_layout.setContentsMargins(14, 14, 14, 14)
         header_layout.setSpacing(6)
 
-        title = QLabel("Widget Browser")
-        title.setObjectName("workspace_section_title")
-        header_layout.addWidget(title)
+        self._title_label = QLabel("Widget Browser")
+        self._title_label.setObjectName("workspace_section_title")
+        header_layout.addWidget(self._title_label)
 
-        subtitle = QLabel("Browse by scenario, filter by tags, and insert directly into the selected target.")
-        subtitle.setObjectName("workspace_section_subtitle")
-        subtitle.setWordWrap(True)
-        header_layout.addWidget(subtitle)
+        self._subtitle_label = QLabel("Browse by scenario, filter by tags, and insert directly into the selected target.")
+        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        header_layout.addWidget(self._subtitle_label)
 
         self._insert_target = QLabel("")
         self._insert_target.setObjectName("workspace_status_chip")
@@ -254,9 +332,9 @@ class WidgetBrowserPanel(QWidget):
         lanes_layout = QVBoxLayout(lanes_frame)
         lanes_layout.setContentsMargins(10, 10, 10, 10)
         lanes_layout.setSpacing(8)
-        lanes_title = QLabel("Quick Lanes")
-        lanes_title.setObjectName("workspace_section_subtitle")
-        lanes_layout.addWidget(lanes_title)
+        self._lanes_title = QLabel("Quick Lanes")
+        self._lanes_title.setObjectName("workspace_section_subtitle")
+        lanes_layout.addWidget(self._lanes_title)
         self._lanes_grid_host = QWidget()
         self._lanes_grid = QGridLayout(self._lanes_grid_host)
         self._lanes_grid.setContentsMargins(0, 0, 0, 0)
@@ -274,9 +352,9 @@ class WidgetBrowserPanel(QWidget):
         sort_row = QHBoxLayout()
         sort_row.setContentsMargins(0, 0, 0, 0)
         sort_row.setSpacing(6)
-        sort_title = QLabel("Sort")
-        sort_title.setObjectName("workspace_section_subtitle")
-        sort_row.addWidget(sort_title)
+        self._sort_title = QLabel("Sort")
+        self._sort_title.setObjectName("workspace_section_subtitle")
+        sort_row.addWidget(self._sort_title)
         self._sort_host = QWidget()
         self._sort_layout = QHBoxLayout(self._sort_host)
         self._sort_layout.setContentsMargins(0, 0, 0, 0)
@@ -287,9 +365,9 @@ class WidgetBrowserPanel(QWidget):
         complexity_row = QHBoxLayout()
         complexity_row.setContentsMargins(0, 0, 0, 0)
         complexity_row.setSpacing(6)
-        complexity_title = QLabel("Complexity")
-        complexity_title.setObjectName("workspace_section_subtitle")
-        complexity_row.addWidget(complexity_title)
+        self._complexity_title = QLabel("Complexity")
+        self._complexity_title.setObjectName("workspace_section_subtitle")
+        complexity_row.addWidget(self._complexity_title)
         self._complexity_host = QWidget()
         self._complexity_layout = QHBoxLayout(self._complexity_host)
         self._complexity_layout.setContentsMargins(0, 0, 0, 0)
@@ -327,9 +405,9 @@ class WidgetBrowserPanel(QWidget):
         tags_layout = QHBoxLayout(tags_frame)
         tags_layout.setContentsMargins(10, 8, 10, 8)
         tags_layout.setSpacing(6)
-        tags_title = QLabel("Tags")
-        tags_title.setObjectName("workspace_section_subtitle")
-        tags_layout.addWidget(tags_title)
+        self._tags_title = QLabel("Tags")
+        self._tags_title.setObjectName("workspace_section_subtitle")
+        tags_layout.addWidget(self._tags_title)
         self._tags_host = QWidget()
         self._tags_layout = QHBoxLayout(self._tags_host)
         self._tags_layout.setContentsMargins(0, 0, 0, 0)
@@ -340,6 +418,12 @@ class WidgetBrowserPanel(QWidget):
         self._clear_tags_btn.clicked.connect(self._clear_active_tags)
         tags_layout.addWidget(self._clear_tags_btn, 0)
         layout.addWidget(tags_frame)
+
+        self._category_list.setAccessibleName("Widget categories")
+        self._scroll.setAccessibleName("Widget browser results")
+        self._cards_container.setAccessibleName("Widget browser cards")
+        self._search.setAccessibleName("Widget browser search")
+        self._clear_tags_btn.setAccessibleName("Clear widget tags")
         self._update_insert_target()
         self._populate_organizers()
 
@@ -356,12 +440,16 @@ class WidgetBrowserPanel(QWidget):
                 "containers": "layout",
             }.get(category_id, "widgets")
             item.setIcon(make_icon(icon_key, size=18))
+            item.setToolTip(f"Show {label} in the widget browser.")
+            item.setStatusTip(item.toolTip())
             self._category_list.addItem(item)
         for label in self._registry.browser_scenarios():
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, f"scenario:{label}")
             icon_key = self._scenario_icon_key(label)
             item.setIcon(make_icon(icon_key, size=18))
+            item.setToolTip(f"Show widgets for the {label} scenario.")
+            item.setStatusTip(item.toolTip())
             self._category_list.addItem(item)
         default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
         selected_row = 0
@@ -469,10 +557,28 @@ class WidgetBrowserPanel(QWidget):
             button.blockSignals(True)
             button.setChecked(mode == self._sort_mode)
             button.blockSignals(False)
+            is_current = mode == self._sort_mode
+            tooltip = f"Sort visible widgets by {button.text()}."
+            if is_current:
+                tooltip += " Current sort mode."
+            _set_widget_metadata(
+                button,
+                tooltip=tooltip,
+                accessible_name=f"Sort widgets by {button.text()}",
+            )
         for level, button in self._complexity_buttons.items():
             button.blockSignals(True)
             button.setChecked(level == self._complexity_filter)
             button.blockSignals(False)
+            is_current = level == self._complexity_filter
+            tooltip = f"Filter visible widgets by {button.text()} complexity."
+            if is_current:
+                tooltip += " Current complexity filter."
+            _set_widget_metadata(
+                button,
+                tooltip=tooltip,
+                accessible_name=f"Complexity filter: {button.text()}",
+            )
 
     def _normalize_sort_mode(self, mode):
         value = str(mode or "").strip().lower()
@@ -553,7 +659,16 @@ class WidgetBrowserPanel(QWidget):
             button.blockSignals(True)
             button.setChecked(tag in active)
             button.blockSignals(False)
+            tooltip = f"Filter widgets by tag {button.text()}."
+            tooltip += " Tag is active." if tag in active else " Tag is inactive."
+            _set_widget_metadata(
+                button,
+                tooltip=tooltip,
+                accessible_name=f"Widget tag: {button.text()}",
+            )
         self._clear_tags_btn.setEnabled(bool(active))
+        clear_hint = "Clear active widget tags." if active else "No active widget tags to clear."
+        _set_widget_metadata(self._clear_tags_btn, tooltip=clear_hint, accessible_name="Clear widget tags")
 
     def _on_tag_toggled(self, tag, checked):
         current = self._active_tag_values()
@@ -605,6 +720,7 @@ class WidgetBrowserPanel(QWidget):
         self._rebuild_cards(items)
         self._update_browser_stats(len(items))
         self._update_quick_lanes()
+        self._update_accessibility_summary(len(items))
 
     def _update_insert_target(self):
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
@@ -631,6 +747,21 @@ class WidgetBrowserPanel(QWidget):
         self._set_chip_text(self._visible_count_chip, f"Visible {visible_count}/{total}", tone)
         self._set_chip_text(self._favorites_count_chip, f"Favorites {favorites}", "success" if favorites else "accent")
         self._set_chip_text(self._recent_count_chip, f"Recent {recent}", "warning" if recent else "accent")
+        _set_widget_metadata(
+            self._visible_count_chip,
+            tooltip=f"Visible widgets: {visible_count} of {total}.",
+            accessible_name=f"Visible widgets: {self._visible_count_chip.text()}",
+        )
+        _set_widget_metadata(
+            self._favorites_count_chip,
+            tooltip=f"Favorite widget types: {favorites}.",
+            accessible_name=f"Favorite widgets: {self._favorites_count_chip.text()}",
+        )
+        _set_widget_metadata(
+            self._recent_count_chip,
+            tooltip=f"Recently inserted widget types: {recent}.",
+            accessible_name=f"Recent widgets: {self._recent_count_chip.text()}",
+        )
 
     def _lane_counts(self):
         items = self._registry.browser_items(addable_only=True)
@@ -672,6 +803,97 @@ class WidgetBrowserPanel(QWidget):
             button.style().unpolish(button)
             button.style().polish(button)
             button.update()
+            count_text = _count_label(count, "widget")
+            tooltip = f"Quick lane {base_label}: {count_text}."
+            if lane_id == selected:
+                tooltip += " Current lane."
+            elif count == 0:
+                tooltip += " No widgets available."
+            _set_widget_metadata(
+                button,
+                tooltip=tooltip,
+                accessible_name=f"Quick lane: {base_label}. {count_text}",
+            )
+
+    def _sort_label(self):
+        return {key: label for key, label in self._SORT_MODES}.get(self._sort_mode, "Recommended")
+
+    def _complexity_label(self):
+        return {key: label for key, label in self._COMPLEXITY_LEVELS}.get(self._complexity_filter, "All")
+
+    def _selected_category_label(self):
+        item = self._category_list.currentItem()
+        return str(item.text() or "All Widgets") if item is not None else "All Widgets"
+
+    def _selected_tag_labels(self):
+        return sorted(button.text() for button in self._tag_buttons.values() if button.isChecked())
+
+    def _selected_card_label(self):
+        for card in self._cards.values():
+            if card.type_name == self._selected_type:
+                return str(card._item.get("display_name", card.type_name) or card.type_name)
+        return ""
+
+    def _update_accessibility_summary(self, visible_count=None):
+        visible = len(self._cards) if visible_count is None else max(int(visible_count or 0), 0)
+        category_label = self._selected_category_label()
+        search_text = str(self._search.text() or "").strip() or "none"
+        tags_text = ", ".join(self._selected_tag_labels()) or "none"
+        selected_text = self._selected_card_label() or "none"
+        visible_text = _count_label(visible, "visible widget", "visible widgets")
+        summary = (
+            f"Widget Browser: {visible_text}. Category: {category_label}. Search: {search_text}. "
+            f"Sort: {self._sort_label()}. Complexity: {self._complexity_label()}. "
+            f"Tags: {tags_text}. Insert target: {self._insert_target_label}. Selected: {selected_text}."
+        )
+        results_summary = f"Widget browser results: {_count_label(visible, 'card')} visible."
+        if selected_text != "none":
+            results_summary += f" Selected widget: {selected_text}."
+
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=self._title_label.text())
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
+        _set_widget_metadata(
+            self._insert_target,
+            tooltip=f"Current insert target: {self._insert_target_label}",
+            accessible_name=f"Insert target: {self._insert_target_label}",
+        )
+        _set_widget_metadata(
+            self._search,
+            tooltip=f"Widget browser search. Current text: {search_text}.",
+            accessible_name="Widget browser search",
+        )
+        _set_widget_metadata(
+            self._category_list,
+            tooltip=f"Widget categories. Current category: {category_label}.",
+            accessible_name=f"Widget categories: {category_label}",
+        )
+        _set_widget_metadata(self._scroll, tooltip=results_summary, accessible_name=results_summary)
+        _set_widget_metadata(self._cards_container, tooltip=results_summary, accessible_name=results_summary)
+        _set_widget_metadata(
+            self._lanes_title,
+            tooltip="Quick lanes switch the main widget browser category.",
+            accessible_name=self._lanes_title.text(),
+        )
+        _set_widget_metadata(
+            self._sort_title,
+            tooltip=f"Current sort mode: {self._sort_label()}",
+            accessible_name=self._sort_title.text(),
+        )
+        _set_widget_metadata(
+            self._complexity_title,
+            tooltip=f"Current complexity filter: {self._complexity_label()}",
+            accessible_name=self._complexity_title.text(),
+        )
+        _set_widget_metadata(
+            self._tags_title,
+            tooltip=f"Active widget tags: {tags_text}.",
+            accessible_name=self._tags_title.text(),
+        )
 
     def _on_category_changed(self, _row):
         if self._suspend_filter_persist:
@@ -811,6 +1033,14 @@ class WidgetBrowserPanel(QWidget):
         count_chip.setProperty("chipTone", "accent")
         layout.addWidget(count_chip, 0, Qt.AlignVCenter)
         layout.addStretch()
+        group_summary = f"Scenario group: {scenario or 'Other'}. {_count_label(item_count, 'widget')}."
+        _set_widget_metadata(frame, tooltip=group_summary, accessible_name=group_summary)
+        _set_widget_metadata(title, tooltip=group_summary, accessible_name=f"Scenario group: {title.text()}")
+        _set_widget_metadata(
+            count_chip,
+            tooltip=group_summary,
+            accessible_name=f"Scenario group count: {count_chip.text()}",
+        )
         return frame
 
     def _should_group_by_scenario(self):
@@ -867,17 +1097,44 @@ class WidgetBrowserPanel(QWidget):
             action_row.setSpacing(8)
             reset_search_btn = QPushButton("Reset Search")
             reset_search_btn.clicked.connect(self._reset_search_only)
+            _set_widget_metadata(
+                reset_search_btn,
+                tooltip="Clear the current widget browser search text.",
+                accessible_name="Reset widget browser search",
+            )
             action_row.addWidget(reset_search_btn)
             clear_tags_btn = QPushButton("Clear Tags")
             clear_tags_btn.clicked.connect(self._clear_active_tags)
+            _set_widget_metadata(
+                clear_tags_btn,
+                tooltip="Clear active widget browser tags.",
+                accessible_name="Clear widget browser tags",
+            )
             action_row.addWidget(clear_tags_btn)
             reset_organize_btn = QPushButton("Reset Organize")
             reset_organize_btn.clicked.connect(self._reset_organizers)
+            _set_widget_metadata(
+                reset_organize_btn,
+                tooltip="Reset sort mode and complexity filters.",
+                accessible_name="Reset widget browser organize filters",
+            )
             action_row.addWidget(reset_organize_btn)
             show_all_btn = QPushButton("Show All Widgets")
             show_all_btn.clicked.connect(self._reset_all_filters)
+            _set_widget_metadata(
+                show_all_btn,
+                tooltip="Reset every widget browser filter and show all widgets.",
+                accessible_name="Show all widgets",
+            )
             action_row.addWidget(show_all_btn)
             empty_layout.addLayout(action_row)
+            _set_widget_metadata(
+                empty,
+                tooltip="No widgets match the current widget browser filters.",
+                accessible_name="No widgets match the current filters.",
+            )
+            _set_widget_metadata(title, tooltip=title.text(), accessible_name=title.text())
+            _set_widget_metadata(hint, tooltip=hint.text(), accessible_name=hint.text())
             self._cards_layout.addWidget(empty, 0, 0, 1, columns)
             return
 
@@ -920,6 +1177,7 @@ class WidgetBrowserPanel(QWidget):
         self._selected_type = widget_type
         for card in self._cards.values():
             card.set_selected(card.type_name == widget_type)
+        self._update_accessibility_summary()
 
     def _toggle_favorite(self, widget_type):
         self._config.toggle_widget_browser_favorite(widget_type)

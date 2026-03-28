@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication, QLabel
+    from PyQt5.QtWidgets import QApplication, QLabel, QPushButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -299,4 +299,84 @@ class TestWidgetBrowserPanel:
         headers = _layout_group_headers(panel)
 
         assert headers == []
+        panel.deleteLater()
+
+    def test_browser_exposes_summary_and_filter_metadata(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        selected_label = next(
+            (
+                str(card._item.get("display_name", card.type_name) or card.type_name)
+                for card in panel._cards.values()
+                if card.type_name == panel._selected_type
+            ),
+            "none",
+        )
+        visible_text = f"{len(panel._cards)} visible widget" if len(panel._cards) == 1 else f"{len(panel._cards)} visible widgets"
+
+        assert panel.accessibleName() == (
+            f"Widget Browser: {visible_text}. Category: All Widgets. Search: none. "
+            f"Sort: Recommended. Complexity: All. Tags: none. "
+            f"Insert target: Current page root. Selected: {selected_label}."
+        )
+        assert panel._search.toolTip() == "Widget browser search. Current text: none."
+        assert panel._category_list.accessibleName() == "Widget categories: All Widgets"
+        assert panel._visible_count_chip.accessibleName() == f"Visible widgets: {panel._visible_count_chip.text()}"
+        assert panel._clear_tags_btn.toolTip() == "No active widget tags to clear."
+        panel.deleteLater()
+
+    def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._select_card("button")
+        button_card = next(card for card in panel._cards.values() if card.type_name == "button")
+        display_name = str(button_card._item.get("display_name", button_card.type_name) or button_card.type_name)
+        category = str(button_card._item.get("category", "") or "Uncategorized").strip() or "Uncategorized"
+        scenario = str(button_card._item.get("scenario", "") or "General").strip() or "General"
+        complexity = str(button_card._item.get("complexity", "") or "unknown").strip().title() or "Unknown"
+        container_text = "yes" if bool(button_card._item.get("is_container")) else "no"
+
+        assert button_card.accessibleName() == (
+            f"Widget card: {display_name}. Category {category}. Scenario {scenario}. "
+            f"Complexity {complexity}. Container {container_text}. Favorite no. Selected yes."
+        )
+        assert button_card._favorite_btn.toolTip() == f"Add {display_name} to favorites."
+        assert button_card._insert_btn.toolTip() == f"Insert {display_name} into the current target."
+
+        panel._toggle_favorite("button")
+        button_card = next(card for card in panel._cards.values() if card.type_name == "button")
+        assert button_card._favorite_btn.toolTip() == f"Remove {display_name} from favorites."
+        assert f"Selected: {display_name}." in panel.accessibleName()
+        panel.deleteLater()
+
+    def test_empty_state_and_quick_lane_metadata_refresh_with_filters(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        isolated_config.widget_browser_favorites = ["button"]
+        panel = WidgetBrowserPanel()
+        favorites_lane = panel._lane_buttons["favorites"]
+
+        assert favorites_lane.toolTip() == "Quick lane Favorites: 1 widget."
+        assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget"
+
+        panel._search.setText("__no_widget_matches__")
+        panel.refresh()
+
+        assert "Widget Browser: 0 visible widgets." in panel.accessibleName()
+        assert panel._scroll.toolTip() == "Widget browser results: 0 cards visible."
+        empty_state = next(
+            widget
+            for widget in (
+                panel._cards_layout.itemAt(index).widget()
+                for index in range(panel._cards_layout.count())
+            )
+            if widget is not None and widget.objectName() == "widget_browser_empty_state"
+        )
+        buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
+        assert empty_state.accessibleName() == "No widgets match the current filters."
+        assert panel._search.toolTip() == "Widget browser search. Current text: __no_widget_matches__."
+        assert buttons["Reset Search"].toolTip() == "Clear the current widget browser search text."
+        assert buttons["Show All Widgets"].toolTip() == "Reset every widget browser filter and show all widgets."
         panel.deleteLater()
