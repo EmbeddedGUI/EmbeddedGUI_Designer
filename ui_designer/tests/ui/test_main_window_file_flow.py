@@ -5989,6 +5989,38 @@ class TestMainWindowFileFlow:
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         _close_window(window)
 
+    def test_workspace_nav_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._workspace_nav_buttons["project"].toolTip() == "Currently showing Project panel."
+        assert window._workspace_nav_buttons["project"].accessibleName() == (
+            "Workspace panel button: Project. Current panel."
+        )
+        assert window._workspace_nav_buttons["status"].toolTip() == "Open Status panel."
+        assert window._workspace_nav_buttons["status"].statusTip() == window._workspace_nav_buttons["status"].toolTip()
+        assert window._workspace_nav_buttons["status"].accessibleName() == "Workspace panel button: Status."
+        assert window._bottom_toggle_button.text() == "Show"
+        assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
+        assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
+
+        window._select_left_panel("status")
+
+        assert window._workspace_nav_buttons["status"].toolTip() == "Currently showing Status panel."
+        assert window._workspace_nav_buttons["status"].accessibleName() == (
+            "Workspace panel button: Status. Current panel."
+        )
+        assert window._workspace_nav_buttons["project"].toolTip() == "Open Project panel."
+
+        window._set_bottom_panel_visible(True)
+
+        assert window._bottom_toggle_button.text() == "Hide"
+        assert window._bottom_toggle_button.toolTip() == "Hide the bottom tools panel."
+        assert window._bottom_toggle_button.statusTip() == window._bottom_toggle_button.toolTip()
+        assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: shown. Activate to hide."
+        _close_window(window)
+
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

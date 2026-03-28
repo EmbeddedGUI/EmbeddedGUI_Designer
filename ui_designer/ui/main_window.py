@@ -576,6 +576,30 @@ class MainWindow(QMainWindow):
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
+    def _workspace_panel_label(self, panel_key):
+        return {
+            "project": "Project",
+            "structure": "Structure",
+            "widgets": "Components",
+            "assets": "Assets",
+            "status": "Status",
+        }.get(panel_key, str(panel_key or "Project").title())
+
+    def _update_workspace_nav_button_metadata(self, current_panel):
+        if not hasattr(self, "_workspace_nav_buttons"):
+            return
+        for key, button in self._workspace_nav_buttons.items():
+            label = self._workspace_panel_label(key)
+            if key == current_panel:
+                tooltip = f"Currently showing {label} panel."
+                accessible_name = f"Workspace panel button: {label}. Current panel."
+            else:
+                tooltip = f"Open {label} panel."
+                accessible_name = f"Workspace panel button: {label}."
+            button.setToolTip(tooltip)
+            button.setStatusTip(tooltip)
+            button.setAccessibleName(accessible_name)
+
     def _select_left_panel(self, panel_key):
         if panel_key == "components":
             panel_key = "widgets"
@@ -587,6 +611,7 @@ class MainWindow(QMainWindow):
         self._left_panel_stack.setCurrentWidget(page)
         for key, button in getattr(self, "_workspace_nav_buttons", {}).items():
             button.setChecked(key == panel_key)
+        self._update_workspace_nav_button_metadata(panel_key)
         if panel_key == "widgets":
             self.widget_browser.focus_search()
 
@@ -692,11 +717,25 @@ class MainWindow(QMainWindow):
         else:
             self._workspace_splitter.setSizes([1000, 0])
             self._bottom_toggle_button.setText("Show")
+        self._update_bottom_toggle_button_metadata()
 
     def _on_bottom_tab_changed(self, index):
         titles = {0: "Diagnostics", 1: "History", 2: "Debug Output"}
         if hasattr(self, "_bottom_title"):
             self._bottom_title.setText(titles.get(index, "Tools"))
+
+    def _update_bottom_toggle_button_metadata(self):
+        if not hasattr(self, "_bottom_toggle_button"):
+            return
+        if self._bottom_panel_visible:
+            tooltip = "Hide the bottom tools panel."
+            accessible_name = "Bottom tools toggle: shown. Activate to hide."
+        else:
+            tooltip = "Show the bottom tools panel."
+            accessible_name = "Bottom tools toggle: hidden. Activate to show."
+        self._bottom_toggle_button.setToolTip(tooltip)
+        self._bottom_toggle_button.setStatusTip(tooltip)
+        self._bottom_toggle_button.setAccessibleName(accessible_name)
 
     def _sync_editor_mode_controls(self, mode):
         if hasattr(self, "_mode_buttons"):
