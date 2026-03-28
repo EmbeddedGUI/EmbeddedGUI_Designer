@@ -1016,6 +1016,16 @@ class MainWindow(QMainWindow):
             hint = base_text if has_project else self._action_hint(base_text, False, "open a project first")
             self._apply_action_hint(action, hint)
 
+    def _update_sdk_root_action_metadata(self, binding_label=""):
+        action = getattr(self, "_set_sdk_root_action", None)
+        if action is None:
+            return
+        label = str(binding_label or "SDK: missing")
+        self._apply_action_hint(
+            action,
+            f"Choose the EmbeddedGUI SDK root used for compile preview. Current binding: {label}.",
+        )
+
     def _update_generate_resources_action_metadata(self):
         if not hasattr(self, "_generate_resources_action"):
             return
@@ -2551,10 +2561,10 @@ class MainWindow(QMainWindow):
         download_sdk_action.triggered.connect(self._download_sdk)
         file_menu.addAction(download_sdk_action)
 
-        set_sdk_root_action = QAction("Set SDK Root...", self)
-        self._apply_action_hint(set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
-        set_sdk_root_action.triggered.connect(self._set_sdk_root)
-        file_menu.addAction(set_sdk_root_action)
+        self._set_sdk_root_action = QAction("Set SDK Root...", self)
+        self._apply_action_hint(self._set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
+        self._set_sdk_root_action.triggered.connect(self._set_sdk_root)
+        file_menu.addAction(self._set_sdk_root_action)
 
         # Recent Projects submenu
         self._recent_menu = file_menu.addMenu("Recent Projects")
@@ -3364,6 +3374,7 @@ class MainWindow(QMainWindow):
         self._sdk_status_label.setToolTip(tooltip)
         self._sdk_status_label.setStatusTip(tooltip)
         self._sdk_status_label.setAccessibleName(f"SDK binding: {binding_label}.")
+        self._update_sdk_root_action_metadata(binding_label)
         self._update_workspace_chips()
 
     def _edit_release_profiles(self):

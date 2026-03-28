@@ -3703,8 +3703,28 @@ class TestMainWindowFileFlow:
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
         assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
         assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
-        assert actions["Set SDK Root..."].toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview."
+        assert actions["Set SDK Root..."].toolTip() == (
+            "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: missing."
+        )
         assert actions["Set SDK Root..."].statusTip() == actions["Set SDK Root..."].toolTip()
+        _close_window(window)
+
+    def test_set_sdk_root_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: test-binding")
+
+        window.project_root = "C:/sdk"
+        window._update_sdk_status_label()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "Set SDK Root..."
+        )
+        assert action.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: test-binding."
+        assert action.statusTip() == action.toolTip()
         _close_window(window)
 
     def test_file_menu_secondary_actions_expose_status_hints(self, qapp, isolated_config, tmp_path):
