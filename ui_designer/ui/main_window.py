@@ -701,6 +701,15 @@ class MainWindow(QMainWindow):
     def _distribute_action_blocked_reason(self, selected_widgets, selectable_widgets):
         return self._arrange_action_blocked_reason(selected_widgets, selectable_widgets, 3)
 
+    def _editable_selection_action_hint(self, base_text, selected_widgets, editable_widgets, partial_locked_note=""):
+        if not selected_widgets:
+            return self._action_hint(base_text, False, "select at least 1 widget")
+        if not editable_widgets:
+            return self._action_hint(base_text, False, "all selected widgets are locked")
+        if len(editable_widgets) != len(selected_widgets) and partial_locked_note:
+            return f"{base_text} {partial_locked_note}"
+        return base_text
+
     def _compile_action_blocked_reason(self):
         if self.project is None:
             return "open a project first"
@@ -2101,20 +2110,36 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._bring_front_action = QAction("Bring to Front", self)
+        self._apply_action_hint(
+            self._bring_front_action,
+            "Bring the current selection to the front of its parent stack.",
+        )
         self._bring_front_action.triggered.connect(self._move_selection_to_front)
         arrange_menu.addAction(self._bring_front_action)
 
         self._send_back_action = QAction("Send to Back", self)
+        self._apply_action_hint(
+            self._send_back_action,
+            "Send the current selection to the back of its parent stack.",
+        )
         self._send_back_action.triggered.connect(self._move_selection_to_back)
         arrange_menu.addAction(self._send_back_action)
 
         arrange_menu.addSeparator()
 
         self._toggle_lock_action = QAction("Toggle Lock", self)
+        self._apply_action_hint(
+            self._toggle_lock_action,
+            "Toggle the designer lock state for the current selection.",
+        )
         self._toggle_lock_action.triggered.connect(self._toggle_selection_locked)
         arrange_menu.addAction(self._toggle_lock_action)
 
         self._toggle_hide_action = QAction("Toggle Hide", self)
+        self._apply_action_hint(
+            self._toggle_hide_action,
+            "Toggle the designer visibility state for the current selection.",
+        )
         self._toggle_hide_action.triggered.connect(self._toggle_selection_hidden)
         arrange_menu.addAction(self._toggle_hide_action)
 
@@ -5684,6 +5709,40 @@ class MainWindow(QMainWindow):
                 action,
                 self._action_hint(base_text, action.isEnabled(), distribute_blocked_reason),
             )
+        self._apply_action_hint(
+            self._bring_front_action,
+            self._editable_selection_action_hint(
+                "Bring the current selection to the front of its parent stack.",
+                selected_widgets,
+                selectable_widgets,
+                "Locked widgets remain in place.",
+            ),
+        )
+        self._apply_action_hint(
+            self._send_back_action,
+            self._editable_selection_action_hint(
+                "Send the current selection to the back of its parent stack.",
+                selected_widgets,
+                selectable_widgets,
+                "Locked widgets remain in place.",
+            ),
+        )
+        self._apply_action_hint(
+            self._toggle_lock_action,
+            self._action_hint(
+                "Toggle the designer lock state for the current selection.",
+                self._toggle_lock_action.isEnabled(),
+                "select at least 1 widget",
+            ),
+        )
+        self._apply_action_hint(
+            self._toggle_hide_action,
+            self._action_hint(
+                "Toggle the designer visibility state for the current selection.",
+                self._toggle_hide_action.isEnabled(),
+                "select at least 1 widget",
+            ),
+        )
         self._apply_action_hint(
             self._select_all_action,
             self._action_hint(

@@ -3125,6 +3125,72 @@ class TestMainWindowFileFlow:
         assert window._distribute_h_action.statusTip() == window._distribute_h_action.toolTip()
         _close_window(window)
 
+    def test_arrange_reorder_and_toggle_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ArrangeToggleHintsDemo"
+        project = _create_project(project_dir, "ArrangeToggleHintsDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        second.designer_locked = True
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert window._bring_front_action.toolTip() == (
+            "Bring the current selection to the front of its parent stack. Unavailable: select at least 1 widget."
+        )
+        assert window._bring_front_action.statusTip() == window._bring_front_action.toolTip()
+        assert window._send_back_action.toolTip() == (
+            "Send the current selection to the back of its parent stack. Unavailable: select at least 1 widget."
+        )
+        assert window._send_back_action.statusTip() == window._send_back_action.toolTip()
+        assert window._toggle_lock_action.toolTip() == (
+            "Toggle the designer lock state for the current selection. Unavailable: select at least 1 widget."
+        )
+        assert window._toggle_lock_action.statusTip() == window._toggle_lock_action.toolTip()
+        assert window._toggle_hide_action.toolTip() == (
+            "Toggle the designer visibility state for the current selection. Unavailable: select at least 1 widget."
+        )
+        assert window._toggle_hide_action.statusTip() == window._toggle_hide_action.toolTip()
+
+        loaded_first, loaded_second = window._current_page.root_widget.children[:2]
+        window._set_selection([loaded_second], primary=loaded_second, sync_tree=True, sync_preview=True)
+        assert window._bring_front_action.toolTip() == (
+            "Bring the current selection to the front of its parent stack. "
+            "Unavailable: all selected widgets are locked."
+        )
+        assert window._bring_front_action.statusTip() == window._bring_front_action.toolTip()
+        assert window._send_back_action.toolTip() == (
+            "Send the current selection to the back of its parent stack. "
+            "Unavailable: all selected widgets are locked."
+        )
+        assert window._send_back_action.statusTip() == window._send_back_action.toolTip()
+        assert window._toggle_lock_action.toolTip() == "Toggle the designer lock state for the current selection."
+        assert window._toggle_lock_action.statusTip() == window._toggle_lock_action.toolTip()
+        assert window._toggle_hide_action.toolTip() == "Toggle the designer visibility state for the current selection."
+        assert window._toggle_hide_action.statusTip() == window._toggle_hide_action.toolTip()
+
+        window._set_selection([loaded_first, loaded_second], primary=loaded_first, sync_tree=True, sync_preview=True)
+        assert window._bring_front_action.toolTip() == (
+            "Bring the current selection to the front of its parent stack. Locked widgets remain in place."
+        )
+        assert window._bring_front_action.statusTip() == window._bring_front_action.toolTip()
+        assert window._send_back_action.toolTip() == (
+            "Send the current selection to the back of its parent stack. Locked widgets remain in place."
+        )
+        assert window._send_back_action.statusTip() == window._send_back_action.toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
