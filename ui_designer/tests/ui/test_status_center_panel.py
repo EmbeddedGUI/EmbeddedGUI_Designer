@@ -975,6 +975,7 @@ class TestStatusCenterPanel:
         assert placeholder.whatsThis() == placeholder.toolTip()
         assert panel._repeat_action_menu.accessibleName() == "Repeat action menu: no recent actions yet."
         assert panel._repeat_action_menu.toolTip() == panel._repeat_action_menu.accessibleName()
+        assert panel._repeat_action_menu.statusTip() == panel._repeat_action_menu.toolTip()
         assert panel._repeat_action_button.toolTip() == "No recent action to repeat yet."
 
         panel._project_btn.click()

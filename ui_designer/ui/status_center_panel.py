@@ -440,9 +440,7 @@ class StatusCenterPanel(QWidget):
         if not self._recent_actions:
             empty_action = self._repeat_action_menu.addAction("No recent actions yet")
             empty_action.setEnabled(False)
-            empty_action.setToolTip(self._recent_actions_tooltip())
-            empty_action.setStatusTip(empty_action.toolTip())
-            empty_action.setWhatsThis(empty_action.toolTip())
+            self._set_action_hint(empty_action, self._recent_actions_tooltip())
             self._update_repeat_action_menu_metadata()
             return
         for action_key in self._recent_actions:
@@ -453,16 +451,12 @@ class StatusCenterPanel(QWidget):
                 menu_tooltip = f"Repeat the current action: {action_label}."
             else:
                 menu_tooltip = f"Replay {action_label} from recent history."
-            menu_action.setToolTip(menu_tooltip)
-            menu_action.setStatusTip(menu_tooltip)
-            menu_action.setWhatsThis(menu_tooltip)
+            self._set_action_hint(menu_action, menu_tooltip)
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
         clear_action.setIcon(make_icon("history", size=16))
-        clear_action.setToolTip(self._clear_recent_actions_tooltip())
-        clear_action.setStatusTip(clear_action.toolTip())
-        clear_action.setWhatsThis(clear_action.toolTip())
+        self._set_action_hint(clear_action, self._clear_recent_actions_tooltip())
         clear_action.triggered.connect(self._clear_recent_actions)
         self._update_repeat_action_menu_metadata()
 
@@ -511,8 +505,7 @@ class StatusCenterPanel(QWidget):
 
     def _update_repeat_action_menu_metadata(self):
         summary = self._repeat_action_menu_summary()
-        self._repeat_action_menu.setToolTip(summary)
-        self._repeat_action_menu.setStatusTip(summary)
+        self._set_hint(self._repeat_action_menu, summary)
         self._repeat_action_menu.setAccessibleName(summary)
 
     def _recent_actions_accessible_name(self):
@@ -562,6 +555,12 @@ class StatusCenterPanel(QWidget):
         hint = str(text or "").strip()
         widget.setToolTip(hint)
         widget.setStatusTip(hint)
+
+    def _set_action_hint(self, action, text):
+        hint = str(text or "").strip()
+        action.setToolTip(hint)
+        action.setStatusTip(hint)
+        action.setWhatsThis(hint)
 
     def _count_label(self, count, singular, plural):
         value = max(int(count or 0), 0)
