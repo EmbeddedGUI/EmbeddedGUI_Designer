@@ -859,6 +859,13 @@ class StatusCenterPanel(QWidget):
             return f"Status Center: {status}. {hint}"
         return f"Status Center: {status}."
 
+    def _header_subtitle_accessible_name(self, workspace_chip_label, suggested_label, suggested_hint):
+        summary = self._header_subtitle_text(workspace_chip_label, suggested_label)
+        hint = str(suggested_hint or "").strip()
+        if hint:
+            return f"Status Center summary: {summary} {hint}"
+        return f"Status Center summary: {summary}"
+
     def _header_title_text(self, suggested_context):
         context = str(suggested_context or "").strip()
         return f"Status Center ({context})" if context else "Status Center"
@@ -867,6 +874,19 @@ class StatusCenterPanel(QWidget):
         context = str(suggested_context or "").strip() or "Status"
         status = str(workspace_chip_label or "").strip() or "Ready"
         return f"Status Center focused on {context}. {status}."
+
+    def _header_title_accessible_name(self, suggested_context, workspace_chip_label):
+        context = str(suggested_context or "").strip() or "Status"
+        status = str(workspace_chip_label or "").strip() or "Ready"
+        return f"Status Center title: {context}. Current status: {status}."
+
+    def _workspace_chip_accessible_name(self, workspace_chip_label, suggested_label, suggested_hint):
+        status = str(workspace_chip_label or "").strip() or "Ready"
+        label = str(suggested_label or "").strip() or "Open Diagnostics"
+        hint = str(suggested_hint or "").strip()
+        if hint:
+            return f"Workspace status: {status}. Suggested: {label}. {hint}"
+        return f"Workspace status: {status}. Suggested: {label}."
 
     def _summary_accessible_name(self, label, summary_text):
         prefix = str(label or "").strip() or "Summary"
@@ -1236,17 +1256,31 @@ class StatusCenterPanel(QWidget):
             self._header_title,
             self._header_title_tooltip(suggested_context, workspace_chip_label),
         )
-        self._header_title.setAccessibleName(self._header_title.text())
+        self._header_title.setAccessibleName(
+            self._header_title_accessible_name(suggested_context, workspace_chip_label)
+        )
         header_subtitle = self._header_subtitle_text(workspace_chip_label, suggested_label)
         self._header_subtitle.setText(header_subtitle)
         self._set_hint(
             self._header_subtitle,
             self._header_subtitle_tooltip(workspace_chip_label, suggested_hint),
         )
-        self._header_subtitle.setAccessibleName(header_subtitle)
+        self._header_subtitle.setAccessibleName(
+            self._header_subtitle_accessible_name(
+                workspace_chip_label,
+                suggested_label,
+                suggested_hint,
+            )
+        )
         self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)
         self._set_widget_icon(self._workspace_chip, suggested_icon, size=16)
-        self._workspace_chip.setAccessibleName(f"Workspace status: {workspace_chip_label}. Suggested: {suggested_label}")
+        self._workspace_chip.setAccessibleName(
+            self._workspace_chip_accessible_name(
+                workspace_chip_label,
+                suggested_label,
+                suggested_hint,
+            )
+        )
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
         workspace_summary = self._workspace_summary_text(
             sdk_ready,

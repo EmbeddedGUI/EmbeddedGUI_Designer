@@ -77,7 +77,8 @@ class TestStatusCenterPanel:
         assert panel._health_chip_action == "open_error_diagnostics"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
         assert panel._workspace_chip.accessibleName() == (
-            "Workspace status: Action Needed (Diagnostics). Suggested: Fix First Error (2)"
+            "Workspace status: Action Needed (Diagnostics). Suggested: Fix First Error (2). "
+            "Start with the first error in Diagnostics. 2 errors active."
         )
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
         assert panel._health_chip.property("iconKey") == "diagnostics"
@@ -119,7 +120,8 @@ class TestStatusCenterPanel:
             "Check Workspace (Diagnostics). Review the first warning in Diagnostics. 3 warnings active."
         )
         assert panel._workspace_chip.accessibleName() == (
-            "Workspace status: Check Workspace (Diagnostics). Suggested: Review First Warning (3)"
+            "Workspace status: Check Workspace (Diagnostics). Suggested: Review First Warning (3). "
+            "Review the first warning in Diagnostics. 3 warnings active."
         )
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
@@ -376,12 +378,17 @@ class TestStatusCenterPanel:
         )
         assert panel._header_title.text() == "Status Center (Workspace)"
         assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace (Setup)."
-        assert panel._header_title.accessibleName() == "Status Center (Workspace)"
+        assert panel._header_title.accessibleName() == (
+            "Status Center title: Workspace. Current status: Check Workspace (Setup)."
+        )
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Configure SDK."
         assert panel._header_subtitle.toolTip() == (
             "Status Center: Check Workspace (Setup). Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._header_subtitle.accessibleName() == "Workspace checks are pending. Focus on Configure SDK."
+        assert panel._header_subtitle.accessibleName() == (
+            "Status Center summary: Workspace checks are pending. Focus on Configure SDK. "
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
+        )
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
         assert panel._runtime_title.text() == "Runtime (Clear)"
@@ -425,7 +432,8 @@ class TestStatusCenterPanel:
         )
         assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._workspace_chip.accessibleName() == (
-            "Workspace status: Check Workspace (Setup). Suggested: Configure SDK"
+            "Workspace status: Check Workspace (Setup). Suggested: Configure SDK. "
+            "Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
         assert panel._repeat_action_button.accessibleName() == (
             "Repeat action unavailable: No recent action yet."
