@@ -45,14 +45,14 @@ class ProjectWorkspacePanel(QWidget):
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(6)
-        self._page_count_chip = QLabel("Pages 0")
+        self._page_count_chip = QLabel("0 pages")
         self._page_count_chip.setObjectName("workspace_status_chip")
         chips_row.addWidget(self._page_count_chip)
-        self._active_page_chip = QLabel("Active None")
+        self._active_page_chip = QLabel("No active page")
         self._active_page_chip.setObjectName("workspace_status_chip")
         self._active_page_chip.setProperty("chipTone", "accent")
         chips_row.addWidget(self._active_page_chip)
-        self._dirty_pages_chip = QLabel("Clean")
+        self._dirty_pages_chip = QLabel("No dirty pages")
         self._dirty_pages_chip.setObjectName("workspace_status_chip")
         self._dirty_pages_chip.setProperty("chipTone", "success")
         chips_row.addWidget(self._dirty_pages_chip)
@@ -123,9 +123,14 @@ class ProjectWorkspacePanel(QWidget):
         pages = max(int(page_count or 0), 0)
         dirty = max(int(dirty_pages or 0), 0)
         active = str(active_page or "").strip() or "None"
-        self._set_chip(self._page_count_chip, f"Pages {pages}", "success" if pages > 0 else "warning")
-        self._set_chip(self._active_page_chip, f"Active {active}", "accent" if active != "None" else "warning")
-        if dirty > 0:
-            self._set_chip(self._dirty_pages_chip, f"Dirty {dirty}", "warning")
+        page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
+        self._set_chip(self._page_count_chip, page_label, "success" if pages > 0 else "warning")
+        if active != "None":
+            self._set_chip(self._active_page_chip, f"Active {active}", "accent")
         else:
-            self._set_chip(self._dirty_pages_chip, "Clean", "success")
+            self._set_chip(self._active_page_chip, "No active page", "warning")
+        if dirty > 0:
+            dirty_label = f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages"
+            self._set_chip(self._dirty_pages_chip, dirty_label, "warning")
+        else:
+            self._set_chip(self._dirty_pages_chip, "No dirty pages", "success")

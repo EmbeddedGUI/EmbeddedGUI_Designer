@@ -57,12 +57,16 @@ class TestProjectWorkspacePanel:
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
 
         panel.set_workspace_snapshot(page_count=3, active_page="main_page", dirty_pages=2)
-        assert panel._page_count_chip.text() == "Pages 3"
+        assert panel._page_count_chip.text() == "3 pages"
         assert panel._active_page_chip.text() == "Active main_page"
-        assert panel._dirty_pages_chip.text() == "Dirty 2"
+        assert panel._dirty_pages_chip.text() == "2 dirty pages"
+
+        panel.set_workspace_snapshot(page_count=1, active_page="main_page", dirty_pages=1)
+        assert panel._page_count_chip.text() == "1 page"
+        assert panel._dirty_pages_chip.text() == "1 dirty page"
 
         panel.set_workspace_snapshot(page_count=0, active_page="", dirty_pages=0)
-        assert panel._page_count_chip.text() == "Pages 0"
-        assert panel._active_page_chip.text() == "Active None"
-        assert panel._dirty_pages_chip.text() == "Clean"
+        assert panel._page_count_chip.text() == "0 pages"
+        assert panel._active_page_chip.text() == "No active page"
+        assert panel._dirty_pages_chip.text() == "No dirty pages"
         panel.deleteLater()

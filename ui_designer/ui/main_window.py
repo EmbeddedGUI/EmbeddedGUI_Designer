@@ -725,7 +725,7 @@ class MainWindow(QMainWindow):
             preview_tone = "success"
 
         if hasattr(self, "_sdk_chip"):
-            self._set_chip(self._sdk_chip, "SDK Ready" if self._has_valid_sdk_root() else "SDK Missing", "accent" if self._has_valid_sdk_root() else "warning")
+            self._set_chip(self._sdk_chip, "SDK ready" if self._has_valid_sdk_root() else "SDK missing", "accent" if self._has_valid_sdk_root() else "warning")
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         if hasattr(self, "_dirty_chip"):
             self._set_chip(self._dirty_chip, f"Dirty {len(dirty_pages)}" if dirty_pages else "Clean", "warning" if dirty_pages else "success")
@@ -739,7 +739,7 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "_selection_chip"):
             count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
-            self._set_chip(self._selection_chip, f"Selection {count}" if count else "No Selection")
+            self._set_chip(self._selection_chip, f"{count} selected" if count else "No selection")
         if hasattr(self, "_preview_chip"):
             self._set_chip(self._preview_chip, preview_text, preview_tone)
         if hasattr(self, "_diagnostics_chip"):

@@ -5914,6 +5914,45 @@ class TestMainWindowFileFlow:
         assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
 
+    def test_workspace_chips_use_sentence_case_and_humanized_counts(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WorkspaceChipDemo"
+        project = _create_project(project_dir, "WorkspaceChipDemo", sdk_root)
+        page = project.get_startup_page()
+        label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
+        page.root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        monkeypatch.setattr(window.preview_panel, "is_python_preview_active", lambda: False)
+        window._update_workspace_chips()
+        window._clear_selection(sync_tree=False, sync_preview=False)
+
+        assert window._sdk_chip.text() == "SDK ready"
+        assert window._selection_chip.text() == "No selection"
+        assert window._preview_chip.text() == "Preview idle"
+        assert window._project_workspace._page_count_chip.text() == "1 page"
+        assert window._project_workspace._active_page_chip.text() == "Active main_page"
+        assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
+
+        window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
+        assert window._selection_chip.text() == "1 selected"
+
+        window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
+        window._update_window_title()
+
+        assert window._dirty_chip.text() == "Dirty 1"
+        assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
+        _close_window(window)
+
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
