@@ -2913,7 +2913,8 @@ class TestMainWindowFileFlow:
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable."
+            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable. "
+            "Release profiles: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
         assert generate_resources_action.toolTip() == (
@@ -2954,7 +2955,8 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release history: available."
+            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release history: available. "
+            "Release profiles: 2 profiles. Default: stm32-sim."
         )
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -2966,7 +2968,8 @@ class TestMainWindowFileFlow:
 
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release history: available."
+            "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release history: available. "
+            "Release profiles: 2 profiles. Default: stm32-sim."
         )
         _close_window(window)
 

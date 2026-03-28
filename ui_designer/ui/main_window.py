@@ -906,12 +906,13 @@ class MainWindow(QMainWindow):
         preview_state = "running" if preview_running else "stopped"
         release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
+        profiles_summary = self._release_profiles_build_summary()
         self._apply_action_hint(
             self._build_menu.menuAction(),
             (
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
-                f"Preview: {preview_state}. Release history: {release_state}."
+                f"Preview: {preview_state}. Release history: {release_state}. {profiles_summary}"
             ),
         )
 
@@ -1099,6 +1100,24 @@ class MainWindow(QMainWindow):
         )
         self._apply_action_hint(self._generate_resources_action, hint)
 
+    def _release_profiles_summary_suffix(self):
+        if getattr(self, "project", None) is None:
+            return ""
+        release_config = getattr(self.project, "release_config", None)
+        profiles = list(getattr(release_config, "profiles", []) or [])
+        profile_count = len(profiles)
+        profile_label = f"{profile_count} profile" if profile_count == 1 else f"{profile_count} profiles"
+        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
+        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
+        if default_profile not in profile_ids and profiles:
+            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
+        return f"Profiles: {profile_label}. Default: {default_profile or 'none'}."
+
+    def _release_profiles_build_summary(self):
+        if getattr(self, "project", None) is None:
+            return "Release profiles: unavailable."
+        return f"Release profiles: {self._release_profiles_summary_suffix().replace('Profiles: ', '')}"
+
     def _update_release_profiles_action_metadata(self):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
@@ -1113,19 +1132,11 @@ class MainWindow(QMainWindow):
                 ),
             )
             return
-        release_config = getattr(self.project, "release_config", None)
-        profiles = list(getattr(release_config, "profiles", []) or [])
-        profile_count = len(profiles)
-        profile_label = f"{profile_count} profile" if profile_count == 1 else f"{profile_count} profiles"
-        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
-        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
-        if default_profile not in profile_ids and profiles:
-            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
         self._apply_action_hint(
             action,
             (
                 "Edit release profiles for the current project. "
-                f"Profiles: {profile_label}. Default: {default_profile or 'none'}."
+                f"{self._release_profiles_summary_suffix()}"
             ),
         )
 
