@@ -2784,6 +2784,34 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "New Project",
+                "Open SDK Example...",
+                "Open Project File...",
+                "Download SDK Copy...",
+                "Set SDK Root...",
+            }
+        }
+
+        assert actions["New Project"].toolTip() == "Create a new EmbeddedGUI Designer project."
+        assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
+        assert actions["Open SDK Example..."].toolTip() == "Open an SDK example project or legacy example."
+        assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
+        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file."
+        assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
+        assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
+        assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
+        assert actions["Set SDK Root..."].toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview."
+        assert actions["Set SDK Root..."].statusTip() == actions["Set SDK Root..."].toolTip()
+        _close_window(window)
+
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

@@ -58,7 +58,13 @@ from ..model.page import Page
 from ..model.build_metadata import format_sdk_binding_label
 from ..model.config import get_config
 from ..model.release import ReleaseRequest
-from ..model.sdk_bootstrap import AUTO_DOWNLOAD_STRATEGY_TEXT, default_sdk_install_dir, describe_sdk_source, ensure_sdk_downloaded
+from ..model.sdk_bootstrap import (
+    AUTO_DOWNLOAD_STRATEGY_TEXT,
+    default_sdk_install_dir,
+    describe_auto_download_plan,
+    describe_sdk_source,
+    ensure_sdk_downloaded,
+)
 from ..model.workspace import (
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
@@ -1840,24 +1846,29 @@ class MainWindow(QMainWindow):
 
         new_action = QAction("New Project", self)
         new_action.setShortcut("Ctrl+N")
+        self._apply_action_hint(new_action, "Create a new EmbeddedGUI Designer project.")
         new_action.triggered.connect(self._new_project)
         file_menu.addAction(new_action)
 
         open_app_action = QAction("Open SDK Example...", self)
         open_app_action.setShortcut("Ctrl+Shift+O")
+        self._apply_action_hint(open_app_action, "Open an SDK example project or legacy example.")
         open_app_action.triggered.connect(self._open_app_dialog)
         file_menu.addAction(open_app_action)
 
         open_action = QAction("Open Project File...", self)
         open_action.setShortcut("Ctrl+O")
+        self._apply_action_hint(open_action, "Open an existing .egui project file.")
         open_action.triggered.connect(self._open_project)
         file_menu.addAction(open_action)
 
         download_sdk_action = QAction("Download SDK Copy...", self)
+        self._apply_action_hint(download_sdk_action, describe_auto_download_plan())
         download_sdk_action.triggered.connect(self._download_sdk)
         file_menu.addAction(download_sdk_action)
 
         set_sdk_root_action = QAction("Set SDK Root...", self)
+        self._apply_action_hint(set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
         set_sdk_root_action.triggered.connect(self._set_sdk_root)
         file_menu.addAction(set_sdk_root_action)
 
