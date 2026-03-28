@@ -767,12 +767,14 @@ class TestResourcePanelFileFlow:
         assert first_combo.toolTip() == "Choose replacement file for missing.png. Current selection: missing.png."
         assert second_combo.toolTip() == "Choose replacement file for icon.png. Current selection: (Skip)."
         assert dialog._ok_button.toolTip() == "Apply the selected replacement files."
+        assert dialog._ok_button.accessibleName() == "Confirm replacement files"
 
         second_combo.setCurrentIndex(1)
         qapp.processEvents()
 
         assert "1 duplicate replacement file selected." in dialog.accessibleName()
         assert dialog._ok_button.toolTip() == "Resolve duplicate replacement files before continuing."
+        assert dialog._ok_button.accessibleName() == "Confirm replacement files unavailable"
         dialog.deleteLater()
 
     def test_reference_impact_dialog_exposes_accessibility_metadata(self, qapp):
@@ -803,6 +805,8 @@ class TestResourcePanelFileFlow:
             "Page: main_page. Widget: hero (image). Property: image_file."
         )
         assert dialog._open_usage_button.toolTip() == "Open the selected usage to review it in the editor."
+        assert dialog._open_usage_button.accessibleName() == "Open selected usage"
+        assert dialog._ok_button.accessibleName() == "Delete"
 
         dialog._table.selectRow(1)
         qapp.processEvents()
@@ -858,6 +862,8 @@ class TestResourcePanelFileFlow:
             "Rename missing_a.png to renamed_a.png. 1 widget affected across 1 page."
         )
         assert dialog._open_usage_button.toolTip() == "Open the selected affected usage in the editor."
+        assert dialog._open_usage_button.accessibleName() == "Open selected affected usage"
+        assert dialog._ok_button.accessibleName() == "Replace"
 
         dialog._current_page_only.setChecked(True)
         qapp.processEvents()

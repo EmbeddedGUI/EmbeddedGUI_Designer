@@ -482,7 +482,15 @@ class _MissingResourceReplaceDialog(QDialog):
                 tooltip = "Apply the selected replacement files."
             else:
                 tooltip = "Choose at least one replacement file to continue."
-            _set_widget_metadata(self._ok_button, tooltip=tooltip, accessible_name="Confirm replacement files")
+            _set_widget_metadata(
+                self._ok_button,
+                tooltip=tooltip,
+                accessible_name=(
+                    "Confirm replacement files"
+                    if selected_count and not duplicate_count
+                    else "Confirm replacement files unavailable"
+                ),
+            )
         if self._cancel_button is not None:
             _set_widget_metadata(
                 self._cancel_button,
@@ -626,7 +634,7 @@ class _ReferenceImpactDialog(QDialog):
                 if selection_label != "none"
                 else "Select a usage to open it in the editor."
             ),
-            accessible_name="Open selected usage",
+            accessible_name="Open selected usage" if selection_label != "none" else "Open selected usage unavailable",
         )
         if self._ok_button is not None:
             _set_widget_metadata(self._ok_button, tooltip="Continue with this action.", accessible_name=self._ok_button.text() or "Continue")
@@ -798,13 +806,17 @@ class _BatchReplaceImpactDialog(QDialog):
                 if usage_label != "none"
                 else "Select an affected usage to open it in the editor."
             ),
-            accessible_name="Open selected affected usage",
+            accessible_name=(
+                "Open selected affected usage"
+                if usage_label != "none"
+                else "Open selected affected usage unavailable"
+            ),
         )
         if self._ok_button is not None:
             _set_widget_metadata(
                 self._ok_button,
                 tooltip="Apply the selected batch replacements.",
-                accessible_name=self._ok_button.text() or "Continue",
+                accessible_name=(self._ok_button.text() or "Continue") if self._visible_impacts else f"{self._ok_button.text() or 'Continue'} unavailable",
             )
         if self._cancel_button is not None:
             _set_widget_metadata(
