@@ -19,6 +19,14 @@ from ..model.page_fields import COMMON_PAGE_FIELD_TYPES, normalize_page_fields, 
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class PageFieldsPanel(QWidget):
     """Editable list of page-level fields stored in Page.user_fields."""
 
@@ -50,23 +58,21 @@ class PageFieldsPanel(QWidget):
         self._code_hint_label = QLabel("Page lifecycle hooks live in {page}.c. Open a section to edit page-level setup and teardown logic.")
         self._code_hint_label.setObjectName("workspace_section_subtitle")
         self._code_hint_label.setWordWrap(True)
-        self._code_hint_label.setAccessibleName("Page lifecycle code hint")
+        _set_widget_metadata(
+            self._code_hint_label,
+            tooltip=self._code_hint_label.text(),
+            accessible_name="Page lifecycle code hint",
+        )
 
         code_buttons = QHBoxLayout()
         code_buttons.setContentsMargins(0, 0, 0, 0)
         code_buttons.setSpacing(6)
         self._open_on_open_button = QPushButton("Open on_open")
         self._open_on_open_button.setIcon(make_icon("page"))
-        self._open_on_open_button.setToolTip("Open the on_open section in the page user code.")
-        self._open_on_open_button.setAccessibleName("Open on_open user code")
         self._open_on_close_button = QPushButton("Open on_close")
         self._open_on_close_button.setIcon(make_icon("page"))
-        self._open_on_close_button.setToolTip("Open the on_close section in the page user code.")
-        self._open_on_close_button.setAccessibleName("Open on_close user code")
         self._open_init_button = QPushButton("Open init")
         self._open_init_button.setIcon(make_icon("page"))
-        self._open_init_button.setToolTip("Open the init section in the page user code.")
-        self._open_init_button.setAccessibleName("Open init user code")
         self._open_on_open_button.clicked.connect(lambda: self._request_section("on_open"))
         self._open_on_close_button.clicked.connect(lambda: self._request_section("on_close"))
         self._open_init_button.clicked.connect(lambda: self._request_section("init"))
@@ -92,11 +98,8 @@ class PageFieldsPanel(QWidget):
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Field")
         self._add_button.setIcon(make_icon("page"))
-        self._add_button.setToolTip("Add a page field.")
-        self._add_button.setAccessibleName("Add page field")
         self._remove_button = QPushButton("Remove Field")
         self._remove_button.setIcon(make_icon("stop"))
-        self._remove_button.setAccessibleName("Remove page field")
         self._add_button.clicked.connect(self._on_add_field)
         self._remove_button.clicked.connect(self._on_remove_field)
         buttons.addWidget(self._add_button)
@@ -109,6 +112,7 @@ class PageFieldsPanel(QWidget):
         layout.addLayout(code_buttons)
         layout.addWidget(self._table, 1)
         layout.addLayout(buttons)
+        self._update_actions()
 
     def _update_accessibility_summary(self, summary_text):
         self.setAccessibleName(summary_text)
@@ -117,11 +121,21 @@ class PageFieldsPanel(QWidget):
         self._summary_label.setToolTip(summary_text)
         self._summary_label.setStatusTip(summary_text)
         self._summary_label.setAccessibleName(summary_text)
-        self._hint_label.setAccessibleName(self._hint_label.text())
-        self._hint_label.setToolTip(self._hint_label.text())
-        self._code_hint_label.setToolTip(self._code_hint_label.text())
+        _set_widget_metadata(
+            self._hint_label,
+            tooltip=self._hint_label.text(),
+            accessible_name=self._hint_label.text(),
+        )
+        _set_widget_metadata(
+            self._code_hint_label,
+            tooltip=self._code_hint_label.text(),
+            accessible_name="Page lifecycle code hint",
+        )
         self._table.setToolTip(summary_text)
         self._table.setStatusTip(summary_text)
+
+    def _update_button_metadata(self, button, tooltip, accessible_name):
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
     def clear(self):
         self.set_page(None)
@@ -163,13 +177,47 @@ class PageFieldsPanel(QWidget):
         self._open_on_open_button.setEnabled(has_page)
         self._open_on_close_button.setEnabled(has_page)
         self._open_init_button.setEnabled(has_page)
+        if has_page:
+            add_hint = "Add a page field."
+            on_open_hint = "Open the on_open section in the page user code."
+            on_close_hint = "Open the on_close section in the page user code."
+            init_hint = "Open the init section in the page user code."
+        else:
+            add_hint = "Open a page to manage fields."
+            on_open_hint = "Open a page to edit the on_open section."
+            on_close_hint = "Open a page to edit the on_close section."
+            init_hint = "Open a page to edit the init section."
         if has_page and has_selection:
             remove_hint = "Remove the selected page field."
         elif has_page:
             remove_hint = "Select a field to remove it."
         else:
             remove_hint = "Open a page to manage fields."
-        self._remove_button.setToolTip(remove_hint)
+        self._update_button_metadata(
+            self._add_button,
+            add_hint,
+            "Add page field" if has_page else "Add page field unavailable",
+        )
+        self._update_button_metadata(
+            self._remove_button,
+            remove_hint,
+            "Remove page field" if has_page and has_selection else "Remove page field unavailable",
+        )
+        self._update_button_metadata(
+            self._open_on_open_button,
+            on_open_hint,
+            "Open on_open user code" if has_page else "Open on_open user code unavailable",
+        )
+        self._update_button_metadata(
+            self._open_on_close_button,
+            on_close_hint,
+            "Open on_close user code" if has_page else "Open on_close user code unavailable",
+        )
+        self._update_button_metadata(
+            self._open_init_button,
+            init_hint,
+            "Open init user code" if has_page else "Open init user code unavailable",
+        )
 
     def _table_fields(self):
         fields = []

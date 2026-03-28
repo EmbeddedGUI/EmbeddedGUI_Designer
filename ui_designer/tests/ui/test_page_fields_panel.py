@@ -53,12 +53,31 @@ class TestPageFieldsPanel:
         assert panel.accessibleName() == "Page Fields: 2 fields on main_page"
         assert panel._table.accessibleName() == "Page fields table"
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in the page user code."
+        assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._add_button.toolTip() == "Add a page field."
+        assert panel._add_button.statusTip() == panel._add_button.toolTip()
+        assert panel._remove_button.toolTip() == "Select a field to remove it."
+        assert panel._remove_button.accessibleName() == "Remove page field unavailable"
         assert panel._table.rowCount() == 2
         assert panel._table.item(0, 0).text() == "counter"
         assert panel._table.item(0, 1).text() == "int"
         assert panel._table.item(0, 2).text() == "0"
         assert panel._table.item(1, 0).text() == "buffer"
+
+    def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
+        from ui_designer.ui.page_fields_panel import PageFieldsPanel
+
+        panel = PageFieldsPanel()
+
+        assert panel.accessibleName() == "Page Fields: no active page"
+        assert panel._add_button.toolTip() == "Open a page to manage fields."
+        assert panel._add_button.accessibleName() == "Add page field unavailable"
+        assert panel._remove_button.toolTip() == "Open a page to manage fields."
+        assert panel._remove_button.accessibleName() == "Remove page field unavailable"
+        assert panel._open_on_open_button.toolTip() == "Open a page to edit the on_open section."
+        assert panel._open_on_open_button.accessibleName() == "Open on_open user code unavailable"
+        assert panel._open_on_close_button.toolTip() == "Open a page to edit the on_close section."
+        assert panel._open_init_button.toolTip() == "Open a page to edit the init section."
 
     def test_panel_add_and_remove_field_emits_changes(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
@@ -75,6 +94,7 @@ class TestPageFieldsPanel:
 
         assert panel._table.rowCount() == 1
         assert panel._remove_button.toolTip() == "Remove the selected page field."
+        assert panel._remove_button.accessibleName() == "Remove page field"
         assert captured[-1] == [{"name": "field", "type": "int", "default": "0"}]
 
         panel._table.selectRow(0)
