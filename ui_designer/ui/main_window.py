@@ -1341,6 +1341,19 @@ class MainWindow(QMainWindow):
                 return build_error
         return "compile preview is unavailable"
 
+    def _compile_action_context_summary(self):
+        project_state = "open" if self.project is not None else "none"
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
+        preview_state = "running" if preview_running else "stopped"
+        return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}."
+
+    def _stop_action_context_summary(self):
+        project_state = "open" if self.project is not None else "none"
+        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
+        preview_state = "running" if preview_running else "stopped"
+        return f"Project: {project_state}. Preview: {preview_state}."
+
     def _update_toolbar_action_metadata(self):
         command_bar_summary = "Workspace command bar with insert, edit, preview, mode, and status controls."
         if hasattr(self, "_toolbar_host"):
@@ -1392,17 +1405,20 @@ class MainWindow(QMainWindow):
             )
             self._apply_action_hint(self._paste_action, paste_hint)
         if hasattr(self, "_compile_action"):
-            compile_hint = self._action_hint(
-                "Compile the current project and run the preview (F5).",
-                self._compile_action.isEnabled(),
-                self._compile_action_blocked_reason(),
-            )
+            base_text = "Compile the current project and run the preview (F5)."
+            compile_context = self._compile_action_context_summary()
+            if self._compile_action.isEnabled():
+                compile_hint = f"{base_text} {compile_context}"
+            else:
+                compile_hint = f"{base_text} {compile_context} Unavailable: {self._compile_action_blocked_reason()}."
             self._apply_action_hint(self._compile_action, compile_hint)
         if hasattr(self, "_stop_action"):
-            stop_hint = self._action_hint(
-                "Stop the running preview executable.",
-                self._stop_action.isEnabled(),
-                "preview is not running",
+            base_text = "Stop the running preview executable."
+            stop_context = self._stop_action_context_summary()
+            stop_hint = (
+                f"{base_text} {stop_context}"
+                if self._stop_action.isEnabled()
+                else f"{base_text} {stop_context} Unavailable: preview is not running."
             )
             self._apply_action_hint(self._stop_action, stop_hint)
 
@@ -2129,10 +2145,14 @@ class MainWindow(QMainWindow):
         self._reload_project_action.setEnabled(self.project is not None and bool(self._project_dir))
         self._apply_action_hint(
             self._reload_project_action,
-            self._action_hint(
-                "Reload the current project from disk (Ctrl+Shift+R).",
-                self._reload_project_action.isEnabled(),
-                "open a project first",
+            (
+                f"Reload the current project from disk (Ctrl+Shift+R). Current project directory: {normalize_path(self._project_dir)}."
+                if self._reload_project_action.isEnabled()
+                else self._action_hint(
+                    "Reload the current project from disk (Ctrl+Shift+R).",
+                    False,
+                    "open a project first",
+                )
             ),
         )
         if hasattr(self, "_release_build_action"):

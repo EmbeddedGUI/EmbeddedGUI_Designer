@@ -3969,7 +3969,10 @@ class TestMainWindowFileFlow:
         )
         assert reloaded_actions["Save As..."].statusTip() == reloaded_actions["Save As..."].toolTip()
         assert reloaded_actions["Save As..."].isEnabled() is True
-        assert reloaded_actions["Reload Project From Disk"].toolTip() == "Reload the current project from disk (Ctrl+Shift+R)."
+        assert reloaded_actions["Reload Project From Disk"].toolTip() == (
+            "Reload the current project from disk (Ctrl+Shift+R). "
+            f"Current project directory: {window._project_dir}."
+        )
         assert reloaded_actions["Reload Project From Disk"].statusTip() == reloaded_actions["Reload Project From Disk"].toolTip()
         assert reloaded_actions["Close Project"].toolTip() == "Close the current project (Ctrl+W). Unsaved pages: none."
         assert reloaded_actions["Close Project"].statusTip() == reloaded_actions["Close Project"].toolTip()
@@ -7449,8 +7452,13 @@ class TestMainWindowFileFlow:
         assert window._redo_action.toolTip() == "Redo the next change on the current page (Ctrl+Shift+Z). Unavailable: open a page first."
         assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C). Unavailable: select at least 1 widget."
         assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V). Unavailable: open a page first."
-        assert window._compile_action.toolTip() == "Compile the current project and run the preview (F5). Unavailable: open a project first."
-        assert window._stop_action.toolTip() == "Stop the running preview executable. Unavailable: preview is not running."
+        assert window._compile_action.toolTip() == (
+            "Compile the current project and run the preview (F5). "
+            "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
+        )
+        assert window._stop_action.toolTip() == (
+            "Stop the running preview executable. Project: none. Preview: stopped. Unavailable: preview is not running."
+        )
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
@@ -7473,9 +7481,14 @@ class TestMainWindowFileFlow:
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is True
         assert window._compile_action.toolTip() == (
-            "Compile the current project and run the preview (F5). Unavailable: preview disabled for test."
+            "Compile the current project and run the preview (F5). "
+            "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
         )
         assert window._compile_action.statusTip() == window._compile_action.toolTip()
+        assert window._stop_action.toolTip() == (
+            "Stop the running preview executable. Project: open. Preview: stopped. Unavailable: preview is not running."
+        )
+        assert window._stop_action.statusTip() == window._stop_action.toolTip()
         assert window._undo_action.toolTip() == (
             "Undo the last change on the current page (Ctrl+Z). Unavailable: no earlier changes are available on this page."
         )
@@ -7494,6 +7507,31 @@ class TestMainWindowFileFlow:
 
         assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V)."
         assert window._paste_action.statusTip() == window._paste_action.toolTip()
+
+        class _RunningCompiler:
+            def can_build(self):
+                return True
+
+            def is_preview_running(self):
+                return True
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        window.compiler = _RunningCompiler()
+        window._update_compile_availability()
+
+        assert window._compile_action.toolTip() == (
+            "Compile the current project and run the preview (F5). Project: open. SDK: valid. Preview: running."
+        )
+        assert window._compile_action.statusTip() == window._compile_action.toolTip()
+        assert window._stop_action.toolTip() == (
+            "Stop the running preview executable. Project: open. Preview: running."
+        )
+        assert window._stop_action.statusTip() == window._stop_action.toolTip()
         _close_window(window)
 
     def test_save_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
