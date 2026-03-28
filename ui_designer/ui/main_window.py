@@ -897,6 +897,24 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_font_size_action"):
             self._apply_action_hint(self._font_size_action, f"Adjust the Designer font size. Current size: {font_label}.")
 
+    def _update_build_menu_metadata(self):
+        if not hasattr(self, "_build_menu"):
+            return
+        compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
+        auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
+        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
+        preview_state = "running" if preview_running else "stopped"
+        release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
+        project_state = "open" if getattr(self, "project", None) is not None else "none"
+        self._apply_action_hint(
+            self._build_menu.menuAction(),
+            (
+                "Compile previews, generate resources, and manage release builds. "
+                f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
+                f"Preview: {preview_state}. Release history: {release_state}."
+            ),
+        )
+
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
             return
@@ -1974,6 +1992,7 @@ class MainWindow(QMainWindow):
                 )
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
+        self._update_build_menu_metadata()
         self._update_edit_actions()
         self._update_workspace_chips()
 
@@ -2688,6 +2707,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
+        self._build_menu = build_menu
         self._apply_action_hint(
             build_menu.menuAction(),
             "Compile previews, generate resources, and manage release builds.",
@@ -2769,6 +2789,7 @@ class MainWindow(QMainWindow):
         gen_res_action.setStatusTip(gen_res_action.toolTip())
         gen_res_action.triggered.connect(self._generate_resources)
         build_menu.addAction(gen_res_action)
+        self._update_build_menu_metadata()
 
         # 鈹€鈹€ View menu 鈹€鈹€
         view_menu = menubar.addMenu("View")
@@ -6624,6 +6645,7 @@ class MainWindow(QMainWindow):
 
     def _toggle_auto_compile(self, enabled):
         self.auto_compile = enabled
+        self._update_build_menu_metadata()
 
     def _trigger_compile(self):
         """Trigger a debounced compile."""

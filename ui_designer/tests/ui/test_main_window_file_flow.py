@@ -2879,6 +2879,7 @@ class TestMainWindowFileFlow:
                 "Repository Health...",
             }
         }
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. Unavailable: open a project first."
@@ -2898,6 +2899,10 @@ class TestMainWindowFileFlow:
         assert actions["Release History..."].statusTip() == actions["Release History..."].toolTip()
         assert actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable."
+        )
 
         window.project = project
         window._project_dir = str(project_dir)
@@ -2920,6 +2925,17 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release history: available."
+        )
+
+        window.auto_compile_action.setChecked(False)
+
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release history: available."
+        )
         _close_window(window)
 
     def test_view_panel_navigation_actions_expose_status_hints(self, qapp, isolated_config):
@@ -3407,7 +3423,10 @@ class TestMainWindowFileFlow:
         assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
         assert actions["Structure"].toolTip() == "Group, move, and reorder widgets in the page hierarchy."
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
-        assert actions["Build"].toolTip() == "Compile previews, generate resources, and manage release builds."
+        assert actions["Build"].toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable."
+        )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (
             "Change workspace layout, themes, preview modes, and mockup options. "
