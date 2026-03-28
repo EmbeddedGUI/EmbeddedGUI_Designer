@@ -147,11 +147,11 @@ class NewProjectDialog(QDialog):
         if self._sdk_root:
             return (
                 "Clear the current SDK root and create an editing-only project.",
-                "Clear SDK root",
+                "Clear SDK root. Clear the current SDK root and create an editing-only project.",
             )
         return (
             "SDK root is already empty. The project will use editing-only mode until you set an SDK.",
-            "Clear SDK root unavailable",
+            "Clear SDK root unavailable. SDK root is already empty. The project will use editing-only mode until you set an SDK.",
         )
 
     def _create_button_metadata(self):
@@ -160,21 +160,21 @@ class NewProjectDialog(QDialog):
         if not parent_dir:
             return (
                 "Select a parent directory before creating the project.",
-                "Create project unavailable",
+                "Create project unavailable. Select a parent directory before creating the project.",
             )
         if not app_name:
             return (
                 "Enter an application name before creating the project.",
-                "Create project unavailable",
+                "Create project unavailable. Enter an application name before creating the project.",
             )
         if not app_name.replace("_", "").isalnum():
             return (
                 "Application name must use letters, numbers, and underscores before the project can be created.",
-                "Create project unavailable",
+                "Create project unavailable. Application name must use letters, numbers, and underscores before the project can be created.",
             )
         return (
             f"Create project {app_name} in {parent_dir} at {self.screen_width} by {self.screen_height}.",
-            f"Create project: {app_name}",
+            f"Create project: {app_name}. Create project {app_name} in {parent_dir} at {self.screen_width} by {self.screen_height}.",
         )
 
     def _browse_sdk_root(self):

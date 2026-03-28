@@ -454,11 +454,16 @@ class TestNewProjectDialog:
         assert dialog._sdk_clear_btn.toolTip() == (
             "SDK root is already empty. The project will use editing-only mode until you set an SDK."
         )
-        assert dialog._sdk_clear_btn.accessibleName() == "Clear SDK root unavailable"
+        assert dialog._sdk_clear_btn.accessibleName() == (
+            "Clear SDK root unavailable. SDK root is already empty. "
+            "The project will use editing-only mode until you set an SDK."
+        )
         assert dialog._create_btn.toolTip() == (
             f"Create project DemoApp in {normalized_parent} at 320 by 240."
         )
-        assert dialog._create_btn.accessibleName() == "Create project: DemoApp"
+        assert dialog._create_btn.accessibleName() == (
+            f"Create project: DemoApp. Create project DemoApp in {normalized_parent} at 320 by 240."
+        )
         dialog.deleteLater()
 
     def test_create_button_reports_missing_fields_and_invalid_name(self, qapp, isolated_config, tmp_path):
@@ -469,7 +474,9 @@ class TestNewProjectDialog:
             dialog = NewProjectDialog(sdk_root="", default_parent_dir="")
 
         assert dialog._create_btn.toolTip() == "Select a parent directory before creating the project."
-        assert dialog._create_btn.accessibleName() == "Create project unavailable"
+        assert dialog._create_btn.accessibleName() == (
+            "Create project unavailable. Select a parent directory before creating the project."
+        )
 
         dialog._parent_dir = os.path.normpath(os.path.abspath(tmp_path))
         dialog._parent_edit.setText(dialog._parent_dir)
@@ -480,7 +487,9 @@ class TestNewProjectDialog:
         assert dialog._create_btn.toolTip() == (
             "Application name must use letters, numbers, and underscores before the project can be created."
         )
-        assert dialog._create_btn.accessibleName() == "Create project unavailable"
+        assert dialog._create_btn.accessibleName() == (
+            "Create project unavailable. Application name must use letters, numbers, and underscores before the project can be created."
+        )
         dialog.deleteLater()
 
     def test_accept_requires_parent_directory(self, qapp, isolated_config):
