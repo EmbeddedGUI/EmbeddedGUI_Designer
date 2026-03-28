@@ -236,11 +236,18 @@ class TestWidgetTreePanel:
 
         menu = panel._build_context_menu(root)
         recent_menu = _context_submenu(menu, "Recent Widgets")
+        recent_actions = [action for action in recent_menu.actions() if action.text()]
 
-        assert [action.text() for action in recent_menu.actions() if action.text()] == [
+        assert [action.text() for action in recent_actions] == [
             WidgetRegistry.instance().display_name("label"),
             WidgetRegistry.instance().display_name("button"),
         ]
+        assert recent_menu.menuAction().toolTip() == "Insert a recently used widget into root_group (group)."
+        assert recent_menu.menuAction().statusTip() == recent_menu.menuAction().toolTip()
+        assert recent_actions[0].toolTip() == f"Insert {recent_actions[0].text()} into root_group (group)."
+        assert recent_actions[0].statusTip() == recent_actions[0].toolTip()
+        assert recent_actions[1].toolTip() == f"Insert {recent_actions[1].text()} into root_group (group)."
+        assert recent_actions[1].statusTip() == recent_actions[1].toolTip()
 
         DesignerConfig.instance().widget_browser_recent = []
         menu.deleteLater()

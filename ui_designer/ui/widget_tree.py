@@ -1985,8 +1985,18 @@ class WidgetTreePanel(QWidget):
         return f"Rename {selected_label} (F2)."
 
     def _context_insert_tooltip(self, preferred_parent):
-        insert_target = self._current_move_target_label(preferred_parent, "page root") or "page root"
+        insert_target = self._context_insert_target_label(preferred_parent)
         return f"Open the widget browser to insert into {insert_target}."
+
+    def _context_insert_target_label(self, preferred_parent):
+        insert_target = self._current_move_target_label(preferred_parent, "page root") or "page root"
+        return insert_target
+
+    def _context_recent_widget_tooltip(self, display_name, preferred_parent):
+        return f"Insert {display_name} into {self._context_insert_target_label(preferred_parent)}."
+
+    def _context_recent_widgets_menu_tooltip(self, preferred_parent):
+        return f"Insert a recently used widget into {self._context_insert_target_label(preferred_parent)}."
 
     def _context_delete_tooltip(self, widget):
         selected_label = self._widget_label(widget) or "widget"
@@ -2539,10 +2549,13 @@ class WidgetTreePanel(QWidget):
         if recent_types:
             recent_menu = menu.addMenu("Recent Widgets")
             recent_menu.setToolTipsVisible(True)
+            _set_action_metadata(recent_menu.menuAction(), tooltip=self._context_recent_widgets_menu_tooltip(preferred_parent))
             display_names = {type_name: display_name for display_name, type_name in _get_addable_types()}
             for type_name in recent_types[:8]:
-                action = QAction(display_names.get(type_name, WidgetRegistry.instance().display_name(type_name)), self)
+                display_name = display_names.get(type_name, WidgetRegistry.instance().display_name(type_name))
+                action = QAction(display_name, self)
                 action.setIcon(make_icon(widget_icon_key(type_name)))
+                _set_action_metadata(action, tooltip=self._context_recent_widget_tooltip(display_name, preferred_parent))
                 action.triggered.connect(lambda checked=False, t=type_name, p=preferred_parent: self.insert_widget(t, parent=p))
                 recent_menu.addAction(action)
 
