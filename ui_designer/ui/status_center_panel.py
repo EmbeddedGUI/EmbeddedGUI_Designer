@@ -116,7 +116,7 @@ class StatusCenterPanel(QWidget):
         self._header_subtitle.setAccessibleName("Status Center summary")
         header_layout.addWidget(self._header_subtitle)
         self._workspace_summary_label = QLabel(
-            "Workspace: SDK missing, compile unavailable, Preview Idle, no dirty pages, no widgets selected."
+            "Workspace: SDK missing, compile unavailable, Preview idle, no dirty pages, no widgets selected."
         )
         self._workspace_summary_label.setObjectName("workspace_section_subtitle")
         self._workspace_summary_label.setWordWrap(True)
@@ -140,7 +140,7 @@ class StatusCenterPanel(QWidget):
             metrics_layout, 1, 0, "Diagnostics", "No active diagnostics", "diagnostics", "open_diagnostics"
         )
         self._preview_value, self._preview_card = self._create_metric(
-            metrics_layout, 1, 1, "Preview", "Preview Idle", "debug", "open_debug"
+            metrics_layout, 1, 1, "Preview", "Preview idle", "debug", "open_debug"
         )
         self._selection_value, self._selection_card = self._create_metric(
             metrics_layout, 2, 0, "Selection", "No widgets selected", "structure", "open_structure_panel"
@@ -731,7 +731,7 @@ class StatusCenterPanel(QWidget):
     ):
         sdk_text = "SDK ready" if sdk_ready else "SDK missing"
         compile_text = "compile available" if can_compile else "compile unavailable"
-        preview_value = str(preview_text or "Preview Idle").strip() or "Preview Idle"
+        preview_value = str(preview_text or "Preview idle").strip() or "Preview idle"
         runtime_summary = "runtime issue detected" if str(runtime_text or "").strip() else "runtime clear"
         dirty_summary = (
             self._count_label(dirty_count, "dirty page", "dirty pages")
@@ -1014,7 +1014,7 @@ class StatusCenterPanel(QWidget):
         can_compile=False,
         dirty_pages=0,
         selection_count=0,
-        preview_label="Preview Idle",
+        preview_label="Preview idle",
         diagnostics_errors=0,
         diagnostics_warnings=0,
         diagnostics_infos=0,
@@ -1024,7 +1024,7 @@ class StatusCenterPanel(QWidget):
         can_compile = bool(can_compile)
         dirty_count = max(int(dirty_pages or 0), 0)
         selection_total = max(int(selection_count or 0), 0)
-        preview_text = str(preview_label or "Preview Idle")
+        preview_text = str(preview_label or "Preview idle")
         error_count = max(int(diagnostics_errors or 0), 0)
         warning_count = max(int(diagnostics_warnings or 0), 0)
         info_count = max(int(diagnostics_infos or 0), 0)

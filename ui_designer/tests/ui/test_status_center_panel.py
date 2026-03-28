@@ -349,7 +349,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._workspace_summary_label.accessibleName() == (
-            "Workspace summary: Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
+            "Workspace summary: Workspace: SDK missing, compile unavailable, Preview idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._header_title.text() == "Status Center (Workspace)"
         assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace (Setup)."
@@ -401,11 +401,11 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
+            "Workspace: SDK missing, compile unavailable, Preview idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
-        assert panel._preview_value.toolTip() == "Preview: Preview Idle"
+        assert panel._preview_value.toolTip() == "Preview: Preview idle"
         assert panel._diag_value.text() == "No active diagnostics"
         assert panel._diag_value.toolTip() == "Diagnostics: No active diagnostics"
         assert panel._diag_value.accessibleName() == "Diagnostics value: No active diagnostics"

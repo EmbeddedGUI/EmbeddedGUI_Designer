@@ -715,7 +715,7 @@ class MainWindow(QMainWindow):
 
     def _update_workspace_chips(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0, "info": 0}
-        preview_text = "Preview Idle"
+        preview_text = "Preview idle"
         preview_tone = "accent"
         if self.preview_panel.is_python_preview_active():
             preview_text = "Python Preview"
@@ -838,7 +838,7 @@ class MainWindow(QMainWindow):
             if hasattr(self, "diagnostics_panel"):
                 self.diagnostics_panel.open_first_warning()
 
-    def _update_status_center(self, *, dirty_pages=0, selection_count=0, preview_text="Preview Idle", diagnostics_counts=None):
+    def _update_status_center(self, *, dirty_pages=0, selection_count=0, preview_text="Preview idle", diagnostics_counts=None):
         if not hasattr(self, "status_center_panel"):
             return
         counts = diagnostics_counts or {"error": 0, "warning": 0, "info": 0}
