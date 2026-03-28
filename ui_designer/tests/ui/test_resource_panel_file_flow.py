@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtCore import QTimer
+    from PyQt5.QtCore import QTimer, Qt
     from PyQt5.QtWidgets import QApplication, QMessageBox
 
     _has_pyqt5 = True
@@ -977,6 +977,8 @@ class TestResourcePanelFileFlow:
         assert dialog._table.item(0, 1).toolTip() == (
             "Page: main_page. Widget: hero (image). Property: image_file."
         )
+        assert dialog._table.item(0, 1).statusTip() == dialog._table.item(0, 1).toolTip()
+        assert dialog._table.item(0, 1).data(Qt.AccessibleTextRole) == dialog._table.item(0, 1).toolTip()
         assert dialog._open_usage_button.toolTip() == "Open the selected usage to review it in the editor."
         assert dialog._open_usage_button.accessibleName() == "Open selected usage"
         assert dialog._ok_button.accessibleName() == "Delete"

@@ -88,6 +88,13 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, tooltip):
+    hint = str(tooltip or "").strip()
+    item.setToolTip(hint)
+    item.setStatusTip(hint)
+    item.setData(Qt.AccessibleTextRole, hint)
+
+
 def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
@@ -570,9 +577,9 @@ class _ReferenceImpactDialog(QDialog):
             widget_item = QTableWidgetItem(widget_text)
             prop_item = QTableWidgetItem(entry.property_name)
             item_tooltip = f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
-            page_item.setToolTip(item_tooltip)
-            widget_item.setToolTip(item_tooltip)
-            prop_item.setToolTip(item_tooltip)
+            _set_item_metadata(page_item, item_tooltip)
+            _set_item_metadata(widget_item, item_tooltip)
+            _set_item_metadata(prop_item, item_tooltip)
             self._table.setItem(row, 0, page_item)
             self._table.setItem(row, 1, widget_item)
             self._table.setItem(row, 2, prop_item)
