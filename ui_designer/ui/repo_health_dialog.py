@@ -175,14 +175,17 @@ class RepositoryHealthDialog(QDialog):
     def _refresh_hint(self) -> str:
         return "Refresh repository health, runtime path checks, and stale temp directory scan."
 
-    def _reset_view_hint(self) -> str:
+    def _has_custom_view_state(self) -> bool:
         has_non_default_stale_selection = self._stale_dir_combo.count() > 0 and self._stale_dir_combo.currentIndex() > 0
-        if (
+        return bool(
             self._critical_only_check.isChecked()
             or self._blocked_only_check.isChecked()
             or self._show_json_check.isChecked()
             or has_non_default_stale_selection
-        ):
+        )
+
+    def _reset_view_hint(self) -> str:
+        if self._has_custom_view_state():
             return "Reset repository health filters, JSON view, and stale-directory selection."
         return "Repository health already shows the full text report."
 
@@ -245,6 +248,16 @@ class RepositoryHealthDialog(QDialog):
         smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         sdk_path = str(sdk.get("path") or "").strip()
         smoke_path = str(smoke.get("path") or "").strip()
+        reset_available = self._has_custom_view_state()
+        can_copy_repo = bool(repo_root)
+        can_open_repo = bool(repo_root and os.path.isdir(repo_root))
+        can_copy_sdk = bool(sdk_path)
+        can_open_sdk = bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path))
+        can_copy_smoke = bool(smoke_path)
+        can_open_smoke = bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path))
+        can_copy_stale = bool(self._selected_stale_path())
+        can_open_stale = bool(self._selected_stale_path() and os.path.exists(self._selected_stale_path()))
+        report_mode = self._view_mode_label()
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
         _set_widget_metadata(
@@ -255,7 +268,11 @@ class RepositoryHealthDialog(QDialog):
         _set_widget_metadata(self._overview_label, tooltip=counts_text, accessible_name=counts_text)
         _set_widget_metadata(self._details_edit, tooltip=details_summary, accessible_name=details_summary)
         _set_widget_metadata(self._refresh_button, tooltip=self._refresh_hint())
-        _set_widget_metadata(self._reset_view_button, tooltip=self._reset_view_hint())
+        _set_widget_metadata(
+            self._reset_view_button,
+            tooltip=self._reset_view_hint(),
+            accessible_name="Reset repository health view" if reset_available else "Reset repository health view unavailable",
+        )
         _set_widget_metadata(
             self._critical_only_check,
             tooltip=(
@@ -294,6 +311,7 @@ class RepositoryHealthDialog(QDialog):
         _set_widget_metadata(
             self._copy_report_button,
             tooltip=f"Copy the current repository health {self._view_mode_label()} report.",
+            accessible_name=f"Copy repository health {report_mode} report",
         )
         _set_widget_metadata(
             self._copy_json_button,
@@ -302,20 +320,65 @@ class RepositoryHealthDialog(QDialog):
         _set_widget_metadata(
             self._export_report_button,
             tooltip=f"Export the current repository health {self._view_mode_label()} report.",
+            accessible_name=f"Export repository health {report_mode} report",
         )
-        _set_widget_metadata(self._copy_repo_button, tooltip=self._copy_path_hint("repository root", repo_root))
-        _set_widget_metadata(self._open_repo_button, tooltip=self._open_path_hint("repository root", repo_root))
-        _set_widget_metadata(self._copy_sdk_button, tooltip=self._copy_path_hint("SDK folder", sdk_path))
-        _set_widget_metadata(self._open_sdk_button, tooltip=self._open_path_hint("SDK folder", sdk_path))
-        _set_widget_metadata(self._copy_smoke_button, tooltip=self._copy_path_hint("release smoke sample", smoke_path))
-        _set_widget_metadata(self._open_smoke_button, tooltip=self._open_path_hint("release smoke sample", smoke_path))
+        _set_widget_metadata(
+            self._copy_repo_button,
+            tooltip=self._copy_path_hint("repository root", repo_root),
+            accessible_name="Copy repository root path" if can_copy_repo else "Copy repository root path unavailable",
+        )
+        _set_widget_metadata(
+            self._open_repo_button,
+            tooltip=self._open_path_hint("repository root", repo_root),
+            accessible_name="Open repository root" if can_open_repo else "Open repository root unavailable",
+        )
+        _set_widget_metadata(
+            self._copy_sdk_button,
+            tooltip=self._copy_path_hint("SDK folder", sdk_path),
+            accessible_name="Copy SDK folder path" if can_copy_sdk else "Copy SDK folder path unavailable",
+        )
+        _set_widget_metadata(
+            self._open_sdk_button,
+            tooltip=self._open_path_hint("SDK folder", sdk_path),
+            accessible_name="Open SDK folder" if can_open_sdk else "Open SDK folder unavailable",
+        )
+        _set_widget_metadata(
+            self._copy_smoke_button,
+            tooltip=self._copy_path_hint("release smoke sample", smoke_path),
+            accessible_name=(
+                "Copy release smoke sample path"
+                if can_copy_smoke
+                else "Copy release smoke sample path unavailable"
+            ),
+        )
+        _set_widget_metadata(
+            self._open_smoke_button,
+            tooltip=self._open_path_hint("release smoke sample", smoke_path),
+            accessible_name="Open release smoke sample" if can_open_smoke else "Open release smoke sample unavailable",
+        )
         _set_widget_metadata(
             self._stale_dir_combo,
             tooltip=stale_summary,
             accessible_name=f"Stale temp directories: {stale_summary.removesuffix('.')}.",
         )
-        _set_widget_metadata(self._copy_stale_path_button, tooltip=self._copy_stale_path_hint())
-        _set_widget_metadata(self._open_stale_button, tooltip=self._open_stale_path_hint())
+        _set_widget_metadata(
+            self._copy_stale_path_button,
+            tooltip=self._copy_stale_path_hint(),
+            accessible_name=(
+                "Copy selected stale temp directory path"
+                if can_copy_stale
+                else "Copy selected stale temp directory path unavailable"
+            ),
+        )
+        _set_widget_metadata(
+            self._open_stale_button,
+            tooltip=self._open_stale_path_hint(),
+            accessible_name=(
+                "Open selected stale temp directory"
+                if can_open_stale
+                else "Open selected stale temp directory unavailable"
+            ),
+        )
 
     def _view_options(self) -> dict[str, bool]:
         return {

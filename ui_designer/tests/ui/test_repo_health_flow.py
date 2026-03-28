@@ -147,12 +147,19 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
     assert dialog._details_edit.accessibleName() == "Repository health details: text view. Filters: critical off, blocked off."
     assert dialog._refresh_button.toolTip() == "Refresh repository health, runtime path checks, and stale temp directory scan."
     assert dialog._reset_view_button.toolTip() == "Repository health already shows the full text report."
+    assert dialog._reset_view_button.accessibleName() == "Reset repository health view unavailable"
     assert dialog._critical_only_check.toolTip() == "Filter the report to critical repository health issues."
     assert dialog._blocked_only_check.toolTip() == "Filter the report to stale temp directories blocked by access errors."
     assert dialog._show_json_check.toolTip() == "Show the repository health report as JSON."
     assert dialog._copy_report_button.toolTip() == "Copy the current repository health text report."
+    assert dialog._copy_report_button.accessibleName() == "Copy repository health text report"
     assert dialog._copy_repo_button.toolTip() == "Copy the repository root path."
+    assert dialog._copy_repo_button.accessibleName() == "Copy repository root path"
+    assert dialog._copy_sdk_button.accessibleName() == "Copy SDK folder path"
+    assert dialog._open_repo_button.accessibleName() == "Open repository root"
     assert dialog._open_sdk_button.toolTip() == "The SDK folder path is unavailable or missing."
+    assert dialog._open_sdk_button.accessibleName() == "Open SDK folder unavailable"
+    assert dialog._open_smoke_button.accessibleName() == "Open release smoke sample unavailable"
     assert dialog._stale_dir_combo.toolTip() == (
         "Select a stale temp directory to copy or open. 1 entry. Current selection: .pytest-tmp-codex [permission_denied]."
     )
@@ -160,6 +167,8 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
         "Stale temp directories: Select a stale temp directory to copy or open. 1 entry. "
         "Current selection: .pytest-tmp-codex [permission_denied]."
     )
+    assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path"
+    assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
 
 
 @_skip_no_qt
@@ -213,6 +222,13 @@ def test_repository_health_dialog_open_buttons_require_existing_paths(qapp, monk
     assert dialog._open_sdk_button.isEnabled() is False
     assert dialog._open_smoke_button.isEnabled() is False
     assert dialog._open_stale_button.isEnabled() is False
+    assert dialog._copy_repo_button.accessibleName() == "Copy repository root path"
+    assert dialog._copy_sdk_button.accessibleName() == "Copy SDK folder path"
+    assert dialog._copy_smoke_button.accessibleName() == "Copy release smoke sample path"
+    assert dialog._open_repo_button.accessibleName() == "Open repository root"
+    assert dialog._open_sdk_button.accessibleName() == "Open SDK folder unavailable"
+    assert dialog._open_smoke_button.accessibleName() == "Open release smoke sample unavailable"
+    assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
 
 
 @_skip_no_qt
@@ -303,16 +319,21 @@ def test_repository_health_dialog_updates_accessibility_metadata_for_view_change
 
     assert dialog._copy_stale_path_button.toolTip() == "Copy the selected stale temp directory path."
     assert dialog._open_stale_button.toolTip() == "The selected stale temp directory path is unavailable or missing."
+    assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path"
+    assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
 
     dialog._critical_only_check.setChecked(True)
     qapp.processEvents()
 
     assert dialog._critical_only_check.toolTip() == "Showing only critical repository health issues."
     assert dialog._reset_view_button.toolTip() == "Reset repository health filters, JSON view, and stale-directory selection."
+    assert dialog._reset_view_button.accessibleName() == "Reset repository health view"
     assert dialog._stale_dir_combo.toolTip() == "No stale temp directories are available in the current view."
     assert dialog._stale_dir_combo.accessibleName() == (
         "Stale temp directories: No stale temp directories are available in the current view."
     )
+    assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path unavailable"
+    assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
 
     dialog._show_json_check.setChecked(True)
     qapp.processEvents()
@@ -320,6 +341,7 @@ def test_repository_health_dialog_updates_accessibility_metadata_for_view_change
     assert dialog._show_json_check.toolTip() == "Showing the repository health report as JSON."
     assert dialog._details_edit.accessibleName() == "Repository health details: JSON view. Filters: critical on, blocked off."
     assert dialog._copy_report_button.toolTip() == "Copy the current repository health JSON report."
+    assert dialog._copy_report_button.accessibleName() == "Copy repository health JSON report"
     assert "View: JSON." in dialog.accessibleName()
 
 
