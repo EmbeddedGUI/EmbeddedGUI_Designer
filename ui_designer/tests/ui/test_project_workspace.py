@@ -36,12 +36,14 @@ class TestProjectWorkspacePanel:
         emitted = []
         panel.view_changed.connect(emitted.append)
 
-        assert panel._list_btn.toolTip() == "Show the page list for structure-first editing."
+        assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
         assert panel._list_btn.statusTip() == panel._list_btn.toolTip()
-        assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first."
-        assert panel._thumb_btn.toolTip() == "Show page thumbnails for a visual scan."
+        assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first. Current view."
+        assert panel._thumb_btn.toolTip() == "Switch to page thumbnails for a visual scan."
         assert panel._thumb_btn.statusTip() == panel._thumb_btn.toolTip()
-        assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan."
+        assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Available."
+        assert panel._stack.accessibleName() == "Project workspace view stack: List view visible."
+        assert panel._stack.toolTip() == panel._stack.accessibleName()
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Dirty state: No dirty pages."
         )
@@ -53,6 +55,11 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.text() == "Thumbnails"
         assert panel._view_chip.accessibleName() == "Workspace view: Thumbnails."
         assert panel._view_chip.statusTip() == panel._view_chip.toolTip()
+        assert panel._list_btn.toolTip() == "Switch to the page list for structure-first editing."
+        assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first. Available."
+        assert panel._thumb_btn.toolTip() == "Currently showing page thumbnails for a visual scan."
+        assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Current view."
+        assert panel._stack.accessibleName() == "Project workspace view stack: Thumbnails visible."
         assert panel.accessibleName() == (
             "Project workspace: Thumbnails. Pages: 0 pages. Active page: none. Dirty state: No dirty pages."
         )
@@ -65,6 +72,9 @@ class TestProjectWorkspacePanel:
         assert panel._stack.currentWidget() is list_view
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
+        assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
+        assert panel._thumb_btn.toolTip() == "Switch to page thumbnails for a visual scan."
+        assert panel._stack.accessibleName() == "Project workspace view stack: List view visible."
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Dirty state: No dirty pages."
         )

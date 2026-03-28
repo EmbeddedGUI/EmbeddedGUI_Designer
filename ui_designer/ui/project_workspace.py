@@ -137,6 +137,37 @@ class ProjectWorkspacePanel(QWidget):
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
 
+    def _update_view_button_metadata(self, current_view):
+        button_specs = (
+            (
+                self._list_btn,
+                self.VIEW_LIST,
+                "List",
+                "Structure first",
+                "the page list for structure-first editing",
+            ),
+            (
+                self._thumb_btn,
+                self.VIEW_THUMBNAILS,
+                "Thumbnails",
+                "Visual scan",
+                "page thumbnails for a visual scan",
+            ),
+        )
+        for button, view_name, label, detail, description in button_specs:
+            is_current = current_view == view_name
+            if is_current:
+                tooltip = f"Currently showing {description}."
+                accessible_name = f"Workspace view button: {label}. {detail}. Current view."
+            else:
+                tooltip = f"Switch to {description}."
+                accessible_name = f"Workspace view button: {label}. {detail}. Available."
+            _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
+
+    def _update_stack_metadata(self, view_label):
+        summary = f"Project workspace view stack: {view_label} visible."
+        _set_widget_metadata(self._stack, tooltip=summary, accessible_name=summary)
+
     def set_view(self, view_name):
         if view_name == self.VIEW_THUMBNAILS:
             self._thumb_btn.setChecked(True)
@@ -147,6 +178,8 @@ class ProjectWorkspacePanel(QWidget):
             view_name = self.VIEW_LIST
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
+        self._update_view_button_metadata(view_name)
+        self._update_stack_metadata(view_label)
         self._update_panel_metadata()
         self.view_changed.emit(view_name)
 
