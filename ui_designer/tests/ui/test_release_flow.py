@@ -645,6 +645,10 @@ def test_release_history_dialog_reports_missing_preview_targets(qapp):
     )
 
     assert dialog._preview_label.text() == "Preview"
+    assert dialog._preview_auto_button.toolTip() == (
+        "Showing the best available preview for the selected release entry. "
+        "Path state: unavailable. Current path: none."
+    )
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: auto. Path state: unavailable. Current path: none. "
         "No manifest, version file, or build log is recorded for this release entry."
@@ -652,6 +656,9 @@ def test_release_history_dialog_reports_missing_preview_targets(qapp):
 
     dialog._activate_preview_mode("manifest")
     assert dialog._preview_label.text() == "Manifest Preview"
+    assert dialog._preview_manifest_button.toolTip() == (
+        "No manifest is recorded for the selected release entry. Path state: unavailable. Current path: none."
+    )
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: manifest. Path state: unavailable. Current path: none. "
         "No manifest path is recorded for this release entry."
@@ -659,6 +666,9 @@ def test_release_history_dialog_reports_missing_preview_targets(qapp):
 
     dialog._activate_preview_mode("version")
     assert dialog._preview_label.text() == "Version Preview"
+    assert dialog._preview_version_button.toolTip() == (
+        "No version file is recorded for the selected release entry. Path state: unavailable. Current path: none."
+    )
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: version. Path state: unavailable. Current path: none. "
         "No version file is available for this release entry."
@@ -705,10 +715,13 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         "Release entry details: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
     assert dialog._preview_auto_button.toolTip() == (
-        "Showing the best available preview for the selected release entry."
+        "Showing the best available preview for the selected release entry. "
+        f"Path state: available. Current path: {manifest_path}."
     )
     assert dialog._preview_auto_button.accessibleName() == "Auto preview"
-    assert dialog._preview_manifest_button.toolTip() == "Preview the selected release manifest."
+    assert dialog._preview_manifest_button.toolTip() == (
+        f"Preview the selected release manifest. Path state: available. Current path: {manifest_path}."
+    )
     assert dialog._preview_manifest_button.accessibleName() == "Preview manifest"
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
     assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
@@ -777,7 +790,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     dialog._preview_log_button.click()
     qapp.processEvents()
 
-    assert dialog._preview_log_button.toolTip() == "Showing the selected release build log preview."
+    assert dialog._preview_log_button.toolTip() == (
+        f"Showing the selected release build log preview. Path state: available. Current path: {log_path}."
+    )
     assert dialog._preview_log_button.accessibleName() == "Preview build log"
     assert dialog._copy_preview_path_button.toolTip() == f"Copy the current log preview path. Current path: {log_path}."
     assert dialog._copy_preview_path_button.accessibleName() == "Copy current preview path"

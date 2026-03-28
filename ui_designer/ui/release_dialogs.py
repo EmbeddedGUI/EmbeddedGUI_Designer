@@ -1412,26 +1412,48 @@ class ReleaseHistoryDialog(QDialog):
     def _preview_mode_hint(self, mode: str) -> str:
         entry = self._current_entry()
         if entry is None:
-            return "Select a release entry to preview its artifacts."
+            return "Select a release entry to preview its artifacts. Path state: unavailable. Current path: none."
         preview_label = {
             "auto": "best available artifact",
             "manifest": "manifest",
             "log": "build log",
             "version": "version file",
         }[mode]
-        if mode == "manifest" and not _history_string(entry, "manifest_path"):
-            return "No manifest is recorded for the selected release entry."
-        if mode == "log" and not _history_string(entry, "log_path"):
-            return "No build log is recorded for the selected release entry."
-        if mode == "version" and not _history_version_path(entry):
-            return "No version file is recorded for the selected release entry."
+        preview_path = ""
+        if mode == "manifest":
+            preview_path = _history_string(entry, "manifest_path")
+            if not preview_path:
+                return "No manifest is recorded for the selected release entry. Path state: unavailable. Current path: none."
+        elif mode == "log":
+            preview_path = _history_string(entry, "log_path")
+            if not preview_path:
+                return "No build log is recorded for the selected release entry. Path state: unavailable. Current path: none."
+        elif mode == "version":
+            preview_path = _history_version_path(entry)
+            if not preview_path:
+                return "No version file is recorded for the selected release entry. Path state: unavailable. Current path: none."
+        else:
+            _preview_label, preview_path, _prefer_json, _suffix = self._current_preview_target_options(entry)
+        preview_state = "available" if preview_path else "unavailable"
         if self._preview_mode == mode:
             if mode == "auto":
-                return "Showing the best available preview for the selected release entry."
-            return f"Showing the selected release {preview_label} preview."
+                return (
+                    "Showing the best available preview for the selected release entry. "
+                    f"Path state: {preview_state}. Current path: {preview_path or 'none'}."
+                )
+            return (
+                f"Showing the selected release {preview_label} preview. "
+                f"Path state: {preview_state}. Current path: {preview_path or 'none'}."
+            )
         if mode == "auto":
-            return "Automatically preview the best available artifact for the selected release entry."
-        return f"Preview the selected release {preview_label}."
+            return (
+                "Automatically preview the best available artifact for the selected release entry. "
+                f"Path state: {preview_state}. Current path: {preview_path or 'none'}."
+            )
+        return (
+            f"Preview the selected release {preview_label}. "
+            f"Path state: {preview_state}. Current path: {preview_path or 'none'}."
+        )
 
     def _preview_empty_state_text(self, message: str, *, path: str = "", state: str | None = None) -> str:
         resolved_path = str(path or "").strip()
