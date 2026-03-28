@@ -2908,15 +2908,27 @@ class TestMainWindowFileFlow:
         )
         assert actions["Auto Compile"].statusTip() == actions["Auto Compile"].toolTip()
         assert actions["Release Build..."].toolTip() == (
-            "Build a release package for the current project. Unavailable: open a project first."
+            "Build a release package for the current project. "
+            "SDK: invalid. Output root: none. History file: none. "
+            "Source resources: missing. Resource directory: none. Release profiles: unavailable. "
+            "Output root state: unavailable. History file state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
+            "Unavailable: open a project first."
         )
         assert actions["Release Build..."].statusTip() == actions["Release Build..."].toolTip()
         assert actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Unavailable: open a project first."
+            "Edit release profiles for the current project. "
+            "SDK: invalid. Output root: none. Profiles: unavailable. History file: none. "
+            "Source resources: missing. Resource directory: none. "
+            "Output root state: unavailable. History file state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
+            "Unavailable: open a project first."
         )
         assert actions["Release Profiles..."].statusTip() == actions["Release Profiles..."].toolTip()
         assert actions["Release History..."].toolTip() == (
-            "Browse recorded release builds for the current project. Unavailable: open a project first."
+            "Browse recorded release builds for the current project. "
+            "SDK: invalid. History file: none. History file state: unavailable. "
+            "Output root: none. Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root state: unavailable. "
+            "Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
+            "Unavailable: open a project first."
         )
         assert actions["Release History..."].statusTip() == actions["Release History..."].toolTip()
         assert actions["Repository Health..."].toolTip() == (

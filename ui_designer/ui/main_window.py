@@ -1141,7 +1141,7 @@ class MainWindow(QMainWindow):
 
     def _release_profiles_summary_suffix(self):
         if getattr(self, "project", None) is None:
-            return ""
+            return "Profiles: unavailable."
         release_config = getattr(self.project, "release_config", None)
         profiles = list(getattr(release_config, "profiles", []) or [])
         profile_count = len(profiles)
@@ -1290,16 +1290,7 @@ class MainWindow(QMainWindow):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
             return
-        if getattr(self, "project", None) is None:
-            self._apply_action_hint(
-                action,
-                self._action_hint(
-                    "Edit release profiles for the current project.",
-                    False,
-                    "open a project first",
-                ),
-            )
-            return
+        no_project = getattr(self, "project", None) is None
         sdk_state = str(sdk_state or ("valid" if self._has_valid_sdk_root() else "invalid"))
         output_root_state_summary = str(output_root_state_summary or self._release_output_root_state_summary())
         release_targets_summary = str(release_targets_summary or self._release_open_targets_summary())
@@ -1311,12 +1302,29 @@ class MainWindow(QMainWindow):
         latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
         latest_release_sdk_summary = str(latest_release_sdk_summary or self._latest_release_sdk_summary())
         output_root_label = self._release_output_root() or "none"
+        history_file_label = history_file_path or ("none" if no_project else "not created yet")
+        profiles_suffix = self._release_profiles_summary_suffix()
+        profiles_segment = f"{profiles_suffix} " if profiles_suffix else ""
+        if getattr(self, "project", None) is None:
+            self._apply_action_hint(
+                action,
+                (
+                    "Edit release profiles for the current project. "
+                    f"SDK: {sdk_state}. Output root: {output_root_label}. {profiles_segment}"
+                    f"History file: {history_file_label}. "
+                    f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
+                    f"{output_root_state_summary} {history_file_state_summary} "
+                    f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
+                    "Unavailable: open a project first."
+                ),
+            )
+            return
         self._apply_action_hint(
             action,
             (
                 "Edit release profiles for the current project. "
-                f"SDK: {sdk_state}. Output root: {output_root_label}. {self._release_profiles_summary_suffix()} "
-                f"History file: {history_file_path or 'not created yet'}. "
+                f"SDK: {sdk_state}. Output root: {output_root_label}. {profiles_segment}"
+                f"History file: {history_file_label}. "
                 f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
                 f"{output_root_state_summary} {history_file_state_summary} "
                 f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
@@ -2387,12 +2395,16 @@ class MainWindow(QMainWindow):
                     else (
                         "Build a release package for the current project. "
                         f"SDK: {sdk_state}. Output root: {self._release_output_root() or 'none'}. "
-                        f"History file: {history_file_path or 'not created yet'}. "
+                        f"History file: {history_file_path or ('none' if self.project is None else 'not created yet')}. "
                         f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
                         f"{profiles_summary} {output_root_state_summary} {history_file_state_summary} "
                         f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
                         f"Unavailable: {release_build_blocked_reason}."
-                        if release_build_blocked_reason in {"set a valid SDK root first", "save the project to disk first"}
+                        if release_build_blocked_reason in {
+                            "open a project first",
+                            "set a valid SDK root first",
+                            "save the project to disk first",
+                        }
                         else self._action_hint(
                             "Build a release package for the current project.",
                             False,
@@ -2424,17 +2436,11 @@ class MainWindow(QMainWindow):
                     if self._release_history_action.isEnabled()
                     else (
                         "Browse recorded release builds for the current project. "
-                        f"SDK: {sdk_state}. History file: {history_file_path or 'not created yet'}. {history_file_state_summary} "
+                        f"SDK: {sdk_state}. History file: {history_file_path or ('none' if self.project is None else 'not created yet')}. {history_file_state_summary} "
                         f"Output root: {self._release_output_root() or 'none'}. Source resources: {resources_state}. "
                         f"Resource directory: {resources_dir or 'none'}. {profiles_summary} {output_root_state_summary} "
                         f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
-                        "Unavailable: save the project to disk first."
-                        if self.project is not None
-                        else self._action_hint(
-                            "Browse recorded release builds for the current project.",
-                            False,
-                            "open a project first",
-                        )
+                        f"Unavailable: {'save the project to disk first' if self.project is not None else 'open a project first'}."
                     )
                 ),
             )
