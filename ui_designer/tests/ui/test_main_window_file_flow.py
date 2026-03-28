@@ -2958,6 +2958,15 @@ class TestMainWindowFileFlow:
         )
         assert unsaved_actions["Release Build..."].statusTip() == unsaved_actions["Release Build..."].toolTip()
         assert unsaved_actions["Release Build..."].isEnabled() is False
+        assert unsaved_actions["Release History..."].toolTip() == (
+            "Browse recorded release builds for the current project. "
+            "SDK: valid. History file: not created yet. History file state: unavailable. "
+            "Output root: none. Source resources: missing. Resource directory: none. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
+            "Output root state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
+            "Unavailable: save the project to disk first."
+        )
+        assert unsaved_actions["Release History..."].statusTip() == unsaved_actions["Release History..."].toolTip()
+        assert unsaved_actions["Release History..."].isEnabled() is False
 
         window.project = project
         window._project_dir = str(project_dir)

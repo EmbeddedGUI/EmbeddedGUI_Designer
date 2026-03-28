@@ -2421,10 +2421,19 @@ class MainWindow(QMainWindow):
                     f"Resource directory: {resources_dir or 'none'}. {profiles_summary} {output_root_state_summary} "
                     f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                     if self._release_history_action.isEnabled()
-                    else self._action_hint(
-                        "Browse recorded release builds for the current project.",
-                        False,
-                        "open a project first" if self.project is None else "save the project to disk first",
+                    else (
+                        "Browse recorded release builds for the current project. "
+                        f"SDK: {sdk_state}. History file: {history_file_path or 'not created yet'}. {history_file_state_summary} "
+                        f"Output root: {self._release_output_root() or 'none'}. Source resources: {resources_state}. "
+                        f"Resource directory: {resources_dir or 'none'}. {profiles_summary} {output_root_state_summary} "
+                        f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
+                        "Unavailable: save the project to disk first."
+                        if self.project is not None
+                        else self._action_hint(
+                            "Browse recorded release builds for the current project.",
+                            False,
+                            "open a project first",
+                        )
                     )
                 ),
             )
