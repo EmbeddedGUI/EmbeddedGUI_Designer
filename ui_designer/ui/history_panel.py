@@ -74,9 +74,11 @@ class HistoryPanel(QWidget):
             f"History panel: Page {page_name}. {entry_count} entries. "
             f"Dirty {'yes' if dirty else 'no'}. Source {dirty_source}."
         )
-        self.setAccessibleName(summary)
-        self.setToolTip(summary)
-        self.setStatusTip(summary)
+        self._set_label_metadata(
+            self,
+            tooltip=summary,
+            accessible_name=summary,
+        )
         self._set_label_metadata(
             self._page_value,
             tooltip=f"History page: {page_name}",
@@ -98,10 +100,10 @@ class HistoryPanel(QWidget):
             accessible_name=f"History source: {dirty_source}",
         )
         list_tooltip = f"History entries: {entry_count} items for page {page_name}. Current entry: {current_entry}."
-        self._history_list.setToolTip(list_tooltip)
-        self._history_list.setStatusTip(list_tooltip)
-        self._history_list.setAccessibleName(
-            f"History entries for {page_name}: {entry_count} items. Current entry: {current_entry}"
+        self._set_label_metadata(
+            self._history_list,
+            tooltip=list_tooltip,
+            accessible_name=f"History entries for {page_name}: {entry_count} items. Current entry: {current_entry}",
         )
 
     def clear(self):

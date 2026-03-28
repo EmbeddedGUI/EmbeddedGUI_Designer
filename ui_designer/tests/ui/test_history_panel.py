@@ -33,7 +33,10 @@ class TestHistoryPanel:
         panel = HistoryPanel()
 
         assert panel.accessibleName() == "History panel: Page -. 0 entries. Dirty no. Source Saved state."
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel.statusTip() == panel.toolTip()
         assert panel._page_value.toolTip() == "History page: -"
+        assert panel._page_value.statusTip() == panel._page_value.toolTip()
         assert panel._stack_value.accessibleName() == "History summary: 0 entries. Undo no. Redo no."
         assert panel._dirty_value.accessibleName() == "History dirty state: No"
         assert panel._source_value.accessibleName() == "History source: Saved state"
@@ -63,9 +66,11 @@ class TestHistoryPanel:
         )
 
         assert panel.accessibleName() == "History panel: Page main_page. 2 entries. Dirty yes. Source xml edit."
+        assert panel.toolTip() == panel.accessibleName()
         assert panel._stack_value.toolTip() == "History entries: 2. Undo: Yes. Redo: No."
         assert panel._history_list.accessibleName() == "History entries for main_page: 2 items. Current entry: xml edit"
         assert panel._history_list.toolTip() == "History entries: 2 items for page main_page. Current entry: xml edit."
+        assert panel._history_list.statusTip() == panel._history_list.toolTip()
         assert panel._history_list.item(0).toolTip() == "History entry 2. Current. xml edit"
         assert panel._history_list.item(1).toolTip() == "History entry 1. Saved. Saved state"
         assert panel._history_list.item(0).data(Qt.AccessibleTextRole) == "History entry 2. Current. xml edit"
