@@ -44,6 +44,11 @@ class TestAnimationsPanel:
         panel.set_selection([widget], primary=widget)
 
         assert panel._summary_label.text() == "Animations: 1 animation on label title"
+        assert panel.accessibleName() == "Animations: 1 animation on label title"
+        assert panel._table.accessibleName() == "Animations table"
+        assert panel._add_button.toolTip() == "Add an animation to the selected widget."
+        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
+        assert panel._remove_button.toolTip() == "Remove the selected animation."
         assert panel._table.rowCount() == 1
         assert panel._table.item(0, 0).text() == "alpha"
         assert panel._table.item(0, 2).text() == "linear"
@@ -60,6 +65,8 @@ class TestAnimationsPanel:
         panel._on_add_animation()
         qapp.processEvents()
         assert panel._table.rowCount() == 1
+        assert panel._duplicate_button.toolTip() == "Duplicate the selected animation."
+        assert panel._remove_button.toolTip() == "Remove the selected animation."
         assert captured[-1][0].anim_type == "alpha"
 
         panel._on_duplicate_animation()
@@ -132,4 +139,7 @@ class TestAnimationsPanel:
         panel.set_selection([primary, secondary], primary=primary)
 
         assert "select a single widget" in panel._summary_label.text().lower()
+        assert panel.accessibleName() == "Animations: select a single widget (2 selected)"
         assert panel._add_button.isEnabled() is False
+        assert panel._duplicate_button.toolTip() == "Select a single widget to duplicate an animation."
+        assert panel._remove_button.toolTip() == "Select a single widget to remove an animation."

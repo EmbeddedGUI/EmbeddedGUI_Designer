@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -60,6 +60,8 @@ class AnimationsPanel(QWidget):
         )
         self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
+        self._hint_label.setAccessibleName(self._hint_label.text())
+        self._hint_label.setToolTip(self._hint_label.text())
 
         self._table = QTableWidget(0, 4, self)
         self._table.setHorizontalHeaderLabels(["Type", "Duration", "Interpolator", "Auto Start"])
@@ -72,16 +74,21 @@ class AnimationsPanel(QWidget):
         self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self._table.itemSelectionChanged.connect(self._on_row_selected)
+        self._table.setAccessibleName("Animations table")
 
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Animation")
         self._add_button.setIcon(make_icon("animation"))
+        self._add_button.setToolTip("Add an animation to the selected widget.")
+        self._add_button.setAccessibleName("Add animation")
         self._duplicate_button = QPushButton("Duplicate")
         self._duplicate_button.setIcon(make_icon("page"))
+        self._duplicate_button.setAccessibleName("Duplicate animation")
         self._remove_button = QPushButton("Remove")
         self._remove_button.setIcon(make_icon("stop"))
+        self._remove_button.setAccessibleName("Remove animation")
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)
@@ -91,6 +98,7 @@ class AnimationsPanel(QWidget):
         buttons.addStretch(1)
 
         self._detail_group = QGroupBox("Selected Animation")
+        self._detail_group.setAccessibleName("Selected Animation")
         self._detail_form = QFormLayout()
         self._detail_group.setLayout(self._detail_form)
 
@@ -99,6 +107,16 @@ class AnimationsPanel(QWidget):
         layout.addWidget(self._table, 1)
         layout.addLayout(buttons)
         layout.addWidget(self._detail_group)
+
+    def _update_accessibility_summary(self, summary_text):
+        self.setAccessibleName(summary_text)
+        self.setToolTip(summary_text)
+        self.setStatusTip(summary_text)
+        self._summary_label.setToolTip(summary_text)
+        self._summary_label.setStatusTip(summary_text)
+        self._summary_label.setAccessibleName(summary_text)
+        self._table.setToolTip(summary_text)
+        self._table.setStatusTip(summary_text)
 
     def clear(self):
         self.set_selection([], primary=None)
@@ -154,17 +172,21 @@ class AnimationsPanel(QWidget):
 
     def _update_summary(self):
         if not self._selection:
-            self._summary_label.setText("Animations: no widget selected")
+            summary_text = "Animations: no widget selected"
+            self._summary_label.setText(summary_text)
+            self._update_accessibility_summary(summary_text)
             return
         if len(self._selection) > 1 or self._primary_widget is None:
-            self._summary_label.setText(f"Animations: select a single widget ({len(self._selection)} selected)")
+            summary_text = f"Animations: select a single widget ({len(self._selection)} selected)"
+            self._summary_label.setText(summary_text)
+            self._update_accessibility_summary(summary_text)
             return
 
         count = len(self._animations)
         noun = "animation" if count == 1 else "animations"
-        self._summary_label.setText(
-            f"Animations: {count} {noun} on {self._primary_widget.widget_type} {self._primary_widget.name}"
-        )
+        summary_text = f"Animations: {count} {noun} on {self._primary_widget.widget_type} {self._primary_widget.name}"
+        self._summary_label.setText(summary_text)
+        self._update_accessibility_summary(summary_text)
 
     def _update_actions(self):
         has_widget = self._primary_widget is not None
@@ -174,6 +196,17 @@ class AnimationsPanel(QWidget):
         self._add_button.setEnabled(has_widget)
         self._duplicate_button.setEnabled(has_widget and has_selection)
         self._remove_button.setEnabled(has_widget and has_selection)
+        if has_widget and has_selection:
+            duplicate_hint = "Duplicate the selected animation."
+            remove_hint = "Remove the selected animation."
+        elif has_widget:
+            duplicate_hint = "Select an animation to duplicate it."
+            remove_hint = "Select an animation to remove it."
+        else:
+            duplicate_hint = "Select a single widget to duplicate an animation."
+            remove_hint = "Select a single widget to remove an animation."
+        self._duplicate_button.setToolTip(duplicate_hint)
+        self._remove_button.setToolTip(remove_hint)
 
     def _rebuild_detail_form(self):
         self._clear_form_layout()
@@ -265,6 +298,9 @@ class AnimationsPanel(QWidget):
             return
         self.animations_changed.emit([clone_animation(animation) for animation in self._animations])
 
+    def _schedule_rebuild_table(self, selected_row):
+        QTimer.singleShot(0, lambda row=selected_row: self._rebuild_table(selected_row=row))
+
     def _on_row_selected(self):
         if self._updating:
             return
@@ -306,21 +342,21 @@ class AnimationsPanel(QWidget):
         replacement.repeat_mode = current.repeat_mode
         replacement.auto_start = current.auto_start
         self._animations[row] = replacement
-        self._rebuild_table(selected_row=row)
+        self._schedule_rebuild_table(row)
         self._emit_changed()
 
     def _on_duration_changed(self, row, value):
         if row < 0 or row >= len(self._animations):
             return
         self._animations[row].duration = int(value)
-        self._rebuild_table(selected_row=row)
+        self._schedule_rebuild_table(row)
         self._emit_changed()
 
     def _on_interpolator_changed(self, row, value):
         if row < 0 or row >= len(self._animations):
             return
         self._animations[row].interpolator = str(value)
-        self._rebuild_table(selected_row=row)
+        self._schedule_rebuild_table(row)
         self._emit_changed()
 
     def _on_repeat_count_changed(self, row, value):
@@ -339,7 +375,7 @@ class AnimationsPanel(QWidget):
         if row < 0 or row >= len(self._animations):
             return
         self._animations[row].auto_start = bool(value)
-        self._rebuild_table(selected_row=row)
+        self._schedule_rebuild_table(row)
         self._emit_changed()
 
     def _on_param_changed(self, row, param_name, value):
