@@ -30,6 +30,7 @@ class ProjectWorkspacePanel(QWidget):
         self._thumbnail_view = thumbnail_view
         self._current_page_count = 0
         self._current_active_page = ""
+        self._current_startup_page = ""
         self._current_dirty_pages = 0
         self._init_ui()
 
@@ -130,10 +131,11 @@ class ProjectWorkspacePanel(QWidget):
         view_label = self._view_chip.text() or "List view"
         page_label = self._page_count_chip.text() or "0 pages"
         active_text = self._current_active_page or "none"
+        startup_text = self._current_startup_page or "none"
         dirty_text = self._dirty_pages_chip.text() or "No dirty pages"
         summary = (
             f"Project workspace: {view_label}. "
-            f"Pages: {page_label}. Active page: {active_text}. Dirty state: {dirty_text}."
+            f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(self._header, tooltip=summary, accessible_name=summary)
@@ -199,12 +201,14 @@ class ProjectWorkspacePanel(QWidget):
             return self.VIEW_THUMBNAILS
         return self.VIEW_LIST
 
-    def set_workspace_snapshot(self, *, page_count=0, active_page="", dirty_pages=0):
+    def set_workspace_snapshot(self, *, page_count=0, active_page="", startup_page="", dirty_pages=0):
         pages = max(int(page_count or 0), 0)
         dirty = max(int(dirty_pages or 0), 0)
         active = str(active_page or "").strip() or "None"
+        startup = str(startup_page or "").strip() or "None"
         self._current_page_count = pages
         self._current_active_page = "" if active == "None" else active
+        self._current_startup_page = "" if startup == "None" else startup
         self._current_dirty_pages = dirty
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
         self._set_chip(

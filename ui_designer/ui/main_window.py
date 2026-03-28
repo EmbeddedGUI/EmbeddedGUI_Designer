@@ -1039,10 +1039,16 @@ class MainWindow(QMainWindow):
             )
         page_count = len(getattr(self.project, "pages", [])) if getattr(self, "project", None) is not None else 0
         active_page_name = str(getattr(getattr(self, "_current_page", None), "name", "") or "")
+        startup_page_name = ""
+        if getattr(self, "project", None) is not None:
+            startup_value = str(getattr(self.project, "startup_page", "") or "").strip()
+            if any(getattr(page, "name", None) == startup_value for page in getattr(self.project, "pages", []) or []):
+                startup_page_name = startup_value
         if hasattr(self, "_project_workspace"):
             self._project_workspace.set_workspace_snapshot(
                 page_count=page_count,
                 active_page=active_page_name,
+                startup_page=startup_page_name,
                 dirty_pages=len(dirty_pages),
             )
         if hasattr(self, "_selection_chip"):
@@ -4615,6 +4621,7 @@ class MainWindow(QMainWindow):
             self.project_dock.set_project(self.project)
             self.page_navigator.set_startup_page(page_name)
             self._update_page_tab_bar_metadata()
+            self._update_workspace_chips()
             self._trigger_compile()
 
     def _on_page_mode_changed(self, mode):
