@@ -7,6 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication, QComboBox, QFormLayout, QLineEdit
 
     _has_pyqt5 = True
@@ -63,6 +64,12 @@ class TestAnimationsPanel:
         assert panel._table.rowCount() == 1
         assert panel._table.item(0, 0).text() == "alpha"
         assert panel._table.item(0, 2).text() == "linear"
+        assert panel._table.item(0, 0).toolTip() == "Animation Type: alpha."
+        assert panel._table.item(0, 0).statusTip() == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(0, 0).data(Qt.AccessibleTextRole) == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(0, 3).toolTip() == "Animation Auto Start: Yes."
+        assert panel._table.item(0, 3).statusTip() == panel._table.item(0, 3).toolTip()
+        assert panel._table.item(0, 3).data(Qt.AccessibleTextRole) == panel._table.item(0, 3).toolTip()
 
     def test_panel_add_duplicate_remove_animation_emits_changes(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel

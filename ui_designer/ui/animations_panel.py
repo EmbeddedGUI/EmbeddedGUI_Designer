@@ -42,6 +42,12 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, tooltip):
+    item.setToolTip(tooltip)
+    item.setStatusTip(tooltip)
+    item.setData(Qt.AccessibleTextRole, tooltip)
+
+
 class AnimationsPanel(QWidget):
     """Editable list of animations for the currently selected widget."""
 
@@ -175,9 +181,16 @@ class AnimationsPanel(QWidget):
                 animation.interpolator,
                 "Yes" if animation.auto_start else "No",
             ]
-            for column, value in enumerate(values):
+            hints = [
+                f"Animation Type: {animation.anim_type or 'none'}.",
+                f"Animation Duration: {animation.duration} ms.",
+                f"Animation Interpolator: {animation.interpolator or 'none'}.",
+                f"Animation Auto Start: {'Yes' if animation.auto_start else 'No'}.",
+            ]
+            for column, (value, hint) in enumerate(zip(values, hints)):
                 item = QTableWidgetItem(value)
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                _set_item_metadata(item, hint)
                 self._table.setItem(row, column, item)
         self._updating = False
 
