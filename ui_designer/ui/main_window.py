@@ -1043,9 +1043,10 @@ class MainWindow(QMainWindow):
         if action is None:
             return
         label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+        default_parent = self._default_new_project_parent_dir(self.project_root or self._active_sdk_root()) or normalize_path(os.getcwd())
         self._apply_action_hint(
             action,
-            f"Create a new EmbeddedGUI Designer project. Current binding: {label}.",
+            f"Create a new EmbeddedGUI Designer project. Current binding: {label}. Default parent: {default_parent}.",
         )
 
     def _update_download_sdk_action_metadata(self, binding_label=""):
@@ -3819,6 +3820,7 @@ class MainWindow(QMainWindow):
         self._update_history_panel()
         self._update_diagnostics_panel()
         self._update_workspace_chips()
+        self._update_new_project_action_metadata()
         self._update_file_menu_metadata()
 
     def _update_history_panel(self):

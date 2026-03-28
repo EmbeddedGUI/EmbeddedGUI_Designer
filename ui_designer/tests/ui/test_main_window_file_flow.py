@@ -3699,7 +3699,10 @@ class TestMainWindowFileFlow:
             }
         }
 
-        assert actions["New Project"].toolTip() == "Create a new EmbeddedGUI Designer project. Current binding: SDK: missing."
+        assert actions["New Project"].toolTip() == (
+            "Create a new EmbeddedGUI Designer project. "
+            f"Current binding: SDK: missing. Default parent: {window._default_new_project_parent_dir()}."
+        )
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
         assert actions["Open SDK Example..."].toolTip() == (
             "Open an SDK example project or legacy example. Current binding: SDK: missing."
@@ -3793,7 +3796,34 @@ class TestMainWindowFileFlow:
             action for action in window.findChildren(type(window._save_action))
             if action.text() == "New Project"
         )
-        assert action.toolTip() == "Create a new EmbeddedGUI Designer project. Current binding: SDK: new-project."
+        assert action.toolTip() == (
+            "Create a new EmbeddedGUI Designer project. "
+            f"Current binding: SDK: new-project. Default parent: {window._default_new_project_parent_dir()}."
+        )
+        assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
+    def test_new_project_action_tracks_default_parent_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        workspace_dir = tmp_path / "workspace"
+        project_dir = workspace_dir / "CurrentApp"
+        project_dir.mkdir(parents=True)
+
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: parent-dir")
+        window._project_dir = str(project_dir)
+        window._update_window_title()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "New Project"
+        )
+        assert action.toolTip() == (
+            "Create a new EmbeddedGUI Designer project. "
+            f"Current binding: SDK: parent-dir. Default parent: {os.path.normpath(os.path.abspath(workspace_dir))}."
+        )
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
