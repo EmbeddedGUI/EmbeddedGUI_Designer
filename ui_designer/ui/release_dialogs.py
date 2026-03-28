@@ -1433,6 +1433,16 @@ class ReleaseHistoryDialog(QDialog):
             return "Automatically preview the best available artifact for the selected release entry."
         return f"Preview the selected release {preview_label}."
 
+    def _preview_empty_state_text(self, message: str, *, path: str = "", state: str | None = None) -> str:
+        resolved_path = str(path or "").strip()
+        resolved_state = str(state or ("missing" if resolved_path else "unavailable")).strip() or "unavailable"
+        return (
+            f"Preview mode: {self._preview_mode}. "
+            f"Path state: {resolved_state}. "
+            f"Current path: {resolved_path or 'none'}. "
+            f"{message}"
+        )
+
     def _update_accessibility_summary(self) -> None:
         visible_entries = len(self._filtered_history_entries)
         total_entries = len(self._all_history_entries)
@@ -1943,12 +1953,20 @@ class ReleaseHistoryDialog(QDialog):
                 "Adjust Range, Status, Profile, Artifact, Diagnostics, Sort, or Search to see matching release builds."
             )
             self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("No manifest or build log is available because the filtered result set is empty.")
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "No manifest, version file, or build log is available because the filtered result set is empty."
+                )
+            )
         else:
             self._summary_label.setText("No release history available for this project.")
             self._details_edit.setPlainText("Run Build -> Release Build... to create the first tracked release.")
             self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("Select a release entry to preview its manifest or build log.")
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "Select a release entry to preview its manifest, version file, or build log."
+                )
+            )
         self._set_open_buttons(None)
         self._update_accessibility_summary()
 
@@ -2358,7 +2376,11 @@ class ReleaseHistoryDialog(QDialog):
         entry = self._current_entry()
         if entry is None:
             self._preview_label.setText("Preview")
-            self._preview_edit.clear()
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "Select a release entry to preview its manifest, version file, or build log."
+                )
+            )
             self._update_preview_target_buttons(None)
             self._update_accessibility_summary()
             return
@@ -2379,7 +2401,11 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_selected_version()
         else:
             self._preview_label.setText("Preview")
-            self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "No manifest, version file, or build log is recorded for this release entry."
+                )
+            )
             self._update_preview_target_buttons(entry)
             self._update_accessibility_summary()
 
@@ -2472,7 +2498,11 @@ class ReleaseHistoryDialog(QDialog):
             self._summary_label.setText("No release entry selected.")
             self._details_edit.clear()
             self._preview_label.setText("Preview")
-            self._preview_edit.clear()
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "Select a release entry to preview its manifest, version file, or build log."
+                )
+            )
             self._set_open_buttons(None)
             self._update_accessibility_summary()
             return
@@ -2481,7 +2511,11 @@ class ReleaseHistoryDialog(QDialog):
             self._summary_label.setText("No release entry selected.")
             self._details_edit.clear()
             self._preview_label.setText("Preview")
-            self._preview_edit.clear()
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    "Select a release entry to preview its manifest, version file, or build log."
+                )
+            )
             self._set_open_buttons(None)
             self._update_accessibility_summary()
             return
@@ -2519,7 +2553,11 @@ class ReleaseHistoryDialog(QDialog):
         path = _history_string(entry or {}, key)
         self._preview_label.setText(f"{label} Preview")
         if not path:
-            self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text(
+                    f"No {label.lower()} path is recorded for this release entry."
+                )
+            )
             self._update_preview_target_buttons(entry)
             self._update_accessibility_summary()
             return
@@ -2532,7 +2570,9 @@ class ReleaseHistoryDialog(QDialog):
         path = _history_version_path(entry or {})
         self._preview_label.setText("Version Preview")
         if not path:
-            self._preview_edit.setPlainText("No version file is available for this release entry.")
+            self._preview_edit.setPlainText(
+                self._preview_empty_state_text("No version file is available for this release entry.")
+            )
             self._update_preview_target_buttons(entry)
             self._update_accessibility_summary()
             return

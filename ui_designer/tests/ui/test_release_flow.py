@@ -631,6 +631,41 @@ def test_release_history_dialog_previews_version_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_reports_missing_preview_targets(qapp):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+            }
+        ]
+    )
+
+    assert dialog._preview_label.text() == "Preview"
+    assert dialog._preview_edit.toPlainText() == (
+        "Preview mode: auto. Path state: unavailable. Current path: none. "
+        "No manifest, version file, or build log is recorded for this release entry."
+    )
+
+    dialog._activate_preview_mode("manifest")
+    assert dialog._preview_label.text() == "Manifest Preview"
+    assert dialog._preview_edit.toPlainText() == (
+        "Preview mode: manifest. Path state: unavailable. Current path: none. "
+        "No manifest path is recorded for this release entry."
+    )
+
+    dialog._activate_preview_mode("version")
+    assert dialog._preview_label.text() == "Version Preview"
+    assert dialog._preview_edit.toPlainText() == (
+        "Preview mode: version. Path state: unavailable. Current path: none. "
+        "No version file is available for this release entry."
+    )
+
+
+@_skip_no_qt
 def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
@@ -760,6 +795,10 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy."
     assert dialog._copy_filtered_button.accessibleName() == "Copy filtered release history summary unavailable"
     assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."
+    assert dialog._preview_edit.toPlainText() == (
+        "Preview mode: log. Path state: unavailable. Current path: none. "
+        "No manifest, version file, or build log is available because the filtered result set is empty."
+    )
 
 
 @_skip_no_qt
@@ -1667,6 +1706,10 @@ def test_release_history_dialog_refresh_updates_history_file_button(qapp, tmp_pa
     )
 
     assert dialog._open_history_file_button.isEnabled() is False
+    assert dialog._preview_edit.toPlainText() == (
+        "Preview mode: auto. Path state: unavailable. Current path: none. "
+        "Select a release entry to preview its manifest, version file, or build log."
+    )
 
     dialog._refresh_button.click()
 
