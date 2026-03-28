@@ -483,6 +483,13 @@ class StatusCenterPanel(QWidget):
         noun = "action" if count == 1 else "actions"
         return f"Quick actions with {count} recent {noun} tracked."
 
+    def _recent_actions_title_accessible_name(self):
+        count = len(self._recent_actions)
+        if count <= 0:
+            return "Quick actions section: No recent actions yet."
+        noun = "recent action" if count == 1 else "recent actions"
+        return f"Quick actions section: {count} {noun} tracked."
+
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
@@ -536,6 +543,18 @@ class StatusCenterPanel(QWidget):
                 "Use the menu arrow to replay an older action."
             )
         return f"Repeat {action_label}. {count} recent {noun} tracked."
+
+    def _repeat_action_accessible_name(self, action_label):
+        if not self._last_action:
+            return "Repeat action unavailable: No recent action yet."
+        count = len(self._recent_actions)
+        noun = "recent action" if count == 1 else "recent actions"
+        if count > 1:
+            return (
+                f"Repeat action: {action_label}. {count} {noun} tracked. "
+                "Older actions are available in the menu."
+            )
+        return f"Repeat action: {action_label}. {count} {noun} tracked."
 
     def _last_action_tooltip(self, action_label):
         if not self._last_action:
@@ -983,7 +1002,7 @@ class StatusCenterPanel(QWidget):
         self._last_action_label.setAccessibleName(self._last_action_accessible_name(action_label))
         self._actions_title.setText(self._recent_actions_title())
         self._set_hint(self._actions_title, self._recent_actions_title_tooltip())
-        self._actions_title.setAccessibleName(self._actions_title.text())
+        self._actions_title.setAccessibleName(self._recent_actions_title_accessible_name())
         self._recent_actions_label.setText(self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._recent_actions_label.setAccessibleName(self._recent_actions_accessible_name())
@@ -996,9 +1015,7 @@ class StatusCenterPanel(QWidget):
             size=20,
         )
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
-        self._repeat_action_button.setAccessibleName(
-            f"Repeat {action_label} action" if has_action else "Repeat last action"
-        )
+        self._repeat_action_button.setAccessibleName(self._repeat_action_accessible_name(action_label))
         self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):

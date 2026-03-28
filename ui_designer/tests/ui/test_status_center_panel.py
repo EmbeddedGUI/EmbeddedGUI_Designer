@@ -339,7 +339,9 @@ class TestStatusCenterPanel:
         assert panel._suggested_action_summary_label.text() == (
             "Diagnostics guidance: Start with the first error in Diagnostics. 2 errors active."
         )
-        assert panel._repeat_action_button.accessibleName() == "Repeat last action"
+        assert panel._repeat_action_button.accessibleName() == (
+            "Repeat action unavailable: No recent action yet."
+        )
         assert panel._runtime_chip.text() == "Issue"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Bridge disconnected"
@@ -375,7 +377,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.accessibleName() == "Runtime (Clear)"
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no recent actions yet."
-        assert panel._actions_title.accessibleName() == "Quick Actions"
+        assert panel._actions_title.accessibleName() == "Quick actions section: No recent actions yet."
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
@@ -408,7 +410,9 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.accessibleName() == (
             "Workspace status: Check Workspace (Setup). Suggested: Configure SDK"
         )
-        assert panel._repeat_action_button.accessibleName() == "Repeat last action"
+        assert panel._repeat_action_button.accessibleName() == (
+            "Repeat action unavailable: No recent action yet."
+        )
         assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._repeat_action_button.statusTip() == panel._repeat_action_button.toolTip()
         assert panel._workspace_summary_label.text() == (
@@ -668,8 +672,11 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.accessibleName() == "Last action: Assets. 4 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (4 recent actions)"
         assert panel._actions_title.toolTip() == "Quick actions with 4 recent actions tracked."
+        assert panel._actions_title.accessibleName() == "Quick actions section: 4 recent actions tracked."
         assert panel._repeat_action_button.text() == "Repeat Assets"
-        assert panel._repeat_action_button.accessibleName() == "Repeat Assets action"
+        assert panel._repeat_action_button.accessibleName() == (
+            "Repeat action: Assets. 4 recent actions tracked. Older actions are available in the menu."
+        )
         assert panel._repeat_action_button.property("iconKey") == "assets"
         assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Components, Structure, +1 more."
         assert panel._recent_actions_label.toolTip() == "4 recent actions: Assets, Components, Structure, Project"
@@ -833,9 +840,12 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.toolTip() == "Current action: Fields. 2 recent actions tracked."
         assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (2 recent actions)"
+        assert panel._actions_title.accessibleName() == "Quick actions section: 2 recent actions tracked."
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
-        assert panel._repeat_action_button.accessibleName() == "Repeat Fields action"
+        assert panel._repeat_action_button.accessibleName() == (
+            "Repeat action: Fields. 2 recent actions tracked. Older actions are available in the menu."
+        )
         assert panel._repeat_action_button.property("iconKey") == "page"
         assert panel._recent_actions_label.text() == "Recent actions (2): Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent actions: Fields, Debug Output"
@@ -903,7 +913,9 @@ class TestStatusCenterPanel:
         assert emitted == ["open_components_panel"]
         assert panel._last_action_label.text() == "Last action: Components"
         assert panel._repeat_action_button.text() == "Repeat Components"
-        assert panel._repeat_action_button.accessibleName() == "Repeat Components action"
+        assert panel._repeat_action_button.accessibleName() == (
+            "Repeat action: Components. 1 recent action tracked."
+        )
         assert panel._repeat_action_button.property("iconKey") == "widgets"
         assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions (1)"]
         panel.deleteLater()
