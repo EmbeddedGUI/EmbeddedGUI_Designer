@@ -82,6 +82,12 @@ class TestAppSelectorDialog:
         assert dialog._search_edit.toolTip() == "Filter SDK examples by name. Current search: none."
         assert dialog._app_list.accessibleName() == "SDK examples list: 1 entry. Current selection: none."
         assert dialog._open_btn.toolTip() == "Select an SDK example to open it."
+        assert dialog._open_btn.accessibleName() == "Open action unavailable: Open"
+        assert dialog._download_btn.toolTip() == (
+            "Download SDK unavailable because this dialog was opened without an SDK download handler."
+        )
+        assert dialog._download_btn.accessibleName() == "Download SDK unavailable"
+        assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
         dialog.deleteLater()
 
@@ -162,6 +168,10 @@ class TestAppSelectorDialog:
 
         assert isolated_config.show_all_examples is True
         assert dialog._app_list.count() == 2
+        assert dialog._show_legacy.toolTip() == (
+            "Showing legacy SDK examples that do not yet have Designer project files."
+        )
+        assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: on"
         texts = [dialog._app_list.item(i).text() for i in range(dialog._app_list.count())]
         assert "LegacyApp [Legacy]" in texts
         dialog.deleteLater()
@@ -310,6 +320,7 @@ class TestAppSelectorDialog:
 
         assert dialog.selected_entry["app_name"] == "LegacyApp"
         assert dialog._open_btn.text() == "Import Legacy Example"
+        assert dialog._open_btn.accessibleName() == "Open action: Import Legacy Example"
         assert "initialize a Designer project" in dialog._selection_hint_label.text()
         assert str(legacy) in dialog._selection_hint_label.text()
         dialog.deleteLater()
@@ -328,6 +339,8 @@ class TestAppSelectorDialog:
 
         dialog = AppSelectorDialog(egui_root="", on_download_sdk=lambda: str(sdk_root))
 
+        assert "GitHub archive" in dialog._download_btn.toolTip()
+        assert dialog._download_btn.accessibleName() == "Download SDK"
         dialog._download_btn.click()
 
         assert dialog.egui_root == os.path.normpath(os.path.abspath(sdk_root))
@@ -410,6 +423,36 @@ class TestNewProjectDialog:
             f"New Project dialog: SDK root none. Parent directory {normalized_parent}. "
             "App name DemoApp. Size 320 by 240."
         )
+        assert dialog._sdk_clear_btn.toolTip() == (
+            "SDK root is already empty. The project will use editing-only mode until you set an SDK."
+        )
+        assert dialog._sdk_clear_btn.accessibleName() == "Clear SDK root unavailable"
+        assert dialog._create_btn.toolTip() == (
+            f"Create project DemoApp in {normalized_parent} at 320 by 240."
+        )
+        assert dialog._create_btn.accessibleName() == "Create project: DemoApp"
+        dialog.deleteLater()
+
+    def test_create_button_reports_missing_fields_and_invalid_name(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
+            dialog = NewProjectDialog(sdk_root="", default_parent_dir="")
+
+        assert dialog._create_btn.toolTip() == "Select a parent directory before creating the project."
+        assert dialog._create_btn.accessibleName() == "Create project unavailable"
+
+        dialog._parent_dir = os.path.normpath(os.path.abspath(tmp_path))
+        dialog._parent_edit.setText(dialog._parent_dir)
+        dialog._update_accessibility_summary()
+        assert dialog._create_btn.toolTip() == "Enter an application name before creating the project."
+
+        dialog._app_name_edit.setText("bad name!")
+        assert dialog._create_btn.toolTip() == (
+            "Application name must use letters, numbers, and underscores before the project can be created."
+        )
+        assert dialog._create_btn.accessibleName() == "Create project unavailable"
         dialog.deleteLater()
 
     def test_accept_requires_parent_directory(self, qapp, isolated_config):

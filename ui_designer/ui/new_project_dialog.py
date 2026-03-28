@@ -141,8 +141,41 @@ class NewProjectDialog(QDialog):
             accessible_name="Browse parent directory",
         )
         _set_widget_metadata(self._cancel_btn, tooltip="Close this dialog without creating a project.", accessible_name="Cancel")
-        _set_widget_metadata(self._create_btn, tooltip="Validate the form and create the project.", accessible_name="Create project")
         self._update_accessibility_summary()
+
+    def _sdk_clear_metadata(self):
+        if self._sdk_root:
+            return (
+                "Clear the current SDK root and create an editing-only project.",
+                "Clear SDK root",
+            )
+        return (
+            "SDK root is already empty. The project will use editing-only mode until you set an SDK.",
+            "Clear SDK root unavailable",
+        )
+
+    def _create_button_metadata(self):
+        app_name = self.app_name
+        parent_dir = self._parent_dir or ""
+        if not parent_dir:
+            return (
+                "Select a parent directory before creating the project.",
+                "Create project unavailable",
+            )
+        if not app_name:
+            return (
+                "Enter an application name before creating the project.",
+                "Create project unavailable",
+            )
+        if not app_name.replace("_", "").isalnum():
+            return (
+                "Application name must use letters, numbers, and underscores before the project can be created.",
+                "Create project unavailable",
+            )
+        return (
+            f"Create project {app_name} in {parent_dir} at {self.screen_width} by {self.screen_height}.",
+            f"Create project: {app_name}",
+        )
 
     def _browse_sdk_root(self):
         previous_default_parent = self._default_parent_dir_for_sdk(self._sdk_root)
@@ -217,6 +250,18 @@ class NewProjectDialog(QDialog):
             self._height_spin,
             tooltip=f"Project height: {self.screen_height}",
             accessible_name=f"Project height: {self.screen_height}",
+        )
+        clear_tooltip, clear_name = self._sdk_clear_metadata()
+        _set_widget_metadata(
+            self._sdk_clear_btn,
+            tooltip=clear_tooltip,
+            accessible_name=clear_name,
+        )
+        create_tooltip, create_name = self._create_button_metadata()
+        _set_widget_metadata(
+            self._create_btn,
+            tooltip=create_tooltip,
+            accessible_name=create_name,
         )
 
     def _accept_if_valid(self):

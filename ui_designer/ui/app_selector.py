@@ -370,6 +370,26 @@ class AppSelectorDialog(QDialog):
             tooltip=self._selection_hint_label.text(),
             accessible_name=f"Selection hint: {self._selection_hint_label.text()}",
         )
+        legacy_hint = (
+            "Showing legacy SDK examples that do not yet have Designer project files."
+            if self._show_legacy.isChecked()
+            else "Include legacy SDK examples that do not yet have Designer project files."
+        )
+        _set_widget_metadata(
+            self._show_legacy,
+            tooltip=legacy_hint,
+            accessible_name=f"Show legacy SDK examples: {'on' if self._show_legacy.isChecked() else 'off'}",
+        )
+        download_hint = describe_auto_download_plan()
+        download_name = "Download SDK"
+        if self._on_download_sdk is None:
+            download_hint = "Download SDK unavailable because this dialog was opened without an SDK download handler."
+            download_name = "Download SDK unavailable"
+        _set_widget_metadata(
+            self._download_btn,
+            tooltip=download_hint,
+            accessible_name=download_name,
+        )
         open_hint = (
             f"{self._open_btn.text()} the selected example."
             if self._selected_entry
@@ -378,7 +398,11 @@ class AppSelectorDialog(QDialog):
         _set_widget_metadata(
             self._open_btn,
             tooltip=open_hint,
-            accessible_name=f"Open action: {self._open_btn.text()}",
+            accessible_name=(
+                f"Open action: {self._open_btn.text()}"
+                if self._selected_entry
+                else f"Open action unavailable: {self._open_btn.text()}"
+            ),
         )
 
     @property
