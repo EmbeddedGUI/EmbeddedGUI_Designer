@@ -34,6 +34,20 @@ from ..model.widget_registry import WidgetRegistry
 from .iconography import make_icon, widget_icon_key
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
+def _count_label(count, singular, plural=None):
+    value = max(int(count or 0), 0)
+    noun = singular if value == 1 else (plural or f"{singular}s")
+    return f"{value} {noun}"
+
+
 def _get_addable_types():
     """Get addable widget types from the registry."""
     return WidgetRegistry.instance().addable_types()
@@ -307,7 +321,29 @@ class WidgetTreePanel(QWidget):
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
         layout.addWidget(self.tree)
+        self.add_btn.setAccessibleName("Insert widget")
+        self.rename_btn.setAccessibleName("Rename selected widget")
+        self.del_btn.setAccessibleName("Delete selected widget")
+        self.expand_btn.setAccessibleName("Expand widget tree")
+        self.collapse_btn.setAccessibleName("Collapse widget tree")
+        self.group_btn.setAccessibleName("Group selected widgets")
+        self.ungroup_btn.setAccessibleName("Ungroup selected widgets")
+        self.into_btn.setAccessibleName("Move selected widgets into container")
+        self.lift_btn.setAccessibleName("Lift selected widgets to parent")
+        self.up_btn.setAccessibleName("Move selected widgets up")
+        self.down_btn.setAccessibleName("Move selected widgets down")
+        self.top_btn.setAccessibleName("Move selected widgets to top")
+        self.bottom_btn.setAccessibleName("Move selected widgets to bottom")
+        self.filter_edit.setAccessibleName("Widget filter")
+        self.filter_prev_btn.setAccessibleName("Previous widget filter match")
+        self.filter_next_btn.setAccessibleName("Next widget filter match")
+        self.filter_select_btn.setAccessibleName("Select widget filter matches")
+        self.tree.setAccessibleName("Widget tree")
+        _set_widget_metadata(self.expand_btn, tooltip="Expand all widgets in the tree.")
+        _set_widget_metadata(self.collapse_btn, tooltip="Collapse all widgets in the tree.")
         self._update_structure_controls()
+        self._update_filter_accessibility()
+        self._update_accessibility_summary()
 
     def set_project(self, project):
         self.project = project
@@ -359,6 +395,11 @@ class WidgetTreePanel(QWidget):
         item.setText(0, self._display_name(widget))
         item.setText(1, self._widget_state_summary(widget))
         item.setIcon(0, make_icon(widget_icon_key(widget.widget_type), size=18))
+        item_tooltip = f"Widget {self._display_name(widget)}: {self._widget_state_summary(widget)}"
+        item.setToolTip(0, item_tooltip)
+        item.setStatusTip(0, item_tooltip)
+        item.setToolTip(1, item_tooltip)
+        item.setStatusTip(1, item_tooltip)
         self._widget_map[id(item)] = widget
         self._item_map[id(widget)] = item
 
@@ -1974,10 +2015,13 @@ class WidgetTreePanel(QWidget):
         self.bottom_btn.setEnabled(state.can_move_bottom)
         for button, (base_text, reason_attr) in self._structure_button_tooltips.items():
             button.setToolTip(self._structure_tooltip(base_text, button.isEnabled(), self._structure_action_reason(state, reason_attr)))
+            button.setStatusTip(button.toolTip())
         if not state.can_move_into and has_quick_move_history:
             self.into_btn.setToolTip(self._into_button_history_hint())
+            self.into_btn.setStatusTip(self.into_btn.toolTip())
         self._refresh_into_button_menu(state)
         self.structure_hint_label.setText(self._structure_hint_text(state))
+        self._update_accessibility_summary()
 
     def _refresh_into_button_menu(self, state=None):
         if not hasattr(self, "_into_quick_menu"):
@@ -2079,6 +2123,102 @@ class WidgetTreePanel(QWidget):
     def _set_drag_target_label(self, text, tone="default"):
         self.drag_target_label.setText(text)
         self.drag_target_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+        self._update_accessibility_summary()
+
+    def _update_filter_accessibility(self):
+        if not hasattr(self, "filter_edit"):
+            return
+        query = self.filter_edit.text().strip()
+        status_text = self.filter_status_label.text().strip() or "All widgets"
+        position_text = self.filter_position_label.text().strip() or "none"
+        matches = self._current_filter_matches()
+        if not query:
+            prev_hint = "Type a widget filter to navigate previous matches."
+            next_hint = "Type a widget filter to navigate next matches."
+            select_hint = "Select all current filter matches (Ctrl+Enter)"
+        elif not matches:
+            prev_hint = "No previous widget filter match is available."
+            next_hint = "No next widget filter match is available."
+            select_hint = "Select all current filter matches (Ctrl+Enter)"
+        else:
+            prev_hint = "Select the previous widget filter match (Shift+Enter)."
+            next_hint = "Select the next widget filter match (Enter)."
+            select_hint = "Select all current filter matches (Ctrl+Enter)"
+        _set_widget_metadata(
+            self.filter_edit,
+            tooltip=f"Filter widgets by name or type. Current filter: {query or 'none'}.",
+            accessible_name=f"Widget filter: {query or 'none'}",
+        )
+        _set_widget_metadata(
+            self.filter_prev_btn,
+            tooltip=prev_hint,
+            accessible_name="Previous widget filter match",
+        )
+        _set_widget_metadata(
+            self.filter_next_btn,
+            tooltip=next_hint,
+            accessible_name="Next widget filter match",
+        )
+        _set_widget_metadata(
+            self.filter_select_btn,
+            tooltip=select_hint,
+            accessible_name="Select widget filter matches",
+        )
+        _set_widget_metadata(
+            self.filter_status_label,
+            tooltip=f"Widget filter status: {status_text}",
+            accessible_name=f"Widget filter status: {status_text}",
+        )
+        _set_widget_metadata(
+            self.filter_position_label,
+            tooltip=f"Widget filter position: {position_text}",
+            accessible_name=f"Widget filter position: {position_text}",
+        )
+
+    def _update_accessibility_summary(self):
+        if not all(
+            hasattr(self, attr)
+            for attr in (
+                "tree",
+                "filter_edit",
+                "filter_status_label",
+                "filter_position_label",
+                "structure_hint_label",
+                "drag_target_label",
+            )
+        ):
+            return
+        widget_count = _count_label(len(self._item_map), "widget")
+        selected_widgets = self.selected_widgets()
+        selected_count = _count_label(len(selected_widgets), "selected widget", "selected widgets")
+        current_widget = self._widget_label(self._get_selected_widget()) or "none"
+        filter_query = self.filter_edit.text().strip() or "none"
+        filter_status = self.filter_status_label.text().strip() or "All widgets"
+        filter_position = self.filter_position_label.text().strip() or "none"
+        structure_hint = self.structure_hint_label.text().strip() or "Structure hint unavailable."
+        drag_target_text = self.drag_target_label.text().strip() or self._default_drag_target_text()
+        summary = (
+            f"Widget tree: {widget_count}. {selected_count}. Current widget: {current_widget}. "
+            f"Filter: {filter_query}. Status: {filter_status}. Position: {filter_position}. "
+            f"{structure_hint} {drag_target_text}"
+        )
+        tree_summary = f"Widget tree: {widget_count}. {selected_count}. Current widget: {current_widget}."
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self.structure_hint_label,
+            tooltip=structure_hint,
+            accessible_name=structure_hint,
+        )
+        _set_widget_metadata(
+            self.drag_target_label,
+            tooltip=drag_target_text,
+            accessible_name=drag_target_text,
+        )
+        _set_widget_metadata(
+            self.tree,
+            tooltip=tree_summary,
+            accessible_name=tree_summary,
+        )
 
     def _structure_hint_text(self, state=None):
         state = state or self._structure_action_state()
@@ -2841,14 +2981,20 @@ class WidgetTreePanel(QWidget):
         if not query:
             self.filter_status_label.setText("All widgets")
             self.filter_position_label.setText("")
+            self._update_filter_accessibility()
+            self._update_accessibility_summary()
             return
         if match_count == 0:
             self.filter_status_label.setText("No matches")
             self.filter_position_label.setText("")
+            self._update_filter_accessibility()
+            self._update_accessibility_summary()
             return
         noun = "match" if match_count == 1 else "matches"
         self.filter_status_label.setText(f"{match_count} {noun}")
         self._update_filter_position_label()
+        self._update_filter_accessibility()
+        self._update_accessibility_summary()
 
     def _current_filter_matches(self):
         return [widget for widget in self._filter_matches if id(widget) in self._item_map]
@@ -2858,6 +3004,8 @@ class WidgetTreePanel(QWidget):
         matches = self._current_filter_matches()
         if not query or not matches:
             self.filter_position_label.setText("")
+            self._update_filter_accessibility()
+            self._update_accessibility_summary()
             return
 
         current = self._get_selected_widget()
@@ -2866,6 +3014,8 @@ class WidgetTreePanel(QWidget):
         else:
             position = 0
         self.filter_position_label.setText(f"{position}/{len(matches)}")
+        self._update_filter_accessibility()
+        self._update_accessibility_summary()
 
     def _filter_feedback_text(self):
         query = self.filter_edit.text().strip()

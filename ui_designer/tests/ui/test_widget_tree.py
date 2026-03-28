@@ -2378,6 +2378,78 @@ class TestWidgetTreePanel:
         menu.deleteLater()
         panel.deleteLater()
 
+    def test_tree_panel_exposes_initial_accessibility_metadata(self, qapp):
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        assert panel.accessibleName() == (
+            "Widget tree: 1 widget. 0 selected widgets. Current widget: none. "
+            "Filter: none. Status: All widgets. Position: none. "
+            "Structure: select widgets to group, move, or reorder. "
+            "Drop target: drag over the tree to preview where the selection will land."
+        )
+        assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
+        assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
+        assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
+        assert panel.tree.accessibleName() == "Widget tree: 1 widget. 0 selected widgets. Current widget: none."
+        assert panel.tree.topLevelItem(0).toolTip(0) == f"Widget {root.name}: {root.widget_type}"
+        panel.deleteLater()
+
+    def test_tree_panel_filter_accessibility_updates_with_matches_and_selection(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="field_label")
+        second = WidgetModel("button", name="field_button")
+        root.add_child(first)
+        root.add_child(second)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.filter_edit.setText("field")
+
+        assert panel.filter_edit.accessibleName() == "Widget filter: field"
+        assert panel.filter_prev_btn.toolTip() == "Select the previous widget filter match (Shift+Enter)."
+        assert panel.filter_next_btn.toolTip() == "Select the next widget filter match (Enter)."
+        assert panel.filter_status_label.accessibleName() == "Widget filter status: 2 matches"
+        assert "Filter: field. Status: 2 matches. Position: 0/2." in panel.accessibleName()
+
+        panel.set_selected_widgets([second], primary=second)
+
+        assert panel.filter_position_label.accessibleName() == "Widget filter position: 2/2"
+        assert panel.tree.accessibleName() == "Widget tree: 3 widgets. 1 selected widget. Current widget: field_button."
+        assert "Current widget: field_button." in panel.accessibleName()
+        panel.deleteLater()
+
+    def test_tree_panel_drag_target_metadata_updates_with_structure_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        target = WidgetModel("group", name="target")
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.set_selected_widgets([first, second], primary=first)
+
+        assert panel.structure_hint_label.accessibleName() == panel.structure_hint_label.text()
+
+        panel._set_drag_target_label("Drop target: move into target.", tone="valid")
+
+        assert panel.drag_target_label.accessibleName() == "Drop target: move into target."
+        assert "Drop target: move into target." in panel.accessibleName()
+        panel.deleteLater()
+
     def test_set_selected_widgets_reveals_primary_item_path(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
