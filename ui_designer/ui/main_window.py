@@ -2399,7 +2399,7 @@ class MainWindow(QMainWindow):
                 self._release_history_action,
                 (
                     "Browse recorded release builds for the current project. "
-                    f"History file: {history_file_path or 'not created yet'}. {history_file_state_summary} "
+                    f"SDK: {sdk_state}. History file: {history_file_path or 'not created yet'}. {history_file_state_summary} "
                     f"Output root: {self._release_output_root()}. Source resources: {resources_state}. "
                     f"Resource directory: {resources_dir or 'none'}. {output_root_state_summary} "
                     f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
