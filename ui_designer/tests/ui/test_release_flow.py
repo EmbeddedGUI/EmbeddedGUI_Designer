@@ -736,9 +736,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
 
     assert dialog._preview_log_button.toolTip() == "Showing the selected release build log preview."
     assert dialog._preview_log_button.accessibleName() == "Preview build log"
-    assert dialog._copy_preview_path_button.toolTip() == "Copy the current log preview path."
+    assert dialog._copy_preview_path_button.toolTip() == f"Copy the current log preview path. Current path: {log_path}."
     assert dialog._copy_preview_path_button.accessibleName() == "Copy current preview path"
-    assert dialog._open_preview_button.toolTip() == "Open the current log preview file."
+    assert dialog._open_preview_button.toolTip() == f"Open the current log preview file. Path state: available. Current path: {log_path}."
     assert dialog._open_preview_button.accessibleName() == "Open current preview file"
     assert dialog._preview_edit.accessibleName() == "Release preview: Log Preview."
 

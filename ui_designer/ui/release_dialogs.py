@@ -1706,9 +1706,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._copy_preview_path_button,
             tooltip=(
-                f"Copy the current {preview_label_lower} preview path."
+                f"Copy the current {preview_label_lower} preview path. Current path: {preview_path}."
                 if preview_path
-                else f"No {preview_label_lower} preview path is available to copy."
+                else f"No {preview_label_lower} preview path is available to copy. Current path: none."
             ),
             accessible_name=(
                 "Copy current preview path"
@@ -1727,9 +1727,12 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._open_preview_button,
             tooltip=(
-                f"Open the current {preview_label_lower} preview file."
+                f"Open the current {preview_label_lower} preview file. Path state: available. Current path: {preview_path}."
                 if self._open_path_callback is not None and preview_path and os.path.isfile(preview_path)
-                else f"The current {preview_label_lower} preview file is unavailable or missing."
+                else (
+                    f"The current {preview_label_lower} preview file is unavailable or missing. "
+                    f"Path state: {'missing' if preview_path else 'unavailable'}. Current path: {preview_path or 'none'}."
+                )
             ),
             accessible_name=(
                 "Open current preview file"
