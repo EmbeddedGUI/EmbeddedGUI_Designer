@@ -2951,7 +2951,8 @@ class TestMainWindowFileFlow:
         )
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
         assert refreshed_actions["Release Build..."].toolTip() == (
-            f"Build a release package for the current project. Output root: {window._release_output_root()}."
+            "Build a release package for the current project. "
+            f"Output root: {window._release_output_root()}. Default profile: stm32-sim."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (

@@ -1132,6 +1132,17 @@ class MainWindow(QMainWindow):
             return "Release profiles: unavailable."
         return f"Release profiles: {self._release_profiles_summary_suffix().replace('Profiles: ', '')}"
 
+    def _default_release_profile_label(self):
+        if getattr(self, "project", None) is None:
+            return "none"
+        release_config = getattr(self.project, "release_config", None)
+        profiles = list(getattr(release_config, "profiles", []) or [])
+        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
+        profile_ids = {str(getattr(profile, "id", "") or "").strip() for profile in profiles}
+        if default_profile not in profile_ids and profiles:
+            default_profile = str(getattr(profiles[0], "id", "") or "").strip()
+        return default_profile or "none"
+
     def _update_release_profiles_action_metadata(self):
         action = getattr(self, "_release_profiles_action", None)
         if action is None:
@@ -2182,7 +2193,8 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(
                 self._release_build_action,
                 (
-                    f"Build a release package for the current project. Output root: {self._release_output_root()}."
+                    "Build a release package for the current project. "
+                    f"Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}."
                     if self._release_build_action.isEnabled()
                     else self._action_hint(
                         "Build a release package for the current project.",
