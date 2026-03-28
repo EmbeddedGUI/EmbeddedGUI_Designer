@@ -904,6 +904,7 @@ class MainWindow(QMainWindow):
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
         preview_state = "running" if preview_running else "stopped"
+        release_build_state = "available" if getattr(getattr(self, "_release_build_action", None), "isEnabled", lambda: False)() else "unavailable"
         release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         profiles_summary = self._release_profiles_build_summary()
@@ -912,7 +913,7 @@ class MainWindow(QMainWindow):
             (
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
-                f"Preview: {preview_state}. Release history: {release_state}. {profiles_summary}"
+                f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. {profiles_summary}"
             ),
         )
 
@@ -922,6 +923,7 @@ class MainWindow(QMainWindow):
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         dirty_state = "present" if hasattr(self, "_undo_manager") and self._undo_manager.is_any_dirty() else "none"
         reload_state = "available" if getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)() else "unavailable"
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
         recent_count = min(len(recent), 10)
         recent_label = "none" if recent_count == 0 else f"{recent_count} project" if recent_count == 1 else f"{recent_count} projects"
@@ -929,7 +931,7 @@ class MainWindow(QMainWindow):
             self._file_menu.menuAction(),
             (
                 "Create, open, save, export, and close projects. "
-                f"Project: {project_state}. Unsaved changes: {dirty_state}. Reload: {reload_state}. Recent projects: {recent_label}."
+                f"Project: {project_state}. SDK: {sdk_state}. Unsaved changes: {dirty_state}. Reload: {reload_state}. Recent projects: {recent_label}."
             ),
         )
 

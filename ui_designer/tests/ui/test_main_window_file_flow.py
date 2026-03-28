@@ -2925,7 +2925,7 @@ class TestMainWindowFileFlow:
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable. "
+            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
             "Release profiles: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
@@ -2971,7 +2971,7 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release history: available. "
+            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
             "Release profiles: 2 profiles. Default: stm32-sim."
         )
         assert generate_resources_action.toolTip() == (
@@ -2984,7 +2984,7 @@ class TestMainWindowFileFlow:
 
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release history: available. "
+            "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
             "Release profiles: 2 profiles. Default: stm32-sim."
         )
         _close_window(window)
@@ -3468,7 +3468,7 @@ class TestMainWindowFileFlow:
 
         assert actions["File"].toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: none. Unsaved changes: none. Reload: unavailable. Recent projects: none."
+            "Project: none. SDK: invalid. Unsaved changes: none. Reload: unavailable. Recent projects: none."
         )
         assert actions["File"].statusTip() == actions["File"].toolTip()
         assert actions["Edit"].toolTip() == (
@@ -3488,7 +3488,8 @@ class TestMainWindowFileFlow:
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
         assert actions["Build"].toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
-            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release history: unavailable."
+            "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
+            "Release profiles: unavailable."
         )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (
@@ -3571,7 +3572,7 @@ class TestMainWindowFileFlow:
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
         assert file_action.toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: none. Unsaved changes: none. Reload: unavailable. Recent projects: none."
+            "Project: none. SDK: invalid. Unsaved changes: none. Reload: unavailable. Recent projects: none."
         )
         assert file_action.statusTip() == file_action.toolTip()
 
@@ -3579,7 +3580,7 @@ class TestMainWindowFileFlow:
 
         assert file_action.toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: open. Unsaved changes: none. Reload: available. Recent projects: 1 project."
+            "Project: open. SDK: valid. Unsaved changes: none. Reload: available. Recent projects: 1 project."
         )
         assert file_action.statusTip() == file_action.toolTip()
 
@@ -3591,7 +3592,7 @@ class TestMainWindowFileFlow:
 
         assert file_action.toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: open. Unsaved changes: present. Reload: available. Recent projects: 1 project."
+            "Project: open. SDK: valid. Unsaved changes: present. Reload: available. Recent projects: 1 project."
         )
         assert file_action.statusTip() == file_action.toolTip()
         _close_window(window)
