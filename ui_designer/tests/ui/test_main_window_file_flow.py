@@ -2979,6 +2979,7 @@ class TestMainWindowFileFlow:
 
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.preview_panel import MODE_HIDDEN, MODE_VERTICAL
 
         window = MainWindow("")
         actions = {
@@ -3004,20 +3005,70 @@ class TestMainWindowFileFlow:
         assert actions["Light"].statusTip() == actions["Light"].toolTip()
         assert actions["Font Size..."].toolTip() == "Adjust the Designer font size."
         assert actions["Font Size..."].statusTip() == actions["Font Size..."].toolTip()
-        assert actions["Vertical"].toolTip() == "Show preview and overlay stacked vertically (Ctrl+1)."
+        current_zoom = window.preview_panel._zoom_label.text()
+        assert actions["Vertical"].toolTip() == (
+            f"Show preview and overlay stacked vertically (Ctrl+1). Current layout: Horizontal, overlay first. Zoom: {current_zoom}."
+        )
         assert actions["Vertical"].statusTip() == actions["Vertical"].toolTip()
-        assert actions["Horizontal"].toolTip() == "Show preview and overlay side by side (Ctrl+2)."
+        assert actions["Horizontal"].toolTip() == (
+            f"Currently showing preview and overlay side by side (Ctrl+2). Current layout: Horizontal, overlay first. Zoom: {current_zoom}."
+        )
         assert actions["Horizontal"].statusTip() == actions["Horizontal"].toolTip()
-        assert actions["Overlay Only"].toolTip() == "Show only the overlay workspace (Ctrl+3)."
+        assert actions["Overlay Only"].toolTip() == (
+            f"Show only the overlay workspace (Ctrl+3). Current layout: Horizontal, overlay first. Zoom: {current_zoom}."
+        )
         assert actions["Overlay Only"].statusTip() == actions["Overlay Only"].toolTip()
-        assert actions["Swap Preview/Overlay"].toolTip() == "Swap the preview and overlay positions (Ctrl+4)."
+        assert actions["Swap Preview/Overlay"].toolTip() == (
+            f"Swap the preview and overlay positions (Ctrl+4). Current layout: Horizontal, overlay first. Zoom: {current_zoom}."
+        )
         assert actions["Swap Preview/Overlay"].statusTip() == actions["Swap Preview/Overlay"].toolTip()
-        assert actions["Zoom In"].toolTip() == "Zoom in on the preview overlay (Ctrl+=)."
+        assert actions["Zoom In"].toolTip() == f"Zoom in on the preview overlay (Ctrl+=). Current zoom: {current_zoom}."
         assert actions["Zoom In"].statusTip() == actions["Zoom In"].toolTip()
-        assert actions["Zoom Out"].toolTip() == "Zoom out on the preview overlay (Ctrl+-)."
+        assert actions["Zoom Out"].toolTip() == f"Zoom out on the preview overlay (Ctrl+-). Current zoom: {current_zoom}."
         assert actions["Zoom Out"].statusTip() == actions["Zoom Out"].toolTip()
-        assert actions["Zoom Reset (100%)"].toolTip() == "Reset the preview overlay zoom to 100% (Ctrl+0)."
+        assert actions["Zoom Reset (100%)"].toolTip() == (
+            f"Reset the preview overlay zoom to 100% (Ctrl+0). Current zoom: {current_zoom}. Unavailable: already at 100% zoom."
+        )
         assert actions["Zoom Reset (100%)"].statusTip() == actions["Zoom Reset (100%)"].toolTip()
+
+        window._set_overlay_mode(MODE_VERTICAL)
+
+        current_zoom = window.preview_panel._zoom_label.text()
+        assert actions["Vertical"].toolTip() == (
+            f"Currently showing preview and overlay stacked vertically (Ctrl+1). Current layout: Vertical, overlay first. Zoom: {current_zoom}."
+        )
+        assert actions["Horizontal"].toolTip() == (
+            f"Show preview and overlay side by side (Ctrl+2). Current layout: Vertical, overlay first. Zoom: {current_zoom}."
+        )
+        assert actions["Swap Preview/Overlay"].toolTip() == (
+            f"Swap the preview and overlay positions (Ctrl+4). Current layout: Vertical, overlay first. Zoom: {current_zoom}."
+        )
+
+        window._flip_overlay_layout()
+
+        current_zoom = window.preview_panel._zoom_label.text()
+        assert actions["Swap Preview/Overlay"].toolTip() == (
+            f"Swap the preview and overlay positions (Ctrl+4). Current layout: Vertical, preview first. Zoom: {current_zoom}."
+        )
+
+        window.preview_panel.overlay.zoom_in()
+
+        current_zoom = window.preview_panel._zoom_label.text()
+        assert actions["Zoom In"].toolTip() == f"Zoom in on the preview overlay (Ctrl+=). Current zoom: {current_zoom}."
+        assert actions["Zoom Out"].toolTip() == f"Zoom out on the preview overlay (Ctrl+-). Current zoom: {current_zoom}."
+        assert actions["Zoom Reset (100%)"].toolTip() == (
+            f"Reset the preview overlay zoom to 100% (Ctrl+0). Current zoom: {current_zoom}."
+        )
+
+        window._set_overlay_mode(MODE_HIDDEN)
+
+        current_zoom = window.preview_panel._zoom_label.text()
+        assert actions["Overlay Only"].toolTip() == (
+            f"Currently showing only the overlay workspace (Ctrl+3). Current layout: Overlay Only. Zoom: {current_zoom}."
+        )
+        assert actions["Swap Preview/Overlay"].toolTip() == (
+            f"Swap preview and overlay unavailable in Overlay Only layout (Ctrl+4). Current layout: Overlay Only. Zoom: {current_zoom}."
+        )
         _close_window(window)
 
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):

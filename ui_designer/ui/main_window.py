@@ -419,6 +419,7 @@ class MainWindow(QMainWindow):
         self.preview_panel = PreviewPanel(screen_width=240, screen_height=320)
         self.preview_panel.set_show_grid(self._config.show_grid)
         self.preview_panel.set_grid_size(self._config.grid_size)
+        self.preview_panel.overlay.zoom_changed.connect(lambda _factor: self._update_preview_appearance_action_metadata())
         self.editor_tabs = EditorTabs(self.preview_panel, show_mode_switch=False)
         center_layout.addWidget(self.editor_tabs, 1)
 
@@ -770,6 +771,67 @@ class MainWindow(QMainWindow):
                     else f"Show the {label} tools panel."
                 )
                 self._apply_action_hint(action, f"{base} {context}".strip())
+
+    def _overlay_mode_action_hint(self, mode, is_current=False):
+        base_hints = {
+            MODE_VERTICAL: "Show preview and overlay stacked vertically (Ctrl+1).",
+            MODE_HORIZONTAL: "Show preview and overlay side by side (Ctrl+2).",
+            MODE_HIDDEN: "Show only the overlay workspace (Ctrl+3).",
+        }
+        current_hints = {
+            MODE_VERTICAL: "Currently showing preview and overlay stacked vertically (Ctrl+1).",
+            MODE_HORIZONTAL: "Currently showing preview and overlay side by side (Ctrl+2).",
+            MODE_HIDDEN: "Currently showing only the overlay workspace (Ctrl+3).",
+        }
+        hints = current_hints if is_current else base_hints
+        return hints.get(mode, "")
+
+    def _preview_appearance_action_context(self):
+        mode = getattr(self.preview_panel, "overlay_mode", MODE_HORIZONTAL)
+        mode_label = {
+            MODE_VERTICAL: "Vertical",
+            MODE_HORIZONTAL: "Horizontal",
+            MODE_HIDDEN: "Overlay Only",
+        }.get(mode, str(mode or "Preview"))
+        zoom_label = getattr(getattr(self, "preview_panel", None), "_zoom_label", None)
+        zoom_text = str(zoom_label.text() if zoom_label is not None else "100% (4px)")
+        if mode == MODE_HIDDEN:
+            return f"Current layout: {mode_label}. Zoom: {zoom_text}."
+        order_text = "overlay first" if getattr(self.preview_panel, "_flipped", False) else "preview first"
+        return f"Current layout: {mode_label}, {order_text}. Zoom: {zoom_text}."
+
+    def _update_preview_appearance_action_metadata(self):
+        if not hasattr(self, "preview_panel"):
+            return
+        current_mode = getattr(self.preview_panel, "overlay_mode", MODE_HORIZONTAL)
+        context = self._preview_appearance_action_context()
+        for mode, action in getattr(self, "_overlay_mode_actions", {}).items():
+            hint = self._overlay_mode_action_hint(mode, is_current=(mode == current_mode))
+            self._apply_action_hint(action, f"{hint} {context}".strip())
+        if hasattr(self, "_swap_overlay_action"):
+            if current_mode == MODE_HIDDEN:
+                swap_hint = f"Swap preview and overlay unavailable in Overlay Only layout (Ctrl+4). {context}"
+            else:
+                swap_hint = f"Swap the preview and overlay positions (Ctrl+4). {context}"
+            self._apply_action_hint(self._swap_overlay_action, swap_hint.strip())
+        if hasattr(self, "_zoom_in_action"):
+            zoom_text = str(self.preview_panel._zoom_label.text() or "100% (4px)")
+            zoom_in_hint = f"Zoom in on the preview overlay (Ctrl+=). Current zoom: {zoom_text}."
+            if self.preview_panel.overlay._zoom >= (self.preview_panel.overlay._zoom_max - 1e-9):
+                zoom_in_hint += " Unavailable: already at maximum zoom."
+            self._apply_action_hint(self._zoom_in_action, zoom_in_hint)
+        if hasattr(self, "_zoom_out_action"):
+            zoom_text = str(self.preview_panel._zoom_label.text() or "100% (4px)")
+            zoom_out_hint = f"Zoom out on the preview overlay (Ctrl+-). Current zoom: {zoom_text}."
+            if self.preview_panel.overlay._zoom <= (self.preview_panel.overlay._zoom_min + 1e-9):
+                zoom_out_hint += " Unavailable: already at minimum zoom."
+            self._apply_action_hint(self._zoom_out_action, zoom_out_hint)
+        if hasattr(self, "_zoom_reset_action"):
+            zoom_text = str(self.preview_panel._zoom_label.text() or "100% (4px)")
+            zoom_reset_hint = f"Reset the preview overlay zoom to 100% (Ctrl+0). Current zoom: {zoom_text}."
+            if abs(self.preview_panel.overlay._zoom - 1.0) <= 1e-9:
+                zoom_reset_hint += " Unavailable: already at 100% zoom."
+            self._apply_action_hint(self._zoom_reset_action, zoom_reset_hint)
 
     def _select_left_panel(self, panel_key):
         if panel_key == "components":
@@ -2697,31 +2759,32 @@ class MainWindow(QMainWindow):
             self._overlay_mode_actions[mode] = action
             view_menu.addAction(action)
 
-        swap_action = QAction("Swap Preview/Overlay", self)
-        swap_action.setShortcut("Ctrl+4")
-        self._apply_action_hint(swap_action, "Swap the preview and overlay positions (Ctrl+4).")
-        swap_action.triggered.connect(self._flip_overlay_layout)
-        view_menu.addAction(swap_action)
+        self._swap_overlay_action = QAction("Swap Preview/Overlay", self)
+        self._swap_overlay_action.setShortcut("Ctrl+4")
+        self._apply_action_hint(self._swap_overlay_action, "Swap the preview and overlay positions (Ctrl+4).")
+        self._swap_overlay_action.triggered.connect(self._flip_overlay_layout)
+        view_menu.addAction(self._swap_overlay_action)
 
         view_menu.addSeparator()
 
-        zoom_in_action = QAction("Zoom In", self)
-        zoom_in_action.setShortcut("Ctrl+=")
-        self._apply_action_hint(zoom_in_action, "Zoom in on the preview overlay (Ctrl+=).")
-        zoom_in_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_in())
-        view_menu.addAction(zoom_in_action)
+        self._zoom_in_action = QAction("Zoom In", self)
+        self._zoom_in_action.setShortcut("Ctrl+=")
+        self._apply_action_hint(self._zoom_in_action, "Zoom in on the preview overlay (Ctrl+=).")
+        self._zoom_in_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_in())
+        view_menu.addAction(self._zoom_in_action)
 
-        zoom_out_action = QAction("Zoom Out", self)
-        zoom_out_action.setShortcut("Ctrl+-")
-        self._apply_action_hint(zoom_out_action, "Zoom out on the preview overlay (Ctrl+-).")
-        zoom_out_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_out())
-        view_menu.addAction(zoom_out_action)
+        self._zoom_out_action = QAction("Zoom Out", self)
+        self._zoom_out_action.setShortcut("Ctrl+-")
+        self._apply_action_hint(self._zoom_out_action, "Zoom out on the preview overlay (Ctrl+-).")
+        self._zoom_out_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_out())
+        view_menu.addAction(self._zoom_out_action)
 
-        zoom_reset_action = QAction("Zoom Reset (100%)", self)
-        zoom_reset_action.setShortcut("Ctrl+0")
-        self._apply_action_hint(zoom_reset_action, "Reset the preview overlay zoom to 100% (Ctrl+0).")
-        zoom_reset_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_reset())
-        view_menu.addAction(zoom_reset_action)
+        self._zoom_reset_action = QAction("Zoom Reset (100%)", self)
+        self._zoom_reset_action.setShortcut("Ctrl+0")
+        self._apply_action_hint(self._zoom_reset_action, "Reset the preview overlay zoom to 100% (Ctrl+0).")
+        self._zoom_reset_action.triggered.connect(lambda: self.preview_panel.overlay.zoom_reset())
+        view_menu.addAction(self._zoom_reset_action)
+        self._update_preview_appearance_action_metadata()
 
         view_menu.addSeparator()
 
@@ -6390,12 +6453,14 @@ class MainWindow(QMainWindow):
         act = self._overlay_mode_actions.get(mode)
         if act:
             act.setChecked(True)
+        self._update_preview_appearance_action_metadata()
 
     def _flip_overlay_layout(self):
         """Swap preview/overlay and persist the flipped state."""
         self.preview_panel.flip_layout()
         self._config.overlay_flipped = self.preview_panel._flipped
         self._config.save()
+        self._update_preview_appearance_action_metadata()
 
     def _set_show_grid(self, show):
         self.preview_panel.set_show_grid(show)
