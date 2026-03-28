@@ -7,6 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication, QLabel, QPushButton
 
     _has_pyqt5 = True
@@ -331,6 +332,10 @@ class TestWidgetBrowserPanel:
         )
         assert panel._search.toolTip() == "Widget browser search. Current text: none."
         assert panel._category_list.accessibleName() == "Widget categories: All Widgets"
+        first_category = panel._category_list.item(0)
+        assert first_category.toolTip() == "Show All Widgets in the widget browser."
+        assert first_category.statusTip() == first_category.toolTip()
+        assert first_category.data(Qt.AccessibleTextRole) == first_category.toolTip()
         assert panel._visible_count_chip.accessibleName() == f"Visible widgets: {panel._visible_count_chip.text()}"
         assert panel._clear_tags_btn.toolTip() == "No active widget tags to clear."
         assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
@@ -339,6 +344,14 @@ class TestWidgetBrowserPanel:
         assert panel._complexity_buttons["all"].accessibleName() == "Complexity filter: All. Current."
         assert panel._complexity_buttons["advanced"].accessibleName() == "Complexity filter: Advanced. Available."
         assert panel._lane_buttons["favorites"].accessibleName() == "Quick lane: Favorites. 0 widgets. No widgets available."
+
+        scenario_item = next(
+            panel._category_list.item(row)
+            for row in range(panel._category_list.count())
+            if str(panel._category_list.item(row).data(Qt.UserRole) or "").startswith("scenario:")
+        )
+        assert scenario_item.statusTip() == scenario_item.toolTip()
+        assert scenario_item.data(Qt.AccessibleTextRole) == scenario_item.toolTip()
         panel.deleteLater()
 
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):

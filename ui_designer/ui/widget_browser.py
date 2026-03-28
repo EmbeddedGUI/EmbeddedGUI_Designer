@@ -36,6 +36,13 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, tooltip):
+    hint = str(tooltip or "").strip()
+    item.setToolTip(hint)
+    item.setStatusTip(hint)
+    item.setData(Qt.AccessibleTextRole, hint)
+
+
 def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
@@ -440,16 +447,14 @@ class WidgetBrowserPanel(QWidget):
                 "containers": "layout",
             }.get(category_id, "widgets")
             item.setIcon(make_icon(icon_key, size=18))
-            item.setToolTip(f"Show {label} in the widget browser.")
-            item.setStatusTip(item.toolTip())
+            _set_item_metadata(item, f"Show {label} in the widget browser.")
             self._category_list.addItem(item)
         for label in self._registry.browser_scenarios():
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, f"scenario:{label}")
             icon_key = self._scenario_icon_key(label)
             item.setIcon(make_icon(icon_key, size=18))
-            item.setToolTip(f"Show widgets for the {label} scenario.")
-            item.setStatusTip(item.toolTip())
+            _set_item_metadata(item, f"Show widgets for the {label} scenario.")
             self._category_list.addItem(item)
         default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
         selected_row = 0
