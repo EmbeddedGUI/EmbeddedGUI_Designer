@@ -1505,6 +1505,15 @@ class ReleaseHistoryDialog(QDialog):
         visible_entries_context = f"Visible entries: {visible_entries} of {total_entries}."
         search_context = f"Current search: {self._current_search_label()}."
         refresh_context = f"History file: {self._history_path or 'none'}. {visible_entries_context}"
+        filter_context = (
+            f"Current filters: range {self._range_filter_combo.currentText()}, "
+            f"status {self._status_filter_combo.currentText()}, "
+            f"profile {self._profile_filter_combo.currentText() or 'All'}, "
+            f"artifact {self._artifact_filter_combo.currentText()}, "
+            f"diagnostics {self._diagnostics_filter_combo.currentText()}, "
+            f"sort {self._sort_combo.currentText()}. "
+            f"{search_context}"
+        )
         selection_label = self._current_selection_label()
         dialog_summary = (
             f"Release history: {result_summary}. "
@@ -1568,22 +1577,22 @@ class ReleaseHistoryDialog(QDialog):
         )
         _set_widget_metadata(
             self._result_count_label,
-            tooltip=f"Release history results: {result_summary}.",
+            tooltip=f"Release history results: {result_summary}. {filter_context}",
             accessible_name=f"Release history results: {result_summary}",
         )
         _set_widget_metadata(
             self._status_breakdown_label,
-            tooltip=self._status_breakdown_label.text(),
+            tooltip=f"{self._status_breakdown_label.text()}. {visible_entries_context} {filter_context}",
             accessible_name=f"Status breakdown: {self._status_breakdown_label.text()}",
         )
         _set_widget_metadata(
             self._artifact_breakdown_label,
-            tooltip=self._artifact_breakdown_label.text(),
+            tooltip=f"{self._artifact_breakdown_label.text()}. {visible_entries_context} {filter_context}",
             accessible_name=f"Artifact breakdown: {self._artifact_breakdown_label.text()}",
         )
         _set_widget_metadata(
             self._diagnostics_breakdown_label,
-            tooltip=self._diagnostics_breakdown_label.text(),
+            tooltip=f"{self._diagnostics_breakdown_label.text()}. {visible_entries_context} {filter_context}",
             accessible_name=f"Diagnostics breakdown: {self._diagnostics_breakdown_label.text()}",
         )
         _set_widget_metadata(

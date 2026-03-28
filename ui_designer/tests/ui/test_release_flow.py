@@ -852,6 +852,16 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     dialog._search_edit.setText("sdk-fail")
     qapp.processEvents()
 
+    assert dialog._result_count_label.toolTip() == (
+        "Release history results: 1 of 1 entries. "
+        "Current filters: range Any, status All, profile All, artifact Any, diagnostics Any, sort Newest First. "
+        "Current search: sdk-fail."
+    )
+    assert dialog._status_breakdown_label.toolTip() == (
+        "success 0 | failed 1 | unknown 0. Visible entries: 1 of 1. "
+        "Current filters: range Any, status All, profile All, artifact Any, diagnostics Any, sort Newest First. "
+        "Current search: sdk-fail."
+    )
     assert dialog._copy_filtered_button.toolTip() == "Copy the filtered release history summary. Visible entries: 1 of 1."
     assert dialog._copy_filtered_json_button.toolTip() == "Copy the filtered release history as JSON. Visible entries: 1 of 1."
     assert dialog._export_filtered_button.toolTip() == "Export the filtered release history. Visible entries: 1 of 1."
@@ -899,6 +909,11 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     qapp.processEvents()
 
     assert dialog._history_list.toolTip() == "Release history list: 0 visible entries. Current selection: none."
+    assert dialog._result_count_label.toolTip() == (
+        "Release history results: 0 of 1 entries. "
+        "Current filters: range Any, status All, profile All, artifact Any, diagnostics Any, sort Newest First. "
+        "Current search: missing-entry."
+    )
     assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy. Visible entries: 0 of 1."
     assert dialog._copy_filtered_json_button.toolTip() == "No filtered release entries are available to copy as JSON. Visible entries: 0 of 1."
     assert dialog._export_filtered_button.toolTip() == "No filtered release entries are available to export. Visible entries: 0 of 1."
