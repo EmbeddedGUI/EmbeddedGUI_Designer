@@ -50,11 +50,31 @@ class PageThumbnail(QWidget):
         self._name_label.setAlignment(Qt.AlignCenter)
         self._name_label.setStyleSheet("color: #ccc; font-size: 11px;")
         layout.addWidget(self._name_label)
+        self._update_accessibility()
+
+    def _state_summary(self):
+        selection_text = "Current page" if self._selected else "Available"
+        dirty_text = "Unsaved changes" if self._dirty else "No unsaved changes"
+        return f"{selection_text}. {dirty_text}."
+
+    def _update_accessibility(self):
+        summary = self._state_summary()
+        tooltip = f"Open page: {self.page_name}. {summary}"
+        self.setToolTip(tooltip)
+        self.setStatusTip(tooltip)
+        self.setAccessibleName(f"Page thumbnail: {self.page_name}. {summary}")
+        self._thumb_label.setToolTip(tooltip)
+        self._thumb_label.setStatusTip(tooltip)
+        self._thumb_label.setAccessibleName(f"Page preview: {self.page_name}. {summary}")
+        self._name_label.setToolTip(tooltip)
+        self._name_label.setStatusTip(tooltip)
+        self._name_label.setAccessibleName(f"Page name: {self._name_label.text()}. {summary}")
 
     def set_selected(self, selected):
         self._selected = selected
         border = "2px solid #4a9eff" if selected else "1px solid #555"
         self._thumb_label.setStyleSheet(f"border: {border}; background: #2a2a2a;")
+        self._update_accessibility()
 
     def set_thumbnail(self, pixmap):
         scaled = pixmap.scaled(THUMB_WIDTH, THUMB_HEIGHT, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -63,6 +83,7 @@ class PageThumbnail(QWidget):
     def set_dirty(self, dirty):
         self._dirty = bool(dirty)
         self._name_label.setText(f"{self.page_name}*" if self._dirty else self.page_name)
+        self._update_accessibility()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -124,21 +145,38 @@ class PageNavigator(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 4, 4, 4)
 
-        title = QLabel("Pages")
-        title.setStyleSheet("font-weight: bold; color: #ccc; font-size: 13px;")
-        outer.addWidget(title)
+        self._title_label = QLabel("Pages")
+        self._title_label.setStyleSheet("font-weight: bold; color: #ccc; font-size: 13px;")
+        self._title_label.setAccessibleName("Pages")
+        outer.addWidget(self._title_label)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        outer.addWidget(scroll)
+        self._scroll_area = QScrollArea()
+        self._scroll_area.setWidgetResizable(True)
+        self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._scroll_area.setAccessibleName("Page thumbnails")
+        outer.addWidget(self._scroll_area)
 
         self._container = QWidget()
+        self._container.setAccessibleName("Page thumbnail list")
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(4)
         self._layout.addStretch()
-        scroll.setWidget(self._container)
+        self._scroll_area.setWidget(self._container)
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        page_count = len(self._pages)
+        page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
+        current_page = self._current_page if self._current_page in self._pages else "none"
+        dirty_count = len(self._dirty_pages)
+        dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        summary = f"Page navigator: {page_label}. Current page: {current_page}. {dirty_label}."
+        self.setAccessibleName(summary)
+        self.setToolTip(summary)
+        self.setStatusTip(summary)
+        self._title_label.setToolTip(summary)
+        self._title_label.setStatusTip(summary)
 
     def set_screen_size(self, w, h):
         self._screen_width = w
@@ -148,16 +186,19 @@ class PageNavigator(QWidget):
         """Set all pages. pages_dict: {page_name: Page}."""
         self._pages = dict(pages_dict)
         self._rebuild()
+        self._update_accessibility_summary()
 
     def set_current_page(self, page_name):
         self._current_page = page_name
         for name, thumb in self._thumbnails.items():
             thumb.set_selected(name == page_name)
+        self._update_accessibility_summary()
 
     def set_dirty_pages(self, page_names):
         self._dirty_pages = set(page_names or [])
         for name, thumb in self._thumbnails.items():
             thumb.set_dirty(name in self._dirty_pages)
+        self._update_accessibility_summary()
 
     def refresh_thumbnail(self, page_name):
         """Re-render thumbnail for a specific page."""
@@ -205,6 +246,7 @@ class PageNavigator(QWidget):
                 pass
 
         self._layout.addStretch()
+        self._update_accessibility_summary()
 
     def _on_thumb_clicked(self, page_name):
         self.set_current_page(page_name)
