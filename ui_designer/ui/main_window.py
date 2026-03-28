@@ -697,6 +697,7 @@ class MainWindow(QMainWindow):
             self._left_shell.setToolTip(shell_summary)
             self._left_shell.setStatusTip(shell_summary)
             self._left_shell.setAccessibleName(shell_summary)
+        self._update_workspace_layout_metadata()
 
     def _workspace_menu_action_context(self, panel_key):
         if panel_key == "project":
@@ -1121,6 +1122,44 @@ class MainWindow(QMainWindow):
             self._bottom_tabs.setAccessibleName(
                 f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Current page: {current_page}. Panel {visibility}."
             )
+        self._update_workspace_layout_metadata()
+
+    def _update_workspace_layout_metadata(self):
+        current_page = self._current_page_accessibility_text() if hasattr(self, "_current_page_accessibility_text") else "none"
+        current_panel = self._workspace_panel_label(getattr(self, "_current_left_panel", "project"))
+        current_mode = self._editor_mode_label(getattr(getattr(self, "editor_tabs", None), "mode", MODE_DESIGN))
+        inspector_section = self._current_tab_text(getattr(self, "_inspector_tabs", None), "Properties")
+        bottom_section = self._current_tab_text(getattr(self, "_bottom_tabs", None), "Diagnostics")
+        visibility = "visible" if getattr(self, "_bottom_panel_visible", False) else "hidden"
+        if hasattr(self, "_editor_container"):
+            editor_summary = (
+                f"Editor workspace. Left panel: {current_panel}. Current page: {current_page}. "
+                f"Mode: {current_mode}. Bottom tools {visibility}."
+            )
+            self._editor_container.setToolTip(editor_summary)
+            self._editor_container.setStatusTip(editor_summary)
+            self._editor_container.setAccessibleName(editor_summary)
+        if hasattr(self, "_top_splitter"):
+            top_splitter_summary = (
+                f"Workspace columns. Left panel: {current_panel}. Editor mode: {current_mode}. "
+                f"Inspector section: {inspector_section}. Current page: {current_page}."
+            )
+            self._top_splitter.setToolTip(top_splitter_summary)
+            self._top_splitter.setStatusTip(top_splitter_summary)
+            self._top_splitter.setAccessibleName(top_splitter_summary)
+        if hasattr(self, "_workspace_splitter"):
+            workspace_splitter_summary = (
+                f"Workspace rows. Editor area visible. Bottom tools {visibility}. "
+                f"Current section: {bottom_section}. Current page: {current_page}."
+            )
+            self._workspace_splitter.setToolTip(workspace_splitter_summary)
+            self._workspace_splitter.setStatusTip(workspace_splitter_summary)
+            self._workspace_splitter.setAccessibleName(workspace_splitter_summary)
+        if hasattr(self, "_bottom_header"):
+            bottom_header_summary = f"Bottom tools header. Current section: {bottom_section}. Panel {visibility}."
+            self._bottom_header.setToolTip(bottom_header_summary)
+            self._bottom_header.setStatusTip(bottom_header_summary)
+            self._bottom_header.setAccessibleName(bottom_header_summary)
 
     def _update_page_tab_bar_metadata(self):
         if not hasattr(self, "page_tab_bar"):
@@ -1158,16 +1197,14 @@ class MainWindow(QMainWindow):
         self._central_stack.setToolTip(summary)
         self._central_stack.setStatusTip(summary)
         self._central_stack.setAccessibleName(summary)
-        if hasattr(self, "_editor_container"):
-            self._editor_container.setToolTip("Editor workspace")
-            self._editor_container.setStatusTip("Editor workspace")
-            self._editor_container.setAccessibleName("Editor workspace")
+        self._update_workspace_layout_metadata()
 
     def _sync_editor_mode_controls(self, mode):
         if hasattr(self, "_mode_buttons"):
             for key, button in self._mode_buttons.items():
                 button.setChecked(key == mode)
             self._update_editor_mode_button_metadata(mode)
+        self._update_workspace_layout_metadata()
 
     def _editor_mode_label(self, mode):
         return {
