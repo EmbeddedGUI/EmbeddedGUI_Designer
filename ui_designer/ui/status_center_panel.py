@@ -401,8 +401,11 @@ class StatusCenterPanel(QWidget):
         button = QPushButton(text)
         button.setProperty("baseText", text)
         button.setIcon(make_icon(icon_key))
-        button.setAccessibleName(self._action_button_accessible_name(action_key, text))
-        self._set_hint(button, f"Open {self._action_label(action_key)}.")
+        default_hint = f"Open {self._action_label(action_key)}."
+        button.setAccessibleName(
+            self._action_button_accessible_name(action_key, text, hint=default_hint)
+        )
+        self._set_hint(button, default_hint)
         button.clicked.connect(lambda checked=False, key=action_key: self._emit_action(key))
         return button
 
@@ -893,12 +896,17 @@ class StatusCenterPanel(QWidget):
         summary = str(summary_text or "").strip()
         return f"{prefix}: {summary}" if summary else prefix
 
-    def _action_button_accessible_name(self, action_key, button_text, available=True):
+    def _action_button_accessible_name(self, action_key, button_text, available=True, hint=""):
         label = self._action_label(action_key)
         text = str(button_text or "").strip() or label
+        summary = str(hint or "").strip()
         if not available:
-            return f"{label} action unavailable: {text}"
-        return f"{label} action: {text}"
+            base = f"{label} action unavailable: {text}"
+        else:
+            base = f"{label} action: {text}"
+        if summary:
+            return f"{base}. {summary}"
+        return base
 
     def _health_row_accessible_name(self, label, value_text, inactive_hint=""):
         row_label = str(label or "").strip() or "Diagnostics"
@@ -1150,23 +1158,8 @@ class StatusCenterPanel(QWidget):
         self._diag_btn.setText(self._diagnostics_button_text(diag_total))
         self._history_btn.setText(self._history_button_text(dirty_count))
         self._structure_btn.setText(self._structure_button_text(selection_total))
-        self._diag_btn.setAccessibleName(
-            self._action_button_accessible_name("open_diagnostics", self._diag_btn.text())
-        )
-        self._history_btn.setAccessibleName(
-            self._action_button_accessible_name("open_history", self._history_btn.text())
-        )
         self._debug_btn.setText(self._debug_button_text(can_compile, runtime_text))
-        self._debug_btn.setAccessibleName(
-            self._action_button_accessible_name("open_debug", self._debug_btn.text())
-        )
         self._project_btn.setText(self._project_button_text(sdk_ready))
-        self._project_btn.setAccessibleName(
-            self._action_button_accessible_name("open_project_panel", self._project_btn.text())
-        )
-        self._structure_btn.setAccessibleName(
-            self._action_button_accessible_name("open_structure_panel", self._structure_btn.text())
-        )
         self._set_metric_context("SDK", self._sdk_value, self._sdk_card, self._sdk_value.text())
         self._set_metric_context("Compile", self._compile_value, self._compile_card, self._compile_value.text())
         self._set_metric_context(
@@ -1198,21 +1191,63 @@ class StatusCenterPanel(QWidget):
             if can_compile
             else "Open Debug Output. Compile is unavailable.",
         )
-        self._set_hint(self._diag_card, self._diagnostics_hint(error_count, warning_count, info_count))
-        self._set_hint(self._diag_btn, self._diagnostics_hint(error_count, warning_count, info_count))
+        diag_hint = self._diagnostics_hint(error_count, warning_count, info_count)
+        self._set_hint(self._diag_card, diag_hint)
+        self._set_hint(self._diag_btn, diag_hint)
         self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
+        debug_hint = self._debug_button_hint(can_compile, runtime_text, preview_text)
         self._set_hint(
             self._debug_btn,
-            self._debug_button_hint(can_compile, runtime_text, preview_text),
+            debug_hint,
         )
-        self._set_hint(self._selection_card, self._structure_hint(selection_total))
-        self._set_hint(self._dirty_card, self._history_hint(dirty_count))
-        self._set_hint(self._history_btn, self._history_hint(dirty_count))
+        structure_hint = self._structure_hint(selection_total)
+        self._set_hint(self._selection_card, structure_hint)
+        history_hint = self._history_hint(dirty_count)
+        self._set_hint(self._dirty_card, history_hint)
+        self._set_hint(self._history_btn, history_hint)
+        project_hint = (
+            "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid."
+        )
         self._set_hint(
             self._project_btn,
-            "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
+            project_hint,
         )
-        self._set_hint(self._structure_btn, self._structure_hint(selection_total))
+        self._set_hint(self._structure_btn, structure_hint)
+        self._diag_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_diagnostics",
+                self._diag_btn.text(),
+                hint=diag_hint,
+            )
+        )
+        self._history_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_history",
+                self._history_btn.text(),
+                hint=history_hint,
+            )
+        )
+        self._debug_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_debug",
+                self._debug_btn.text(),
+                hint=debug_hint,
+            )
+        )
+        self._project_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_project_panel",
+                self._project_btn.text(),
+                hint=project_hint,
+            )
+        )
+        self._structure_btn.setAccessibleName(
+            self._action_button_accessible_name(
+                "open_structure_panel",
+                self._structure_btn.text(),
+                hint=structure_hint,
+            )
+        )
         (
             self._suggested_action_key,
             suggested_label,
@@ -1383,36 +1418,44 @@ class StatusCenterPanel(QWidget):
         self._first_error_btn.setText(
             f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
         )
-        self._set_hint(
-            self._first_error_btn,
+        first_error_hint = (
             "Jump to the first error in Diagnostics. "
             f"{self._active_count_hint(error_count, 'error', 'errors')}"
             if error_count > 0
-            else "No errors are active.",
+            else "No errors are active."
+        )
+        self._set_hint(
+            self._first_error_btn,
+            first_error_hint,
         )
         self._first_error_btn.setAccessibleName(
             self._action_button_accessible_name(
                 "open_first_error",
                 self._first_error_btn.text(),
                 error_count > 0,
+                hint=first_error_hint,
             )
         )
         self._first_warning_btn.setEnabled(warning_count > 0)
         self._first_warning_btn.setText(
             f"Open First Warning ({warning_count})" if warning_count > 0 else "Open First Warning"
         )
-        self._set_hint(
-            self._first_warning_btn,
+        first_warning_hint = (
             "Jump to the first warning in Diagnostics. "
             f"{self._active_count_hint(warning_count, 'warning', 'warnings')}"
             if warning_count > 0
-            else "No warnings are active.",
+            else "No warnings are active."
+        )
+        self._set_hint(
+            self._first_warning_btn,
+            first_warning_hint,
         )
         self._first_warning_btn.setAccessibleName(
             self._action_button_accessible_name(
                 "open_first_warning",
                 self._first_warning_btn.text(),
                 warning_count > 0,
+                hint=first_warning_hint,
             )
         )
         if runtime_text:
