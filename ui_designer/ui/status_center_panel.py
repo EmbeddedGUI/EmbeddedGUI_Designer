@@ -214,7 +214,7 @@ class StatusCenterPanel(QWidget):
         self._repeat_action_button.clicked.connect(self._repeat_last_action)
         last_action_row.addWidget(self._repeat_action_button, 0)
         quick_layout.addLayout(last_action_row)
-        self._recent_actions_label = QLabel("Recent actions: none saved.")
+        self._recent_actions_label = QLabel("Recent actions: none yet.")
         self._recent_actions_label.setObjectName("workspace_section_subtitle")
         self._recent_actions_label.setWordWrap(True)
         quick_layout.addWidget(self._recent_actions_label)
@@ -438,7 +438,7 @@ class StatusCenterPanel(QWidget):
     def _refresh_repeat_action_menu(self):
         self._repeat_action_menu.clear()
         if not self._recent_actions:
-            empty_action = self._repeat_action_menu.addAction("No recent actions")
+            empty_action = self._repeat_action_menu.addAction("No recent actions yet")
             empty_action.setEnabled(False)
             empty_action.setToolTip(self._recent_actions_tooltip())
             empty_action.setStatusTip(empty_action.toolTip())
@@ -464,7 +464,7 @@ class StatusCenterPanel(QWidget):
     def _recent_actions_summary(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Recent actions: none saved."
+            return "Recent actions: none yet."
         labels = [self._action_label(action_key) for action_key in self._recent_actions]
         if len(labels) > 3:
             labels = labels[:3] + [f"+{count - 3} more"]
@@ -480,7 +480,7 @@ class StatusCenterPanel(QWidget):
     def _recent_actions_title_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Quick actions with no saved recent status center actions."
+            return "Quick actions with no recent status center actions yet."
         noun = "action" if count == 1 else "actions"
         return f"Quick actions with {count} saved recent status center {noun}."
 
@@ -495,7 +495,7 @@ class StatusCenterPanel(QWidget):
     def _recent_actions_accessible_name(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Recent actions: none saved."
+            return "Recent actions: none yet."
         noun = "recent action" if count == 1 else "recent actions"
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
         return f"Recent actions summary: {count} {noun} saved. {labels}."
@@ -530,7 +530,7 @@ class StatusCenterPanel(QWidget):
 
     def _last_action_accessible_name(self, action_label):
         if not self._last_action:
-            return "Last action: None. No recent actions saved."
+            return "Last action: None. No recent actions yet."
         count = len(self._recent_actions)
         noun = "recent action" if count == 1 else "recent actions"
         return f"Last action: {action_label}. {count} {noun} saved."
