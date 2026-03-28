@@ -956,6 +956,7 @@ class MainWindow(QMainWindow):
         chip.setAccessibleName(accessible_name or text)
         if tool_tip is not None:
             chip.setToolTip(tool_tip)
+            chip.setStatusTip(tool_tip)
         if tone is not None:
             chip.setProperty("chipTone", tone)
         chip.style().unpolish(chip)

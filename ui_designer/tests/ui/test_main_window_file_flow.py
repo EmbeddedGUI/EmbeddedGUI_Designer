@@ -5954,6 +5954,7 @@ class TestMainWindowFileFlow:
         assert window._sdk_chip.text() == "SDK ready"
         assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
         assert window._sdk_chip.toolTip() == "Open Status Center to review SDK readiness."
+        assert window._sdk_chip.statusTip() == window._sdk_chip.toolTip()
         assert window._central_stack.accessibleName() == "Main view stack: Editor workspace visible."
         assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
         assert window._sdk_status_label.toolTip() == str(sdk_root)
@@ -5964,11 +5965,14 @@ class TestMainWindowFileFlow:
         assert window._selection_chip.text() == "No selection"
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
+        assert window._selection_chip.statusTip() == window._selection_chip.toolTip()
         assert window._preview_chip.text() == "Preview idle"
         assert window._preview_chip.accessibleName() == "Workspace status: Preview idle."
         assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."
+        assert window._preview_chip.statusTip() == window._preview_chip.toolTip()
         assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 0 errors and 0 warnings."
         assert window._diagnostics_chip.toolTip() == "Open Diagnostics to review issues and warnings."
+        assert window._diagnostics_chip.statusTip() == window._diagnostics_chip.toolTip()
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
@@ -5983,6 +5987,7 @@ class TestMainWindowFileFlow:
         assert window._dirty_chip.text() == "Dirty 1"
         assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
         assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
+        assert window._dirty_chip.statusTip() == window._dirty_chip.toolTip()
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
         _close_window(window)
 
