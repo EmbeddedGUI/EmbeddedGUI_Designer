@@ -417,20 +417,21 @@ class AppSelectorDialog(QDialog):
         _set_widget_metadata(
             self._download_btn,
             tooltip=download_hint,
-            accessible_name=download_name,
+            accessible_name=f"{download_name}. {download_hint}",
         )
-        open_hint = (
-            f"{self._open_btn.text()} the selected example."
-            if self._selected_entry
-            else "Select an SDK example to open it."
-        )
+        if not self._selected_entry:
+            open_hint = "Select an SDK example to open it."
+        elif self._selected_entry.get("is_legacy"):
+            open_hint = "Import the selected legacy example into a Designer project."
+        else:
+            open_hint = "Open the selected Designer project."
         _set_widget_metadata(
             self._open_btn,
             tooltip=open_hint,
             accessible_name=(
-                f"Open action: {self._open_btn.text()}"
+                f"Open action: {self._open_btn.text()}. {open_hint}"
                 if self._selected_entry
-                else f"Open action unavailable: {self._open_btn.text()}"
+                else f"Open action unavailable: {self._open_btn.text()}. {open_hint}"
             ),
         )
 
