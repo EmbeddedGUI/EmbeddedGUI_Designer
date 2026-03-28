@@ -331,7 +331,12 @@ class TestWidgetBrowserPanel:
             f"Insert target: Current page root. Selected: {selected_label}."
         )
         assert panel._search.toolTip() == "Widget browser search. Current text: none."
+        assert panel._search.accessibleName() == "Widget browser search: none."
         assert panel._category_list.accessibleName() == "Widget categories: All Widgets"
+        assert panel._lanes_title.accessibleName() == "Quick Lanes: current category All Widgets."
+        assert panel._sort_title.accessibleName() == "Sort: Recommended"
+        assert panel._complexity_title.accessibleName() == "Complexity: All"
+        assert panel._tags_title.accessibleName() == "Tags: none."
         first_category = panel._category_list.item(0)
         assert first_category.toolTip() == "Show All Widgets in the widget browser."
         assert first_category.statusTip() == first_category.toolTip()
@@ -405,6 +410,7 @@ class TestWidgetBrowserPanel:
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
         assert empty_state.accessibleName() == "No widgets match the current filters."
         assert panel._search.toolTip() == "Widget browser search. Current text: __no_widget_matches__."
+        assert panel._search.accessibleName() == "Widget browser search: __no_widget_matches__."
         assert buttons["Reset Search"].toolTip() == "Clear the current widget browser search text."
         assert buttons["Show All Widgets"].toolTip() == "Reset every widget browser filter and show all widgets."
         panel.deleteLater()

@@ -882,7 +882,7 @@ class WidgetBrowserPanel(QWidget):
         _set_widget_metadata(
             self._search,
             tooltip=f"Widget browser search. Current text: {search_text}.",
-            accessible_name="Widget browser search",
+            accessible_name=f"Widget browser search: {search_text}.",
         )
         _set_widget_metadata(
             self._category_list,
@@ -894,22 +894,22 @@ class WidgetBrowserPanel(QWidget):
         _set_widget_metadata(
             self._lanes_title,
             tooltip="Quick lanes switch the main widget browser category.",
-            accessible_name=self._lanes_title.text(),
+            accessible_name=f"Quick Lanes: current category {category_label}.",
         )
         _set_widget_metadata(
             self._sort_title,
             tooltip=f"Current sort mode: {self._sort_label()}",
-            accessible_name=self._sort_title.text(),
+            accessible_name=f"Sort: {self._sort_label()}",
         )
         _set_widget_metadata(
             self._complexity_title,
             tooltip=f"Current complexity filter: {self._complexity_label()}",
-            accessible_name=self._complexity_title.text(),
+            accessible_name=f"Complexity: {self._complexity_label()}",
         )
         _set_widget_metadata(
             self._tags_title,
             tooltip=f"Active widget tags: {tags_text}.",
-            accessible_name=self._tags_title.text(),
+            accessible_name=f"Tags: {tags_text}.",
         )
 
     def _on_category_changed(self, _row):
