@@ -480,17 +480,17 @@ class StatusCenterPanel(QWidget):
     def _recent_actions_title_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Quick actions with no recent status center actions yet."
+            return "Quick actions with no recent actions yet."
         noun = "action" if count == 1 else "actions"
-        return f"Quick actions with {count} recent status center {noun} tracked."
+        return f"Quick actions with {count} recent {noun} tracked."
 
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
-            return "Status center has no recent actions yet."
+            return "No recent actions yet."
         noun = "action" if count == 1 else "actions"
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
-        return f"{count} recent status center {noun}: {labels}"
+        return f"{count} recent {noun}: {labels}"
 
     def _recent_actions_accessible_name(self):
         count = len(self._recent_actions)
@@ -503,7 +503,7 @@ class StatusCenterPanel(QWidget):
     def _clear_recent_actions_tooltip(self):
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
-        return f"Clear {count} recent status center {noun}."
+        return f"Clear {count} recent {noun}."
 
     def _clear_recent_actions_label(self):
         count = len(self._recent_actions)
@@ -516,17 +516,17 @@ class StatusCenterPanel(QWidget):
         noun = "action" if count == 1 else "actions"
         if count > 1:
             return (
-                f"Repeat {action_label}. {count} recent status center {noun} tracked. "
+                f"Repeat {action_label}. {count} recent {noun} tracked. "
                 "Use the menu arrow to replay an older action."
             )
-        return f"Repeat {action_label}. {count} recent status center {noun} tracked."
+        return f"Repeat {action_label}. {count} recent {noun} tracked."
 
     def _last_action_tooltip(self, action_label):
         if not self._last_action:
-            return "No recent status center action yet."
+            return "No recent action yet."
         count = len(self._recent_actions)
         noun = "recent action" if count == 1 else "recent actions"
-        return f"Current status center action: {action_label}. {count} {noun} tracked."
+        return f"Current action: {action_label}. {count} {noun} tracked."
 
     def _last_action_accessible_name(self, action_label):
         if not self._last_action:
