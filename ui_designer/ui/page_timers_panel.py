@@ -120,6 +120,17 @@ class PageTimersPanel(QWidget):
     def _update_button_metadata(self, button, tooltip, accessible_name):
         _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
+    def _selected_timer(self):
+        if self._table.selectionModel() is None:
+            return {}
+        selected_rows = self._table.selectionModel().selectedRows()
+        if not selected_rows:
+            return {}
+        row = selected_rows[0].row()
+        if row < 0 or row >= len(self._timers):
+            return {}
+        return dict(self._timers[row])
+
     def clear(self):
         self.set_page(None)
 
@@ -167,18 +178,23 @@ class PageTimersPanel(QWidget):
 
     def _update_actions(self):
         has_page = self._page is not None
-        has_selection = bool(self._table.selectionModel() and self._table.selectionModel().selectedRows())
+        selected_timer = self._selected_timer()
+        selected_timer_name = str(selected_timer.get("name", "") or "").strip()
+        selected_callback = str(selected_timer.get("callback", "") or "").strip()
+        has_selection = bool(selected_timer_name)
         self._table.setEnabled(has_page)
         self._add_button.setEnabled(has_page)
         self._remove_button.setEnabled(has_page and has_selection)
         self._open_code_button.setEnabled(has_page and has_selection)
         if has_page:
             add_hint = "Add a page timer."
+            page_name = str(self._page.name or "current page")
         else:
             add_hint = "Open a page to manage timers."
+            page_name = ""
         if has_page and has_selection:
-            remove_hint = "Remove the selected page timer."
-            code_hint = "Open user code for the selected timer callback."
+            remove_hint = f"Remove the selected page timer: {selected_timer_name}."
+            code_hint = f"Open user code for timer callback: {selected_callback or 'none'}."
         elif has_page:
             remove_hint = "Select a timer to remove it."
             code_hint = "Select a timer to open its user code."
@@ -188,17 +204,21 @@ class PageTimersPanel(QWidget):
         self._update_button_metadata(
             self._add_button,
             add_hint,
-            "Add page timer" if has_page else "Add page timer unavailable",
+            f"Add page timer to {page_name}" if has_page else "Add page timer unavailable",
         )
         self._update_button_metadata(
             self._remove_button,
             remove_hint,
-            "Remove page timer" if has_page and has_selection else "Remove page timer unavailable",
+            f"Remove page timer: {selected_timer_name}" if has_page and has_selection else "Remove page timer unavailable",
         )
         self._update_button_metadata(
             self._open_code_button,
             code_hint,
-            "Open timer user code" if has_page and has_selection else "Open timer user code unavailable",
+            (
+                f"Open timer user code: {selected_callback}"
+                if has_page and has_selection and selected_callback
+                else "Open timer user code unavailable"
+            ),
         )
 
     def _table_timers(self):

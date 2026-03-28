@@ -59,6 +59,7 @@ class TestPageTimersPanel:
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page"
         assert panel._add_button.toolTip() == "Add a page timer."
+        assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._remove_button.toolTip() == "Select a timer to remove it."
         assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
@@ -106,16 +107,16 @@ class TestPageTimersPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
-        assert panel._remove_button.toolTip() == "Remove the selected page timer."
-        assert panel._remove_button.accessibleName() == "Remove page timer"
-        assert panel._open_code_button.toolTip() == "Open user code for the selected timer callback."
-        assert panel._open_code_button.accessibleName() == "Open timer user code"
+        assert panel._remove_button.toolTip() == "Remove the selected page timer: timer."
+        assert panel._remove_button.accessibleName() == "Remove page timer: timer"
+        assert panel._open_code_button.toolTip() == "Open user code for timer callback: egui_main_page_timer_callback."
+        assert panel._open_code_button.accessibleName() == "Open timer user code: egui_main_page_timer_callback"
         assert captured[-1][0]["name"] == "timer"
         assert captured[-1][0]["callback"] == "egui_main_page_timer_callback"
 
         panel._table.selectRow(0)
-        assert panel._remove_button.toolTip() == "Remove the selected page timer."
-        assert panel._open_code_button.toolTip() == "Open user code for the selected timer callback."
+        assert panel._remove_button.toolTip() == "Remove the selected page timer: timer."
+        assert panel._open_code_button.toolTip() == "Open user code for timer callback: egui_main_page_timer_callback."
         panel._on_remove_timer()
         qapp.processEvents()
 
