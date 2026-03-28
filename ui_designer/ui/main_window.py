@@ -1016,6 +1016,38 @@ class MainWindow(QMainWindow):
             hint = base_text if has_project else self._action_hint(base_text, False, "open a project first")
             self._apply_action_hint(action, hint)
 
+    def _update_file_open_action_metadata(self, binding_label=""):
+        open_app_action = getattr(self, "_open_app_action", None)
+        if open_app_action is not None:
+            label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+            self._apply_action_hint(
+                open_app_action,
+                f"Open an SDK example project or legacy example. Current binding: {label}.",
+            )
+        open_project_action = getattr(self, "_open_project_action", None)
+        if open_project_action is not None:
+            recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
+            recent_count = min(len(recent), 10)
+            recent_label = (
+                "none"
+                if recent_count == 0
+                else f"{recent_count} project" if recent_count == 1 else f"{recent_count} projects"
+            )
+            self._apply_action_hint(
+                open_project_action,
+                f"Open an existing .egui project file. Recent projects: {recent_label}.",
+            )
+
+    def _update_download_sdk_action_metadata(self, binding_label=""):
+        action = getattr(self, "_download_sdk_action", None)
+        if action is None:
+            return
+        label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+        self._apply_action_hint(
+            action,
+            f"{describe_auto_download_plan()} Current binding: {label}.",
+        )
+
     def _update_sdk_root_action_metadata(self, binding_label=""):
         action = getattr(self, "_set_sdk_root_action", None)
         if action is None:
@@ -2544,22 +2576,22 @@ class MainWindow(QMainWindow):
         new_action.triggered.connect(self._new_project)
         file_menu.addAction(new_action)
 
-        open_app_action = QAction("Open SDK Example...", self)
-        open_app_action.setShortcut("Ctrl+Shift+O")
-        self._apply_action_hint(open_app_action, "Open an SDK example project or legacy example.")
-        open_app_action.triggered.connect(self._open_app_dialog)
-        file_menu.addAction(open_app_action)
+        self._open_app_action = QAction("Open SDK Example...", self)
+        self._open_app_action.setShortcut("Ctrl+Shift+O")
+        self._apply_action_hint(self._open_app_action, "Open an SDK example project or legacy example.")
+        self._open_app_action.triggered.connect(self._open_app_dialog)
+        file_menu.addAction(self._open_app_action)
 
-        open_action = QAction("Open Project File...", self)
-        open_action.setShortcut("Ctrl+O")
-        self._apply_action_hint(open_action, "Open an existing .egui project file.")
-        open_action.triggered.connect(self._open_project)
-        file_menu.addAction(open_action)
+        self._open_project_action = QAction("Open Project File...", self)
+        self._open_project_action.setShortcut("Ctrl+O")
+        self._apply_action_hint(self._open_project_action, "Open an existing .egui project file.")
+        self._open_project_action.triggered.connect(self._open_project)
+        file_menu.addAction(self._open_project_action)
 
-        download_sdk_action = QAction("Download SDK Copy...", self)
-        self._apply_action_hint(download_sdk_action, describe_auto_download_plan())
-        download_sdk_action.triggered.connect(self._download_sdk)
-        file_menu.addAction(download_sdk_action)
+        self._download_sdk_action = QAction("Download SDK Copy...", self)
+        self._apply_action_hint(self._download_sdk_action, describe_auto_download_plan())
+        self._download_sdk_action.triggered.connect(self._download_sdk)
+        file_menu.addAction(self._download_sdk_action)
 
         self._set_sdk_root_action = QAction("Set SDK Root...", self)
         self._apply_action_hint(self._set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
@@ -3317,6 +3349,7 @@ class MainWindow(QMainWindow):
             action.setToolTip("No recent projects are available.")
             action.setStatusTip(action.toolTip())
             self._recent_menu.addAction(action)
+            self._update_file_open_action_metadata()
             self._update_file_menu_metadata()
             return
 
@@ -3344,6 +3377,7 @@ class MainWindow(QMainWindow):
                 lambda checked, p=project_path, r=sdk_root: self._open_recent_project(p, r)
             )
             self._recent_menu.addAction(action)
+        self._update_file_open_action_metadata()
         self._update_file_menu_metadata()
 
     def _release_output_root(self):
@@ -3374,6 +3408,8 @@ class MainWindow(QMainWindow):
         self._sdk_status_label.setToolTip(tooltip)
         self._sdk_status_label.setStatusTip(tooltip)
         self._sdk_status_label.setAccessibleName(f"SDK binding: {binding_label}.")
+        self._update_file_open_action_metadata(binding_label)
+        self._update_download_sdk_action_metadata(binding_label)
         self._update_sdk_root_action_metadata(binding_label)
         self._update_workspace_chips()
 

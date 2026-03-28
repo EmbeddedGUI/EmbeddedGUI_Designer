@@ -3697,11 +3697,14 @@ class TestMainWindowFileFlow:
 
         assert actions["New Project"].toolTip() == "Create a new EmbeddedGUI Designer project."
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
-        assert actions["Open SDK Example..."].toolTip() == "Open an SDK example project or legacy example."
+        assert actions["Open SDK Example..."].toolTip() == (
+            "Open an SDK example project or legacy example. Current binding: SDK: missing."
+        )
         assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
-        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file."
+        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file. Recent projects: none."
         assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
         assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
+        assert "Current binding: SDK: missing." in actions["Download SDK Copy..."].toolTip()
         assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
         assert actions["Set SDK Root..."].toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: missing."
@@ -3724,6 +3727,51 @@ class TestMainWindowFileFlow:
             if action.text() == "Set SDK Root..."
         )
         assert action.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: test-binding."
+        assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
+    def test_file_open_actions_track_binding_and_recent_projects(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        isolated_config.recent_projects = [
+            {"project_path": "C:/work/Demo.egui", "sdk_root": "", "display_name": "Demo"},
+        ]
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: cached")
+
+        window.project_root = "C:/sdk"
+        window._update_sdk_status_label()
+        window._update_recent_menu()
+
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {"Open SDK Example...", "Open Project File..."}
+        }
+        assert actions["Open SDK Example..."].toolTip() == (
+            "Open an SDK example project or legacy example. Current binding: SDK: cached."
+        )
+        assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
+        assert actions["Open Project File..."].toolTip() == "Open an existing .egui project file. Recent projects: 1 project."
+        assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
+        _close_window(window)
+
+    def test_download_sdk_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: download-test")
+
+        window.project_root = "C:/sdk"
+        window._update_sdk_status_label()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "Download SDK Copy..."
+        )
+        assert "Current binding: SDK: download-test." in action.toolTip()
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
