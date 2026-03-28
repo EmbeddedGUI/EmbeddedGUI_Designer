@@ -478,6 +478,104 @@ def test_release_history_dialog_previews_version_file(qapp, tmp_path):
 
 
 @_skip_no_qt
+def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    manifest_path = tmp_path / "release-manifest.json"
+    manifest_path.write_text('{"status":"success"}\n', encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000000Z",
+                "status": "success",
+                "profile_id": "windows-pc",
+                "message": "Release created",
+                "sdk": {"revision": "sdk-good"},
+                "manifest_path": str(manifest_path),
+            }
+        ]
+    )
+
+    assert "Release history: 1 of 1 entries." in dialog.accessibleName()
+    assert "Preview mode: auto." in dialog.accessibleName()
+    assert dialog._search_edit.toolTip() == (
+        "Filter release history by build ID, message, SDK revision, or artifact path. Current search: none."
+    )
+    assert dialog._history_list.accessibleName() == (
+        "Release history list: 1 visible entry. Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._history_list.item(0).toolTip() == (
+        "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created"
+    )
+    assert dialog._summary_label.accessibleName() == (
+        "Selected release summary: 20260326T000000Z [windows-pc] success sdk sdk-good"
+    )
+    assert dialog._details_edit.accessibleName() == (
+        "Release entry details: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._preview_auto_button.toolTip() == (
+        "Showing the best available preview for the selected release entry."
+    )
+    assert dialog._preview_manifest_button.toolTip() == "Preview the selected release manifest."
+    assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
+    assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy."
+    assert dialog._refresh_button.toolTip() == "Refresh unavailable because no history reload callback was provided."
+
+
+@_skip_no_qt
+def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_preview(qapp, tmp_path):
+    from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
+
+    log_path = tmp_path / "build.log"
+    history_path = tmp_path / "history.json"
+    log_path.write_text("build failed\n", encoding="utf-8")
+    history_path.write_text("[]\n", encoding="utf-8")
+
+    dialog = ReleaseHistoryDialog(
+        [
+            {
+                "build_id": "20260326T000100Z",
+                "status": "failed",
+                "profile_id": "esp32",
+                "message": "Build failed",
+                "sdk": {"revision": "sdk-fail"},
+                "warning_count": 2,
+                "error_count": 1,
+                "log_path": str(log_path),
+            }
+        ],
+        open_path_callback=lambda path: None,
+        history_path=str(history_path),
+        refresh_history_callback=lambda: [],
+    )
+
+    dialog._search_edit.setText("sdk-fail")
+    qapp.processEvents()
+
+    assert dialog._clear_filters_button.toolTip() == "Clear the current release history filters and search text."
+    assert dialog._reset_view_button.toolTip() == "Reset release history filters, preview mode, and selection."
+    assert dialog._copy_history_json_button.toolTip() == "Copy the release history JSON file."
+    assert dialog._open_history_file_button.toolTip() == "Open the release history JSON file."
+    assert dialog._refresh_button.toolTip() == "Reload release history from disk."
+
+    dialog._preview_log_button.click()
+    qapp.processEvents()
+
+    assert dialog._preview_log_button.toolTip() == "Showing the selected release build log preview."
+    assert dialog._copy_preview_path_button.toolTip() == "Copy the current log preview path."
+    assert dialog._open_preview_button.toolTip() == "Open the current log preview file."
+    assert dialog._preview_edit.accessibleName() == "Release preview: Log Preview."
+
+    dialog._search_edit.setText("missing-entry")
+    qapp.processEvents()
+
+    assert dialog._history_list.toolTip() == "Release history list: 0 visible entries. Current selection: none."
+    assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy."
+    assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."
+
+
+@_skip_no_qt
 def test_release_history_dialog_filters_entries_by_version_artifact(qapp, tmp_path):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 

@@ -36,6 +36,14 @@ _PREVIEW_CHAR_LIMIT = 65536
 _LIST_DIAGNOSTIC_LIMIT = 72
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None) -> None:
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 def _history_string(entry: dict[str, object], key: str) -> str:
     value = entry.get(key, "")
     return str(value).strip() if value is not None else ""
@@ -1111,11 +1119,397 @@ class ReleaseHistoryDialog(QDialog):
         button_box.rejected.connect(self.reject)
         button_box.accepted.connect(self.accept)
         root_layout.addWidget(button_box)
+        close_button = button_box.button(QDialogButtonBox.Close)
+
+        self._range_filter_combo.setAccessibleName("Release history range filter")
+        self._status_filter_combo.setAccessibleName("Release history status filter")
+        self._profile_filter_combo.setAccessibleName("Release history profile filter")
+        self._artifact_filter_combo.setAccessibleName("Release history artifact filter")
+        self._diagnostics_filter_combo.setAccessibleName("Release history diagnostics filter")
+        self._sort_combo.setAccessibleName("Release history sort order")
+        self._search_edit.setAccessibleName("Release history search")
+        self._history_list.setAccessibleName("Release history list")
+        self._summary_label.setAccessibleName("Release entry summary")
+        self._details_edit.setAccessibleName("Release entry details")
+        self._preview_label.setAccessibleName("Release preview label")
+        self._preview_edit.setAccessibleName("Release preview")
+        for button, accessible_name in (
+            (self._clear_filters_button, "Clear release history filters"),
+            (self._reset_view_button, "Reset release history view"),
+            (self._copy_filtered_button, "Copy filtered release history summary"),
+            (self._copy_filtered_json_button, "Copy filtered release history JSON"),
+            (self._export_filtered_button, "Export filtered release history"),
+            (self._copy_history_file_button, "Copy release history file path"),
+            (self._copy_history_json_button, "Copy release history JSON"),
+            (self._export_history_json_button, "Export release history JSON"),
+            (self._open_history_file_button, "Open release history file"),
+            (self._refresh_button, "Refresh release history"),
+            (self._preview_auto_button, "Auto preview"),
+            (self._preview_manifest_button, "Preview manifest"),
+            (self._preview_log_button, "Preview build log"),
+            (self._preview_version_button, "Preview version file"),
+            (self._copy_summary_button, "Copy selected release summary"),
+            (self._export_summary_button, "Export selected release summary"),
+            (self._copy_details_button, "Copy selected release details"),
+            (self._copy_preview_button, "Copy current preview text"),
+            (self._copy_preview_path_button, "Copy current preview path"),
+            (self._export_preview_button, "Export current preview"),
+            (self._open_preview_button, "Open current preview file"),
+            (self._copy_folder_path_button, "Copy selected release folder path"),
+            (self._copy_dist_path_button, "Copy selected dist path"),
+            (self._copy_package_path_button, "Copy selected package path"),
+            (self._export_details_button, "Export selected release details"),
+            (self._copy_entry_json_button, "Copy selected release entry JSON"),
+            (self._export_entry_json_button, "Export selected release entry JSON"),
+            (self._open_folder_button, "Open selected release folder"),
+            (self._open_dist_button, "Open selected dist folder"),
+            (self._open_version_button, "Open selected version file"),
+            (self._open_manifest_button, "Open selected manifest"),
+            (self._open_log_button, "Open selected build log"),
+            (self._open_package_button, "Open selected package"),
+        ):
+            button.setAccessibleName(accessible_name)
+        if close_button is not None:
+            _set_widget_metadata(
+                close_button,
+                tooltip="Close the release history dialog.",
+                accessible_name="Close release history dialog",
+            )
 
         self._load_history_entries(history_entries)
         self._restore_view_state()
         self._update_history_file_button()
         self._sync_preview_mode_buttons()
+
+    def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
+        value = max(int(count or 0), 0)
+        noun = singular if value == 1 else (plural or f"{singular}s")
+        return f"{value} {noun}"
+
+    def _current_search_label(self) -> str:
+        text = self._search_edit.text().strip()
+        return text if text else "none"
+
+    def _current_selection_label(self) -> str:
+        entry = self._current_entry()
+        return _history_list_label(entry) if entry else "none"
+
+    def _filters_are_active(self) -> bool:
+        return any(
+            (
+                str(self._range_filter_combo.currentData() or ""),
+                str(self._status_filter_combo.currentData() or ""),
+                str(self._profile_filter_combo.currentData() or ""),
+                str(self._artifact_filter_combo.currentData() or ""),
+                str(self._diagnostics_filter_combo.currentData() or ""),
+                "" if str(self._sort_combo.currentData() or "newest") == "newest" else str(self._sort_combo.currentData() or ""),
+                self._search_edit.text().strip(),
+            )
+        )
+
+    def _default_view_is_active(self) -> bool:
+        current_row = self._history_list.currentRow()
+        default_row = 0 if self._history_list.count() else -1
+        return not self._filters_are_active() and self._preview_mode == "auto" and current_row == default_row
+
+    def _history_file_exists(self) -> bool:
+        return bool(self._history_path and os.path.isfile(self._history_path))
+
+    def _copy_path_hint(self, label: str, path: str) -> str:
+        if path:
+            return f"Copy the {label} path."
+        return f"No {label} path is available to copy."
+
+    def _open_path_hint(self, label: str, path: str, *, directory: bool = False) -> str:
+        exists = os.path.isdir(path) if directory else os.path.isfile(path)
+        if path and exists:
+            return f"Open the {label}."
+        return f"The {label} is unavailable or missing."
+
+    def _preview_mode_hint(self, mode: str) -> str:
+        entry = self._current_entry()
+        if entry is None:
+            return "Select a release entry to preview its artifacts."
+        preview_label = {
+            "auto": "best available artifact",
+            "manifest": "manifest",
+            "log": "build log",
+            "version": "version file",
+        }[mode]
+        if mode == "manifest" and not _history_string(entry, "manifest_path"):
+            return "No manifest is recorded for the selected release entry."
+        if mode == "log" and not _history_string(entry, "log_path"):
+            return "No build log is recorded for the selected release entry."
+        if mode == "version" and not _history_version_path(entry):
+            return "No version file is recorded for the selected release entry."
+        if self._preview_mode == mode:
+            if mode == "auto":
+                return "Showing the best available preview for the selected release entry."
+            return f"Showing the selected release {preview_label} preview."
+        if mode == "auto":
+            return "Automatically preview the best available artifact for the selected release entry."
+        return f"Preview the selected release {preview_label}."
+
+    def _update_accessibility_summary(self) -> None:
+        visible_entries = len(self._filtered_history_entries)
+        total_entries = len(self._all_history_entries)
+        result_summary = f"{visible_entries} of {total_entries} entries"
+        selection_label = self._current_selection_label()
+        dialog_summary = (
+            f"Release history: {result_summary}. "
+            f"Filters: range {self._range_filter_combo.currentText()}, status {self._status_filter_combo.currentText()}, "
+            f"profile {self._profile_filter_combo.currentText() or 'All'}, artifact {self._artifact_filter_combo.currentText()}, "
+            f"diagnostics {self._diagnostics_filter_combo.currentText()}, sort {self._sort_combo.currentText()}, "
+            f"search {self._current_search_label()}. "
+            f"Preview mode: {self._preview_mode}. Current selection: {selection_label}."
+        )
+        list_summary = f"Release history list: {self._count_label(visible_entries, 'visible entry', 'visible entries')}. Current selection: {selection_label}."
+        summary_text = str(self._summary_label.text() or "No release entry selected.").strip() or "No release entry selected."
+        details_summary = (
+            f"Release entry details: {selection_label}."
+            if self._current_entry() is not None
+            else "Release entry details: no release entry selected."
+        )
+        preview_title = str(self._preview_label.text() or "Preview").strip() or "Preview"
+        preview_summary = f"Release preview: {preview_title}."
+        history_exists = self._history_file_exists()
+        preview_label_text, preview_path = self._current_preview_target()
+        preview_label_lower = preview_label_text.lower()
+
+        _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._range_filter_combo,
+            tooltip=f"Filter release history by age. Current filter: {self._range_filter_combo.currentText()}.",
+            accessible_name=f"Release history range filter: {self._range_filter_combo.currentText()}",
+        )
+        _set_widget_metadata(
+            self._status_filter_combo,
+            tooltip=f"Filter release history by status. Current filter: {self._status_filter_combo.currentText()}.",
+            accessible_name=f"Release history status filter: {self._status_filter_combo.currentText()}",
+        )
+        _set_widget_metadata(
+            self._profile_filter_combo,
+            tooltip=f"Filter release history by build profile. Current filter: {self._profile_filter_combo.currentText() or 'All'}.",
+            accessible_name=f"Release history profile filter: {self._profile_filter_combo.currentText() or 'All'}",
+        )
+        _set_widget_metadata(
+            self._artifact_filter_combo,
+            tooltip=f"Filter release history by artifact availability. Current filter: {self._artifact_filter_combo.currentText()}.",
+            accessible_name=f"Release history artifact filter: {self._artifact_filter_combo.currentText()}",
+        )
+        _set_widget_metadata(
+            self._diagnostics_filter_combo,
+            tooltip=f"Filter release history by diagnostics state. Current filter: {self._diagnostics_filter_combo.currentText()}.",
+            accessible_name=f"Release history diagnostics filter: {self._diagnostics_filter_combo.currentText()}",
+        )
+        _set_widget_metadata(
+            self._sort_combo,
+            tooltip=f"Choose how filtered release entries are sorted. Current sort: {self._sort_combo.currentText()}.",
+            accessible_name=f"Release history sort order: {self._sort_combo.currentText()}",
+        )
+        _set_widget_metadata(
+            self._search_edit,
+            tooltip=f"Filter release history by build ID, message, SDK revision, or artifact path. Current search: {self._current_search_label()}.",
+            accessible_name=f"Release history search: {self._current_search_label()}",
+        )
+        _set_widget_metadata(
+            self._result_count_label,
+            tooltip=f"Release history results: {result_summary}.",
+            accessible_name=f"Release history results: {result_summary}",
+        )
+        _set_widget_metadata(
+            self._status_breakdown_label,
+            tooltip=self._status_breakdown_label.text(),
+            accessible_name=f"Status breakdown: {self._status_breakdown_label.text()}",
+        )
+        _set_widget_metadata(
+            self._artifact_breakdown_label,
+            tooltip=self._artifact_breakdown_label.text(),
+            accessible_name=f"Artifact breakdown: {self._artifact_breakdown_label.text()}",
+        )
+        _set_widget_metadata(
+            self._diagnostics_breakdown_label,
+            tooltip=self._diagnostics_breakdown_label.text(),
+            accessible_name=f"Diagnostics breakdown: {self._diagnostics_breakdown_label.text()}",
+        )
+        _set_widget_metadata(
+            self._clear_filters_button,
+            tooltip=(
+                "Clear the current release history filters and search text."
+                if self._filters_are_active()
+                else "Release history filters already show every entry."
+            ),
+        )
+        _set_widget_metadata(
+            self._reset_view_button,
+            tooltip=(
+                "Reset release history filters, preview mode, and selection."
+                if not self._default_view_is_active()
+                else "Release history already shows the default view."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_filtered_button,
+            tooltip=(
+                "Copy the filtered release history summary."
+                if self._filtered_history_entries
+                else "No filtered release entries are available to copy."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_filtered_json_button,
+            tooltip=(
+                "Copy the filtered release history as JSON."
+                if self._filtered_history_entries
+                else "No filtered release entries are available to copy as JSON."
+            ),
+        )
+        _set_widget_metadata(
+            self._export_filtered_button,
+            tooltip=(
+                "Export the filtered release history."
+                if self._filtered_history_entries
+                else "No filtered release entries are available to export."
+            ),
+        )
+        _set_widget_metadata(self._copy_history_file_button, tooltip=self._copy_path_hint("release history file", self._history_path))
+        _set_widget_metadata(
+            self._copy_history_json_button,
+            tooltip=(
+                "Copy the release history JSON file."
+                if history_exists
+                else "No readable release history JSON file is available to copy."
+            ),
+        )
+        _set_widget_metadata(
+            self._export_history_json_button,
+            tooltip=(
+                "Export the release history JSON file."
+                if history_exists
+                else "No readable release history JSON file is available to export."
+            ),
+        )
+        _set_widget_metadata(
+            self._open_history_file_button,
+            tooltip=(
+                "Open the release history JSON file."
+                if history_exists and self._open_path_callback is not None
+                else "The release history JSON file is unavailable or cannot be opened here."
+            ),
+        )
+        _set_widget_metadata(
+            self._refresh_button,
+            tooltip=(
+                "Reload release history from disk."
+                if self._refresh_history_callback is not None
+                else "Refresh unavailable because no history reload callback was provided."
+            ),
+        )
+        _set_widget_metadata(self._history_list, tooltip=list_summary, accessible_name=list_summary)
+        _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=f"Selected release summary: {summary_text}")
+        _set_widget_metadata(self._details_edit, tooltip=details_summary, accessible_name=details_summary)
+        _set_widget_metadata(self._preview_label, tooltip=preview_title, accessible_name=f"Release preview label: {preview_title}")
+        _set_widget_metadata(self._preview_edit, tooltip=preview_summary, accessible_name=preview_summary)
+        _set_widget_metadata(self._preview_auto_button, tooltip=self._preview_mode_hint("auto"))
+        _set_widget_metadata(self._preview_manifest_button, tooltip=self._preview_mode_hint("manifest"))
+        _set_widget_metadata(self._preview_log_button, tooltip=self._preview_mode_hint("log"))
+        _set_widget_metadata(self._preview_version_button, tooltip=self._preview_mode_hint("version"))
+        _set_widget_metadata(
+            self._copy_summary_button,
+            tooltip=(
+                "Copy the selected release summary."
+                if self._current_entry() is not None
+                else "Select a release entry to copy its summary."
+            ),
+        )
+        _set_widget_metadata(
+            self._export_summary_button,
+            tooltip=(
+                "Export the selected release summary."
+                if self._current_entry() is not None
+                else "Select a release entry to export its summary."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_details_button,
+            tooltip=(
+                "Copy the selected release details."
+                if self._current_entry() is not None
+                else "Select a release entry to copy its details."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_preview_button,
+            tooltip=(
+                f"Copy the full {preview_label_lower} preview text."
+                if self._current_entry() is not None
+                else "Select a release entry to copy its preview."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_preview_path_button,
+            tooltip=(
+                f"Copy the current {preview_label_lower} preview path."
+                if preview_path
+                else f"No {preview_label_lower} preview path is available to copy."
+            ),
+        )
+        _set_widget_metadata(
+            self._export_preview_button,
+            tooltip=(
+                f"Export the current {preview_label_lower} preview."
+                if preview_path and os.path.isfile(preview_path)
+                else f"No {preview_label_lower} preview file is available to export."
+            ),
+        )
+        _set_widget_metadata(
+            self._open_preview_button,
+            tooltip=(
+                f"Open the current {preview_label_lower} preview file."
+                if self._open_path_callback is not None and preview_path and os.path.isfile(preview_path)
+                else f"The current {preview_label_lower} preview file is unavailable or missing."
+            ),
+        )
+        entry = self._current_entry() or {}
+        release_root = _history_string(entry, "release_root")
+        dist_dir = _history_string(entry, "dist_dir")
+        package_path = _history_string(entry, "zip_path")
+        manifest_path = _history_string(entry, "manifest_path")
+        log_path = _history_string(entry, "log_path")
+        version_path = _history_version_path(entry)
+        _set_widget_metadata(self._copy_folder_path_button, tooltip=self._copy_path_hint("release folder", release_root))
+        _set_widget_metadata(self._copy_dist_path_button, tooltip=self._copy_path_hint("release dist folder", dist_dir))
+        _set_widget_metadata(self._copy_package_path_button, tooltip=self._copy_path_hint("release package", package_path))
+        _set_widget_metadata(
+            self._export_details_button,
+            tooltip=(
+                "Export the selected release details."
+                if self._current_entry() is not None
+                else "Select a release entry to export its details."
+            ),
+        )
+        _set_widget_metadata(
+            self._copy_entry_json_button,
+            tooltip=(
+                "Copy the selected release entry as JSON."
+                if self._current_entry() is not None
+                else "Select a release entry to copy its JSON."
+            ),
+        )
+        _set_widget_metadata(
+            self._export_entry_json_button,
+            tooltip=(
+                "Export the selected release entry as JSON."
+                if self._current_entry() is not None
+                else "Select a release entry to export its JSON."
+            ),
+        )
+        _set_widget_metadata(self._open_folder_button, tooltip=self._open_path_hint("selected release folder", release_root, directory=True))
+        _set_widget_metadata(self._open_dist_button, tooltip=self._open_path_hint("selected dist folder", dist_dir, directory=True))
+        _set_widget_metadata(self._open_version_button, tooltip=self._open_path_hint("selected version file", version_path))
+        _set_widget_metadata(self._open_manifest_button, tooltip=self._open_path_hint("selected manifest file", manifest_path))
+        _set_widget_metadata(self._open_log_button, tooltip=self._open_path_hint("selected build log", log_path))
+        _set_widget_metadata(self._open_package_button, tooltip=self._open_path_hint("selected package", package_path))
 
     def _current_entry(self) -> dict[str, object] | None:
         item = self._history_list.currentItem()
@@ -1251,6 +1645,9 @@ class ReleaseHistoryDialog(QDialog):
         for row, entry in enumerate(filtered_entries):
             item = QListWidgetItem(_history_list_label(entry))
             item.setData(Qt.UserRole, entry)
+            item_tooltip = _history_summary_line(entry)
+            item.setToolTip(item_tooltip)
+            item.setStatusTip(item_tooltip)
             self._history_list.addItem(item)
             if current_build_id and _history_string(entry, "build_id") == current_build_id:
                 selected_row = row
@@ -1273,6 +1670,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_label.setText("Preview")
             self._preview_edit.setPlainText("Select a release entry to preview its manifest or build log.")
         self._set_open_buttons(None)
+        self._update_accessibility_summary()
 
     def _reload_history_entries(self) -> None:
         if self._refresh_history_callback is None:
@@ -1682,6 +2080,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_label.setText("Preview")
             self._preview_edit.clear()
             self._update_preview_target_buttons(None)
+            self._update_accessibility_summary()
             return
         if self._preview_mode == "manifest":
             self._preview_selected_path("manifest_path", "Manifest", prefer_json=True)
@@ -1702,6 +2101,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_label.setText("Preview")
             self._preview_edit.setPlainText("No manifest, version file, or build log is recorded for this release entry.")
             self._update_preview_target_buttons(entry)
+            self._update_accessibility_summary()
 
     def _sync_preview_mode_buttons(self) -> None:
         self._preview_auto_button.setChecked(self._preview_mode == "auto")
@@ -1715,6 +2115,7 @@ class ReleaseHistoryDialog(QDialog):
         self._copy_history_json_button.setEnabled(history_exists)
         self._export_history_json_button.setEnabled(history_exists)
         self._open_history_file_button.setEnabled(bool(self._open_path_callback and history_exists))
+        self._update_accessibility_summary()
 
     def _copy_history_file_path(self) -> None:
         self._copy_text(self._history_path + "\n" if self._history_path else "")
@@ -1793,6 +2194,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_label.setText("Preview")
             self._preview_edit.clear()
             self._set_open_buttons(None)
+            self._update_accessibility_summary()
             return
         entry = self._current_entry()
         if entry is None:
@@ -1801,6 +2203,7 @@ class ReleaseHistoryDialog(QDialog):
             self._preview_label.setText("Preview")
             self._preview_edit.clear()
             self._set_open_buttons(None)
+            self._update_accessibility_summary()
             return
         self._summary_label.setText(_history_list_label(entry))
         self._details_edit.setPlainText(_history_detail_text(entry))
@@ -1838,9 +2241,11 @@ class ReleaseHistoryDialog(QDialog):
         if not path:
             self._preview_edit.setPlainText(f"No {label.lower()} path recorded for this release entry.")
             self._update_preview_target_buttons(entry)
+            self._update_accessibility_summary()
             return
         self._preview_edit.setPlainText(_preview_file_text(path, prefer_json=prefer_json))
         self._update_preview_target_buttons(entry)
+        self._update_accessibility_summary()
 
     def _preview_selected_version(self) -> None:
         entry = self._current_entry()
@@ -1849,9 +2254,11 @@ class ReleaseHistoryDialog(QDialog):
         if not path:
             self._preview_edit.setPlainText("No version file is available for this release entry.")
             self._update_preview_target_buttons(entry)
+            self._update_accessibility_summary()
             return
         self._preview_edit.setPlainText(_preview_file_text(path))
         self._update_preview_target_buttons(entry)
+        self._update_accessibility_summary()
 
     def _copy_text(self, text: str) -> None:
         QApplication.clipboard().setText(text or "")
