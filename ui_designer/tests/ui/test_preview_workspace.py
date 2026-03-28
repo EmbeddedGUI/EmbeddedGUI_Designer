@@ -32,6 +32,22 @@ def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton
 
 @_skip_no_qt
 class TestPreviewPanelFallback:
+    def test_preview_panel_exposes_initial_accessibility_metadata(self, qapp):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+
+        assert panel._zoom_label.text() == "100% (8px)"
+        assert panel.accessibleName() == (
+            "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
+            "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
+        )
+        assert panel.status_label.accessibleName() == "Preview status: Preview - waiting for exe..."
+        assert panel._status_bar.accessibleName() == "Preview controls: Zoom 100% (8px). Pointer Pointer idle."
+        assert panel._btn_zoom_out.toolTip() == "Zoom out preview (Ctrl+-). Current zoom: 100% (8px)."
+        assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (8px)."
+        panel.deleteLater()
+
     def test_show_python_preview_sets_pixmap_and_status(self, qapp):
         from ui_designer.model.page import Page
         from ui_designer.model.widget_model import WidgetModel
@@ -49,6 +65,33 @@ class TestPreviewPanelFallback:
         assert panel.is_python_preview_active() is True
         assert panel._preview_label.pixmap() is not None
         assert "Python fallback" in panel.status_label.text()
+        panel.deleteLater()
+
+    def test_preview_summary_metadata_refreshes_with_pointer_and_grid_updates(self, qapp):
+        from ui_designer.model.page import Page
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        label = WidgetModel("label", name="label", x=10, y=10, width=100, height=20)
+        root.add_child(label)
+        page = Page(file_path="layout/main_page.xml", root_widget=root)
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        panel.set_grid_size(12)
+        panel.show_python_preview(page, "fallback")
+        panel._update_status_label(12, 18, label)
+
+        assert panel._zoom_label.text() == "100% (12px)"
+        assert panel.status_label.accessibleName() == "Preview status: Preview - Python fallback (fallback)"
+        assert panel._status_label.accessibleName() == (
+            "Preview pointer status: (12, 18)  |  label: label  [10, 10, 100×20]"
+        )
+        assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (12px)."
+        assert panel.accessibleName() == (
+            "Preview panel: Preview - Python fallback (fallback). Mode: Horizontal split. "
+            "Zoom: 100% (12px). Grid: on. Pointer: (12, 18)  |  label: label  [10, 10, 100×20]."
+        )
         panel.deleteLater()
 
     def test_runtime_failed_emits_after_repeated_frame_failures(self, qapp):

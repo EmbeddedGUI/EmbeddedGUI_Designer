@@ -56,6 +56,14 @@ def _snap_to_grid(value, grid_size):
     return round(value / grid_size) * grid_size
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class WidgetOverlay(QWidget):
     """Overlay showing widget bounds with drag, resize, and grid snap.
 
@@ -1150,6 +1158,8 @@ class PreviewPanel(QWidget):
 
         # Apply initial layout mode
         self._apply_mode()
+        self._update_zoom_label()
+        self._update_accessibility_summary()
 
     def _clear_content_layout(self):
         """Remove all widgets from the content layout without deleting them."""
@@ -1236,6 +1246,7 @@ class PreviewPanel(QWidget):
             self.preview_frame.hide()
             self._overlay_scroll.show()
             self._status_bar.show()
+        self._update_accessibility_summary()
 
     def update_screen_size(self, width, height):
         """Update the logical screen size and resize all preview components."""
@@ -1271,15 +1282,88 @@ class PreviewPanel(QWidget):
     def _on_zoom_out(self):
         self.overlay.zoom_out()
 
+    def _mode_summary(self):
+        return {
+            MODE_VERTICAL: "Vertical split",
+            MODE_HORIZONTAL: "Horizontal split",
+            MODE_HIDDEN: "Overlay only",
+        }.get(self._mode, str(self._mode or "Preview"))
+
+    def _update_accessibility_summary(self):
+        status_text = str(self.status_label.text() or "Preview status unavailable").strip() or "Preview status unavailable"
+        zoom_text = str(self._zoom_label.text() or "100%").strip() or "100%"
+        pointer_text = str(self._status_label.text() or "").strip() or "Pointer idle"
+        grid_text = "on" if self.show_grid() else "off"
+        mode_text = self._mode_summary()
+        summary = (
+            f"Preview panel: {status_text}. Mode: {mode_text}. "
+            f"Zoom: {zoom_text}. Grid: {grid_text}. Pointer: {pointer_text}."
+        )
+        controls_summary = f"Preview controls: Zoom {zoom_text}. Pointer {pointer_text}."
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self.status_label,
+            tooltip=status_text,
+            accessible_name=f"Preview status: {status_text}",
+        )
+        _set_widget_metadata(
+            self.preview_frame,
+            tooltip=f"Rendered preview surface. {status_text}",
+            accessible_name=f"Preview frame: {status_text}",
+        )
+        _set_widget_metadata(
+            self._preview_label,
+            tooltip="Rendered preview surface.",
+            accessible_name="Rendered preview surface",
+        )
+        _set_widget_metadata(
+            self.overlay,
+            tooltip=f"Preview overlay. Mode: {mode_text}.",
+            accessible_name=f"Preview overlay: {mode_text}",
+        )
+        _set_widget_metadata(
+            self._overlay_scroll,
+            tooltip=f"Preview overlay canvas. Mode: {mode_text}.",
+            accessible_name=f"Preview overlay canvas: {mode_text}",
+        )
+        _set_widget_metadata(
+            self._status_bar,
+            tooltip=controls_summary,
+            accessible_name=controls_summary,
+        )
+        _set_widget_metadata(
+            self._status_label,
+            tooltip=f"Preview pointer status: {pointer_text}",
+            accessible_name=f"Preview pointer status: {pointer_text}",
+        )
+        _set_widget_metadata(
+            self._zoom_label,
+            tooltip=f"Preview zoom: {zoom_text}",
+            accessible_name=f"Preview zoom: {zoom_text}",
+        )
+        _set_widget_metadata(
+            self._btn_zoom_out,
+            tooltip=f"Zoom out preview (Ctrl+-). Current zoom: {zoom_text}.",
+            accessible_name="Zoom out preview",
+        )
+        _set_widget_metadata(
+            self._btn_zoom_in,
+            tooltip=f"Zoom in preview (Ctrl+=). Current zoom: {zoom_text}.",
+            accessible_name="Zoom in preview",
+        )
+
     def _update_zoom_label(self, factor=None):
+        del factor
         pct = int(self.overlay._zoom * 100)
         grid = self.overlay._effective_grid_size()
         self._zoom_label.setText(f"{pct}% ({grid}px)")
+        self._update_accessibility_summary()
 
     def _update_status_label(self, x, y, widget):
         """Update status bar with mouse position and widget info."""
         if x < 0 or y < 0:
             self._status_label.setText("")
+            self._update_accessibility_summary()
             return
 
         if widget is not None:
@@ -1290,6 +1374,7 @@ class PreviewPanel(QWidget):
             text = f"({x}, {y})"
 
         self._status_label.setText(text)
+        self._update_accessibility_summary()
 
     def set_widgets(self, widgets):
         """Update the widget list for overlay display."""
@@ -1362,6 +1447,7 @@ class PreviewPanel(QWidget):
         self._render_timer.start(33)  # ~30fps
         self._embedded = True
         self.status_label.setText("Preview - headless rendering")
+        self._update_accessibility_summary()
 
     def stop_rendering(self):
         """Stop frame refresh."""
@@ -1370,6 +1456,7 @@ class PreviewPanel(QWidget):
         self._embedded = False
         self._frame_failure_count = 0
         self._runtime_error_emitted = False
+        self._update_accessibility_summary()
 
     def _set_preview_pixmap(self, pixmap):
         self._preview_label.setPixmap(pixmap)
@@ -1382,6 +1469,7 @@ class PreviewPanel(QWidget):
         if page is None:
             self._preview_label.clear()
             self.status_label.setText("Preview - Python fallback")
+            self._update_accessibility_summary()
             return
 
         image = render_page(page, self.screen_width, self.screen_height).convert("RGBA")
@@ -1392,6 +1480,7 @@ class PreviewPanel(QWidget):
             self.status_label.setText(f"Preview - Python fallback ({reason})")
         else:
             self.status_label.setText("Preview - Python fallback")
+        self._update_accessibility_summary()
 
     def clear_python_preview_mode(self):
         """Leave Python fallback mode without clearing the current frame."""
