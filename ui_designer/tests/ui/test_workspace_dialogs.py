@@ -89,6 +89,9 @@ class TestAppSelectorDialog:
         assert dialog._download_btn.accessibleName() == "Download SDK unavailable"
         assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
+        assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
+            "SDK examples list item: Set or download an SDK root first."
+        )
         dialog.deleteLater()
 
     def test_filters_legacy_examples_by_default(self, qapp, isolated_config, tmp_path):
@@ -143,6 +146,9 @@ class TestAppSelectorDialog:
         assert dialog._app_list.item(0).text() == "(Current SDK root is invalid)"
         assert "Invalid" in dialog._root_status_label.text()
         assert dialog._open_btn.isEnabled() is False
+        assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
+            "SDK examples list item: Current SDK root is invalid."
+        )
         dialog.deleteLater()
 
     def test_toggle_legacy_updates_list_and_config(self, qapp, isolated_config, tmp_path):
@@ -174,6 +180,15 @@ class TestAppSelectorDialog:
         assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: on"
         texts = [dialog._app_list.item(i).text() for i in range(dialog._app_list.count())]
         assert "LegacyApp [Legacy]" in texts
+        legacy_item = next(
+            dialog._app_list.item(i)
+            for i in range(dialog._app_list.count())
+            if dialog._app_list.item(i).text() == "LegacyApp [Legacy]"
+        )
+        assert legacy_item.data(Qt.AccessibleTextRole) == (
+            f"SDK example: LegacyApp [Legacy]. Legacy example path: {legacy}. "
+            "Opening it will initialize a Designer project."
+        )
         dialog.deleteLater()
 
     def test_selection_updates_selected_entry_and_enables_open(self, qapp, isolated_config, tmp_path):
@@ -347,6 +362,9 @@ class TestAppSelectorDialog:
         assert dialog._root_edit.text() == os.path.normpath(os.path.abspath(sdk_root))
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "HelloVirtual"
+        assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
+            f"SDK example: HelloVirtual. Project path: {app_dir / 'HelloVirtual.egui'}"
+        )
         assert "Ready" in dialog._root_status_label.text()
         dialog.deleteLater()
 

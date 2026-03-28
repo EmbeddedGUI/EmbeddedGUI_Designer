@@ -42,6 +42,14 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, *, tooltip=None, accessible_text=None):
+    if tooltip is not None:
+        item.setToolTip(tooltip)
+        item.setStatusTip(tooltip)
+    description = accessible_text if accessible_text is not None else (tooltip or item.text())
+    item.setData(Qt.AccessibleTextRole, description)
+
+
 class AppSelectorDialog(QDialog):
     """Dialog for opening Designer-aware or legacy SDK examples."""
 
@@ -201,8 +209,11 @@ class AppSelectorDialog(QDialog):
         if not self._egui_root:
             item = QListWidgetItem("(Set or download an SDK root first)")
             item.setFlags(Qt.NoItemFlags)
-            item.setToolTip("Set or download an SDK root first.")
-            item.setStatusTip(item.toolTip())
+            _set_item_metadata(
+                item,
+                tooltip="Set or download an SDK root first.",
+                accessible_text="SDK examples list item: Set or download an SDK root first.",
+            )
             self._app_list.addItem(item)
             self._update_accessibility_summary()
             return
@@ -210,8 +221,11 @@ class AppSelectorDialog(QDialog):
         if not is_valid_sdk_root(self._egui_root):
             item = QListWidgetItem("(Current SDK root is invalid)")
             item.setFlags(Qt.NoItemFlags)
-            item.setToolTip("Current SDK root is invalid.")
-            item.setStatusTip(item.toolTip())
+            _set_item_metadata(
+                item,
+                tooltip="Current SDK root is invalid.",
+                accessible_text="SDK examples list item: Current SDK root is invalid.",
+            )
             self._app_list.addItem(item)
             self._update_accessibility_summary()
             return
@@ -230,17 +244,30 @@ class AppSelectorDialog(QDialog):
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, entry)
             if entry["has_project"]:
-                item.setToolTip(entry["project_path"])
+                _set_item_metadata(
+                    item,
+                    tooltip=entry["project_path"],
+                    accessible_text=f"SDK example: {label}. Project path: {entry['project_path']}",
+                )
             else:
-                item.setToolTip(f"{entry['app_dir']}\nLegacy example without .egui. Opening it will initialize a Designer project.")
-            item.setStatusTip(item.toolTip())
+                _set_item_metadata(
+                    item,
+                    tooltip=f"{entry['app_dir']}\nLegacy example without .egui. Opening it will initialize a Designer project.",
+                    accessible_text=(
+                        f"SDK example: {label}. Legacy example path: {entry['app_dir']}. "
+                        "Opening it will initialize a Designer project."
+                    ),
+                )
             self._app_list.addItem(item)
 
         if self._app_list.count() == 0:
             item = QListWidgetItem("(No matching examples)" if search_text else "(No SDK examples found)")
             item.setFlags(Qt.NoItemFlags)
-            item.setToolTip(item.text())
-            item.setStatusTip(item.toolTip())
+            _set_item_metadata(
+                item,
+                tooltip=item.text(),
+                accessible_text=f"SDK examples list item: {item.text()}",
+            )
             self._app_list.addItem(item)
             self._update_accessibility_summary()
             return
