@@ -1273,6 +1273,7 @@ class MainWindow(QMainWindow):
         self,
         output_root_state_summary="",
         release_targets_summary="",
+        history_file_path="",
         history_file_state_summary="",
         history_summary="",
         latest_release_summary="",
@@ -1293,6 +1294,7 @@ class MainWindow(QMainWindow):
             return
         output_root_state_summary = str(output_root_state_summary or self._release_output_root_state_summary())
         release_targets_summary = str(release_targets_summary or self._release_open_targets_summary())
+        history_file_path = str(history_file_path or "")
         history_file_state_summary = str(history_file_state_summary or self._release_history_file_state_summary())
         history_summary = str(history_summary or self._release_history_records_summary())
         latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
@@ -1302,6 +1304,7 @@ class MainWindow(QMainWindow):
             (
                 "Edit release profiles for the current project. "
                 f"Output root: {self._release_output_root()}. {self._release_profiles_summary_suffix()} "
+                f"History file: {history_file_path or 'not created yet'}. "
                 f"{output_root_state_summary} {history_file_state_summary} "
                 f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
             ),
@@ -2370,6 +2373,7 @@ class MainWindow(QMainWindow):
             self._update_release_profiles_action_metadata(
                 output_root_state_summary=output_root_state_summary,
                 release_targets_summary=release_targets_summary,
+                history_file_path=history_file_path,
                 history_file_state_summary=history_file_state_summary,
                 history_summary=history_summary,
                 latest_release_summary=latest_release_summary,
