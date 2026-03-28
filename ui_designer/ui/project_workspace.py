@@ -8,6 +8,14 @@ from PyQt5.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QStackedW
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class ProjectWorkspacePanel(QWidget):
     """Hosts project explorer list and page thumbnails in one panel."""
 
@@ -20,6 +28,9 @@ class ProjectWorkspacePanel(QWidget):
         super().__init__(parent)
         self._list_view = list_view
         self._thumbnail_view = thumbnail_view
+        self._current_page_count = 0
+        self._current_active_page = ""
+        self._current_dirty_pages = 0
         self._init_ui()
 
     def _init_ui(self):
@@ -73,14 +84,20 @@ class ProjectWorkspacePanel(QWidget):
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         self._list_btn.setIcon(make_icon("project"))
-        self._list_btn.setToolTip("Show the page list for structure-first editing.")
-        self._list_btn.setAccessibleName("Workspace view button: List. Structure first.")
+        _set_widget_metadata(
+            self._list_btn,
+            tooltip="Show the page list for structure-first editing.",
+            accessible_name="Workspace view button: List. Structure first.",
+        )
         self._thumb_btn = QPushButton("Thumbnails\nVisual scan")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         self._thumb_btn.setIcon(make_icon("image"))
-        self._thumb_btn.setToolTip("Show page thumbnails for a visual scan.")
-        self._thumb_btn.setAccessibleName("Workspace view button: Thumbnails. Visual scan.")
+        _set_widget_metadata(
+            self._thumb_btn,
+            tooltip="Show page thumbnails for a visual scan.",
+            accessible_name="Workspace view button: Thumbnails. Visual scan.",
+        )
         self._button_group.addButton(self._list_btn)
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
@@ -101,12 +118,24 @@ class ProjectWorkspacePanel(QWidget):
 
     def _set_chip(self, chip, text, tone=None, accessible_name=None):
         chip.setText(str(text or ""))
-        chip.setAccessibleName(str(accessible_name or text or ""))
+        metadata_text = str(accessible_name or text or "")
+        _set_widget_metadata(chip, tooltip=metadata_text, accessible_name=metadata_text)
         if tone is not None:
             chip.setProperty("chipTone", str(tone or "accent"))
         chip.style().unpolish(chip)
         chip.style().polish(chip)
         chip.update()
+
+    def _update_panel_metadata(self):
+        view_label = self._view_chip.text() or "List view"
+        page_label = self._page_count_chip.text() or "0 pages"
+        active_text = self._current_active_page or "none"
+        dirty_text = self._dirty_pages_chip.text() or "No dirty pages"
+        summary = (
+            f"Project workspace: {view_label}. "
+            f"Pages: {page_label}. Active page: {active_text}. Dirty state: {dirty_text}."
+        )
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
 
     def set_view(self, view_name):
         if view_name == self.VIEW_THUMBNAILS:
@@ -118,6 +147,7 @@ class ProjectWorkspacePanel(QWidget):
             view_name = self.VIEW_LIST
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
+        self._update_panel_metadata()
         self.view_changed.emit(view_name)
 
     def current_view(self):
@@ -129,6 +159,9 @@ class ProjectWorkspacePanel(QWidget):
         pages = max(int(page_count or 0), 0)
         dirty = max(int(dirty_pages or 0), 0)
         active = str(active_page or "").strip() or "None"
+        self._current_page_count = pages
+        self._current_active_page = "" if active == "None" else active
+        self._current_dirty_pages = dirty
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
         self._set_chip(
             self._page_count_chip,
@@ -165,3 +198,4 @@ class ProjectWorkspacePanel(QWidget):
                 "success",
                 accessible_name="Workspace dirty pages: no dirty pages.",
             )
+        self._update_panel_metadata()
