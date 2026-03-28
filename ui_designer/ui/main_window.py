@@ -1079,9 +1079,10 @@ class MainWindow(QMainWindow):
         if action is None:
             return
         label = str(binding_label or "SDK: missing")
+        default_root = self._active_sdk_root() or "none"
         self._apply_action_hint(
             action,
-            f"Choose the EmbeddedGUI SDK root used for compile preview. Current binding: {label}.",
+            f"Choose the EmbeddedGUI SDK root used for compile preview. Current binding: {label}. Default selection: {default_root}.",
         )
 
     def _update_generate_resources_action_metadata(self):
@@ -1316,7 +1317,8 @@ class MainWindow(QMainWindow):
             if has_project:
                 dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
                 dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
-                save_hint = f"Save the current project (Ctrl+S). Unsaved pages: {dirty_label}."
+                target_dir = normalize_path(self._project_dir) or "unsaved project directory"
+                save_hint = f"Save the current project (Ctrl+S). Unsaved pages: {dirty_label}. Target: {target_dir}."
             else:
                 save_hint = self._action_hint("Save the current project (Ctrl+S).", False, "open a project first")
             self._apply_action_hint(self._save_action, save_hint)

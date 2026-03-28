@@ -3720,7 +3720,8 @@ class TestMainWindowFileFlow:
         assert f"Install target: {main_window_module.default_sdk_install_dir()}." in actions["Download SDK Copy..."].toolTip()
         assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
         assert actions["Set SDK Root..."].toolTip() == (
-            "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: missing."
+            "Choose the EmbeddedGUI SDK root used for compile preview. "
+            f"Current binding: SDK: missing. Default selection: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Set SDK Root..."].statusTip() == actions["Set SDK Root..."].toolTip()
         _close_window(window)
@@ -3739,7 +3740,10 @@ class TestMainWindowFileFlow:
             action for action in window.findChildren(type(window._save_action))
             if action.text() == "Set SDK Root..."
         )
-        assert action.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview. Current binding: SDK: test-binding."
+        assert action.toolTip() == (
+            "Choose the EmbeddedGUI SDK root used for compile preview. "
+            f"Current binding: SDK: test-binding. Default selection: {window._active_sdk_root() or 'none'}."
+        )
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
@@ -7432,7 +7436,10 @@ class TestMainWindowFileFlow:
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
-        assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unsaved pages: none."
+        assert window._save_action.toolTip() == (
+            "Save the current project (Ctrl+S). "
+            f"Unsaved pages: none. Target: {window._project_dir}."
+        )
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is True
         assert window._compile_action.toolTip() == (
@@ -7478,7 +7485,10 @@ class TestMainWindowFileFlow:
         stack.push("state 2", label="changed")
         window._update_toolbar_action_metadata()
 
-        assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unsaved pages: 1 page."
+        assert window._save_action.toolTip() == (
+            "Save the current project (Ctrl+S). "
+            f"Unsaved pages: 1 page. Target: {window._project_dir}."
+        )
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is True
         _close_window(window)
