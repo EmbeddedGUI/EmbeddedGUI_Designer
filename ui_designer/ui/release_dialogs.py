@@ -1470,6 +1470,8 @@ class ReleaseHistoryDialog(QDialog):
         total_entries = len(self._all_history_entries)
         result_summary = f"{visible_entries} of {total_entries} entries"
         visible_entries_context = f"Visible entries: {visible_entries} of {total_entries}."
+        search_context = f"Current search: {self._current_search_label()}."
+        refresh_context = f"History file: {self._history_path or 'none'}. {visible_entries_context}"
         selection_label = self._current_selection_label()
         dialog_summary = (
             f"Release history: {result_summary}. "
@@ -1554,9 +1556,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._clear_filters_button,
             tooltip=(
-                "Clear the current release history filters and search text."
+                f"Clear the current release history filters and search text. {visible_entries_context} {search_context}"
                 if has_filters
-                else "Release history filters already show every entry."
+                else f"Release history filters already show every entry. {visible_entries_context} {search_context}"
             ),
             accessible_name=(
                 "Clear release history filters"
@@ -1567,9 +1569,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._reset_view_button,
             tooltip=(
-                "Reset release history filters, preview mode, and selection."
+                f"Reset release history filters, preview mode, and selection. {visible_entries_context} {search_context} Preview mode: {self._preview_mode}. Current selection: {selection_label}."
                 if not default_view_active
-                else "Release history already shows the default view."
+                else f"Release history already shows the default view. {visible_entries_context} {search_context} Preview mode: {self._preview_mode}. Current selection: {selection_label}."
             ),
             accessible_name=(
                 "Reset release history view"
@@ -1676,9 +1678,9 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._refresh_button,
             tooltip=(
-                "Reload release history from disk."
+                f"Reload release history from disk. {refresh_context}"
                 if self._refresh_history_callback is not None
-                else "Refresh unavailable because no history reload callback was provided."
+                else f"Refresh unavailable because no history reload callback was provided. {refresh_context}"
             ),
             accessible_name=(
                 "Refresh release history"

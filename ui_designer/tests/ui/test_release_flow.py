@@ -742,7 +742,9 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         "The release history JSON file is unavailable or cannot be opened here. Path state: unavailable. Current path: none."
     )
     assert dialog._open_history_file_button.accessibleName() == "Open release history file unavailable"
-    assert dialog._refresh_button.toolTip() == "Refresh unavailable because no history reload callback was provided."
+    assert dialog._refresh_button.toolTip() == (
+        "Refresh unavailable because no history reload callback was provided. History file: none. Visible entries: 1 of 1."
+    )
     assert dialog._refresh_button.accessibleName() == "Refresh release history unavailable"
     assert dialog._copy_preview_path_button.accessibleName() == "Copy current preview path"
     assert dialog._open_preview_button.accessibleName() == "Open current preview file unavailable"
@@ -781,9 +783,14 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_filtered_button.toolTip() == "Copy the filtered release history summary. Visible entries: 1 of 1."
     assert dialog._copy_filtered_json_button.toolTip() == "Copy the filtered release history as JSON. Visible entries: 1 of 1."
     assert dialog._export_filtered_button.toolTip() == "Export the filtered release history. Visible entries: 1 of 1."
-    assert dialog._clear_filters_button.toolTip() == "Clear the current release history filters and search text."
+    assert dialog._clear_filters_button.toolTip() == (
+        "Clear the current release history filters and search text. Visible entries: 1 of 1. Current search: sdk-fail."
+    )
     assert dialog._clear_filters_button.accessibleName() == "Clear release history filters"
-    assert dialog._reset_view_button.toolTip() == "Reset release history filters, preview mode, and selection."
+    assert dialog._reset_view_button.toolTip() == (
+        "Reset release history filters, preview mode, and selection. Visible entries: 1 of 1. Current search: sdk-fail. "
+        "Preview mode: auto. Current selection: 20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1."
+    )
     assert dialog._reset_view_button.accessibleName() == "Reset release history view"
     assert dialog._copy_history_json_button.toolTip() == (
         f"Copy the release history JSON file. Path state: available. Current path: {history_path}."
@@ -795,7 +802,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_history_file_button.toolTip() == f"Copy the release history file path. Current path: {history_path}."
     assert dialog._open_history_file_button.toolTip() == f"Open the release history JSON file. Path state: available. Current path: {history_path}."
     assert dialog._open_history_file_button.accessibleName() == "Open release history file"
-    assert dialog._refresh_button.toolTip() == "Reload release history from disk."
+    assert dialog._refresh_button.toolTip() == (
+        f"Reload release history from disk. History file: {history_path}. Visible entries: 1 of 1."
+    )
     assert dialog._refresh_button.accessibleName() == "Refresh release history"
 
     dialog._preview_log_button.click()
