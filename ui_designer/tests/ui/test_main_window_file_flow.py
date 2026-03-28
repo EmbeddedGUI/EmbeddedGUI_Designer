@@ -3001,6 +3001,7 @@ class TestMainWindowFileFlow:
 
     def test_release_artifact_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.engine.release_engine import release_history_path
+        from ui_designer.model.release import ReleaseConfig, ReleaseProfile
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
@@ -3018,6 +3019,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReleaseArtifactsDemo"
         project = _create_project(project_dir, "ReleaseArtifactsDemo", sdk_root)
+        project.release_config = ReleaseConfig(
+            profiles=[
+                ReleaseProfile(id="windows-pc", name="Windows PC"),
+                ReleaseProfile(id="stm32-sim", name="STM32 Simulator", port="stm32"),
+            ],
+            default_profile="windows-pc",
+        )
 
         window = MainWindow("")
         actions = {
@@ -3067,7 +3075,7 @@ class TestMainWindowFileFlow:
             f"Release history file unavailable\nExpected file: {history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 1 profile. Default: windows-pc (Windows PC). "
+            "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Release records: 0 entries. Latest release: none."
         )
         assert actions["Release Build..."].toolTip() == (
@@ -3078,7 +3086,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). "
+            "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
         )
 
@@ -3167,29 +3175,29 @@ class TestMainWindowFileFlow:
             f"{history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (
-            "Edit release profiles for the current project. Profiles: 1 profile. Default: windows-pc (Windows PC). "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success)."
+            "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success)."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
         )
         assert actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             f"History file: {history_path}. Output root: {output_root}. "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success)."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
         )
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {output_root}. Source resources: available. "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Release open targets: 7 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Source resources: available. Release profiles: 1 profile. Default: windows-pc (Windows PC). "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success). Release open targets: 7 of 7 available."
+            "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Release open targets: 7 of 7 available."
         )
         for action in actions.values():
             assert action.statusTip() == action.toolTip()

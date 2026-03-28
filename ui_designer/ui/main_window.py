@@ -1151,13 +1151,14 @@ class MainWindow(QMainWindow):
             return "Latest release: none."
         build_id = str(latest_entry.get("build_id") or latest_entry.get("created_at_utc") or "unknown-build").strip()
         profile_id = str(latest_entry.get("profile_id") or "unknown-profile").strip()
+        profile_label = self._release_profile_label(profile_id)
         status = str(latest_entry.get("status") or "").strip()
         if not status:
             if "success" in latest_entry:
                 status = "success" if bool(latest_entry.get("success")) else "failed"
             else:
                 status = "unknown"
-        return f"Latest release: {build_id} ({profile_id}, {status})."
+        return f"Latest release: {build_id} ({profile_label}, {status})."
 
     def _release_history_records_summary(self, history_entries=None, latest_entry=None):
         if getattr(self, "project", None) is None or not self._project_dir:
@@ -1220,11 +1221,23 @@ class MainWindow(QMainWindow):
             selected_profile = profiles[0]
         if selected_profile is None:
             return default_profile or "none"
-        profile_id = str(getattr(selected_profile, "id", "") or "").strip() or "none"
-        profile_name = str(getattr(selected_profile, "name", "") or "").strip()
-        if profile_name and profile_name != profile_id:
-            return f"{profile_id} ({profile_name})"
-        return profile_id
+        return self._release_profile_label(str(getattr(selected_profile, "id", "") or "").strip() or default_profile or "none")
+
+    def _release_profile_label(self, profile_id):
+        normalized_profile_id = str(profile_id or "").strip() or "none"
+        if getattr(self, "project", None) is None:
+            return normalized_profile_id
+        release_config = getattr(self.project, "release_config", None)
+        profiles = list(getattr(release_config, "profiles", []) or [])
+        for profile in profiles:
+            current_id = str(getattr(profile, "id", "") or "").strip()
+            if current_id != normalized_profile_id:
+                continue
+            profile_name = str(getattr(profile, "name", "") or "").strip()
+            if profile_name and profile_name != current_id:
+                return f"{current_id} ({profile_name})"
+            return current_id or normalized_profile_id
+        return normalized_profile_id
 
     def _update_release_profiles_action_metadata(self, history_summary="", latest_release_summary=""):
         action = getattr(self, "_release_profiles_action", None)
