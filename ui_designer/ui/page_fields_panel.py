@@ -27,6 +27,12 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, tooltip):
+    item.setToolTip(tooltip)
+    item.setStatusTip(tooltip)
+    item.setData(Qt.AccessibleTextRole, tooltip)
+
+
 class PageFieldsPanel(QWidget):
     """Editable list of page-level fields stored in Page.user_fields."""
 
@@ -148,9 +154,19 @@ class PageFieldsPanel(QWidget):
         self._updating = True
         self._table.setRowCount(len(self._fields))
         for row, field in enumerate(self._fields):
-            self._table.setItem(row, 0, QTableWidgetItem(field.get("name", "")))
-            self._table.setItem(row, 1, QTableWidgetItem(field.get("type", "")))
-            self._table.setItem(row, 2, QTableWidgetItem(field.get("default", "")))
+            items = (
+                QTableWidgetItem(field.get("name", "")),
+                QTableWidgetItem(field.get("type", "")),
+                QTableWidgetItem(field.get("default", "")),
+            )
+            hints = (
+                f"Page field Name: {field.get('name', '') or 'none'}.",
+                f"Page field Type: {field.get('type', '') or 'none'}.",
+                f"Page field Default: {field.get('default', '') or 'none'}.",
+            )
+            for column, (item, hint) in enumerate(zip(items, hints)):
+                _set_item_metadata(item, hint)
+                self._table.setItem(row, column, item)
         self._updating = False
         self._update_summary()
         self._update_actions()

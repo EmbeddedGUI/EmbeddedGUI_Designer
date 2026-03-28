@@ -7,6 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
@@ -67,6 +68,12 @@ class TestPageTimersPanel:
         assert panel._table.item(0, 0).text() == "refresh_timer"
         assert panel._table.item(0, 1).text() == "tick_refresh"
         assert panel._table.item(0, 4).text() == "true"
+        assert panel._table.item(0, 0).toolTip() == "Page timer Name: refresh_timer."
+        assert panel._table.item(0, 0).statusTip() == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(0, 0).data(Qt.AccessibleTextRole) == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(0, 4).toolTip() == "Page timer Auto Start: true."
+        assert panel._table.item(0, 4).statusTip() == panel._table.item(0, 4).toolTip()
+        assert panel._table.item(0, 4).data(Qt.AccessibleTextRole) == panel._table.item(0, 4).toolTip()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel

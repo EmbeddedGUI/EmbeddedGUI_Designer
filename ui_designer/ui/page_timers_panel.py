@@ -32,6 +32,12 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_item_metadata(item, tooltip):
+    item.setToolTip(tooltip)
+    item.setStatusTip(tooltip)
+    item.setData(Qt.AccessibleTextRole, tooltip)
+
+
 class PageTimersPanel(QWidget):
     """Editable list of page-level timers stored in Page.timers."""
 
@@ -126,11 +132,23 @@ class PageTimersPanel(QWidget):
         self._updating = True
         self._table.setRowCount(len(self._timers))
         for row, timer in enumerate(self._timers):
-            self._table.setItem(row, 0, QTableWidgetItem(timer.get("name", "")))
-            self._table.setItem(row, 1, QTableWidgetItem(timer.get("callback", "")))
-            self._table.setItem(row, 2, QTableWidgetItem(timer.get("delay_ms", "")))
-            self._table.setItem(row, 3, QTableWidgetItem(timer.get("period_ms", "")))
-            self._table.setItem(row, 4, QTableWidgetItem("true" if timer.get("auto_start") else "false"))
+            items = (
+                QTableWidgetItem(timer.get("name", "")),
+                QTableWidgetItem(timer.get("callback", "")),
+                QTableWidgetItem(timer.get("delay_ms", "")),
+                QTableWidgetItem(timer.get("period_ms", "")),
+                QTableWidgetItem("true" if timer.get("auto_start") else "false"),
+            )
+            hints = (
+                f"Page timer Name: {timer.get('name', '') or 'none'}.",
+                f"Page timer Callback: {timer.get('callback', '') or 'none'}.",
+                f"Page timer Delay: {timer.get('delay_ms', '') or 'none'}.",
+                f"Page timer Period: {timer.get('period_ms', '') or 'none'}.",
+                f"Page timer Auto Start: {'true' if timer.get('auto_start') else 'false'}.",
+            )
+            for column, (item, hint) in enumerate(zip(items, hints)):
+                _set_item_metadata(item, hint)
+                self._table.setItem(row, column, item)
         self._updating = False
         self._update_summary()
         self._update_actions()

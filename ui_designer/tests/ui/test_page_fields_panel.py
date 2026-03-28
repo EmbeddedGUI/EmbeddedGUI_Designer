@@ -7,6 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
@@ -69,6 +70,12 @@ class TestPageFieldsPanel:
         assert panel._table.item(0, 1).text() == "int"
         assert panel._table.item(0, 2).text() == "0"
         assert panel._table.item(1, 0).text() == "buffer"
+        assert panel._table.item(0, 0).toolTip() == "Page field Name: counter."
+        assert panel._table.item(0, 0).statusTip() == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(0, 0).data(Qt.AccessibleTextRole) == panel._table.item(0, 0).toolTip()
+        assert panel._table.item(1, 2).toolTip() == "Page field Default: none."
+        assert panel._table.item(1, 2).statusTip() == panel._table.item(1, 2).toolTip()
+        assert panel._table.item(1, 2).data(Qt.AccessibleTextRole) == panel._table.item(1, 2).toolTip()
 
     def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
