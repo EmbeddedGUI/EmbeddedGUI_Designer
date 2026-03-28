@@ -678,6 +678,9 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
     assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
     assert dialog._copy_history_file_button.accessibleName() == "Copy release history file path unavailable"
+    assert dialog._copy_history_json_button.toolTip() == (
+        "No readable release history JSON file is available to copy. Path state: unavailable. Current path: none."
+    )
     assert dialog._copy_history_json_button.accessibleName() == "Copy release history JSON unavailable"
     assert dialog._open_history_file_button.toolTip() == (
         "The release history JSON file is unavailable or cannot be opened here. Path state: unavailable. Current path: none."
@@ -723,8 +726,13 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._clear_filters_button.accessibleName() == "Clear release history filters"
     assert dialog._reset_view_button.toolTip() == "Reset release history filters, preview mode, and selection."
     assert dialog._reset_view_button.accessibleName() == "Reset release history view"
-    assert dialog._copy_history_json_button.toolTip() == "Copy the release history JSON file."
+    assert dialog._copy_history_json_button.toolTip() == (
+        f"Copy the release history JSON file. Path state: available. Current path: {history_path}."
+    )
     assert dialog._copy_history_json_button.accessibleName() == "Copy release history JSON"
+    assert dialog._export_history_json_button.toolTip() == (
+        f"Export the release history JSON file. Path state: available. Current path: {history_path}."
+    )
     assert dialog._copy_history_file_button.toolTip() == f"Copy the release history file path. Current path: {history_path}."
     assert dialog._open_history_file_button.toolTip() == f"Open the release history JSON file. Path state: available. Current path: {history_path}."
     assert dialog._open_history_file_button.accessibleName() == "Open release history file"
@@ -738,6 +746,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._preview_log_button.accessibleName() == "Preview build log"
     assert dialog._copy_preview_path_button.toolTip() == f"Copy the current log preview path. Current path: {log_path}."
     assert dialog._copy_preview_path_button.accessibleName() == "Copy current preview path"
+    assert dialog._export_preview_button.toolTip() == (
+        f"Export the current log preview. Path state: available. Current path: {log_path}."
+    )
     assert dialog._open_preview_button.toolTip() == f"Open the current log preview file. Path state: available. Current path: {log_path}."
     assert dialog._open_preview_button.accessibleName() == "Open current preview file"
     assert dialog._preview_edit.accessibleName() == "Release preview: Log Preview."

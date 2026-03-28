@@ -1594,9 +1594,12 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._copy_history_json_button,
             tooltip=(
-                "Copy the release history JSON file."
+                f"Copy the release history JSON file. Path state: available. Current path: {self._history_path}."
                 if history_exists
-                else "No readable release history JSON file is available to copy."
+                else (
+                    f"No readable release history JSON file is available to copy. "
+                    f"Path state: {'missing' if self._history_path else 'unavailable'}. Current path: {self._history_path or 'none'}."
+                )
             ),
             accessible_name=(
                 "Copy release history JSON"
@@ -1607,9 +1610,12 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._export_history_json_button,
             tooltip=(
-                "Export the release history JSON file."
+                f"Export the release history JSON file. Path state: available. Current path: {self._history_path}."
                 if history_exists
-                else "No readable release history JSON file is available to export."
+                else (
+                    f"No readable release history JSON file is available to export. "
+                    f"Path state: {'missing' if self._history_path else 'unavailable'}. Current path: {self._history_path or 'none'}."
+                )
             ),
             accessible_name=(
                 "Export release history JSON"
@@ -1719,9 +1725,12 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._export_preview_button,
             tooltip=(
-                f"Export the current {preview_label_lower} preview."
+                f"Export the current {preview_label_lower} preview. Path state: available. Current path: {preview_path}."
                 if preview_path and os.path.isfile(preview_path)
-                else f"No {preview_label_lower} preview file is available to export."
+                else (
+                    f"No {preview_label_lower} preview file is available to export. "
+                    f"Path state: {'missing' if preview_path else 'unavailable'}. Current path: {preview_path or 'none'}."
+                )
             ),
         )
         _set_widget_metadata(
