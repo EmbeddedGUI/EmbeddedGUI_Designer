@@ -2414,6 +2414,7 @@ class MainWindow(QMainWindow):
                     "Inspect the Designer repository health summary. "
                     f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
                     f"Release output root: {repo_release_root}. {output_root_state_summary} Source resources: {resources_state}. "
+                    f"Resource directory: {resources_dir or 'none'}. "
                     f"{profiles_summary} History file: {history_file_path or 'none'}. "
                     f"{history_file_state_summary} "
                     f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
