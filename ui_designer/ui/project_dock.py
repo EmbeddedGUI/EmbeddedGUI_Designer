@@ -75,42 +75,82 @@ class ProjectExplorerDock(QDockWidget):
 
         # Project settings group
         settings_group = QGroupBox("Project")
+        settings_group.setAccessibleName("Project settings")
         # settings_group.setStyleSheet(_GROUPBOX_STYLE)
         settings_layout = QVBoxLayout(settings_group)
         settings_layout.setContentsMargins(4, 4, 4, 4)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
-        mode_layout.addWidget(QLabel("Mode:"))
+        mode_label = QLabel("Mode:")
+        mode_label.setAccessibleName("Page mode label")
+        mode_layout.addWidget(mode_label)
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["easy_page", "activity"])
         self._mode_combo.currentTextChanged.connect(self._on_mode_changed)
+        self._mode_combo.setToolTip("Choose how pages are generated for the current project.")
+        self._mode_combo.setAccessibleName("Project page mode")
         mode_layout.addWidget(self._mode_combo)
         settings_layout.addLayout(mode_layout)
         layout.addWidget(settings_group)
 
         # Page tree
-        pages_label = QLabel("Pages")
-        pages_label.setFont(QFont("", -1, QFont.Bold))
-        pages_label.setObjectName("workspace_section_title")
-        layout.addWidget(pages_label)
+        self._pages_label = QLabel("Pages")
+        self._pages_label.setFont(QFont("", -1, QFont.Bold))
+        self._pages_label.setObjectName("workspace_section_title")
+        self._pages_label.setAccessibleName("Pages")
+        layout.addWidget(self._pages_label)
 
         self._page_tree = QTreeWidget()
         self._page_tree.setHeaderHidden(True)
         self._page_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._page_tree.customContextMenuRequested.connect(self._on_page_context_menu)
         self._page_tree.currentItemChanged.connect(self._on_page_item_changed)
+        self._page_tree.setAccessibleName("Project pages")
         layout.addWidget(self._page_tree)
 
         # Add page button
-        add_btn = QPushButton("+ New Page")
-        add_btn.setIcon(make_icon("page"))
-        add_btn.clicked.connect(self._on_add_page)
-        layout.addWidget(add_btn)
+        self._add_page_button = QPushButton("+ New Page")
+        self._add_page_button.setIcon(make_icon("page"))
+        self._add_page_button.setToolTip("Create a new page in the current project.")
+        self._add_page_button.setAccessibleName("New page")
+        self._add_page_button.clicked.connect(self._on_add_page)
+        layout.addWidget(self._add_page_button)
 
         layout.addStretch()
 
         self.setWidget(container)
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        page_count = len(getattr(self._project, "pages", []) or [])
+        page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
+        current_page = self._current_page_name or "none"
+        dirty_count = len(self._dirty_pages)
+        dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        summary = f"Project Explorer: {page_label}. Current page: {current_page}. {dirty_label}."
+        self.setAccessibleName(summary)
+        self.setToolTip(summary)
+        self.setStatusTip(summary)
+        self._pages_label.setToolTip(summary)
+        self._pages_label.setStatusTip(summary)
+        self._page_tree.setToolTip(summary)
+        self._page_tree.setStatusTip(summary)
+
+    def _apply_page_item_metadata(self, item, page_name):
+        item.setText(0, self._page_item_text(page_name))
+        item.setToolTip(0, self._page_item_tooltip(page_name))
+        item.setStatusTip(0, item.toolTip(0))
+
+    def _page_item_tooltip(self, page_name):
+        parts = [f"Page: {page_name}."]
+        startup = self._project.startup_page if self._project else ""
+        if page_name == startup:
+            parts.append("Startup page.")
+        if page_name == self._current_page_name:
+            parts.append("Current page.")
+        parts.append("Unsaved changes." if page_name in self._dirty_pages else "No unsaved changes.")
+        return " ".join(parts)
 
     # ── Public API ─────────────────────────────────────────────────
 
@@ -125,6 +165,7 @@ class ProjectExplorerDock(QDockWidget):
         self._mode_combo.blockSignals(False)
         self._rebuild_page_tree()
         self._rebuild_resource_tree()
+        self._update_accessibility_summary()
 
     def set_current_page(self, page_name):
         """Highlight the current page in the tree."""
@@ -135,6 +176,9 @@ class ProjectExplorerDock(QDockWidget):
             font = item.font(0)
             font.setBold(name == page_name)
             item.setFont(0, font)
+            if name:
+                self._apply_page_item_metadata(item, name)
+        self._update_accessibility_summary()
 
     def set_dirty_pages(self, page_names):
         self._dirty_pages = set(page_names or [])
@@ -142,7 +186,8 @@ class ProjectExplorerDock(QDockWidget):
             item = self._page_tree.topLevelItem(i)
             name = item.data(0, Qt.UserRole)
             if name:
-                item.setText(0, self._page_item_text(name))
+                self._apply_page_item_metadata(item, name)
+        self._update_accessibility_summary()
 
     # ── Internal ───────────────────────────────────────────────────
 
@@ -159,6 +204,7 @@ class ProjectExplorerDock(QDockWidget):
                 font = item.font(0)
                 font.setBold(True)
                 item.setFont(0, font)
+            self._apply_page_item_metadata(item, name)
             self._page_tree.addTopLevelItem(item)
 
     def _page_item_text(self, page_name):
