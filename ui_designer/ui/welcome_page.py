@@ -129,6 +129,7 @@ class WelcomePage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._config = get_config()
+        self._recent_project_count = 0
         self._init_ui()
 
     def _init_ui(self):
@@ -324,8 +325,10 @@ class WelcomePage(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        recent = self._config.recent_projects
-        if not recent:
+        recent = list(self._config.recent_projects or [])
+        visible_recent = recent[:8]
+        self._recent_project_count = len(visible_recent)
+        if not visible_recent:
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_empty_state")
             _set_widget_metadata(no_recent, tooltip=no_recent.text(), accessible_name=no_recent.text())
@@ -333,7 +336,7 @@ class WelcomePage(QWidget):
             self._update_accessibility_summary()
             return
 
-        for item_data in recent[:8]:
+        for item_data in visible_recent:
             project_path = item_data.get("project_path", "")
             sdk_root = self._resolve_display_sdk_root(item_data.get("sdk_root", ""))
             display_name = item_data.get("display_name") or os.path.splitext(os.path.basename(project_path))[0]
@@ -349,9 +352,15 @@ class WelcomePage(QWidget):
         self._refresh_sdk_status()
         self._refresh_recent_list()
 
+    def _recent_projects_summary(self):
+        if self._recent_project_count == 0:
+            return "No recent projects"
+        if self._recent_project_count == 1:
+            return "1 recent item"
+        return f"{self._recent_project_count} recent items"
+
     def _update_accessibility_summary(self):
-        recent_count = self._recent_list.count()
-        recent_text = "1 recent item" if recent_count == 1 else f"{recent_count} recent items"
+        recent_text = self._recent_projects_summary()
         sdk_status = self._sdk_status_label.text().strip() or "SDK status unavailable."
         sdk_path = self._sdk_path_label.text().strip() or "No SDK root configured"
         summary = f"Welcome page: {sdk_status}. SDK path: {sdk_path}. {recent_text}."
@@ -400,5 +409,10 @@ class WelcomePage(QWidget):
             tooltip=describe_auto_download_plan(default_sdk_install_dir()),
             accessible_name="Download SDK",
         )
-        _set_widget_metadata(self._recent_label, tooltip=self._recent_label.text(), accessible_name=self._recent_label.text())
+        recent_label_summary = f"Recent Projects: {recent_text}."
+        _set_widget_metadata(
+            self._recent_label,
+            tooltip=recent_label_summary,
+            accessible_name=recent_label_summary,
+        )
         _set_widget_metadata(self._footer_label, tooltip=self._footer_label.text(), accessible_name=self._footer_label.text())

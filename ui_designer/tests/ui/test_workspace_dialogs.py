@@ -635,10 +635,11 @@ class TestWelcomePage:
         page = WelcomePage()
 
         assert page.accessibleName() == (
-            f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. 1 recent item."
+            f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
         assert page._sdk_status_label.accessibleName() == "SDK status: Ready: using selected SDK root"
         assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
+        assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
         assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
@@ -672,6 +673,7 @@ class TestWelcomePage:
         assert widget._status_label.accessibleName() == (
             "Recent project status: Project: ready  |  SDK: ready (selected SDK root)"
         )
+        assert page._recent_label.accessibleName() == "Recent Projects: 1 recent item."
         assert "1 recent item." in page.accessibleName()
         page.deleteLater()
 
@@ -685,6 +687,8 @@ class TestWelcomePage:
         widget = page._recent_list.itemAt(0).widget()
         assert widget is not None
         assert "No recent projects" in widget.text()
+        assert "No recent projects." in page.accessibleName()
+        assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         page.deleteLater()
 
     def test_recent_click_emits_project_path_and_sdk(self, qapp, isolated_config, tmp_path):
