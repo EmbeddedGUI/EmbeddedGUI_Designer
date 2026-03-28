@@ -1172,6 +1172,12 @@ class MainWindow(QMainWindow):
         noun = "entry" if entry_count == 1 else "entries"
         return f"Release records: {entry_count} {noun}."
 
+    def _release_history_file_state_summary(self, history_file_path=""):
+        if getattr(self, "project", None) is None or not self._project_dir:
+            return "History file state: unavailable."
+        normalized_path = normalize_path(history_file_path) if history_file_path else ""
+        return f"History file state: {'available' if normalized_path and os.path.isfile(normalized_path) else 'missing'}."
+
     def _release_open_targets_summary(self, latest_entry=None, history_file_path=""):
         has_project_context = getattr(self, "project", None) is not None and bool(self._project_dir)
         if not has_project_context and (not isinstance(latest_entry, dict) or not latest_entry) and not history_file_path:
@@ -2263,6 +2269,7 @@ class MainWindow(QMainWindow):
         version_expected_path = self._latest_release_version_path(latest_entry, require_exists=False)
         latest_release_profile_label = self._release_profile_label(latest_entry.get("profile_id")) if isinstance(latest_entry, dict) else ""
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
+        history_file_state_summary = self._release_history_file_state_summary(history_file_path)
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
@@ -2329,7 +2336,7 @@ class MainWindow(QMainWindow):
                 self._release_history_action,
                 (
                     "Browse recorded release builds for the current project. "
-                    f"History file: {history_file_path or 'not created yet'}. Output root: {self._release_output_root()}. "
+                    f"History file: {history_file_path or 'not created yet'}. {history_file_state_summary} Output root: {self._release_output_root()}. "
                     f"{history_summary} {latest_release_summary}"
                     if self._release_history_action.isEnabled()
                     else self._action_hint(
@@ -2350,6 +2357,7 @@ class MainWindow(QMainWindow):
                     "Inspect the Designer repository health summary. "
                     f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
                     f"Release output root: {repo_release_root}. Source resources: {repo_resources_state}. "
+                    f"{history_file_state_summary} "
                     f"{history_summary} {latest_release_summary} {release_targets_summary}"
                 ),
             )
