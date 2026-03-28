@@ -2771,9 +2771,12 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
-    def test_recent_and_view_submenu_categories_expose_status_hints(self, qapp, isolated_config, tmp_path):
+    def test_recent_and_view_submenu_categories_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from PyQt5.QtGui import QPixmap
+        from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
+
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
 
         window = MainWindow("")
         file_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "File")
@@ -2801,7 +2804,7 @@ class TestMainWindowFileFlow:
 
         assert file_actions["Recent Projects"].toolTip() == window._recent_menu.menuAction().toolTip()
         assert file_actions["Recent Projects"].statusTip() == file_actions["Recent Projects"].toolTip()
-        assert view_actions["Theme"].toolTip() == "Choose the Designer theme."
+        assert view_actions["Theme"].toolTip() == "Choose the Designer theme. Current theme: Dark."
         assert view_actions["Theme"].statusTip() == view_actions["Theme"].toolTip()
         assert view_actions["Workspace"].toolTip() == "Choose a workspace panel to show. Current panel: Project."
         assert view_actions["Workspace"].statusTip() == view_actions["Workspace"].toolTip()
@@ -2818,12 +2821,14 @@ class TestMainWindowFileFlow:
         assert background_actions["Opacity"].toolTip() == "Choose the mockup image opacity. Current mockup: none loaded. Opacity: 30%."
         assert background_actions["Opacity"].statusTip() == background_actions["Opacity"].toolTip()
 
+        window._set_theme("light")
         window._set_show_grid(False)
         window._set_grid_size(12)
         window.preview_panel.set_background_image(QPixmap(8, 8))
         window.preview_panel.set_background_image_visible(False)
         window._set_background_opacity(0.7)
 
+        assert view_actions["Theme"].toolTip() == "Choose the Designer theme. Current theme: Light."
         assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size. Current snap: 12px. Grid hidden."
         assert view_actions["Background Mockup"].toolTip() == (
             "Manage the preview background mockup image. Current mockup: hidden. Opacity: 70%."
@@ -2992,9 +2997,12 @@ class TestMainWindowFileFlow:
         assert actions["History"].toolTip() == "Currently showing the History tools panel. Current page: none. Panel visible."
         _close_window(window)
 
-    def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config):
+    def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
         from ui_designer.ui.preview_panel import MODE_HIDDEN, MODE_VERTICAL
+
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
 
         window = MainWindow("")
         actions = {
@@ -3014,7 +3022,7 @@ class TestMainWindowFileFlow:
             }
         }
 
-        assert actions["Dark"].toolTip() == "Switch the Designer theme to dark."
+        assert actions["Dark"].toolTip() == "Currently using the dark Designer theme."
         assert actions["Dark"].statusTip() == actions["Dark"].toolTip()
         assert actions["Light"].toolTip() == "Switch the Designer theme to light."
         assert actions["Light"].statusTip() == actions["Light"].toolTip()
@@ -3084,6 +3092,11 @@ class TestMainWindowFileFlow:
         assert actions["Swap Preview/Overlay"].toolTip() == (
             f"Swap preview and overlay unavailable in Overlay Only layout (Ctrl+4). Current layout: Overlay Only. Zoom: {current_zoom}."
         )
+
+        window._set_theme("light")
+
+        assert actions["Dark"].toolTip() == "Switch the Designer theme to dark."
+        assert actions["Light"].toolTip() == "Currently using the light Designer theme."
         _close_window(window)
 
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):
@@ -3372,8 +3385,11 @@ class TestMainWindowFileFlow:
         assert window._send_back_action.statusTip() == window._send_back_action.toolTip()
         _close_window(window)
 
-    def test_menu_bar_categories_expose_status_hints(self, qapp, isolated_config):
+    def test_menu_bar_categories_expose_status_hints(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
+
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
 
         window = MainWindow("")
         actions = {action.text(): action for action in window.menuBar().actions() if action.text()}
@@ -3388,8 +3404,20 @@ class TestMainWindowFileFlow:
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
         assert actions["Build"].toolTip() == "Compile previews, generate resources, and manage release builds."
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
-        assert actions["View"].toolTip() == "Change workspace layout, themes, preview modes, and mockup options."
+        assert actions["View"].toolTip() == (
+            "Change workspace layout, themes, preview modes, and mockup options. "
+            "Theme: Dark. Layout: Horizontal, overlay first. Grid: visible. Snap: 8px. Mockup: none loaded."
+        )
         assert actions["View"].statusTip() == actions["View"].toolTip()
+
+        window._set_theme("light")
+        window._set_show_grid(False)
+        window._set_overlay_mode("hidden")
+
+        assert actions["View"].toolTip() == (
+            "Change workspace layout, themes, preview modes, and mockup options. "
+            "Theme: Light. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
+        )
         _close_window(window)
 
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):

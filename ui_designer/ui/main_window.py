@@ -832,10 +832,27 @@ class MainWindow(QMainWindow):
             if abs(self.preview_panel.overlay._zoom - 1.0) <= 1e-9:
                 zoom_reset_hint += " Unavailable: already at 100% zoom."
             self._apply_action_hint(self._zoom_reset_action, zoom_reset_hint)
+        self._update_view_and_theme_action_metadata()
 
     def _current_grid_snap_label(self):
         size = int(getattr(self.preview_panel, "grid_size", lambda: 0)() or 0)
         return "off" if size <= 0 else f"{size}px"
+
+    def _current_theme_label(self):
+        theme = str(getattr(self._config, "theme", "dark") or "dark")
+        return {"dark": "Dark", "light": "Light"}.get(theme, theme.title())
+
+    def _preview_layout_menu_label(self):
+        mode = getattr(self.preview_panel, "overlay_mode", MODE_HORIZONTAL)
+        mode_label = {
+            MODE_VERTICAL: "Vertical",
+            MODE_HORIZONTAL: "Horizontal",
+            MODE_HIDDEN: "Overlay Only",
+        }.get(mode, str(mode or "Preview"))
+        if mode == MODE_HIDDEN:
+            return mode_label
+        order = "overlay first" if getattr(self.preview_panel, "_flipped", False) else "preview first"
+        return f"{mode_label}, {order}"
 
     def _preview_mockup_action_context(self):
         overlay = getattr(self.preview_panel, "overlay", None)
@@ -847,6 +864,34 @@ class MainWindow(QMainWindow):
         else:
             state = "visible" if visible else "hidden"
         return has_mockup, visible, opacity, f"Current mockup: {state}. Opacity: {opacity}%."
+
+    def _update_view_and_theme_action_metadata(self):
+        if not hasattr(self, "preview_panel"):
+            return
+        theme_label = self._current_theme_label()
+        layout_label = self._preview_layout_menu_label()
+        grid_state = "visible" if self.preview_panel.show_grid() else "hidden"
+        snap_label = self._current_grid_snap_label()
+        has_mockup, mockup_visible, _opacity, _mockup_context = self._preview_mockup_action_context()
+        mockup_state = "none loaded" if not has_mockup else ("visible" if mockup_visible else "hidden")
+        if hasattr(self, "_view_menu"):
+            self._apply_action_hint(
+                self._view_menu.menuAction(),
+                (
+                    "Change workspace layout, themes, preview modes, and mockup options. "
+                    f"Theme: {theme_label}. Layout: {layout_label}. Grid: {grid_state}. "
+                    f"Snap: {snap_label}. Mockup: {mockup_state}."
+                ),
+            )
+        if hasattr(self, "_theme_menu"):
+            self._apply_action_hint(self._theme_menu.menuAction(), f"Choose the Designer theme. Current theme: {theme_label}.")
+        current_theme = str(getattr(self._config, "theme", "dark") or "dark")
+        if hasattr(self, "theme_dark_action"):
+            dark_hint = "Currently using the dark Designer theme." if current_theme == "dark" else "Switch the Designer theme to dark."
+            self._apply_action_hint(self.theme_dark_action, dark_hint)
+        if hasattr(self, "theme_light_action"):
+            light_hint = "Currently using the light Designer theme." if current_theme == "light" else "Switch the Designer theme to light."
+            self._apply_action_hint(self.theme_light_action, light_hint)
 
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
@@ -910,6 +955,7 @@ class MainWindow(QMainWindow):
                 else f"Set the mockup image opacity to {pct}%. {mockup_context}"
             )
             self._apply_action_hint(action, hint)
+        self._update_view_and_theme_action_metadata()
 
     def _select_left_panel(self, panel_key):
         if panel_key == "components":
@@ -2722,6 +2768,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ View menu 鈹€鈹€
         view_menu = menubar.addMenu("View")
+        self._view_menu = view_menu
         self._apply_action_hint(
             view_menu.menuAction(),
             "Change workspace layout, themes, preview modes, and mockup options.",
@@ -2729,6 +2776,7 @@ class MainWindow(QMainWindow):
 
         # Theme Submenu
         theme_menu = view_menu.addMenu("Theme")
+        self._theme_menu = theme_menu
         self._apply_action_hint(theme_menu.menuAction(), "Choose the Designer theme.")
         theme_group = QActionGroup(self)
         theme_group.setExclusive(True)
@@ -2937,6 +2985,7 @@ class MainWindow(QMainWindow):
             self._opacity_actions[pct] = act
             self._opacity_menu.addAction(act)
         self._update_preview_grid_and_mockup_action_metadata()
+        self._update_view_and_theme_action_metadata()
 
     # 鈹€鈹€ Toolbar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -3049,6 +3098,7 @@ class MainWindow(QMainWindow):
         self._config.theme = theme
         self._config.save()
         self._apply_workspace_iconography()
+        self._update_view_and_theme_action_metadata()
         if hasattr(self, "widget_browser"):
             self.widget_browser.refresh()
 

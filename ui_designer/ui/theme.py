@@ -635,12 +635,12 @@ QToolButton#widget_browser_tag:checked {{
 
 #status_center_metric_card:hover {{
     border-color: {t['accent_soft']};
-    background-color: {t['hover']};
+    background-color: {t['surface_hover']};
 }}
 
 #status_center_metric_card:focus {{
     border-color: {t['accent']};
-    background-color: {t['hover']};
+    background-color: {t['surface_hover']};
 }}
 
 #status_center_metric_value {{
@@ -657,12 +657,12 @@ QToolButton#widget_browser_tag:checked {{
 
 #status_center_health_row:hover {{
     border-color: {t['accent_soft']};
-    background-color: {t['hover']};
+    background-color: {t['surface_hover']};
 }}
 
 #status_center_health_row:focus {{
     border-color: {t['accent']};
-    background-color: {t['hover']};
+    background-color: {t['surface_hover']};
 }}
 
 #status_center_health_value {{
