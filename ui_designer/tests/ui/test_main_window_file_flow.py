@@ -3020,7 +3020,11 @@ class TestMainWindowFileFlow:
             if action.text() in actions
         }
         assert invalid_actions["Release Build..."].toolTip() == (
-            "Build a release package for the current project. SDK: invalid. Unavailable: set a valid SDK root first."
+            "Build a release package for the current project. "
+            f"SDK: invalid. Output root: {window._release_output_root()}. "
+            f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
+            f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
+            "Unavailable: set a valid SDK root first."
         )
         assert invalid_actions["Release Build..."].statusTip() == invalid_actions["Release Build..."].toolTip()
         assert invalid_actions["Release Build..."].isEnabled() is False

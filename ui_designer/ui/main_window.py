@@ -2383,7 +2383,11 @@ class MainWindow(QMainWindow):
                     f"{latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                     if self._release_build_action.isEnabled()
                     else (
-                        f"Build a release package for the current project. SDK: {sdk_state}. Unavailable: {release_build_blocked_reason}."
+                        "Build a release package for the current project. "
+                        f"SDK: {sdk_state}. Output root: {self._release_output_root()}. "
+                        f"History file: {history_file_path or 'not created yet'}. "
+                        f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
+                        f"Unavailable: {release_build_blocked_reason}."
                         if release_build_blocked_reason == "set a valid SDK root first"
                         else self._action_hint(
                             "Build a release package for the current project.",
