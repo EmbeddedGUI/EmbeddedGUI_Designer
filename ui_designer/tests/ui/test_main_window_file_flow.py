@@ -2857,6 +2857,52 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         _close_window(window)
 
+    def test_view_panel_navigation_actions_expose_status_hints(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Project",
+                "Structure",
+                "Components",
+                "Assets",
+                "Status",
+                "Properties",
+                "Animations",
+                "Page",
+                "Diagnostics",
+                "History",
+                "Debug Output",
+            }
+        }
+
+        assert actions["Project"].toolTip() == "Show the Project workspace panel."
+        assert actions["Project"].statusTip() == actions["Project"].toolTip()
+        assert actions["Structure"].toolTip() == "Show the Structure workspace panel."
+        assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
+        assert actions["Components"].toolTip() == "Show the Components workspace panel."
+        assert actions["Components"].statusTip() == actions["Components"].toolTip()
+        assert actions["Assets"].toolTip() == "Show the Assets workspace panel."
+        assert actions["Assets"].statusTip() == actions["Assets"].toolTip()
+        assert actions["Status"].toolTip() == "Show the Status workspace panel."
+        assert actions["Status"].statusTip() == actions["Status"].toolTip()
+        assert actions["Properties"].toolTip() == "Show the Properties inspector section."
+        assert actions["Properties"].statusTip() == actions["Properties"].toolTip()
+        assert actions["Animations"].toolTip() == "Show the Animations inspector section."
+        assert actions["Animations"].statusTip() == actions["Animations"].toolTip()
+        assert actions["Page"].toolTip() == "Show the Page inspector section."
+        assert actions["Page"].statusTip() == actions["Page"].toolTip()
+        assert actions["Diagnostics"].toolTip() == "Show the Diagnostics tools panel."
+        assert actions["Diagnostics"].statusTip() == actions["Diagnostics"].toolTip()
+        assert actions["History"].toolTip() == "Show the History tools panel."
+        assert actions["History"].statusTip() == actions["History"].toolTip()
+        assert actions["Debug Output"].toolTip() == "Show the Debug Output tools panel."
+        assert actions["Debug Output"].statusTip() == actions["Debug Output"].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

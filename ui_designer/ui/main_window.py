@@ -2258,6 +2258,7 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         workspace_menu = view_menu.addMenu("Workspace")
+        self._apply_action_hint(workspace_menu.menuAction(), "Choose a workspace panel to show.")
         for label, key in (
             ("Project", "project"),
             ("Structure", "structure"),
@@ -2266,22 +2267,27 @@ class MainWindow(QMainWindow):
             ("Status", "status"),
         ):
             action = QAction(label, self)
+            self._apply_action_hint(action, f"Show the {label} workspace panel.")
             action.triggered.connect(lambda checked=False, panel_key=key: self._select_left_panel(panel_key))
             workspace_menu.addAction(action)
 
         inspector_menu = view_menu.addMenu("Inspector")
+        self._apply_action_hint(inspector_menu.menuAction(), "Choose an inspector section to show.")
         for label, key in (
             ("Properties", "properties"),
             ("Animations", "animations"),
             ("Page", "page"),
         ):
             action = QAction(label, self)
+            self._apply_action_hint(action, f"Show the {label} inspector section.")
             action.triggered.connect(lambda checked=False, section=key: self._show_inspector_tab(section))
             inspector_menu.addAction(action)
 
         tools_menu = view_menu.addMenu("Tools")
+        self._apply_action_hint(tools_menu.menuAction(), "Choose a bottom tools panel to show.")
         for label in ("Diagnostics", "History", "Debug Output"):
             action = QAction(label, self)
+            self._apply_action_hint(action, f"Show the {label} tools panel.")
             action.triggered.connect(lambda checked=False, section=label: self._show_bottom_panel(section))
             tools_menu.addAction(action)
         view_menu.addSeparator()
