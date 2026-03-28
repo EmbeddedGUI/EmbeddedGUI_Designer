@@ -290,7 +290,7 @@ class StatusCenterPanel(QWidget):
         runtime = _ClickableFrame()
         runtime.setObjectName("status_center_runtime")
         runtime.clicked.connect(lambda: self._emit_action("open_debug"))
-        runtime.setToolTip("Open Debug Output")
+        self._set_hint(runtime, "Open Debug Output")
         runtime.setAccessibleName("Runtime section")
         runtime_layout = QVBoxLayout(runtime)
         runtime_layout.setContentsMargins(12, 12, 12, 12)
@@ -326,7 +326,7 @@ class StatusCenterPanel(QWidget):
         card.setObjectName("status_center_metric_card")
         if action_key:
             card.clicked.connect(lambda key=action_key: self._emit_action(key))
-            card.setToolTip(f"Open {label}")
+            self._set_hint(card, f"Open {label}")
             card.setAccessibleName(f"{label} metric")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(10, 10, 10, 10)
@@ -353,7 +353,7 @@ class StatusCenterPanel(QWidget):
         row.setObjectName("status_center_health_row")
         if action_key:
             row.clicked.connect(lambda key=action_key: self._emit_action(key))
-            row.setToolTip(f"Open {label}")
+            self._set_hint(row, f"Open {label}")
             row.setAccessibleName(f"{label} diagnostics")
         row_layout = QVBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
@@ -996,8 +996,7 @@ class StatusCenterPanel(QWidget):
             self._action_icon_key(self._last_action if has_action else "history"),
             size=20,
         )
-        self._repeat_action_button.setToolTip(self._repeat_action_tooltip(action_label))
-        self._repeat_action_button.setStatusTip(self._repeat_action_button.toolTip())
+        self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
         self._repeat_action_button.setAccessibleName(
             f"Repeat {action_label} action" if has_action else "Repeat last action"
         )
@@ -1233,12 +1232,9 @@ class StatusCenterPanel(QWidget):
                 "No info items active" if info_count <= 0 else "",
             )
         )
-        self._error_value.setToolTip("Errors: " + self._error_value.text())
-        self._warning_value.setToolTip("Warnings: " + self._warning_value.text())
-        self._info_value.setToolTip("Info: " + self._info_value.text())
-        self._error_value.setStatusTip(self._error_value.toolTip())
-        self._warning_value.setStatusTip(self._warning_value.toolTip())
-        self._info_value.setStatusTip(self._info_value.toolTip())
+        self._set_hint(self._error_value, "Errors: " + self._error_value.text())
+        self._set_hint(self._warning_value, "Warnings: " + self._warning_value.text())
+        self._set_hint(self._info_value, "Info: " + self._info_value.text())
         self._error_value.setAccessibleName(f"Errors value: {self._error_value.text()}")
         self._warning_value.setAccessibleName(f"Warnings value: {self._warning_value.text()}")
         self._info_value.setAccessibleName(f"Info value: {self._info_value.text()}")
