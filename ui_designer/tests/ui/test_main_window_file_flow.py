@@ -3159,12 +3159,12 @@ class TestMainWindowFileFlow:
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         assert actions["Open Last Release Folder"].toolTip() == (
-            "Open last release folder\n\nNo release history available\n\nRelease folder unavailable\nOutput root: none"
+            "Open last release folder\n\nNo release history available\n\nRelease folder unavailable\nOutput root state: unavailable.\nOutput root: none"
         )
         assert actions["Open Last Release Folder"].statusTip() == actions["Open Last Release Folder"].toolTip()
         assert actions["Open Last Release Folder"].isEnabled() is False
         assert actions["Open Release History File"].toolTip() == (
-            "Open release history file\n\nNo release history available\n\nRelease history file unavailable\nExpected file: none"
+            "Open release history file\n\nNo release history available\n\nRelease history file unavailable\nHistory file state: unavailable.\nExpected file: none"
         )
         assert actions["Open Release History File"].statusTip() == actions["Open Release History File"].toolTip()
         assert actions["Open Release History File"].isEnabled() is False
@@ -3179,11 +3179,11 @@ class TestMainWindowFileFlow:
         history_path = release_history_path(str(project_dir), output_dir=output_root)
         assert actions["Open Last Release Folder"].toolTip() == (
             "Open last release folder\n\nNo release history available\n\n"
-            f"Release folder unavailable\nOutput root: {output_root}"
+            f"Release folder unavailable\nOutput root state: missing.\nOutput root: {output_root}"
         )
         assert actions["Open Release History File"].toolTip() == (
             "Open release history file\n\nNo release history available\n\n"
-            f"Release history file unavailable\nExpected file: {history_path}"
+            f"Release history file unavailable\nHistory file state: missing.\nExpected file: {history_path}"
         )
         assert actions["Release Profiles..."].toolTip() == (
             f"Edit release profiles for the current project. SDK: valid. Output root: {output_root}. "
@@ -3231,7 +3231,7 @@ class TestMainWindowFileFlow:
 
         assert actions["Open Last Release Folder"].toolTip() == (
             "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release folder unavailable\nExpected folder: {release_root}"
+            f"Release folder unavailable\nOutput root state: available.\nExpected folder: {release_root}"
         )
         assert actions["Open Last Release Dist"].toolTip() == (
             "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"

@@ -2474,9 +2474,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release folder unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected folder: {release_root}"
+                        f"Output root state: {output_root_state_summary.split(': ', 1)[1]}\nExpected folder: {release_root}"
                         if release_root
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
@@ -2563,7 +2563,7 @@ class MainWindow(QMainWindow):
                     path=history_file_path if history_file_path and os.path.isfile(history_file_path) else "",
                     unavailable_label="Release history file unavailable",
                     profile_label=latest_release_profile_label,
-                    fallback_hint=f"Expected file: {history_file_path or 'none'}",
+                    fallback_hint=f"{history_file_state_summary}\nExpected file: {history_file_path or 'none'}",
                 )
             )
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
