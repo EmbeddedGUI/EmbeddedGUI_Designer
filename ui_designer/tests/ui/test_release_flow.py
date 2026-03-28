@@ -426,6 +426,78 @@ def test_open_last_release_actions_reflect_available_artifacts(qapp, isolated_co
 
 
 @_skip_no_qt
+def test_open_last_release_actions_report_missing_targets(qapp, isolated_config, tmp_path, monkeypatch):
+    from ui_designer.model.project import Project
+    from ui_designer.ui.main_window import MainWindow
+
+    sdk_root = tmp_path / "sdk"
+    project_dir = sdk_root / "example" / "ReleaseDemo"
+    output_root = project_dir / "output" / "ui_designer_release"
+    release_root = output_root / "windows-pc" / "20260326T000000Z"
+    dist_dir = release_root / "dist"
+    manifest_path = release_root / "release-manifest.json"
+    zip_path = release_root / "ReleaseDemo.zip"
+    log_path = release_root / "logs" / "build.log"
+    history_path = output_root / "history.json"
+    _create_sdk_root(sdk_root)
+    project_dir.mkdir(parents=True)
+
+    project = Project(app_name="ReleaseDemo")
+    project.sdk_root = str(sdk_root)
+    project.project_dir = str(project_dir)
+    project.create_new_page("main_page")
+    project.save(str(project_dir))
+
+    window = MainWindow(str(sdk_root))
+    monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+    monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+    window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+    monkeypatch.setattr(
+        "ui_designer.ui.main_window.latest_release_entry",
+        lambda project_dir_arg, output_dir="": {
+            "build_id": "20260326T000000Z",
+            "status": "failed",
+            "profile_id": "windows-pc",
+            "release_root": str(release_root),
+            "dist_dir": str(dist_dir),
+            "manifest_path": str(manifest_path),
+            "zip_path": str(zip_path),
+            "log_path": str(log_path),
+        },
+    )
+
+    opened_paths = []
+    monkeypatch.setattr(window, "_open_path_in_shell", lambda path: opened_paths.append(path))
+
+    window._update_compile_availability()
+
+    assert window._open_last_release_dir_action.isEnabled() is False
+    assert window._open_last_release_dist_action.isEnabled() is False
+    assert window._open_last_release_manifest_action.isEnabled() is False
+    assert window._open_last_release_version_action.isEnabled() is False
+    assert window._open_last_release_package_action.isEnabled() is False
+    assert window._open_last_release_log_action.isEnabled() is False
+    assert window._open_release_history_file_action.isEnabled() is False
+
+    window._open_last_release_folder()
+    assert window.statusBar().currentMessage() == f"No release folder available. Output root: {window._release_output_root()}."
+    window._open_last_release_dist()
+    assert window.statusBar().currentMessage() == f"No release dist directory available. Output root: {window._release_output_root()}."
+    window._open_last_release_manifest()
+    assert window.statusBar().currentMessage() == f"No release manifest available. Output root: {window._release_output_root()}."
+    window._open_last_release_version()
+    assert window.statusBar().currentMessage() == f"No release version file available. Output root: {window._release_output_root()}."
+    window._open_last_release_package()
+    assert window.statusBar().currentMessage() == f"No release package available. Output root: {window._release_output_root()}."
+    window._open_last_release_log()
+    assert window.statusBar().currentMessage() == f"No release log available. Output root: {window._release_output_root()}."
+    window._open_release_history_file()
+    assert window.statusBar().currentMessage() == f"No release history file available. Expected file: {history_path}."
+    assert opened_paths == []
+
+
+@_skip_no_qt
 def test_release_build_dialog_exposes_accessibility_metadata(qapp):
     from ui_designer.model.release import ReleaseConfig, ReleaseProfile
     from ui_designer.ui.release_dialogs import ReleaseBuildDialog

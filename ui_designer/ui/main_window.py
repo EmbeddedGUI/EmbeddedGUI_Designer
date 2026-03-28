@@ -3676,8 +3676,11 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         release_root = normalize_path(entry.get("release_root", "")) if isinstance(entry, dict) else ""
-        if not release_root:
-            self.statusBar().showMessage("No release history available", 4000)
+        if not release_root or not os.path.isdir(release_root):
+            self.statusBar().showMessage(
+                f"No release folder available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(release_root)
@@ -3689,8 +3692,11 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         dist_dir = normalize_path(entry.get("dist_dir", "")) if isinstance(entry, dict) else ""
-        if not dist_dir:
-            self.statusBar().showMessage("No release dist directory available", 4000)
+        if not dist_dir or not os.path.isdir(dist_dir):
+            self.statusBar().showMessage(
+                f"No release dist directory available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(dist_dir)
@@ -3702,8 +3708,11 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         manifest_path = normalize_path(entry.get("manifest_path", "")) if isinstance(entry, dict) else ""
-        if not manifest_path:
-            self.statusBar().showMessage("No release manifest available", 4000)
+        if not manifest_path or not os.path.isfile(manifest_path):
+            self.statusBar().showMessage(
+                f"No release manifest available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(manifest_path)
@@ -3716,7 +3725,10 @@ class MainWindow(QMainWindow):
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         version_path = self._latest_release_version_path(entry)
         if not version_path:
-            self.statusBar().showMessage("No release version file available", 4000)
+            self.statusBar().showMessage(
+                f"No release version file available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(version_path)
@@ -3728,8 +3740,11 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         zip_path = normalize_path(entry.get("zip_path", "")) if isinstance(entry, dict) else ""
-        if not zip_path:
-            self.statusBar().showMessage("No release package available", 4000)
+        if not zip_path or not os.path.isfile(zip_path):
+            self.statusBar().showMessage(
+                f"No release package available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(zip_path)
@@ -3741,8 +3756,11 @@ class MainWindow(QMainWindow):
             return
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         log_path = normalize_path(entry.get("log_path", "")) if isinstance(entry, dict) else ""
-        if not log_path:
-            self.statusBar().showMessage("No release log available", 4000)
+        if not log_path or not os.path.isfile(log_path):
+            self.statusBar().showMessage(
+                f"No release log available. Output root: {self._release_output_root() or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(log_path)
@@ -3754,7 +3772,10 @@ class MainWindow(QMainWindow):
             return
         history_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
         if not history_path or not os.path.isfile(history_path):
-            self.statusBar().showMessage("No release history file available", 4000)
+            self.statusBar().showMessage(
+                f"No release history file available. Expected file: {history_path or 'none'}.",
+                4000,
+            )
             return
         try:
             self._open_path_in_shell(history_path)
