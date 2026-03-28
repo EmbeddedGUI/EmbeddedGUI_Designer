@@ -6001,6 +6001,63 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert widget unavailable."
         _close_window(window)
 
+    def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
+        assert window._toolbar.toolTip() == window._toolbar.accessibleName()
+        assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, edit, preview, mode, and status controls."
+        assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
+        assert window._save_action.toolTip() == "Save the current project (Ctrl+S)."
+        assert window._save_action.statusTip() == window._save_action.toolTip()
+        assert window._undo_action.toolTip() == "Undo the last change on the current page (Ctrl+Z). Unavailable: open a page first."
+        assert window._redo_action.toolTip() == "Redo the next change on the current page (Ctrl+Shift+Z). Unavailable: open a page first."
+        assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C). Unavailable: select at least 1 widget."
+        assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V). Unavailable: open a page first."
+        assert window._compile_action.toolTip() == "Compile the current project and run the preview (F5). Unavailable: open a project first."
+        assert window._stop_action.toolTip() == "Stop the running preview executable. Unavailable: preview is not running."
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ToolbarHintDemo"
+        project = _create_project(project_dir, "ToolbarHintDemo", sdk_root)
+        page = project.get_startup_page()
+        label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
+        page.root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert window._compile_action.toolTip() == (
+            "Compile the current project and run the preview (F5). Unavailable: preview disabled for test."
+        )
+        assert window._compile_action.statusTip() == window._compile_action.toolTip()
+        assert window._undo_action.toolTip() == (
+            "Undo the last change on the current page (Ctrl+Z). Unavailable: no earlier changes are available on this page."
+        )
+        assert window._redo_action.toolTip() == (
+            "Redo the next change on the current page (Ctrl+Shift+Z). Unavailable: no later changes are available on this page."
+        )
+        assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C). Unavailable: select at least 1 widget."
+        assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V). Unavailable: copy or cut widgets first."
+
+        window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
+
+        assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C)."
+        assert window._copy_action.statusTip() == window._copy_action.toolTip()
+
+        window._copy_selection()
+
+        assert window._paste_action.toolTip() == "Paste clipboard widgets into the current page (Ctrl+V)."
+        assert window._paste_action.statusTip() == window._paste_action.toolTip()
+        _close_window(window)
+
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
         from ui_designer.ui.editor_tabs import MODE_CODE, MODE_DESIGN, MODE_SPLIT
         from ui_designer.ui.main_window import MainWindow

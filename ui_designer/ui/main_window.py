@@ -655,6 +655,95 @@ class MainWindow(QMainWindow):
         self._insert_widget_button.setStatusTip(tooltip)
         self._insert_widget_button.setAccessibleName(accessible_name)
 
+    def _action_hint(self, base_text, enabled, blocked_reason=""):
+        if enabled or not blocked_reason:
+            return base_text
+        reason = blocked_reason.rstrip(".")
+        return f"{base_text} Unavailable: {reason}."
+
+    def _apply_action_hint(self, action, hint):
+        if action is None:
+            return
+        action.setToolTip(hint)
+        action.setStatusTip(hint)
+
+    def _paste_action_blocked_reason(self):
+        if self._current_page is None:
+            return "open a page first"
+        if self._clipboard_payload is None:
+            return "copy or cut widgets first"
+        return "select a container or page root that can receive pasted widgets"
+
+    def _compile_action_blocked_reason(self):
+        if self.project is None:
+            return "open a project first"
+        if not self._has_valid_sdk_root():
+            return "set a valid SDK root first"
+        if self.compiler is None:
+            return "save the project to a valid SDK workspace first"
+        if not self.compiler.can_build():
+            build_error_getter = getattr(self.compiler, "get_build_error", None)
+            build_error = build_error_getter() if callable(build_error_getter) else ""
+            if build_error:
+                return build_error
+        return "compile preview is unavailable"
+
+    def _update_toolbar_action_metadata(self):
+        command_bar_summary = "Workspace command bar with insert, edit, preview, mode, and status controls."
+        if hasattr(self, "_toolbar_host"):
+            self._toolbar_host.setToolTip(command_bar_summary)
+            self._toolbar_host.setStatusTip(command_bar_summary)
+            self._toolbar_host.setAccessibleName(command_bar_summary)
+        toolbar_summary = "Main toolbar: insert, save, edit, and preview commands."
+        if hasattr(self, "_toolbar"):
+            self._toolbar.setToolTip(toolbar_summary)
+            self._toolbar.setStatusTip(toolbar_summary)
+            self._toolbar.setAccessibleName(toolbar_summary)
+        if hasattr(self, "_save_action"):
+            self._apply_action_hint(self._save_action, "Save the current project (Ctrl+S).")
+        if hasattr(self, "_undo_action"):
+            undo_hint = self._action_hint(
+                "Undo the last change on the current page (Ctrl+Z).",
+                self._undo_action.isEnabled(),
+                "open a page first" if self._current_page is None else "no earlier changes are available on this page",
+            )
+            self._apply_action_hint(self._undo_action, undo_hint)
+        if hasattr(self, "_redo_action"):
+            redo_hint = self._action_hint(
+                "Redo the next change on the current page (Ctrl+Shift+Z).",
+                self._redo_action.isEnabled(),
+                "open a page first" if self._current_page is None else "no later changes are available on this page",
+            )
+            self._apply_action_hint(self._redo_action, redo_hint)
+        if hasattr(self, "_copy_action"):
+            copy_hint = self._action_hint(
+                "Copy the current selection (Ctrl+C).",
+                self._copy_action.isEnabled(),
+                "select at least 1 widget",
+            )
+            self._apply_action_hint(self._copy_action, copy_hint)
+        if hasattr(self, "_paste_action"):
+            paste_hint = self._action_hint(
+                "Paste clipboard widgets into the current page (Ctrl+V).",
+                self._paste_action.isEnabled(),
+                self._paste_action_blocked_reason(),
+            )
+            self._apply_action_hint(self._paste_action, paste_hint)
+        if hasattr(self, "_compile_action"):
+            compile_hint = self._action_hint(
+                "Compile the current project and run the preview (F5).",
+                self._compile_action.isEnabled(),
+                self._compile_action_blocked_reason(),
+            )
+            self._apply_action_hint(self._compile_action, compile_hint)
+        if hasattr(self, "_stop_action"):
+            stop_hint = self._action_hint(
+                "Stop the running preview executable.",
+                self._stop_action.isEnabled(),
+                "preview is not running",
+            )
+            self._apply_action_hint(self._stop_action, stop_hint)
+
     def _update_widget_browser_target(self, preferred_parent=None):
         parent = preferred_parent or self._default_insert_parent()
         self._pending_insert_parent = parent
@@ -2325,6 +2414,7 @@ class MainWindow(QMainWindow):
         self._toolbar = tb
         self._update_compile_availability()
         self._update_edit_actions()
+        self._update_toolbar_action_metadata()
         self._apply_workspace_iconography()
         self._update_workspace_chips()
 
@@ -4728,10 +4818,7 @@ class MainWindow(QMainWindow):
         return describe_structure_actions(self._structure_project_context(), selection)
 
     def _structure_action_hint(self, base_text, enabled, blocked_reason=""):
-        if enabled or not blocked_reason:
-            return base_text
-        reason = blocked_reason.rstrip(".")
-        return f"{base_text} Unavailable: {reason}."
+        return self._action_hint(base_text, enabled, blocked_reason)
 
     def _structure_action_reason(self, state, reason_attr=""):
         if reason_attr:
@@ -5433,6 +5520,7 @@ class MainWindow(QMainWindow):
         self._quick_move_into_menu.menuAction().setToolTip(quick_hint)
         self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
         self._refresh_quick_move_into_menu()
+        self._update_toolbar_action_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
@@ -5568,6 +5656,7 @@ class MainWindow(QMainWindow):
         else:
             self._undo_action.setEnabled(False)
             self._redo_action.setEnabled(False)
+        self._update_toolbar_action_metadata()
 
     def _on_drag_started(self):
         """Preview drag/resize began 鈥?start undo batch."""
