@@ -4844,6 +4844,13 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["status"].toolTip() == (
             "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
         )
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page."
+        )
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: main_page. Startup page: main_page."
+        )
 
         window._switch_page("detail_page")
 
@@ -4854,6 +4861,12 @@ class TestMainWindowFileFlow:
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: detail_page."
+        assert window._left_panel_stack.toolTip() == (
+            "Workspace panels: Project visible. View: List view. Active page: detail_page. Startup page: main_page."
+        )
+        assert window._left_shell.toolTip() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: detail_page. Startup page: main_page."
+        )
 
         window._on_startup_changed("detail_page")
 
@@ -4866,6 +4879,12 @@ class TestMainWindowFileFlow:
         assert "Startup page: detail_page." in window._project_workspace.accessibleName()
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: detail_page."
+        )
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Project visible. View: List view. Active page: detail_page. Startup page: detail_page."
+        )
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: detail_page. Startup page: detail_page."
         )
         _close_window(window)
 
@@ -6608,6 +6627,23 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
         )
+        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
+        assert window._left_panel_stack.toolTip() == (
+            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
+        )
+        assert window._left_panel_stack.statusTip() == window._left_panel_stack.toolTip()
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
+        )
+        assert window._left_shell.toolTip() == (
+            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
+        )
+        assert window._left_shell.statusTip() == window._left_shell.toolTip()
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
+        )
         assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
 
@@ -6824,6 +6860,23 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["status"].accessibleName() == (
             "Workspace panel button: Status. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
         )
+        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Project."
+        assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
+        assert window._left_panel_stack.toolTip() == (
+            "Workspace panels: Project visible. View: List view. Active page: none. Startup page: none."
+        )
+        assert window._left_panel_stack.statusTip() == window._left_panel_stack.toolTip()
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Project visible. View: List view. Active page: none. Startup page: none."
+        )
+        assert window._left_shell.toolTip() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: none. Startup page: none."
+        )
+        assert window._left_shell.statusTip() == window._left_shell.toolTip()
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Project panel visible. View: List view. Active page: none. Startup page: none."
+        )
         assert window._bottom_toggle_button.text() == "Show"
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
@@ -6838,6 +6891,13 @@ class TestMainWindowFileFlow:
         )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: List view. Active page: none. Startup page: none."
+        )
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Status."
+        assert window._left_panel_stack.accessibleName() == (
+            "Workspace panels: Status visible. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
+        assert window._left_shell.accessibleName() == (
+            "Workspace left shell: Status panel visible. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
         )
 
         window._set_bottom_panel_visible(True)
