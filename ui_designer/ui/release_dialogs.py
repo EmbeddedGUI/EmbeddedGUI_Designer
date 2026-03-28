@@ -1490,6 +1490,7 @@ class ReleaseHistoryDialog(QDialog):
         history_exists = self._history_file_exists()
         preview_label_text, preview_path = self._current_preview_target()
         preview_label_lower = preview_label_text.lower()
+        selection_context = f"Current selection: {selection_label}."
         has_filters = self._filters_are_active()
         default_view_active = self._default_view_is_active()
 
@@ -1712,33 +1713,33 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._copy_summary_button,
             tooltip=(
-                "Copy the selected release summary."
+                f"Copy the selected release summary. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to copy its summary."
+                else f"Select a release entry to copy its summary. {selection_context}"
             ),
         )
         _set_widget_metadata(
             self._export_summary_button,
             tooltip=(
-                "Export the selected release summary."
+                f"Export the selected release summary. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to export its summary."
+                else f"Select a release entry to export its summary. {selection_context}"
             ),
         )
         _set_widget_metadata(
             self._copy_details_button,
             tooltip=(
-                "Copy the selected release details."
+                f"Copy the selected release details. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to copy its details."
+                else f"Select a release entry to copy its details. {selection_context}"
             ),
         )
         _set_widget_metadata(
             self._copy_preview_button,
             tooltip=(
-                f"Copy the full {preview_label_lower} preview text."
+                f"Copy the full {preview_label_lower} preview text. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to copy its preview."
+                else f"Select a release entry to copy its preview. {selection_context}"
             ),
         )
         _set_widget_metadata(
@@ -1794,25 +1795,25 @@ class ReleaseHistoryDialog(QDialog):
         _set_widget_metadata(
             self._export_details_button,
             tooltip=(
-                "Export the selected release details."
+                f"Export the selected release details. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to export its details."
+                else f"Select a release entry to export its details. {selection_context}"
             ),
         )
         _set_widget_metadata(
             self._copy_entry_json_button,
             tooltip=(
-                "Copy the selected release entry as JSON."
+                f"Copy the selected release entry as JSON. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to copy its JSON."
+                else f"Select a release entry to copy its JSON. {selection_context}"
             ),
         )
         _set_widget_metadata(
             self._export_entry_json_button,
             tooltip=(
-                "Export the selected release entry as JSON."
+                f"Export the selected release entry as JSON. {selection_context}"
                 if self._current_entry() is not None
-                else "Select a release entry to export its JSON."
+                else f"Select a release entry to export its JSON. {selection_context}"
             ),
         )
         _set_widget_metadata(self._open_folder_button, tooltip=self._open_path_hint("selected release folder", release_root, directory=True))

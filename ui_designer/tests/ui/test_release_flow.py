@@ -723,6 +723,14 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         f"Preview the selected release manifest. Path state: available. Current path: {manifest_path}."
     )
     assert dialog._preview_manifest_button.accessibleName() == "Preview manifest"
+    assert dialog._copy_summary_button.toolTip() == (
+        "Copy the selected release summary. "
+        "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._copy_preview_button.toolTip() == (
+        "Copy the full manifest preview text. "
+        "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
     assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
     assert dialog._copy_history_file_button.accessibleName() == "Copy release history file path unavailable"
@@ -809,6 +817,7 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._history_list.toolTip() == "Release history list: 0 visible entries. Current selection: none."
     assert dialog._copy_filtered_button.toolTip() == "No filtered release entries are available to copy."
     assert dialog._copy_filtered_button.accessibleName() == "Copy filtered release history summary unavailable"
+    assert dialog._copy_summary_button.toolTip() == "Select a release entry to copy its summary. Current selection: none."
     assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: log. Path state: unavailable. Current path: none. "
