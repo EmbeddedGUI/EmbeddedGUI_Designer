@@ -468,6 +468,79 @@ class TestResourcePanelFileFlow:
         assert panel.get_string_catalog().get("salutation", DEFAULT_LOCALE) == "Hello"
         panel.deleteLater()
 
+    def test_string_action_buttons_expose_unavailable_accessibility_metadata_without_selection(self, qapp):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+
+        assert panel._locale_combo.accessibleName() == "String locale selector: Default. 0 locales configured."
+        assert panel._locale_combo.toolTip() == panel._locale_combo.accessibleName()
+        assert panel._string_table.accessibleName() == (
+            "String resource table: 0 string keys. Current locale: Default. Current key: none."
+        )
+        assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 0 locales configured."
+        assert panel._add_locale_btn.accessibleName() == "Add locale. 0 locales configured."
+        assert panel._remove_locale_btn.toolTip() == "Select a non-default locale to remove it."
+        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable"
+        assert panel._add_key_btn.toolTip() == "Add a new string key across all locales. 0 string keys defined."
+        assert panel._add_key_btn.accessibleName() == "Add string key. 0 string keys defined."
+        assert panel._rename_key_btn.toolTip() == "Select a string key to rename it across all locales."
+        assert panel._rename_key_btn.accessibleName() == "Rename string key unavailable"
+        assert panel._remove_key_btn.toolTip() == "Select a string key to remove it from all locales."
+        assert panel._remove_key_btn.accessibleName() == "Remove string key unavailable"
+        panel.deleteLater()
+
+    def test_string_action_buttons_update_accessibility_metadata_for_selected_key_and_locale(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        string_catalog.set("farewell", "Bye", DEFAULT_LOCALE)
+        string_catalog.set("greeting", "Ni Hao", "zh")
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel.set_resource_usage_index(
+            {
+                ("string", "greeting"): [
+                    ResourceUsageEntry("string", "greeting", "main_page", "title", "text", "label"),
+                    ResourceUsageEntry("string", "greeting", "detail_page", "subtitle", "text", "label"),
+                ]
+            }
+        )
+        panel._select_resource_item("string", "greeting")
+
+        assert panel._locale_combo.accessibleName() == "String locale selector: Default. 2 locales configured."
+        assert panel._string_table.accessibleName() == (
+            "String resource table: 2 string keys. Current locale: Default. Current key: greeting."
+        )
+        assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 2 locales configured."
+        assert panel._add_locale_btn.statusTip() == panel._add_locale_btn.toolTip()
+        assert panel._add_locale_btn.accessibleName() == "Add locale. 2 locales configured."
+        assert panel._remove_locale_btn.toolTip() == "Select a non-default locale to remove it."
+        assert panel._remove_locale_btn.accessibleName() == "Remove locale unavailable"
+        assert panel._add_key_btn.toolTip() == "Add a new string key across all locales. 2 string keys defined."
+        assert panel._add_key_btn.accessibleName() == "Add string key. 2 string keys defined."
+        assert panel._rename_key_btn.toolTip() == "Rename string key greeting across all locales. 2 usages will be updated."
+        assert panel._rename_key_btn.statusTip() == panel._rename_key_btn.toolTip()
+        assert panel._rename_key_btn.accessibleName() == "Rename string key: greeting. 2 usages."
+        assert panel._remove_key_btn.toolTip() == "Remove string key greeting from all locales. 2 usages will be updated."
+        assert panel._remove_key_btn.accessibleName() == "Remove string key: greeting. 2 usages."
+
+        panel._locale_combo.setCurrentIndex(panel._locale_combo.findData("zh"))
+        qapp.processEvents()
+
+        assert panel._locale_combo.accessibleName() == "String locale selector: zh. 2 locales configured."
+        assert panel._string_table.accessibleName() == (
+            "String resource table: 2 string keys. Current locale: zh. Current key: greeting."
+        )
+        assert panel._remove_locale_btn.toolTip() == "Remove locale zh and all its translations."
+        assert panel._remove_locale_btn.statusTip() == panel._remove_locale_btn.toolTip()
+        assert panel._remove_locale_btn.accessibleName() == "Remove locale: zh"
+        panel.deleteLater()
+
     def test_tab_title_shows_missing_resource_count(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel

@@ -1180,14 +1180,14 @@ class ResourcePanel(QWidget):
         self._locale_combo.setMinimumWidth(80)
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
-        add_locale_btn = PushButton("Add Locale...")
-        add_locale_btn.setIcon(make_icon("page"))
-        add_locale_btn.clicked.connect(self._on_add_locale)
-        locale_row.addWidget(add_locale_btn)
-        remove_locale_btn = PushButton("Remove Locale")
-        remove_locale_btn.setIcon(make_icon("stop"))
-        remove_locale_btn.clicked.connect(self._on_remove_locale)
-        locale_row.addWidget(remove_locale_btn)
+        self._add_locale_btn = PushButton("Add Locale...")
+        self._add_locale_btn.setIcon(make_icon("page"))
+        self._add_locale_btn.clicked.connect(self._on_add_locale)
+        locale_row.addWidget(self._add_locale_btn)
+        self._remove_locale_btn = PushButton("Remove Locale")
+        self._remove_locale_btn.setIcon(make_icon("stop"))
+        self._remove_locale_btn.clicked.connect(self._on_remove_locale)
+        locale_row.addWidget(self._remove_locale_btn)
         locale_row.addStretch()
         strings_tab_layout.addLayout(locale_row)
 
@@ -1208,18 +1208,18 @@ class ResourcePanel(QWidget):
 
         # Buttons
         str_btn_layout = QHBoxLayout()
-        add_key_btn = PushButton("Add Key...")
-        add_key_btn.setIcon(make_icon("page"))
-        add_key_btn.clicked.connect(self._on_add_string_key)
-        str_btn_layout.addWidget(add_key_btn)
-        rename_key_btn = PushButton("Rename Key...")
-        rename_key_btn.setIcon(make_icon("properties"))
-        rename_key_btn.clicked.connect(self._on_rename_string_key)
-        str_btn_layout.addWidget(rename_key_btn)
-        remove_key_btn = PushButton("Remove Key")
-        remove_key_btn.setIcon(make_icon("stop"))
-        remove_key_btn.clicked.connect(self._on_remove_string_key)
-        str_btn_layout.addWidget(remove_key_btn)
+        self._add_key_btn = PushButton("Add Key...")
+        self._add_key_btn.setIcon(make_icon("page"))
+        self._add_key_btn.clicked.connect(self._on_add_string_key)
+        str_btn_layout.addWidget(self._add_key_btn)
+        self._rename_key_btn = PushButton("Rename Key...")
+        self._rename_key_btn.setIcon(make_icon("properties"))
+        self._rename_key_btn.clicked.connect(self._on_rename_string_key)
+        str_btn_layout.addWidget(self._rename_key_btn)
+        self._remove_key_btn = PushButton("Remove Key")
+        self._remove_key_btn.setIcon(make_icon("stop"))
+        self._remove_key_btn.clicked.connect(self._on_remove_string_key)
+        str_btn_layout.addWidget(self._remove_key_btn)
         str_btn_layout.addStretch()
         strings_tab_layout.addLayout(str_btn_layout)
 
@@ -1276,6 +1276,7 @@ class ResourcePanel(QWidget):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
         self._update_resource_action_metadata()
+        self._update_string_action_metadata()
 
     # -- Public API --
 
@@ -1386,6 +1387,7 @@ class ResourcePanel(QWidget):
         """Set the current project resource usage map."""
         self._resource_usage_index = usage_index or {}
         self._refresh_usage_view()
+        self._update_string_action_metadata()
 
     def set_usage_page_context(self, page_name):
         """Set the current page name used by usage filtering."""
@@ -1498,6 +1500,109 @@ class ResourcePanel(QWidget):
                     tooltip = self._resource_action_unavailable_tooltip(action, resource_type)
                     accessible_name = f"{action_label} unavailable"
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
+
+    def _selected_string_key(self):
+        if not hasattr(self, "_string_table"):
+            return ""
+        row = self._string_table.currentRow()
+        key_item = self._string_table.item(row, 0) if row >= 0 else None
+        return key_item.text().strip() if key_item is not None else ""
+
+    def _selected_locale_label(self):
+        if not hasattr(self, "_locale_combo"):
+            return "Default"
+        idx = self._locale_combo.currentIndex()
+        if idx >= 0:
+            label = (self._locale_combo.currentText() or "").strip()
+            if label:
+                return label
+            locale_code = self._locale_combo.itemData(idx)
+            if locale_code == DEFAULT_LOCALE:
+                return "Default"
+            if locale_code:
+                return locale_code
+        return self._string_catalog.locale_display_names.get(DEFAULT_LOCALE, "Default")
+
+    def _selected_string_usage_count(self):
+        key = self._selected_string_key()
+        if not key:
+            return 0
+        return len(self._resource_usage_index.get(("string", key), []))
+
+    def _update_string_action_metadata(self):
+        if not hasattr(self, "_locale_combo"):
+            return
+
+        locale_label = self._selected_locale_label()
+        locale_count = len(self._string_catalog.locales)
+        locale_count_label = _count_label(locale_count, "locale")
+        key_count = len(self._string_catalog.all_keys)
+        key_count_label = _count_label(key_count, "string key")
+        selected_key = self._selected_string_key()
+        usage_count = self._selected_string_usage_count()
+        usage_label = _count_label(usage_count, "usage")
+        current_key_label = selected_key or "none"
+
+        locale_summary = f"String locale selector: {locale_label}. {locale_count_label.capitalize()} configured."
+        _set_widget_metadata(self._locale_combo, tooltip=locale_summary, accessible_name=locale_summary)
+
+        table_summary = (
+            f"String resource table: {key_count_label.capitalize()}. "
+            f"Current locale: {locale_label}. Current key: {current_key_label}."
+        )
+        _set_widget_metadata(self._string_table, tooltip=table_summary, accessible_name=table_summary)
+
+        add_locale_tooltip = f"Add a new locale for translated string values. {locale_count_label.capitalize()} configured."
+        _set_widget_metadata(
+            self._add_locale_btn,
+            tooltip=add_locale_tooltip,
+            accessible_name=f"Add locale. {locale_count_label.capitalize()} configured.",
+        )
+
+        if self._get_selected_locale() == DEFAULT_LOCALE:
+            remove_locale_tooltip = "Select a non-default locale to remove it."
+            remove_locale_name = "Remove locale unavailable"
+        else:
+            remove_locale_tooltip = f"Remove locale {locale_label} and all its translations."
+            remove_locale_name = f"Remove locale: {locale_label}"
+        _set_widget_metadata(
+            self._remove_locale_btn,
+            tooltip=remove_locale_tooltip,
+            accessible_name=remove_locale_name,
+        )
+
+        add_key_tooltip = f"Add a new string key across all locales. {key_count_label.capitalize()} defined."
+        _set_widget_metadata(
+            self._add_key_btn,
+            tooltip=add_key_tooltip,
+            accessible_name=f"Add string key. {key_count_label.capitalize()} defined.",
+        )
+
+        if selected_key:
+            rename_key_tooltip = f"Rename string key {selected_key} across all locales."
+            remove_key_tooltip = f"Remove string key {selected_key} from all locales."
+            rename_key_name = f"Rename string key: {selected_key}"
+            remove_key_name = f"Remove string key: {selected_key}"
+            if usage_count:
+                rename_key_tooltip += f" {usage_label.capitalize()} will be updated."
+                remove_key_tooltip += f" {usage_label.capitalize()} will be updated."
+                rename_key_name += f". {usage_label.capitalize()}."
+                remove_key_name += f". {usage_label.capitalize()}."
+        else:
+            rename_key_tooltip = "Select a string key to rename it across all locales."
+            remove_key_tooltip = "Select a string key to remove it from all locales."
+            rename_key_name = "Rename string key unavailable"
+            remove_key_name = "Remove string key unavailable"
+        _set_widget_metadata(
+            self._rename_key_btn,
+            tooltip=rename_key_tooltip,
+            accessible_name=rename_key_name,
+        )
+        _set_widget_metadata(
+            self._remove_key_btn,
+            tooltip=remove_key_tooltip,
+            accessible_name=remove_key_name,
+        )
 
     def _update_tab_titles(self):
         n_img = len(self._catalog.images)
@@ -2443,6 +2548,7 @@ class ResourcePanel(QWidget):
         finally:
             self._string_table_updating = False
         self._refresh_usage_view()
+        self._update_string_action_metadata()
 
     def _get_selected_locale(self):
         """Get the locale code of the currently selected combo item."""
@@ -2488,6 +2594,7 @@ class ResourcePanel(QWidget):
         """Locale combo selection changed."""
         if not self._string_table_updating:
             self._refresh_string_table()
+        self._update_string_action_metadata()
 
     def _on_string_current_cell_changed(self, current_row, current_column, previous_row, previous_column):
         del current_column, previous_row, previous_column
@@ -2497,6 +2604,7 @@ class ResourcePanel(QWidget):
         key = key_item.text() if key_item is not None else ""
         self._preview.clear_preview()
         self._update_current_resource("string" if key else "", key)
+        self._update_string_action_metadata()
 
     def _on_string_cell_changed(self, row, col):
         """Handle user editing a string value in the table."""
