@@ -22,6 +22,7 @@ class DebugPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._init_ui()
+        self._update_accessibility_summary("No output yet.")
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
@@ -37,13 +38,16 @@ class DebugPanel(QWidget):
         title_icon.setPixmap(make_icon("debug", size=18).pixmap(18, 18))
         toolbar.addWidget(title_icon)
 
-        title = QLabel("Debug Output")
-        title.setObjectName("workspace_section_title")
-        toolbar.addWidget(title)
+        self._title_label = QLabel("Debug Output")
+        self._title_label.setObjectName("workspace_section_title")
+        self._title_label.setAccessibleName("Debug Output")
+        toolbar.addWidget(self._title_label)
 
         self._clear_btn = QPushButton("Clear")
         self._clear_btn.setIcon(make_icon("stop"))
         self._clear_btn.setFixedWidth(80)
+        self._clear_btn.setToolTip("Clear debug output.")
+        self._clear_btn.setAccessibleName("Clear debug output")
         self._clear_btn.clicked.connect(self.clear)
         toolbar.addWidget(self._clear_btn)
 
@@ -77,6 +81,21 @@ class DebugPanel(QWidget):
         self._cmd_format = QTextCharFormat()
         self._cmd_format.setForeground(QColor("#ffd43b"))
 
+    def _update_accessibility_summary(self, last_message):
+        lines = self._output.toPlainText().splitlines()
+        line_count = len(lines)
+        line_label = f"{line_count} line" if line_count == 1 else f"{line_count} lines"
+        last_summary = str(last_message or "").strip() or "blank line"
+        summary = f"Debug output: {line_label}. Last message: {last_summary}"
+        self.setAccessibleName(summary)
+        self.setToolTip(summary)
+        self.setStatusTip(summary)
+        self._title_label.setToolTip(summary)
+        self._title_label.setStatusTip(summary)
+        self._output.setToolTip(summary)
+        self._output.setStatusTip(summary)
+        self._output.setAccessibleName(f"Debug output log: {line_label}. Last message: {last_summary}")
+
     def _timestamp(self):
         """Get current timestamp string with milliseconds."""
         return datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -84,6 +103,7 @@ class DebugPanel(QWidget):
     def clear(self):
         """Clear all output."""
         self._output.clear()
+        self._update_accessibility_summary("No output yet.")
 
     def get_output_font(self):
         """Get the current font used in the debug output."""
@@ -108,6 +128,7 @@ class DebugPanel(QWidget):
             text: Text to append
             msg_type: "info", "error", "success", "action", or "cmd"
         """
+        text = str(text or "")
         cursor = self._output.textCursor()
         cursor.movePosition(cursor.End)
 
@@ -126,6 +147,7 @@ class DebugPanel(QWidget):
         # Auto-scroll to bottom
         self._output.setTextCursor(cursor)
         self._output.ensureCursorVisible()
+        self._update_accessibility_summary(text)
 
     def log(self, message, msg_type="info"):
         """Log a message with timestamp.
