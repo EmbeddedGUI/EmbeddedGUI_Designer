@@ -659,6 +659,9 @@ class StatusCenterPanel(QWidget):
             return "No dirty pages"
         return self._count_label(total, "dirty page", "dirty pages")
 
+    def _compile_metric_text(self, can_compile):
+        return "Ready" if bool(can_compile) else "Unavailable"
+
     def _set_metric_context(self, label, value_label, card, summary):
         summary_text = str(summary or "").strip()
         label_text = str(label or "").strip() or "Metric"
@@ -730,7 +733,7 @@ class StatusCenterPanel(QWidget):
         suggested_label="",
     ):
         sdk_text = "SDK ready" if sdk_ready else "SDK missing"
-        compile_text = "compile available" if can_compile else "compile unavailable"
+        compile_text = "compile ready" if can_compile else "compile unavailable"
         preview_value = str(preview_text or "Preview idle").strip() or "Preview idle"
         runtime_summary = "runtime issue detected" if str(runtime_text or "").strip() else "runtime clear"
         dirty_summary = (
@@ -1032,7 +1035,7 @@ class StatusCenterPanel(QWidget):
         runtime_text = str(runtime_error or "").strip()
 
         self._sdk_value.setText("Ready" if sdk_ready else "Missing")
-        self._compile_value.setText("Available" if can_compile else "Unavailable")
+        self._compile_value.setText(self._compile_metric_text(can_compile))
         self._dirty_value.setText(self._dirty_metric_text(dirty_count))
         self._selection_value.setText(self._selection_metric_text(selection_total))
         self._preview_value.setText(preview_text)
@@ -1091,7 +1094,7 @@ class StatusCenterPanel(QWidget):
         )
         self._set_hint(
             self._compile_card,
-            "Open Debug Output. Compile is available."
+            "Open Debug Output. Compile is ready."
             if can_compile
             else "Open Debug Output. Compile is unavailable.",
         )

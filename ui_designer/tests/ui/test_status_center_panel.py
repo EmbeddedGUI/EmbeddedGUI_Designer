@@ -273,10 +273,10 @@ class TestStatusCenterPanel:
         )
 
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
+            "Workspace: SDK ready, compile ready, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
         )
         assert panel._workspace_summary_label.accessibleName() == (
-            "Workspace summary: Workspace: SDK ready, compile available, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
+            "Workspace summary: Workspace: SDK ready, compile ready, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
         )
         assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
@@ -290,8 +290,8 @@ class TestStatusCenterPanel:
         assert panel._sdk_value.toolTip() == "SDK: Ready"
         assert panel._sdk_value.accessibleName() == "SDK value: Ready"
         assert panel._sdk_card.accessibleName() == "SDK metric: Ready"
-        assert panel._compile_value.toolTip() == "Compile: Available"
-        assert panel._compile_card.accessibleName() == "Compile metric: Available"
+        assert panel._compile_value.toolTip() == "Compile: Ready"
+        assert panel._compile_card.accessibleName() == "Compile metric: Ready"
         assert panel._preview_value.toolTip() == "Preview: Preview Running"
         assert panel._preview_card.accessibleName() == "Preview metric: Preview Running"
         assert panel._selection_value.toolTip() == "Selection: 1 widget"
@@ -299,7 +299,7 @@ class TestStatusCenterPanel:
         assert panel._dirty_value.toolTip() == "Dirty Pages: 2 dirty pages"
         assert panel._dirty_card.accessibleName() == "Dirty Pages metric: 2 dirty pages"
         assert panel._sdk_card.toolTip() == "Open Project. SDK workspace is ready."
-        assert panel._compile_card.toolTip() == "Open Debug Output. Compile is available."
+        assert panel._compile_card.toolTip() == "Open Debug Output. Compile is ready."
         assert panel._diag_card.toolTip() == "Open Diagnostics. 2 errors, 1 warning, 3 info items."
         assert panel._preview_card.toolTip() == "Open Debug Output. Preview Running."
         assert panel._selection_card.toolTip() == "Open Structure. 1 widget selected."
