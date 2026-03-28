@@ -482,7 +482,7 @@ class StatusCenterPanel(QWidget):
         if count <= 0:
             return "Quick actions with no recent status center actions yet."
         noun = "action" if count == 1 else "actions"
-        return f"Quick actions with {count} saved recent status center {noun}."
+        return f"Quick actions with {count} recent status center {noun} tracked."
 
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
@@ -498,7 +498,7 @@ class StatusCenterPanel(QWidget):
             return "Recent actions: none yet."
         noun = "recent action" if count == 1 else "recent actions"
         labels = ", ".join(self._action_label(action_key) for action_key in self._recent_actions)
-        return f"Recent actions summary: {count} {noun} saved. {labels}."
+        return f"Recent actions summary: {count} {noun} tracked. {labels}."
 
     def _clear_recent_actions_tooltip(self):
         count = len(self._recent_actions)
@@ -516,24 +516,24 @@ class StatusCenterPanel(QWidget):
         noun = "action" if count == 1 else "actions"
         if count > 1:
             return (
-                f"Repeat {action_label}. {count} recent status center {noun} saved. "
+                f"Repeat {action_label}. {count} recent status center {noun} tracked. "
                 "Use the menu arrow to replay an older action."
             )
-        return f"Repeat {action_label}. {count} recent status center {noun} saved."
+        return f"Repeat {action_label}. {count} recent status center {noun} tracked."
 
     def _last_action_tooltip(self, action_label):
         if not self._last_action:
             return "No recent status center action yet."
         count = len(self._recent_actions)
         noun = "recent action" if count == 1 else "recent actions"
-        return f"Current status center action: {action_label}. {count} {noun} saved."
+        return f"Current status center action: {action_label}. {count} {noun} tracked."
 
     def _last_action_accessible_name(self, action_label):
         if not self._last_action:
             return "Last action: None. No recent actions yet."
         count = len(self._recent_actions)
         noun = "recent action" if count == 1 else "recent actions"
-        return f"Last action: {action_label}. {count} {noun} saved."
+        return f"Last action: {action_label}. {count} {noun} tracked."
 
     def _set_hint(self, widget, text):
         hint = str(text or "").strip()

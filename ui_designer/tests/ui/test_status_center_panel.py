@@ -653,10 +653,10 @@ class TestStatusCenterPanel:
             "open_assets_panel",
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
-        assert panel._last_action_label.toolTip() == "Current status center action: Assets. 4 recent actions saved."
-        assert panel._last_action_label.accessibleName() == "Last action: Assets. 4 recent actions saved."
+        assert panel._last_action_label.toolTip() == "Current status center action: Assets. 4 recent actions tracked."
+        assert panel._last_action_label.accessibleName() == "Last action: Assets. 4 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (4 recent actions)"
-        assert panel._actions_title.toolTip() == "Quick actions with 4 saved recent status center actions."
+        assert panel._actions_title.toolTip() == "Quick actions with 4 recent status center actions tracked."
         assert panel._repeat_action_button.text() == "Repeat Assets"
         assert panel._repeat_action_button.accessibleName() == "Repeat Assets action"
         assert panel._repeat_action_button.property("iconKey") == "assets"
@@ -665,10 +665,10 @@ class TestStatusCenterPanel:
             "4 recent status center actions: Assets, Components, Structure, Project"
         )
         assert panel._recent_actions_label.accessibleName() == (
-            "Recent actions summary: 4 recent actions saved. Assets, Components, Structure, Project."
+            "Recent actions summary: 4 recent actions tracked. Assets, Components, Structure, Project."
         )
         assert panel._repeat_action_button.toolTip() == (
-            "Repeat Assets. 4 recent status center actions saved. Use the menu arrow to replay an older action."
+            "Repeat Assets. 4 recent status center actions tracked. Use the menu arrow to replay an older action."
         )
         assert _menu_labels(panel._repeat_action_menu) == [
             "Assets",
@@ -821,8 +821,8 @@ class TestStatusCenterPanel:
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
         panel.restore_view_state({"last_action": "open_page_fields", "recent_actions": ["open_page_fields", "open_debug"]})
         assert panel._last_action_label.text() == "Last action: Fields"
-        assert panel._last_action_label.toolTip() == "Current status center action: Fields. 2 recent actions saved."
-        assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions saved."
+        assert panel._last_action_label.toolTip() == "Current status center action: Fields. 2 recent actions tracked."
+        assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (2 recent actions)"
         assert panel._repeat_action_button.isEnabled() is True
         assert panel._repeat_action_button.text() == "Repeat Fields"
@@ -831,10 +831,10 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions (2): Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent status center actions: Fields, Debug Output"
         assert panel._recent_actions_label.accessibleName() == (
-            "Recent actions summary: 2 recent actions saved. Fields, Debug Output."
+            "Recent actions summary: 2 recent actions tracked. Fields, Debug Output."
         )
         assert panel._repeat_action_button.toolTip() == (
-            "Repeat Fields. 2 recent status center actions saved. Use the menu arrow to replay an older action."
+            "Repeat Fields. 2 recent status center actions tracked. Use the menu arrow to replay an older action."
         )
         assert panel.view_state() == {
             "last_action": "open_page_fields",
