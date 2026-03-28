@@ -977,5 +977,5 @@ class TestStatusCenterPanel:
         ]
         assert menu_actions[0].toolTip() == "Repeat the current action: Debug Output."
         assert menu_actions[1].toolTip() == "Replay Assets from recent status center history."
-        assert menu_actions[-1].toolTip() == "Forget 3 recent status center actions."
+        assert menu_actions[-1].toolTip() == "Clear 3 recent status center actions."
         panel.deleteLater()

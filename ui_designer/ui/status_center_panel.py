@@ -503,7 +503,7 @@ class StatusCenterPanel(QWidget):
     def _clear_recent_actions_tooltip(self):
         count = len(self._recent_actions)
         noun = "action" if count == 1 else "actions"
-        return f"Forget {count} recent status center {noun}."
+        return f"Clear {count} recent status center {noun}."
 
     def _clear_recent_actions_label(self):
         count = len(self._recent_actions)
