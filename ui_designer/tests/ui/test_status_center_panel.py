@@ -506,14 +506,14 @@ class TestStatusCenterPanel:
 
         panel.set_status(sdk_ready=True, can_compile=False)
         assert panel._header_title.text() == "Status Center (Build)"
-        assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Check Compile Output."
+        assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Inspect Compile Output."
         assert panel._suggested_action_label.text() == "Suggested next step (Build):"
-        assert panel._suggested_action_button.text() == "Check Compile Output"
+        assert panel._suggested_action_button.text() == "Inspect Compile Output"
         assert panel._debug_btn.text() == "Debug Output (Build)"
         assert panel._suggested_action_button.property("iconKey") == "debug"
         assert panel._workspace_chip.property("iconKey") == "debug"
         assert panel._suggested_action_summary_label.text() == (
-            "Build guidance: Open Debug Output to inspect why compile is unavailable."
+            "Build guidance: Open Debug Output to inspect compile output. Compile is unavailable."
         )
 
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)

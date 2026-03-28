@@ -895,10 +895,10 @@ class StatusCenterPanel(QWidget):
         if not can_compile:
             return (
                 "open_debug",
-                "Check Compile Output",
+                "Inspect Compile Output",
                 "Build",
                 "debug",
-                "Open Debug Output to inspect why compile is unavailable.",
+                "Open Debug Output to inspect compile output. Compile is unavailable.",
             )
         if dirty_count > 0:
             return (
