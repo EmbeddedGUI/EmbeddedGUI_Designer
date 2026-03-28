@@ -4802,10 +4802,14 @@ class TestMainWindowFileFlow:
 
         assert set(window.page_navigator._pages.keys()) == {"main_page", "detail_page"}
         assert window.page_navigator._current_page == "main_page"
+        assert window.page_navigator._startup_page == "main_page"
+        assert "Startup page: main_page." in window.page_navigator.accessibleName()
+        assert "Startup page" in window.page_navigator._thumbnails["main_page"].accessibleName()
 
         window._switch_page("detail_page")
 
         assert window.page_navigator._current_page == "detail_page"
+        assert window.page_navigator._startup_page == "main_page"
         _close_window(window)
 
     def test_page_navigator_copy_and_template_add_keep_pages_in_sync(self, qapp, isolated_config, tmp_path, monkeypatch):

@@ -3918,11 +3918,13 @@ class MainWindow(QMainWindow):
     def _refresh_page_navigator(self):
         if not self.project:
             self.page_navigator.set_pages({})
+            self.page_navigator.set_startup_page("")
             self.page_navigator.set_current_page("")
             return
 
         self.page_navigator.set_screen_size(self.project.screen_width, self.project.screen_height)
         self.page_navigator.set_pages({page.name: page for page in self.project.pages})
+        self.page_navigator.set_startup_page(getattr(self.project, "startup_page", ""))
 
         current_name = ""
         if self._current_page and self.project.get_page_by_name(self._current_page.name):

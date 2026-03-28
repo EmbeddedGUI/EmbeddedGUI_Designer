@@ -42,13 +42,17 @@ class TestPageNavigator:
         assert thumb._name_label.statusTip() == thumb._name_label.toolTip()
         assert thumb._name_label.accessibleName() == "Page name: main_page. Available. No unsaved changes."
 
+        thumb.set_startup(True)
+        assert thumb.toolTip() == "Open page: main_page. Startup page. Available. No unsaved changes."
+        assert thumb.accessibleName() == "Page thumbnail: main_page. Startup page. Available. No unsaved changes."
+
         thumb.set_selected(True)
-        assert thumb.accessibleName() == "Page thumbnail: main_page. Current page. No unsaved changes."
+        assert thumb.accessibleName() == "Page thumbnail: main_page. Startup page. Current page. No unsaved changes."
 
         thumb.set_dirty(True)
         assert thumb._name_label.text() == "main_page*"
-        assert thumb.toolTip() == "Open page: main_page. Current page. Unsaved changes."
-        assert thumb._name_label.accessibleName() == "Page name: main_page*. Current page. Unsaved changes."
+        assert thumb.toolTip() == "Open page: main_page. Startup page. Current page. Unsaved changes."
+        assert thumb._name_label.accessibleName() == "Page name: main_page*. Startup page. Current page. Unsaved changes."
         thumb.deleteLater()
 
     def test_page_navigator_accessibility_summarizes_pages_current_and_dirty_state(self, qapp):
@@ -56,32 +60,36 @@ class TestPageNavigator:
 
         navigator = PageNavigator()
 
-        assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. No dirty pages."
+        assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
         assert navigator.toolTip() == navigator.accessibleName()
         assert navigator.statusTip() == navigator.toolTip()
-        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
-        assert navigator._container.accessibleName() == "Page thumbnail list: 0 pages. Current page: none. No dirty pages."
-        assert navigator._scroll_area.toolTip() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
-        assert navigator._container.toolTip() == "Page thumbnail list: 0 pages. Current page: none. No dirty pages."
+        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 0 pages. Current page: none. Startup page: none. No dirty pages."
+        assert navigator._container.accessibleName() == "Page thumbnail list: 0 pages. Current page: none. Startup page: none. No dirty pages."
+        assert navigator._scroll_area.toolTip() == "Page thumbnails view: 0 pages. Current page: none. Startup page: none. No dirty pages."
+        assert navigator._container.toolTip() == "Page thumbnail list: 0 pages. Current page: none. Startup page: none. No dirty pages."
 
         navigator.set_pages({"main_page": object(), "detail_page": object()})
-        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: none. No dirty pages."
+        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: none. Startup page: none. No dirty pages."
         assert navigator._title_label.toolTip() == navigator.accessibleName()
         assert navigator._title_label.statusTip() == navigator._title_label.toolTip()
-        assert navigator._title_label.accessibleName() == "Pages: 2 pages. Current page: none."
+        assert navigator._title_label.accessibleName() == "Pages: 2 pages. Current page: none. Startup page: none."
+
+        navigator.set_startup_page("main_page")
+        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: none. Startup page: main_page. No dirty pages."
+        assert navigator._thumbnails["main_page"].accessibleName() == "Page thumbnail: main_page. Startup page. Available. No unsaved changes."
 
         navigator.set_current_page("detail_page")
-        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. No dirty pages."
+        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. Startup page: main_page. No dirty pages."
         assert navigator._thumbnails["detail_page"].accessibleName() == "Page thumbnail: detail_page. Current page. No unsaved changes."
         assert navigator._scroll_area.statusTip() == navigator._scroll_area.toolTip()
-        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 2 pages. Current page: detail_page. No dirty pages."
+        assert navigator._scroll_area.accessibleName() == "Page thumbnails view: 2 pages. Current page: detail_page. Startup page: main_page. No dirty pages."
 
         navigator.set_dirty_pages({"main_page"})
-        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. 1 dirty page."
-        assert navigator._thumbnails["main_page"].accessibleName() == "Page thumbnail: main_page. Available. Unsaved changes."
+        assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. Startup page: main_page. 1 dirty page."
+        assert navigator._thumbnails["main_page"].accessibleName() == "Page thumbnail: main_page. Startup page. Available. Unsaved changes."
         assert navigator._thumbnails["main_page"]._name_label.text() == "main_page*"
-        assert navigator._container.toolTip() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
-        assert navigator._container.accessibleName() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
+        assert navigator._container.toolTip() == "Page thumbnail list: 2 pages. Current page: detail_page. Startup page: main_page. 1 dirty page."
+        assert navigator._container.accessibleName() == "Page thumbnail list: 2 pages. Current page: detail_page. Startup page: main_page. 1 dirty page."
         navigator.deleteLater()
 
     def test_page_thumbnail_context_menu_actions_expose_dynamic_hints(self, qapp):

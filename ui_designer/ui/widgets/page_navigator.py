@@ -46,6 +46,7 @@ class PageThumbnail(QWidget):
         self.page_name = page_name
         self._dirty = False
         self._selected = False
+        self._startup = False
         self.setFixedSize(THUMB_WIDTH + 8, THUMB_HEIGHT + 24)
         self.setCursor(Qt.PointingHandCursor)
 
@@ -66,9 +67,12 @@ class PageThumbnail(QWidget):
         self._update_accessibility()
 
     def _state_summary(self):
-        selection_text = "Current page" if self._selected else "Available"
-        dirty_text = "Unsaved changes" if self._dirty else "No unsaved changes"
-        return f"{selection_text}. {dirty_text}."
+        parts = []
+        if self._startup:
+            parts.append("Startup page")
+        parts.append("Current page" if self._selected else "Available")
+        parts.append("Unsaved changes" if self._dirty else "No unsaved changes")
+        return ". ".join(parts) + "."
 
     def _update_accessibility(self):
         summary = self._state_summary()
@@ -102,6 +106,10 @@ class PageThumbnail(QWidget):
     def set_dirty(self, dirty):
         self._dirty = bool(dirty)
         self._name_label.setText(f"{self.page_name}*" if self._dirty else self.page_name)
+        self._update_accessibility()
+
+    def set_startup(self, startup):
+        self._startup = bool(startup)
         self._update_accessibility()
 
     def mousePressEvent(self, event):
@@ -155,6 +163,7 @@ class PageNavigator(QWidget):
         self._pages = {}  # page_name -> Page
         self._thumbnails = {}  # page_name -> PageThumbnail
         self._current_page = None
+        self._startup_page = ""
         self._dirty_pages = set()
         self._screen_width = 240
         self._screen_height = 320
@@ -188,24 +197,25 @@ class PageNavigator(QWidget):
         page_count = len(self._pages)
         page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
         current_page = self._current_page if self._current_page in self._pages else "none"
+        startup_page = self._startup_page if self._startup_page in self._pages else "none"
         dirty_count = len(self._dirty_pages)
         dirty_label = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
-        summary = f"Page navigator: {page_label}. Current page: {current_page}. {dirty_label}."
+        summary = f"Page navigator: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,
-            accessible_name=f"Pages: {page_label}. Current page: {current_page}.",
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.",
         )
         _set_widget_metadata(
             self._scroll_area,
-            tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. {dirty_label}.",
-            accessible_name=f"Page thumbnails view: {page_label}. Current page: {current_page}. {dirty_label}.",
+            tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+            accessible_name=f"Page thumbnails view: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
         )
         _set_widget_metadata(
             self._container,
-            tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. {dirty_label}.",
-            accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. {dirty_label}.",
+            tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+            accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
         )
 
     def set_screen_size(self, w, h):
@@ -222,6 +232,12 @@ class PageNavigator(QWidget):
         self._current_page = page_name
         for name, thumb in self._thumbnails.items():
             thumb.set_selected(name == page_name)
+        self._update_accessibility_summary()
+
+    def set_startup_page(self, page_name):
+        self._startup_page = page_name or ""
+        for name, thumb in self._thumbnails.items():
+            thumb.set_startup(name == self._startup_page)
         self._update_accessibility_summary()
 
     def set_dirty_pages(self, page_names):
@@ -263,6 +279,7 @@ class PageNavigator(QWidget):
             thumb.clicked.connect(self._on_thumb_clicked)
             thumb.context_menu_requested.connect(self._on_context_menu)
             thumb.set_selected(name == self._current_page)
+            thumb.set_startup(name == self._startup_page)
             thumb.set_dirty(name in self._dirty_pages)
             self._thumbnails[name] = thumb
             self._layout.addWidget(thumb)
