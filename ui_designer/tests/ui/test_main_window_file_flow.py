@@ -3695,7 +3695,7 @@ class TestMainWindowFileFlow:
             }
         }
 
-        assert actions["New Project"].toolTip() == "Create a new EmbeddedGUI Designer project."
+        assert actions["New Project"].toolTip() == "Create a new EmbeddedGUI Designer project. Current binding: SDK: missing."
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
         assert actions["Open SDK Example..."].toolTip() == (
             "Open an SDK example project or legacy example. Current binding: SDK: missing."
@@ -3772,6 +3772,24 @@ class TestMainWindowFileFlow:
             if action.text() == "Download SDK Copy..."
         )
         assert "Current binding: SDK: download-test." in action.toolTip()
+        assert action.statusTip() == action.toolTip()
+        _close_window(window)
+
+    def test_new_project_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        monkeypatch.setattr(main_window_module, "format_sdk_binding_label", lambda sdk_root, designer_repo_root=None: "SDK: new-project")
+
+        window.project_root = "C:/sdk"
+        window._update_sdk_status_label()
+
+        action = next(
+            action for action in window.findChildren(type(window._save_action))
+            if action.text() == "New Project"
+        )
+        assert action.toolTip() == "Create a new EmbeddedGUI Designer project. Current binding: SDK: new-project."
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 

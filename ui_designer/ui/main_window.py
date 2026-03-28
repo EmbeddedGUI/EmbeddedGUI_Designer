@@ -1038,6 +1038,16 @@ class MainWindow(QMainWindow):
                 f"Open an existing .egui project file. Recent projects: {recent_label}.",
             )
 
+    def _update_new_project_action_metadata(self, binding_label=""):
+        action = getattr(self, "_new_project_action", None)
+        if action is None:
+            return
+        label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
+        self._apply_action_hint(
+            action,
+            f"Create a new EmbeddedGUI Designer project. Current binding: {label}.",
+        )
+
     def _update_download_sdk_action_metadata(self, binding_label=""):
         action = getattr(self, "_download_sdk_action", None)
         if action is None:
@@ -2570,11 +2580,11 @@ class MainWindow(QMainWindow):
         self._file_menu = file_menu
         self._apply_action_hint(file_menu.menuAction(), "Create, open, save, export, and close projects.")
 
-        new_action = QAction("New Project", self)
-        new_action.setShortcut("Ctrl+N")
-        self._apply_action_hint(new_action, "Create a new EmbeddedGUI Designer project.")
-        new_action.triggered.connect(self._new_project)
-        file_menu.addAction(new_action)
+        self._new_project_action = QAction("New Project", self)
+        self._new_project_action.setShortcut("Ctrl+N")
+        self._apply_action_hint(self._new_project_action, "Create a new EmbeddedGUI Designer project.")
+        self._new_project_action.triggered.connect(self._new_project)
+        file_menu.addAction(self._new_project_action)
 
         self._open_app_action = QAction("Open SDK Example...", self)
         self._open_app_action.setShortcut("Ctrl+Shift+O")
@@ -3408,6 +3418,7 @@ class MainWindow(QMainWindow):
         self._sdk_status_label.setToolTip(tooltip)
         self._sdk_status_label.setStatusTip(tooltip)
         self._sdk_status_label.setAccessibleName(f"SDK binding: {binding_label}.")
+        self._update_new_project_action_metadata(binding_label)
         self._update_file_open_action_metadata(binding_label)
         self._update_download_sdk_action_metadata(binding_label)
         self._update_sdk_root_action_metadata(binding_label)
