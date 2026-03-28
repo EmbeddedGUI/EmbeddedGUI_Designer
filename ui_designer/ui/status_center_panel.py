@@ -624,6 +624,18 @@ class StatusCenterPanel(QWidget):
             return "Open Structure. No widgets selected."
         return f"Open Structure. {self._count_label(total, 'widget', 'widgets')} selected."
 
+    def _selection_metric_summary(self, selection_total):
+        total = max(int(selection_total or 0), 0)
+        if total <= 0:
+            return "No widgets selected"
+        return self._count_label(total, "widget", "widgets")
+
+    def _dirty_metric_summary(self, dirty_count):
+        total = max(int(dirty_count or 0), 0)
+        if total <= 0:
+            return "No dirty pages"
+        return self._count_label(total, "dirty page", "dirty pages")
+
     def _set_metric_context(self, label, value_label, card, summary):
         summary_text = str(summary or "").strip()
         label_text = str(label or "").strip() or "Metric"
@@ -1023,8 +1035,18 @@ class StatusCenterPanel(QWidget):
         self._set_metric_context("Compile", self._compile_value, self._compile_card, self._compile_value.text())
         self._set_metric_context("Diagnostics", self._diag_value, self._diag_card, self._diag_value.text())
         self._set_metric_context("Preview", self._preview_value, self._preview_card, self._preview_value.text())
-        self._set_metric_context("Selection", self._selection_value, self._selection_card, self._selection_value.text())
-        self._set_metric_context("Dirty Pages", self._dirty_value, self._dirty_card, self._dirty_value.text())
+        self._set_metric_context(
+            "Selection",
+            self._selection_value,
+            self._selection_card,
+            self._selection_metric_summary(selection_total),
+        )
+        self._set_metric_context(
+            "Dirty Pages",
+            self._dirty_value,
+            self._dirty_card,
+            self._dirty_metric_summary(dirty_count),
+        )
         self._set_hint(
             self._sdk_card,
             "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
