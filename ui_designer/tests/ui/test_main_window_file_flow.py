@@ -3235,23 +3235,23 @@ class TestMainWindowFileFlow:
         )
         assert actions["Open Last Release Dist"].toolTip() == (
             "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release dist unavailable\nExpected folder: {dist_dir}"
+            f"Release dist unavailable\nOutput root state: available.\nExpected folder: {dist_dir}"
         )
         assert actions["Open Last Release Manifest"].toolTip() == (
             "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release manifest unavailable\nExpected file: {manifest_path}"
+            f"Release manifest unavailable\nOutput root state: available.\nExpected file: {manifest_path}"
         )
         assert actions["Open Last Release Version"].toolTip() == (
             "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release version unavailable\nExpected file: {dist_dir / 'VERSION.txt'}"
+            f"Release version unavailable\nOutput root state: available.\nExpected file: {dist_dir / 'VERSION.txt'}"
         )
         assert actions["Open Last Release Package"].toolTip() == (
             "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release package unavailable\nExpected file: {zip_path}"
+            f"Release package unavailable\nOutput root state: available.\nExpected file: {zip_path}"
         )
         assert actions["Open Last Release Log"].toolTip() == (
             "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
-            f"Release log unavailable\nExpected file: {log_path}"
+            f"Release log unavailable\nOutput root state: available.\nExpected file: {log_path}"
         )
 
         dist_dir.mkdir(parents=True)

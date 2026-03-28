@@ -2329,6 +2329,7 @@ class MainWindow(QMainWindow):
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
+        output_root_state_detail = output_root_state_summary.split(": ", 1)[1] if ": " in output_root_state_summary else output_root_state_summary
         history_file_state_summary = self._release_history_file_state_summary(history_file_path)
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
@@ -2474,7 +2475,7 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release folder unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Output root state: {output_root_state_summary.split(': ', 1)[1]}\nExpected folder: {release_root}"
+                        f"Output root state: {output_root_state_detail}\nExpected folder: {release_root}"
                         if release_root
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
@@ -2489,9 +2490,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release dist unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected folder: {dist_dir}"
+                        f"Output root state: {output_root_state_detail}\nExpected folder: {dist_dir}"
                         if dist_dir
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
@@ -2504,9 +2505,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release manifest unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected file: {manifest_path}"
+                        f"Output root state: {output_root_state_detail}\nExpected file: {manifest_path}"
                         if manifest_path
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
@@ -2519,9 +2520,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release version unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected file: {version_expected_path}"
+                        f"Output root state: {output_root_state_detail}\nExpected file: {version_expected_path}"
                         if version_expected_path
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
@@ -2534,9 +2535,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release package unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected file: {zip_path}"
+                        f"Output root state: {output_root_state_detail}\nExpected file: {zip_path}"
                         if zip_path
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
@@ -2549,9 +2550,9 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release log unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=(
-                        f"Expected file: {log_path}"
+                        f"Output root state: {output_root_state_detail}\nExpected file: {log_path}"
                         if log_path
-                        else f"Output root: {self._release_output_root() or 'none'}"
+                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
                 )
             )
