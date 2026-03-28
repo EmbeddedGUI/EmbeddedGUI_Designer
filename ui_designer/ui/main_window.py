@@ -914,12 +914,14 @@ class MainWindow(QMainWindow):
         release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         profiles_summary = self._release_profiles_build_summary()
+        latest_release_summary = self._build_menu_latest_release_summary()
         self._apply_action_hint(
             self._build_menu.menuAction(),
             (
                 "Compile previews, generate resources, and manage release builds. "
                 f"Project: {project_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
-                f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. {profiles_summary}"
+                f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
+                f"{profiles_summary} {latest_release_summary}"
             ),
         )
 
@@ -1139,6 +1141,16 @@ class MainWindow(QMainWindow):
         if getattr(self, "project", None) is None:
             return "Release profiles: unavailable."
         return f"Release profiles: {self._release_profiles_summary_suffix().replace('Profiles: ', '')}"
+
+    def _build_menu_latest_release_summary(self):
+        if getattr(self, "project", None) is None or not self._project_dir:
+            return "Latest release: none."
+        latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
+        if not isinstance(latest_entry, dict) or not latest_entry:
+            return "Latest release: none."
+        build_id = str(latest_entry.get("build_id") or latest_entry.get("created_at_utc") or "unknown-build").strip()
+        profile_id = str(latest_entry.get("profile_id") or "unknown-profile").strip()
+        return f"Latest release: {build_id} ({profile_id})."
 
     def _default_release_profile_label(self):
         if getattr(self, "project", None) is None:

@@ -2926,7 +2926,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Release profiles: unavailable."
+            "Release profiles: unavailable. Latest release: none."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
         assert generate_resources_action.toolTip() == (
@@ -2973,7 +2973,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
-            "Release profiles: 2 profiles. Default: stm32-sim."
+            "Release profiles: 2 profiles. Default: stm32-sim. Latest release: none."
         )
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -2986,7 +2986,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: open. Compile: available. Auto compile: off. Preview: stopped. Release build: available. Release history: available. "
-            "Release profiles: 2 profiles. Default: stm32-sim."
+            "Release profiles: 2 profiles. Default: stm32-sim. Latest release: none."
         )
         _close_window(window)
 
@@ -3024,6 +3024,7 @@ class TestMainWindowFileFlow:
                 "Open Release History File",
             }
         }
+        build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         assert actions["Open Last Release Folder"].toolTip() == (
             "Open last release folder\n\nNo release history available\n\nRelease folder unavailable\nOutput root: none"
@@ -3051,6 +3052,11 @@ class TestMainWindowFileFlow:
         assert actions["Open Release History File"].toolTip() == (
             "Open release history file\n\nNo release history available\n\n"
             f"Release history file unavailable\nExpected file: {history_path}"
+        )
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
+            "Release profiles: 1 profile. Default: windows-pc. Latest release: none."
         )
 
         release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
@@ -3110,6 +3116,11 @@ class TestMainWindowFileFlow:
         assert actions["Open Release History File"].toolTip() == (
             "Open release history file\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
             f"{history_path}"
+        )
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, and manage release builds. "
+            "Project: open. Compile: available. Auto compile: on. Preview: stopped. Release build: available. Release history: available. "
+            "Release profiles: 1 profile. Default: windows-pc. Latest release: 20260329-010203 (stm32-sim)."
         )
         for action in actions.values():
             assert action.statusTip() == action.toolTip()
