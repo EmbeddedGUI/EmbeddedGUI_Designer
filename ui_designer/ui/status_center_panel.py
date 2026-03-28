@@ -599,6 +599,29 @@ class StatusCenterPanel(QWidget):
         total = max(int(selection_total or 0), 0)
         return f"Structure ({total} selected)" if total > 0 else "Structure (Idle)"
 
+    def _diagnostics_hint(self, error_count, warning_count, info_count):
+        total = max(int(error_count or 0), 0) + max(int(warning_count or 0), 0) + max(int(info_count or 0), 0)
+        if total <= 0:
+            return "Open Diagnostics. No active diagnostics."
+        return (
+            "Open Diagnostics. "
+            f"{self._count_label(error_count, 'error', 'errors')}, "
+            f"{self._count_label(warning_count, 'warning', 'warnings')}, "
+            f"{self._count_label(info_count, 'info item', 'info items')}."
+        )
+
+    def _history_hint(self, dirty_count):
+        total = max(int(dirty_count or 0), 0)
+        if total <= 0:
+            return "Open History. No dirty pages."
+        return f"Open History. {self._count_label(total, 'dirty page', 'dirty pages')}."
+
+    def _structure_hint(self, selection_total):
+        total = max(int(selection_total or 0), 0)
+        if total <= 0:
+            return "Open Structure. No widgets selected."
+        return f"Open Structure. {self._count_label(total, 'widget', 'widgets')} selected."
+
     def _set_metric_context(self, label, value_label, card, summary):
         summary_text = str(summary or "").strip()
         label_text = str(label or "").strip() or "Metric"
@@ -1001,39 +1024,21 @@ class StatusCenterPanel(QWidget):
             if can_compile
             else "Open Debug Output. Compile pipeline is unavailable.",
         )
-        self._set_hint(
-            self._diag_card,
-            "Open Diagnostics. "
-            f"{self._count_label(error_count, 'error', 'errors')}, "
-            f"{self._count_label(warning_count, 'warning', 'warnings')}, "
-            f"{self._count_label(info_count, 'info item', 'info items')}.",
-        )
-        self._set_hint(
-            self._diag_btn,
-            "Open Diagnostics. "
-            f"{self._count_label(error_count, 'error', 'errors')}, "
-            f"{self._count_label(warning_count, 'warning', 'warnings')}, "
-            f"{self._count_label(info_count, 'info item', 'info items')}.",
-        )
+        self._set_hint(self._diag_card, self._diagnostics_hint(error_count, warning_count, info_count))
+        self._set_hint(self._diag_btn, self._diagnostics_hint(error_count, warning_count, info_count))
         self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
         self._set_hint(
             self._debug_btn,
             self._debug_button_hint(can_compile, runtime_text, preview_text),
         )
-        self._set_hint(
-            self._selection_card,
-            f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
-        )
-        self._set_hint(self._dirty_card, f"Open History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')}.")
-        self._set_hint(self._history_btn, f"Open History. {self._count_label(dirty_count, 'dirty page', 'dirty pages')}.")
+        self._set_hint(self._selection_card, self._structure_hint(selection_total))
+        self._set_hint(self._dirty_card, self._history_hint(dirty_count))
+        self._set_hint(self._history_btn, self._history_hint(dirty_count))
         self._set_hint(
             self._project_btn,
             "Open Project. SDK workspace is ready." if sdk_ready else "Open Project. SDK root is missing or invalid.",
         )
-        self._set_hint(
-            self._structure_btn,
-            f"Open Structure. {self._count_label(selection_total, 'widget', 'widgets')} selected.",
-        )
+        self._set_hint(self._structure_btn, self._structure_hint(selection_total))
         (
             self._suggested_action_key,
             suggested_label,
