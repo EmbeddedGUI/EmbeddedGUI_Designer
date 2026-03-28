@@ -10,6 +10,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication, QDialog
     _has_pyqt5 = True
 except ImportError:
@@ -483,6 +484,8 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
         "Release profile list: 2 entries. Current profile: Windows PC [windows-pc] default."
     )
     assert "Default profile." in dialog._profile_list.item(0).toolTip()
+    assert dialog._profile_list.item(0).statusTip() == dialog._profile_list.item(0).toolTip()
+    assert dialog._profile_list.item(0).data(Qt.AccessibleTextRole) == dialog._profile_list.item(0).toolTip()
     assert dialog._delete_btn.toolTip() == "Delete the current release profile."
     assert dialog._delete_btn.accessibleName() == "Delete release profile"
     assert dialog._set_default_btn.toolTip() == "The current profile is already the default release profile."
@@ -584,6 +587,8 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._history_list.item(0).toolTip() == (
         "20260326T000000Z | success | windows-pc | sdk sdk-good | Release created"
     )
+    assert dialog._history_list.item(0).statusTip() == dialog._history_list.item(0).toolTip()
+    assert dialog._history_list.item(0).data(Qt.AccessibleTextRole) == dialog._history_list.item(0).toolTip()
     assert dialog._summary_label.accessibleName() == (
         "Selected release summary: 20260326T000000Z [windows-pc] success sdk sdk-good"
     )

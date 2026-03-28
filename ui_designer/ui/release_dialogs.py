@@ -817,6 +817,7 @@ class ReleaseProfilesDialog(QDialog):
                 item_tooltip += " Default profile."
             item.setToolTip(item_tooltip)
             item.setStatusTip(item_tooltip)
+            item.setData(Qt.AccessibleTextRole, item_tooltip)
             self._profile_list.addItem(item)
         self._profile_list.blockSignals(False)
 
@@ -1909,6 +1910,7 @@ class ReleaseHistoryDialog(QDialog):
             item_tooltip = _history_summary_line(entry)
             item.setToolTip(item_tooltip)
             item.setStatusTip(item_tooltip)
+            item.setData(Qt.AccessibleTextRole, item_tooltip)
             self._history_list.addItem(item)
             if current_build_id and _history_string(entry, "build_id") == current_build_id:
                 selected_row = row
