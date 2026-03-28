@@ -142,6 +142,17 @@ class PageFieldsPanel(QWidget):
     def _update_button_metadata(self, button, tooltip, accessible_name):
         _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
+    def _selected_field_name(self):
+        if self._table.selectionModel() is None:
+            return ""
+        selected_rows = self._table.selectionModel().selectedRows()
+        if not selected_rows:
+            return ""
+        row = selected_rows[0].row()
+        if row < 0 or row >= len(self._fields):
+            return ""
+        return str(self._fields[row].get("name", "") or "").strip()
+
     def clear(self):
         self.set_page(None)
 
@@ -185,7 +196,8 @@ class PageFieldsPanel(QWidget):
 
     def _update_actions(self):
         has_page = self._page is not None
-        has_selection = bool(self._table.selectionModel() and self._table.selectionModel().selectedRows())
+        selected_field_name = self._selected_field_name()
+        has_selection = bool(selected_field_name)
         self._table.setEnabled(has_page)
         self._add_button.setEnabled(has_page)
         self._remove_button.setEnabled(has_page and has_selection)
@@ -194,16 +206,18 @@ class PageFieldsPanel(QWidget):
         self._open_init_button.setEnabled(has_page)
         if has_page:
             add_hint = "Add a page field."
-            on_open_hint = "Open the on_open section in the page user code."
-            on_close_hint = "Open the on_close section in the page user code."
-            init_hint = "Open the init section in the page user code."
+            page_name = str(self._page.name or "current page")
+            on_open_hint = f"Open the on_open section in {page_name} user code."
+            on_close_hint = f"Open the on_close section in {page_name} user code."
+            init_hint = f"Open the init section in {page_name} user code."
         else:
             add_hint = "Open a page to manage fields."
+            page_name = ""
             on_open_hint = "Open a page to edit the on_open section."
             on_close_hint = "Open a page to edit the on_close section."
             init_hint = "Open a page to edit the init section."
         if has_page and has_selection:
-            remove_hint = "Remove the selected page field."
+            remove_hint = f"Remove the selected page field: {selected_field_name}."
         elif has_page:
             remove_hint = "Select a field to remove it."
         else:
@@ -211,27 +225,27 @@ class PageFieldsPanel(QWidget):
         self._update_button_metadata(
             self._add_button,
             add_hint,
-            "Add page field" if has_page else "Add page field unavailable",
+            f"Add page field to {page_name}" if has_page else "Add page field unavailable",
         )
         self._update_button_metadata(
             self._remove_button,
             remove_hint,
-            "Remove page field" if has_page and has_selection else "Remove page field unavailable",
+            f"Remove page field: {selected_field_name}" if has_page and has_selection else "Remove page field unavailable",
         )
         self._update_button_metadata(
             self._open_on_open_button,
             on_open_hint,
-            "Open on_open user code" if has_page else "Open on_open user code unavailable",
+            f"Open on_open user code for {page_name}" if has_page else "Open on_open user code unavailable",
         )
         self._update_button_metadata(
             self._open_on_close_button,
             on_close_hint,
-            "Open on_close user code" if has_page else "Open on_close user code unavailable",
+            f"Open on_close user code for {page_name}" if has_page else "Open on_close user code unavailable",
         )
         self._update_button_metadata(
             self._open_init_button,
             init_hint,
-            "Open init user code" if has_page else "Open init user code unavailable",
+            f"Open init user code for {page_name}" if has_page else "Open init user code unavailable",
         )
 
     def _table_fields(self):

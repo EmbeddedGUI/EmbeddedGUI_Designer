@@ -59,9 +59,13 @@ class TestPageFieldsPanel:
         assert panel._table.toolTip() == panel._summary_label.text()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page"
-        assert panel._open_on_open_button.toolTip() == "Open the on_open section in the page user code."
+        assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
+        assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
+        assert panel._open_on_close_button.accessibleName() == "Open on_close user code for main_page"
+        assert panel._open_init_button.accessibleName() == "Open init user code for main_page"
         assert panel._add_button.toolTip() == "Add a page field."
+        assert panel._add_button.accessibleName() == "Add page field to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._remove_button.toolTip() == "Select a field to remove it."
         assert panel._remove_button.accessibleName() == "Remove page field unavailable"
@@ -93,7 +97,9 @@ class TestPageFieldsPanel:
         assert panel._open_on_open_button.toolTip() == "Open a page to edit the on_open section."
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code unavailable"
         assert panel._open_on_close_button.toolTip() == "Open a page to edit the on_close section."
+        assert panel._open_on_close_button.accessibleName() == "Open on_close user code unavailable"
         assert panel._open_init_button.toolTip() == "Open a page to edit the init section."
+        assert panel._open_init_button.accessibleName() == "Open init user code unavailable"
 
     def test_panel_add_and_remove_field_emits_changes(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
@@ -109,12 +115,12 @@ class TestPageFieldsPanel:
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
-        assert panel._remove_button.toolTip() == "Remove the selected page field."
-        assert panel._remove_button.accessibleName() == "Remove page field"
+        assert panel._remove_button.toolTip() == "Remove the selected page field: field."
+        assert panel._remove_button.accessibleName() == "Remove page field: field"
         assert captured[-1] == [{"name": "field", "type": "int", "default": "0"}]
 
         panel._table.selectRow(0)
-        assert panel._remove_button.toolTip() == "Remove the selected page field."
+        assert panel._remove_button.toolTip() == "Remove the selected page field: field."
         panel._on_remove_field()
         qapp.processEvents()
 
