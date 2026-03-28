@@ -69,8 +69,16 @@ class TestDiagnosticsPanel:
         )
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Any"
         assert panel._reset_view_button.toolTip() == "Diagnostics already show every severity."
+        assert panel._reset_view_button.accessibleName() == "Reset diagnostics view unavailable"
         assert panel._open_selected_button.toolTip() == "Select a diagnostic to open its target."
+        assert panel._open_selected_button.accessibleName() == "Open selected diagnostic unavailable"
+        assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic unavailable"
+        assert panel._open_first_warning_button.accessibleName() == "Open first warning diagnostic unavailable"
         assert panel._copy_button.toolTip() == "No diagnostics available to copy."
+        assert panel._copy_button.accessibleName() == "Copy diagnostics summary unavailable"
+        assert panel._copy_json_button.accessibleName() == "Copy diagnostics JSON unavailable"
+        assert panel._export_button.accessibleName() == "Export diagnostics summary unavailable"
+        assert panel._export_json_button.accessibleName() == "Export diagnostics JSON unavailable"
         assert panel._list.toolTip() == "Diagnostics list: 0 visible items. Severity filter: Any."
         panel.deleteLater()
 
@@ -84,8 +92,14 @@ class TestDiagnosticsPanel:
         assert panel.accessibleName() == "Diagnostics: 1 error(s), 1 warning(s), 1 info item(s). Severity filter: Any. 3 visible items."
         assert panel._open_first_error_button.toolTip() == "Open the first navigable error diagnostic."
         assert panel._open_first_warning_button.toolTip() == "Open the first navigable warning diagnostic."
+        assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic"
+        assert panel._open_first_warning_button.accessibleName() == "Open first warning diagnostic"
         assert panel._copy_json_button.toolTip() == "Copy the visible diagnostics as JSON."
+        assert panel._copy_button.accessibleName() == "Copy diagnostics summary"
+        assert panel._copy_json_button.accessibleName() == "Copy diagnostics JSON"
         assert panel._export_button.toolTip() == "Export the visible diagnostics summary to a text file."
+        assert panel._export_button.accessibleName() == "Export diagnostics summary"
+        assert panel._export_json_button.accessibleName() == "Export diagnostics JSON"
         assert panel._list.accessibleName() == (
             "Diagnostics list: 3 visible items. Severity filter: Any. Double-click a diagnostic to open its target when available."
         )
@@ -100,11 +114,13 @@ class TestDiagnosticsPanel:
         qapp.processEvents()
         assert panel._open_selected_button.isEnabled() is True
         assert panel._open_selected_button.toolTip() == "Open the selected diagnostic target."
+        assert panel._open_selected_button.accessibleName() == "Open selected diagnostic"
 
         panel._list.setCurrentRow(2)
         qapp.processEvents()
         assert panel._open_selected_button.isEnabled() is False
         assert panel._open_selected_button.toolTip() == "The selected diagnostic has no page or widget target to open."
+        assert panel._open_selected_button.accessibleName() == "Open selected diagnostic unavailable"
         panel.deleteLater()
 
     def test_filter_empty_state_updates_hints_and_copy_metadata(self, qapp):
@@ -120,8 +136,13 @@ class TestDiagnosticsPanel:
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"
         assert panel._reset_view_button.isEnabled() is True
         assert panel._reset_view_button.toolTip() == "Reset the diagnostics filter and show every severity."
+        assert panel._reset_view_button.accessibleName() == "Reset diagnostics view"
         assert panel._copy_button.toolTip() == "No diagnostics match the current filter to copy."
         assert panel._copy_json_button.toolTip() == "No diagnostics match the current filter to copy as JSON."
         assert panel._export_button.toolTip() == "No diagnostics match the current filter to export."
+        assert panel._copy_button.accessibleName() == "Copy diagnostics summary unavailable"
+        assert panel._copy_json_button.accessibleName() == "Copy diagnostics JSON unavailable"
+        assert panel._export_button.accessibleName() == "Export diagnostics summary unavailable"
+        assert panel._export_json_button.accessibleName() == "Export diagnostics JSON unavailable"
         assert panel._list.toolTip() == "Diagnostics list: 0 visible items. Severity filter: Info."
         panel.deleteLater()

@@ -294,6 +294,13 @@ class DiagnosticsPanel(QWidget):
         list_summary = f"Diagnostics list: {visible_summary}. Severity filter: {filter_label}."
         if self._visible_entries:
             list_summary += " Double-click a diagnostic to open its target when available."
+        current_item = self._list.currentItem()
+        current_entry = current_item.data(Qt.UserRole + 1) if current_item is not None else None
+        has_filter = bool(self._current_filter_value())
+        has_navigable_error = self._first_navigable_error(self._entries) is not None
+        has_navigable_warning = self._first_navigable_warning(self._entries) is not None
+        can_open_selected = current_item is not None and _is_navigable_entry(current_entry)
+        has_visible_entries = bool(self._visible_entries)
 
         self.setAccessibleName(panel_summary)
         self.setToolTip(panel_summary)
@@ -309,22 +316,62 @@ class DiagnosticsPanel(QWidget):
             tooltip=f"Filter diagnostics by severity. Current filter: {filter_label}.",
             accessible_name=f"Diagnostics severity filter: {filter_label}",
         )
-        self._set_widget_metadata(self._reset_view_button, tooltip=self._reset_view_hint())
-        self._set_widget_metadata(self._open_selected_button, tooltip=self._open_selected_hint())
-        self._set_widget_metadata(self._open_first_error_button, tooltip=(
-            "Open the first navigable error diagnostic."
-            if self._first_navigable_error(self._entries) is not None
-            else "No navigable error diagnostics available."
-        ))
-        self._set_widget_metadata(self._open_first_warning_button, tooltip=(
-            "Open the first navigable warning diagnostic."
-            if self._first_navigable_warning(self._entries) is not None
-            else "No navigable warning diagnostics available."
-        ))
-        self._set_widget_metadata(self._copy_button, tooltip=self._copy_summary_hint())
-        self._set_widget_metadata(self._copy_json_button, tooltip=self._copy_json_hint())
-        self._set_widget_metadata(self._export_button, tooltip=self._export_summary_hint())
-        self._set_widget_metadata(self._export_json_button, tooltip=self._export_json_hint())
+        self._set_widget_metadata(
+            self._reset_view_button,
+            tooltip=self._reset_view_hint(),
+            accessible_name="Reset diagnostics view" if has_filter else "Reset diagnostics view unavailable",
+        )
+        self._set_widget_metadata(
+            self._open_selected_button,
+            tooltip=self._open_selected_hint(),
+            accessible_name="Open selected diagnostic" if can_open_selected else "Open selected diagnostic unavailable",
+        )
+        self._set_widget_metadata(
+            self._open_first_error_button,
+            tooltip=(
+                "Open the first navigable error diagnostic."
+                if has_navigable_error
+                else "No navigable error diagnostics available."
+            ),
+            accessible_name=(
+                "Open first error diagnostic"
+                if has_navigable_error
+                else "Open first error diagnostic unavailable"
+            ),
+        )
+        self._set_widget_metadata(
+            self._open_first_warning_button,
+            tooltip=(
+                "Open the first navigable warning diagnostic."
+                if has_navigable_warning
+                else "No navigable warning diagnostics available."
+            ),
+            accessible_name=(
+                "Open first warning diagnostic"
+                if has_navigable_warning
+                else "Open first warning diagnostic unavailable"
+            ),
+        )
+        self._set_widget_metadata(
+            self._copy_button,
+            tooltip=self._copy_summary_hint(),
+            accessible_name="Copy diagnostics summary" if has_visible_entries else "Copy diagnostics summary unavailable",
+        )
+        self._set_widget_metadata(
+            self._copy_json_button,
+            tooltip=self._copy_json_hint(),
+            accessible_name="Copy diagnostics JSON" if has_visible_entries else "Copy diagnostics JSON unavailable",
+        )
+        self._set_widget_metadata(
+            self._export_button,
+            tooltip=self._export_summary_hint(),
+            accessible_name="Export diagnostics summary" if has_visible_entries else "Export diagnostics summary unavailable",
+        )
+        self._set_widget_metadata(
+            self._export_json_button,
+            tooltip=self._export_json_hint(),
+            accessible_name="Export diagnostics JSON" if has_visible_entries else "Export diagnostics JSON unavailable",
+        )
         self._set_widget_metadata(self._list, tooltip=list_summary, accessible_name=list_summary)
 
     def _current_filter_value(self):
