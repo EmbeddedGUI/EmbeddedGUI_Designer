@@ -714,6 +714,15 @@ class StatusCenterPanel(QWidget):
         self._set_hint(card, f"Open {label_text}. {summary_text}")
         card.setAccessibleName(f"{label_text} metric: {summary_text}")
 
+    def _metric_card_accessible_name(self, label, summary, hint):
+        label_text = str(label or "").strip() or "Metric"
+        summary_text = str(summary or "").strip()
+        hint_text = str(hint or "").strip()
+        base = f"{label_text} metric: {summary_text}" if summary_text else f"{label_text} metric"
+        if hint_text:
+            return f"{base}. {hint_text}"
+        return base
+
     def _diagnostic_summary_text(self, error_count, warning_count, info_count):
         errors = max(int(error_count or 0), 0)
         warnings = max(int(warning_count or 0), 0)
@@ -1194,7 +1203,8 @@ class StatusCenterPanel(QWidget):
         diag_hint = self._diagnostics_hint(error_count, warning_count, info_count)
         self._set_hint(self._diag_card, diag_hint)
         self._set_hint(self._diag_btn, diag_hint)
-        self._set_hint(self._preview_card, f"Open Debug Output. {preview_text}.")
+        preview_hint = f"Open Debug Output. {preview_text}."
+        self._set_hint(self._preview_card, preview_hint)
         debug_hint = self._debug_button_hint(can_compile, runtime_text, preview_text)
         self._set_hint(
             self._debug_btn,
@@ -1213,6 +1223,36 @@ class StatusCenterPanel(QWidget):
             project_hint,
         )
         self._set_hint(self._structure_btn, structure_hint)
+        self._sdk_card.setAccessibleName(
+            self._metric_card_accessible_name("SDK", self._sdk_value.text(), self._sdk_card.toolTip())
+        )
+        self._compile_card.setAccessibleName(
+            self._metric_card_accessible_name("Compile", self._compile_value.text(), self._compile_card.toolTip())
+        )
+        self._diag_card.setAccessibleName(
+            self._metric_card_accessible_name(
+                "Diagnostics",
+                self._diagnostic_metric_summary(error_count, warning_count, info_count),
+                self._diag_card.toolTip(),
+            )
+        )
+        self._preview_card.setAccessibleName(
+            self._metric_card_accessible_name("Preview", self._preview_value.text(), preview_hint)
+        )
+        self._selection_card.setAccessibleName(
+            self._metric_card_accessible_name(
+                "Selection",
+                self._selection_metric_summary(selection_total),
+                self._selection_card.toolTip(),
+            )
+        )
+        self._dirty_card.setAccessibleName(
+            self._metric_card_accessible_name(
+                "Dirty Pages",
+                self._dirty_metric_summary(dirty_count),
+                self._dirty_card.toolTip(),
+            )
+        )
         self._diag_btn.setAccessibleName(
             self._action_button_accessible_name(
                 "open_diagnostics",
