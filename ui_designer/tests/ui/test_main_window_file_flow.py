@@ -3429,7 +3429,10 @@ class TestMainWindowFileFlow:
 
         assert actions["File"].toolTip() == "Create, open, save, export, and close projects."
         assert actions["File"].statusTip() == actions["File"].toolTip()
-        assert actions["Edit"].toolTip() == "Undo changes and work with the current selection."
+        assert actions["Edit"].toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: none. Undo: unavailable. Redo: unavailable. Selection: none."
+        )
         assert actions["Edit"].statusTip() == actions["Edit"].toolTip()
         assert actions["Arrange"].toolTip() == "Align, distribute, reorder, lock, and hide selected widgets."
         assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
@@ -3456,6 +3459,53 @@ class TestMainWindowFileFlow:
             "Change workspace layout, themes, preview modes, and mockup options. "
             "Theme: Light. Font size: 11pt. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
         )
+        _close_window(window)
+
+    def test_edit_menu_category_exposes_page_selection_and_undo_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "EditCategoryHintsDemo"
+        project = _create_project(project_dir, "EditCategoryHintsDemo", sdk_root)
+        widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        project.get_startup_page().root_widget.add_child(widget)
+        project.save(str(project_dir))
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        edit_action = next(action for action in window.menuBar().actions() if action.text() == "Edit")
+        assert edit_action.toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: none. Undo: unavailable. Redo: unavailable. Selection: none."
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert edit_action.toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: main_page. Undo: unavailable. Redo: unavailable. Selection: none."
+        )
+        assert edit_action.statusTip() == edit_action.toolTip()
+
+        loaded_widget = window._current_page.root_widget.children[0]
+        window._set_selection([loaded_widget], primary=loaded_widget, sync_tree=True, sync_preview=True)
+
+        stack = window._undo_manager.get_stack(window._current_page.name)
+        stack.push("state 1", label="initial")
+        stack.push("state 2", label="changed")
+        stack.push("state 3", label="changed again")
+        stack.undo()
+        window._update_undo_actions()
+
+        assert edit_action.toolTip() == (
+            "Undo changes and work with the current selection. "
+            "Page: main_page. Undo: available. Redo: available. Selection: title (label)."
+        )
+        assert edit_action.statusTip() == edit_action.toolTip()
         _close_window(window)
 
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):

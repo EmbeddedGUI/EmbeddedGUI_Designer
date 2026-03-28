@@ -915,6 +915,21 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_edit_menu_metadata(self):
+        if not hasattr(self, "_edit_menu"):
+            return
+        page_label = self._current_page_accessibility_text()
+        selection_text = self._selection_accessibility_text()
+        undo_state = "available" if getattr(getattr(self, "_undo_action", None), "isEnabled", lambda: False)() else "unavailable"
+        redo_state = "available" if getattr(getattr(self, "_redo_action", None), "isEnabled", lambda: False)() else "unavailable"
+        self._apply_action_hint(
+            self._edit_menu.menuAction(),
+            (
+                "Undo changes and work with the current selection. "
+                f"Page: {page_label}. Undo: {undo_state}. Redo: {redo_state}. {selection_text}"
+            ),
+        )
+
     def _update_generate_resources_action_metadata(self):
         if not hasattr(self, "_generate_resources_action"):
             return
@@ -2498,6 +2513,7 @@ class MainWindow(QMainWindow):
 
         # 鈹€鈹€ Edit menu 鈹€鈹€
         edit_menu = menubar.addMenu("Edit")
+        self._edit_menu = edit_menu
         self._apply_action_hint(edit_menu.menuAction(), "Undo changes and work with the current selection.")
 
         self._undo_action = QAction("Undo", self)
@@ -6403,6 +6419,7 @@ class MainWindow(QMainWindow):
         self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
         self._refresh_quick_move_into_menu()
         self._update_toolbar_action_metadata()
+        self._update_edit_menu_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
@@ -6539,6 +6556,7 @@ class MainWindow(QMainWindow):
             self._undo_action.setEnabled(False)
             self._redo_action.setEnabled(False)
         self._update_toolbar_action_metadata()
+        self._update_edit_menu_metadata()
 
     def _on_drag_started(self):
         """Preview drag/resize began 鈥?start undo batch."""
