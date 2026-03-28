@@ -3069,6 +3069,62 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Delete"].statusTip() == refreshed_actions["Delete"].toolTip()
         _close_window(window)
 
+    def test_arrange_actions_expose_dynamic_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ArrangeHintsDemo"
+        project = _create_project(project_dir, "ArrangeHintsDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
+        second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
+        third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(third)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert window._align_left_action.toolTip() == (
+            "Align the current selection to the left edge of the primary widget. Unavailable: select at least 2 widgets."
+        )
+        assert window._align_left_action.statusTip() == window._align_left_action.toolTip()
+        assert window._distribute_h_action.toolTip() == (
+            "Distribute the current selection evenly across the horizontal axis. "
+            "Unavailable: select at least 3 widgets."
+        )
+        assert window._distribute_h_action.statusTip() == window._distribute_h_action.toolTip()
+
+        loaded_first, loaded_second, loaded_third = window._current_page.root_widget.children[:3]
+        window._set_selection([loaded_first, loaded_second], primary=loaded_first, sync_tree=True, sync_preview=True)
+        assert window._align_left_action.toolTip() == "Align the current selection to the left edge of the primary widget."
+        assert window._align_left_action.statusTip() == window._align_left_action.toolTip()
+        assert window._distribute_h_action.toolTip() == (
+            "Distribute the current selection evenly across the horizontal axis. "
+            "Unavailable: select at least 3 widgets."
+        )
+        assert window._distribute_h_action.statusTip() == window._distribute_h_action.toolTip()
+
+        loaded_second.designer_locked = True
+        window._update_edit_actions()
+        assert window._align_left_action.toolTip() == (
+            "Align the current selection to the left edge of the primary widget. "
+            "Unavailable: locked widgets leave fewer than 2 editable widgets."
+        )
+        assert window._align_left_action.statusTip() == window._align_left_action.toolTip()
+        loaded_second.designer_locked = False
+
+        window._set_selection([loaded_first, loaded_second, loaded_third], primary=loaded_first, sync_tree=True, sync_preview=True)
+        assert window._distribute_h_action.toolTip() == "Distribute the current selection evenly across the horizontal axis."
+        assert window._distribute_h_action.statusTip() == window._distribute_h_action.toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

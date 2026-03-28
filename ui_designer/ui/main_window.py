@@ -680,6 +680,27 @@ class MainWindow(QMainWindow):
             return "copy or cut widgets first"
         return "select a container or page root that can receive pasted widgets"
 
+    def _arrange_action_blocked_reason(self, selected_widgets, selectable_widgets, minimum_count):
+        if len(selectable_widgets) < minimum_count:
+            if len(selected_widgets) >= minimum_count:
+                return f"locked widgets leave fewer than {minimum_count} editable widgets"
+            return f"select at least {minimum_count} widgets"
+        layout_parent = self._shared_layout_managed_parent(selectable_widgets)
+        if layout_parent is not None:
+            return (
+                f"selected widgets are layout-managed by the same {layout_parent.widget_type} parent; "
+                "reorder them instead"
+            )
+        if self._shared_selection_parent(selectable_widgets) is None:
+            return "selected widgets do not share the same free-position parent"
+        return f"select at least {minimum_count} widgets"
+
+    def _align_action_blocked_reason(self, selected_widgets, selectable_widgets):
+        return self._arrange_action_blocked_reason(selected_widgets, selectable_widgets, 2)
+
+    def _distribute_action_blocked_reason(self, selected_widgets, selectable_widgets):
+        return self._arrange_action_blocked_reason(selected_widgets, selectable_widgets, 3)
+
     def _compile_action_blocked_reason(self):
         if self.project is None:
             return "open a project first"
@@ -2021,36 +2042,59 @@ class MainWindow(QMainWindow):
         arrange_menu = menubar.addMenu("Arrange")
 
         self._align_left_action = QAction("Align Left", self)
+        self._apply_action_hint(self._align_left_action, "Align the current selection to the left edge of the primary widget.")
         self._align_left_action.triggered.connect(lambda: self._align_selection("left"))
         arrange_menu.addAction(self._align_left_action)
 
         self._align_right_action = QAction("Align Right", self)
+        self._apply_action_hint(self._align_right_action, "Align the current selection to the right edge of the primary widget.")
         self._align_right_action.triggered.connect(lambda: self._align_selection("right"))
         arrange_menu.addAction(self._align_right_action)
 
         self._align_top_action = QAction("Align Top", self)
+        self._apply_action_hint(self._align_top_action, "Align the current selection to the top edge of the primary widget.")
         self._align_top_action.triggered.connect(lambda: self._align_selection("top"))
         arrange_menu.addAction(self._align_top_action)
 
         self._align_bottom_action = QAction("Align Bottom", self)
+        self._apply_action_hint(
+            self._align_bottom_action,
+            "Align the current selection to the bottom edge of the primary widget.",
+        )
         self._align_bottom_action.triggered.connect(lambda: self._align_selection("bottom"))
         arrange_menu.addAction(self._align_bottom_action)
 
         self._align_hcenter_action = QAction("Align Horizontal Center", self)
+        self._apply_action_hint(
+            self._align_hcenter_action,
+            "Align the current selection to the horizontal center of the primary widget.",
+        )
         self._align_hcenter_action.triggered.connect(lambda: self._align_selection("hcenter"))
         arrange_menu.addAction(self._align_hcenter_action)
 
         self._align_vcenter_action = QAction("Align Vertical Center", self)
+        self._apply_action_hint(
+            self._align_vcenter_action,
+            "Align the current selection to the vertical center of the primary widget.",
+        )
         self._align_vcenter_action.triggered.connect(lambda: self._align_selection("vcenter"))
         arrange_menu.addAction(self._align_vcenter_action)
 
         arrange_menu.addSeparator()
 
         self._distribute_h_action = QAction("Distribute Horizontally", self)
+        self._apply_action_hint(
+            self._distribute_h_action,
+            "Distribute the current selection evenly across the horizontal axis.",
+        )
         self._distribute_h_action.triggered.connect(lambda: self._distribute_selection("horizontal"))
         arrange_menu.addAction(self._distribute_h_action)
 
         self._distribute_v_action = QAction("Distribute Vertically", self)
+        self._apply_action_hint(
+            self._distribute_v_action,
+            "Distribute the current selection evenly across the vertical axis.",
+        )
         self._distribute_v_action.triggered.connect(lambda: self._distribute_selection("vertical"))
         arrange_menu.addAction(self._distribute_v_action)
 
@@ -5594,6 +5638,52 @@ class MainWindow(QMainWindow):
         self._send_back_action.setEnabled(has_selection)
         self._toggle_lock_action.setEnabled(has_selection)
         self._toggle_hide_action.setEnabled(has_selection)
+        align_blocked_reason = self._align_action_blocked_reason(selected_widgets, selectable_widgets)
+        distribute_blocked_reason = self._distribute_action_blocked_reason(selected_widgets, selectable_widgets)
+        for action, base_text in (
+            (
+                self._align_left_action,
+                "Align the current selection to the left edge of the primary widget.",
+            ),
+            (
+                self._align_right_action,
+                "Align the current selection to the right edge of the primary widget.",
+            ),
+            (
+                self._align_top_action,
+                "Align the current selection to the top edge of the primary widget.",
+            ),
+            (
+                self._align_bottom_action,
+                "Align the current selection to the bottom edge of the primary widget.",
+            ),
+            (
+                self._align_hcenter_action,
+                "Align the current selection to the horizontal center of the primary widget.",
+            ),
+            (
+                self._align_vcenter_action,
+                "Align the current selection to the vertical center of the primary widget.",
+            ),
+        ):
+            self._apply_action_hint(
+                action,
+                self._action_hint(base_text, action.isEnabled(), align_blocked_reason),
+            )
+        for action, base_text in (
+            (
+                self._distribute_h_action,
+                "Distribute the current selection evenly across the horizontal axis.",
+            ),
+            (
+                self._distribute_v_action,
+                "Distribute the current selection evenly across the vertical axis.",
+            ),
+        ):
+            self._apply_action_hint(
+                action,
+                self._action_hint(base_text, action.isEnabled(), distribute_blocked_reason),
+            )
         self._apply_action_hint(
             self._select_all_action,
             self._action_hint(
