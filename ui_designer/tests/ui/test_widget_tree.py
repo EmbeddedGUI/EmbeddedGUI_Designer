@@ -1022,7 +1022,15 @@ class TestWidgetTreePanel:
         assert actions["Move To Bottom"].isEnabled() is True
         assert "Unavailable: selection must only include groups." in actions["Ungroup"].toolTip()
         assert "Unavailable: move something into a container first." in actions["Move Into Last Target"].toolTip()
+        assert actions["Group Selection"].statusTip() == actions["Group Selection"].toolTip()
+        assert actions["Ungroup"].statusTip() == actions["Ungroup"].toolTip()
+        assert actions["Move Into..."].statusTip() == actions["Move Into..."].toolTip()
         assert actions["Move Into Last Target"].statusTip() == actions["Move Into Last Target"].toolTip()
+        assert actions["Lift To Parent"].statusTip() == actions["Lift To Parent"].toolTip()
+        assert actions["Move Up"].statusTip() == actions["Move Up"].toolTip()
+        assert actions["Move Down"].statusTip() == actions["Move Down"].toolTip()
+        assert actions["Move To Top"].statusTip() == actions["Move To Top"].toolTip()
+        assert actions["Move To Bottom"].statusTip() == actions["Move To Bottom"].toolTip()
         assert "Unavailable: selected widgets already belong to the top container." in actions["Lift To Parent"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move Up"].toolTip()
         assert "Unavailable: selected widgets are already at the top." in actions["Move To Top"].toolTip()
@@ -1880,6 +1888,7 @@ class TestWidgetTreePanel:
         assert root_actions["Move To Bottom"].isEnabled() is False
         assert "root widgets cannot be regrouped or reordered" in root_actions["Group Selection"].toolTip()
         assert "Structure unavailable: root widgets cannot be regrouped or reordered." == root_structure_action.toolTip()
+        assert root_structure_action.statusTip() == root_structure_action.toolTip()
 
         root_menu.deleteLater()
 
@@ -1901,6 +1910,7 @@ class TestWidgetTreePanel:
             "Structure unavailable: select another sibling or target container to move this widget."
             == child_structure_action.toolTip()
         )
+        assert child_structure_action.statusTip() == child_structure_action.toolTip()
 
         child_menu.deleteLater()
         panel.deleteLater()
