@@ -2903,7 +2903,8 @@ class TestMainWindowFileFlow:
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
         assert actions["Auto Compile"].toolTip() == (
-            "Automatically compile and rerun the preview after changes. Unavailable: open a project first."
+            "Automatically compile and rerun the preview after changes. "
+            "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
         )
         assert actions["Auto Compile"].statusTip() == actions["Auto Compile"].toolTip()
         assert actions["Release Build..."].toolTip() == (
@@ -2945,7 +2946,9 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
-        assert refreshed_actions["Auto Compile"].toolTip() == "Automatically compile and rerun the preview after changes."
+        assert refreshed_actions["Auto Compile"].toolTip() == (
+            "Automatically compile and rerun the preview after changes. Project: open. SDK: valid. Preview: stopped."
+        )
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
         assert refreshed_actions["Release Build..."].toolTip() == (
             f"Build a release package for the current project. Output root: {window._release_output_root()}."

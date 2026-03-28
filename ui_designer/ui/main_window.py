@@ -1348,6 +1348,9 @@ class MainWindow(QMainWindow):
         preview_state = "running" if preview_running else "stopped"
         return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}."
 
+    def _auto_compile_action_context_summary(self):
+        return self._compile_action_context_summary()
+
     def _stop_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
@@ -2133,12 +2136,14 @@ class MainWindow(QMainWindow):
         can_browse_release_history = self.project is not None and bool(self._project_dir)
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
+        auto_compile_base = "Automatically compile and rerun the preview after changes."
+        auto_compile_context = self._auto_compile_action_context_summary()
         self._apply_action_hint(
             self.auto_compile_action,
-            self._action_hint(
-                "Automatically compile and rerun the preview after changes.",
-                self.auto_compile_action.isEnabled(),
-                self._compile_action_blocked_reason(),
+            (
+                f"{auto_compile_base} {auto_compile_context}"
+                if self.auto_compile_action.isEnabled()
+                else f"{auto_compile_base} {auto_compile_context} Unavailable: {self._compile_action_blocked_reason()}."
             ),
         )
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
