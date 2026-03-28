@@ -833,6 +833,75 @@ class MainWindow(QMainWindow):
                 zoom_reset_hint += " Unavailable: already at 100% zoom."
             self._apply_action_hint(self._zoom_reset_action, zoom_reset_hint)
 
+    def _current_grid_snap_label(self):
+        size = int(getattr(self.preview_panel, "grid_size", lambda: 0)() or 0)
+        return "off" if size <= 0 else f"{size}px"
+
+    def _preview_mockup_action_context(self):
+        overlay = getattr(self.preview_panel, "overlay", None)
+        has_mockup = bool(getattr(overlay, "_bg_image", None) is not None)
+        visible = bool(getattr(overlay, "_bg_image_visible", True))
+        opacity = int(round(float(getattr(overlay, "_bg_image_opacity", 0.3) or 0.0) * 100))
+        if not has_mockup:
+            state = "none loaded"
+        else:
+            state = "visible" if visible else "hidden"
+        return has_mockup, visible, opacity, f"Current mockup: {state}. Opacity: {opacity}%."
+
+    def _update_preview_grid_and_mockup_action_metadata(self):
+        if not hasattr(self, "preview_panel"):
+            return
+        grid_visible = bool(self.preview_panel.show_grid())
+        current_snap = self._current_grid_snap_label()
+        grid_visibility = "visible" if grid_visible else "hidden"
+        if hasattr(self, "_show_grid_action"):
+            grid_hint = (
+                f"Currently showing the preview grid overlay. Current snap: {current_snap}."
+                if grid_visible
+                else f"Show the preview grid overlay. Current snap: {current_snap}."
+            )
+            self._apply_action_hint(self._show_grid_action, grid_hint)
+        for size, action in getattr(self, "_grid_size_actions", {}).items():
+            if size <= 0:
+                hint = (
+                    f"Grid snapping is currently disabled. Grid {grid_visibility}."
+                    if current_snap == "off"
+                    else f"Disable grid snapping. Current snap: {current_snap}. Grid {grid_visibility}."
+                )
+            else:
+                hint = (
+                    f"Currently snapping the overlay grid to {size}px. Grid {grid_visibility}."
+                    if current_snap == f"{size}px"
+                    else f"Snap the overlay grid to {size}px. Current snap: {current_snap}. Grid {grid_visibility}."
+                )
+            self._apply_action_hint(action, hint)
+
+        has_mockup, mockup_visible, opacity, mockup_context = self._preview_mockup_action_context()
+        if hasattr(self, "_load_bg_action"):
+            self._apply_action_hint(self._load_bg_action, f"Load a mockup image behind the preview. {mockup_context}")
+        if hasattr(self, "_toggle_bg_action"):
+            if has_mockup:
+                toggle_hint = (
+                    f"Currently showing the background mockup image (Ctrl+M). {mockup_context}"
+                    if mockup_visible
+                    else f"Show the background mockup image (Ctrl+M). {mockup_context}"
+                )
+            else:
+                toggle_hint = f"Toggle the background mockup image (Ctrl+M). {mockup_context}"
+            self._apply_action_hint(self._toggle_bg_action, toggle_hint)
+        if hasattr(self, "_clear_bg_action"):
+            clear_hint = f"Remove the current background mockup image. {mockup_context}"
+            if not has_mockup:
+                clear_hint = f"Remove the current background mockup image. Unavailable: no mockup image loaded. {mockup_context}"
+            self._apply_action_hint(self._clear_bg_action, clear_hint)
+        for pct, action in getattr(self, "_opacity_actions", {}).items():
+            hint = (
+                f"Currently showing mockup opacity at {pct}%. {mockup_context}"
+                if pct == opacity
+                else f"Set the mockup image opacity to {pct}%. {mockup_context}"
+            )
+            self._apply_action_hint(action, hint)
+
     def _select_left_panel(self, panel_key):
         if panel_key == "components":
             panel_key = "widgets"
@@ -2820,10 +2889,10 @@ class MainWindow(QMainWindow):
         bg_menu = view_menu.addMenu("Background Mockup")
         self._apply_action_hint(bg_menu.menuAction(), "Manage the preview background mockup image.")
 
-        load_bg_action = QAction("Load Mockup Image...", self)
-        self._apply_action_hint(load_bg_action, "Load a mockup image behind the preview.")
-        load_bg_action.triggered.connect(self._load_background_image)
-        bg_menu.addAction(load_bg_action)
+        self._load_bg_action = QAction("Load Mockup Image...", self)
+        self._apply_action_hint(self._load_bg_action, "Load a mockup image behind the preview.")
+        self._load_bg_action.triggered.connect(self._load_background_image)
+        bg_menu.addAction(self._load_bg_action)
 
         self._toggle_bg_action = QAction("Show Mockup", self)
         self._toggle_bg_action.setCheckable(True)
@@ -2833,10 +2902,10 @@ class MainWindow(QMainWindow):
         self._toggle_bg_action.toggled.connect(self._toggle_background_image)
         bg_menu.addAction(self._toggle_bg_action)
 
-        clear_bg_action = QAction("Clear Mockup Image", self)
-        self._apply_action_hint(clear_bg_action, "Remove the current background mockup image.")
-        clear_bg_action.triggered.connect(self._clear_background_image)
-        bg_menu.addAction(clear_bg_action)
+        self._clear_bg_action = QAction("Clear Mockup Image", self)
+        self._apply_action_hint(self._clear_bg_action, "Remove the current background mockup image.")
+        self._clear_bg_action.triggered.connect(self._clear_background_image)
+        bg_menu.addAction(self._clear_bg_action)
 
         bg_menu.addSeparator()
 
@@ -2845,6 +2914,7 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(opacity_menu.menuAction(), "Choose the mockup image opacity.")
         self._opacity_group = QActionGroup(self)
         self._opacity_group.setExclusive(True)
+        self._opacity_actions = {}
         for pct in [10, 20, 30, 50, 70, 100]:
             act = QAction(f"{pct}%", self)
             act.setCheckable(True)
@@ -2855,7 +2925,9 @@ class MainWindow(QMainWindow):
                 lambda checked, p=pct: self._set_background_opacity(p / 100.0)
             )
             self._opacity_group.addAction(act)
+            self._opacity_actions[pct] = act
             opacity_menu.addAction(act)
+        self._update_preview_grid_and_mockup_action_metadata()
 
     # 鈹€鈹€ Toolbar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -4088,6 +4160,7 @@ class MainWindow(QMainWindow):
         self.preview_panel.set_background_image_opacity(self._current_page.mockup_image_opacity)
         self._refresh_project_watch_snapshot()
         self._record_page_state_change(update_preview=False, trigger_compile=False)
+        self._update_preview_grid_and_mockup_action_metadata()
         self.statusBar().showMessage(f"Mockup image loaded: {filename}")
 
     def _toggle_background_image(self, visible):
@@ -4095,10 +4168,12 @@ class MainWindow(QMainWindow):
         if self._current_page:
             if self._current_page.mockup_image_visible == visible:
                 self.preview_panel.set_background_image_visible(visible)
+                self._update_preview_grid_and_mockup_action_metadata()
                 return
             self._current_page.mockup_image_visible = visible
         self.preview_panel.set_background_image_visible(visible)
         self._record_page_state_change(update_preview=False, trigger_compile=False, source="mockup visibility")
+        self._update_preview_grid_and_mockup_action_metadata()
 
     def _clear_background_image(self):
         """Remove the mockup image from the current page."""
@@ -4118,6 +4193,7 @@ class MainWindow(QMainWindow):
         self._set_background_toggle_state(True)
         self._refresh_project_watch_snapshot()
         self._record_page_state_change(update_preview=False, trigger_compile=False)
+        self._update_preview_grid_and_mockup_action_metadata()
         self.statusBar().showMessage("Mockup image cleared")
 
     def _set_background_opacity(self, opacity):
@@ -4125,16 +4201,19 @@ class MainWindow(QMainWindow):
         if self._current_page:
             if self._current_page.mockup_image_opacity == opacity:
                 self.preview_panel.set_background_image_opacity(opacity)
+                self._update_preview_grid_and_mockup_action_metadata()
                 return
             self._current_page.mockup_image_opacity = opacity
         self.preview_panel.set_background_image_opacity(opacity)
         self._record_page_state_change(update_preview=False, trigger_compile=False, source="mockup opacity")
+        self._update_preview_grid_and_mockup_action_metadata()
 
     def _apply_page_mockup(self):
         """Load and apply the current page's mockup image."""
         if not self._current_page:
             self.preview_panel.clear_background_image()
             self._set_background_toggle_state(True)
+            self._update_preview_grid_and_mockup_action_metadata()
             return
 
         path = self._current_page.mockup_image_path
@@ -4159,8 +4238,10 @@ class MainWindow(QMainWindow):
                     self.preview_panel.set_background_image_opacity(
                         self._current_page.mockup_image_opacity
                     )
+                    self._update_preview_grid_and_mockup_action_metadata()
                     return
         self.preview_panel.clear_background_image()
+        self._update_preview_grid_and_mockup_action_metadata()
 
     def _set_background_toggle_state(self, visible):
         blocker = QSignalBlocker(self._toggle_bg_action)
@@ -6466,6 +6547,7 @@ class MainWindow(QMainWindow):
         self.preview_panel.set_show_grid(show)
         self._config.show_grid = bool(show)
         self._config.save()
+        self._update_preview_grid_and_mockup_action_metadata()
 
     def _set_grid_size(self, size):
         self.preview_panel.set_grid_size(size)
@@ -6474,6 +6556,7 @@ class MainWindow(QMainWindow):
         action = self._grid_size_actions.get(int(size))
         if action is not None:
             action.setChecked(True)
+        self._update_preview_grid_and_mockup_action_metadata()
 
     def _toggle_auto_compile(self, enabled):
         self.auto_compile = enabled
