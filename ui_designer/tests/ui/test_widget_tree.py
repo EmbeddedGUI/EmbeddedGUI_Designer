@@ -2392,9 +2392,22 @@ class TestWidgetTreePanel:
             "Structure: select widgets to group, move, or reorder. "
             "Drop target: drag over the tree to preview where the selection will land."
         )
+        assert panel.add_btn.toolTip() == "Open the widget browser to insert into root_group (group)."
+        assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
+        assert panel.add_btn.accessibleName() == "Insert widget target: root_group (group)"
+        assert panel.rename_btn.toolTip() == "Rename the current selection (F2)\nUnavailable: select at least 1 widget."
+        assert panel.rename_btn.statusTip() == panel.rename_btn.toolTip()
+        assert panel.rename_btn.accessibleName() == "Rename selected widget unavailable"
+        assert panel.del_btn.toolTip() == "Delete the current selection (Del)\nUnavailable: select at least 1 widget."
+        assert panel.del_btn.statusTip() == panel.del_btn.toolTip()
+        assert panel.del_btn.accessibleName() == "Delete selected widget unavailable"
         assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
         assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
         assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
+        assert panel.filter_select_btn.toolTip() == "Type a widget filter to select matching widgets."
+        assert panel.filter_prev_btn.accessibleName() == "Previous widget filter match unavailable"
+        assert panel.filter_next_btn.accessibleName() == "Next widget filter match unavailable"
+        assert panel.filter_select_btn.accessibleName() == "Select widget filter matches unavailable"
         assert panel.tree.accessibleName() == "Widget tree: 1 widget. 0 selected widgets. Current widget: none."
         assert panel.tree.topLevelItem(0).toolTip(0) == f"Widget {root.name}: {root.widget_type}"
         panel.deleteLater()
@@ -2416,12 +2429,23 @@ class TestWidgetTreePanel:
         assert panel.filter_edit.accessibleName() == "Widget filter: field"
         assert panel.filter_prev_btn.toolTip() == "Select the previous widget filter match (Shift+Enter)."
         assert panel.filter_next_btn.toolTip() == "Select the next widget filter match (Enter)."
+        assert panel.filter_select_btn.toolTip() == "Select all current filter matches (Ctrl+Enter)."
+        assert panel.filter_prev_btn.accessibleName() == "Previous widget filter match: 2 matches. Current position 0/2."
+        assert panel.filter_next_btn.accessibleName() == "Next widget filter match: 2 matches. Current position 0/2."
+        assert panel.filter_select_btn.accessibleName() == "Select 2 widget filter matches"
         assert panel.filter_status_label.accessibleName() == "Widget filter status: 2 matches"
         assert "Filter: field. Status: 2 matches. Position: 0/2." in panel.accessibleName()
 
         panel.set_selected_widgets([second], primary=second)
 
+        assert panel.add_btn.accessibleName() == "Insert widget target: root_group (group)"
+        assert panel.rename_btn.toolTip() == "Rename field_button (F2)."
+        assert panel.rename_btn.accessibleName() == "Rename selected widget: field_button"
+        assert panel.del_btn.toolTip() == "Delete field_button (Del)."
+        assert panel.del_btn.accessibleName() == "Delete selected widget: field_button"
         assert panel.filter_position_label.accessibleName() == "Widget filter position: 2/2"
+        assert panel.filter_prev_btn.accessibleName() == "Previous widget filter match: 2 matches. Current position 2/2."
+        assert panel.filter_next_btn.accessibleName() == "Next widget filter match: 2 matches. Current position 2/2."
         assert panel.tree.accessibleName() == "Widget tree: 3 widgets. 1 selected widget. Current widget: field_button."
         assert "Current widget: field_button." in panel.accessibleName()
         panel.deleteLater()

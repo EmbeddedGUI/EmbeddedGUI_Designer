@@ -1893,6 +1893,80 @@ class WidgetTreePanel(QWidget):
         reason = blocked_reason.rstrip(".")
         return f"{base_text}\nUnavailable: {reason}."
 
+    def _update_primary_action_metadata(self):
+        if not hasattr(self, "add_btn"):
+            return
+
+        insert_parent = self._default_insert_parent()
+        insert_target = self._current_move_target_label(insert_parent, "page root") or "page root"
+        can_insert = self.project is not None
+        if can_insert:
+            add_tooltip = f"Open the widget browser to insert into {insert_target}."
+            add_accessible_name = f"Insert widget target: {insert_target}"
+        else:
+            add_tooltip = "Open or create a project page to insert a widget."
+            add_accessible_name = "Insert widget unavailable"
+        self.add_btn.setEnabled(can_insert)
+        _set_widget_metadata(self.add_btn, tooltip=add_tooltip, accessible_name=add_accessible_name)
+
+        selected_widgets = self.selected_widgets()
+        selected_count = len(selected_widgets)
+        if selected_count == 0:
+            rename_enabled = False
+            rename_tooltip = self._structure_tooltip(
+                "Rename the current selection (F2)",
+                False,
+                "select at least 1 widget.",
+            )
+            rename_accessible_name = "Rename selected widget unavailable"
+        elif selected_count == 1:
+            rename_enabled = True
+            selected_label = self._widget_label(selected_widgets[0])
+            rename_tooltip = f"Rename {selected_label} (F2)."
+            rename_accessible_name = f"Rename selected widget: {selected_label}"
+        else:
+            rename_enabled = True
+            selection_label = _count_label(selected_count, "selected widget", "selected widgets")
+            rename_tooltip = f"Batch rename {selection_label} (F2)."
+            rename_accessible_name = f"Rename {selection_label}"
+        self.rename_btn.setEnabled(rename_enabled)
+        _set_widget_metadata(self.rename_btn, tooltip=rename_tooltip, accessible_name=rename_accessible_name)
+
+        deletable_widgets = [widget for widget in selected_widgets if not getattr(widget, "designer_locked", False)]
+        locked_count = selected_count - len(deletable_widgets)
+        if selected_count == 0:
+            delete_enabled = False
+            delete_tooltip = self._structure_tooltip(
+                "Delete the current selection (Del)",
+                False,
+                "select at least 1 widget.",
+            )
+            delete_accessible_name = "Delete selected widget unavailable"
+        elif not deletable_widgets:
+            delete_enabled = False
+            delete_tooltip = self._structure_tooltip(
+                "Delete the current selection (Del)",
+                False,
+                f"{self._locked_widget_summary(locked_count)}.",
+            )
+            delete_accessible_name = "Delete selected widget unavailable"
+        elif len(deletable_widgets) == 1 and selected_count == 1:
+            delete_enabled = True
+            selected_label = self._widget_label(deletable_widgets[0])
+            delete_tooltip = f"Delete {selected_label} (Del)."
+            delete_accessible_name = f"Delete selected widget: {selected_label}"
+        else:
+            delete_enabled = True
+            selection_label = _count_label(len(deletable_widgets), "selected widget", "selected widgets")
+            delete_tooltip = f"Delete {selection_label} (Del)."
+            delete_accessible_name = f"Delete {selection_label}"
+            if locked_count:
+                locked_summary = self._locked_widget_summary(locked_count)
+                delete_tooltip += f" Skips {locked_summary}."
+                delete_accessible_name += f". {locked_summary} skipped."
+        self.del_btn.setEnabled(delete_enabled)
+        _set_widget_metadata(self.del_btn, tooltip=delete_tooltip, accessible_name=delete_accessible_name)
+
     def _structure_action_reason(self, state, reason_attr=""):
         if reason_attr:
             reason = getattr(state, reason_attr, "")
@@ -2021,6 +2095,7 @@ class WidgetTreePanel(QWidget):
             self.into_btn.setStatusTip(self.into_btn.toolTip())
         self._refresh_into_button_menu(state)
         self.structure_hint_label.setText(self._structure_hint_text(state))
+        self._update_primary_action_metadata()
         self._update_accessibility_summary()
 
     def _refresh_into_button_menu(self, state=None):
@@ -2135,15 +2210,25 @@ class WidgetTreePanel(QWidget):
         if not query:
             prev_hint = "Type a widget filter to navigate previous matches."
             next_hint = "Type a widget filter to navigate next matches."
-            select_hint = "Select all current filter matches (Ctrl+Enter)"
+            select_hint = "Type a widget filter to select matching widgets."
         elif not matches:
             prev_hint = "No previous widget filter match is available."
             next_hint = "No next widget filter match is available."
-            select_hint = "Select all current filter matches (Ctrl+Enter)"
+            select_hint = "No widget filter matches are available to select."
         else:
             prev_hint = "Select the previous widget filter match (Shift+Enter)."
             next_hint = "Select the next widget filter match (Enter)."
-            select_hint = "Select all current filter matches (Ctrl+Enter)"
+            select_hint = "Select all current filter matches (Ctrl+Enter)."
+        if matches:
+            match_count_text = _count_label(len(matches), "match", "matches")
+            position_summary = f" Current position {position_text}." if position_text != "none" else ""
+            prev_accessible_name = f"Previous widget filter match: {match_count_text}.{position_summary}".rstrip()
+            next_accessible_name = f"Next widget filter match: {match_count_text}.{position_summary}".rstrip()
+            select_accessible_name = f"Select {len(matches)} widget filter {'match' if len(matches) == 1 else 'matches'}"
+        else:
+            prev_accessible_name = "Previous widget filter match unavailable"
+            next_accessible_name = "Next widget filter match unavailable"
+            select_accessible_name = "Select widget filter matches unavailable"
         _set_widget_metadata(
             self.filter_edit,
             tooltip=f"Filter widgets by name or type. Current filter: {query or 'none'}.",
@@ -2152,17 +2237,17 @@ class WidgetTreePanel(QWidget):
         _set_widget_metadata(
             self.filter_prev_btn,
             tooltip=prev_hint,
-            accessible_name="Previous widget filter match",
+            accessible_name=prev_accessible_name,
         )
         _set_widget_metadata(
             self.filter_next_btn,
             tooltip=next_hint,
-            accessible_name="Next widget filter match",
+            accessible_name=next_accessible_name,
         )
         _set_widget_metadata(
             self.filter_select_btn,
             tooltip=select_hint,
-            accessible_name="Select widget filter matches",
+            accessible_name=select_accessible_name,
         )
         _set_widget_metadata(
             self.filter_status_label,
