@@ -554,6 +554,8 @@ class StatusCenterPanel(QWidget):
         value = max(int(count or 0), 0)
         total_value = max(int(total or 0), 0)
         if total_value <= 0:
+            if value <= 0:
+                return f"No {plural}"
             return self._count_label(value, singular, plural)
         percent = int(round((value * 100.0) / total_value))
         return f"{self._count_label(value, singular, plural)} ({percent}%)"
