@@ -614,12 +614,40 @@ class MainWindow(QMainWindow):
                 startup_page = startup_value
         return f"View: {view_label}. Active page: {current_page}. Startup page: {startup_page}."
 
+    def _structure_workspace_nav_context(self):
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+        widgets = [widget for widget in getattr(self._selection_state, "widgets", []) if widget is not None]
+        if not widgets:
+            selection_text = "Selection: none."
+        elif len(widgets) == 1:
+            primary = self._selection_state.primary or widgets[0]
+            widget_name = str(getattr(primary, "name", "") or getattr(primary, "widget_type", "") or "widget")
+            widget_type = str(getattr(primary, "widget_type", "") or "widget")
+            selection_text = f"Selection: {widget_name} ({widget_type})."
+        else:
+            selection_text = f"Selection: {len(widgets)} widgets."
+        return f"Current page: {current_page}. {selection_text}"
+
+    def _components_workspace_nav_context(self):
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+        if self._current_page is None:
+            return "Current page: none. Insert target: unavailable."
+        target = self._insert_target_summary(self._pending_insert_parent or self._default_insert_parent())
+        return f"Current page: {current_page}. Insert target: {target}."
+
     def _update_workspace_nav_button_metadata(self, current_panel):
         if not hasattr(self, "_workspace_nav_buttons"):
             return
         for key, button in self._workspace_nav_buttons.items():
             label = self._workspace_panel_label(key)
-            context = self._project_workspace_nav_context() if key == "project" else ""
+            if key == "project":
+                context = self._project_workspace_nav_context()
+            elif key == "structure":
+                context = self._structure_workspace_nav_context()
+            elif key == "widgets":
+                context = self._components_workspace_nav_context()
+            else:
+                context = ""
             if key == current_panel:
                 tooltip = f"Currently showing {label} panel."
                 accessible_name = f"Workspace panel button: {label}. Current panel."

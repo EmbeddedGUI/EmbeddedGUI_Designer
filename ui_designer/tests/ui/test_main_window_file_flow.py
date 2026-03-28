@@ -6568,6 +6568,9 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+            "Currently showing Components panel. Current page: none. Insert target: unavailable."
+        )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
         )
@@ -6621,10 +6624,22 @@ class TestMainWindowFileFlow:
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
+        assert window._workspace_nav_buttons["structure"].toolTip() == (
+            "Open Structure panel. Current page: main_page. Selection: none."
+        )
+        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+            "Open Components panel. Current page: main_page. Insert target: root_group."
+        )
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
         assert window._selection_chip.text() == "1 selected"
         assert window._selection_chip.accessibleName() == "Workspace status: 1 selected."
+        assert window._workspace_nav_buttons["structure"].toolTip() == (
+            "Open Structure panel. Current page: main_page. Selection: title (label)."
+        )
+        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+            "Open Components panel. Current page: main_page. Insert target: root_group."
+        )
 
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
         window._update_window_title()
@@ -6744,6 +6759,12 @@ class TestMainWindowFileFlow:
         )
         assert window._workspace_nav_buttons["project"].accessibleName() == (
             "Workspace panel button: Project. Current panel. View: List view. Active page: none. Startup page: none."
+        )
+        assert window._workspace_nav_buttons["structure"].toolTip() == (
+            "Open Structure panel. Current page: none. Selection: none."
+        )
+        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+            "Open Components panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["status"].toolTip() == "Open Status panel."
         assert window._workspace_nav_buttons["status"].statusTip() == window._workspace_nav_buttons["status"].toolTip()
