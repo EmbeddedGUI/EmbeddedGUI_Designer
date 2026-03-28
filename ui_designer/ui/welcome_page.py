@@ -376,5 +376,29 @@ class WelcomePage(QWidget):
             tooltip=self._sdk_hint_label.text(),
             accessible_name=f"SDK hint: {self._sdk_hint_label.text()}",
         )
+        if sdk_status.startswith("Ready:"):
+            open_app_hint = "Open an SDK example project or legacy example."
+            set_sdk_hint = "Change the EmbeddedGUI SDK root used for compile preview."
+        elif sdk_status.startswith("Invalid:"):
+            open_app_hint = "SDK root needs attention before browsing SDK examples."
+            set_sdk_hint = "Choose a valid EmbeddedGUI SDK root used for compile preview."
+        else:
+            open_app_hint = "Set or download an SDK before browsing SDK examples."
+            set_sdk_hint = "Choose the EmbeddedGUI SDK root used for compile preview."
+        _set_widget_metadata(
+            self._open_app_btn,
+            tooltip=open_app_hint,
+            accessible_name="Open SDK example",
+        )
+        _set_widget_metadata(
+            self._set_sdk_root_btn,
+            tooltip=set_sdk_hint,
+            accessible_name="Set SDK root",
+        )
+        _set_widget_metadata(
+            self._download_sdk_btn,
+            tooltip=describe_auto_download_plan(default_sdk_install_dir()),
+            accessible_name="Download SDK",
+        )
         _set_widget_metadata(self._recent_label, tooltip=self._recent_label.text(), accessible_name=self._recent_label.text())
         _set_widget_metadata(self._footer_label, tooltip=self._footer_label.text(), accessible_name=self._footer_label.text())

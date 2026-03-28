@@ -620,6 +620,10 @@ class TestWelcomePage:
         assert page._sdk_status_label.accessibleName() == "SDK status: Ready: using selected SDK root"
         assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
+        assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
+        assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
+        assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."
+        assert page._download_sdk_btn.statusTip() == page._download_sdk_btn.toolTip()
         page.deleteLater()
 
     def test_recent_project_item_exposes_accessibility_summary(self, qapp, isolated_config, tmp_path):
@@ -749,6 +753,8 @@ class TestWelcomePage:
         assert "Missing" in page._sdk_status_label.text()
         assert str(cache_dir) in page._sdk_hint_label.text()
         assert "GitHub archive" in page._sdk_hint_label.text()
+        assert page._open_app_btn.toolTip() == "Set or download an SDK before browsing SDK examples."
+        assert page._set_sdk_root_btn.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview."
         page.deleteLater()
 
     def test_refresh_uses_default_sdk_cache_when_config_is_invalid(self, qapp, isolated_config, tmp_path, monkeypatch):
