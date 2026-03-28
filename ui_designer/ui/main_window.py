@@ -1310,11 +1310,12 @@ class MainWindow(QMainWindow):
         history_summary = str(history_summary or self._release_history_records_summary())
         latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
         latest_release_sdk_summary = str(latest_release_sdk_summary or self._latest_release_sdk_summary())
+        output_root_label = self._release_output_root() or "none"
         self._apply_action_hint(
             action,
             (
                 "Edit release profiles for the current project. "
-                f"SDK: {sdk_state}. Output root: {self._release_output_root()}. {self._release_profiles_summary_suffix()} "
+                f"SDK: {sdk_state}. Output root: {output_root_label}. {self._release_profiles_summary_suffix()} "
                 f"History file: {history_file_path or 'not created yet'}. "
                 f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
                 f"{output_root_state_summary} {history_file_state_summary} "
