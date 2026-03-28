@@ -2365,6 +2365,13 @@ class MainWindow(QMainWindow):
             self._release_build_action.setEnabled(can_release)
             self._release_profiles_action.setEnabled(self.project is not None)
             self._release_history_action.setEnabled(can_browse_release_history)
+            release_build_blocked_reason = (
+                "open a project first"
+                if self.project is None
+                else "save the project to disk first"
+                if not self._project_dir
+                else "set a valid SDK root first"
+            )
             self._apply_action_hint(
                 self._release_build_action,
                 (
@@ -2375,14 +2382,14 @@ class MainWindow(QMainWindow):
                     f"{output_root_state_summary} {history_file_state_summary} {history_summary} "
                     f"{latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                     if self._release_build_action.isEnabled()
-                    else self._action_hint(
-                        "Build a release package for the current project.",
-                        False,
-                        "open a project first"
-                        if self.project is None
-                        else "save the project to disk first"
-                        if not self._project_dir
-                        else "set a valid SDK root first",
+                    else (
+                        f"Build a release package for the current project. SDK: {sdk_state}. Unavailable: {release_build_blocked_reason}."
+                        if release_build_blocked_reason == "set a valid SDK root first"
+                        else self._action_hint(
+                            "Build a release package for the current project.",
+                            False,
+                            release_build_blocked_reason,
+                        )
                     )
                 ),
             )
