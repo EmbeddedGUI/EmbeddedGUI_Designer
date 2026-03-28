@@ -889,6 +889,12 @@ class ReleaseProfilesDialog(QDialog):
 
     def _update_accessibility_summary(self) -> None:
         current_profile_label = self._current_profile_label()
+        current_profile = self._current_profile()
+        can_copy_profile = current_profile is not None
+        can_delete_profile = current_profile is not None and len(self._release_config.profiles) > 1
+        can_set_default_profile = (
+            current_profile is not None and current_profile.id != self._release_config.default_profile
+        )
         summary = (
             f"Release profiles: {_count_label(len(self._release_config.profiles), 'profile')}. "
             f"Default profile: {self._release_config.default_profile}. "
@@ -906,28 +912,32 @@ class ReleaseProfilesDialog(QDialog):
             self._copy_btn,
             tooltip=(
                 "Copy the current release profile."
-                if self._current_profile() is not None
+                if can_copy_profile
                 else "Select a release profile to copy it."
             ),
-            accessible_name="Copy release profile",
+            accessible_name="Copy release profile" if can_copy_profile else "Copy release profile unavailable",
         )
         _set_widget_metadata(
             self._delete_btn,
             tooltip=(
                 "At least one release profile is required."
-                if len(self._release_config.profiles) <= 1
+                if not can_delete_profile
                 else "Delete the current release profile."
             ),
-            accessible_name="Delete release profile",
+            accessible_name="Delete release profile" if can_delete_profile else "Delete release profile unavailable",
         )
         _set_widget_metadata(
             self._set_default_btn,
             tooltip=(
                 "The current profile is already the default release profile."
-                if self._current_profile() is not None and self._current_profile().id == self._release_config.default_profile
+                if not can_set_default_profile
                 else "Set the current profile as the default release profile."
             ),
-            accessible_name="Set default release profile",
+            accessible_name=(
+                "Set default release profile"
+                if can_set_default_profile
+                else "Set default release profile unavailable"
+            ),
         )
         _set_widget_metadata(self._id_edit, tooltip=f"Release profile ID: {self._id_edit.text() or 'empty'}", accessible_name=f"Release profile ID: {self._id_edit.text() or 'empty'}")
         _set_widget_metadata(self._name_edit, tooltip=f"Release profile name: {self._name_edit.text() or 'empty'}", accessible_name=f"Release profile name: {self._name_edit.text() or 'empty'}")
