@@ -1001,6 +1001,21 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_file_project_action_metadata(self):
+        has_project = getattr(self, "project", None) is not None
+        action_specs = (
+            ("_save_as_action", "Save the current project to a new file (Ctrl+Shift+S)."),
+            ("_close_project_action", "Close the current project (Ctrl+W)."),
+            ("_export_action", "Export generated C code for the current project (Ctrl+E)."),
+        )
+        for attr_name, base_text in action_specs:
+            action = getattr(self, attr_name, None)
+            if action is None:
+                continue
+            action.setEnabled(has_project)
+            hint = base_text if has_project else self._action_hint(base_text, False, "open a project first")
+            self._apply_action_hint(action, hint)
+
     def _update_generate_resources_action_metadata(self):
         if not hasattr(self, "_generate_resources_action"):
             return
@@ -2102,6 +2117,7 @@ class MainWindow(QMainWindow):
             self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
         self._update_build_menu_metadata()
         self._update_file_menu_metadata()
+        self._update_file_project_action_metadata()
         self._update_generate_resources_action_metadata()
         self._update_edit_actions()
         self._update_workspace_chips()
@@ -2552,11 +2568,11 @@ class MainWindow(QMainWindow):
         self._save_action.triggered.connect(self._save_project)
         file_menu.addAction(self._save_action)
 
-        save_as_action = QAction("Save As...", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        self._apply_action_hint(save_as_action, "Save the current project to a new file (Ctrl+Shift+S).")
-        save_as_action.triggered.connect(self._save_project_as)
-        file_menu.addAction(save_as_action)
+        self._save_as_action = QAction("Save As...", self)
+        self._save_as_action.setShortcut("Ctrl+Shift+S")
+        self._apply_action_hint(self._save_as_action, "Save the current project to a new file (Ctrl+Shift+S).")
+        self._save_as_action.triggered.connect(self._save_project_as)
+        file_menu.addAction(self._save_as_action)
 
         self._reload_project_action = QAction("Reload Project From Disk", self)
         self._reload_project_action.setShortcut("Ctrl+Shift+R")
@@ -2570,19 +2586,19 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        close_project_action = QAction("Close Project", self)
-        close_project_action.setShortcut("Ctrl+W")
-        self._apply_action_hint(close_project_action, "Close the current project (Ctrl+W).")
-        close_project_action.triggered.connect(self._close_project)
-        file_menu.addAction(close_project_action)
+        self._close_project_action = QAction("Close Project", self)
+        self._close_project_action.setShortcut("Ctrl+W")
+        self._apply_action_hint(self._close_project_action, "Close the current project (Ctrl+W).")
+        self._close_project_action.triggered.connect(self._close_project)
+        file_menu.addAction(self._close_project_action)
 
         file_menu.addSeparator()
 
-        export_action = QAction("Export C Code...", self)
-        export_action.setShortcut("Ctrl+E")
-        self._apply_action_hint(export_action, "Export generated C code for the current project (Ctrl+E).")
-        export_action.triggered.connect(self._export_code)
-        file_menu.addAction(export_action)
+        self._export_action = QAction("Export C Code...", self)
+        self._export_action.setShortcut("Ctrl+E")
+        self._apply_action_hint(self._export_action, "Export generated C code for the current project (Ctrl+E).")
+        self._export_action.triggered.connect(self._export_code)
+        file_menu.addAction(self._export_action)
 
         file_menu.addSeparator()
 
