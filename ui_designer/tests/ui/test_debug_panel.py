@@ -37,7 +37,7 @@ class TestDebugPanel:
         assert panel.statusTip() == panel.toolTip()
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
         assert panel._clear_btn.statusTip() == panel._clear_btn.toolTip()
-        assert panel._clear_btn.accessibleName() == "Clear debug output: 0 lines"
+        assert panel._clear_btn.accessibleName() == "Clear debug output unavailable"
         assert panel._title_label.toolTip() == "Debug output: 0 lines. Last message: No output yet."
         assert panel._title_label.statusTip() == panel._title_label.toolTip()
         assert panel._title_label.accessibleName() == "Debug output title: 0 lines"

@@ -106,12 +106,14 @@ class DebugPanel(QWidget):
         )
         if line_count == 0:
             clear_tooltip = "Debug output is already clear."
+            clear_accessible_name = "Clear debug output unavailable"
         else:
             clear_tooltip = f"Clear {line_label} of debug output."
+            clear_accessible_name = f"Clear debug output: {line_label}"
         _set_widget_metadata(
             self._clear_btn,
             tooltip=clear_tooltip,
-            accessible_name=f"Clear debug output: {line_label}",
+            accessible_name=clear_accessible_name,
         )
 
     def _timestamp(self):
