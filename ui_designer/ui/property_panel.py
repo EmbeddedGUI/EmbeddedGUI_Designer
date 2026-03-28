@@ -64,6 +64,20 @@ _MULTI_SUPPORTED_PROPERTY_TYPES = {
 }
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
+def _count_label(count, singular, plural=None):
+    value = max(int(count or 0), 0)
+    noun = singular if value == 1 else (plural or f"{singular}s")
+    return f"{value} {noun}"
+
+
 class CollapsibleGroupBox(QGroupBox):
     """A QGroupBox that can be collapsed/expanded by clicking its title."""
 
@@ -282,8 +296,9 @@ class PropertyPanel(QWidget):
         self._layout.setContentsMargins(4, 4, 4, 4)
         scroll.setWidget(self._container)
 
-        self._no_selection_label = QLabel("No widget selected")
+        self._no_selection_label = self._create_no_selection_label()
         self._layout.addWidget(self._no_selection_label)
+        self._update_panel_metadata()
 
     def _on_search_changed(self, text):
         """Filter visible property rows by search text."""
@@ -312,6 +327,7 @@ class PropertyPanel(QWidget):
                 if visible:
                     any_visible = True
             w.setVisible(any_visible or not text)
+        self._update_panel_metadata()
 
     def set_widget(self, widget):
         """Set the widget to edit. None to clear."""
@@ -340,6 +356,92 @@ class PropertyPanel(QWidget):
         if tone:
             chip.setProperty("chipTone", tone)
         return chip
+
+    def _create_no_selection_label(self):
+        label = QLabel("No widget selected")
+        _set_widget_metadata(
+            label,
+            tooltip="Select a widget from the canvas or tree to edit its properties.",
+            accessible_name="Property panel empty state: No widget selected.",
+        )
+        return label
+
+    def _current_search_summary(self):
+        if not hasattr(self, "_search_edit"):
+            return "none"
+        text = self._search_edit.text().strip()
+        return text or "none"
+
+    def _property_label(self, prop_name):
+        return prop_name.replace("_", " ").title()
+
+    def _editor_value_summary(self, editor):
+        text = editor.text().strip() if hasattr(editor, "text") else ""
+        if text:
+            return text
+        placeholder = editor.placeholderText().strip() if hasattr(editor, "placeholderText") else ""
+        if placeholder == "Mixed values":
+            return "mixed values"
+        return placeholder or "none"
+
+    def _file_selector_tooltip(self, prop_name, value_text):
+        return (
+            f"{self._property_label(prop_name)}: {value_text}. "
+            "Choose a project resource file or type a filename."
+        )
+
+    def _browse_button_tooltip(self, prop_name, file_filter):
+        browse_target = (file_filter or "").split("(")[0].strip().lower() or "files"
+        return f"Browse {browse_target} for {self._property_label(prop_name)}."
+
+    def _update_panel_metadata(self):
+        search_summary = self._current_search_summary()
+        _set_widget_metadata(
+            self._search_edit,
+            tooltip=f"Filter visible property rows by label. Current filter: {search_summary}.",
+            accessible_name=f"Property search: {search_summary}",
+        )
+
+        if self._primary_widget is None:
+            panel_summary = f"Property panel: no widget selected. Search: {search_summary}."
+        elif len(self._selection) > 1:
+            panel_summary = (
+                f"Property panel: {_count_label(len(self._selection), 'selected widget')}. "
+                f"Primary widget: {self._primary_widget.name} ({self._primary_widget.widget_type}). "
+                f"Search: {search_summary}."
+            )
+        else:
+            panel_summary = (
+                "Property panel: 1 selected widget. "
+                f"Current widget: {self._primary_widget.name} ({self._primary_widget.widget_type}). "
+                f"Search: {search_summary}."
+            )
+        _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
+
+    def _update_file_selector_metadata(self, prop_name, combo, tooltip=None):
+        value_text = self._editor_value_summary(combo)
+        _set_widget_metadata(
+            combo,
+            tooltip=tooltip or self._file_selector_tooltip(prop_name, value_text),
+            accessible_name=f"{self._property_label(prop_name)} selector: {value_text}",
+        )
+
+    def _update_callback_editor_metadata(self, editor, event_name, tooltip):
+        callback_label = self._humanize_callback_name(event_name)
+        _set_widget_metadata(
+            editor,
+            tooltip=tooltip,
+            accessible_name=f"{callback_label} callback: {self._editor_value_summary(editor)}",
+        )
+
+    def _update_callback_button_metadata(self, button, event_name, enabled, tooltip):
+        callback_label = self._humanize_callback_name(event_name)
+        accessible_name = (
+            f"Open {callback_label} callback code"
+            if enabled
+            else f"Open {callback_label} callback code unavailable"
+        )
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
     def _build_single_selection_header(self, widget):
         header = QFrame()
@@ -384,12 +486,14 @@ class PropertyPanel(QWidget):
         self._callback_open_buttons = {}
 
         if self._primary_widget is None:
-            self._no_selection_label = QLabel("No widget selected")
+            self._no_selection_label = self._create_no_selection_label()
             self._layout.addWidget(self._no_selection_label)
+            self._update_panel_metadata()
             return
 
         if len(self._selection) > 1:
             self._build_multi_selection_form()
+            self._update_panel_metadata()
             return
 
         w = self._primary_widget
@@ -512,6 +616,7 @@ class PropertyPanel(QWidget):
 
         self._layout.addWidget(bg_group)
         self._layout.addStretch()
+        self._update_panel_metadata()
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
@@ -725,7 +830,10 @@ class PropertyPanel(QWidget):
                     target.setPlaceholderText("Mixed values")
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
-            target.setToolTip(tooltip)
+            if ptype in {"image_file", "font_file", "text_file"}:
+                self._update_file_selector_metadata(prop_name, target, tooltip=tooltip)
+            else:
+                target.setToolTip(tooltip)
             return
 
         if isinstance(target, ComboBox):
@@ -817,7 +925,10 @@ class PropertyPanel(QWidget):
         existing_tooltip = target.toolTip().strip()
         if existing_tooltip and message not in existing_tooltip:
             message = f"{existing_tooltip}\n{message}"
-        target.setToolTip(message)
+        if prop_info.get("type", "") in {"image_file", "font_file", "text_file"}:
+            self._update_file_selector_metadata(prop_name, target, tooltip=message)
+        else:
+            target.setToolTip(message)
 
     def _collect_multi_common_properties(self):
         if not self._selection:
@@ -1048,7 +1159,11 @@ class PropertyPanel(QWidget):
             editor = LineEdit()
             editor.setText(entry["value"])
             editor.setPlaceholderText(self._suggest_callback_name(widget, event_name))
-            editor.setToolTip(self._callback_tooltip(widget, event_name, entry["signature"]))
+            self._update_callback_editor_metadata(
+                editor,
+                event_name,
+                self._callback_tooltip(widget, event_name, entry["signature"]),
+            )
             editor.editingFinished.connect(
                 lambda editor=editor,
                 current_widget=widget,
@@ -1065,6 +1180,7 @@ class PropertyPanel(QWidget):
             self._editors[f"callback_{event_name}"] = editor
             container, button = self._build_callback_editor_row(
                 editor,
+                event_name,
                 lambda editor=editor,
                 current_widget=widget,
                 event_name=event_name,
@@ -1116,14 +1232,16 @@ class PropertyPanel(QWidget):
                 editor.setPlaceholderText(self._suggest_multi_callback_name(event_name))
             if hasattr(editor, "setModified"):
                 editor.setModified(False)
-        editor.setToolTip(self._multi_callback_tooltip(event_name, signature, is_mixed))
+        tooltip = self._multi_callback_tooltip(event_name, signature, is_mixed)
+        self._update_callback_editor_metadata(editor, event_name, tooltip)
         button = self._callback_open_buttons.get(f"callback_{event_name}")
         if button is not None:
             button.setEnabled(not is_mixed)
             if is_mixed:
-                button.setToolTip("Normalize this callback first to open a single user function.")
+                button_tooltip = "Normalize this callback first to open a single user function."
             else:
-                button.setToolTip("Open or create this callback in the page user source.")
+                button_tooltip = "Open or create this callback in the page user source."
+            self._update_callback_button_metadata(button, event_name, not is_mixed, button_tooltip)
 
     def _build_multi_callbacks_group(self, entries=None):
         entries = list(entries or self._collect_multi_callback_entries())
@@ -1157,6 +1275,7 @@ class PropertyPanel(QWidget):
             self._editors[f"callback_{event_name}"] = editor
             container, button = self._build_callback_editor_row(
                 editor,
+                event_name,
                 lambda editor=editor,
                 event_name=event_name,
                 signature=entry["signature"],
@@ -1179,7 +1298,14 @@ class PropertyPanel(QWidget):
 
         return group
 
-    def _build_callback_editor_row(self, editor, open_handler, enabled=True, tooltip="Open or create this callback in the page user source."):
+    def _build_callback_editor_row(
+        self,
+        editor,
+        event_name,
+        open_handler,
+        enabled=True,
+        tooltip="Open or create this callback in the page user source.",
+    ):
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1189,7 +1315,7 @@ class PropertyPanel(QWidget):
         button = ToolButton()
         button.setText("Code")
         button.setEnabled(enabled)
-        button.setToolTip(tooltip)
+        self._update_callback_button_metadata(button, event_name, enabled, tooltip)
         button.clicked.connect(open_handler)
         layout.addWidget(button)
         return container, button
@@ -1383,15 +1509,21 @@ class PropertyPanel(QWidget):
             combo.addItem(cur)
         combo.setCurrentText(cur)
         combo.currentTextChanged.connect(lambda val: file_prop_handler(prop_name, val))
+        combo.currentTextChanged.connect(lambda _val, name=prop_name, target=combo: self._update_file_selector_metadata(name, target))
         h_layout.addWidget(combo, 1)
 
         browse_btn = ToolButton()
         browse_btn.setText("...")
-        browse_btn.setToolTip("Browse files")
+        _set_widget_metadata(
+            browse_btn,
+            tooltip=self._browse_button_tooltip(prop_name, file_filter),
+            accessible_name=f"Browse {self._property_label(prop_name)}",
+        )
         browse_btn.clicked.connect(lambda: self._browse_file(combo, file_filter))
         h_layout.addWidget(browse_btn)
 
         self._editors[f"prop_{prop_name}"] = combo
+        self._update_file_selector_metadata(prop_name, combo)
         return container
 
     def _browse_file(self, combo, file_filter):
@@ -1544,7 +1676,11 @@ class PropertyPanel(QWidget):
         if normalized and not is_valid_widget_name(normalized):
             with QSignalBlocker(editor):
                 editor.setText(current_value)
-            editor.setToolTip(self._callback_tooltip(widget, event_name, signature))
+            self._update_callback_editor_metadata(
+                editor,
+                event_name,
+                self._callback_tooltip(widget, event_name, signature),
+            )
             self.validation_message.emit(_CALLBACK_INVALID_MESSAGE)
             return
 
@@ -1558,7 +1694,11 @@ class PropertyPanel(QWidget):
             with QSignalBlocker(editor):
                 editor.setText(normalized)
 
-        editor.setToolTip(self._callback_tooltip(widget, event_name, signature))
+        self._update_callback_editor_metadata(
+            editor,
+            event_name,
+            self._callback_tooltip(widget, event_name, signature),
+        )
 
         if text_changed and normalized:
             self.validation_message.emit(f"Callback name normalized to '{normalized}'.")

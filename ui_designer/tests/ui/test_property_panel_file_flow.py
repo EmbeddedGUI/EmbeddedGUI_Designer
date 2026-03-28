@@ -62,6 +62,43 @@ def _group_label_texts(group):
 
 @_skip_no_qt
 class TestPropertyPanelFileFlow:
+    def test_empty_state_and_search_metadata(self, qapp):
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+
+        assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
+        assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
+        assert panel._search_edit.accessibleName() == "Property search: none"
+        assert panel._no_selection_label.toolTip() == "Select a widget from the canvas or tree to edit its properties."
+        assert panel._no_selection_label.accessibleName() == "Property panel empty state: No widget selected."
+
+        panel._search_edit.setText("font")
+
+        assert panel._search_edit.accessibleName() == "Property search: font"
+        assert panel.toolTip() == "Property panel: no widget selected. Search: font."
+        panel.deleteLater()
+
+    def test_file_selector_sets_accessibility_metadata(self, qapp):
+        from qfluentwidgets import ToolButton
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+        selector = panel._create_file_selector("font_file", "title.ttf", ["title.ttf"], "Font files (*.ttf *.otf)")
+        combo = panel._editors["prop_font_file"]
+        browse_btn = selector.findChild(ToolButton)
+
+        assert combo.toolTip() == "Font File: title.ttf. Choose a project resource file or type a filename."
+        assert combo.statusTip() == combo.toolTip()
+        assert combo.accessibleName() == "Font File selector: title.ttf"
+        assert browse_btn is not None
+        assert browse_btn.toolTip() == "Browse font files for Font File."
+        assert browse_btn.statusTip() == browse_btn.toolTip()
+        assert browse_btn.accessibleName() == "Browse Font File"
+        panel.deleteLater()
+
     def test_browse_file_warns_when_project_resource_dir_is_missing(self, qapp, monkeypatch):
         from ui_designer.ui.property_panel import PropertyPanel
 
@@ -570,6 +607,24 @@ class TestPropertyPanelFileFlow:
         assert "uint8_t value" in panel._editors["callback_onValueChanged"].toolTip()
         panel.deleteLater()
 
+    def test_single_selection_callback_editor_and_button_metadata(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("slider", name="volume_slider")
+        widget.events["onValueChanged"] = "on_slider_changed"
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        editor = panel._editors["callback_onValueChanged"]
+        button = panel._callback_open_buttons["callback_onValueChanged"]
+
+        assert editor.accessibleName() == "Value Changed callback: on_slider_changed"
+        assert button.accessibleName() == "Open Value Changed callback code"
+        assert button.statusTip() == button.toolTip()
+        panel.deleteLater()
+
     def test_single_selection_callback_edit_normalizes_and_updates_widget(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
@@ -682,9 +737,12 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
+        editor = panel._editors["callback_onClick"]
         button = panel._callback_open_buttons["callback_onClick"]
 
+        assert editor.accessibleName() == "Click callback: mixed values"
         assert button.isEnabled() is False
+        assert button.accessibleName() == "Open Click callback code unavailable"
         panel.deleteLater()
 
     def test_multi_selection_callback_edit_updates_all_widgets(self, qapp):
