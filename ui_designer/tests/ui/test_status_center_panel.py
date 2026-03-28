@@ -110,6 +110,12 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.text() == "Check Workspace (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
+        assert panel._workspace_chip.toolTip() == (
+            "Check Workspace (Diagnostics). Review the first warning in Diagnostics. 3 warnings active."
+        )
+        assert panel._workspace_chip.accessibleName() == (
+            "Workspace status: Check Workspace (Diagnostics). Suggested: Review First Warning (3)"
+        )
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
         assert panel._health_chip.property("iconKey") == "history"
