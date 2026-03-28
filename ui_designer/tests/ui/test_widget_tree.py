@@ -2410,6 +2410,8 @@ class TestWidgetTreePanel:
         assert panel.filter_select_btn.accessibleName() == "Select widget filter matches unavailable"
         assert panel.tree.accessibleName() == "Widget tree: 1 widget. 0 selected widgets. Current widget: none."
         assert panel.tree.topLevelItem(0).toolTip(0) == f"Widget {root.name}: {root.widget_type}"
+        assert panel.tree.topLevelItem(0).data(0, Qt.AccessibleTextRole) == panel.tree.topLevelItem(0).toolTip(0)
+        assert panel.tree.topLevelItem(0).data(1, Qt.AccessibleTextRole) == panel.tree.topLevelItem(0).toolTip(1)
         panel.deleteLater()
 
     def test_tree_panel_filter_accessibility_updates_with_matches_and_selection(self, qapp):

@@ -400,6 +400,8 @@ class WidgetTreePanel(QWidget):
         item.setStatusTip(0, item_tooltip)
         item.setToolTip(1, item_tooltip)
         item.setStatusTip(1, item_tooltip)
+        item.setData(0, Qt.AccessibleTextRole, item_tooltip)
+        item.setData(1, Qt.AccessibleTextRole, item_tooltip)
         self._widget_map[id(item)] = widget
         self._item_map[id(widget)] = item
 
