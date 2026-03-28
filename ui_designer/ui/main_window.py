@@ -966,6 +966,41 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_structure_menu_metadata(self):
+        if not hasattr(self, "_structure_menu"):
+            return
+        group_state = "available" if (
+            getattr(getattr(self, "_group_selection_action", None), "isEnabled", lambda: False)()
+            or getattr(getattr(self, "_ungroup_selection_action", None), "isEnabled", lambda: False)()
+        ) else "unavailable"
+        move_into_state = "available" if getattr(getattr(self, "_move_into_container_action", None), "isEnabled", lambda: False)() else "unavailable"
+        reorder_lift_state = "available" if any(
+            getattr(action, "isEnabled", lambda: False)()
+            for action in (
+                getattr(self, "_lift_to_parent_action", None),
+                getattr(self, "_move_up_action", None),
+                getattr(self, "_move_down_action", None),
+                getattr(self, "_move_top_action", None),
+                getattr(self, "_move_bottom_action", None),
+            )
+            if action is not None
+        ) else "unavailable"
+        quick_move_menu = getattr(self, "_quick_move_into_menu", None)
+        quick_move_state = (
+            "available"
+            if quick_move_menu is not None and quick_move_menu.menuAction().isEnabled()
+            else "unavailable"
+        )
+        self._apply_action_hint(
+            self._structure_menu.menuAction(),
+            (
+                "Group, move, and reorder widgets in the page hierarchy. "
+                f"{self._selection_accessibility_text()} "
+                f"Group/Ungroup: {group_state}. Move Into: {move_into_state}. "
+                f"Reorder/Lift: {reorder_lift_state}. Quick Move: {quick_move_state}."
+            ),
+        )
+
     def _update_generate_resources_action_metadata(self):
         if not hasattr(self, "_generate_resources_action"):
             return
@@ -6462,6 +6497,7 @@ class MainWindow(QMainWindow):
         self._refresh_quick_move_into_menu()
         self._update_toolbar_action_metadata()
         self._update_arrange_menu_metadata()
+        self._update_structure_menu_metadata()
         self._update_edit_menu_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
