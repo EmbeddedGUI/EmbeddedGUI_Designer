@@ -6021,6 +6021,27 @@ class TestMainWindowFileFlow:
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: shown. Activate to hide."
         _close_window(window)
 
+    def test_workspace_tab_widgets_expose_current_section_metadata(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        assert window._inspector_tabs.accessibleName() == "Inspector tabs: Properties selected. 3 tabs."
+        assert window._inspector_tabs.toolTip() == "Inspector tabs. Current section: Properties."
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs."
+        assert window._page_tools_tabs.toolTip() == "Page tools tabs. Current section: Fields."
+        assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: Diagnostics selected. 3 tabs. Panel hidden."
+        assert window._bottom_tabs.toolTip() == "Bottom tools tabs. Current section: Diagnostics. Panel hidden."
+
+        window._show_inspector_tab("page", inner_section="timers")
+        window._show_bottom_panel("History")
+
+        assert window._inspector_tabs.accessibleName() == "Inspector tabs: Page selected. 3 tabs."
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Timers selected. 2 tabs."
+        assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: History selected. 3 tabs. Panel visible."
+        assert window._bottom_tabs.statusTip() == window._bottom_tabs.toolTip()
+        _close_window(window)
+
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

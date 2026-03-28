@@ -417,12 +417,14 @@ class MainWindow(QMainWindow):
         self._page_tools_tabs = QTabWidget()
         self._page_tools_tabs.addTab(self.page_fields_panel, make_icon("page"), "Fields")
         self._page_tools_tabs.addTab(self.page_timers_panel, make_icon("time"), "Timers")
+        self._page_tools_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._inspector_tabs = QTabWidget()
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
         self._inspector_tabs.addTab(self.props_dock, make_icon("properties"), "Properties")
         self._inspector_tabs.addTab(self.animations_panel, make_icon("animation"), "Animations")
         self._inspector_tabs.addTab(self._page_tools_tabs, make_icon("page"), "Page")
+        self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._top_splitter = QSplitter(Qt.Horizontal)
         self._top_splitter.setChildrenCollapsible(False)
@@ -554,6 +556,7 @@ class MainWindow(QMainWindow):
         self._sync_editor_mode_controls(self.editor_tabs.mode)
         self._on_bottom_tab_changed(self._bottom_tabs.currentIndex())
         self._set_bottom_panel_visible(False)
+        self._update_workspace_tab_metadata()
         self.status_center_panel.restore_view_state(getattr(self._config, "workspace_status_panel_state", {}))
 
     def _apply_stylesheet(self):
@@ -718,11 +721,13 @@ class MainWindow(QMainWindow):
             self._workspace_splitter.setSizes([1000, 0])
             self._bottom_toggle_button.setText("Show")
         self._update_bottom_toggle_button_metadata()
+        self._update_workspace_tab_metadata()
 
     def _on_bottom_tab_changed(self, index):
         titles = {0: "Diagnostics", 1: "History", 2: "Debug Output"}
         if hasattr(self, "_bottom_title"):
             self._bottom_title.setText(titles.get(index, "Tools"))
+        self._update_workspace_tab_metadata()
 
     def _update_bottom_toggle_button_metadata(self):
         if not hasattr(self, "_bottom_toggle_button"):
@@ -736,6 +741,41 @@ class MainWindow(QMainWindow):
         self._bottom_toggle_button.setToolTip(tooltip)
         self._bottom_toggle_button.setStatusTip(tooltip)
         self._bottom_toggle_button.setAccessibleName(accessible_name)
+
+    def _current_tab_text(self, tab_widget, fallback):
+        if tab_widget is None or tab_widget.count() <= 0:
+            return fallback
+        index = tab_widget.currentIndex()
+        if index < 0:
+            index = 0
+        return tab_widget.tabText(index) or fallback
+
+    def _update_workspace_tab_metadata(self):
+        if hasattr(self, "_inspector_tabs"):
+            current = self._current_tab_text(self._inspector_tabs, "Properties")
+            tooltip = f"Inspector tabs. Current section: {current}."
+            self._inspector_tabs.setToolTip(tooltip)
+            self._inspector_tabs.setStatusTip(tooltip)
+            self._inspector_tabs.setAccessibleName(
+                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs."
+            )
+        if hasattr(self, "_page_tools_tabs"):
+            current = self._current_tab_text(self._page_tools_tabs, "Fields")
+            tooltip = f"Page tools tabs. Current section: {current}."
+            self._page_tools_tabs.setToolTip(tooltip)
+            self._page_tools_tabs.setStatusTip(tooltip)
+            self._page_tools_tabs.setAccessibleName(
+                f"Page tools tabs: {current} selected. {self._page_tools_tabs.count()} tabs."
+            )
+        if hasattr(self, "_bottom_tabs"):
+            current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
+            visibility = "visible" if self._bottom_panel_visible else "hidden"
+            tooltip = f"Bottom tools tabs. Current section: {current}. Panel {visibility}."
+            self._bottom_tabs.setToolTip(tooltip)
+            self._bottom_tabs.setStatusTip(tooltip)
+            self._bottom_tabs.setAccessibleName(
+                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Panel {visibility}."
+            )
 
     def _sync_editor_mode_controls(self, mode):
         if hasattr(self, "_mode_buttons"):
