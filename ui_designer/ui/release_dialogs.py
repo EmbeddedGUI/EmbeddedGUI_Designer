@@ -896,6 +896,7 @@ class ReleaseProfilesDialog(QDialog):
         can_set_default_profile = (
             current_profile is not None and current_profile.id != self._release_config.default_profile
         )
+        current_profile_context = f"Current profile: {current_profile_label}."
         summary = (
             f"Release profiles: {_count_label(len(self._release_config.profiles), 'profile')}. "
             f"Default profile: {self._release_config.default_profile}. "
@@ -912,27 +913,27 @@ class ReleaseProfilesDialog(QDialog):
         _set_widget_metadata(
             self._copy_btn,
             tooltip=(
-                "Copy the current release profile."
+                f"Copy the current release profile. {current_profile_context}"
                 if can_copy_profile
-                else "Select a release profile to copy it."
+                else f"Select a release profile to copy it. {current_profile_context}"
             ),
             accessible_name="Copy release profile" if can_copy_profile else "Copy release profile unavailable",
         )
         _set_widget_metadata(
             self._delete_btn,
             tooltip=(
-                "At least one release profile is required."
+                f"At least one release profile is required. {current_profile_context}"
                 if not can_delete_profile
-                else "Delete the current release profile."
+                else f"Delete the current release profile. {current_profile_context}"
             ),
             accessible_name="Delete release profile" if can_delete_profile else "Delete release profile unavailable",
         )
         _set_widget_metadata(
             self._set_default_btn,
             tooltip=(
-                "The current profile is already the default release profile."
+                f"The current profile is already the default release profile. {current_profile_context}"
                 if not can_set_default_profile
-                else "Set the current profile as the default release profile."
+                else f"Set the current profile as the default release profile. {current_profile_context}"
             ),
             accessible_name=(
                 "Set default release profile"

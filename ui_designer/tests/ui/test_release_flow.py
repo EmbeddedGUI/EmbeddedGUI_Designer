@@ -560,16 +560,22 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert "Default profile." in dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).statusTip() == dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).data(Qt.AccessibleTextRole) == dialog._profile_list.item(0).toolTip()
-    assert dialog._delete_btn.toolTip() == "Delete the current release profile."
+    assert dialog._copy_btn.toolTip() == "Copy the current release profile. Current profile: Windows PC [windows-pc] default."
+    assert dialog._delete_btn.toolTip() == "Delete the current release profile. Current profile: Windows PC [windows-pc] default."
     assert dialog._delete_btn.accessibleName() == "Delete release profile"
-    assert dialog._set_default_btn.toolTip() == "The current profile is already the default release profile."
+    assert dialog._set_default_btn.toolTip() == (
+        "The current profile is already the default release profile. Current profile: Windows PC [windows-pc] default."
+    )
     assert dialog._set_default_btn.accessibleName() == "Set default release profile unavailable"
     assert dialog._id_edit.accessibleName() == "Release profile ID: windows-pc"
 
     dialog._profile_list.setCurrentRow(1)
     qapp.processEvents()
 
-    assert dialog._set_default_btn.toolTip() == "Set the current profile as the default release profile."
+    assert dialog._copy_btn.toolTip() == "Copy the current release profile. Current profile: ESP32 [esp32]."
+    assert dialog._set_default_btn.toolTip() == (
+        "Set the current profile as the default release profile. Current profile: ESP32 [esp32]."
+    )
     assert dialog._set_default_btn.accessibleName() == "Set default release profile"
     assert dialog._name_edit.accessibleName() == "Release profile name: ESP32"
     assert dialog._package_format_combo.accessibleName() == "Release package format: Directory + Zip"
