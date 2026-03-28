@@ -22,6 +22,14 @@ def _pil_to_qpixmap(pil_image):
     return QPixmap.fromImage(qimg)
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class PageThumbnail(QWidget):
     """Single page thumbnail with label and click selection."""
 
@@ -175,8 +183,21 @@ class PageNavigator(QWidget):
         self.setAccessibleName(summary)
         self.setToolTip(summary)
         self.setStatusTip(summary)
-        self._title_label.setToolTip(summary)
-        self._title_label.setStatusTip(summary)
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=summary,
+            accessible_name=f"Pages: {page_label}. Current page: {current_page}.",
+        )
+        _set_widget_metadata(
+            self._scroll_area,
+            tooltip=f"Page thumbnails view: {page_label}. Current page: {current_page}. {dirty_label}.",
+            accessible_name="Page thumbnails",
+        )
+        _set_widget_metadata(
+            self._container,
+            tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. {dirty_label}.",
+            accessible_name="Page thumbnail list",
+        )
 
     def set_screen_size(self, w, h):
         self._screen_width = w

@@ -56,17 +56,22 @@ class TestPageNavigator:
         assert navigator.toolTip() == navigator.accessibleName()
         assert navigator._scroll_area.accessibleName() == "Page thumbnails"
         assert navigator._container.accessibleName() == "Page thumbnail list"
+        assert navigator._scroll_area.toolTip() == "Page thumbnails view: 0 pages. Current page: none. No dirty pages."
+        assert navigator._container.toolTip() == "Page thumbnail list: 0 pages. Current page: none. No dirty pages."
 
         navigator.set_pages({"main_page": object(), "detail_page": object()})
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: none. No dirty pages."
         assert navigator._title_label.toolTip() == navigator.accessibleName()
+        assert navigator._title_label.accessibleName() == "Pages: 2 pages. Current page: none."
 
         navigator.set_current_page("detail_page")
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. No dirty pages."
         assert navigator._thumbnails["detail_page"].accessibleName() == "Page thumbnail: detail_page. Current page. No unsaved changes."
+        assert navigator._scroll_area.statusTip() == navigator._scroll_area.toolTip()
 
         navigator.set_dirty_pages({"main_page"})
         assert navigator.accessibleName() == "Page navigator: 2 pages. Current page: detail_page. 1 dirty page."
         assert navigator._thumbnails["main_page"].accessibleName() == "Page thumbnail: main_page. Available. Unsaved changes."
         assert navigator._thumbnails["main_page"]._name_label.text() == "main_page*"
+        assert navigator._container.toolTip() == "Page thumbnail list: 2 pages. Current page: detail_page. 1 dirty page."
         navigator.deleteLater()
