@@ -585,11 +585,23 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert "Default profile." in dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).statusTip() == dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).data(Qt.AccessibleTextRole) == dialog._profile_list.item(0).toolTip()
+    assert dialog._add_btn.toolTip() == (
+        "Add a new release profile. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: Windows PC [windows-pc] default."
+    )
     assert dialog._copy_btn.toolTip() == "Copy the current release profile. Current profile: Windows PC [windows-pc] default."
     assert dialog._delete_btn.toolTip() == "Delete the current release profile. Current profile: Windows PC [windows-pc] default."
     assert dialog._delete_btn.accessibleName() == "Delete release profile"
     assert dialog._set_default_btn.toolTip() == (
         "The current profile is already the default release profile. Current profile: Windows PC [windows-pc] default."
+    )
+    assert dialog._ok_button.toolTip() == (
+        "Save the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: Windows PC [windows-pc] default."
+    )
+    assert dialog._cancel_button.toolTip() == (
+        "Discard the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: Windows PC [windows-pc] default."
     )
     assert dialog._set_default_btn.accessibleName() == "Set default release profile unavailable"
     assert dialog._id_edit.accessibleName() == "Release profile ID: windows-pc"
@@ -598,6 +610,10 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     qapp.processEvents()
 
     assert dialog._copy_btn.toolTip() == "Copy the current release profile. Current profile: ESP32 [esp32]."
+    assert dialog._ok_button.toolTip() == (
+        "Save the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: ESP32 [esp32]."
+    )
     assert dialog._set_default_btn.toolTip() == (
         "Set the current profile as the default release profile. Current profile: ESP32 [esp32]."
     )

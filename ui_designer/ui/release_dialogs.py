@@ -917,7 +917,7 @@ class ReleaseProfilesDialog(QDialog):
             accessible_name=f"Release profile list: {_count_label(self._profile_list.count(), 'entry', 'entries')}. Current profile: {current_profile_label}.",
         )
         _set_widget_metadata(self._default_label, tooltip=self._default_label.text(), accessible_name=self._default_label.text())
-        _set_widget_metadata(self._add_btn, tooltip="Add a new release profile.", accessible_name="Add release profile")
+        _set_widget_metadata(self._add_btn, tooltip=f"Add a new release profile. {summary}", accessible_name="Add release profile")
         _set_widget_metadata(
             self._copy_btn,
             tooltip=(
@@ -973,9 +973,17 @@ class ReleaseProfilesDialog(QDialog):
             accessible_name=f"Copy resource directory into dist: {'on' if self._copy_resource_check.isChecked() else 'off'}",
         )
         if self._ok_button is not None:
-            _set_widget_metadata(self._ok_button, tooltip="Save the release profile changes.", accessible_name=self._ok_button.text() or "OK")
+            _set_widget_metadata(
+                self._ok_button,
+                tooltip=f"Save the release profile changes. {summary}",
+                accessible_name=self._ok_button.text() or "OK",
+            )
         if self._cancel_button is not None:
-            _set_widget_metadata(self._cancel_button, tooltip="Discard the release profile changes.", accessible_name="Cancel release profile changes")
+            _set_widget_metadata(
+                self._cancel_button,
+                tooltip=f"Discard the release profile changes. {summary}",
+                accessible_name="Cancel release profile changes",
+            )
 
     def _add_profile(self) -> None:
         base = "windows-pc"
