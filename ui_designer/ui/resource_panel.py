@@ -918,10 +918,10 @@ class _BatchReplaceImpactDialog(QDialog):
                 f"Rename {entry['old_name']} to {entry['new_name']}. "
                 f"{_count_label(entry['widget_count'], 'widget')} affected across {_count_label(entry['page_count'], 'page')}."
             )
-            old_item.setToolTip(item_tooltip)
-            new_item.setToolTip(item_tooltip)
-            widget_item.setToolTip(item_tooltip)
-            page_item.setToolTip(item_tooltip)
+            _set_item_metadata(old_item, item_tooltip)
+            _set_item_metadata(new_item, item_tooltip)
+            _set_item_metadata(widget_item, item_tooltip)
+            _set_item_metadata(page_item, item_tooltip)
             self._impact_table.setItem(row, 0, old_item)
             self._impact_table.setItem(row, 1, new_item)
             self._impact_table.setItem(row, 2, widget_item)
@@ -953,9 +953,9 @@ class _BatchReplaceImpactDialog(QDialog):
             widget_item = QTableWidgetItem(widget_text)
             prop_item = QTableWidgetItem(entry.property_name)
             item_tooltip = f"Page: {entry.page_name}. Widget: {widget_text}. Property: {entry.property_name}."
-            page_item.setToolTip(item_tooltip)
-            widget_item.setToolTip(item_tooltip)
-            prop_item.setToolTip(item_tooltip)
+            _set_item_metadata(page_item, item_tooltip)
+            _set_item_metadata(widget_item, item_tooltip)
+            _set_item_metadata(prop_item, item_tooltip)
             self._usage_table.setItem(row, 0, page_item)
             self._usage_table.setItem(row, 1, widget_item)
             self._usage_table.setItem(row, 2, prop_item)

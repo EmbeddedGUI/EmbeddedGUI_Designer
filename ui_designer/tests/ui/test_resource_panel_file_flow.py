@@ -1036,6 +1036,10 @@ class TestResourcePanelFileFlow:
         assert dialog._impact_table.item(0, 0).toolTip() == (
             "Rename missing_a.png to renamed_a.png. 1 widget affected across 1 page."
         )
+        assert dialog._impact_table.item(0, 0).statusTip() == dialog._impact_table.item(0, 0).toolTip()
+        assert dialog._impact_table.item(0, 0).data(Qt.AccessibleTextRole) == dialog._impact_table.item(0, 0).toolTip()
+        assert dialog._usage_table.item(0, 1).statusTip() == dialog._usage_table.item(0, 1).toolTip()
+        assert dialog._usage_table.item(0, 1).data(Qt.AccessibleTextRole) == dialog._usage_table.item(0, 1).toolTip()
         assert dialog._open_usage_button.toolTip() == "Open the selected affected usage in the editor."
         assert dialog._open_usage_button.accessibleName() == "Open selected affected usage"
         assert dialog._ok_button.accessibleName() == "Replace"
