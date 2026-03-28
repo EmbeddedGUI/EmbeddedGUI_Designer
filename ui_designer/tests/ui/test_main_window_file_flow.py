@@ -6639,6 +6639,12 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["status"].toolTip() == (
             "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
         )
+        assert window._inspector_tabs.accessibleName() == (
+            "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: none."
+        )
+        assert window._bottom_tabs.accessibleName() == (
+            "Bottom tools tabs: Diagnostics selected. 3 tabs. Current page: main_page. Panel hidden."
+        )
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
         assert window._selection_chip.text() == "1 selected"
@@ -6648,6 +6654,9 @@ class TestMainWindowFileFlow:
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
             "Open Components panel. Current page: main_page. Insert target: root_group."
+        )
+        assert window._inspector_tabs.accessibleName() == (
+            "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: title (label)."
         )
 
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
@@ -6815,19 +6824,31 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
 
-        assert window._inspector_tabs.accessibleName() == "Inspector tabs: Properties selected. 3 tabs."
-        assert window._inspector_tabs.toolTip() == "Inspector tabs. Current section: Properties."
+        assert window._inspector_tabs.accessibleName() == (
+            "Inspector tabs: Properties selected. 3 tabs. Current page: none. Selection: none."
+        )
+        assert window._inspector_tabs.toolTip() == (
+            "Inspector tabs. Current section: Properties. Current page: none. Selection: none."
+        )
         assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: none."
         assert window._page_tools_tabs.toolTip() == "Page tools tabs. Current section: Fields. Current page: none."
-        assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: Diagnostics selected. 3 tabs. Panel hidden."
-        assert window._bottom_tabs.toolTip() == "Bottom tools tabs. Current section: Diagnostics. Panel hidden."
+        assert window._bottom_tabs.accessibleName() == (
+            "Bottom tools tabs: Diagnostics selected. 3 tabs. Current page: none. Panel hidden."
+        )
+        assert window._bottom_tabs.toolTip() == (
+            "Bottom tools tabs. Current section: Diagnostics. Current page: none. Panel hidden."
+        )
 
         window._show_inspector_tab("page", inner_section="timers")
         window._show_bottom_panel("History")
 
-        assert window._inspector_tabs.accessibleName() == "Inspector tabs: Page selected. 3 tabs."
+        assert window._inspector_tabs.accessibleName() == (
+            "Inspector tabs: Page selected. 3 tabs. Current page: none. Selection: none."
+        )
         assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Timers selected. 2 tabs. Current page: none."
-        assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: History selected. 3 tabs. Panel visible."
+        assert window._bottom_tabs.accessibleName() == (
+            "Bottom tools tabs: History selected. 3 tabs. Current page: none. Panel visible."
+        )
         assert window._bottom_tabs.statusTip() == window._bottom_tabs.toolTip()
         _close_window(window)
 

@@ -982,14 +982,30 @@ class MainWindow(QMainWindow):
             index = 0
         return tab_widget.tabText(index) or fallback
 
+    def _current_page_accessibility_text(self):
+        return str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+
+    def _selection_accessibility_text(self):
+        widgets = [widget for widget in getattr(self._selection_state, "widgets", []) if widget is not None]
+        if not widgets:
+            return "Selection: none."
+        if len(widgets) == 1:
+            primary = self._selection_state.primary or widgets[0]
+            widget_name = str(getattr(primary, "name", "") or getattr(primary, "widget_type", "") or "widget")
+            widget_type = str(getattr(primary, "widget_type", "") or "widget")
+            return f"Selection: {widget_name} ({widget_type})."
+        return f"Selection: {len(widgets)} widgets."
+
     def _update_workspace_tab_metadata(self):
         if hasattr(self, "_inspector_tabs"):
             current = self._current_tab_text(self._inspector_tabs, "Properties")
-            tooltip = f"Inspector tabs. Current section: {current}."
+            current_page = self._current_page_accessibility_text()
+            selection_text = self._selection_accessibility_text()
+            tooltip = f"Inspector tabs. Current section: {current}. Current page: {current_page}. {selection_text}"
             self._inspector_tabs.setToolTip(tooltip)
             self._inspector_tabs.setStatusTip(tooltip)
             self._inspector_tabs.setAccessibleName(
-                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs."
+                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. Current page: {current_page}. {selection_text}"
             )
         if hasattr(self, "_page_tools_tabs"):
             current = self._current_tab_text(self._page_tools_tabs, "Fields")
@@ -1002,12 +1018,13 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "_bottom_tabs"):
             current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
+            current_page = self._current_page_accessibility_text()
             visibility = "visible" if self._bottom_panel_visible else "hidden"
-            tooltip = f"Bottom tools tabs. Current section: {current}. Panel {visibility}."
+            tooltip = f"Bottom tools tabs. Current section: {current}. Current page: {current_page}. Panel {visibility}."
             self._bottom_tabs.setToolTip(tooltip)
             self._bottom_tabs.setStatusTip(tooltip)
             self._bottom_tabs.setAccessibleName(
-                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Panel {visibility}."
+                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Current page: {current_page}. Panel {visibility}."
             )
 
     def _update_page_tab_bar_metadata(self):
@@ -1184,6 +1201,7 @@ class MainWindow(QMainWindow):
             preview_text=preview_text,
             diagnostics_counts=diagnostics_counts,
         )
+        self._update_workspace_tab_metadata()
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
 
     def _apply_workspace_iconography(self):
