@@ -4684,6 +4684,35 @@ class MainWindow(QMainWindow):
             elif self.project and self.project.pages:
                 self._switch_page(self.project.pages[0].name)
 
+    def _build_page_tab_context_menu(self, index):
+        menu = QMenu(self)
+        menu.setToolTipsVisible(True)
+        actions = {}
+
+        if index >= 0:
+            close_tab = menu.addAction("Close")
+            self._apply_action_hint(close_tab, "Close this open page tab.")
+            actions["close_tab"] = close_tab
+
+            close_others = menu.addAction("Close Others")
+            can_close_others = self.page_tab_bar.count() > 1
+            close_others.setEnabled(can_close_others)
+            self._apply_action_hint(
+                close_others,
+                self._action_hint(
+                    "Close all other open page tabs.",
+                    can_close_others,
+                    "only 1 page tab is open",
+                ),
+            )
+            actions["close_others"] = close_others
+
+            close_all = menu.addAction("Close All")
+            self._apply_action_hint(close_all, "Close all open page tabs.")
+            actions["close_all"] = close_all
+
+        return menu, actions
+
     def _show_tab_context_menu(self, pos):
         index = -1
         for i in range(self.page_tab_bar.count()):
@@ -4692,14 +4721,10 @@ class MainWindow(QMainWindow):
                 index = i
                 break
 
-        menu = QMenu(self)
-
-        if index >= 0:
-            close_tab = menu.addAction("Close")
-            close_others = menu.addAction("Close Others")
-            close_all = menu.addAction("Close All")
-        else:
-            close_tab = close_others = close_all = None
+        menu, actions = self._build_page_tab_context_menu(index)
+        close_tab = actions.get("close_tab")
+        close_others = actions.get("close_others")
+        close_all = actions.get("close_all")
 
         action = menu.exec_(self.page_tab_bar.mapToGlobal(pos))
         if action is None:

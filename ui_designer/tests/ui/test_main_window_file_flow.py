@@ -4893,6 +4893,45 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_page_tab_context_menu_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PageTabContextMenuDemo"
+        project = _create_project(project_dir, "PageTabContextMenuDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        menu, actions = window._build_page_tab_context_menu(0)
+        assert actions["close_tab"].toolTip() == "Close this open page tab."
+        assert actions["close_tab"].statusTip() == actions["close_tab"].toolTip()
+        assert actions["close_others"].isEnabled() is False
+        assert actions["close_others"].toolTip() == (
+            "Close all other open page tabs. Unavailable: only 1 page tab is open."
+        )
+        assert actions["close_others"].statusTip() == actions["close_others"].toolTip()
+        assert actions["close_all"].toolTip() == "Close all open page tabs."
+        assert actions["close_all"].statusTip() == actions["close_all"].toolTip()
+        menu.deleteLater()
+
+        window._switch_page("detail_page")
+        menu, actions = window._build_page_tab_context_menu(0)
+        assert actions["close_tab"].toolTip() == "Close this open page tab."
+        assert actions["close_tab"].statusTip() == actions["close_tab"].toolTip()
+        assert actions["close_others"].isEnabled() is True
+        assert actions["close_others"].toolTip() == "Close all other open page tabs."
+        assert actions["close_others"].statusTip() == actions["close_others"].toolTip()
+        assert actions["close_all"].toolTip() == "Close all open page tabs."
+        assert actions["close_all"].statusTip() == actions["close_all"].toolTip()
+        menu.deleteLater()
+        _close_window(window)
+
     def test_copy_and_paste_selection_creates_unique_widget_names(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
