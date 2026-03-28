@@ -2390,10 +2390,17 @@ class TestWidgetTreePanel:
 
         menu = panel._build_context_menu(first)
         rename_action = next(action for action in menu.actions() if action.text() == "Rename Selected")
+        insert_action = next(action for action in menu.actions() if action.text() == "Insert Widget...")
         delete_action = next(action for action in menu.actions() if action.text() == "Delete")
 
         assert rename_action.shortcut().toString() == "F2"
+        assert rename_action.toolTip() == "Batch rename 2 selected widgets (F2)."
+        assert rename_action.statusTip() == rename_action.toolTip()
+        assert insert_action.toolTip() == "Open the widget browser to insert into root_group (group)."
+        assert insert_action.statusTip() == insert_action.toolTip()
         assert delete_action.shortcut().toString() == "Del"
+        assert delete_action.toolTip() == "Delete first (Del)."
+        assert delete_action.statusTip() == delete_action.toolTip()
 
         menu.deleteLater()
         panel.deleteLater()

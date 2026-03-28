@@ -1977,6 +1977,21 @@ class WidgetTreePanel(QWidget):
         self.del_btn.setEnabled(delete_enabled)
         _set_widget_metadata(self.del_btn, tooltip=delete_tooltip, accessible_name=delete_accessible_name)
 
+    def _context_rename_tooltip(self, widget, context_widgets):
+        if len(context_widgets) > 1 and widget in context_widgets:
+            selection_label = _count_label(len(context_widgets), "selected widget", "selected widgets")
+            return f"Batch rename {selection_label} (F2)."
+        selected_label = self._widget_label(widget) or "widget"
+        return f"Rename {selected_label} (F2)."
+
+    def _context_insert_tooltip(self, preferred_parent):
+        insert_target = self._current_move_target_label(preferred_parent, "page root") or "page root"
+        return f"Open the widget browser to insert into {insert_target}."
+
+    def _context_delete_tooltip(self, widget):
+        selected_label = self._widget_label(widget) or "widget"
+        return f"Delete {selected_label} (Del)."
+
     def _structure_action_reason(self, state, reason_attr=""):
         if reason_attr:
             reason = getattr(state, reason_attr, "")
@@ -2506,6 +2521,7 @@ class WidgetTreePanel(QWidget):
         # Rename
         rename_action = QAction("Rename Selected" if rename_selected else "Rename", self)
         rename_action.setShortcut("F2")
+        _set_action_metadata(rename_action, tooltip=self._context_rename_tooltip(widget, context_widgets))
         if rename_selected:
             rename_action.triggered.connect(lambda: self._rename_selected_widgets(context_widgets))
         else:
@@ -2515,6 +2531,7 @@ class WidgetTreePanel(QWidget):
         preferred_parent = widget if widget.is_container else getattr(widget, "parent", None)
         insert_action = QAction("Insert Widget...", self)
         insert_action.setIcon(make_icon("widgets"))
+        _set_action_metadata(insert_action, tooltip=self._context_insert_tooltip(preferred_parent))
         insert_action.triggered.connect(lambda: self.browse_widgets_requested.emit(preferred_parent))
         menu.addAction(insert_action)
 
@@ -2666,6 +2683,7 @@ class WidgetTreePanel(QWidget):
         # Delete
         del_action = QAction("Delete", self)
         del_action.setShortcut("Del")
+        _set_action_metadata(del_action, tooltip=self._context_delete_tooltip(widget))
         del_action.triggered.connect(lambda: self._delete_widget(widget))
         menu.addAction(del_action)
 
