@@ -3026,7 +3026,7 @@ class TestMainWindowFileFlow:
         assert actions["Dark"].statusTip() == actions["Dark"].toolTip()
         assert actions["Light"].toolTip() == "Switch the Designer theme to light."
         assert actions["Light"].statusTip() == actions["Light"].toolTip()
-        assert actions["Font Size..."].toolTip() == "Adjust the Designer font size."
+        assert actions["Font Size..."].toolTip() == "Adjust the Designer font size. Current size: app default."
         assert actions["Font Size..."].statusTip() == actions["Font Size..."].toolTip()
         current_zoom = window.preview_panel._zoom_label.text()
         assert actions["Vertical"].toolTip() == (
@@ -3097,6 +3097,11 @@ class TestMainWindowFileFlow:
 
         assert actions["Dark"].toolTip() == "Switch the Designer theme to dark."
         assert actions["Light"].toolTip() == "Currently using the light Designer theme."
+
+        monkeypatch.setattr(main_window_module.QInputDialog, "getInt", lambda *args, **kwargs: (11, True))
+        window._set_font_sizes()
+
+        assert actions["Font Size..."].toolTip() == "Adjust the Designer font size. Current size: 11pt."
         _close_window(window)
 
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):

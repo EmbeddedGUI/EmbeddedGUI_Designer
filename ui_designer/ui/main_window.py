@@ -872,6 +872,8 @@ class MainWindow(QMainWindow):
         layout_label = self._preview_layout_menu_label()
         grid_state = "visible" if self.preview_panel.show_grid() else "hidden"
         snap_label = self._current_grid_snap_label()
+        font_size = int(getattr(self._config, "font_size_px", 0) or 0)
+        font_label = "app default" if font_size <= 0 else f"{font_size}pt"
         has_mockup, mockup_visible, _opacity, _mockup_context = self._preview_mockup_action_context()
         mockup_state = "none loaded" if not has_mockup else ("visible" if mockup_visible else "hidden")
         if hasattr(self, "_view_menu"):
@@ -892,6 +894,8 @@ class MainWindow(QMainWindow):
         if hasattr(self, "theme_light_action"):
             light_hint = "Currently using the light Designer theme." if current_theme == "light" else "Switch the Designer theme to light."
             self._apply_action_hint(self.theme_light_action, light_hint)
+        if hasattr(self, "_font_size_action"):
+            self._apply_action_hint(self._font_size_action, f"Adjust the Designer font size. Current size: {font_label}.")
 
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
@@ -2799,10 +2803,10 @@ class MainWindow(QMainWindow):
         
         view_menu.addSeparator()
 
-        font_size_action = QAction("Font Size...", self)
-        self._apply_action_hint(font_size_action, "Adjust the Designer font size.")
-        font_size_action.triggered.connect(self._set_font_sizes)
-        view_menu.addAction(font_size_action)
+        self._font_size_action = QAction("Font Size...", self)
+        self._apply_action_hint(self._font_size_action, "Adjust the Designer font size.")
+        self._font_size_action.triggered.connect(self._set_font_sizes)
+        view_menu.addAction(self._font_size_action)
 
         view_menu.addSeparator()
 
@@ -3126,6 +3130,7 @@ class MainWindow(QMainWindow):
         # Persist to config
         self._config.font_size_px = size
         self._config.save()
+        self._update_view_and_theme_action_metadata()
         self.statusBar().showMessage(f"Font size set to {size}pt (saved)")
 
     def _get_base_stylesheet(self, app):
