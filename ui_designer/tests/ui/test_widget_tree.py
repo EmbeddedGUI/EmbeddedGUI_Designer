@@ -1099,6 +1099,7 @@ class TestWidgetTreePanel:
 
         root_menu = panel._build_context_menu(root)
         root_actions = _select_menu_actions(root_menu)
+        root_select_action = next(action for action in root_menu.actions() if action.text() == "Select")
         assert root_actions["Parent"].isEnabled() is False
         assert root_actions["Previous Sibling"].isEnabled() is False
         assert root_actions["Next Sibling"].isEnabled() is False
@@ -1142,6 +1143,10 @@ class TestWidgetTreePanel:
         assert "Unavailable: root widgets do not have siblings." in root_actions["Siblings"].toolTip()
         assert root_actions["Parent"].statusTip() == root_actions["Parent"].toolTip()
         assert root_actions["Managed"].statusTip() == root_actions["Managed"].toolTip()
+        assert root_select_action.toolTip() == (
+            "Select related widgets from this widget's parent, subtree, siblings, and page hierarchy."
+        )
+        assert root_select_action.statusTip() == root_select_action.toolTip()
         root_menu.deleteLater()
 
         first_menu = panel._build_context_menu(first)
@@ -1186,6 +1191,7 @@ class TestWidgetTreePanel:
 
         child_menu = panel._build_context_menu(child_a)
         child_actions = _select_menu_actions(child_menu)
+        child_structure_action = next(action for action in child_menu.actions() if action.text() == "Structure")
         assert child_actions["Parent"].isEnabled() is True
         assert child_actions["Previous Sibling"].isEnabled() is False
         assert child_actions["Next Sibling"].isEnabled() is True
@@ -1234,6 +1240,8 @@ class TestWidgetTreePanel:
         assert "Unavailable: widget does not have any previous siblings under the same parent." in child_actions["Previous Siblings"].toolTip()
         assert child_actions["Children"].statusTip() == child_actions["Children"].toolTip()
         assert child_actions["Same Type"].statusTip() == child_actions["Same Type"].toolTip()
+        assert child_structure_action.toolTip() == "Group, move, and reorder widgets relative to the current selection."
+        assert child_structure_action.statusTip() == child_structure_action.toolTip()
         child_menu.deleteLater()
 
         solo_menu = panel._build_context_menu(solo)

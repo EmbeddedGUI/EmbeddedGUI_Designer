@@ -1678,11 +1678,14 @@ class WidgetTreePanel(QWidget):
         for action in select_menu.actions():
             action.setStatusTip(action.toolTip())
         select_menu.menuAction().setEnabled(select_enabled)
-        if not select_enabled:
-            select_menu.menuAction().setToolTip("Selection navigation unavailable for this widget.")
-        else:
-            select_menu.menuAction().setToolTip("")
-        select_menu.menuAction().setStatusTip(select_menu.menuAction().toolTip())
+        _set_action_metadata(
+            select_menu.menuAction(),
+            tooltip=(
+                "Select related widgets from this widget's parent, subtree, siblings, and page hierarchy."
+                if select_enabled
+                else "Selection navigation unavailable for this widget."
+            ),
+        )
 
     def _move_target_memory_key(self):
         if self.project is None:
@@ -2691,7 +2694,10 @@ class WidgetTreePanel(QWidget):
         if not structure_enabled and structure_state.blocked_reason:
             _set_action_metadata(structure_menu.menuAction(), tooltip=f"Structure unavailable: {structure_state.blocked_reason}")
         else:
-            _set_action_metadata(structure_menu.menuAction(), tooltip="")
+            _set_action_metadata(
+                structure_menu.menuAction(),
+                tooltip="Group, move, and reorder widgets relative to the current selection.",
+            )
 
         # Delete
         del_action = QAction("Delete", self)
