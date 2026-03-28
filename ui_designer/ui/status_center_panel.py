@@ -115,7 +115,9 @@ class StatusCenterPanel(QWidget):
         self._header_subtitle.setWordWrap(True)
         self._header_subtitle.setAccessibleName("Status Center summary")
         header_layout.addWidget(self._header_subtitle)
-        self._workspace_summary_label = QLabel("Workspace: SDK missing, compile unavailable, Preview Idle, 0 dirty pages, 0 widgets selected.")
+        self._workspace_summary_label = QLabel(
+            "Workspace: SDK missing, compile unavailable, Preview Idle, no dirty pages, no widgets selected."
+        )
         self._workspace_summary_label.setObjectName("workspace_section_subtitle")
         self._workspace_summary_label.setWordWrap(True)
         self._workspace_summary_label.setAccessibleName("Workspace summary")
@@ -696,11 +698,20 @@ class StatusCenterPanel(QWidget):
         compile_text = "compile available" if can_compile else "compile unavailable"
         preview_value = str(preview_text or "Preview Idle").strip() or "Preview Idle"
         runtime_summary = "runtime issue detected" if str(runtime_text or "").strip() else "runtime clear"
+        dirty_summary = (
+            self._count_label(dirty_count, "dirty page", "dirty pages")
+            if int(dirty_count or 0) > 0
+            else "no dirty pages"
+        )
+        selection_summary = (
+            f"{self._count_label(selection_total, 'widget', 'widgets')} selected"
+            if int(selection_total or 0) > 0
+            else "no widgets selected"
+        )
         diag_summary = "diagnostics clear" if int(diag_total or 0) <= 0 else self._count_label(diag_total, "diagnostic", "diagnostics")
         summary = (
             f"Workspace: {sdk_text}, {compile_text}, {preview_value}, {runtime_summary}, "
-            f"{self._count_label(dirty_count, 'dirty page', 'dirty pages')}, "
-            f"{self._count_label(selection_total, 'widget', 'widgets')} selected, {diag_summary}."
+            f"{dirty_summary}, {selection_summary}, {diag_summary}."
         )
         suggested = str(suggested_label or "").strip()
         if suggested:

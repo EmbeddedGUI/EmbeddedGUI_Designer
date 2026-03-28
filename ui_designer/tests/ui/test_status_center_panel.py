@@ -343,7 +343,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._workspace_summary_label.accessibleName() == (
-            "Workspace summary: Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear. Next: Configure SDK."
+            "Workspace summary: Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._header_title.text() == "Status Center (Workspace)"
         assert panel._header_title.toolTip() == "Status Center focused on Workspace. Check Workspace (Setup)."
@@ -395,7 +395,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == "Repeat last action"
         assert panel._repeat_action_button.property("iconKey") == "history"
         assert panel._workspace_summary_label.text() == (
-            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, 0 dirty pages, 0 widgets selected, diagnostics clear. Next: Configure SDK."
+            "Workspace: SDK missing, compile unavailable, Preview Idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
         )
         assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
