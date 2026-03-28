@@ -635,18 +635,21 @@ class ReleaseBuildDialog(QDialog):
 
     def _update_accessibility_summary(self) -> None:
         profile_text = self._profile_combo.currentText() or "none"
+        output_root = self._output_label.text() or "none"
+        diagnostics_text = self._warnings_label.text()
+        release_context = f"Current profile: {profile_text}. Output root: {output_root}. Diagnostics: {diagnostics_text}."
         summary = (
             f"Release build: profile {profile_text}. "
             f"{self._sdk_label.text() or 'SDK: unknown'}. "
-            f"Output: {self._output_label.text() or 'none'}. "
-            f"Diagnostics: {self._warnings_label.text()}. "
+            f"Output: {output_root}. "
+            f"Diagnostics: {diagnostics_text}. "
             f"Warnings as errors {'on' if self._warnings_as_errors.isChecked() else 'off'}. "
             f"Create zip package {'on' if self._package_release.isChecked() else 'off'}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._profile_combo,
-            tooltip=f"Choose the release profile. Current profile: {profile_text}.",
+            tooltip=f"Choose the release profile. {release_context}",
             accessible_name=f"Release profile: {profile_text}",
         )
         _set_widget_metadata(
@@ -667,31 +670,36 @@ class ReleaseBuildDialog(QDialog):
         _set_widget_metadata(
             self._warnings_as_errors,
             tooltip=(
-                "Treat release warnings as build errors."
+                f"Treat release warnings as build errors. {release_context}"
                 if self._warnings_as_errors.isChecked()
-                else "Allow release builds to continue when warnings are present."
+                else f"Allow release builds to continue when warnings are present. {release_context}"
             ),
             accessible_name=f"Treat warnings as errors: {'on' if self._warnings_as_errors.isChecked() else 'off'}",
         )
         _set_widget_metadata(
             self._package_release,
             tooltip=(
-                "Create a zip package in addition to the release directory."
+                f"Create a zip package in addition to the release directory. {release_context}"
                 if self._package_release.isChecked()
-                else "Create only the release directory without a zip package."
+                else f"Create only the release directory without a zip package. {release_context}"
             ),
             accessible_name=f"Create zip package: {'on' if self._package_release.isChecked() else 'off'}",
         )
         if self._ok_button is not None:
             _set_widget_metadata(
                 self._ok_button,
-                tooltip=f"Start the release build with profile {profile_text}.",
+                tooltip=(
+                    f"Start the release build with profile {profile_text}. "
+                    f"Output root: {output_root}. Diagnostics: {diagnostics_text}. "
+                    f"Warnings as errors {'on' if self._warnings_as_errors.isChecked() else 'off'}. "
+                    f"Create zip package {'on' if self._package_release.isChecked() else 'off'}."
+                ),
                 accessible_name=f"Start release build: {profile_text}",
             )
         if self._cancel_button is not None:
             _set_widget_metadata(
                 self._cancel_button,
-                tooltip="Cancel the release build.",
+                tooltip=f"Cancel the release build. {release_context}",
                 accessible_name="Cancel release build",
             )
 

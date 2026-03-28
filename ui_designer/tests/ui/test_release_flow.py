@@ -518,10 +518,26 @@ def test_release_build_dialog_exposes_accessibility_metadata(qapp):
     )
 
     assert "Release build: profile Windows PC (windows-pc)." in dialog.accessibleName()
-    assert dialog._profile_combo.toolTip() == "Choose the release profile. Current profile: Windows PC (windows-pc)."
-    assert dialog._warnings_as_errors.toolTip() == "Allow release builds to continue when warnings are present."
-    assert dialog._package_release.toolTip() == "Create a zip package in addition to the release directory."
-    assert dialog._ok_button.toolTip() == "Start the release build with profile Windows PC (windows-pc)."
+    assert dialog._profile_combo.toolTip() == (
+        "Choose the release profile. Current profile: Windows PC (windows-pc). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._warnings_as_errors.toolTip() == (
+        "Allow release builds to continue when warnings are present. Current profile: Windows PC (windows-pc). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._package_release.toolTip() == (
+        "Create a zip package in addition to the release directory. Current profile: Windows PC (windows-pc). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._ok_button.toolTip() == (
+        "Start the release build with profile Windows PC (windows-pc). Output root: D:/workspace/output/ui_designer_release. "
+        "Diagnostics: 2 warning(s). Warnings as errors off. Create zip package on."
+    )
+    assert dialog._cancel_button.toolTip() == (
+        "Cancel the release build. Current profile: Windows PC (windows-pc). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
     assert dialog._ok_button.accessibleName() == "Start release build: Windows PC (windows-pc)"
 
     dialog._profile_combo.setCurrentIndex(1)
@@ -530,9 +546,18 @@ def test_release_build_dialog_exposes_accessibility_metadata(qapp):
     qapp.processEvents()
 
     assert "Release build: profile ESP32 (esp32)." in dialog.accessibleName()
-    assert dialog._warnings_as_errors.toolTip() == "Treat release warnings as build errors."
-    assert dialog._package_release.toolTip() == "Create only the release directory without a zip package."
-    assert dialog._ok_button.toolTip() == "Start the release build with profile ESP32 (esp32)."
+    assert dialog._warnings_as_errors.toolTip() == (
+        "Treat release warnings as build errors. Current profile: ESP32 (esp32). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._package_release.toolTip() == (
+        "Create only the release directory without a zip package. Current profile: ESP32 (esp32). "
+        "Output root: D:/workspace/output/ui_designer_release. Diagnostics: 2 warning(s)."
+    )
+    assert dialog._ok_button.toolTip() == (
+        "Start the release build with profile ESP32 (esp32). Output root: D:/workspace/output/ui_designer_release. "
+        "Diagnostics: 2 warning(s). Warnings as errors on. Create zip package off."
+    )
     assert dialog._ok_button.accessibleName() == "Start release build: ESP32 (esp32)"
 
 
