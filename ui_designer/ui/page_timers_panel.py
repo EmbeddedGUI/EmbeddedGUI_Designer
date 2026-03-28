@@ -64,16 +64,21 @@ class PageTimersPanel(QWidget):
         self._table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self._table.itemChanged.connect(self._on_item_changed)
         self._table.itemSelectionChanged.connect(self._update_actions)
+        self._table.setAccessibleName("Page timers table")
 
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Timer")
         self._add_button.setIcon(make_icon("time"))
+        self._add_button.setToolTip("Add a page timer.")
+        self._add_button.setAccessibleName("Add page timer")
         self._remove_button = QPushButton("Remove Timer")
         self._remove_button.setIcon(make_icon("stop"))
+        self._remove_button.setAccessibleName("Remove page timer")
         self._open_code_button = QPushButton("Open User Code")
         self._open_code_button.setIcon(make_icon("page"))
+        self._open_code_button.setAccessibleName("Open timer user code")
         self._add_button.clicked.connect(self._on_add_timer)
         self._remove_button.clicked.connect(self._on_remove_timer)
         self._open_code_button.clicked.connect(self._on_open_user_code)
@@ -86,6 +91,18 @@ class PageTimersPanel(QWidget):
         layout.addWidget(self._hint_label)
         layout.addWidget(self._table, 1)
         layout.addLayout(buttons)
+
+    def _update_accessibility_summary(self, summary_text):
+        self.setAccessibleName(summary_text)
+        self.setToolTip(summary_text)
+        self.setStatusTip(summary_text)
+        self._summary_label.setToolTip(summary_text)
+        self._summary_label.setStatusTip(summary_text)
+        self._summary_label.setAccessibleName(summary_text)
+        self._hint_label.setAccessibleName(self._hint_label.text())
+        self._hint_label.setToolTip(self._hint_label.text())
+        self._table.setToolTip(summary_text)
+        self._table.setStatusTip(summary_text)
 
     def clear(self):
         self.set_page(None)
@@ -110,11 +127,15 @@ class PageTimersPanel(QWidget):
 
     def _update_summary(self):
         if self._page is None:
-            self._summary_label.setText("Page Timers: no active page")
+            summary_text = "Page Timers: no active page"
+            self._summary_label.setText(summary_text)
+            self._update_accessibility_summary(summary_text)
             return
         count = len(self._timers)
         noun = "timer" if count == 1 else "timers"
-        self._summary_label.setText(f"Page Timers: {count} {noun} on {self._page.name}")
+        summary_text = f"Page Timers: {count} {noun} on {self._page.name}"
+        self._summary_label.setText(summary_text)
+        self._update_accessibility_summary(summary_text)
 
     def _update_actions(self):
         has_page = self._page is not None
@@ -123,6 +144,17 @@ class PageTimersPanel(QWidget):
         self._add_button.setEnabled(has_page)
         self._remove_button.setEnabled(has_page and has_selection)
         self._open_code_button.setEnabled(has_page and has_selection)
+        if has_page and has_selection:
+            remove_hint = "Remove the selected page timer."
+            code_hint = "Open user code for the selected timer callback."
+        elif has_page:
+            remove_hint = "Select a timer to remove it."
+            code_hint = "Select a timer to open its user code."
+        else:
+            remove_hint = "Open a page to manage timers."
+            code_hint = "Open a page to access timer user code."
+        self._remove_button.setToolTip(remove_hint)
+        self._open_code_button.setToolTip(code_hint)
 
     def _table_timers(self):
         timers = []

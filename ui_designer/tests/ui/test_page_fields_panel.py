@@ -50,6 +50,10 @@ class TestPageFieldsPanel:
         panel.set_page(page)
 
         assert panel._summary_label.text() == "Page Fields: 2 fields on main_page"
+        assert panel.accessibleName() == "Page Fields: 2 fields on main_page"
+        assert panel._table.accessibleName() == "Page fields table"
+        assert panel._open_on_open_button.toolTip() == "Open the on_open section in the page user code."
+        assert panel._add_button.toolTip() == "Add a page field."
         assert panel._table.rowCount() == 2
         assert panel._table.item(0, 0).text() == "counter"
         assert panel._table.item(0, 1).text() == "int"
@@ -65,13 +69,16 @@ class TestPageFieldsPanel:
         captured = []
         panel.fields_changed.connect(lambda fields: captured.append(fields))
 
+        assert panel._remove_button.toolTip() == "Select a field to remove it."
         panel._on_add_field()
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
+        assert panel._remove_button.toolTip() == "Remove the selected page field."
         assert captured[-1] == [{"name": "field", "type": "int", "default": "0"}]
 
         panel._table.selectRow(0)
+        assert panel._remove_button.toolTip() == "Remove the selected page field."
         panel._on_remove_field()
         qapp.processEvents()
 

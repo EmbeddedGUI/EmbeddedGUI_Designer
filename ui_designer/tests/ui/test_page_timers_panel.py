@@ -49,6 +49,9 @@ class TestPageTimersPanel:
         panel.set_page(page)
 
         assert panel._summary_label.text() == "Page Timers: 1 timer on main_page"
+        assert panel.accessibleName() == "Page Timers: 1 timer on main_page"
+        assert panel._table.accessibleName() == "Page timers table"
+        assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._table.rowCount() == 1
         assert panel._table.item(0, 0).text() == "refresh_timer"
         assert panel._table.item(0, 1).text() == "tick_refresh"
@@ -63,14 +66,20 @@ class TestPageTimersPanel:
         captured = []
         panel.timers_changed.connect(lambda timers: captured.append(timers))
 
+        assert panel._remove_button.toolTip() == "Select a timer to remove it."
+        assert panel._open_code_button.toolTip() == "Select a timer to open its user code."
         panel._on_add_timer()
         qapp.processEvents()
 
         assert panel._table.rowCount() == 1
+        assert panel._remove_button.toolTip() == "Remove the selected page timer."
+        assert panel._open_code_button.toolTip() == "Open user code for the selected timer callback."
         assert captured[-1][0]["name"] == "timer"
         assert captured[-1][0]["callback"] == "egui_main_page_timer_callback"
 
         panel._table.selectRow(0)
+        assert panel._remove_button.toolTip() == "Remove the selected page timer."
+        assert panel._open_code_button.toolTip() == "Open user code for the selected timer callback."
         panel._on_remove_timer()
         qapp.processEvents()
 
