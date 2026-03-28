@@ -2956,7 +2956,8 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
         assert refreshed_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
-            f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator)."
+            f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
+            "Release records: 0 entries. Latest release: none."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
@@ -3029,6 +3030,7 @@ class TestMainWindowFileFlow:
                 "Open Last Release Package",
                 "Open Last Release Log",
                 "Open Release History File",
+                "Release Build...",
                 "Release History...",
                 "Repository Health...",
             }
@@ -3061,6 +3063,11 @@ class TestMainWindowFileFlow:
         assert actions["Open Release History File"].toolTip() == (
             "Open release history file\n\nNo release history available\n\n"
             f"Release history file unavailable\nExpected file: {history_path}"
+        )
+        assert actions["Release Build..."].toolTip() == (
+            "Build a release package for the current project. "
+            f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
+            "Release records: 0 entries. Latest release: none."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -3152,6 +3159,11 @@ class TestMainWindowFileFlow:
         assert actions["Open Release History File"].toolTip() == (
             "Open release history file\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
             f"{history_path}"
+        )
+        assert actions["Release Build..."].toolTip() == (
+            "Build a release package for the current project. "
+            f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim, success)."
         )
         assert actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
