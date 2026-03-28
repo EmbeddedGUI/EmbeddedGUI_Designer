@@ -641,11 +641,26 @@ class MainWindow(QMainWindow):
         names.reverse()
         return " / ".join(names) if names else "Current page root"
 
+    def _update_insert_widget_button_metadata(self, parent=None):
+        if not hasattr(self, "_insert_widget_button"):
+            return
+        if self._current_page is None:
+            tooltip = "Open or create a project to insert a widget."
+            accessible_name = "Insert widget unavailable."
+        else:
+            target = self._insert_target_summary(parent)
+            tooltip = f"Open Components and insert a widget into {target}."
+            accessible_name = f"Insert widget target: {target}."
+        self._insert_widget_button.setToolTip(tooltip)
+        self._insert_widget_button.setStatusTip(tooltip)
+        self._insert_widget_button.setAccessibleName(accessible_name)
+
     def _update_widget_browser_target(self, preferred_parent=None):
         parent = preferred_parent or self._default_insert_parent()
         self._pending_insert_parent = parent
         if hasattr(self, "widget_browser"):
             self.widget_browser.set_insert_target_label(self._insert_target_summary(parent))
+        self._update_insert_widget_button_metadata(parent)
 
     def _show_widget_browser_for_parent(self, preferred_parent=None):
         self._update_widget_browser_target(preferred_parent=preferred_parent)
@@ -2240,6 +2255,7 @@ class MainWindow(QMainWindow):
         self._insert_widget_button.setIcon(make_icon("widgets"))
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
+        self._update_insert_widget_button_metadata()
 
         tb.addSeparator()
         tb.addAction(self._save_action)

@@ -5957,6 +5957,9 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
         assert window._sdk_status_label.toolTip() == str(sdk_root)
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
+        assert window._insert_widget_button.toolTip() == "Open Components and insert a widget into root_group."
+        assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
+        assert window._insert_widget_button.accessibleName() == "Insert widget target: root_group."
         assert window._selection_chip.text() == "No selection"
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
@@ -5993,6 +5996,9 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.toolTip() == "No SDK root configured"
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
+        assert window._insert_widget_button.toolTip() == "Open or create a project to insert a widget."
+        assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
+        assert window._insert_widget_button.accessibleName() == "Insert widget unavailable."
         _close_window(window)
 
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
