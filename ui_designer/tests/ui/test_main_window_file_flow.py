@@ -2923,14 +2923,14 @@ class TestMainWindowFileFlow:
             "Inspect the Designer repository health summary. "
             "Project: none. SDK: invalid. Release output root: none. Output root state: unavailable. Source resources: missing. "
             "History file state: unavailable. Release records: unavailable. "
-            "Latest release: none. Release open targets: unavailable."
+            "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
         )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
             "Source resources: missing. Release profiles: unavailable. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
-            "Latest release: none. Release open targets: unavailable."
+            "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
         assert generate_resources_action.toolTip() == (
@@ -2957,25 +2957,25 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
-            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none."
+            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none."
         )
         assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
-            "History file state: missing. Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none."
         )
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             f"History file state: missing. Output root: {window._release_output_root()}. Output root state: missing. "
-            "Release records: 0 entries. Latest release: none."
+            "Release records: 0 entries. Latest release: none. Latest release SDK: none."
         )
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {window._release_output_root()}. Output root state: missing. Source resources: available. "
-            "History file state: missing. Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
+            "History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
@@ -2984,7 +2984,7 @@ class TestMainWindowFileFlow:
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
             "Output root state: missing. "
             "History file state: missing. "
-            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         assert generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
@@ -3000,7 +3000,7 @@ class TestMainWindowFileFlow:
             "Source resources: available. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
             "Output root state: missing. "
             "History file state: missing. "
-            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
         _close_window(window)
 
@@ -3081,12 +3081,12 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
-            "History file state: missing. Release records: 0 entries. Latest release: none."
+            "History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none."
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
-            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none."
+            "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -3094,7 +3094,7 @@ class TestMainWindowFileFlow:
             "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Output root state: missing. "
             "History file state: missing. "
-            "Release records: 0 entries. Latest release: none. Release open targets: 0 of 7 available."
+            "Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
 
         release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
@@ -3183,23 +3183,23 @@ class TestMainWindowFileFlow:
         )
         assert actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. Profiles: 2 profiles. Default: windows-pc (Windows PC). "
-            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
+            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234."
         )
         assert actions["Release Build..."].toolTip() == (
             "Build a release package for the current project. "
             f"Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             "Output root state: available. History file state: available. Release records: 1 entry. "
-            "Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
+            "Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234."
         )
         assert actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             f"History file: {history_path}. History file state: available. Output root: {output_root}. Output root state: available. "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success)."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234."
         )
         assert actions["Repository Health..."].toolTip() == (
             "Inspect the Designer repository health summary. "
             f"Project: open. SDK: valid. Release output root: {output_root}. Output root state: available. Source resources: available. "
-            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Release open targets: 7 of 7 available."
+            "History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
@@ -3207,7 +3207,7 @@ class TestMainWindowFileFlow:
             "Source resources: available. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
             "Output root state: available. "
             "History file state: available. "
-            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Release open targets: 7 of 7 available."
+            "Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
         for action in actions.values():
             assert action.statusTip() == action.toolTip()
