@@ -19,6 +19,14 @@ from ..model.repo_health import (
 )
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None) -> None:
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class RepositoryHealthDialog(QDialog):
     """Inspect repository health and open relevant workspace paths."""
 
@@ -118,6 +126,33 @@ class RepositoryHealthDialog(QDialog):
         button_box.rejected.connect(self.reject)
         button_box.accepted.connect(self.accept)
         root_layout.addWidget(button_box)
+        close_button = button_box.button(QDialogButtonBox.Close)
+
+        self._refresh_button.setAccessibleName("Refresh repository health")
+        self._reset_view_button.setAccessibleName("Reset repository health view")
+        self._critical_only_check.setAccessibleName("Critical only filter")
+        self._blocked_only_check.setAccessibleName("Blocked stale directories filter")
+        self._show_json_check.setAccessibleName("Show JSON report")
+        self._copy_summary_button.setAccessibleName("Copy repository health summary")
+        self._export_summary_button.setAccessibleName("Export repository health summary")
+        self._copy_report_button.setAccessibleName("Copy repository health report")
+        self._copy_json_button.setAccessibleName("Copy repository health JSON")
+        self._export_report_button.setAccessibleName("Export repository health report")
+        self._copy_repo_button.setAccessibleName("Copy repository root path")
+        self._open_repo_button.setAccessibleName("Open repository root")
+        self._copy_sdk_button.setAccessibleName("Copy SDK folder path")
+        self._open_sdk_button.setAccessibleName("Open SDK folder")
+        self._copy_smoke_button.setAccessibleName("Copy release smoke sample path")
+        self._open_smoke_button.setAccessibleName("Open release smoke sample")
+        self._stale_dir_combo.setAccessibleName("Stale temp directories")
+        self._copy_stale_path_button.setAccessibleName("Copy selected stale temp directory path")
+        self._open_stale_button.setAccessibleName("Open selected stale temp directory")
+        if close_button is not None:
+            _set_widget_metadata(
+                close_button,
+                tooltip="Close the repository health dialog.",
+                accessible_name="Close repository health dialog",
+            )
 
         self._restore_view_state()
         self.refresh()
@@ -125,6 +160,162 @@ class RepositoryHealthDialog(QDialog):
     def refresh(self) -> None:
         self._payload = collect_repo_health(self._repo_root)
         self._render_details()
+
+    def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
+        value = max(int(count or 0), 0)
+        noun = singular if value == 1 else (plural or f"{singular}s")
+        return f"{value} {noun}"
+
+    def _toggle_state_label(self, checked: bool) -> str:
+        return "on" if checked else "off"
+
+    def _view_mode_label(self) -> str:
+        return "JSON" if self._show_json_check.isChecked() else "text"
+
+    def _refresh_hint(self) -> str:
+        return "Refresh repository health, runtime path checks, and stale temp directory scan."
+
+    def _reset_view_hint(self) -> str:
+        has_non_default_stale_selection = self._stale_dir_combo.count() > 0 and self._stale_dir_combo.currentIndex() > 0
+        if (
+            self._critical_only_check.isChecked()
+            or self._blocked_only_check.isChecked()
+            or self._show_json_check.isChecked()
+            or has_non_default_stale_selection
+        ):
+            return "Reset repository health filters, JSON view, and stale-directory selection."
+        return "Repository health already shows the full text report."
+
+    def _copy_path_hint(self, label: str, path: str) -> str:
+        if path:
+            return f"Copy the {label} path."
+        return f"No {label} path is available to copy."
+
+    def _open_path_hint(self, label: str, path: str) -> str:
+        if path and os.path.exists(path):
+            return f"Open the {label} in the system file browser."
+        return f"The {label} path is unavailable or missing."
+
+    def _stale_dir_hint(self) -> str:
+        count = self._stale_dir_combo.count()
+        if count <= 0:
+            return "No stale temp directories are available in the current view."
+        current_selection = str(self._stale_dir_combo.currentText() or "none").strip() or "none"
+        count_text = self._count_label(count, "entry")
+        return f"Select a stale temp directory to copy or open. {count_text}. Current selection: {current_selection}."
+
+    def _copy_stale_path_hint(self) -> str:
+        if self._selected_stale_path():
+            return "Copy the selected stale temp directory path."
+        return "No stale temp directory is selected to copy."
+
+    def _open_stale_path_hint(self) -> str:
+        return self._open_path_hint("selected stale temp directory", self._selected_stale_path())
+
+    def _update_accessibility_summary(self) -> None:
+        view_payload = self._current_view_payload()
+        counts = repo_health_counts(view_payload)
+        summary_text = str(self._summary_label.text() or "Repository health looks good.").strip() or "Repository health looks good."
+        counts_text = (
+            "Repository health counts: "
+            f"{self._count_label(counts['critical'], 'critical issue')}, "
+            f"{self._count_label(counts['suggestions'], 'suggestion')}, "
+            f"{self._count_label(counts['stale_dirs'], 'stale directory')}, "
+            f"{self._count_label(counts['blocked_stale_dirs'], 'blocked stale directory')}."
+        )
+        view_text = (
+            "Filters: "
+            f"critical {self._toggle_state_label(self._critical_only_check.isChecked())}, "
+            f"blocked {self._toggle_state_label(self._blocked_only_check.isChecked())}. "
+            f"View: {self._view_mode_label()}."
+        )
+        dialog_summary = f"Repository health: {summary_text} {counts_text} {view_text}"
+        if self._stale_dir_combo.count() > 0:
+            current_selection = str(self._stale_dir_combo.currentText() or "none").strip() or "none"
+            dialog_summary += f" Current stale selection: {current_selection}."
+
+        details_summary = (
+            f"Repository health details: {self._view_mode_label()} view. "
+            f"Filters: critical {self._toggle_state_label(self._critical_only_check.isChecked())}, "
+            f"blocked {self._toggle_state_label(self._blocked_only_check.isChecked())}."
+        )
+        stale_summary = self._stale_dir_hint()
+        repo_root = str(self._payload.get("repo_root") or "").strip()
+        sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
+        smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
+        sdk_path = str(sdk.get("path") or "").strip()
+        smoke_path = str(smoke.get("path") or "").strip()
+
+        _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._summary_label,
+            tooltip=summary_text,
+            accessible_name=f"Repository health summary: {summary_text}",
+        )
+        _set_widget_metadata(self._overview_label, tooltip=counts_text, accessible_name=counts_text)
+        _set_widget_metadata(self._details_edit, tooltip=details_summary, accessible_name=details_summary)
+        _set_widget_metadata(self._refresh_button, tooltip=self._refresh_hint())
+        _set_widget_metadata(self._reset_view_button, tooltip=self._reset_view_hint())
+        _set_widget_metadata(
+            self._critical_only_check,
+            tooltip=(
+                "Showing only critical repository health issues."
+                if self._critical_only_check.isChecked()
+                else "Filter the report to critical repository health issues."
+            ),
+            accessible_name=f"Critical only filter: {self._toggle_state_label(self._critical_only_check.isChecked())}",
+        )
+        _set_widget_metadata(
+            self._blocked_only_check,
+            tooltip=(
+                "Showing only stale temp directories blocked by access errors."
+                if self._blocked_only_check.isChecked()
+                else "Filter the report to stale temp directories blocked by access errors."
+            ),
+            accessible_name=f"Blocked stale directories filter: {self._toggle_state_label(self._blocked_only_check.isChecked())}",
+        )
+        _set_widget_metadata(
+            self._show_json_check,
+            tooltip=(
+                "Showing the repository health report as JSON."
+                if self._show_json_check.isChecked()
+                else "Show the repository health report as JSON."
+            ),
+            accessible_name=f"Show JSON report: {self._toggle_state_label(self._show_json_check.isChecked())}",
+        )
+        _set_widget_metadata(
+            self._copy_summary_button,
+            tooltip="Copy the current repository health summary.",
+        )
+        _set_widget_metadata(
+            self._export_summary_button,
+            tooltip="Export the current repository health summary to a text file.",
+        )
+        _set_widget_metadata(
+            self._copy_report_button,
+            tooltip=f"Copy the current repository health {self._view_mode_label()} report.",
+        )
+        _set_widget_metadata(
+            self._copy_json_button,
+            tooltip="Copy the current repository health report as JSON.",
+        )
+        _set_widget_metadata(
+            self._export_report_button,
+            tooltip=f"Export the current repository health {self._view_mode_label()} report.",
+        )
+        _set_widget_metadata(self._copy_repo_button, tooltip=self._copy_path_hint("repository root", repo_root))
+        _set_widget_metadata(self._open_repo_button, tooltip=self._open_path_hint("repository root", repo_root))
+        _set_widget_metadata(self._copy_sdk_button, tooltip=self._copy_path_hint("SDK folder", sdk_path))
+        _set_widget_metadata(self._open_sdk_button, tooltip=self._open_path_hint("SDK folder", sdk_path))
+        _set_widget_metadata(self._copy_smoke_button, tooltip=self._copy_path_hint("release smoke sample", smoke_path))
+        _set_widget_metadata(self._open_smoke_button, tooltip=self._open_path_hint("release smoke sample", smoke_path))
+        _set_widget_metadata(
+            self._stale_dir_combo,
+            tooltip=stale_summary,
+            accessible_name=f"Stale temp directories: {stale_summary.removesuffix('.')}.",
+        )
+        _set_widget_metadata(self._copy_stale_path_button, tooltip=self._copy_stale_path_hint())
+        _set_widget_metadata(self._open_stale_button, tooltip=self._open_stale_path_hint())
 
     def _view_options(self) -> dict[str, bool]:
         return {
@@ -173,10 +364,11 @@ class RepositoryHealthDialog(QDialog):
         self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path)))
         self._copy_stale_path_button.setEnabled(bool(stale_path))
         self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
+        details_text = format_repo_health_text(view_payload, **view_options)
         if self._show_json_check.isChecked():
-            self._details_edit.setPlainText(format_repo_health_json(view_payload, **view_options))
-            return
-        self._details_edit.setPlainText(format_repo_health_text(view_payload, **view_options))
+            details_text = format_repo_health_json(view_payload, **view_options)
+        self._details_edit.setPlainText(details_text)
+        self._update_accessibility_summary()
 
     def _open_payload_path(self, key: str, label: str) -> None:
         path = str(self._payload.get(key) or "").strip()
@@ -267,6 +459,7 @@ class RepositoryHealthDialog(QDialog):
         stale_path = self._selected_stale_path()
         self._copy_stale_path_button.setEnabled(bool(stale_path))
         self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
+        self._update_accessibility_summary()
 
     def _sync_stale_dir_combo(self, stale_dirs: list[object], selected_path: str = "") -> None:
         self._stale_dir_combo.blockSignals(True)

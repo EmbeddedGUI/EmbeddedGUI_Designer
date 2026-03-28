@@ -119,6 +119,50 @@ def test_repository_health_dialog_copy_summary_writes_clipboard(qapp, monkeypatc
 
 
 @_skip_no_qt
+def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    assert "SDK submodule is not initialized; release smoke sample is missing; 1 stale temp dir(s) detected" in dialog.accessibleName()
+    assert "Filters: critical off, blocked off. View: text." in dialog.accessibleName()
+    assert dialog._summary_label.accessibleName() == (
+        "Repository health summary: SDK submodule is not initialized; release smoke sample is missing; "
+        "1 stale temp dir(s) detected"
+    )
+    assert dialog._overview_label.accessibleName() == (
+        "Repository health counts: 2 critical issues, 1 suggestion, 1 stale directory, 1 blocked stale directory."
+    )
+    assert dialog._details_edit.accessibleName() == "Repository health details: text view. Filters: critical off, blocked off."
+    assert dialog._refresh_button.toolTip() == "Refresh repository health, runtime path checks, and stale temp directory scan."
+    assert dialog._reset_view_button.toolTip() == "Repository health already shows the full text report."
+    assert dialog._critical_only_check.toolTip() == "Filter the report to critical repository health issues."
+    assert dialog._blocked_only_check.toolTip() == "Filter the report to stale temp directories blocked by access errors."
+    assert dialog._show_json_check.toolTip() == "Show the repository health report as JSON."
+    assert dialog._copy_report_button.toolTip() == "Copy the current repository health text report."
+    assert dialog._copy_repo_button.toolTip() == "Copy the repository root path."
+    assert dialog._open_sdk_button.toolTip() == "The SDK folder path is unavailable or missing."
+    assert dialog._stale_dir_combo.toolTip() == (
+        "Select a stale temp directory to copy or open. 1 entry. Current selection: .pytest-tmp-codex [permission_denied]."
+    )
+    assert dialog._stale_dir_combo.accessibleName() == (
+        "Stale temp directories: Select a stale temp directory to copy or open. 1 entry. "
+        "Current selection: .pytest-tmp-codex [permission_denied]."
+    )
+
+
+@_skip_no_qt
 def test_repository_health_dialog_can_open_first_stale_dir(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
@@ -230,6 +274,53 @@ def test_repository_health_dialog_updates_open_button_for_selected_stale_dir(qap
     assert dialog._stale_dir_combo.currentData() == str(missing_stale_dir)
     assert dialog._copy_stale_path_button.isEnabled() is True
     assert dialog._open_stale_button.isEnabled() is False
+
+
+@_skip_no_qt
+def test_repository_health_dialog_updates_accessibility_metadata_for_view_changes(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    accessible_stale_dir = tmp_path / ".pytest-tmp-codex"
+    missing_stale_dir = tmp_path / "tmpxtayw0f6"
+    accessible_stale_dir.mkdir()
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [
+            {"path": str(accessible_stale_dir), "accessible": True, "issue": ""},
+            {"path": str(missing_stale_dir), "accessible": False, "issue": "permission_denied"},
+        ],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._stale_dir_combo.setCurrentIndex(1)
+    qapp.processEvents()
+
+    assert dialog._copy_stale_path_button.toolTip() == "Copy the selected stale temp directory path."
+    assert dialog._open_stale_button.toolTip() == "The selected stale temp directory path is unavailable or missing."
+
+    dialog._critical_only_check.setChecked(True)
+    qapp.processEvents()
+
+    assert dialog._critical_only_check.toolTip() == "Showing only critical repository health issues."
+    assert dialog._reset_view_button.toolTip() == "Reset repository health filters, JSON view, and stale-directory selection."
+    assert dialog._stale_dir_combo.toolTip() == "No stale temp directories are available in the current view."
+    assert dialog._stale_dir_combo.accessibleName() == (
+        "Stale temp directories: No stale temp directories are available in the current view."
+    )
+
+    dialog._show_json_check.setChecked(True)
+    qapp.processEvents()
+
+    assert dialog._show_json_check.toolTip() == "Showing the repository health report as JSON."
+    assert dialog._details_edit.accessibleName() == "Repository health details: JSON view. Filters: critical on, blocked off."
+    assert dialog._copy_report_button.toolTip() == "Copy the current repository health JSON report."
+    assert "View: JSON." in dialog.accessibleName()
 
 
 @_skip_no_qt
