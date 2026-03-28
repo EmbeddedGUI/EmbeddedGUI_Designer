@@ -24,6 +24,14 @@ from ..model.page_timers import (
 from .iconography import make_icon
 
 
+def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
+    if tooltip is not None:
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+    if accessible_name is not None:
+        widget.setAccessibleName(accessible_name)
+
+
 class PageTimersPanel(QWidget):
     """Editable list of page-level timers stored in Page.timers."""
 
@@ -71,14 +79,10 @@ class PageTimersPanel(QWidget):
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Timer")
         self._add_button.setIcon(make_icon("time"))
-        self._add_button.setToolTip("Add a page timer.")
-        self._add_button.setAccessibleName("Add page timer")
         self._remove_button = QPushButton("Remove Timer")
         self._remove_button.setIcon(make_icon("stop"))
-        self._remove_button.setAccessibleName("Remove page timer")
         self._open_code_button = QPushButton("Open User Code")
         self._open_code_button.setIcon(make_icon("page"))
-        self._open_code_button.setAccessibleName("Open timer user code")
         self._add_button.clicked.connect(self._on_add_timer)
         self._remove_button.clicked.connect(self._on_remove_timer)
         self._open_code_button.clicked.connect(self._on_open_user_code)
@@ -91,6 +95,7 @@ class PageTimersPanel(QWidget):
         layout.addWidget(self._hint_label)
         layout.addWidget(self._table, 1)
         layout.addLayout(buttons)
+        self._update_actions()
 
     def _update_accessibility_summary(self, summary_text):
         self.setAccessibleName(summary_text)
@@ -99,10 +104,16 @@ class PageTimersPanel(QWidget):
         self._summary_label.setToolTip(summary_text)
         self._summary_label.setStatusTip(summary_text)
         self._summary_label.setAccessibleName(summary_text)
-        self._hint_label.setAccessibleName(self._hint_label.text())
-        self._hint_label.setToolTip(self._hint_label.text())
+        _set_widget_metadata(
+            self._hint_label,
+            tooltip=self._hint_label.text(),
+            accessible_name=self._hint_label.text(),
+        )
         self._table.setToolTip(summary_text)
         self._table.setStatusTip(summary_text)
+
+    def _update_button_metadata(self, button, tooltip, accessible_name):
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
     def clear(self):
         self.set_page(None)
@@ -144,6 +155,10 @@ class PageTimersPanel(QWidget):
         self._add_button.setEnabled(has_page)
         self._remove_button.setEnabled(has_page and has_selection)
         self._open_code_button.setEnabled(has_page and has_selection)
+        if has_page:
+            add_hint = "Add a page timer."
+        else:
+            add_hint = "Open a page to manage timers."
         if has_page and has_selection:
             remove_hint = "Remove the selected page timer."
             code_hint = "Open user code for the selected timer callback."
@@ -153,8 +168,21 @@ class PageTimersPanel(QWidget):
         else:
             remove_hint = "Open a page to manage timers."
             code_hint = "Open a page to access timer user code."
-        self._remove_button.setToolTip(remove_hint)
-        self._open_code_button.setToolTip(code_hint)
+        self._update_button_metadata(
+            self._add_button,
+            add_hint,
+            "Add page timer" if has_page else "Add page timer unavailable",
+        )
+        self._update_button_metadata(
+            self._remove_button,
+            remove_hint,
+            "Remove page timer" if has_page and has_selection else "Remove page timer unavailable",
+        )
+        self._update_button_metadata(
+            self._open_code_button,
+            code_hint,
+            "Open timer user code" if has_page and has_selection else "Open timer user code unavailable",
+        )
 
     def _table_timers(self):
         timers = []

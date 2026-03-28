@@ -52,10 +52,28 @@ class TestPageTimersPanel:
         assert panel.accessibleName() == "Page Timers: 1 timer on main_page"
         assert panel._table.accessibleName() == "Page timers table"
         assert panel._add_button.toolTip() == "Add a page timer."
+        assert panel._add_button.statusTip() == panel._add_button.toolTip()
+        assert panel._remove_button.toolTip() == "Select a timer to remove it."
+        assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
+        assert panel._open_code_button.toolTip() == "Select a timer to open its user code."
+        assert panel._open_code_button.accessibleName() == "Open timer user code unavailable"
         assert panel._table.rowCount() == 1
         assert panel._table.item(0, 0).text() == "refresh_timer"
         assert panel._table.item(0, 1).text() == "tick_refresh"
         assert panel._table.item(0, 4).text() == "true"
+
+    def test_panel_marks_actions_unavailable_without_active_page(self, qapp):
+        from ui_designer.ui.page_timers_panel import PageTimersPanel
+
+        panel = PageTimersPanel()
+
+        assert panel.accessibleName() == "Page Timers: no active page"
+        assert panel._add_button.toolTip() == "Open a page to manage timers."
+        assert panel._add_button.accessibleName() == "Add page timer unavailable"
+        assert panel._remove_button.toolTip() == "Open a page to manage timers."
+        assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
+        assert panel._open_code_button.toolTip() == "Open a page to access timer user code."
+        assert panel._open_code_button.accessibleName() == "Open timer user code unavailable"
 
     def test_panel_add_and_remove_timer_emit_changes(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
@@ -73,7 +91,9 @@ class TestPageTimersPanel:
 
         assert panel._table.rowCount() == 1
         assert panel._remove_button.toolTip() == "Remove the selected page timer."
+        assert panel._remove_button.accessibleName() == "Remove page timer"
         assert panel._open_code_button.toolTip() == "Open user code for the selected timer callback."
+        assert panel._open_code_button.accessibleName() == "Open timer user code"
         assert captured[-1][0]["name"] == "timer"
         assert captured[-1][0]["callback"] == "egui_main_page_timer_callback"
 
