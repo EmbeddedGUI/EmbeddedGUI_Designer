@@ -3437,7 +3437,10 @@ class TestMainWindowFileFlow:
             "Page: none. Undo: unavailable. Redo: unavailable. Selection: none."
         )
         assert actions["Edit"].statusTip() == actions["Edit"].toolTip()
-        assert actions["Arrange"].toolTip() == "Align, distribute, reorder, lock, and hide selected widgets."
+        assert actions["Arrange"].toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: none. Align: unavailable. Distribute: unavailable. Reorder: unavailable. Lock/Hide: unavailable."
+        )
         assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
         assert actions["Structure"].toolTip() == "Group, move, and reorder widgets in the page hierarchy."
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
@@ -3549,6 +3552,49 @@ class TestMainWindowFileFlow:
             "Project: open. Unsaved changes: present. Reload: available. Recent projects: 1 project."
         )
         assert file_action.statusTip() == file_action.toolTip()
+        _close_window(window)
+
+    def test_arrange_menu_category_exposes_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ArrangeCategoryHintsDemo"
+        project = _create_project(project_dir, "ArrangeCategoryHintsDemo", sdk_root)
+        first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
+        project.get_startup_page().root_widget.add_child(first)
+        project.get_startup_page().root_widget.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        arrange_action = next(action for action in window.menuBar().actions() if action.text() == "Arrange")
+        assert arrange_action.toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: none. Align: unavailable. Distribute: unavailable. Reorder: unavailable. Lock/Hide: unavailable."
+        )
+        assert arrange_action.statusTip() == arrange_action.toolTip()
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        loaded_first, loaded_second = window._current_page.root_widget.children[:2]
+
+        window._set_selection([loaded_first], primary=loaded_first, sync_tree=True, sync_preview=True)
+        assert arrange_action.toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: title (label). Align: unavailable. Distribute: unavailable. Reorder: available. Lock/Hide: available."
+        )
+        assert arrange_action.statusTip() == arrange_action.toolTip()
+
+        window._set_selection([loaded_first, loaded_second], primary=loaded_first, sync_tree=True, sync_preview=True)
+        assert arrange_action.toolTip() == (
+            "Align, distribute, reorder, lock, and hide selected widgets. "
+            "Selection: 2 widgets. Align: available. Distribute: unavailable. Reorder: available. Lock/Hide: available."
+        )
+        assert arrange_action.statusTip() == arrange_action.toolTip()
         _close_window(window)
 
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):

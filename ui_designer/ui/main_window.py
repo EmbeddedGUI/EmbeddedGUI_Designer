@@ -947,6 +947,25 @@ class MainWindow(QMainWindow):
             ),
         )
 
+    def _update_arrange_menu_metadata(self):
+        if not hasattr(self, "_arrange_menu"):
+            return
+        selected_widgets = self._top_level_selected_widgets()
+        selectable_widgets = [widget for widget in selected_widgets if not getattr(widget, "designer_locked", False)]
+        align_state = "available" if getattr(getattr(self, "_align_left_action", None), "isEnabled", lambda: False)() else "unavailable"
+        distribute_state = "available" if getattr(getattr(self, "_distribute_h_action", None), "isEnabled", lambda: False)() else "unavailable"
+        reorder_state = "available" if selectable_widgets else "unavailable"
+        lock_hide_state = "available" if selected_widgets else "unavailable"
+        self._apply_action_hint(
+            self._arrange_menu.menuAction(),
+            (
+                "Align, distribute, reorder, lock, and hide selected widgets. "
+                f"{self._selection_accessibility_text()} "
+                f"Align: {align_state}. Distribute: {distribute_state}. "
+                f"Reorder: {reorder_state}. Lock/Hide: {lock_hide_state}."
+            ),
+        )
+
     def _update_generate_resources_action_metadata(self):
         if not hasattr(self, "_generate_resources_action"):
             return
@@ -2580,6 +2599,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self._delete_action)
 
         arrange_menu = menubar.addMenu("Arrange")
+        self._arrange_menu = arrange_menu
         self._apply_action_hint(
             arrange_menu.menuAction(),
             "Align, distribute, reorder, lock, and hide selected widgets.",
@@ -6441,6 +6461,7 @@ class MainWindow(QMainWindow):
         self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
         self._refresh_quick_move_into_menu()
         self._update_toolbar_action_metadata()
+        self._update_arrange_menu_metadata()
         self._update_edit_menu_metadata()
 
     def _on_tree_selection_changed(self, widgets, primary):
