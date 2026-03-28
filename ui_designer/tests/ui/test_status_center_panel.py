@@ -287,9 +287,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.toolTip() == "Bridge disconnected"
         assert panel._runtime_label.accessibleName() == "Runtime details: Bridge disconnected"
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Bridge disconnected"
-        assert panel._sdk_value.toolTip() == "SDK: SDK Ready"
-        assert panel._sdk_value.accessibleName() == "SDK value: SDK Ready"
-        assert panel._sdk_card.accessibleName() == "SDK metric: SDK Ready"
+        assert panel._sdk_value.toolTip() == "SDK: Ready"
+        assert panel._sdk_value.accessibleName() == "SDK value: Ready"
+        assert panel._sdk_card.accessibleName() == "SDK metric: Ready"
         assert panel._compile_value.toolTip() == "Compile: Available"
         assert panel._compile_card.accessibleName() == "Compile metric: Available"
         assert panel._preview_value.toolTip() == "Preview: Preview Running"
@@ -403,7 +403,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_summary_label.text() == (
             "Workspace: SDK missing, compile unavailable, Preview idle, runtime clear, no dirty pages, no widgets selected, diagnostics clear. Next: Configure SDK."
         )
-        assert panel._sdk_value.toolTip() == "SDK: SDK Missing"
+        assert panel._sdk_value.toolTip() == "SDK: Missing"
         assert panel._compile_value.toolTip() == "Compile: Unavailable"
         assert panel._preview_value.toolTip() == "Preview: Preview idle"
         assert panel._diag_value.text() == "No active diagnostics"

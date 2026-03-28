@@ -131,7 +131,7 @@ class StatusCenterPanel(QWidget):
         metrics_layout.setHorizontalSpacing(10)
         metrics_layout.setVerticalSpacing(10)
         self._sdk_value, self._sdk_card = self._create_metric(
-            metrics_layout, 0, 0, "SDK", "SDK Missing", "assets", "open_project_panel"
+            metrics_layout, 0, 0, "SDK", "Missing", "assets", "open_project_panel"
         )
         self._compile_value, self._compile_card = self._create_metric(
             metrics_layout, 0, 1, "Compile", "Unavailable", "compile", "open_debug"
@@ -1031,7 +1031,7 @@ class StatusCenterPanel(QWidget):
         diag_total = error_count + warning_count + info_count
         runtime_text = str(runtime_error or "").strip()
 
-        self._sdk_value.setText("SDK Ready" if sdk_ready else "SDK Missing")
+        self._sdk_value.setText("Ready" if sdk_ready else "Missing")
         self._compile_value.setText("Available" if can_compile else "Unavailable")
         self._dirty_value.setText(self._dirty_metric_text(dirty_count))
         self._selection_value.setText(self._selection_metric_text(selection_total))
