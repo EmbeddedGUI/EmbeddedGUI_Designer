@@ -46,6 +46,8 @@ class TestPreviewPanelFallback:
         assert panel._status_bar.accessibleName() == "Preview controls: Zoom 100% (8px). Pointer Pointer idle."
         assert panel._btn_zoom_out.toolTip() == "Zoom out preview (Ctrl+-). Current zoom: 100% (8px)."
         assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (8px)."
+        assert panel._btn_zoom_out.accessibleName() == "Zoom out preview: current zoom 100% (8px)"
+        assert panel._btn_zoom_in.accessibleName() == "Zoom in preview: current zoom 100% (8px)"
         panel.deleteLater()
 
     def test_show_python_preview_sets_pixmap_and_status(self, qapp):
@@ -88,6 +90,7 @@ class TestPreviewPanelFallback:
             "Preview pointer status: (12, 18)  |  label: label  [10, 10, 100×20]"
         )
         assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (12px)."
+        assert panel._btn_zoom_in.accessibleName() == "Zoom in preview: current zoom 100% (12px)"
         assert panel.accessibleName() == (
             "Preview panel: Preview - Python fallback (fallback). Mode: Horizontal split. "
             "Zoom: 100% (12px). Grid: on. Pointer: (12, 18)  |  label: label  [10, 10, 100×20]."

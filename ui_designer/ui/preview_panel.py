@@ -1344,12 +1344,12 @@ class PreviewPanel(QWidget):
         _set_widget_metadata(
             self._btn_zoom_out,
             tooltip=f"Zoom out preview (Ctrl+-). Current zoom: {zoom_text}.",
-            accessible_name="Zoom out preview",
+            accessible_name=f"Zoom out preview: current zoom {zoom_text}",
         )
         _set_widget_metadata(
             self._btn_zoom_in,
             tooltip=f"Zoom in preview (Ctrl+=). Current zoom: {zoom_text}.",
-            accessible_name="Zoom in preview",
+            accessible_name=f"Zoom in preview: current zoom {zoom_text}",
         )
 
     def _update_zoom_label(self, factor=None):
