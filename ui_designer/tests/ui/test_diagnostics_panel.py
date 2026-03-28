@@ -63,6 +63,8 @@ class TestDiagnosticsPanel:
         panel = DiagnosticsPanel()
 
         assert panel.accessibleName() == "Diagnostics: no active issues. Severity filter: Any. 0 visible items."
+        assert panel.toolTip() == panel.accessibleName()
+        assert panel.statusTip() == panel.toolTip()
         assert panel._summary_label.toolTip() == "Diagnostics: no active issues"
         assert panel._hint_label.accessibleName() == (
             "Diagnostics hint: Double-click a diagnostic to switch page or focus the widget."
@@ -90,6 +92,7 @@ class TestDiagnosticsPanel:
         qapp.processEvents()
 
         assert panel.accessibleName() == "Diagnostics: 1 error(s), 1 warning(s), 1 info item(s). Severity filter: Any. 3 visible items."
+        assert panel.toolTip() == panel.accessibleName()
         assert panel._open_first_error_button.toolTip() == "Open the first navigable error diagnostic."
         assert panel._open_first_warning_button.toolTip() == "Open the first navigable warning diagnostic."
         assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic"
@@ -131,6 +134,7 @@ class TestDiagnosticsPanel:
         panel.set_severity_filter("info")
         qapp.processEvents()
 
+        assert panel.toolTip() == panel.accessibleName()
         assert panel._hint_label.text() == "No diagnostics match the current severity filter."
         assert panel._hint_label.toolTip() == "No diagnostics match the current severity filter."
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"

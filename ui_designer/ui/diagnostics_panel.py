@@ -302,9 +302,7 @@ class DiagnosticsPanel(QWidget):
         can_open_selected = current_item is not None and _is_navigable_entry(current_entry)
         has_visible_entries = bool(self._visible_entries)
 
-        self.setAccessibleName(panel_summary)
-        self.setToolTip(panel_summary)
-        self.setStatusTip(panel_summary)
+        self._set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
         self._set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         self._set_widget_metadata(
             self._hint_label,
