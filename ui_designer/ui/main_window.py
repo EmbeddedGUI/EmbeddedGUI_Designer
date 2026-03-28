@@ -2241,11 +2241,18 @@ class MainWindow(QMainWindow):
         zip_path = normalize_path(latest_entry.get("zip_path", "")) if isinstance(latest_entry, dict) else ""
         log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
         version_path = self._latest_release_version_path(latest_entry)
+        version_expected_path = self._latest_release_version_path(latest_entry, require_exists=False)
         history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
         history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
         latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
         can_browse_release_history = self.project is not None and bool(self._project_dir)
+        release_root_exists = bool(release_root and os.path.isdir(release_root))
+        dist_dir_exists = bool(dist_dir and os.path.isdir(dist_dir))
+        manifest_exists = bool(manifest_path and os.path.isfile(manifest_path))
+        version_exists = bool(version_path and os.path.isfile(version_path))
+        zip_exists = bool(zip_path and os.path.isfile(zip_path))
+        log_exists = bool(log_path and os.path.isfile(log_path))
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
         auto_compile_base = "Automatically compile and rerun the preview after changes."
@@ -2322,20 +2329,24 @@ class MainWindow(QMainWindow):
                     f"{history_summary} {latest_release_summary} {release_targets_summary}"
                 ),
             )
-            self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
-            self._open_last_release_dist_action.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
-            self._open_last_release_manifest_action.setEnabled(bool(manifest_path and os.path.isfile(manifest_path)))
-            self._open_last_release_version_action.setEnabled(bool(version_path))
-            self._open_last_release_package_action.setEnabled(bool(zip_path and os.path.isfile(zip_path)))
-            self._open_last_release_log_action.setEnabled(bool(log_path and os.path.isfile(log_path)))
+            self._open_last_release_dir_action.setEnabled(release_root_exists)
+            self._open_last_release_dist_action.setEnabled(dist_dir_exists)
+            self._open_last_release_manifest_action.setEnabled(manifest_exists)
+            self._open_last_release_version_action.setEnabled(version_exists)
+            self._open_last_release_package_action.setEnabled(zip_exists)
+            self._open_last_release_log_action.setEnabled(log_exists)
             self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
             self._open_last_release_dir_action.setToolTip(
                 _release_action_tooltip(
                     "Open last release folder",
                     latest_entry,
-                    path=release_root,
+                    path=release_root if release_root_exists else "",
                     unavailable_label="Release folder unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected folder: {release_root}"
+                        if release_root
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_dir_action.setStatusTip(self._open_last_release_dir_action.toolTip())
@@ -2343,9 +2354,13 @@ class MainWindow(QMainWindow):
                 _release_action_tooltip(
                     "Open last release dist",
                     latest_entry,
-                    path=dist_dir,
+                    path=dist_dir if dist_dir_exists else "",
                     unavailable_label="Release dist unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected folder: {dist_dir}"
+                        if dist_dir
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_dist_action.setStatusTip(self._open_last_release_dist_action.toolTip())
@@ -2353,9 +2368,13 @@ class MainWindow(QMainWindow):
                 _release_action_tooltip(
                     "Open last release manifest",
                     latest_entry,
-                    path=manifest_path,
+                    path=manifest_path if manifest_exists else "",
                     unavailable_label="Release manifest unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected file: {manifest_path}"
+                        if manifest_path
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_manifest_action.setStatusTip(self._open_last_release_manifest_action.toolTip())
@@ -2363,9 +2382,13 @@ class MainWindow(QMainWindow):
                 _release_action_tooltip(
                     "Open last release version",
                     latest_entry,
-                    path=version_path,
+                    path=version_path if version_exists else "",
                     unavailable_label="Release version unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected file: {version_expected_path}"
+                        if version_expected_path
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_version_action.setStatusTip(self._open_last_release_version_action.toolTip())
@@ -2373,9 +2396,13 @@ class MainWindow(QMainWindow):
                 _release_action_tooltip(
                     "Open last release package",
                     latest_entry,
-                    path=zip_path,
+                    path=zip_path if zip_exists else "",
                     unavailable_label="Release package unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected file: {zip_path}"
+                        if zip_path
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_package_action.setStatusTip(self._open_last_release_package_action.toolTip())
@@ -2383,9 +2410,13 @@ class MainWindow(QMainWindow):
                 _release_action_tooltip(
                     "Open last release log",
                     latest_entry,
-                    path=log_path,
+                    path=log_path if log_exists else "",
                     unavailable_label="Release log unavailable",
-                    fallback_hint=f"Output root: {self._release_output_root() or 'none'}",
+                    fallback_hint=(
+                        f"Expected file: {log_path}"
+                        if log_path
+                        else f"Output root: {self._release_output_root() or 'none'}"
+                    ),
                 )
             )
             self._open_last_release_log_action.setStatusTip(self._open_last_release_log_action.toolTip())
@@ -3632,7 +3663,7 @@ class MainWindow(QMainWindow):
             return ""
         return os.path.join(self._project_dir, "output", "ui_designer_release")
 
-    def _latest_release_version_path(self, entry):
+    def _latest_release_version_path(self, entry, require_exists=True):
         if not isinstance(entry, dict):
             return ""
         dist_dir = normalize_path(entry.get("dist_dir", ""))
@@ -3641,7 +3672,7 @@ class MainWindow(QMainWindow):
             if not base_dir:
                 continue
             candidate = normalize_path(os.path.join(base_dir, "VERSION.txt"))
-            if candidate and os.path.isfile(candidate):
+            if candidate and (not require_exists or os.path.isfile(candidate)):
                 return candidate
         return ""
 
@@ -3691,7 +3722,11 @@ class MainWindow(QMainWindow):
         release_root = normalize_path(entry.get("release_root", "")) if isinstance(entry, dict) else ""
         if not release_root or not os.path.isdir(release_root):
             self.statusBar().showMessage(
-                f"No release folder available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release folder available. Expected folder: {release_root}."
+                    if release_root
+                    else f"No release folder available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return
@@ -3707,7 +3742,11 @@ class MainWindow(QMainWindow):
         dist_dir = normalize_path(entry.get("dist_dir", "")) if isinstance(entry, dict) else ""
         if not dist_dir or not os.path.isdir(dist_dir):
             self.statusBar().showMessage(
-                f"No release dist directory available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release dist directory available. Expected folder: {dist_dir}."
+                    if dist_dir
+                    else f"No release dist directory available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return
@@ -3723,7 +3762,11 @@ class MainWindow(QMainWindow):
         manifest_path = normalize_path(entry.get("manifest_path", "")) if isinstance(entry, dict) else ""
         if not manifest_path or not os.path.isfile(manifest_path):
             self.statusBar().showMessage(
-                f"No release manifest available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release manifest available. Expected file: {manifest_path}."
+                    if manifest_path
+                    else f"No release manifest available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return
@@ -3738,8 +3781,13 @@ class MainWindow(QMainWindow):
         entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
         version_path = self._latest_release_version_path(entry)
         if not version_path:
+            version_expected_path = self._latest_release_version_path(entry, require_exists=False)
             self.statusBar().showMessage(
-                f"No release version file available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release version file available. Expected file: {version_expected_path}."
+                    if version_expected_path
+                    else f"No release version file available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return
@@ -3755,7 +3803,11 @@ class MainWindow(QMainWindow):
         zip_path = normalize_path(entry.get("zip_path", "")) if isinstance(entry, dict) else ""
         if not zip_path or not os.path.isfile(zip_path):
             self.statusBar().showMessage(
-                f"No release package available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release package available. Expected file: {zip_path}."
+                    if zip_path
+                    else f"No release package available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return
@@ -3771,7 +3823,11 @@ class MainWindow(QMainWindow):
         log_path = normalize_path(entry.get("log_path", "")) if isinstance(entry, dict) else ""
         if not log_path or not os.path.isfile(log_path):
             self.statusBar().showMessage(
-                f"No release log available. Output root: {self._release_output_root() or 'none'}.",
+                (
+                    f"No release log available. Expected file: {log_path}."
+                    if log_path
+                    else f"No release log available. Output root: {self._release_output_root() or 'none'}."
+                ),
                 4000,
             )
             return

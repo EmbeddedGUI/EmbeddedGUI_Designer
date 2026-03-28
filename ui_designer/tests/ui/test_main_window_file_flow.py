@@ -3075,13 +3075,6 @@ class TestMainWindowFileFlow:
         version_path = release_root / "VERSION.txt"
         zip_path = release_root / "ReleaseArtifactsDemo.zip"
         log_path = release_root / "logs" / "build.log"
-        dist_dir.mkdir(parents=True)
-        manifest_path.write_text("{}", encoding="utf-8")
-        version_path.write_text("1.0.0\n", encoding="utf-8")
-        zip_path.write_text("zip\n", encoding="utf-8")
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        log_path.write_text("build log\n", encoding="utf-8")
-        Path(history_path).parent.mkdir(parents=True, exist_ok=True)
         latest_entry = {
             "build_id": "20260329-010203",
             "profile_id": "stm32-sim",
@@ -3093,8 +3086,42 @@ class TestMainWindowFileFlow:
             "log_path": str(log_path),
             "zip_path": str(zip_path),
         }
+        Path(history_path).parent.mkdir(parents=True, exist_ok=True)
         Path(history_path).write_text(json.dumps([latest_entry], indent=2) + "\n", encoding="utf-8")
         monkeypatch.setattr(main_window_module, "latest_release_entry", lambda *args, **kwargs: latest_entry)
+        window._update_compile_availability()
+
+        assert actions["Open Last Release Folder"].toolTip() == (
+            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release folder unavailable\nExpected folder: {release_root}"
+        )
+        assert actions["Open Last Release Dist"].toolTip() == (
+            "Open last release dist\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release dist unavailable\nExpected folder: {dist_dir}"
+        )
+        assert actions["Open Last Release Manifest"].toolTip() == (
+            "Open last release manifest\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release manifest unavailable\nExpected file: {manifest_path}"
+        )
+        assert actions["Open Last Release Version"].toolTip() == (
+            "Open last release version\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release version unavailable\nExpected file: {dist_dir / 'VERSION.txt'}"
+        )
+        assert actions["Open Last Release Package"].toolTip() == (
+            "Open last release package\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release package unavailable\nExpected file: {zip_path}"
+        )
+        assert actions["Open Last Release Log"].toolTip() == (
+            "Open last release log\n\nLatest release: 20260329-010203 | stm32-sim | success | sdk git abc1234\n\n"
+            f"Release log unavailable\nExpected file: {log_path}"
+        )
+
+        dist_dir.mkdir(parents=True)
+        manifest_path.write_text("{}", encoding="utf-8")
+        version_path.write_text("1.0.0\n", encoding="utf-8")
+        zip_path.write_text("zip\n", encoding="utf-8")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text("build log\n", encoding="utf-8")
         window._update_compile_availability()
 
         assert actions["Open Last Release Folder"].toolTip() == (
