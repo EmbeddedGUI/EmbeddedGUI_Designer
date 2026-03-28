@@ -673,6 +673,29 @@ class MainWindow(QMainWindow):
         action.setToolTip(hint)
         action.setStatusTip(hint)
 
+    def _page_tab_state_summary(self, page_name):
+        page_label = str(page_name or "").strip() or "unknown page"
+        parts = [f"Page: {page_label}."]
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "").strip()
+        startup_page = str(getattr(getattr(self, "project", None), "startup_page", "") or "").strip()
+        dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
+        if page_label == current_page:
+            parts.append("Current page.")
+        if page_label == startup_page:
+            parts.append("Startup page.")
+        parts.append("Unsaved changes." if page_label in dirty_pages else "No unsaved changes.")
+        return " ".join(parts)
+
+    def _page_tab_context_action_hint(self, action_key, page_name):
+        state_summary = self._page_tab_state_summary(page_name)
+        if action_key == "close_tab":
+            return f"Close page tab. {state_summary}"
+        if action_key == "close_others":
+            return f"Close all other open page tabs and keep {page_name}. {state_summary}"
+        if action_key == "close_all":
+            return f"Close all open page tabs from {page_name}. {state_summary}"
+        return state_summary
+
     def _paste_action_blocked_reason(self):
         if self._current_page is None:
             return "open a page first"
@@ -4705,8 +4728,9 @@ class MainWindow(QMainWindow):
         actions = {}
 
         if index >= 0:
+            page_name = self._page_tab_name(index)
             close_tab = menu.addAction("Close")
-            self._apply_action_hint(close_tab, "Close this open page tab.")
+            self._apply_action_hint(close_tab, self._page_tab_context_action_hint("close_tab", page_name))
             actions["close_tab"] = close_tab
 
             close_others = menu.addAction("Close Others")
@@ -4715,7 +4739,7 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(
                 close_others,
                 self._action_hint(
-                    "Close all other open page tabs.",
+                    self._page_tab_context_action_hint("close_others", page_name),
                     can_close_others,
                     "only 1 page tab is open",
                 ),
@@ -4723,7 +4747,7 @@ class MainWindow(QMainWindow):
             actions["close_others"] = close_others
 
             close_all = menu.addAction("Close All")
-            self._apply_action_hint(close_all, "Close all open page tabs.")
+            self._apply_action_hint(close_all, self._page_tab_context_action_hint("close_all", page_name))
             actions["close_all"] = close_all
 
         return menu, actions
