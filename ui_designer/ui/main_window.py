@@ -1028,6 +1028,19 @@ class MainWindow(QMainWindow):
             else:
                 hint = self._action_hint(base_text, False, "open a project first")
             self._apply_action_hint(action, hint)
+        self._update_quit_action_metadata()
+
+    def _update_quit_action_metadata(self):
+        action = getattr(self, "_quit_action", None)
+        if action is None:
+            return
+        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+        dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
+        project_state = "open" if getattr(self, "project", None) is not None else "none"
+        self._apply_action_hint(
+            action,
+            f"Quit EmbeddedGUI Designer (Ctrl+Q). Project: {project_state}. Unsaved pages: {dirty_label}.",
+        )
 
     def _update_file_open_action_metadata(self, binding_label=""):
         open_app_action = getattr(self, "_open_app_action", None)
@@ -1424,6 +1437,7 @@ class MainWindow(QMainWindow):
                 else f"{base_text} {stop_context} Unavailable: preview is not running."
             )
             self._apply_action_hint(self._stop_action, stop_hint)
+        self._update_quit_action_metadata()
 
     def _update_widget_browser_target(self, preferred_parent=None):
         parent = preferred_parent or self._default_insert_parent()
@@ -2741,11 +2755,11 @@ class MainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        quit_action = QAction("Quit", self)
-        quit_action.setShortcut("Ctrl+Q")
-        self._apply_action_hint(quit_action, "Quit EmbeddedGUI Designer (Ctrl+Q).")
-        quit_action.triggered.connect(self.close)
-        file_menu.addAction(quit_action)
+        self._quit_action = QAction("Quit", self)
+        self._quit_action.setShortcut("Ctrl+Q")
+        self._apply_action_hint(self._quit_action, "Quit EmbeddedGUI Designer (Ctrl+Q).")
+        self._quit_action.triggered.connect(self.close)
+        file_menu.addAction(self._quit_action)
 
         # 鈹€鈹€ Edit menu 鈹€鈹€
         edit_menu = menubar.addMenu("Edit")

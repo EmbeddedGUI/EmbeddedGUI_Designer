@@ -3951,7 +3951,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Export C Code..."].statusTip() == actions["Export C Code..."].toolTip()
         assert actions["Export C Code..."].isEnabled() is False
-        assert actions["Quit"].toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q)."
+        assert actions["Quit"].toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q). Project: none. Unsaved pages: none."
         assert actions["Quit"].statusTip() == actions["Quit"].toolTip()
 
         sdk_root = tmp_path / "sdk"
@@ -3964,7 +3964,7 @@ class TestMainWindowFileFlow:
         reloaded_actions = {
             action.text(): action
             for action in window.findChildren(type(window._save_action))
-            if action.text() in {"Save As...", "Reload Project From Disk", "Close Project", "Export C Code..."}
+            if action.text() in {"Save As...", "Reload Project From Disk", "Close Project", "Export C Code...", "Quit"}
         }
         assert reloaded_actions["Save As..."].toolTip() == (
             "Save the current project to a new file (Ctrl+Shift+S). "
@@ -3986,6 +3986,8 @@ class TestMainWindowFileFlow:
         )
         assert reloaded_actions["Export C Code..."].statusTip() == reloaded_actions["Export C Code..."].toolTip()
         assert reloaded_actions["Export C Code..."].isEnabled() is True
+        assert reloaded_actions["Quit"].toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q). Project: open. Unsaved pages: none."
+        assert reloaded_actions["Quit"].statusTip() == reloaded_actions["Quit"].toolTip()
         _close_window(window)
 
     def test_close_project_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -7562,6 +7564,8 @@ class TestMainWindowFileFlow:
         )
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is True
+        assert window._quit_action.toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q). Project: open. Unsaved pages: 1 page."
+        assert window._quit_action.statusTip() == window._quit_action.toolTip()
         _close_window(window)
 
     def test_editor_mode_buttons_track_current_workspace_mode(self, qapp, isolated_config):
