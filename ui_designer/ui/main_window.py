@@ -1276,6 +1276,7 @@ class MainWindow(QMainWindow):
 
     def _update_release_profiles_action_metadata(
         self,
+        sdk_state="",
         output_root_state_summary="",
         release_targets_summary="",
         history_file_path="",
@@ -1299,6 +1300,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             return
+        sdk_state = str(sdk_state or ("valid" if self._has_valid_sdk_root() else "invalid"))
         output_root_state_summary = str(output_root_state_summary or self._release_output_root_state_summary())
         release_targets_summary = str(release_targets_summary or self._release_open_targets_summary())
         history_file_path = str(history_file_path or "")
@@ -1312,7 +1314,7 @@ class MainWindow(QMainWindow):
             action,
             (
                 "Edit release profiles for the current project. "
-                f"Output root: {self._release_output_root()}. {self._release_profiles_summary_suffix()} "
+                f"SDK: {sdk_state}. Output root: {self._release_output_root()}. {self._release_profiles_summary_suffix()} "
                 f"History file: {history_file_path or 'not created yet'}. "
                 f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
                 f"{output_root_state_summary} {history_file_state_summary} "
@@ -2385,6 +2387,7 @@ class MainWindow(QMainWindow):
                 ),
             )
             self._update_release_profiles_action_metadata(
+                sdk_state=sdk_state,
                 output_root_state_summary=output_root_state_summary,
                 release_targets_summary=release_targets_summary,
                 history_file_path=history_file_path,
