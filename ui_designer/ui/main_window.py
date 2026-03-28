@@ -2211,7 +2211,8 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(
                 self._release_history_action,
                 (
-                    f"Browse recorded release builds for the current project. History file: {history_file_path or 'not created yet'}."
+                    "Browse recorded release builds for the current project. "
+                    f"History file: {history_file_path or 'not created yet'}. Output root: {self._release_output_root()}."
                     if self._release_history_action.isEnabled()
                     else self._action_hint(
                         "Browse recorded release builds for the current project.",

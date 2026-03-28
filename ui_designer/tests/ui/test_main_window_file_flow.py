@@ -2961,7 +2961,8 @@ class TestMainWindowFileFlow:
         assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
         assert refreshed_actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
-            f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}."
+            f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
+            f"Output root: {window._release_output_root()}."
         )
         assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
         assert refreshed_actions["Repository Health..."].toolTip() == (
