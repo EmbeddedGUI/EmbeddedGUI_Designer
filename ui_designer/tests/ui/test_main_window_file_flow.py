@@ -2766,6 +2766,7 @@ class TestMainWindowFileFlow:
         action = window._recent_menu.actions()[0]
         assert action.text() == "[Missing] MissingApp"
         assert "Project path is missing" in action.toolTip()
+        assert action.statusTip() == action.toolTip()
         _close_window(window)
 
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):

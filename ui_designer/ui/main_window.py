@@ -2495,6 +2495,7 @@ class MainWindow(QMainWindow):
             if not project_exists:
                 tooltip = f"{project_path}\nProject path is missing. Selecting it will offer to remove the stale entry."
             action.setToolTip(tooltip)
+            action.setStatusTip(tooltip)
             action.triggered.connect(
                 lambda checked, p=project_path, r=sdk_root: self._open_recent_project(p, r)
             )
