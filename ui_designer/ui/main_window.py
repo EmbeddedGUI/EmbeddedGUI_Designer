@@ -2313,6 +2313,8 @@ class MainWindow(QMainWindow):
         latest_release_sdk_summary = self._latest_release_sdk_summary(latest_entry=latest_entry)
         release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
         profiles_summary = self._release_profiles_build_summary()
+        resources_dir = self._get_eguiproject_resource_dir()
+        resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         can_browse_release_history = self.project is not None and bool(self._project_dir)
         release_root_exists = bool(release_root and os.path.isdir(release_root))
         dist_dir_exists = bool(dist_dir and os.path.isdir(dist_dir))
@@ -2356,7 +2358,7 @@ class MainWindow(QMainWindow):
                     "Build a release package for the current project. "
                     f"Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
                     f"History file: {history_file_path or 'not created yet'}. "
-                    f"{output_root_state_summary} {history_file_state_summary} {history_summary} "
+                    f"Source resources: {resources_state}. {output_root_state_summary} {history_file_state_summary} {history_summary} "
                     f"{latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
                     if self._release_build_action.isEnabled()
                     else self._action_hint(
@@ -2397,14 +2399,12 @@ class MainWindow(QMainWindow):
             repo_project_state = "open" if self.project is not None else "none"
             repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
             repo_release_root = self._release_output_root() if self.project is not None and self._project_dir else "none"
-            repo_resources_dir = self._get_eguiproject_resource_dir()
-            repo_resources_state = "available" if repo_resources_dir and os.path.isdir(repo_resources_dir) else "missing"
             self._apply_action_hint(
                 self._repo_health_action,
                 (
                     "Inspect the Designer repository health summary. "
                     f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
-                    f"Release output root: {repo_release_root}. {output_root_state_summary} Source resources: {repo_resources_state}. "
+                    f"Release output root: {repo_release_root}. {output_root_state_summary} Source resources: {resources_state}. "
                     f"{profiles_summary} History file: {history_file_path or 'none'}. "
                     f"{history_file_state_summary} "
                     f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
