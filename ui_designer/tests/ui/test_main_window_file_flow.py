@@ -2784,6 +2784,79 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    def test_build_menu_actions_expose_status_hints(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BuildReadyCompiler:
+            def can_build(self):
+                return True
+
+            def is_preview_running(self):
+                return False
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "BuildHintsDemo"
+        project = _create_project(project_dir, "BuildHintsDemo", sdk_root)
+
+        window = MainWindow("")
+        actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in {
+                "Auto Compile",
+                "Release Build...",
+                "Release Profiles...",
+                "Release History...",
+                "Repository Health...",
+            }
+        }
+
+        assert actions["Auto Compile"].toolTip() == (
+            "Automatically compile and rerun the preview after changes. Unavailable: open a project first."
+        )
+        assert actions["Auto Compile"].statusTip() == actions["Auto Compile"].toolTip()
+        assert actions["Release Build..."].toolTip() == (
+            "Build a release package for the current project. Unavailable: open a project first."
+        )
+        assert actions["Release Build..."].statusTip() == actions["Release Build..."].toolTip()
+        assert actions["Release Profiles..."].toolTip() == (
+            "Edit release profiles for the current project. Unavailable: open a project first."
+        )
+        assert actions["Release Profiles..."].statusTip() == actions["Release Profiles..."].toolTip()
+        assert actions["Release History..."].toolTip() == (
+            "Browse recorded release builds for the current project. Unavailable: open a project first."
+        )
+        assert actions["Release History..."].statusTip() == actions["Release History..."].toolTip()
+        assert actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
+        assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
+
+        window.project = project
+        window._project_dir = str(project_dir)
+        window.project_root = str(sdk_root)
+        window.compiler = _BuildReadyCompiler()
+        window._update_compile_availability()
+
+        refreshed_actions = {
+            action.text(): action
+            for action in window.findChildren(type(window._save_action))
+            if action.text() in actions
+        }
+        assert refreshed_actions["Auto Compile"].toolTip() == "Automatically compile and rerun the preview after changes."
+        assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
+        assert refreshed_actions["Release Build..."].toolTip() == "Build a release package for the current project."
+        assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
+        assert refreshed_actions["Release Profiles..."].toolTip() == "Edit release profiles for the current project."
+        assert refreshed_actions["Release Profiles..."].statusTip() == refreshed_actions["Release Profiles..."].toolTip()
+        assert refreshed_actions["Release History..."].toolTip() == "Browse recorded release builds for the current project."
+        assert refreshed_actions["Release History..."].statusTip() == refreshed_actions["Release History..."].toolTip()
+        assert refreshed_actions["Repository Health..."].toolTip() == "Inspect the Designer repository health summary."
+        assert refreshed_actions["Repository Health..."].statusTip() == refreshed_actions["Repository Health..."].toolTip()
+        _close_window(window)
+
     def test_file_menu_primary_actions_expose_status_hints(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

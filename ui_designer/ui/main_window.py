@@ -1377,6 +1377,14 @@ class MainWindow(QMainWindow):
         can_browse_release_history = self.project is not None and bool(self._project_dir)
         self._compile_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
+        self._apply_action_hint(
+            self.auto_compile_action,
+            self._action_hint(
+                "Automatically compile and rerun the preview after changes.",
+                self.auto_compile_action.isEnabled(),
+                self._compile_action_blocked_reason(),
+            ),
+        )
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
         self._reload_project_action.setEnabled(self.project is not None and bool(self._project_dir))
         self._apply_action_hint(
@@ -1391,6 +1399,38 @@ class MainWindow(QMainWindow):
             self._release_build_action.setEnabled(can_release)
             self._release_profiles_action.setEnabled(self.project is not None)
             self._release_history_action.setEnabled(can_browse_release_history)
+            self._apply_action_hint(
+                self._release_build_action,
+                self._action_hint(
+                    "Build a release package for the current project.",
+                    self._release_build_action.isEnabled(),
+                    "open a project first"
+                    if self.project is None
+                    else "save the project to disk first"
+                    if not self._project_dir
+                    else "set a valid SDK root first",
+                ),
+            )
+            self._apply_action_hint(
+                self._release_profiles_action,
+                self._action_hint(
+                    "Edit release profiles for the current project.",
+                    self._release_profiles_action.isEnabled(),
+                    "open a project first",
+                ),
+            )
+            self._apply_action_hint(
+                self._release_history_action,
+                self._action_hint(
+                    "Browse recorded release builds for the current project.",
+                    self._release_history_action.isEnabled(),
+                    "open a project first" if self.project is None else "save the project to disk first",
+                ),
+            )
+            self._apply_action_hint(
+                self._repo_health_action,
+                "Inspect the Designer repository health summary.",
+            )
             self._open_last_release_dir_action.setEnabled(bool(release_root and os.path.isdir(release_root)))
             self._open_last_release_dist_action.setEnabled(bool(dist_dir and os.path.isdir(dist_dir)))
             self._open_last_release_manifest_action.setEnabled(bool(manifest_path and os.path.isfile(manifest_path)))
@@ -2118,6 +2158,7 @@ class MainWindow(QMainWindow):
         self.auto_compile_action = QAction("Auto Compile", self)
         self.auto_compile_action.setCheckable(True)
         self.auto_compile_action.setChecked(self.auto_compile)
+        self._apply_action_hint(self.auto_compile_action, "Automatically compile and rerun the preview after changes.")
         self.auto_compile_action.toggled.connect(self._toggle_auto_compile)
         build_menu.addAction(self.auto_compile_action)
 
@@ -2128,10 +2169,12 @@ class MainWindow(QMainWindow):
         build_menu.addSeparator()
 
         self._release_build_action = QAction("Release Build...", self)
+        self._apply_action_hint(self._release_build_action, "Build a release package for the current project.")
         self._release_build_action.triggered.connect(self._release_build)
         build_menu.addAction(self._release_build_action)
 
         self._release_profiles_action = QAction("Release Profiles...", self)
+        self._apply_action_hint(self._release_profiles_action, "Edit release profiles for the current project.")
         self._release_profiles_action.triggered.connect(self._edit_release_profiles)
         build_menu.addAction(self._release_profiles_action)
 
@@ -2164,10 +2207,12 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._open_release_history_file_action)
 
         self._release_history_action = QAction("Release History...", self)
+        self._apply_action_hint(self._release_history_action, "Browse recorded release builds for the current project.")
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
 
         self._repo_health_action = QAction("Repository Health...", self)
+        self._apply_action_hint(self._repo_health_action, "Inspect the Designer repository health summary.")
         self._repo_health_action.triggered.connect(self._show_repository_health)
         build_menu.addAction(self._repo_health_action)
 
