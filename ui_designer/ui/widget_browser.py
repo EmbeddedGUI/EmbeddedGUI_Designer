@@ -561,10 +561,11 @@ class WidgetBrowserPanel(QWidget):
             tooltip = f"Sort visible widgets by {button.text()}."
             if is_current:
                 tooltip += " Current sort mode."
+            accessible_name = f"Sort mode: {button.text()}. {'Current.' if is_current else 'Available.'}"
             _set_widget_metadata(
                 button,
                 tooltip=tooltip,
-                accessible_name=f"Sort widgets by {button.text()}",
+                accessible_name=accessible_name,
             )
         for level, button in self._complexity_buttons.items():
             button.blockSignals(True)
@@ -574,10 +575,11 @@ class WidgetBrowserPanel(QWidget):
             tooltip = f"Filter visible widgets by {button.text()} complexity."
             if is_current:
                 tooltip += " Current complexity filter."
+            accessible_name = f"Complexity filter: {button.text()}. {'Current.' if is_current else 'Available.'}"
             _set_widget_metadata(
                 button,
                 tooltip=tooltip,
-                accessible_name=f"Complexity filter: {button.text()}",
+                accessible_name=accessible_name,
             )
 
     def _normalize_sort_mode(self, mode):
@@ -661,14 +663,19 @@ class WidgetBrowserPanel(QWidget):
             button.blockSignals(False)
             tooltip = f"Filter widgets by tag {button.text()}."
             tooltip += " Tag is active." if tag in active else " Tag is inactive."
+            accessible_name = f"Widget tag: {button.text()}. {'Active.' if tag in active else 'Inactive.'}"
             _set_widget_metadata(
                 button,
                 tooltip=tooltip,
-                accessible_name=f"Widget tag: {button.text()}",
+                accessible_name=accessible_name,
             )
         self._clear_tags_btn.setEnabled(bool(active))
         clear_hint = "Clear active widget tags." if active else "No active widget tags to clear."
-        _set_widget_metadata(self._clear_tags_btn, tooltip=clear_hint, accessible_name="Clear widget tags")
+        _set_widget_metadata(
+            self._clear_tags_btn,
+            tooltip=clear_hint,
+            accessible_name="Clear widget tags" if active else "Clear widget tags unavailable",
+        )
 
     def _on_tag_toggled(self, tag, checked):
         current = self._active_tag_values()
@@ -809,10 +816,15 @@ class WidgetBrowserPanel(QWidget):
                 tooltip += " Current lane."
             elif count == 0:
                 tooltip += " No widgets available."
+            accessible_name = (
+                f"Quick lane: {base_label}. {count_text}. Current lane."
+                if lane_id == selected
+                else f"Quick lane: {base_label}. {count_text}. {'No widgets available.' if count == 0 else 'Available.'}"
+            )
             _set_widget_metadata(
                 button,
                 tooltip=tooltip,
-                accessible_name=f"Quick lane: {base_label}. {count_text}",
+                accessible_name=accessible_name,
             )
 
     def _sort_label(self):

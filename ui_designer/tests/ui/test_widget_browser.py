@@ -182,15 +182,21 @@ class TestWidgetBrowserPanel:
         panel = WidgetBrowserPanel()
         assert panel._tag_buttons
         first_tag = sorted(panel._tag_buttons.keys())[0]
-        panel._tag_buttons[first_tag].setChecked(True)
+        first_tag_button = panel._tag_buttons[first_tag]
+        first_tag_button.setChecked(True)
 
         assert first_tag in [value.lower() for value in isolated_config.widget_browser_active_tags]
+        assert first_tag_button.accessibleName() == f"Widget tag: {first_tag_button.text()}. Active."
+        assert panel._clear_tags_btn.toolTip() == "Clear active widget tags."
+        assert panel._clear_tags_btn.accessibleName() == "Clear widget tags"
         for item in panel._filtered_items():
             item_tags = {str(tag).lower() for tag in item.get("tags", [])}
             assert first_tag in item_tags
 
         panel._clear_tags_btn.click()
         assert isolated_config.widget_browser_active_tags == []
+        assert first_tag_button.accessibleName() == f"Widget tag: {first_tag_button.text()}. Inactive."
+        assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
         panel.deleteLater()
 
     def test_quick_lane_click_updates_active_category_and_results(self, qapp, isolated_config):
@@ -206,6 +212,9 @@ class TestWidgetBrowserPanel:
         assert panel._selected_category() == "favorites"
         assert [card.type_name for card in panel._cards.values()] == ["button"]
         assert favorites_lane.isChecked() is True
+        assert favorites_lane.toolTip() == "Quick lane Favorites: 1 widget. Current lane."
+        assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget. Current lane."
+        assert favorites_lane.statusTip() == favorites_lane.toolTip()
         panel.deleteLater()
 
     def test_container_cards_include_visual_info_chips(self, qapp, isolated_config):
@@ -324,6 +333,12 @@ class TestWidgetBrowserPanel:
         assert panel._category_list.accessibleName() == "Widget categories: All Widgets"
         assert panel._visible_count_chip.accessibleName() == f"Visible widgets: {panel._visible_count_chip.text()}"
         assert panel._clear_tags_btn.toolTip() == "No active widget tags to clear."
+        assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
+        assert panel._sort_buttons["relevance"].accessibleName() == "Sort mode: Recommended. Current."
+        assert panel._sort_buttons["name"].accessibleName() == "Sort mode: A-Z. Available."
+        assert panel._complexity_buttons["all"].accessibleName() == "Complexity filter: All. Current."
+        assert panel._complexity_buttons["advanced"].accessibleName() == "Complexity filter: Advanced. Available."
+        assert panel._lane_buttons["favorites"].accessibleName() == "Quick lane: Favorites. 0 widgets. No widgets available."
         panel.deleteLater()
 
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
@@ -359,7 +374,7 @@ class TestWidgetBrowserPanel:
         favorites_lane = panel._lane_buttons["favorites"]
 
         assert favorites_lane.toolTip() == "Quick lane Favorites: 1 widget."
-        assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget"
+        assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget. Available."
 
         panel._search.setText("__no_widget_matches__")
         panel.refresh()
