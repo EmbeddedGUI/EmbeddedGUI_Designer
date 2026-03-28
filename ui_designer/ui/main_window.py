@@ -1173,6 +1173,9 @@ class MainWindow(QMainWindow):
         return f"Release records: {entry_count} {noun}."
 
     def _release_open_targets_summary(self, latest_entry=None, history_file_path=""):
+        has_project_context = getattr(self, "project", None) is not None and bool(self._project_dir)
+        if not has_project_context and (not isinstance(latest_entry, dict) or not latest_entry) and not history_file_path:
+            return "Release open targets: unavailable."
         if latest_entry is None:
             latest_entry = (
                 latest_release_entry(self._project_dir, output_dir=self._release_output_root())

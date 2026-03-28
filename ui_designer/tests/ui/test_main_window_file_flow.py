@@ -2923,14 +2923,14 @@ class TestMainWindowFileFlow:
             "Inspect the Designer repository health summary. "
             "Project: none. SDK: invalid. Release output root: none. Source resources: missing. "
             "Release records: unavailable. "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Latest release: none. Release open targets: unavailable."
         )
         assert actions["Repository Health..."].statusTip() == actions["Repository Health..."].toolTip()
         assert build_action.toolTip() == (
             "Compile previews, generate resources, and manage release builds. "
             "Project: none. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
             "Source resources: missing. Release profiles: unavailable. Release records: unavailable. "
-            "Latest release: none. Release open targets: 0 of 7 available."
+            "Latest release: none. Release open targets: unavailable."
         )
         generate_resources_action = next(action for action in window.findChildren(type(window._save_action)) if action.text() == "Generate Resources")
         assert generate_resources_action.toolTip() == (
