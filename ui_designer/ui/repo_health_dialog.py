@@ -227,6 +227,7 @@ class RepositoryHealthDialog(QDialog):
             f"{self._count_label(counts['stale_dirs'], 'stale directory')}, "
             f"{self._count_label(counts['blocked_stale_dirs'], 'blocked stale directory')}."
         )
+        counts_accessible = counts_text.removeprefix("Repository health counts: ").rstrip(".")
         view_text = (
             "Filters: "
             f"critical {self._toggle_state_label(self._critical_only_check.isChecked())}, "
@@ -304,10 +305,12 @@ class RepositoryHealthDialog(QDialog):
         _set_widget_metadata(
             self._copy_summary_button,
             tooltip="Copy the current repository health summary.",
+            accessible_name=f"Copy repository health summary: {counts_accessible}",
         )
         _set_widget_metadata(
             self._export_summary_button,
             tooltip="Export the current repository health summary to a text file.",
+            accessible_name=f"Export repository health summary: {counts_accessible}",
         )
         _set_widget_metadata(
             self._copy_report_button,
@@ -317,6 +320,7 @@ class RepositoryHealthDialog(QDialog):
         _set_widget_metadata(
             self._copy_json_button,
             tooltip="Copy the current repository health report as JSON.",
+            accessible_name=f"Copy repository health JSON report: {counts_accessible}",
         )
         _set_widget_metadata(
             self._export_report_button,
