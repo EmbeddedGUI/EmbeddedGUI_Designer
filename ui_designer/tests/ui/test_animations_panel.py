@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QComboBox, QFormLayout, QLineEdit
+    from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QFormLayout, QLineEdit, QSpinBox
 
     _has_pyqt5 = True
 except ImportError:
@@ -30,6 +30,17 @@ def _make_widget(name="title"):
     from ui_designer.model.widget_model import WidgetModel
 
     return WidgetModel("label", name=name, x=12, y=16, width=100, height=24)
+
+
+def _detail_row_widgets(panel, label_text):
+    for row in range(panel._detail_form.rowCount()):
+        label_item = panel._detail_form.itemAt(row, QFormLayout.LabelRole)
+        field_item = panel._detail_form.itemAt(row, QFormLayout.FieldRole)
+        label_widget = label_item.widget() if label_item is not None else None
+        field_widget = field_item.widget() if field_item is not None else None
+        if label_widget is not None and label_widget.text() == label_text:
+            return label_widget, field_widget
+    raise AssertionError(f"detail row {label_text!r} not found")
 
 
 @_skip_no_qt
@@ -73,6 +84,48 @@ class TestAnimationsPanel:
         assert panel._table.item(0, 3).toolTip() == "Animation Auto Start: Yes."
         assert panel._table.item(0, 3).statusTip() == panel._table.item(0, 3).toolTip()
         assert panel._table.item(0, 3).data(Qt.AccessibleTextRole) == panel._table.item(0, 3).toolTip()
+        type_label, type_combo = _detail_row_widgets(panel, "Type:")
+        assert isinstance(type_combo, QComboBox)
+        assert type_label.toolTip() == "Animation field label: Type."
+        assert type_label.statusTip() == type_label.toolTip()
+        assert type_label.accessibleName() == type_label.toolTip()
+        assert type_combo.toolTip() == "Type for animation alpha on label title. Current value: alpha."
+        assert type_combo.statusTip() == type_combo.toolTip()
+        assert type_combo.accessibleName() == "Animation Type: alpha."
+        duration_label, duration_spin = _detail_row_widgets(panel, "Duration (ms):")
+        assert isinstance(duration_spin, QSpinBox)
+        assert duration_label.accessibleName() == "Animation field label: Duration (ms)."
+        assert duration_spin.toolTip() == "Duration (ms) for animation alpha on label title. Current value: 500."
+        assert duration_spin.accessibleName() == "Animation Duration (ms): 500."
+        interpolator_label, interpolator_combo = _detail_row_widgets(panel, "Interpolator:")
+        assert isinstance(interpolator_combo, QComboBox)
+        assert interpolator_label.accessibleName() == "Animation field label: Interpolator."
+        assert interpolator_combo.toolTip() == (
+            "Interpolator for animation alpha on label title. Current value: linear."
+        )
+        assert interpolator_combo.accessibleName() == "Animation Interpolator: linear."
+        repeat_count_label, repeat_count_spin = _detail_row_widgets(panel, "Repeat Count:")
+        assert isinstance(repeat_count_spin, QSpinBox)
+        assert repeat_count_label.accessibleName() == "Animation field label: Repeat Count."
+        assert repeat_count_spin.toolTip() == (
+            "Repeat Count for animation alpha on label title. Current value: 0."
+        )
+        assert repeat_count_spin.accessibleName() == "Animation Repeat Count: 0."
+        repeat_mode_label, repeat_mode_combo = _detail_row_widgets(panel, "Repeat Mode:")
+        assert isinstance(repeat_mode_combo, QComboBox)
+        assert repeat_mode_label.accessibleName() == "Animation field label: Repeat Mode."
+        assert repeat_mode_combo.toolTip() == (
+            "Repeat Mode for animation alpha on label title. Current value: restart."
+        )
+        assert repeat_mode_combo.accessibleName() == "Animation Repeat Mode: restart."
+        auto_start_check = next(
+            check for check in panel.findChildren(QCheckBox) if check.text() == "Start automatically"
+        )
+        assert auto_start_check.toolTip() == (
+            "Auto Start for animation alpha on label title. Current value: enabled."
+        )
+        assert auto_start_check.statusTip() == auto_start_check.toolTip()
+        assert auto_start_check.accessibleName() == "Animation Auto Start: enabled."
 
     def test_panel_add_duplicate_remove_animation_emits_changes(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel
@@ -147,11 +200,15 @@ class TestAnimationsPanel:
                 break
 
         assert isinstance(target_editor, QLineEdit)
+        assert target_editor.toolTip() == "To Y for animation translate on label title. Current value: 32."
+        assert target_editor.accessibleName() == "Animation To Y: 32."
         target_editor.setText("64")
         target_editor.editingFinished.emit()
         qapp.processEvents()
 
         assert captured[-1][0].params["to_y"] == "64"
+        assert target_editor.toolTip() == "To Y for animation translate on label title. Current value: 64."
+        assert target_editor.accessibleName() == "Animation To Y: 64."
 
     def test_panel_marks_detail_group_when_selected_widget_has_no_animations(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel

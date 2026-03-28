@@ -142,6 +142,84 @@ class AnimationsPanel(QWidget):
             accessible_name=summary_text,
         )
 
+    def _detail_widget_label(self):
+        if self._primary_widget is None:
+            return "selected widget"
+        return f"{self._primary_widget.widget_type} {self._primary_widget.name}"
+
+    @staticmethod
+    def _detail_field_label_text(label_text):
+        return str(label_text or "").strip().rstrip(":") or "Field"
+
+    @staticmethod
+    def _detail_editor_value(editor):
+        if isinstance(editor, QComboBox):
+            return editor.currentText()
+        if isinstance(editor, QSpinBox):
+            return str(editor.value())
+        if isinstance(editor, QLineEdit):
+            return editor.text()
+        if isinstance(editor, QCheckBox):
+            return "enabled" if editor.isChecked() else "disabled"
+        return ""
+
+    def _detail_editor_tooltip(self, field_label, value_text, animation_label):
+        value = str(value_text or "").strip() or "empty"
+        return (
+            f"{field_label} for animation {animation_label} on {self._detail_widget_label()}. "
+            f"Current value: {value}."
+        )
+
+    def _detail_editor_accessible_name(self, field_label, value_text):
+        value = str(value_text or "").strip() or "empty"
+        return f"Animation {field_label}: {value}."
+
+    def _apply_detail_label_metadata(self, label_widget, label_text):
+        field_label = self._detail_field_label_text(label_text)
+        summary = f"Animation field label: {field_label}."
+        _set_widget_metadata(label_widget, tooltip=summary, accessible_name=summary)
+
+    def _apply_detail_editor_metadata(self, editor, label_text, value_text, animation_label):
+        field_label = self._detail_field_label_text(label_text)
+        _set_widget_metadata(
+            editor,
+            tooltip=self._detail_editor_tooltip(field_label, value_text, animation_label),
+            accessible_name=self._detail_editor_accessible_name(field_label, value_text),
+        )
+
+    def _bind_detail_editor_metadata(self, editor, label_text, animation_label, value_getter):
+        def refresh(*_args):
+            self._apply_detail_editor_metadata(editor, label_text, value_getter(), animation_label)
+
+        refresh()
+        if isinstance(editor, QComboBox):
+            editor.currentTextChanged.connect(refresh)
+        elif isinstance(editor, QSpinBox):
+            editor.valueChanged.connect(refresh)
+        elif isinstance(editor, QLineEdit):
+            editor.textChanged.connect(refresh)
+        elif isinstance(editor, QCheckBox):
+            editor.toggled.connect(refresh)
+        return editor
+
+    def _add_detail_row(self, label_text, editor, animation_label):
+        label_widget = QLabel(label_text)
+        self._apply_detail_label_metadata(label_widget, label_text)
+        self._bind_detail_editor_metadata(
+            editor,
+            label_text,
+            animation_label,
+            lambda control=editor: self._detail_editor_value(control),
+        )
+        self._detail_form.addRow(label_widget, editor)
+        return editor
+
+    def _create_detail_message_label(self, message):
+        label = QLabel(message)
+        label.setWordWrap(True)
+        _set_widget_metadata(label, tooltip=message, accessible_name=message)
+        return label
+
     def _selected_animation_label(self):
         row = self._selected_row()
         if row < 0 or row >= len(self._animations):
@@ -273,13 +351,13 @@ class AnimationsPanel(QWidget):
 
         if not self._selection:
             message = "Select a widget to edit animations."
-            self._detail_form.addRow(QLabel(message))
+            self._detail_form.addRow(self._create_detail_message_label(message))
             self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
         if len(self._selection) > 1 or self._primary_widget is None:
             message = "Animation editing is available for a single selected widget only."
-            self._detail_form.addRow(QLabel(message))
+            self._detail_form.addRow(self._create_detail_message_label(message))
             self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
@@ -289,11 +367,12 @@ class AnimationsPanel(QWidget):
                 message = "Select an animation from the table above."
             else:
                 message = "No animations on the selected widget."
-            self._detail_form.addRow(QLabel(message))
+            self._detail_form.addRow(self._create_detail_message_label(message))
             self._update_detail_group_metadata(f"Selected animation details unavailable. {message}")
             return
 
         animation = self._animations[row]
+        animation_label = str(animation.anim_type or "").strip() or "none"
         self._update_detail_group_metadata(
             f"Selected animation details: {animation.anim_type}. "
             f"Duration {animation.duration} ms. Interpolator {animation.interpolator}."
@@ -303,40 +382,47 @@ class AnimationsPanel(QWidget):
         type_combo.addItems(animation_type_names())
         type_combo.setCurrentText(animation.anim_type)
         type_combo.currentTextChanged.connect(lambda value, index=row: self._on_type_changed(index, value))
-        self._detail_form.addRow("Type:", type_combo)
+        self._add_detail_row("Type:", type_combo, animation_label)
 
         duration_spin = QSpinBox()
         duration_spin.setRange(0, 600000)
         duration_spin.setValue(animation.duration)
         duration_spin.valueChanged.connect(lambda value, index=row: self._on_duration_changed(index, value))
-        self._detail_form.addRow("Duration (ms):", duration_spin)
+        self._add_detail_row("Duration (ms):", duration_spin, animation_label)
 
         interpolator_combo = QComboBox()
         interpolator_combo.addItems(animation_interpolator_names())
         interpolator_combo.setCurrentText(animation.interpolator)
         interpolator_combo.currentTextChanged.connect(lambda value, index=row: self._on_interpolator_changed(index, value))
-        self._detail_form.addRow("Interpolator:", interpolator_combo)
+        self._add_detail_row("Interpolator:", interpolator_combo, animation_label)
 
         repeat_count_spin = QSpinBox()
         repeat_count_spin.setRange(0, 9999)
         repeat_count_spin.setValue(animation.repeat_count)
         repeat_count_spin.valueChanged.connect(lambda value, index=row: self._on_repeat_count_changed(index, value))
-        self._detail_form.addRow("Repeat Count:", repeat_count_spin)
+        self._add_detail_row("Repeat Count:", repeat_count_spin, animation_label)
 
         repeat_mode_combo = QComboBox()
         repeat_mode_combo.addItems(ANIMATION_REPEAT_MODES)
         repeat_mode_combo.setCurrentText(animation.repeat_mode)
         repeat_mode_combo.currentTextChanged.connect(lambda value, index=row: self._on_repeat_mode_changed(index, value))
-        self._detail_form.addRow("Repeat Mode:", repeat_mode_combo)
+        self._add_detail_row("Repeat Mode:", repeat_mode_combo, animation_label)
 
         auto_start_check = QCheckBox("Start automatically")
         auto_start_check.setChecked(animation.auto_start)
         auto_start_check.toggled.connect(lambda value, index=row: self._on_auto_start_changed(index, value))
+        self._bind_detail_editor_metadata(
+            auto_start_check,
+            "Auto Start",
+            animation_label,
+            lambda checkbox=auto_start_check: self._detail_editor_value(checkbox),
+        )
         self._detail_form.addRow(auto_start_check)
 
         for param_name, default_value in animation_param_defaults(animation.anim_type).items():
+            label_text = self._label_for_param(param_name)
             editor = self._create_param_editor(row, param_name, animation.params.get(param_name, default_value))
-            self._detail_form.addRow(self._label_for_param(param_name), editor)
+            self._add_detail_row(label_text, editor, animation_label)
 
     def _label_for_param(self, param_name):
         name = str(param_name or "")

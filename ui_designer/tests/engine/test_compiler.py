@@ -290,6 +290,15 @@ class TestCompilerRuntime:
         assert engine.get_build_error() == "cross drive"
         assert not engine.is_exe_ready()
 
+    def test_init_records_external_alias_creation_error(self, tmp_path):
+        with patch("ui_designer.engine.compiler.compute_make_app_root_arg", return_value="../external"):
+            with patch.object(CompilerEngine, "_ensure_external_app_root_alias", side_effect=RuntimeError("alias unsupported")):
+                with patch.object(CompilerEngine, "_cleanup_stale_processes"):
+                    engine = CompilerEngine(str(tmp_path), str(tmp_path / "app"), "TestApp")
+        assert engine.get_last_runtime_error() == "alias unsupported"
+        assert engine.get_build_error() == "alias unsupported"
+        assert engine.can_build() is False
+
     def test_init_rewrites_external_parent_with_alias(self, tmp_path):
         external_app = tmp_path.parent / "external" / "TestApp"
         with patch("ui_designer.engine.compiler.compute_make_app_root_arg", return_value="../external"):

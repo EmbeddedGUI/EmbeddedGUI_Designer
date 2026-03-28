@@ -214,7 +214,7 @@ class CompilerEngine:
         try:
             raw_app_root_arg = compute_make_app_root_arg(self.project_root, self.app_dir, self.app_name)
             self.app_root_arg = self._resolve_make_app_root_arg(raw_app_root_arg)
-        except ValueError as exc:
+        except (ValueError, OSError, RuntimeError) as exc:
             self._app_root_error = str(exc)
         self.process = None  # kept for backward compat, not used by bridge
         self.bridge = DesignerBridge()
@@ -311,18 +311,22 @@ class CompilerEngine:
     def _create_dir_alias(self, alias_dir, target_dir):
         """Create a directory alias for *target_dir* at *alias_dir*."""
         if sys.platform == "win32":
-            result = subprocess.run(
-                ["cmd", "/c", "mklink", "/J", alias_dir, target_dir],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode == 0:
-                return
+            detail = ""
+            try:
+                result = subprocess.run(
+                    ["cmd", "/c", "mklink", "/J", alias_dir, target_dir],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode == 0:
+                    return
+                detail = (result.stderr or result.stdout or "").strip()
+            except OSError as exc:
+                detail = str(exc).strip()
             try:
                 os.symlink(target_dir, alias_dir, target_is_directory=True)
                 return
             except OSError as exc:
-                detail = (result.stderr or result.stdout or "").strip()
                 if detail:
                     raise RuntimeError(f"Failed to create external app alias: {detail}") from exc
                 raise RuntimeError("Failed to create external app alias") from exc
