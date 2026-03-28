@@ -420,6 +420,7 @@ class DiagnosticsPanel(QWidget):
             item_tooltip = self._entry_tooltip(entry)
             item.setToolTip(item_tooltip)
             item.setStatusTip(item_tooltip)
+            item.setData(Qt.AccessibleTextRole, item_tooltip)
             self._list.addItem(item)
         self._restore_selection(selection_key)
         self._update_selection_actions()

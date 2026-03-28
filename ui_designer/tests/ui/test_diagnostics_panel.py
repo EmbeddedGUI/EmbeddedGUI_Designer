@@ -7,6 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
@@ -109,9 +110,13 @@ class TestDiagnosticsPanel:
         assert panel._list.item(0).toolTip() == (
             "Error diagnostic: main_page/title. Widget name 'title' is duplicated in page 'main_page'. Double-click to open."
         )
+        assert panel._list.item(0).statusTip() == panel._list.item(0).toolTip()
+        assert panel._list.item(0).data(Qt.AccessibleTextRole) == panel._list.item(0).toolTip()
         assert panel._list.item(2).toolTip() == (
             "Info diagnostic: selection. 1 selected widget is locked; canvas drag and resize are disabled. Navigation unavailable."
         )
+        assert panel._list.item(2).statusTip() == panel._list.item(2).toolTip()
+        assert panel._list.item(2).data(Qt.AccessibleTextRole) == panel._list.item(2).toolTip()
 
         panel._list.setCurrentRow(0)
         qapp.processEvents()
