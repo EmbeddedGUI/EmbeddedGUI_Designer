@@ -1132,7 +1132,6 @@ class PreviewPanel(QWidget):
         self._btn_zoom_out = QPushButton("\u2212")  # minus sign
         self._btn_zoom_out.setFixedSize(28, 28)
         self._btn_zoom_out.setStyleSheet(_zbtn_style)
-        self._btn_zoom_out.setToolTip("Zoom Out (Ctrl+-)")
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
@@ -1143,7 +1142,6 @@ class PreviewPanel(QWidget):
         self._btn_zoom_in = QPushButton("+")
         self._btn_zoom_in.setFixedSize(28, 28)
         self._btn_zoom_in.setStyleSheet(_zbtn_style)
-        self._btn_zoom_in.setToolTip("Zoom In (Ctrl+=)")
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
 
         sbl.addWidget(self._btn_zoom_out)
@@ -1289,6 +1287,30 @@ class PreviewPanel(QWidget):
             MODE_HIDDEN: "Overlay only",
         }.get(self._mode, str(self._mode or "Preview"))
 
+    def _zoom_button_metadata(self, direction, zoom_text):
+        if direction == "out":
+            enabled = self.overlay._zoom > (self.overlay._zoom_min + 1e-9)
+            tooltip = f"Zoom out preview (Ctrl+-). Current zoom: {zoom_text}."
+            if not enabled:
+                tooltip += " Unavailable: already at minimum zoom."
+            accessible_name = (
+                f"Zoom out preview: current zoom {zoom_text}"
+                if enabled
+                else f"Zoom out preview unavailable: current zoom {zoom_text}"
+            )
+            return enabled, tooltip, accessible_name
+
+        enabled = self.overlay._zoom < (self.overlay._zoom_max - 1e-9)
+        tooltip = f"Zoom in preview (Ctrl+=). Current zoom: {zoom_text}."
+        if not enabled:
+            tooltip += " Unavailable: already at maximum zoom."
+        accessible_name = (
+            f"Zoom in preview: current zoom {zoom_text}"
+            if enabled
+            else f"Zoom in preview unavailable: current zoom {zoom_text}"
+        )
+        return enabled, tooltip, accessible_name
+
     def _update_accessibility_summary(self):
         status_text = str(self.status_label.text() or "Preview status unavailable").strip() or "Preview status unavailable"
         zoom_text = str(self._zoom_label.text() or "100%").strip() or "100%"
@@ -1341,15 +1363,19 @@ class PreviewPanel(QWidget):
             tooltip=f"Preview zoom: {zoom_text}",
             accessible_name=f"Preview zoom: {zoom_text}",
         )
+        can_zoom_out, zoom_out_tooltip, zoom_out_accessible_name = self._zoom_button_metadata("out", zoom_text)
+        can_zoom_in, zoom_in_tooltip, zoom_in_accessible_name = self._zoom_button_metadata("in", zoom_text)
+        self._btn_zoom_out.setEnabled(can_zoom_out)
+        self._btn_zoom_in.setEnabled(can_zoom_in)
         _set_widget_metadata(
             self._btn_zoom_out,
-            tooltip=f"Zoom out preview (Ctrl+-). Current zoom: {zoom_text}.",
-            accessible_name=f"Zoom out preview: current zoom {zoom_text}",
+            tooltip=zoom_out_tooltip,
+            accessible_name=zoom_out_accessible_name,
         )
         _set_widget_metadata(
             self._btn_zoom_in,
-            tooltip=f"Zoom in preview (Ctrl+=). Current zoom: {zoom_text}.",
-            accessible_name=f"Zoom in preview: current zoom {zoom_text}",
+            tooltip=zoom_in_tooltip,
+            accessible_name=zoom_in_accessible_name,
         )
 
     def _update_zoom_label(self, factor=None):

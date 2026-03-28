@@ -138,6 +138,36 @@ class TestPreviewPanelFallback:
         assert panel.overlay._effective_grid_size() == 12
         panel.deleteLater()
 
+    def test_zoom_buttons_reflect_zoom_limits_in_accessibility_metadata(self, qapp):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+
+        panel.overlay.set_zoom(panel.overlay._zoom_min)
+
+        assert panel._zoom_label.text() == "25% (8px)"
+        assert panel._btn_zoom_out.isEnabled() is False
+        assert panel._btn_zoom_out.toolTip() == (
+            "Zoom out preview (Ctrl+-). Current zoom: 25% (8px). "
+            "Unavailable: already at minimum zoom."
+        )
+        assert panel._btn_zoom_out.statusTip() == panel._btn_zoom_out.toolTip()
+        assert panel._btn_zoom_out.accessibleName() == "Zoom out preview unavailable: current zoom 25% (8px)"
+        assert panel._btn_zoom_in.isEnabled() is True
+
+        panel.overlay.set_zoom(panel.overlay._zoom_max)
+
+        assert panel._zoom_label.text() == "400% (8px)"
+        assert panel._btn_zoom_in.isEnabled() is False
+        assert panel._btn_zoom_in.toolTip() == (
+            "Zoom in preview (Ctrl+=). Current zoom: 400% (8px). "
+            "Unavailable: already at maximum zoom."
+        )
+        assert panel._btn_zoom_in.statusTip() == panel._btn_zoom_in.toolTip()
+        assert panel._btn_zoom_in.accessibleName() == "Zoom in preview unavailable: current zoom 400% (8px)"
+        assert panel._btn_zoom_out.isEnabled() is True
+        panel.deleteLater()
+
 
 @_skip_no_qt
 class TestMainWindowBuildAvailability:
