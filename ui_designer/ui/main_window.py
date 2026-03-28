@@ -635,6 +635,18 @@ class MainWindow(QMainWindow):
         target = self._insert_target_summary(self._pending_insert_parent or self._default_insert_parent())
         return f"Current page: {current_page}. Insert target: {target}."
 
+    def _assets_workspace_nav_context(self):
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+        return f"Current page: {current_page}."
+
+    def _status_workspace_nav_context(self):
+        diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
+        error_count = int(diagnostics_counts.get("error", 0) or 0)
+        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
+        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+        dirty_text = "no dirty pages" if dirty_count == 0 else ("1 dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        return f"Diagnostics: {error_count} errors and {warning_count} warnings. Dirty state: {dirty_text}."
+
     def _update_workspace_nav_button_metadata(self, current_panel):
         if not hasattr(self, "_workspace_nav_buttons"):
             return
@@ -646,6 +658,10 @@ class MainWindow(QMainWindow):
                 context = self._structure_workspace_nav_context()
             elif key == "widgets":
                 context = self._components_workspace_nav_context()
+            elif key == "assets":
+                context = self._assets_workspace_nav_context()
+            elif key == "status":
+                context = self._status_workspace_nav_context()
             else:
                 context = ""
             if key == current_panel:

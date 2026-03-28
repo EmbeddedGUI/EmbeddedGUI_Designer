@@ -4811,6 +4811,10 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page."
         )
+        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
+        assert window._workspace_nav_buttons["status"].toolTip() == (
+            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
 
         window._switch_page("detail_page")
 
@@ -4820,6 +4824,7 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
         )
+        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: detail_page."
 
         window._on_startup_changed("detail_page")
 
@@ -6630,6 +6635,10 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
             "Open Components panel. Current page: main_page. Insert target: root_group."
         )
+        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
+        assert window._workspace_nav_buttons["status"].toolTip() == (
+            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
         assert window._selection_chip.text() == "1 selected"
@@ -6649,6 +6658,9 @@ class TestMainWindowFileFlow:
         assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
         assert window._dirty_chip.statusTip() == window._dirty_chip.toolTip()
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
+        assert window._workspace_nav_buttons["status"].toolTip() == (
+            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: 1 dirty page."
+        )
         _close_window(window)
 
     def test_welcome_view_and_sdk_status_label_expose_accessible_metadata(self, qapp, isolated_config):
@@ -6766,18 +6778,25 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
             "Open Components panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["status"].toolTip() == "Open Status panel."
+        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: none."
+        assert window._workspace_nav_buttons["status"].toolTip() == (
+            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
         assert window._workspace_nav_buttons["status"].statusTip() == window._workspace_nav_buttons["status"].toolTip()
-        assert window._workspace_nav_buttons["status"].accessibleName() == "Workspace panel button: Status."
+        assert window._workspace_nav_buttons["status"].accessibleName() == (
+            "Workspace panel button: Status. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
         assert window._bottom_toggle_button.text() == "Show"
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
 
         window._select_left_panel("status")
 
-        assert window._workspace_nav_buttons["status"].toolTip() == "Currently showing Status panel."
+        assert window._workspace_nav_buttons["status"].toolTip() == (
+            "Currently showing Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        )
         assert window._workspace_nav_buttons["status"].accessibleName() == (
-            "Workspace panel button: Status. Current panel."
+            "Workspace panel button: Status. Current panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
         )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: List view. Active page: none. Startup page: none."
