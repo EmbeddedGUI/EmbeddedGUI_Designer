@@ -4807,11 +4807,13 @@ class TestMainWindowFileFlow:
         assert "Startup page" in window.page_navigator._thumbnails["main_page"].accessibleName()
         assert "Startup page: main_page." in window.page_tab_bar.accessibleName()
         assert "Startup page: main_page." in window._project_workspace.accessibleName()
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: main_page."
 
         window._switch_page("detail_page")
 
         assert window.page_navigator._current_page == "detail_page"
         assert window.page_navigator._startup_page == "main_page"
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: detail_page."
 
         window._on_startup_changed("detail_page")
 
@@ -6759,8 +6761,8 @@ class TestMainWindowFileFlow:
 
         assert window._inspector_tabs.accessibleName() == "Inspector tabs: Properties selected. 3 tabs."
         assert window._inspector_tabs.toolTip() == "Inspector tabs. Current section: Properties."
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs."
-        assert window._page_tools_tabs.toolTip() == "Page tools tabs. Current section: Fields."
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: none."
+        assert window._page_tools_tabs.toolTip() == "Page tools tabs. Current section: Fields. Current page: none."
         assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: Diagnostics selected. 3 tabs. Panel hidden."
         assert window._bottom_tabs.toolTip() == "Bottom tools tabs. Current section: Diagnostics. Panel hidden."
 
@@ -6768,7 +6770,7 @@ class TestMainWindowFileFlow:
         window._show_bottom_panel("History")
 
         assert window._inspector_tabs.accessibleName() == "Inspector tabs: Page selected. 3 tabs."
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Timers selected. 2 tabs."
+        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Timers selected. 2 tabs. Current page: none."
         assert window._bottom_tabs.accessibleName() == "Bottom tools tabs: History selected. 3 tabs. Panel visible."
         assert window._bottom_tabs.statusTip() == window._bottom_tabs.toolTip()
         _close_window(window)

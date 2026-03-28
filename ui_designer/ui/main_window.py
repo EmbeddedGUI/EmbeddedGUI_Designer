@@ -926,11 +926,12 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "_page_tools_tabs"):
             current = self._current_tab_text(self._page_tools_tabs, "Fields")
-            tooltip = f"Page tools tabs. Current section: {current}."
+            current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+            tooltip = f"Page tools tabs. Current section: {current}. Current page: {current_page}."
             self._page_tools_tabs.setToolTip(tooltip)
             self._page_tools_tabs.setStatusTip(tooltip)
             self._page_tools_tabs.setAccessibleName(
-                f"Page tools tabs: {current} selected. {self._page_tools_tabs.count()} tabs."
+                f"Page tools tabs: {current} selected. {self._page_tools_tabs.count()} tabs. Current page: {current_page}."
             )
         if hasattr(self, "_bottom_tabs"):
             current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
@@ -1835,6 +1836,7 @@ class MainWindow(QMainWindow):
         self._update_edit_actions()
         self._update_widget_browser_target(preferred_parent=None)
         self._update_workspace_chips()
+        self._update_workspace_tab_metadata()
 
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
@@ -4302,6 +4304,7 @@ class MainWindow(QMainWindow):
         self._update_undo_actions()
         self._update_edit_actions()
         self._update_window_title()
+        self._update_workspace_tab_metadata()
 
     def _on_page_selected(self, page_name):
         """User clicked a page in the Project Explorer."""
