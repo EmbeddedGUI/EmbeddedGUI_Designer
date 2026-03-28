@@ -41,11 +41,50 @@ class HistoryPanel(QWidget):
         self._history_list = QListWidget()
         self._history_list.setSelectionMode(QListWidget.NoSelection)
         self._history_list.setFocusPolicy(Qt.NoFocus)
+        self._history_list.setAccessibleName("History entries")
 
         layout.addWidget(self._stack_value)
         layout.addWidget(self._dirty_value)
         layout.addWidget(self._source_value)
         layout.addWidget(self._history_list, 1)
+
+    def _set_label_metadata(self, widget, *, tooltip, accessible_name):
+        widget.setToolTip(tooltip)
+        widget.setStatusTip(tooltip)
+        widget.setAccessibleName(accessible_name)
+
+    def _update_accessibility_summary(self, *, page_name, entry_count, dirty, dirty_source, can_undo=False, can_redo=False):
+        summary = (
+            f"History panel: Page {page_name}. {entry_count} entries. "
+            f"Dirty {'yes' if dirty else 'no'}. Source {dirty_source}."
+        )
+        self.setAccessibleName(summary)
+        self.setToolTip(summary)
+        self.setStatusTip(summary)
+        self._set_label_metadata(
+            self._page_value,
+            tooltip=f"History page: {page_name}",
+            accessible_name=f"History page: {page_name}",
+        )
+        self._set_label_metadata(
+            self._stack_value,
+            tooltip=f"History entries: {entry_count}. Undo: {'Yes' if can_undo else 'No'}. Redo: {'Yes' if can_redo else 'No'}.",
+            accessible_name=f"History summary: {entry_count} entries. Undo {'yes' if can_undo else 'no'}. Redo {'yes' if can_redo else 'no'}.",
+        )
+        self._set_label_metadata(
+            self._dirty_value,
+            tooltip=f"History dirty state: {'Yes' if dirty else 'No'}",
+            accessible_name=f"History dirty state: {'Yes' if dirty else 'No'}",
+        )
+        self._set_label_metadata(
+            self._source_value,
+            tooltip=f"History source: {dirty_source}",
+            accessible_name=f"History source: {dirty_source}",
+        )
+        list_tooltip = f"History entries: {entry_count} items for page {page_name}."
+        self._history_list.setToolTip(list_tooltip)
+        self._history_list.setStatusTip(list_tooltip)
+        self._history_list.setAccessibleName(f"History entries for {page_name}: {entry_count} items")
 
     def clear(self):
         self._page_value.setText("Page: -")
@@ -54,6 +93,12 @@ class HistoryPanel(QWidget):
         self._source_value.setText("Source: Saved state")
         self._dirty_value.setProperty("chipTone", "success")
         self._history_list.clear()
+        self._update_accessibility_summary(
+            page_name="-",
+            entry_count=0,
+            dirty=False,
+            dirty_source="Saved state",
+        )
 
     def set_history(self, page_name, entries, dirty=False, dirty_source="", can_undo=False, can_redo=False):
         page_name = page_name or "-"
@@ -69,6 +114,14 @@ class HistoryPanel(QWidget):
         self._dirty_value.setProperty("chipTone", "warning" if dirty else "success")
         self._dirty_value.style().unpolish(self._dirty_value)
         self._dirty_value.style().polish(self._dirty_value)
+        self._update_accessibility_summary(
+            page_name=page_name,
+            entry_count=len(entries),
+            dirty=dirty,
+            dirty_source=dirty_source or "Saved state",
+            can_undo=can_undo,
+            can_redo=can_redo,
+        )
 
         self._history_list.clear()
         for entry in reversed(entries):
@@ -87,4 +140,8 @@ class HistoryPanel(QWidget):
             elif entry.get("is_saved"):
                 icon_key = "save"
             item.setIcon(make_icon(icon_key, size=16))
+            marker_summary = ". ".join(markers) + ". " if markers else ""
+            item_tooltip = f"History entry {entry.get('index', 0) + 1}. {marker_summary}{label}"
+            item.setToolTip(item_tooltip)
+            item.setStatusTip(item_tooltip)
             self._history_list.addItem(item)
