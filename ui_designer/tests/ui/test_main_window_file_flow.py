@@ -10823,3 +10823,46 @@ class TestMainWindowCanvasActions:
         assert window._last_runtime_error_text == "forced failure"
 
         _close_window(window)
+
+    def test_v2_snapshot_failure_routes_to_preview_failure_handler(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class FakeRenderer:
+            def __init__(self):
+                self.last_render_error = ""
+                self.rendered = False
+
+            def render(self, _schema):
+                self.rendered = True
+
+            def snapshot(self):
+                return b""
+
+        renderer = FakeRenderer()
+        window = MainWindow("")
+        window._current_page = None
+
+        failures = []
+        image_preview_calls = []
+        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
+        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
+        monkeypatch.setattr(
+            window.preview_panel,
+            "show_image_preview",
+            lambda image, reason="", label_prefix="": image_preview_calls.append((image, reason, label_prefix)),
+        )
+
+        window._render_preview_with_v2()
+
+        assert renderer.rendered is False
+        assert failures == []
+        assert image_preview_calls == [(None, "No page", "V2 renderer")]
+
+        window._current_page = object()
+
+        window._render_preview_with_v2()
+
+        assert renderer.rendered is True
+        assert failures[-1] == "V2 preview render failed"
+
+        _close_window(window)
