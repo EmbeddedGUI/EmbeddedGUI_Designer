@@ -78,6 +78,7 @@ class DesignerConfig:
         self.auto_compile = True
         self.overlay_mode = "horizontal"
         self.overlay_flipped = True
+        self.preview_engine = "v1"
         self.show_grid = True
         self.grid_size = 8
         self.font_size_px = 0
@@ -227,6 +228,7 @@ class DesignerConfig:
             self.auto_compile = data.get("auto_compile", True)
             self.overlay_mode = data.get("overlay_mode", "horizontal")
             self.overlay_flipped = data.get("overlay_flipped", True)
+            self.preview_engine = str(data.get("preview_engine", "v1") or "v1")
             self.show_grid = data.get("show_grid", True)
             self.grid_size = int(data.get("grid_size", 8))
             self.font_size_px = data.get("font_size_px", 0)
@@ -281,6 +283,7 @@ class DesignerConfig:
                 "auto_compile": self.auto_compile,
                 "overlay_mode": self.overlay_mode,
                 "overlay_flipped": self.overlay_flipped,
+                "preview_engine": self.preview_engine,
                 "show_grid": self.show_grid,
                 "grid_size": self.grid_size,
                 "font_size_px": self.font_size_px,

@@ -116,6 +116,7 @@ from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_conten
 from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
+from ..settings.preview_settings import PreviewSettings
 from ..core.state_store import StateStore
 from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
@@ -597,8 +598,14 @@ class MainWindow(QMainWindow):
         """Register preview renderers and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
         self._renderer_manager.register(V2RendererQml())
-        initial_engine = "v2" if PREVIEW_V2_ENABLED else "v1"
-        active_engine = self._renderer_manager.switch(initial_engine, fallback="v1")
+
+        configured = getattr(self._config, "preview_engine", "v1")
+        preview_settings = PreviewSettings.from_config(configured)
+        preferred_engine = preview_settings.resolve_initial_engine(env_v2_enabled=PREVIEW_V2_ENABLED)
+        active_engine = self._renderer_manager.switch(preferred_engine, fallback="v1")
+
+        # Persist resolved engine so unsupported/failed choices gracefully fall back.
+        self._config.preview_engine = active_engine
         if hasattr(self, "_state_store"):
             self._state_store.set_preview_engine(active_engine)
 
@@ -3540,6 +3547,20 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(self._swap_overlay_action, "Swap the preview and overlay positions (Ctrl+4).")
         self._swap_overlay_action.triggered.connect(self._flip_overlay_layout)
         view_menu.addAction(self._swap_overlay_action)
+
+        self._preview_engine_menu = view_menu.addMenu("Preview Engine")
+        self._apply_action_hint(self._preview_engine_menu.menuAction(), "Choose the preview renderer engine.")
+        self._preview_engine_group = QActionGroup(self)
+        self._preview_engine_group.setExclusive(True)
+        self._preview_engine_actions = {}
+        for label, engine_name in (("V1 (Python)", "v1"), ("V2 (Experimental)", "v2")):
+            action = QAction(label, self)
+            action.setCheckable(True)
+            action.triggered.connect(lambda checked=False, name=engine_name: self._set_preview_engine(name))
+            self._preview_engine_group.addAction(action)
+            self._preview_engine_actions[engine_name] = action
+            self._preview_engine_menu.addAction(action)
+        self._update_preview_engine_actions()
 
         view_menu.addSeparator()
 
@@ -7408,6 +7429,33 @@ class MainWindow(QMainWindow):
             action.setChecked(True)
         self._update_preview_grid_and_mockup_action_metadata()
 
+    def _set_preview_engine(self, engine_name: str) -> None:
+        name = str(engine_name or "").strip().lower()
+        if name not in ("v1", "v2"):
+            return
+        if name == "v2" and not PREVIEW_V2_ENABLED:
+            self.statusBar().showMessage("Preview V2 is disabled by feature flag", 3000)
+            self._update_preview_engine_actions()
+            return
+        active_engine = self._renderer_manager.switch(name, fallback="v1")
+        self._config.preview_engine = active_engine
+        self._config.save()
+        if hasattr(self, "_state_store"):
+            self._state_store.set_preview_engine(active_engine)
+        self._update_preview_engine_actions()
+        self.statusBar().showMessage(f"Preview engine set to {active_engine.upper()}.", 3000)
+
+    def _update_preview_engine_actions(self) -> None:
+        active_engine = self._renderer_manager.active_name or "v1"
+        for engine_name, action in (self._preview_engine_actions or {}).items():
+            action.setChecked(engine_name == active_engine)
+            if engine_name == "v2":
+                action.setEnabled(PREVIEW_V2_ENABLED)
+                hint = "Use the experimental V2 renderer." if PREVIEW_V2_ENABLED else "V2 renderer disabled by feature flag."
+            else:
+                hint = "Use the stable V1 Python renderer."
+            self._apply_action_hint(action, hint)
+
     def _toggle_auto_compile(self, enabled):
         self.auto_compile = enabled
         self._update_build_menu_metadata()
@@ -7537,12 +7585,19 @@ class MainWindow(QMainWindow):
     def _on_preview_runtime_failed(self, reason):
         if self._is_closing:
             return
-        self._last_runtime_error_text = reason or "Headless preview stopped responding"
+        self._handle_preview_failure(reason or "Headless preview stopped responding")
+
+    def _handle_preview_failure(self, reason: str) -> None:
+        self._last_runtime_error_text = reason
         if self.compiler is not None:
             self.compiler.stop_exe()
-        self.debug_panel.log_error(reason or "Headless preview stopped responding")
+        self.debug_panel.log_error(reason)
         self._show_bottom_panel("Debug Output")
-        self._switch_to_python_preview(reason or "Headless preview stopped responding")
+        self._switch_to_python_preview(reason)
+        self._renderer_manager.switch("v1", fallback="v1")
+        self._config.preview_engine = "v1"
+        if hasattr(self, "_state_store"):
+            self._state_store.set_preview_engine("v1")
         self._update_compile_availability()
 
     def _try_embed_exe(self):

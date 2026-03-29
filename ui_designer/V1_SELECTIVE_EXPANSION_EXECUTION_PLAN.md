@@ -413,7 +413,7 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 
 ```yaml
 last_update: 2026-03-29
-current_sprint: S3
+current_sprint: S4
 completed:
   - UI-S1-001
   - UI-S1-002
@@ -428,13 +428,15 @@ completed:
   - UI-S3-002
   - UI-S3-003
   - UI-S3-004
+  - UI-S4-001
+  - UI-S4-002
+  - UI-S4-004
 in_progress:
   - []
 blocked:
   - []
 next_recommended:
-  - UI-S4-001
-  - UI-S4-002
+  - UI-S4-003
 notes:
   - 已完成主窗口现状盘点，保留“左导航+中画布+右检查器+底部工具”的既有壳层能力。
   - 已新增 feature flag：NEW_SHELL_ENABLED / PREVIEW_V2_ENABLED，支持灰度切换。
@@ -445,6 +447,10 @@ notes:
   - 已完成拖拽插入链路：Widget Browser -> Preview Overlay -> WidgetTree insert + selection sync。
   - Inspector 已接入共享可折叠分组容器，并完成 Basic/Layout/Style/Behavior/Data/Callbacks 分组。
   - property_panel 属性变更已写入 state_store node patch 通道，便于后续统一状态观察与撤销策略。
+  - 已补充 renderer/base.py 与 renderer/manager.py 的注册/切换基础能力，并在 main_window 启动阶段完成渲染器注册。
+  - 已将旧 python_renderer 封装为 renderer/v1_python_renderer.py 适配器并接入 manager。
+  - 已新增 settings/preview_settings.py 与 View 菜单预览引擎切换入口，支持配置持久化与运行时切换。
+  - 当预览运行失败时会自动回退到 V1 引擎并同步 state_store/config，保证编辑链路不中断。
 ```
 
 ---
