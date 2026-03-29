@@ -33,6 +33,37 @@ class SearchService:
         filtered = self._filter(items, query)
         return self._sort(filtered, query, favorite_types=favorite_types, recent_types=recent_types)
 
+    def rank(
+        self,
+        item: ComponentMeta,
+        query: SearchQuery,
+        *,
+        favorite_types: set[str] | None = None,
+        recent_types: list[str] | None = None,
+    ) -> tuple:
+        """Return the same tuple used for relevance ordering (for diagnostics/tests)."""
+        favorite_types = favorite_types or set()
+        recent_types = recent_types or []
+        mode = str(query.sort_mode or "relevance").strip().lower()
+        if mode == "name":
+            return (item.display_name.lower(), item.browse_priority, item.type_name.lower())
+        if mode == "complexity":
+            rank = {"basic": 0, "intermediate": 1, "advanced": 2}
+            return (
+                rank.get(item.complexity.lower(), 9),
+                item.display_name.lower(),
+                item.browse_priority,
+                item.type_name.lower(),
+            )
+
+        search = str(query.text or "").strip().lower()
+        terms = self._tokenize(search)
+        recent_order = {name: idx for idx, name in enumerate(recent_types)}
+        weighted_rank = -self._text_score(item, terms)
+        favorite_rank = 0 if item.type_name in favorite_types else 1
+        recent_rank = recent_order.get(item.type_name, 999)
+        return (weighted_rank, favorite_rank, recent_rank, item.browse_priority, item.display_name.lower(), item.type_name.lower())
+
     def _filter(self, items: list[ComponentMeta], query: SearchQuery) -> list[ComponentMeta]:
         search = str(query.text or "").strip().lower()
         category = str(query.category or "all").strip().lower()
@@ -89,63 +120,44 @@ class SearchService:
         favorite_types: set[str],
         recent_types: list[str],
     ) -> list[ComponentMeta]:
-        mode = str(query.sort_mode or "relevance").strip().lower()
-        if mode == "name":
-            return sorted(items, key=lambda item: (item.display_name.lower(), item.browse_priority, item.type_name.lower()))
-        if mode == "complexity":
-            rank = {"basic": 0, "intermediate": 1, "advanced": 2}
-            return sorted(
-                items,
-                key=lambda item: (
-                    rank.get(item.complexity.lower(), 9),
-                    item.display_name.lower(),
-                    item.browse_priority,
-                    item.type_name.lower(),
-                ),
-            )
+        return sorted(
+            items,
+            key=lambda item: self.rank(
+                item,
+                query,
+                favorite_types=favorite_types,
+                recent_types=recent_types,
+            ),
+        )
 
-        search = str(query.text or "").strip().lower()
-        terms = self._tokenize(search)
-        recent_order = {name: idx for idx, name in enumerate(recent_types)}
-
-        def text_score(item: ComponentMeta) -> int:
-            if not terms:
-                return 0
-            display = item.display_name.lower()
-            type_name = item.type_name.lower()
-            category = item.category.lower()
-            scenario = item.scenario.lower()
-            complexity = item.complexity.lower()
-            tags = [tag.lower() for tag in item.tags]
-            keywords = [keyword.lower() for keyword in item.keywords]
-            score_value = 0
-            for term in terms:
-                if term == display or term == type_name:
-                    score_value += 300
-                elif display.startswith(term) or type_name.startswith(term):
-                    score_value += 180
-                elif term in display or term in type_name:
-                    score_value += 120
-                elif any(term == tag for tag in tags):
-                    score_value += 90
-                elif any(term in tag for tag in tags):
-                    score_value += 70
-                elif any(term == keyword for keyword in keywords):
-                    score_value += 80
-                elif any(term in keyword for keyword in keywords):
-                    score_value += 60
-                elif term == category or term == scenario or term == complexity:
-                    score_value += 50
-                elif term in category or term in scenario or term in complexity:
-                    score_value += 30
-            return score_value
-
-        def score(item: ComponentMeta):
-            display = item.display_name.lower()
-            tname = item.type_name.lower()
-            weighted_rank = -text_score(item)
-            favorite_rank = 0 if item.type_name in favorite_types else 1
-            recent_rank = recent_order.get(item.type_name, 999)
-            return (weighted_rank, favorite_rank, recent_rank, item.browse_priority, display, tname)
-
-        return sorted(items, key=score)
+    def _text_score(self, item: ComponentMeta, terms: list[str]) -> int:
+        if not terms:
+            return 0
+        display = item.display_name.lower()
+        type_name = item.type_name.lower()
+        category = item.category.lower()
+        scenario = item.scenario.lower()
+        complexity = item.complexity.lower()
+        tags = [tag.lower() for tag in item.tags]
+        keywords = [keyword.lower() for keyword in item.keywords]
+        score_value = 0
+        for term in terms:
+            if term == display or term == type_name:
+                score_value += 300
+            elif display.startswith(term) or type_name.startswith(term):
+                score_value += 180
+            elif term in display or term in type_name:
+                score_value += 120
+            elif any(term == tag for tag in tags):
+                score_value += 90
+            elif any(term in tag for tag in tags):
+                score_value += 70
+            elif any(term == keyword for keyword in keywords):
+                score_value += 80
+            elif any(term in keyword for keyword in keywords):
+                score_value += 60
+            elif term == category or term == scenario or term == complexity:
+                score_value += 50
+            elif term in category or term in scenario or term in complexity:
+                score_value += 30
+        return score_value

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections import Counter
-
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (
     QFrame,
@@ -457,7 +455,7 @@ class WidgetBrowserPanel(QWidget):
             item.setIcon(make_icon(icon_key, size=18))
             _set_item_metadata(item, f"Show {label} in the widget browser.")
             self._category_list.addItem(item)
-        for label in self._registry.browser_scenarios():
+        for label in self._catalog.browser_scenarios():
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, f"scenario:{label}")
             icon_key = self._scenario_icon_key(label)
@@ -502,7 +500,7 @@ class WidgetBrowserPanel(QWidget):
             ("recent", "Recent", "history"),
             ("containers", "Containers", "layout"),
         ]
-        for scenario in self._registry.browser_scenarios():
+        for scenario in self._catalog.browser_scenarios():
             lane_id = f"scenario:{scenario}"
             lanes.append((lane_id, self._scenario_short_label(scenario), self._scenario_icon_key(scenario)))
         return lanes[:8]
@@ -656,14 +654,7 @@ class WidgetBrowserPanel(QWidget):
         self._sync_tags_from_config()
 
     def _available_tags(self):
-        counts = Counter()
-        for item in self._registry.browser_items(addable_only=True):
-            for tag in item.get("tags", []):
-                text = str(tag or "").strip()
-                if text:
-                    counts[text] += 1
-        ranked = sorted(counts.items(), key=lambda entry: (-entry[1], entry[0].lower()))
-        return [text for text, _count in ranked[:18]]
+        return self._catalog.top_tags(addable_only=True, limit=18)
 
     def _active_tag_values(self):
         return [str(tag or "").strip().lower() for tag in getattr(self._config, "widget_browser_active_tags", []) if str(tag or "").strip()]
@@ -784,28 +775,11 @@ class WidgetBrowserPanel(QWidget):
         )
 
     def _lane_counts(self):
-        items = self._registry.browser_items(addable_only=True)
-        favorites = set(self._config.widget_browser_favorites)
-        recent = set(self._config.widget_browser_recent)
-        counts = {
-            "all": len(items),
-            "favorites": 0,
-            "recent": 0,
-            "containers": 0,
-        }
-        for item in items:
-            type_name = item.get("type_name")
-            if type_name in favorites:
-                counts["favorites"] += 1
-            if type_name in recent:
-                counts["recent"] += 1
-            if bool(item.get("is_container")):
-                counts["containers"] += 1
-            scenario = str(item.get("scenario", "") or "").strip()
-            if scenario:
-                lane_id = f"scenario:{scenario}".lower()
-                counts[lane_id] = counts.get(lane_id, 0) + 1
-        return counts
+        return self._catalog.lane_counts(
+            addable_only=True,
+            favorite_types=set(self._config.widget_browser_favorites),
+            recent_types=list(self._config.widget_browser_recent),
+        )
 
     def _update_quick_lanes(self):
         if not self._lane_buttons:
@@ -1090,17 +1064,6 @@ class WidgetBrowserPanel(QWidget):
             and self._sort_mode == "relevance"
         )
 
-    def _group_items_by_scenario(self, items):
-        grouped = {}
-        order = []
-        for item in items:
-            scenario = str(item.get("scenario", "") or "").strip() or "Other"
-            key = scenario.lower()
-            if key not in grouped:
-                grouped[key] = (scenario, [])
-                order.append(key)
-            grouped[key][1].append(item)
-        return [grouped[key] for key in order]
 
     def _rebuild_cards(self, items):
         self._clear_cards()
@@ -1180,7 +1143,7 @@ class WidgetBrowserPanel(QWidget):
         if self._selected_type not in visible_types:
             self._selected_type = visible_types[0]
 
-        grouped = self._group_items_by_scenario(items) if self._should_group_by_scenario() else [("", items)]
+        grouped = self._catalog.group_by_scenario(items) if self._should_group_by_scenario() else [("", items)]
         row = 0
         column = 0
         card_index = 0
