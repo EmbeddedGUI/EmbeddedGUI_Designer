@@ -10991,4 +10991,28 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    def test_preview_engine_v2_disabled_keeps_v1_selected(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        monkeypatch.setattr(main_window_module, "PREVIEW_V2_ENABLED", False)
+
+        window = MainWindow("")
+        window._preview_engine_actions["v1"].setChecked(True)
+        window._preview_engine_actions["v2"].setChecked(False)
+        window._config.preview_engine = "v1"
+        window._state_store.set_preview_engine("v1")
+
+        switch_calls = []
+        monkeypatch.setattr(window._renderer_manager, "switch", lambda *args, **kwargs: switch_calls.append(args) or "v2")
+
+        window._set_preview_engine("v2")
+
+        assert switch_calls == []
+        assert window._config.preview_engine == "v1"
+        assert window._state_store.state.preview_engine == "v1"
+        assert window._preview_engine_actions["v1"].isChecked() is True
+        assert window._preview_engine_actions["v2"].isChecked() is False
+        assert window.statusBar().currentMessage() == "Preview V2 is disabled by feature flag"
+
         _close_window(window)
