@@ -10866,3 +10866,30 @@ class TestMainWindowCanvasActions:
         assert failures[-1] == "V2 preview render failed"
 
         _close_window(window)
+
+    def test_v2_snapshot_failure_prefers_renderer_error_text(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class FakeRenderer:
+            def __init__(self):
+                self.last_render_error = "render exploded"
+
+            def render(self, _schema):
+                return None
+
+            def snapshot(self):
+                return b""
+
+        renderer = FakeRenderer()
+        window = MainWindow("")
+        window._current_page = object()
+
+        failures = []
+        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
+        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
+
+        window._render_preview_with_v2()
+
+        assert failures == ["render exploded"]
+
+        _close_window(window)
