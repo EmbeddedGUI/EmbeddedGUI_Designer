@@ -430,13 +430,14 @@ completed:
   - UI-S3-004
   - UI-S4-001
   - UI-S4-002
+  - UI-S4-003
   - UI-S4-004
 in_progress:
   - []
 blocked:
   - []
 next_recommended:
-  - UI-S4-003
+  - []
 notes:
   - 已完成主窗口现状盘点，保留“左导航+中画布+右检查器+底部工具”的既有壳层能力。
   - 已新增 feature flag：NEW_SHELL_ENABLED / PREVIEW_V2_ENABLED，支持灰度切换。

@@ -2636,6 +2636,37 @@ class MainWindow(QMainWindow):
         if reason or self.preview_panel.is_python_preview_active() or self.compiler is None:
             self._switch_to_python_preview(reason)
 
+    def _render_preview_with_v2(self):
+        if self._current_page is None:
+            self.preview_panel.show_image_preview(None, reason="No page", label_prefix="V2 renderer")
+            return
+
+        renderer = self._renderer_manager.active()
+        if renderer is None:
+            self._handle_preview_failure("Preview renderer unavailable")
+            return
+
+        schema = {
+            "page": self._current_page,
+            "screen_width": int(self.project.screen_width if self.project is not None else 240),
+            "screen_height": int(self.project.screen_height if self.project is not None else 320),
+        }
+        renderer.render(schema)
+        snapshot = renderer.snapshot()
+        if not snapshot:
+            error = getattr(renderer, "last_render_error", "")
+            self._handle_preview_failure(error or "V2 preview render failed")
+            return
+
+        try:
+            qimage = QImage.fromData(snapshot)
+        except Exception:
+            qimage = QImage()
+        if qimage.isNull():
+            self._handle_preview_failure("V2 preview snapshot invalid")
+            return
+        self.preview_panel.show_image_preview(qimage, label_prefix="V2 renderer")
+
     def _persist_current_project_to_config(self):
         self._config.last_app = self.app_name or self._config.last_app
         self._config.last_project_path = normalize_path(os.path.join(self._project_dir, f"{self.app_name}.egui")) if self._project_dir else ""
@@ -7388,6 +7419,11 @@ class MainWindow(QMainWindow):
             self.preview_panel.set_widgets(widgets)
             self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
             self.page_navigator.refresh_thumbnail(self._current_page.name)
+
+            if self._renderer_manager.active_name == "v2":
+                self._render_preview_with_v2()
+                return
+
             if self.compiler is None or not self.compiler.can_build() or self.preview_panel.is_python_preview_active():
                 reason = ""
                 if self.compiler is None:

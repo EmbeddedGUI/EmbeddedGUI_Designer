@@ -1523,11 +1523,24 @@ class PreviewPanel(QWidget):
         image = render_page(page, self.screen_width, self.screen_height).convert("RGBA")
         raw = image.tobytes("raw", "RGBA")
         qimage = QImage(raw, image.width, image.height, image.width * 4, QImage.Format_RGBA8888).copy()
+        self.show_image_preview(qimage, reason=reason, label_prefix="Python fallback")
+
+    def show_image_preview(self, qimage, reason="", label_prefix="Renderer"):
+        """Display a pre-rendered QImage in the preview area."""
+        self.stop_rendering()
+        self._python_preview_active = True
+
+        if qimage is None or qimage.isNull():
+            self._preview_label.clear()
+            self.status_label.setText(f"Preview - {label_prefix}")
+            self._update_accessibility_summary()
+            return
+
         self._set_preview_pixmap(QPixmap.fromImage(qimage))
         if reason:
-            self.status_label.setText(f"Preview - Python fallback ({reason})")
+            self.status_label.setText(f"Preview - {label_prefix} ({reason})")
         else:
-            self.status_label.setText("Preview - Python fallback")
+            self.status_label.setText(f"Preview - {label_prefix}")
         self._update_accessibility_summary()
 
     def clear_python_preview_mode(self):
