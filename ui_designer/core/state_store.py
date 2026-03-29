@@ -14,6 +14,7 @@ class EditorState:
     active_bottom_tab: str = "Diagnostics"
     preview_engine: str = "v1"
     panel_layout: dict[str, Any] = field(default_factory=dict)
+    last_node_patch: dict[str, Any] = field(default_factory=dict)
 
 
 class StateStore:
@@ -58,6 +59,11 @@ class StateStore:
 
     def set_preview_engine(self, engine_name: str) -> None:
         self._state.preview_engine = str(engine_name or "v1")
+        self._notify()
+
+    def set_node_patch(self, node_id: str | None, patch: dict[str, Any] | None) -> None:
+        self._state.selected_node_id = node_id
+        self._state.last_node_patch = patch if isinstance(patch, dict) else {}
         self._notify()
 
     def _notify(self) -> None:

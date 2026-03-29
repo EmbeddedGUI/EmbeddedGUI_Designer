@@ -28,6 +28,7 @@ from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
 from .iconography import make_icon, widget_icon_key
+from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
 
@@ -76,27 +77,6 @@ def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
     return f"{value} {noun}"
-
-
-class CollapsibleGroupBox(QGroupBox):
-    """A QGroupBox that can be collapsed/expanded by clicking its title."""
-
-    def __init__(self, title, parent=None):
-        super().__init__(title, parent)
-        self.setCheckable(True)
-        self.setChecked(True)
-        self.toggled.connect(self._on_toggled)
-        self._content_height = 0
-
-    def _on_toggled(self, checked):
-        for i in range(self.layout().count()) if self.layout() else []:
-            item = self.layout().itemAt(i)
-            if item.widget():
-                item.widget().setVisible(checked)
-        if checked:
-            self.setMaximumHeight(16777215)
-        else:
-            self.setMaximumHeight(30)
 
 
 class PropertyPanel(QWidget):

@@ -7174,6 +7174,17 @@ class MainWindow(QMainWindow):
 
     def _on_property_changed(self):
         """A property value was changed in the property panel."""
+        primary = self._selection_state.primary
+        patch = {}
+        if primary is not None:
+            patch = {
+                "x": int(getattr(primary, "x", 0)),
+                "y": int(getattr(primary, "y", 0)),
+                "width": int(getattr(primary, "width", 0)),
+                "height": int(getattr(primary, "height", 0)),
+                "properties": dict(getattr(primary, "properties", {}) or {}),
+            }
+        self._state_store.set_node_patch(getattr(primary, "name", None) if primary is not None else None, patch)
         self.widget_tree.rebuild_tree()
         self.widget_tree.set_selected_widgets(self._selection_state.widgets, self._selection_state.primary)
         self.animations_panel.refresh()
