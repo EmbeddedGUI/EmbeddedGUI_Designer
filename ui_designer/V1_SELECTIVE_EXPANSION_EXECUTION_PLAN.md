@@ -416,16 +416,21 @@ last_update: 2026-03-29
 current_sprint: S1
 completed:
   - UI-S1-001
-in_progress:
   - UI-S1-002
+  - UI-S1-003
+  - UI-S1-004
+in_progress:
+  - []
 blocked:
   - []
 next_recommended:
-  - UI-S1-003
-  - UI-S1-004
+  - UI-S2-001
+  - UI-S2-002
 notes:
   - 已完成主窗口现状盘点，保留“左导航+中画布+右检查器+底部工具”的既有壳层能力。
-  - 三栏骨架改造建议以 feature flag 分叉实现，避免影响现有发布与编译链路。
+  - 已新增 feature flag：NEW_SHELL_ENABLED / PREVIEW_V2_ENABLED，支持灰度切换。
+  - 已新增 settings/ui_prefs.py 并接入 main_window，持久化 splitter/tab/底部面板与左侧激活面板。
+  - 已新增 core/state_store.py 并接入页面切换、选中态、底部面板与左侧面板状态更新入口。
 ```
 
 ---
