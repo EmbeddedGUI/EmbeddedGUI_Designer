@@ -415,22 +415,79 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 last_update: 2026-03-29
 current_sprint: S1
 completed:
-  - []
+  - UI-S1-001
 in_progress:
-  - []
+  - UI-S1-002
 blocked:
   - []
 next_recommended:
-  - UI-S1-001
-  - UI-S1-002
+  - UI-S1-003
+  - UI-S1-004
 notes:
-  - 初始化文档已落地，待开始任务执行。
+  - 已完成主窗口现状盘点，保留“左导航+中画布+右检查器+底部工具”的既有壳层能力。
+  - 三栏骨架改造建议以 feature flag 分叉实现，避免影响现有发布与编译链路。
 ```
 
 ---
 
 ## 12. 下一步（建议立即执行）
 
-1. 开始 `UI-S1-001`（盘点主窗口现状）
-2. 紧接 `UI-S1-002`（搭三栏骨架 + Feature Flag）
-3. 完成后更新第 11 节状态并提交一次小步 commit
+1. 执行 `UI-S1-002`：在 `main_window.py` 引入 `NEW_SHELL_ENABLED` 分支骨架（先不替换旧逻辑）
+2. 执行 `UI-S1-003`：新增 `settings/ui_prefs.py`，持久化 splitter/tab/折叠状态
+3. 执行 `UI-S1-004`：抽最小 `state_store.py`，统一选中态入口
+
+---
+
+## 13. UI-S1-001 盘点结果（main_window 重构边界）
+
+### 13.1 可复用区域（建议保留）
+
+1. 工作区壳层结构已接近目标态：
+   - 左侧：`_left_shell` + `_left_panel_stack`
+   - 中央：`_center_shell`（含 page tab + `EditorTabs/PreviewPanel`）
+   - 右侧：`_inspector_tabs`
+   - 底部：`_bottom_tabs` + `_workspace_splitter`
+2. 顶部命令区可复用：`_toolbar_host` + `_init_toolbar()`
+3. 导航元数据与可访问性逻辑可复用：
+   - `_update_workspace_nav_button_metadata`
+   - `_update_workspace_layout_metadata`
+   - `_update_workspace_tab_metadata`
+4. 页面切换/状态同步骨架可复用：
+   - `_switch_page`
+   - `_set_selection`
+   - `_record_page_state_change`
+
+### 13.2 重构隔离边界（建议分层）
+
+1. **Shell 层（新）**：只负责布局、面板装配、feature flag 切换。
+2. **State 层（新）**：选中态/当前页/激活面板状态。
+3. **Render 层（后续 S4）**：编译预览与 Python fallback 统一由 manager 驱动。
+4. **业务动作层（保留）**：现有 `_on_*` 事件方法先不拆，避免第一阶段风险。
+
+### 13.3 需保留的关键信号/槽链路
+
+1. 结构树链路：
+   - `widget_tree.selection_changed -> _on_tree_selection_changed`
+   - `widget_tree.tree_changed -> _on_tree_changed`
+2. 画布链路：
+   - `preview_panel.selection_changed -> _on_preview_selection_changed`
+   - `preview_panel.widget_moved/widget_resized -> _on_widget_moved/_on_widget_resized`
+3. 属性链路：
+   - `property_panel.property_changed -> _on_property_changed`
+4. 编辑器链路：
+   - `editor_tabs.xml_changed -> _on_xml_changed`
+   - `editor_tabs.mode_changed -> _sync_editor_mode_controls`
+5. 页面导航链路：
+   - `project_dock.page_selected -> _on_page_selected`
+   - `page_navigator.page_selected -> _on_page_selected`
+6. 资源链路：
+   - `res_panel.resource_selected -> _on_resource_selected`
+   - `res_panel.resource_imported -> _on_resource_imported`
+
+### 13.4 UI-S1-002 实施注意事项
+
+1. 在 `_init_ui()` 中以 `NEW_SHELL_ENABLED` 包裹新骨架构建函数：
+   - 旧逻辑保持可用（默认）
+   - 新逻辑并行挂载（灰度）
+2. 保持对象名兼容（如 `self.widget_tree/self.property_panel/self.preview_panel`），避免后续信号断链。
+3. 第一步只做“结构复用+封装”，不做视觉重绘，不改交互行为。
