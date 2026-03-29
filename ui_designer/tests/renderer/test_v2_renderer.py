@@ -6,6 +6,7 @@ from PIL import Image
 
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.renderer import v2_renderer_qml as v2_mod
 from ui_designer.renderer.v2_renderer_qml import V2RendererQml
 
 
@@ -63,3 +64,21 @@ def test_v2_renders_progress_and_slider_with_visible_non_background_pixels():
 
     slider_pixels = [img.getpixel((px, 82)) for px in range(20, 160)]
     assert any(pixel != _BG_COLOR for pixel in slider_pixels)
+
+
+def test_v2_reports_error_and_clears_snapshot_when_layout_raises(monkeypatch):
+    root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+    root.add_child(WidgetModel("label", name="lbl", x=8, y=8, width=100, height=20))
+    page = Page(file_path="test.xml", root_widget=root)
+
+    renderer = V2RendererQml()
+
+    def _raise_layout(_page):
+        raise RuntimeError("layout boom")
+
+    monkeypatch.setattr(v2_mod, "compute_page_layout", _raise_layout)
+
+    renderer.render({"page": page, "screen_width": 240, "screen_height": 320})
+
+    assert renderer.snapshot() == b""
+    assert "layout boom" in renderer.last_render_error
