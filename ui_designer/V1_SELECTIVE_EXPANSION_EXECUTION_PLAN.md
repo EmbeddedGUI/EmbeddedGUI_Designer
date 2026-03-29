@@ -413,24 +413,30 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI
 
 ```yaml
 last_update: 2026-03-29
-current_sprint: S1
+current_sprint: S2
 completed:
   - UI-S1-001
   - UI-S1-002
   - UI-S1-003
   - UI-S1-004
+  - UI-S2-001
+  - UI-S2-002
+  - UI-S2-003
+  - UI-S2-004
 in_progress:
   - []
 blocked:
   - []
 next_recommended:
-  - UI-S2-001
-  - UI-S2-002
+  - UI-S2-005
+  - UI-S3-001
 notes:
   - 已完成主窗口现状盘点，保留“左导航+中画布+右检查器+底部工具”的既有壳层能力。
   - 已新增 feature flag：NEW_SHELL_ENABLED / PREVIEW_V2_ENABLED，支持灰度切换。
   - 已新增 settings/ui_prefs.py 并接入 main_window，持久化 splitter/tab/底部面板与左侧激活面板。
   - 已新增 core/state_store.py 并接入页面切换、选中态、底部面板与左侧面板状态更新入口。
+  - 已存在 services/component_catalog.py、search_service.py、recent_service.py、favorite_service.py 并在 widget_browser 中使用。
+  - library_panel.py 已封装 WidgetBrowserPanel，可用于后续壳层切换。
 ```
 
 ---
