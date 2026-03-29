@@ -1,4 +1,4 @@
-﻿"""Main window for EmbeddedGUI Designer 鈥?Android Studio-like IDE layout.
+"""Main window for EmbeddedGUI Designer 鈥?Android Studio-like IDE layout.
 
 All panels (Project Explorer, Widget Tree, Properties) are QDockWidgets
 that can be freely dragged, docked, and rearranged.  Page switching uses
@@ -118,6 +118,10 @@ from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 
 
 WORKSPACE_LAYOUT_VERSION = 2
+
+
+NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+PREVIEW_V2_ENABLED = os.environ.get("EGUI_PREVIEW_V2_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 _DETACHED_WORKERS = set()
