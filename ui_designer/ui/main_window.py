@@ -117,6 +117,9 @@ from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
+from ..renderer.manager import RendererManager
+from ..renderer.v1_python_renderer import V1PythonRenderer
+from ..renderer.v2_renderer_qml import V2RendererQml
 
 
 WORKSPACE_LAYOUT_VERSION = 2
@@ -243,6 +246,7 @@ class MainWindow(QMainWindow):
         self._selected_widget = None
         self._selection_state = SelectionState()
         self._state_store = StateStore()
+        self._renderer_manager = RendererManager()
         self._current_page = None      # currently-displayed Page object
         self._pending_insert_parent = None
         self._clipboard_payload = None
@@ -285,6 +289,7 @@ class MainWindow(QMainWindow):
         self._project_watch_timer.timeout.connect(self._poll_project_files)
 
         self._init_ui()
+        self._init_renderer_manager()
         self._init_menus()
         self._init_toolbar()
         self._restore_diagnostics_view_state()
@@ -587,6 +592,15 @@ class MainWindow(QMainWindow):
 
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
+
+    def _init_renderer_manager(self):
+        """Register preview renderers and sync initial state."""
+        self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
+        self._renderer_manager.register(V2RendererQml())
+        initial_engine = "v2" if PREVIEW_V2_ENABLED else "v1"
+        active_engine = self._renderer_manager.switch(initial_engine, fallback="v1")
+        if hasattr(self, "_state_store"):
+            self._state_store.set_preview_engine(active_engine)
 
     def _prepare_workspace_dock(self, dock_widget):
         if dock_widget is None or not isinstance(dock_widget, QDockWidget):
