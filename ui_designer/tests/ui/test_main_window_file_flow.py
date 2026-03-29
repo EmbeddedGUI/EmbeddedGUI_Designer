@@ -11016,3 +11016,25 @@ class TestMainWindowCanvasActions:
         assert window.statusBar().currentMessage() == "Preview V2 is disabled by feature flag"
 
         _close_window(window)
+
+    def test_preview_engine_invalid_name_is_ignored(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window._preview_engine_actions["v1"].setChecked(True)
+        window._preview_engine_actions["v2"].setChecked(False)
+        window._config.preview_engine = "v1"
+        window._state_store.set_preview_engine("v1")
+
+        switch_calls = []
+        monkeypatch.setattr(window._renderer_manager, "switch", lambda *args, **kwargs: switch_calls.append(args) or "v2")
+
+        window._set_preview_engine("unknown")
+
+        assert switch_calls == []
+        assert window._config.preview_engine == "v1"
+        assert window._state_store.state.preview_engine == "v1"
+        assert window._preview_engine_actions["v1"].isChecked() is True
+        assert window._preview_engine_actions["v2"].isChecked() is False
+
+        _close_window(window)
