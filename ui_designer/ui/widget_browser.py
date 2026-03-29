@@ -25,6 +25,10 @@ from qfluentwidgets import PrimaryPushButton, SearchLineEdit
 
 from ..model.config import get_config
 from ..model.widget_registry import WidgetRegistry
+from ..services.component_catalog import ComponentCatalog
+from ..services.search_service import SearchService, SearchQuery
+from ..services.recent_service import RecentService
+from ..services.favorite_service import FavoriteService
 from .iconography import make_icon, make_widget_preview, widget_icon_key
 
 
@@ -263,6 +267,10 @@ class WidgetBrowserPanel(QWidget):
         super().__init__(parent)
         self._config = get_config()
         self._registry = WidgetRegistry.instance()
+        self._catalog = ComponentCatalog(self._registry)
+        self._search_service = SearchService()
+        self._recent_service = RecentService(self._config)
+        self._favorite_service = FavoriteService(self._config)
         self._selected_type = ""
         self._insert_target_label = "Current page root"
         self._cards = {}
@@ -716,14 +724,14 @@ class WidgetBrowserPanel(QWidget):
             card.set_selected(card.type_name == widget_type)
 
     def record_insert(self, widget_type):
-        self._config.record_widget_browser_recent(widget_type)
+        self._recent_service.record_insert(widget_type)
         self.refresh()
 
     def recent_types(self):
-        return list(self._config.widget_browser_recent)
+        return list(self._recent_service.list_recent_types())
 
     def favorite_types(self):
-        return list(self._config.widget_browser_favorites)
+        return self._favorite_service.list_favorites()
 
     def refresh(self):
         self._sync_organizers()
@@ -926,61 +934,74 @@ class WidgetBrowserPanel(QWidget):
         return item.data(Qt.UserRole) or "all"
 
     def _filtered_items(self):
-        search = (self._search.text() or "").strip().lower()
-        category = self._selected_category()
-        favorite_types = set(self._config.widget_browser_favorites)
-        recent_types = list(self._config.widget_browser_recent)
+        search = (self._search.text() or "").strip()
+        category = str(self._selected_category() or "all").strip().lower()
+        favorite_types = set(self._favorite_service.list_favorites())
+        recent_types = list(self._recent_service.list_recent_types())
         recent_lookup = set(recent_types)
-        items = self._registry.browser_items(addable_only=True)
+        metas = self._catalog.list_components(addable_only=True)
 
+        scenario_filter = "all"
+        category_filter = "all"
         if category == "favorites":
-            items = [item for item in items if item.get("type_name") in favorite_types]
+            metas = [item for item in metas if item.type_name in favorite_types]
         elif category == "recent":
             order = {name: index for index, name in enumerate(recent_types)}
-            items = [item for item in items if item.get("type_name") in recent_lookup]
-            items.sort(key=lambda item: order.get(item.get("type_name"), 999))
+            metas = [item for item in metas if item.type_name in recent_lookup]
+            metas.sort(key=lambda item: order.get(item.type_name, 999))
         elif category == "containers":
-            items = [item for item in items if item.get("is_container")]
-        elif str(category).startswith("scenario:"):
-            selected_scenario = str(category).split(":", 1)[1].strip().lower()
-            items = [item for item in items if str(item.get("scenario", "")).strip().lower() == selected_scenario]
+            category_filter = "containers"
+        elif category.startswith("scenario:"):
+            scenario_filter = category
         elif category != "all":
-            items = [item for item in items if str(item.get("category", "")).strip().lower() == str(category).strip().lower()]
+            category_filter = category
 
-        active_tags = set(self._active_tag_values())
-        if active_tags:
-            tagged_items = []
-            for item in items:
-                item_tags = {str(tag or "").strip().lower() for tag in item.get("tags", []) if str(tag or "").strip()}
-                if active_tags.issubset(item_tags):
-                    tagged_items.append(item)
-            items = tagged_items
-
-        if self._complexity_filter != "all":
-            selected_complexity = str(self._complexity_filter or "").strip().lower()
-            items = [item for item in items if str(item.get("complexity", "") or "").strip().lower() == selected_complexity]
-
-        if search:
-            filtered = []
-            for item in items:
-                haystack = " ".join(
-                    [
-                        item.get("display_name", ""),
-                        item.get("type_name", ""),
-                        item.get("category", ""),
-                        item.get("scenario", ""),
-                    ]
-                    + list(item.get("keywords", []))
-                    + list(item.get("tags", []))
-                ).lower()
-                if search in haystack:
-                    filtered.append(item)
-            items = filtered
-
+        query = SearchQuery(
+            text=search,
+            category=category_filter,
+            scenario=scenario_filter,
+            complexity=self._complexity_filter,
+            tags=tuple(self._active_tag_values()),
+            sort_mode=self._sort_mode,
+        )
         if category != "recent":
-            items = self._sort_items(items, search, favorite_types, recent_types, self._sort_mode)
+            metas = self._search_service.filter_and_sort(
+                metas,
+                query,
+                favorite_types=favorite_types,
+                recent_types=recent_types,
+            )
+        else:
+            metas = self._search_service.filter_and_sort(
+                metas,
+                SearchQuery(
+                    text=search,
+                    category="all",
+                    scenario="all",
+                    complexity=self._complexity_filter,
+                    tags=tuple(self._active_tag_values()),
+                    sort_mode="relevance",
+                ),
+                favorite_types=favorite_types,
+                recent_types=recent_types,
+            )
 
-        return items
+        return [
+            {
+                "type_name": item.type_name,
+                "display_name": item.display_name,
+                "category": item.category,
+                "scenario": item.scenario,
+                "tags": list(item.tags),
+                "keywords": list(item.keywords),
+                "complexity": item.complexity,
+                "icon_key": item.icon_key,
+                "preview_kind": item.preview_kind,
+                "browse_priority": item.browse_priority,
+                "is_container": item.is_container,
+            }
+            for item in metas
+        ]
 
     def _sort_items(self, items, search, favorite_types, recent_types, sort_mode="relevance"):
         mode = str(sort_mode or "relevance").strip().lower()
@@ -1197,7 +1218,7 @@ class WidgetBrowserPanel(QWidget):
         self._update_accessibility_summary()
 
     def _toggle_favorite(self, widget_type):
-        self._config.toggle_widget_browser_favorite(widget_type)
+        self._favorite_service.toggle(widget_type)
         self.refresh()
 
     def _show_card_menu(self, widget_type, global_pos):
