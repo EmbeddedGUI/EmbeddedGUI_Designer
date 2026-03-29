@@ -83,6 +83,7 @@ class WidgetOverlay(QWidget):
     widget_reordered = pyqtSignal(object, int)  # widget, new_index
     zoom_changed = pyqtSignal(float)  # zoom factor
     resource_dropped = pyqtSignal(object, str, str)  # widget, res_type, filename
+    widget_type_dropped = pyqtSignal(str, int, int, object)  # widget_type, x, y, target_widget
     mouse_position_changed = pyqtSignal(int, int, object)  # x, y, widget_under_cursor (or None)
     drag_started = pyqtSignal()   # emitted when drag or resize begins
     drag_finished = pyqtSignal()  # emitted when drag or resize ends
@@ -967,14 +968,16 @@ class WidgetOverlay(QWidget):
 
     def dragEnterEvent(self, event):
         from .resource_panel import EGUI_RESOURCE_MIME
-        if event.mimeData().hasFormat(EGUI_RESOURCE_MIME):
+        from .widget_browser import WidgetBrowserPanel
+        if event.mimeData().hasFormat(EGUI_RESOURCE_MIME) or event.mimeData().hasFormat(WidgetBrowserPanel.WIDGET_DRAG_MIME):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
         from .resource_panel import EGUI_RESOURCE_MIME
-        if event.mimeData().hasFormat(EGUI_RESOURCE_MIME):
+        from .widget_browser import WidgetBrowserPanel
+        if event.mimeData().hasFormat(EGUI_RESOURCE_MIME) or event.mimeData().hasFormat(WidgetBrowserPanel.WIDGET_DRAG_MIME):
             # Highlight widget under cursor
             pos = self._to_logical(event.pos())
             w = self._widget_at(pos, allow_root=False)
@@ -987,6 +990,23 @@ class WidgetOverlay(QWidget):
 
     def dropEvent(self, event):
         from .resource_panel import EGUI_RESOURCE_MIME
+        from .widget_browser import WidgetBrowserPanel
+        if event.mimeData().hasFormat(WidgetBrowserPanel.WIDGET_DRAG_MIME):
+            try:
+                widget_type = bytes(event.mimeData().data(WidgetBrowserPanel.WIDGET_DRAG_MIME)).decode("utf-8").strip()
+            except Exception:
+                event.ignore()
+                return
+            if not widget_type:
+                event.ignore()
+                return
+            pos = self._to_logical(event.pos())
+            target = self._widget_at(pos, allow_root=False)
+            self.widget_type_dropped.emit(widget_type, pos.x(), pos.y(), target)
+            self._hovered = None
+            self.update()
+            event.acceptProposedAction()
+            return
         if not event.mimeData().hasFormat(EGUI_RESOURCE_MIME):
             event.ignore()
             return
@@ -1100,6 +1120,7 @@ class PreviewPanel(QWidget):
         self.overlay.resource_dropped.connect(self.resource_dropped.emit)
         self.overlay.drag_started.connect(self.drag_started.emit)
         self.overlay.drag_finished.connect(self.drag_finished.emit)
+        self.overlay.widget_type_dropped.connect(self.widget_type_dropped.emit)
 
         # Wrap overlay in a scroll area so it can be zoomed bigger than the panel
         self._overlay_scroll = QScrollArea()

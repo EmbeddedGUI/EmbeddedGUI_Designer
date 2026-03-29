@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData
+from PyQt5.QtGui import QDrag
 from PyQt5.QtWidgets import (
     QFrame,
     QGridLayout,
@@ -58,11 +59,13 @@ class WidgetBrowserCard(QFrame):
     insert_requested = pyqtSignal(str)
     favorite_toggled = pyqtSignal(str)
     menu_requested = pyqtSignal(str, object)
+    drag_requested = pyqtSignal(str, QPoint)
 
     def __init__(self, item, parent=None):
         super().__init__(parent)
         self._item = dict(item or {})
         self._selected = False
+        self._drag_start_pos = QPoint()
         self._init_ui()
 
     @property
@@ -207,6 +210,11 @@ class WidgetBrowserCard(QFrame):
             tooltip=f"Insert {display_name} into the current target.",
             accessible_name=f"Insert {display_name}",
         )
+        _set_widget_metadata(
+            self,
+            tooltip=f"{summary} Drag to insert {display_name} into the canvas.",
+            accessible_name=summary,
+        )
 
     def set_selected(self, selected):
         self._selected = bool(selected)
@@ -224,8 +232,19 @@ class WidgetBrowserCard(QFrame):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            self._drag_start_pos = event.pos()
             self.clicked.emit(self.type_name)
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if not (event.buttons() & Qt.LeftButton):
+            super().mouseMoveEvent(event)
+            return
+        if (event.pos() - self._drag_start_pos).manhattanLength() < 8:
+            super().mouseMoveEvent(event)
+            return
+        self.drag_requested.emit(self.type_name, event.globalPos())
+        super().mouseMoveEvent(event)
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -242,6 +261,8 @@ class WidgetBrowserPanel(QWidget):
 
     insert_requested = pyqtSignal(str)
     reveal_requested = pyqtSignal(str)
+
+    WIDGET_DRAG_MIME = "application/x-egui-widget-type"
 
     _SPECIAL_CATEGORIES = (
         ("all", "All Widgets"),
@@ -1160,6 +1181,7 @@ class WidgetBrowserPanel(QWidget):
                 card.insert_requested.connect(self.insert_requested.emit)
                 card.favorite_toggled.connect(self._toggle_favorite)
                 card.menu_requested.connect(self._show_card_menu)
+                card.drag_requested.connect(self._start_widget_drag)
                 self._cards_layout.addWidget(card, row, column)
                 self._cards[card_index] = card
                 card.set_selected(card.type_name == self._selected_type)
@@ -1191,6 +1213,7 @@ class WidgetBrowserPanel(QWidget):
         insert_action = menu.addAction("Insert")
         favorite_action = menu.addAction("Unfavorite" if is_favorite else "Favorite")
         reveal_action = menu.addAction("Reveal in Structure")
+        drag_action = menu.addAction("Drag to Canvas")
         chosen = menu.exec_(global_pos)
         if chosen == insert_action:
             self.insert_requested.emit(widget_type)
@@ -1198,6 +1221,25 @@ class WidgetBrowserPanel(QWidget):
             self._toggle_favorite(widget_type)
         elif chosen == reveal_action:
             self.reveal_requested.emit(widget_type)
+        elif chosen == drag_action:
+            self._start_widget_drag(widget_type, global_pos)
+
+    def _start_widget_drag(self, widget_type, global_pos=None):
+        widget_type = str(widget_type or "").strip()
+        if not widget_type:
+            return
+        self._select_card(widget_type)
+        drag = QDrag(self)
+        mime = QMimeData()
+        mime.setData(self.WIDGET_DRAG_MIME, widget_type.encode("utf-8"))
+        drag.setMimeData(mime)
+        item = self._catalog.by_type(widget_type)
+        if item is not None:
+            drag.setPixmap(make_icon(item.icon_key or widget_icon_key(widget_type), size=18).pixmap(18, 18))
+            drag.setHotSpot(QPoint(9, 9))
+        if global_pos is not None:
+            self.statusTip()  # keep QObject state touched for accessibility update rhythm
+        drag.exec_(Qt.CopyAction)
 
     def _set_category_by_id(self, category_id):
         target = str(category_id or "").strip().lower()

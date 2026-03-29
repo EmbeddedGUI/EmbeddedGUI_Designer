@@ -532,6 +532,7 @@ class MainWindow(QMainWindow):
         self.preview_panel.widget_resized.connect(self._on_widget_resized)
         self.preview_panel.widget_reordered.connect(self._on_widget_reordered)
         self.preview_panel.resource_dropped.connect(self._on_resource_dropped)
+        self.preview_panel.widget_type_dropped.connect(self._on_widget_type_dropped)
         self.preview_panel.drag_started.connect(self._on_drag_started)
         self.preview_panel.drag_finished.connect(self._on_drag_finished)
         self.preview_panel.runtime_failed.connect(self._on_preview_runtime_failed)
@@ -5298,6 +5299,38 @@ class MainWindow(QMainWindow):
         self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
         self._update_resource_usage_panel()
         self._on_model_changed(source=f"{res_type} resource drop")
+
+    def _on_widget_type_dropped(self, widget_type, x, y, target_widget):
+        """Widget type dropped from library onto preview overlay."""
+        widget_type = str(widget_type or "").strip()
+        if not widget_type or self._current_page is None:
+            return
+
+        target_parent = None
+        if target_widget is not None and getattr(target_widget, "is_container", False):
+            target_parent = target_widget
+
+        inserted = self.widget_tree.insert_widget(widget_type, parent=target_parent)
+        if inserted is None:
+            return
+
+        if target_parent is None:
+            inserted.x = max(0, min(int(x or 0), max(self._current_page.screen_width - inserted.width, 0)))
+            inserted.y = max(0, min(int(y or 0), max(self._current_page.screen_height - inserted.height, 0)))
+            inserted.display_x = inserted.x
+            inserted.display_y = inserted.y
+
+        self.widget_tree.rebuild_tree()
+        self._set_selection([inserted], primary=inserted, sync_tree=True, sync_preview=True)
+        self._record_page_state_change(source=f"widget drag insert: {widget_type}")
+
+        if hasattr(self, "widget_browser"):
+            self.widget_browser.record_insert(widget_type)
+
+        self.statusBar().showMessage(
+            f"Inserted {WidgetRegistry.instance().display_name(widget_type)} via drag",
+            3000,
+        )
 
     def _run_resource_generation(self, silent=False):
         if not self.project or not self._project_dir:
