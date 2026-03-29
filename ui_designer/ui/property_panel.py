@@ -64,6 +64,18 @@ _MULTI_SUPPORTED_PROPERTY_TYPES = {
     "text_file",
 }
 
+_DATA_PROPERTY_TYPES = {
+    "image_file",
+    "image_format",
+    "image_alpha",
+    "image_external",
+    "font_file",
+    "font_pixelsize",
+    "font_fontbitsize",
+    "font_external",
+    "text_file",
+}
+
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
@@ -496,47 +508,59 @@ class PropertyPanel(QWidget):
         w = self._primary_widget
         self._layout.addWidget(self._build_single_selection_header(w))
 
-        # Common properties group
-        common_group = QGroupBox(f"{w.widget_type} - {w.name}")
-        common_form = QFormLayout()
-        common_group.setLayout(common_form)
+        # Basic group
+        basic_group = CollapsibleGroupBox("Basic")
+        basic_form = QFormLayout()
+        basic_group.setLayout(basic_form)
 
-        # Name
         name_edit = LineEdit()
         name_edit.setText(w.name)
         name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
-        common_form.addRow("Name:", name_edit)
+        basic_form.addRow("Name:", name_edit)
         self._editors["name"] = name_edit
         self._update_name_editor_metadata(name_edit)
+        self._layout.addWidget(basic_group)
 
-        # Position/Size
+        # Layout group
+        layout_group = CollapsibleGroupBox("Layout")
+        layout_form = QFormLayout()
+        layout_group.setLayout(layout_form)
         for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
             spin = SpinBox()
             spin.setRange(-9999, 9999)
             spin.setValue(getattr(w, field))
             spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
-            common_form.addRow(label, spin)
+            layout_form.addRow(label, spin)
             self._editors[field] = spin
+        self._layout.addWidget(layout_group)
 
-        self._layout.addWidget(common_group)
         self._layout.addWidget(self._build_designer_state_group())
         feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
 
-        # Type-specific properties - data-driven grouping
+        # Type-specific properties - grouped by data vs other
         type_info = WidgetRegistry.instance().get(w.widget_type)
         props = type_info.get("properties", {})
 
         if props:
-            self._build_grouped_properties(w, props)
+            data_props = {
+                name: info for name, info in props.items() if info.get("type") in _DATA_PROPERTY_TYPES
+            }
+            other_props = {
+                name: info for name, info in props.items() if info.get("type") not in _DATA_PROPERTY_TYPES
+            }
+            if other_props:
+                self._build_grouped_properties(w, other_props)
+            if data_props:
+                self._build_data_group(w, data_props)
 
         callbacks_group = self._build_callbacks_group(w)
         if callbacks_group is not None:
             self._layout.addWidget(callbacks_group)
 
-        # Background properties
-        bg_group = QGroupBox("Background")
+        # Style properties
+        bg_group = CollapsibleGroupBox("Style")
         bg_form = QFormLayout()
         bg_group.setLayout(bg_form)
 
@@ -1014,6 +1038,8 @@ class PropertyPanel(QWidget):
 
         for group_key, group_props in groups.items():
             group_label = _UI_GROUP_LABELS.get(group_key, group_key.replace("_", " ").title())
+            if group_label in {"Properties", "Main"}:
+                group_label = "Behavior"
             group_box = CollapsibleGroupBox(group_label)
             form = QFormLayout()
             group_box.setLayout(form)
@@ -1035,6 +1061,32 @@ class PropertyPanel(QWidget):
                     label += ":"
                     form.addRow(label, editor)
 
+            self._layout.addWidget(group_box)
+
+    def _build_data_group(self, w, props):
+        group_box = CollapsibleGroupBox("Data")
+        form = QFormLayout()
+        group_box.setLayout(form)
+
+        for prop_name, prop_info in props.items():
+            vis = prop_info.get("ui_visible_when")
+            if vis and not self._check_visibility(w, vis):
+                continue
+            editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
+            if editor is None:
+                continue
+            label = prop_name
+            for prefix in ("image_", "font_"):
+                if label.startswith(prefix):
+                    label = label[len(prefix):]
+                    break
+            label = label.replace("_", " ").title()
+            if self._is_missing_file_property(prop_name, prop_info, w.properties.get(prop_name)):
+                label += " (Missing)"
+                self._apply_missing_file_editor_state(editor, prop_name, prop_info, w.properties.get(prop_name))
+            form.addRow(f"{label}:", editor)
+
+        if form.rowCount() > 0:
             self._layout.addWidget(group_box)
 
     def _humanize_callback_name(self, event_name):

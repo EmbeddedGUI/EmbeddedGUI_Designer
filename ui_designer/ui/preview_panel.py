@@ -1059,6 +1059,7 @@ class PreviewPanel(QWidget):
     context_menu_requested = pyqtSignal(object, object)
     widget_reordered = pyqtSignal(object, int)
     resource_dropped = pyqtSignal(object, str, str)  # widget, res_type, filename
+    widget_type_dropped = pyqtSignal(str, int, int, object)  # widget_type, x, y, target_widget
     drag_started = pyqtSignal()
     drag_finished = pyqtSignal()
     runtime_failed = pyqtSignal(str)
