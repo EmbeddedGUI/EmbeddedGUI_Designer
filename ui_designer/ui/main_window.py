@@ -115,6 +115,8 @@ from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
+from ..settings.ui_prefs import UIPreferences
+from ..core.state_store import StateStore
 
 
 WORKSPACE_LAYOUT_VERSION = 2
@@ -240,6 +242,7 @@ class MainWindow(QMainWindow):
         self._project_dir = None      # directory containing .egui project file
         self._selected_widget = None
         self._selection_state = SelectionState()
+        self._state_store = StateStore()
         self._current_page = None      # currently-displayed Page object
         self._pending_insert_parent = None
         self._clipboard_payload = None
@@ -1406,6 +1409,8 @@ class MainWindow(QMainWindow):
             panel_key = "project"
         self._current_left_panel = panel_key
         self._config.workspace_left_panel = panel_key
+        if hasattr(self, "_state_store"):
+            self._state_store.set_left_tab(panel_key)
         page = self._left_panel_pages[panel_key]
         self._left_panel_stack.setCurrentWidget(page)
         for key, button in getattr(self, "_workspace_nav_buttons", {}).items():
@@ -1712,8 +1717,11 @@ class MainWindow(QMainWindow):
 
     def _on_bottom_tab_changed(self, index):
         titles = {0: "Diagnostics", 1: "History", 2: "Debug Output"}
+        current_label = titles.get(index, "Tools")
         if hasattr(self, "_bottom_title"):
-            self._bottom_title.setText(titles.get(index, "Tools"))
+            self._bottom_title.setText(current_label)
+        if hasattr(self, "_state_store"):
+            self._state_store.set_bottom_tab(current_label)
         self._update_workspace_tab_metadata()
 
     def _update_bottom_toggle_button_metadata(self):
@@ -2127,11 +2135,12 @@ class MainWindow(QMainWindow):
                 pass
 
         workspace_state = getattr(self._config, "workspace_state", {}) if isinstance(getattr(self._config, "workspace_state", {}), dict) else {}
-        for splitter, key in (
-            (getattr(self, "_top_splitter", None), "top_splitter"),
-            (getattr(self, "_workspace_splitter", None), "workspace_splitter"),
+        ui_prefs = UIPreferences.from_workspace_state(workspace_state)
+        for splitter, state in (
+            (getattr(self, "_top_splitter", None), ui_prefs.top_splitter),
+            (getattr(self, "_workspace_splitter", None), ui_prefs.workspace_splitter),
         ):
-            state = str(workspace_state.get(key, "") or "").strip()
+            state = str(state or "").strip()
             if splitter is None or not state:
                 continue
             try:
@@ -2139,7 +2148,14 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
 
-        self._select_left_panel(getattr(self._config, "workspace_left_panel", "project"))
+        self._select_left_panel(ui_prefs.active_left_panel or getattr(self._config, "workspace_left_panel", "project"))
+        if hasattr(self, "_inspector_tabs") and self._inspector_tabs.count() > 0:
+            self._inspector_tabs.setCurrentIndex(max(0, min(ui_prefs.inspector_tab_index, self._inspector_tabs.count() - 1)))
+        if hasattr(self, "_page_tools_tabs") and self._page_tools_tabs.count() > 0:
+            self._page_tools_tabs.setCurrentIndex(max(0, min(ui_prefs.page_tools_tab_index, self._page_tools_tabs.count() - 1)))
+        if hasattr(self, "_bottom_tabs") and self._bottom_tabs.count() > 0:
+            self._bottom_tabs.setCurrentIndex(max(0, min(ui_prefs.bottom_tab_index, self._bottom_tabs.count() - 1)))
+        self._set_bottom_panel_visible(bool(ui_prefs.bottom_panel_visible))
 
     def _save_window_state_to_config(self):
         try:
@@ -2147,10 +2163,17 @@ class MainWindow(QMainWindow):
             self._config.window_state = bytes(self.saveState().toBase64()).decode("ascii")
             self._config.workspace_layout_version = WORKSPACE_LAYOUT_VERSION
             self._config.workspace_left_panel = getattr(self, "_current_left_panel", "project")
-            self._config.workspace_state = {
-                "top_splitter": bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
-                "workspace_splitter": bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
-            }
+            ui_prefs = UIPreferences(
+                top_splitter=bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
+                workspace_splitter=bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
+                inspector_tab_index=self._inspector_tabs.currentIndex() if hasattr(self, "_inspector_tabs") else 0,
+                page_tools_tab_index=self._page_tools_tabs.currentIndex() if hasattr(self, "_page_tools_tabs") else 0,
+                bottom_tab_index=self._bottom_tabs.currentIndex() if hasattr(self, "_bottom_tabs") else 0,
+                bottom_panel_visible=bool(getattr(self, "_bottom_panel_visible", False)),
+                active_left_panel=getattr(self, "_current_left_panel", "project"),
+                panel_layout={},
+            )
+            self._config.workspace_state = ui_prefs.to_workspace_state()
             self._config.workspace_status_panel_state = (
                 self.status_center_panel.view_state() if hasattr(self, "status_center_panel") else {}
             )
@@ -5402,6 +5425,8 @@ class MainWindow(QMainWindow):
         if page is None:
             return
         self._current_page = page
+        if hasattr(self, "_state_store"):
+            self._state_store.set_current_page(page_name)
         self.res_panel.set_usage_page_context(page_name)
         self._clear_selection(sync_tree=True, sync_preview=True)
         self.project_dock.set_current_page(page_name)
@@ -6076,6 +6101,9 @@ class MainWindow(QMainWindow):
     def _set_selection(self, widgets=None, primary=None, sync_tree=True, sync_preview=True):
         self._selection_state.set_widgets(widgets or [], primary=primary)
         self._selected_widget = self._selection_state.primary
+        if hasattr(self, "_state_store"):
+            selected_id = getattr(self._selected_widget, "name", None) if self._selected_widget is not None else None
+            self._state_store.set_selection(selected_id)
         self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
         self.animations_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
         if sync_tree:

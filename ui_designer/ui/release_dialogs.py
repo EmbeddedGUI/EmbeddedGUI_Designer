@@ -1334,6 +1334,7 @@ class ReleaseHistoryDialog(QDialog):
         button_box.accepted.connect(self.accept)
         root_layout.addWidget(button_box)
         close_button = button_box.button(QDialogButtonBox.Close)
+        self._close_button = close_button
 
         self._range_filter_combo.setAccessibleName("Release history range filter")
         self._status_filter_combo.setAccessibleName("Release history status filter")
@@ -1540,6 +1541,15 @@ class ReleaseHistoryDialog(QDialog):
         default_view_active = self._default_view_is_active()
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        if getattr(self, "_close_button", None) is not None:
+            _set_widget_metadata(
+                self._close_button,
+                tooltip=(
+                    f"Close the release history dialog. {visible_entries_context} "
+                    f"Current selection: {selection_label}. Preview mode: {self._preview_mode}."
+                ),
+                accessible_name="Close release history dialog",
+            )
         _set_widget_metadata(
             self._range_filter_combo,
             tooltip=f"Filter release history by age. Current filter: {self._range_filter_combo.currentText()}.",
