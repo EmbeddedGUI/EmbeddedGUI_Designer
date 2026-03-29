@@ -10792,3 +10792,34 @@ class TestMainWindowCanvasActions:
         assert window.preview_panel.selected_widgets() == [leaf_a, nested_group, leaf_b]
         assert window.statusBar().currentMessage() == "Selected 3 widgets at depth 2."
         _close_window(window)
+
+    def test_preview_failure_forces_v1_and_syncs_config_and_state_store(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class CompilerWithStopCount:
+            def __init__(self):
+                self.stop_calls = 0
+
+            def stop_exe(self):
+                self.stop_calls += 1
+
+        window = MainWindow("")
+        compiler = CompilerWithStopCount()
+        window.compiler = compiler
+        window._config.preview_engine = "v2"
+        window._state_store.set_preview_engine("v2")
+
+        switch_calls = []
+        monkeypatch.setattr(window._renderer_manager, "switch", lambda engine, fallback="v1": switch_calls.append((engine, fallback)) or "v1")
+        monkeypatch.setattr(window, "_show_bottom_panel", lambda *_args, **_kwargs: None)
+        monkeypatch.setattr(window, "_update_compile_availability", lambda: None)
+
+        window._handle_preview_failure("forced failure")
+
+        assert compiler.stop_calls == 1
+        assert switch_calls == [("v1", "v1")]
+        assert window._config.preview_engine == "v1"
+        assert window._state_store.state.preview_engine == "v1"
+        assert window._last_runtime_error_text == "forced failure"
+
+        _close_window(window)
