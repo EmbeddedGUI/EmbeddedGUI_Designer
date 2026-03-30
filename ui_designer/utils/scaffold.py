@@ -55,6 +55,10 @@ def make_app_config_h_content(app_name, screen_width=240, screen_height=320):
         f"",
         f"#define EGUI_CONFIG_COLOR_DEPTH 16",
         f"",
+        # DesignerPreviewSmoke and the designer-generated UI rely on circle-mask
+        # helpers under EGUI_CONFIG_FUNCTION_SUPPORT_MASK.
+        f"#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1",
+        f"",
         f"#endif /* _APP_EGUI_CONFIG_H_ */",
         f"",
     ]

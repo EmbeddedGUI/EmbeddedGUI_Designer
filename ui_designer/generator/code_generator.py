@@ -1633,6 +1633,11 @@ def generate_app_config(project):
         f"#define EGUI_CONFIG_PFB_WIDTH    {pfb_w}\n"
         f"#define EGUI_CONFIG_PFB_HEIGHT   {pfb_h}\n"
         "\n"
+        "#define EGUI_CONFIG_COLOR_DEPTH 16\n"
+        "\n"
+        # Designer UI relies on circle-mask helpers under EGUI_CONFIG_FUNCTION_SUPPORT_MASK.
+        "#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1\n"
+        "\n"
         f"#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE {max_radius}\n"
         "\n"
         f"{recording_line}"
