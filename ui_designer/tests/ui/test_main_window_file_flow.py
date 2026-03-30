@@ -7621,6 +7621,7 @@ class TestMainWindowFileFlow:
 
         assert isolated_config.window_geometry == bytes(saved_geometry.toBase64()).decode("ascii")
         assert isolated_config.window_state == bytes(saved_state.toBase64()).decode("ascii")
+        assert isolated_config.workspace_state.get("focus_canvas_enabled") is False
 
         restore_calls = {}
         monkeypatch.setattr(window, "restoreGeometry", lambda data: restore_calls.setdefault("geometry", bytes(data)) or True)
@@ -7639,6 +7640,20 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_dock.objectName() == "diagnostics_dock"
         assert window.debug_dock.objectName() == "debug_output_dock"
         assert window._toolbar.objectName() == "main_toolbar"
+        _close_window(window)
+
+    def test_workspace_preferences_restore_focus_canvas_mode(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        isolated_config.workspace_state = {"focus_canvas_enabled": True}
+        isolated_config.workspace_layout_version = 2
+
+        window = MainWindow("")
+
+        assert window._focus_canvas_enabled is True
+        assert window._focus_canvas_action.isChecked() is True
+        assert window._left_shell.isHidden() is True
+        assert window._inspector_tabs.isHidden() is True
         _close_window(window)
 
     def test_workspace_panel_preferences_restore_from_config(self, qapp, isolated_config):

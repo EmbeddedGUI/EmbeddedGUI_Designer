@@ -342,10 +342,10 @@ completed:
   - MAC-C-002
   - MAC-C-003
   - UI-D-004
+  - UI-D-001
 in_progress: []
 blocked: []
 next_recommended:
-  - UI-D-001
   - UI-D-002
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
@@ -356,6 +356,7 @@ notes:
   - MAC-C-002：欢迎页「无最近工程」与属性面板「无选中」空状态双行文案 + 面板样式
   - MAC-C-003：dark token 对比度提升（border/text/accent/selection），并让 light surface_hover 与 test_theme 基线一致
   - UI-D-004：新增 View > Focus Canvas 切换（隐藏左栏/Inspector/底栏），打开 Inspector/Tools 时自动退出专注模式
+  - UI-D-001：workspace_state 新增 focus_canvas_enabled，重启后可恢复 Focus Canvas
 ```
 
 ---

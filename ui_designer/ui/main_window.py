@@ -2239,6 +2239,8 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_bottom_tabs") and self._bottom_tabs.count() > 0:
             self._bottom_tabs.setCurrentIndex(max(0, min(ui_prefs.bottom_tab_index, self._bottom_tabs.count() - 1)))
         self._set_bottom_panel_visible(bool(ui_prefs.bottom_panel_visible))
+        if bool(getattr(ui_prefs, "focus_canvas_enabled", False)):
+            self._set_focus_canvas_enabled(True)
 
     def _save_window_state_to_config(self):
         try:
@@ -2257,6 +2259,7 @@ class MainWindow(QMainWindow):
                 ),
                 bottom_tab_index=self._bottom_tabs.currentIndex() if hasattr(self, "_bottom_tabs") else 0,
                 bottom_panel_visible=bool(getattr(self, "_bottom_panel_visible", False)),
+                focus_canvas_enabled=bool(getattr(self, "_focus_canvas_enabled", False)),
                 active_left_panel=getattr(self, "_current_left_panel", "project"),
                 panel_layout={},
             )
