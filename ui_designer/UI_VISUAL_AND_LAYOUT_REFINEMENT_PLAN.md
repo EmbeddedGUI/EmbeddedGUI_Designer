@@ -349,8 +349,10 @@ in_progress: []
 blocked: []
 next_recommended:
   - 可选：分批跑 UI 子集（`ui/test_theme.py`、`ui/test_workspace_dialogs.py`、`ui/test_main_window_file_flow.py` 轻量用例）；本机全量 UI 可能触发 Qt native access violation，尽量避免一次性跑完 ui_designer/tests/ui
+  - 观察到：批量跑 `ui/test_main_window_file_flow.py`（排除单个用例后仍跑大量）在本机环境可能导致原生崩溃；建议继续只跑单个/少量用例来验证
 notes:
   - 回归验证（非 UI）：`pytest ui_designer/tests/{engine,generator,model,renderer,settings}` 已通过，共 667 passed
+  - 回归验证（UI 子集）：`test_editor_tabs/test_diagnostics_panel/test_history_panel/test_animations_panel` 共 13 passed；`test_theme` 与 `test_workspace_dialogs` 通过（本机已验证）
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
   - MAC-B-003：Inspector `_inspector_form`、property_panel 滚动根 QSS、collapsible_group 对象名与折叠高度
