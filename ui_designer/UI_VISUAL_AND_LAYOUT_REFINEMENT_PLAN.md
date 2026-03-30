@@ -253,10 +253,10 @@ shadow:
 
 ### Backlog（阶段 D，可选）
 
-- [ ] **UI-D-001**：持久化 `_top_splitter` / `_workspace_splitter` 尺寸与底栏高度（`config` / `ui_prefs`）。  
-- [ ] **UI-D-002**：最小窗口宽度与小屏策略。  
+- [x] **UI-D-001**：持久化 `_top_splitter` / `_workspace_splitter` 尺寸与底栏高度（`config` / `ui_prefs`）。  
+- [x] **UI-D-002**：最小窗口宽度与小屏策略。  
 - [ ] **UI-D-003**：`CollapsibleGroupBox` 展开策略记忆（按 widget 类型，成本允许再做）。  
-- [ ] **UI-D-004**：专注模式（收拢侧栏）。
+- [x] **UI-D-004**：专注模式（收拢侧栏）。
 
 ---
 
@@ -324,7 +324,7 @@ shadow:
 
 ```yaml
 last_update: 2026-03-30
-phase: Sprint C
+phase: Backlog D
 completed:
   - UI-S0-001
   - UI-S0-002
@@ -343,10 +343,11 @@ completed:
   - MAC-C-003
   - UI-D-004
   - UI-D-001
+  - UI-D-002
 in_progress: []
 blocked: []
 next_recommended:
-  - UI-D-002
+  - UI-D-003
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
@@ -357,6 +358,7 @@ notes:
   - MAC-C-003：dark token 对比度提升（border/text/accent/selection），并让 light surface_hover 与 test_theme 基线一致
   - UI-D-004：新增 View > Focus Canvas 切换（隐藏左栏/Inspector/底栏），打开 Inspector/Tools 时自动退出专注模式
   - UI-D-001：workspace_state 新增 focus_canvas_enabled，重启后可恢复 Focus Canvas
+  - UI-D-002：主窗 min 960×620、Inspector 滚动区 min 280；启动/恢复几何后按主屏 availableGeometry 收缩并校正位置
 ```
 
 ---

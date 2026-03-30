@@ -7642,6 +7642,27 @@ class TestMainWindowFileFlow:
         assert window._toolbar.objectName() == "main_toolbar"
         _close_window(window)
 
+    def test_main_window_clamps_to_available_screen(self, qapp, monkeypatch):
+        from PyQt5.QtCore import QRect
+
+        class _FakeScreen:
+            def availableGeometry(self):
+                return QRect(0, 0, 1000, 700)
+
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QGuiApplication.primaryScreen",
+            staticmethod(lambda: _FakeScreen()),
+        )
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        margin = 12
+        assert window.width() <= 1000 - 2 * margin
+        assert window.height() <= 700 - 2 * margin
+        assert window.minimumWidth() == 960
+        assert window.props_dock.minimumWidth() == 280
+        _close_window(window)
+
     def test_workspace_preferences_restore_focus_canvas_mode(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import (
     QLineEdit, QPlainTextEdit, QTextEdit,
 )
 from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QGuiApplication, QIcon
 
 from qfluentwidgets import PrimaryPushButton, PushButton, TabBar, TabCloseButtonDisplayMode
 
@@ -131,6 +131,12 @@ from ..renderer.v2_renderer_qml import V2RendererQml
 
 WORKSPACE_LAYOUT_VERSION = 2
 
+# UI-D-002: usable on 1280-wide laptops; clamp to primary screen on startup / restore.
+MAIN_WINDOW_MIN_WIDTH = 960
+MAIN_WINDOW_MIN_HEIGHT = 620
+MAIN_WINDOW_DEFAULT_WIDTH = 1400
+MAIN_WINDOW_DEFAULT_HEIGHT = 800
+INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 PREVIEW_V2_ENABLED = os.environ.get("EGUI_PREVIEW_V2_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -308,8 +314,8 @@ class MainWindow(QMainWindow):
 
     def _init_ui(self):
         self.setWindowTitle("EmbeddedGUI Designer")
-        self.setMinimumSize(1100, 700)
-        self.resize(1400, 800)
+        self.setMinimumSize(MAIN_WINDOW_MIN_WIDTH, MAIN_WINDOW_MIN_HEIGHT)
+        self.resize(MAIN_WINDOW_DEFAULT_WIDTH, MAIN_WINDOW_DEFAULT_HEIGHT)
 
         self._central_stack = QStackedWidget()
 
@@ -355,7 +361,7 @@ class MainWindow(QMainWindow):
 
         right_scroll = QScrollArea()
         right_scroll.setWidgetResizable(True)
-        right_scroll.setMinimumWidth(300)
+        right_scroll.setMinimumWidth(INSPECTOR_SCROLL_MIN_WIDTH)
         right_scroll.setObjectName("properties_dock")
         self.property_panel = PropertyPanel()
         right_scroll.setWidget(self.property_panel)
@@ -2241,6 +2247,35 @@ class MainWindow(QMainWindow):
         self._set_bottom_panel_visible(bool(ui_prefs.bottom_panel_visible))
         if bool(getattr(ui_prefs, "focus_canvas_enabled", False)):
             self._set_focus_canvas_enabled(True)
+
+        self._clamp_window_to_available_screen()
+
+    def _clamp_window_to_available_screen(self):
+        """Shrink and/or reposition so the frame fits the primary screen work area."""
+        try:
+            screen = QGuiApplication.primaryScreen()
+            if screen is None:
+                return
+            avail = screen.availableGeometry()
+            margin = 12
+            max_w = max(self.minimumWidth(), avail.width() - 2 * margin)
+            max_h = max(self.minimumHeight(), avail.height() - 2 * margin)
+            tw = min(self.width(), max_w)
+            th = min(self.height(), max_h)
+            if tw != self.width() or th != self.height():
+                self.resize(tw, th)
+            fg = self.frameGeometry()
+            if fg.right() > avail.right():
+                self.move(avail.right() - fg.width() - margin, fg.top())
+            if fg.bottom() > avail.bottom():
+                self.move(self.x(), avail.bottom() - fg.height() - margin)
+            fg = self.frameGeometry()
+            if fg.left() < avail.left():
+                self.move(avail.left() + margin, fg.top())
+            if fg.top() < avail.top():
+                self.move(self.x(), avail.top() + margin)
+        except Exception:
+            pass
 
     def _save_window_state_to_config(self):
         try:
