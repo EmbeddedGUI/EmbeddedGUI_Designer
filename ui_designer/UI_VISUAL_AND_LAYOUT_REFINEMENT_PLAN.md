@@ -348,7 +348,7 @@ completed:
 in_progress: []
 blocked: []
 next_recommended:
-  - 可选：回归主路径 smoke（main.py）或全量 pytest
+  - 可选：main.py smoke；全量 pytest 在部分环境可能因 Qt/解释器组合偶发崩溃，可分批跑 ui_designer/tests
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
@@ -362,6 +362,7 @@ notes:
   - UI-D-002：主窗 min 960×620、Inspector 滚动区 min 280；启动/恢复几何后按主屏 availableGeometry 收缩并校正位置
   - UI-D-003：workspace_state.inspector_group_expanded（键：widget_type + 制表符 + 组标题，多选为 __multi__ 前缀）；CollapsibleGroupBox.apply_expanded_state 恢复
   - §6 壳层：Tab 选中态与 pane 同色衔接；nav_rail / status_chip 内边距用 space_*；对话框提示色用 hintTone / dialog_muted_hint
+  - 欢迎页空列表测试：断言容器 accessibleName 与子 QLabel，与 test_workspace_dialogs 一致
 ```
 
 ---

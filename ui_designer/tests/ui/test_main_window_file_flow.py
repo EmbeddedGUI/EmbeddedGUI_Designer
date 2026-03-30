@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QByteArray, Qt
-    from PyQt5.QtWidgets import QApplication, QAbstractItemView
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel
     from PyQt5.QtWidgets import QMessageBox
 
     _has_pyqt5 = True
@@ -2720,7 +2720,8 @@ class TestMainWindowFileFlow:
         assert window._recent_menu.actions()[0].statusTip() == window._recent_menu.actions()[0].toolTip()
         recent_widget = window._welcome_page._recent_list.itemAt(0).widget()
         assert recent_widget is not None
-        assert "No recent projects" in recent_widget.text()
+        assert "No recent projects" in (recent_widget.accessibleName() or "")
+        assert any("No recent projects" in (lb.text() or "") for lb in recent_widget.findChildren(QLabel))
         assert "Removed missing project" in window.statusBar().currentMessage()
         _close_window(window)
 
