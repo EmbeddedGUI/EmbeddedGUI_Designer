@@ -355,6 +355,7 @@ notes:
   - 集成验证：`python package_ui_designer.py --sdk-root sdk/EmbeddedGUI` 成功；产物位于 `dist/EmbeddedGUI-Designer` 与 zip 包
   - 回归验证（UI 子集）：`test_editor_tabs/test_diagnostics_panel/test_history_panel/test_animations_panel` 共 13 passed；`test_theme` 与 `test_workspace_dialogs` 通过（本机已验证）
   - 回归验证（smoke 修复后）：`ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI` 通过；`pytest ui_designer/tests/generator/test_code_gen_edge_cases.py::TestAppEguiConfigContent` 通过
+  - MainWindow 关键用例回归：`test_main_window_file_flow.py` 中 `inspector_group_expanded_persist_and_restore` / `test_main_window_clamps_to_available_screen` / `test_open_recent_project_can_remove_missing_entry` 均通过（3 passed）
   - 集成修复点：`code_generator.generate_app_config()` 在生成 `app_egui_config.h` 时增加 `EGUI_CONFIG_FUNCTION_SUPPORT_MASK=1`，保证 circle-mask 相关实现可链接
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
