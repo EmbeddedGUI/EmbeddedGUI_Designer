@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QLabel
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -719,7 +719,8 @@ class TestWelcomePage:
         assert page._recent_list.count() == 1
         widget = page._recent_list.itemAt(0).widget()
         assert widget is not None
-        assert "No recent projects" in widget.text()
+        assert "No recent projects" in (widget.accessibleName() or "")
+        assert any("No recent projects" in (lb.text() or "") for lb in widget.findChildren(QLabel))
         assert "No recent projects." in page.accessibleName()
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         page.deleteLater()
