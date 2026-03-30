@@ -14,48 +14,48 @@ except ImportError:
 
 _TOKENS = {
     "dark": {
-        "bg": "#0F141B",
-        "panel": "#16202B",
-        "panel_alt": "#1B2735",
-        "panel_soft": "#223041",
-        "surface": "#1F2C3A",
-        "surface_hover": "#28384A",
-        "surface_pressed": "#304257",
-        "border": "#314355",
-        "border_strong": "#3C5168",
-        "text": "#E8EEF8",
-        "text_muted": "#97A8BC",
-        "text_soft": "#70849B",
-        "accent": "#63A5FF",
-        "accent_hover": "#7EB4FF",
-        "accent_soft": "#163861",
-        "danger": "#FF7B72",
-        "success": "#4CC38A",
-        "warning": "#F2C572",
-        "selection": "#2D67A9",
-        "selection_soft": "#14314F",
+        "bg": "#1C1C1E",
+        "panel": "#2C2C2E",
+        "panel_alt": "#3A3A3C",
+        "panel_soft": "#3F3F42",
+        "surface": "#323235",
+        "surface_hover": "#3D3D41",
+        "surface_pressed": "#4A4A50",
+        "border": "#4B4B50",
+        "border_strong": "#5A5A61",
+        "text": "#F2F2F7",
+        "text_muted": "#C7C7CC",
+        "text_soft": "#9A9AA2",
+        "accent": "#0A84FF",
+        "accent_hover": "#4A9EFF",
+        "accent_soft": "#123A63",
+        "danger": "#FF453A",
+        "success": "#30D158",
+        "warning": "#FFD60A",
+        "selection": "#2E5EA7",
+        "selection_soft": "#1C2E47",
     },
     "light": {
-        "bg": "#F4F8FC",
+        "bg": "#F5F5F7",
         "panel": "#FFFFFF",
-        "panel_alt": "#F7FAFD",
-        "panel_soft": "#EDF3FA",
-        "surface": "#F3F7FB",
-        "surface_hover": "#E8F0FA",
-        "surface_pressed": "#DCE8F6",
-        "border": "#D5E0EB",
-        "border_strong": "#BCCBDA",
-        "text": "#1D2630",
-        "text_muted": "#617185",
-        "text_soft": "#7A8CA1",
-        "accent": "#1E6FD9",
-        "accent_hover": "#2D7AE2",
-        "accent_soft": "#DCEAFD",
-        "danger": "#BE4B3F",
-        "success": "#22804D",
-        "warning": "#A77000",
-        "selection": "#CFE4FF",
-        "selection_soft": "#E7F1FF",
+        "panel_alt": "#F2F3F5",
+        "panel_soft": "#E9EAED",
+        "surface": "#F3F4F6",
+        "surface_hover": "#ECEEF2",
+        "surface_pressed": "#E1E3E8",
+        "border": "#E0E1E6",
+        "border_strong": "#C7C9D1",
+        "text": "#1C1C1E",
+        "text_muted": "#5B5C61",
+        "text_soft": "#8E8E93",
+        "accent": "#0A84FF",
+        "accent_hover": "#2F8CFF",
+        "accent_soft": "#D6E7FF",
+        "danger": "#D92D20",
+        "success": "#1F8F4C",
+        "warning": "#A56B00",
+        "selection": "#D6E7FF",
+        "selection_soft": "#EEF5FF",
     },
 }
 
@@ -92,13 +92,14 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 8px;
-    padding: 6px 8px;
+    border-radius: 10px;
+    padding: 6px 10px;
     selection-background-color: {t['selection']};
 }}
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
     border: 1px solid {t['accent']};
+    background-color: {t['panel']};
 }}
 
 QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
@@ -107,42 +108,27 @@ QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBo
 }}
 
 QPushButton, QToolButton {{
-    background-color: {t['panel']};
+    background-color: {t['surface']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: 9px;
-    padding: 6px 12px;
+    padding: 7px 13px;
 }}
 
 QPushButton:hover, QToolButton:hover {{
     background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
-}}
-
-QPushButton:pressed, QToolButton:pressed {{
-    background-color: {t['surface_pressed']};
-}}
-
-QPushButton:checked {{
-    background-color: {t['accent_soft']};
-    border-color: {t['accent']};
-}}
-
-QPushButton:disabled, QToolButton:disabled {{
-    color: {t['text_soft']};
-    background-color: {t['panel_alt']};
 }}
 
 QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 10px;
+    border-radius: 12px;
     outline: none;
 }}
 
 QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {{
-    padding: 5px 6px;
+    padding: 6px 8px;
 }}
 
 QListView::item:hover, QTreeView::item:hover, QTableView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
@@ -157,7 +143,7 @@ QListView::item:selected, QTreeView::item:selected, QTableView::item:selected, Q
 QHeaderView::section {{
     background-color: {t['panel_alt']};
     color: {t['text_muted']};
-    padding: 6px 8px;
+    padding: 8px 10px;
     border: none;
     border-right: 1px solid {t['border']};
     border-bottom: 1px solid {t['border']};
@@ -165,7 +151,7 @@ QHeaderView::section {{
 
 QTabWidget::pane {{
     border: 1px solid {t['border']};
-    border-radius: 12px;
+    border-radius: 14px;
     background-color: {t['panel']};
     top: -1px;
 }}
@@ -173,14 +159,14 @@ QTabWidget::pane {{
 QTabBar::tab {{
     background-color: transparent;
     color: {t['text_muted']};
-    padding: 8px 14px;
-    margin-right: 4px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    padding: 8px 16px;
+    margin-right: 6px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }}
 
 QTabBar::tab:selected {{
-    background-color: {t['panel']};
+    background-color: {t['panel_alt']};
     color: {t['text']};
 }}
 
@@ -191,8 +177,9 @@ QMenuBar {{
 }}
 
 QMenuBar::item {{
-    padding: 6px 10px;
+    padding: 6px 12px;
     background: transparent;
+    border-radius: 6px;
 }}
 
 QMenuBar::item:selected {{
@@ -203,11 +190,11 @@ QMenu {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 10px;
+    border-radius: 12px;
 }}
 
 QMenu::item {{
-    padding: 7px 24px 7px 12px;
+    padding: 7px 26px 7px 12px;
 }}
 
 QMenu::item:selected {{
@@ -217,7 +204,7 @@ QMenu::item:selected {{
 QMenu::separator {{
     height: 1px;
     background: {t['border']};
-    margin: 5px 8px;
+    margin: 6px 8px;
 }}
 
 QScrollBar:vertical {{
@@ -252,6 +239,7 @@ QToolTip {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
+    border-radius: 8px;
     padding: 6px 8px;
 }}
 
@@ -264,9 +252,9 @@ QStatusBar {{
 QGroupBox {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 12px;
-    margin-top: 18px;
-    padding-top: 10px;
+    border-radius: 14px;
+    margin-top: 20px;
+    padding-top: 12px;
 }}
 
 QGroupBox::title {{
@@ -285,6 +273,10 @@ QGroupBox::title {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
     border-radius: 14px;
+}}
+
+#workspace_command_bar {{
+    background-color: {t['panel_alt']};
 }}
 
 QPushButton#project_workspace_view_button {{
@@ -309,22 +301,42 @@ QPushButton#project_workspace_view_button:checked {{
     color: {t['accent_hover']};
 }}
 
-#workspace_shell, #workspace_center_shell, #workspace_right_shell, #workspace_bottom_shell, #workspace_left_shell {{
+#workspace_shell, #workspace_center_shell, #workspace_right_shell, #workspace_bottom_shell {{
     background-color: transparent;
 }}
 
-#workspace_nav_rail {{
-    background-color: {t['panel']};
+#workspace_left_shell {{
+    background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 16px;
+    border-radius: 12px;
+}}
+
+#workspace_nav_rail {{
+    background-color: transparent;
+    border: none;
+    border-right: 1px solid {t['border']};
+}}
+
+#page_inspector_scroll {{
+    background-color: transparent;
+    border: none;
+}}
+
+QFrame#toolbar_host_separator {{
+    background-color: {t['border']};
+    min-width: 1px;
+    max-width: 1px;
+    border: none;
+    margin-left: 6px;
+    margin-right: 6px;
 }}
 
 QToolButton[workspaceNav="true"] {{
     background-color: transparent;
     color: {t['text_muted']};
     border: none;
-    border-radius: 12px;
-    padding: 10px 6px;
+    border-radius: 10px;
+    padding: 9px 6px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
@@ -390,13 +402,13 @@ QToolButton#workspace_status_chip:focus {{
 
 #workspace_section_title {{
     color: {t['text']};
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
 }}
 
 #workspace_section_subtitle {{
     color: {t['text_muted']};
-    font-size: 12px;
+    font-size: 11px;
 }}
 
 #workspace_empty_state {{

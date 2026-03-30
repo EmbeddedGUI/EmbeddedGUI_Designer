@@ -324,19 +324,22 @@ shadow:
 
 ```yaml
 last_update: 2026-03-30
-phase: Sprint A
+phase: Sprint B
 completed:
   - UI-S0-001
   - UI-S0-002
   - UI-S0-003
   - MAC-A-001
+  - MAC-A-002
+  - MAC-A-003
+  - UI-B-001
 in_progress: []
 blocked: []
 next_recommended:
-  - MAC-A-002
-  - MAC-A-003
+  - MAC-B-001
+  - UI-B-002
 notes:
-  - 样式盘点见 ui_designer/UI_STYLE_INVENTORY.md
+  - Page 下 Fields/Timers 已改为单滚动面板（Scroll focus 与 prefs 的 page_tools_tab_index 兼容）
 ```
 
 ---

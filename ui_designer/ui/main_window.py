@@ -326,14 +326,14 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(18, 18, 18, 18)
+        editor_layout.setContentsMargins(16, 16, 16, 16)
         editor_layout.setSpacing(12)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(14, 10, 14, 10)
-        self._toolbar_host_layout.setSpacing(12)
+        self._toolbar_host_layout.setContentsMargins(12, 10, 12, 10)
+        self._toolbar_host_layout.setSpacing(10)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -449,16 +449,27 @@ class MainWindow(QMainWindow):
         self.editor_tabs = EditorTabs(self.preview_panel, show_mode_switch=False)
         center_layout.addWidget(self.editor_tabs, 1)
 
-        self._page_tools_tabs = QTabWidget()
-        self._page_tools_tabs.addTab(self.page_fields_panel, make_icon("page"), "Fields")
-        self._page_tools_tabs.addTab(self.page_timers_panel, make_icon("time"), "Timers")
-        self._page_tools_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
+        self._page_inspector_body = QWidget()
+        self._page_inspector_body.setObjectName("page_inspector_body")
+        page_body_layout = QVBoxLayout(self._page_inspector_body)
+        page_body_layout.setContentsMargins(0, 0, 0, 0)
+        page_body_layout.setSpacing(16)
+        page_body_layout.addWidget(self.page_fields_panel)
+        page_body_layout.addWidget(self.page_timers_panel)
+
+        self._page_tools_scroll = QScrollArea()
+        self._page_tools_scroll.setObjectName("page_inspector_scroll")
+        self._page_tools_scroll.setWidgetResizable(True)
+        self._page_tools_scroll.setFrameShape(QFrame.NoFrame)
+        self._page_tools_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._page_tools_scroll.setWidget(self._page_inspector_body)
+        self._page_tools_section_focus = "fields"
 
         self._inspector_tabs = QTabWidget()
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
         self._inspector_tabs.addTab(self.props_dock, make_icon("properties"), "Properties")
         self._inspector_tabs.addTab(self.animations_panel, make_icon("animation"), "Animations")
-        self._inspector_tabs.addTab(self._page_tools_tabs, make_icon("page"), "Page")
+        self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("page"), "Page")
         self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._top_splitter = QSplitter(Qt.Horizontal)
@@ -1704,6 +1715,16 @@ class MainWindow(QMainWindow):
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
         self._update_view_panel_navigation_action_metadata()
 
+    def _focus_page_inspector_section(self, inner_section="fields"):
+        """Scroll the Page inspector so Fields or Timers is visible (single-column, no nested tabs)."""
+        focus_key = "timers" if inner_section == "timers" else "fields"
+        self._page_tools_section_focus = focus_key
+        scroll = getattr(self, "_page_tools_scroll", None)
+        if scroll is None:
+            return
+        target = self.page_timers_panel if focus_key == "timers" else self.page_fields_panel
+        QTimer.singleShot(0, lambda s=scroll, w=target: s.ensureWidgetVisible(w, 24, 24))
+
     def _show_inspector_tab(self, section, inner_section=None):
         section_map = {
             "properties": 0,
@@ -1713,9 +1734,10 @@ class MainWindow(QMainWindow):
         index = section_map.get(section, 0)
         if hasattr(self, "_inspector_tabs"):
             self._inspector_tabs.setCurrentIndex(index)
-        if section == "page" and inner_section in ("fields", "timers") and hasattr(self, "_page_tools_tabs"):
-            self._page_tools_tabs.setCurrentIndex(0 if inner_section == "fields" else 1)
+        if section == "page" and inner_section in ("fields", "timers"):
+            self._focus_page_inspector_section(inner_section)
         self._update_view_panel_navigation_action_metadata()
+        self._update_workspace_tab_metadata()
 
     def _show_bottom_panel(self, section="Diagnostics"):
         if not hasattr(self, "_bottom_tabs"):
@@ -1798,14 +1820,19 @@ class MainWindow(QMainWindow):
             self._inspector_tabs.setAccessibleName(
                 f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. Current page: {current_page}. {selection_text}"
             )
-        if hasattr(self, "_page_tools_tabs"):
-            current = self._current_tab_text(self._page_tools_tabs, "Fields")
+        if hasattr(self, "_page_tools_scroll"):
             current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
-            tooltip = f"Page tools tabs. Current section: {current}. Current page: {current_page}."
-            self._page_tools_tabs.setToolTip(tooltip)
-            self._page_tools_tabs.setStatusTip(tooltip)
-            self._page_tools_tabs.setAccessibleName(
-                f"Page tools tabs: {current} selected. {self._page_tools_tabs.count()} tabs. Current page: {current_page}."
+            focus = getattr(self, "_page_tools_section_focus", "fields")
+            focus_label = "Timers" if focus == "timers" else "Fields"
+            tooltip = (
+                f"Page inspector (Fields and Timers). Scroll focus: {focus_label}. "
+                f"Current page: {current_page}."
+            )
+            self._page_tools_scroll.setToolTip(tooltip)
+            self._page_tools_scroll.setStatusTip(tooltip)
+            self._page_tools_scroll.setAccessibleName(
+                f"Page inspector: Fields and Timers sections. Scroll focus: {focus_label}. "
+                f"Current page: {current_page}."
             )
         if hasattr(self, "_bottom_tabs"):
             current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
@@ -2179,8 +2206,11 @@ class MainWindow(QMainWindow):
         self._select_left_panel(ui_prefs.active_left_panel or getattr(self._config, "workspace_left_panel", "project"))
         if hasattr(self, "_inspector_tabs") and self._inspector_tabs.count() > 0:
             self._inspector_tabs.setCurrentIndex(max(0, min(ui_prefs.inspector_tab_index, self._inspector_tabs.count() - 1)))
-        if hasattr(self, "_page_tools_tabs") and self._page_tools_tabs.count() > 0:
-            self._page_tools_tabs.setCurrentIndex(max(0, min(ui_prefs.page_tools_tab_index, self._page_tools_tabs.count() - 1)))
+        if hasattr(self, "_page_tools_scroll"):
+            idx = max(0, min(int(getattr(ui_prefs, "page_tools_tab_index", 0) or 0), 1))
+            self._page_tools_section_focus = "timers" if idx else "fields"
+            if hasattr(self, "_inspector_tabs") and self._inspector_tabs.currentIndex() == 2:
+                self._focus_page_inspector_section(self._page_tools_section_focus)
         if hasattr(self, "_bottom_tabs") and self._bottom_tabs.count() > 0:
             self._bottom_tabs.setCurrentIndex(max(0, min(ui_prefs.bottom_tab_index, self._bottom_tabs.count() - 1)))
         self._set_bottom_panel_visible(bool(ui_prefs.bottom_panel_visible))
@@ -2195,7 +2225,11 @@ class MainWindow(QMainWindow):
                 top_splitter=bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
                 workspace_splitter=bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
                 inspector_tab_index=self._inspector_tabs.currentIndex() if hasattr(self, "_inspector_tabs") else 0,
-                page_tools_tab_index=self._page_tools_tabs.currentIndex() if hasattr(self, "_page_tools_tabs") else 0,
+                page_tools_tab_index=(
+                    (1 if getattr(self, "_page_tools_section_focus", "fields") == "timers" else 0)
+                    if hasattr(self, "_page_tools_scroll")
+                    else 0
+                ),
                 bottom_tab_index=self._bottom_tabs.currentIndex() if hasattr(self, "_bottom_tabs") else 0,
                 bottom_panel_visible=bool(getattr(self, "_bottom_panel_visible", False)),
                 active_left_panel=getattr(self, "_current_left_panel", "project"),
@@ -3713,6 +3747,13 @@ class MainWindow(QMainWindow):
             "QToolButton { padding: 6px 10px; border-radius: 8px; }"
         )
         self._toolbar_host_layout.addWidget(tb, 1)
+
+        toolbar_rail_sep = QFrame()
+        toolbar_rail_sep.setObjectName("toolbar_host_separator")
+        toolbar_rail_sep.setFrameShape(QFrame.VLine)
+        toolbar_rail_sep.setFrameShadow(QFrame.Plain)
+        toolbar_rail_sep.setFixedHeight(26)
+        self._toolbar_host_layout.addWidget(toolbar_rail_sep, 0)
 
         for action, icon_key in (
             (self._save_action, "save"),

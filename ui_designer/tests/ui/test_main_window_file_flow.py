@@ -5835,7 +5835,9 @@ class TestMainWindowFileFlow:
         assert "Startup page" in window.page_navigator._thumbnails["main_page"].accessibleName()
         assert "Startup page: main_page." in window.page_tab_bar.accessibleName()
         assert "Startup page: main_page." in window._project_workspace.accessibleName()
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: main_page."
+        assert window._page_tools_scroll.accessibleName() == (
+            "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: main_page."
+        )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page."
         )
@@ -5869,7 +5871,9 @@ class TestMainWindowFileFlow:
 
         assert window.page_navigator._current_page == "detail_page"
         assert window.page_navigator._startup_page == "main_page"
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: detail_page."
+        assert window._page_tools_scroll.accessibleName() == (
+            "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: detail_page."
+        )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
         )
@@ -8079,8 +8083,12 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.toolTip() == (
             "Inspector tabs. Current section: Properties. Current page: none. Selection: none."
         )
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Fields selected. 2 tabs. Current page: none."
-        assert window._page_tools_tabs.toolTip() == "Page tools tabs. Current section: Fields. Current page: none."
+        assert window._page_tools_scroll.accessibleName() == (
+            "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: none."
+        )
+        assert window._page_tools_scroll.toolTip() == (
+            "Page inspector (Fields and Timers). Scroll focus: Fields. Current page: none."
+        )
         assert window._bottom_tabs.accessibleName() == (
             "Bottom tools tabs: Diagnostics selected. 3 tabs. Current page: none. Panel hidden."
         )
@@ -8094,7 +8102,9 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Page selected. 3 tabs. Current page: none. Selection: none."
         )
-        assert window._page_tools_tabs.accessibleName() == "Page tools tabs: Timers selected. 2 tabs. Current page: none."
+        assert window._page_tools_scroll.accessibleName() == (
+            "Page inspector: Fields and Timers sections. Scroll focus: Timers. Current page: none."
+        )
         assert window._bottom_tabs.accessibleName() == (
             "Bottom tools tabs: History selected. 3 tabs. Current page: none. Panel visible."
         )
@@ -8208,10 +8218,10 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.currentIndex() == 0
         window._on_status_center_action_requested("open_page_timers")
         assert window._inspector_tabs.currentIndex() == 2
-        assert window._page_tools_tabs.currentIndex() == 1
+        assert window._page_tools_section_focus == "timers"
         window._on_status_center_action_requested("open_page_fields")
         assert window._inspector_tabs.currentIndex() == 2
-        assert window._page_tools_tabs.currentIndex() == 0
+        assert window._page_tools_section_focus == "fields"
         _close_window(window)
 
     def test_status_center_tool_actions_switch_bottom_tabs(self, qapp, isolated_config):
