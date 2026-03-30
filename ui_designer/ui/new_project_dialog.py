@@ -78,8 +78,8 @@ class NewProjectDialog(QDialog):
         form.addRow("SDK Root", sdk_row)
 
         self._sdk_hint_label = QLabel("Optional. Leave empty to create an editing-only project and set the SDK later.")
+        self._sdk_hint_label.setObjectName("dialog_muted_hint")
         self._sdk_hint_label.setWordWrap(True)
-        self._sdk_hint_label.setStyleSheet("color: #888;")
         form.addRow("", self._sdk_hint_label)
 
         self._parent_edit = LineEdit()

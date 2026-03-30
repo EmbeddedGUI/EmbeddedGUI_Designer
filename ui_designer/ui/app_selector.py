@@ -42,6 +42,14 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+def _set_label_hint_tone(widget, tone):
+    """Theme-driven hint colors via QSS property ``hintTone`` (muted/success/warning/danger)."""
+    widget.setProperty("hintTone", tone or "")
+    style = widget.style()
+    style.unpolish(widget)
+    style.polish(widget)
+
+
 def _set_item_metadata(item, *, tooltip=None, accessible_text=None):
     if tooltip is not None:
         item.setToolTip(tooltip)
@@ -300,7 +308,7 @@ class AppSelectorDialog(QDialog):
             self._root_status_label.setText(
                 f"{self._root_status_label.text()}\n{describe_sdk_source_hint(self._egui_root)}"
             )
-            self._root_status_label.setStyleSheet("color: #4caf50;")
+            _set_label_hint_tone(self._root_status_label, "success")
             return
 
         if status == "invalid":
@@ -308,14 +316,14 @@ class AppSelectorDialog(QDialog):
                 "Invalid: current SDK root needs attention. Browse to a valid SDK root or download a fresh copy.\n"
                 f"{describe_auto_download_plan()}"
             )
-            self._root_status_label.setStyleSheet("color: #ff9800;")
+            _set_label_hint_tone(self._root_status_label, "warning")
             return
 
         self._root_status_label.setText(
             "Missing: no SDK root selected. Browse to an existing SDK or download one now.\n"
             f"{describe_auto_download_plan()}"
         )
-        self._root_status_label.setStyleSheet("color: #f44336;")
+        _set_label_hint_tone(self._root_status_label, "danger")
 
     def _on_selection_changed(self, current, previous):
         del previous
@@ -340,7 +348,7 @@ class AppSelectorDialog(QDialog):
             self._selection_hint_label.setText(
                 "Select a Designer project or a legacy example from the list."
             )
-            self._selection_hint_label.setStyleSheet("color: #888;")
+            _set_label_hint_tone(self._selection_hint_label, "muted")
             self._update_accessibility_summary()
             return
 
@@ -350,7 +358,7 @@ class AppSelectorDialog(QDialog):
                 f"Legacy example path:\n{entry.get('app_dir', '')}\n\n"
                 "Opening it will initialize a Designer project in this app directory."
             )
-            self._selection_hint_label.setStyleSheet("color: #ff9800;")
+            _set_label_hint_tone(self._selection_hint_label, "warning")
             self._update_accessibility_summary()
             return
 
@@ -358,7 +366,7 @@ class AppSelectorDialog(QDialog):
         self._selection_hint_label.setText(
             f"Designer project path:\n{entry.get('project_path', '')}"
         )
-        self._selection_hint_label.setStyleSheet("color: #4caf50;")
+        _set_label_hint_tone(self._selection_hint_label, "success")
         self._update_accessibility_summary()
 
     def _update_accessibility_summary(self):

@@ -226,8 +226,8 @@ shadow:
 
 **壳层样式（可紧随 MAC-B-001）**
 
-- [ ] `QTabWidget::tab`、`#workspace_nav_rail`、`#workspace_status_chip` 等与 token 对齐。  
-- [ ] 高频对话框抽样：`new_project_dialog.py`、`app_selector.py`、`release_dialogs.py`。
+- [x] `QTabWidget::tab`、`#workspace_nav_rail`、`#workspace_status_chip` 等与 token 对齐。  
+- [x] 高频对话框抽样：`new_project_dialog.py`、`app_selector.py`（`release_dialogs` 无硬编码色，沿用全局 QSS）。
 
 ### Sprint C — 细节与主题回归（1～2 天）【对应原 MAC-C】
 
@@ -348,7 +348,7 @@ completed:
 in_progress: []
 blocked: []
 next_recommended:
-  - 可选：§6「壳层样式」清单未勾项（Tab/对话框抽样）
+  - 可选：回归主路径 smoke（main.py）或全量 pytest
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
@@ -361,6 +361,7 @@ notes:
   - UI-D-001：workspace_state 新增 focus_canvas_enabled，重启后可恢复 Focus Canvas
   - UI-D-002：主窗 min 960×620、Inspector 滚动区 min 280；启动/恢复几何后按主屏 availableGeometry 收缩并校正位置
   - UI-D-003：workspace_state.inspector_group_expanded（键：widget_type + 制表符 + 组标题，多选为 __multi__ 前缀）；CollapsibleGroupBox.apply_expanded_state 恢复
+  - §6 壳层：Tab 选中态与 pane 同色衔接；nav_rail / status_chip 内边距用 space_*；对话框提示色用 hintTone / dialog_muted_hint
 ```
 
 ---

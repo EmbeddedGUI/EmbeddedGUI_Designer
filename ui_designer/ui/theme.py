@@ -122,6 +122,26 @@ QLabel, QCheckBox, QRadioButton {{
     background: transparent;
 }}
 
+QLabel[hintTone="muted"] {{
+    color: {t['text_soft']};
+}}
+
+QLabel[hintTone="success"] {{
+    color: {t['success']};
+}}
+
+QLabel[hintTone="warning"] {{
+    color: {t['warning']};
+}}
+
+QLabel[hintTone="danger"] {{
+    color: {t['danger']};
+}}
+
+QLabel#dialog_muted_hint {{
+    color: {t['text_soft']};
+}}
+
 QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QComboBox {{
     background-color: {t['panel']};
     color: {t['text']};
@@ -218,13 +238,18 @@ QTabBar::tab {{
     padding: {t['space_sm']}px {t['space_md']}px;
     margin-right: {t['space_sm']}px;
     min-height: {t['h_tab_min']}px;
+    border: 1px solid transparent;
+    border-bottom: none;
     border-top-left-radius: {t['r_md']}px;
     border-top-right-radius: {t['r_md']}px;
 }}
 
 QTabBar::tab:selected {{
-    background-color: {t['panel_alt']};
+    background-color: {t['panel']};
     color: {t['text']};
+    border: 1px solid {t['border']};
+    border-bottom-color: {t['panel']};
+    margin-bottom: -1px;
 }}
 
 QTabBar::tab:hover:!selected {{
@@ -399,6 +424,7 @@ QPushButton#project_workspace_view_button:checked {{
     background-color: transparent;
     border: none;
     border-right: 1px solid {t['border']};
+    padding: {t['space_sm']}px {t['space_xs']}px;
 }}
 
 #page_inspector_scroll {{
@@ -443,7 +469,7 @@ QToolButton[workspaceNav="true"]:checked {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    padding: 5px 10px;
+    padding: {t['space_xs']}px {t['space_sm']}px;
 }}
 
 QToolButton#workspace_status_chip {{
@@ -451,7 +477,7 @@ QToolButton#workspace_status_chip {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    padding: 5px 10px;
+    padding: {t['space_xs']}px {t['space_sm']}px;
 }}
 
 QToolButton#workspace_status_chip:hover {{
