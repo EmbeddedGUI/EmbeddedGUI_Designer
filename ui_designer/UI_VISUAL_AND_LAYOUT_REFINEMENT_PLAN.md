@@ -338,16 +338,19 @@ completed:
   - UI-B-002
   - MAC-B-003
   - UI-B-003
+  - MAC-C-001
+  - MAC-C-002
 in_progress: []
 blocked: []
 next_recommended:
-  - MAC-C-001
-  - MAC-C-002
+  - MAC-C-003
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
   - MAC-B-003：Inspector `_inspector_form`、property_panel 滚动根 QSS、collapsible_group 对象名与折叠高度
   - UI-B-003：菜单/工具栏/树「Widgets」与「Insert Component」命名一致；测试对齐 Data 组中的 font_file 行
+  - MAC-C-001：列表/树选中态在非活动窗口下用 selection_soft；选中行 hover 保持高亮
+  - MAC-C-002：欢迎页「无最近工程」与属性面板「无选中」空状态双行文案 + 面板样式
 ```
 
 ---

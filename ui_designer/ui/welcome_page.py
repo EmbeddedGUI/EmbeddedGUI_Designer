@@ -337,10 +337,21 @@ class WelcomePage(QWidget):
         visible_recent = recent[:8]
         self._recent_project_count = len(visible_recent)
         if not visible_recent:
+            empty = QWidget()
+            empty.setObjectName("welcome_recent_empty")
+            el = QVBoxLayout(empty)
+            el.setContentsMargins(0, 4, 0, 0)
+            el.setSpacing(6)
             no_recent = QLabel("No recent projects")
-            no_recent.setObjectName("workspace_empty_state")
-            _set_widget_metadata(no_recent, tooltip=no_recent.text(), accessible_name=no_recent.text())
-            self._recent_list.addWidget(no_recent)
+            no_recent.setObjectName("workspace_section_title")
+            sub = QLabel("Open a .egui file or create a project — it will appear here.")
+            sub.setObjectName("workspace_section_subtitle")
+            sub.setWordWrap(True)
+            el.addWidget(no_recent)
+            el.addWidget(sub)
+            summary = "No recent projects. Open a project to see it listed here."
+            _set_widget_metadata(empty, tooltip=summary, accessible_name=summary)
+            self._recent_list.addWidget(empty)
             self._update_accessibility_summary()
             return
 

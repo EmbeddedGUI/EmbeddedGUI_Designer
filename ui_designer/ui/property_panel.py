@@ -364,13 +364,24 @@ class PropertyPanel(QWidget):
         return chip
 
     def _create_no_selection_label(self):
-        label = QLabel("No widget selected")
+        frame = QWidget()
+        frame.setObjectName("property_panel_empty_state")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(12, 14, 12, 14)
+        layout.setSpacing(6)
+        title = QLabel("No selection")
+        title.setObjectName("workspace_section_title")
+        sub = QLabel("Select a widget in the structure tree or on the canvas to edit properties.")
+        sub.setObjectName("workspace_section_subtitle")
+        sub.setWordWrap(True)
+        layout.addWidget(title)
+        layout.addWidget(sub)
         _set_widget_metadata(
-            label,
+            frame,
             tooltip="Select a widget from the canvas or tree to edit its properties.",
             accessible_name="Property panel empty state: No widget selected.",
         )
-        return label
+        return frame
 
     def _current_search_summary(self):
         if not hasattr(self, "_search_edit"):

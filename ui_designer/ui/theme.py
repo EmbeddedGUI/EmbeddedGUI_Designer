@@ -185,6 +185,17 @@ QListView::item:selected, QTreeView::item:selected, QTableView::item:selected, Q
     color: {t['text']};
 }}
 
+QListView::item:selected:!active, QTreeView::item:selected:!active, QTableView::item:selected:!active,
+QListWidget::item:selected:!active, QTreeWidget::item:selected:!active, QTableWidget::item:selected:!active {{
+    background-color: {t['selection_soft']};
+    color: {t['text']};
+}}
+
+QListView::item:selected:hover, QTreeView::item:selected:hover, QTableView::item:selected:hover,
+QListWidget::item:selected:hover, QTreeWidget::item:selected:hover, QTableWidget::item:selected:hover {{
+    background-color: {t['selection']};
+}}
+
 QHeaderView::section {{
     background-color: {t['panel_alt']};
     color: {t['text_muted']};
@@ -496,6 +507,16 @@ QToolButton#workspace_status_chip:focus {{
 #workspace_empty_state {{
     color: {t['text_soft']};
     padding: 20px;
+}}
+
+#property_panel_empty_state {{
+    background-color: {t['panel_alt']};
+    border: 1px dashed {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#welcome_recent_empty {{
+    padding: 4px 0 0 0;
 }}
 
 #widget_browser_categories {{
