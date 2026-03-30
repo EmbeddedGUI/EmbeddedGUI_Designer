@@ -357,6 +357,7 @@ notes:
   - 回归验证（UI 子集）：`test_editor_tabs/test_diagnostics_panel/test_history_panel/test_animations_panel` 共 13 passed；`test_theme` 与 `test_workspace_dialogs` 通过（本机已验证）
   - 回归验证（UI 子集，2026-03-31）：`pytest ui_designer/tests/ui/test_theme.py`（2 passed）
   - 回归验证（UI 子集，2026-03-31）：`pytest ui_designer/tests/ui/test_workspace_dialogs.py`（37 passed）
+  - MainWindow 关键用例回归（2026-03-31）：`pytest ui_designer/tests/ui/test_main_window_file_flow.py -k "inspector_group_expanded_persist_and_restore or test_main_window_clamps_to_available_screen or test_open_recent_project_can_remove_missing_entry"`（3 passed, 248 deselected）
   - 回归验证（smoke 修复后）：`ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI` 通过；`pytest ui_designer/tests/generator/test_code_gen_edge_cases.py::TestAppEguiConfigContent` 通过
   - MainWindow 关键用例回归：`test_main_window_file_flow.py` 中 `inspector_group_expanded_persist_and_restore` / `test_main_window_clamps_to_available_screen` / `test_open_recent_project_can_remove_missing_entry` 均通过（3 passed）
   - 集成修复点：`code_generator.generate_app_config()` 在生成 `app_egui_config.h` 时增加 `EGUI_CONFIG_FUNCTION_SUPPORT_MASK=1`，保证 circle-mask 相关实现可链接
