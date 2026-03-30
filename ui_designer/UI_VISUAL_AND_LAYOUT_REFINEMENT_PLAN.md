@@ -333,13 +333,17 @@ completed:
   - MAC-A-002
   - MAC-A-003
   - UI-B-001
+  - MAC-B-001
+  - MAC-B-002
+  - UI-B-002
 in_progress: []
 blocked: []
 next_recommended:
-  - MAC-B-001
-  - UI-B-002
+  - MAC-B-003
+  - UI-B-003
 notes:
-  - Page 下 Fields/Timers 已改为单滚动面板（Scroll focus 与 prefs 的 page_tools_tab_index 兼容）
+  - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
+  - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
 ```
 
 ---

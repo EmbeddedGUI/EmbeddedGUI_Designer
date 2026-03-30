@@ -7705,7 +7705,10 @@ class TestMainWindowFileFlow:
 
         assert window._sdk_chip.text() == "SDK ready"
         assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
-        assert window._sdk_chip.toolTip() == "Open Status Center to review SDK readiness."
+        assert window._sdk_chip.toolTip() == (
+            "Open the left Status panel (SDK, compile readiness, and workspace summary). "
+            "Design-time issues open from the bottom Diagnostics tab or the diagnostics chip."
+        )
         assert window._sdk_chip.statusTip() == window._sdk_chip.toolTip()
         assert window._central_stack.accessibleName() == "Main view stack: Editor workspace visible."
         assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
@@ -7723,7 +7726,10 @@ class TestMainWindowFileFlow:
         assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."
         assert window._preview_chip.statusTip() == window._preview_chip.toolTip()
         assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 0 errors and 0 warnings."
-        assert window._diagnostics_chip.toolTip() == "Open Diagnostics to review issues and warnings."
+        assert window._diagnostics_chip.toolTip() == (
+            "Open the bottom Diagnostics tab (full design-time issue list). "
+            "Use the left Status panel for SDK overview and actions."
+        )
         assert window._diagnostics_chip.statusTip() == window._diagnostics_chip.toolTip()
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"

@@ -1996,7 +1996,10 @@ class MainWindow(QMainWindow):
                 sdk_text,
                 "accent" if self._has_valid_sdk_root() else "warning",
                 accessible_name=f"Workspace status: {sdk_text}.",
-                tool_tip="Open Status Center to review SDK readiness.",
+                tool_tip=(
+                    "Open the left Status panel (SDK, compile readiness, and workspace summary). "
+                    "Design-time issues open from the bottom Diagnostics tab or the diagnostics chip."
+                ),
             )
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         if hasattr(self, "_dirty_chip"):
@@ -2059,7 +2062,10 @@ class MainWindow(QMainWindow):
                 label,
                 tone,
                 accessible_name=f"Workspace diagnostics: {error_count} errors and {warning_count} warnings.",
-                tool_tip="Open Diagnostics to review issues and warnings.",
+                tool_tip=(
+                    "Open the bottom Diagnostics tab (full design-time issue list). "
+                    "Use the left Status panel for SDK overview and actions."
+                ),
             )
 
         self._update_status_center(

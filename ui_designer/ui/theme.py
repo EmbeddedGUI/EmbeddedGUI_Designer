@@ -34,6 +34,23 @@ _TOKENS = {
         "warning": "#FFD60A",
         "selection": "#2E5EA7",
         "selection_soft": "#1C2E47",
+        "r_sm": 6,
+        "r_md": 8,
+        "r_lg": 10,
+        "r_xl": 12,
+        "r_2xl": 14,
+        "r_3xl": 16,
+        "space_xs": 4,
+        "space_sm": 8,
+        "space_md": 12,
+        "space_lg": 16,
+        "pad_btn_v": 7,
+        "pad_btn_h": 13,
+        "pad_input_v": 6,
+        "pad_input_h": 10,
+        "h_tab_min": 28,
+        "fs_panel_title": 13,
+        "fs_caption": 11,
     },
     "light": {
         "bg": "#F5F5F7",
@@ -56,6 +73,23 @@ _TOKENS = {
         "warning": "#A56B00",
         "selection": "#D6E7FF",
         "selection_soft": "#EEF5FF",
+        "r_sm": 6,
+        "r_md": 8,
+        "r_lg": 10,
+        "r_xl": 12,
+        "r_2xl": 14,
+        "r_3xl": 16,
+        "space_xs": 4,
+        "space_sm": 8,
+        "space_md": 12,
+        "space_lg": 16,
+        "pad_btn_v": 7,
+        "pad_btn_h": 13,
+        "pad_input_v": 6,
+        "pad_input_h": 10,
+        "h_tab_min": 28,
+        "fs_panel_title": 13,
+        "fs_caption": 11,
     },
 }
 
@@ -92,8 +126,8 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 10px;
-    padding: 6px 10px;
+    border-radius: {t['r_md']}px;
+    padding: {t['pad_input_v']}px {t['pad_input_h']}px;
     selection-background-color: {t['selection']};
 }}
 
@@ -111,19 +145,30 @@ QPushButton, QToolButton {{
     background-color: {t['surface']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 9px;
-    padding: 7px 13px;
+    border-radius: {t['r_md']}px;
+    padding: {t['pad_btn_v']}px {t['pad_btn_h']}px;
 }}
 
 QPushButton:hover, QToolButton:hover {{
     background-color: {t['surface_hover']};
 }}
 
+QPushButton:pressed, QToolButton:pressed {{
+    background-color: {t['surface_pressed']};
+    border-color: {t['border_strong']};
+}}
+
+QPushButton:disabled, QToolButton:disabled {{
+    color: {t['text_soft']};
+    background-color: {t['panel_alt']};
+    border-color: {t['border']};
+}}
+
 QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 12px;
+    border-radius: {t['r_xl']}px;
     outline: none;
 }}
 
@@ -151,7 +196,7 @@ QHeaderView::section {{
 
 QTabWidget::pane {{
     border: 1px solid {t['border']};
-    border-radius: 14px;
+    border-radius: {t['r_xl']}px;
     background-color: {t['panel']};
     top: -1px;
 }}
@@ -159,15 +204,20 @@ QTabWidget::pane {{
 QTabBar::tab {{
     background-color: transparent;
     color: {t['text_muted']};
-    padding: 8px 16px;
-    margin-right: 6px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    padding: {t['space_sm']}px {t['space_md']}px;
+    margin-right: {t['space_sm']}px;
+    min-height: {t['h_tab_min']}px;
+    border-top-left-radius: {t['r_md']}px;
+    border-top-right-radius: {t['r_md']}px;
 }}
 
 QTabBar::tab:selected {{
     background-color: {t['panel_alt']};
     color: {t['text']};
+}}
+
+QTabBar::tab:hover:!selected {{
+    background-color: {t['surface_hover']};
 }}
 
 QMenuBar {{
@@ -177,9 +227,9 @@ QMenuBar {{
 }}
 
 QMenuBar::item {{
-    padding: 6px 12px;
+    padding: {t['pad_input_v']}px {t['space_md']}px;
     background: transparent;
-    border-radius: 6px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QMenuBar::item:selected {{
@@ -190,7 +240,7 @@ QMenu {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 12px;
+    border-radius: {t['r_xl']}px;
 }}
 
 QMenu::item {{
@@ -216,7 +266,7 @@ QScrollBar:vertical {{
 QScrollBar::handle:vertical {{
     background: {t['border_strong']};
     min-height: 24px;
-    border-radius: 6px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QScrollBar::handle:vertical:hover {{
@@ -232,15 +282,15 @@ QScrollBar:horizontal {{
 QScrollBar::handle:horizontal {{
     background: {t['border_strong']};
     min-width: 24px;
-    border-radius: 6px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QToolTip {{
     background-color: {t['panel']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: 8px;
-    padding: 6px 8px;
+    border-radius: {t['r_md']}px;
+    padding: {t['pad_input_v']}px {t['space_sm']}px;
 }}
 
 QStatusBar {{
@@ -252,18 +302,18 @@ QStatusBar {{
 QGroupBox {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 14px;
-    margin-top: 20px;
-    padding-top: 12px;
+    border-radius: {t['r_xl']}px;
+    margin-top: {t['space_lg']}px;
+    padding-top: {t['space_md']}px;
 }}
 
 QGroupBox::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 12px;
+    left: {t['space_md']}px;
     top: 0px;
     color: {t['text_muted']};
-    padding: 0 6px;
+    padding: 0 {t['r_sm']}px;
 }}
 
 #workspace_command_bar,
@@ -272,7 +322,7 @@ QGroupBox::title {{
 #workspace_bottom_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 14px;
+    border-radius: {t['r_xl']}px;
 }}
 
 #workspace_command_bar {{
@@ -282,7 +332,7 @@ QGroupBox::title {{
 QPushButton#project_workspace_view_button {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 10px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     padding: 8px 10px;
     text-align: left;
@@ -308,7 +358,7 @@ QPushButton#project_workspace_view_button:checked {{
 #workspace_left_shell {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 12px;
+    border-radius: {t['r_xl']}px;
 }}
 
 #workspace_nav_rail {{
@@ -335,13 +385,17 @@ QToolButton[workspaceNav="true"] {{
     background-color: transparent;
     color: {t['text_muted']};
     border: none;
-    border-radius: 10px;
+    border-radius: {t['r_md']}px;
     padding: 9px 6px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
     background-color: {t['surface_hover']};
     color: {t['text']};
+}}
+
+QToolButton[workspaceNav="true"]:pressed {{
+    background-color: {t['surface_pressed']};
 }}
 
 QToolButton[workspaceNav="true"]:checked {{
@@ -368,6 +422,11 @@ QToolButton#workspace_status_chip {{
 
 QToolButton#workspace_status_chip:hover {{
     background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
+QToolButton#workspace_status_chip:pressed {{
+    background-color: {t['surface_pressed']};
     border-color: {t['border_strong']};
 }}
 
@@ -402,13 +461,13 @@ QToolButton#workspace_status_chip:focus {{
 
 #workspace_section_title {{
     color: {t['text']};
-    font-size: 14px;
+    font-size: {t['fs_panel_title']}px;
     font-weight: 600;
 }}
 
 #workspace_section_subtitle {{
     color: {t['text_muted']};
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #workspace_empty_state {{
