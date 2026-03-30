@@ -353,6 +353,7 @@ next_recommended:
 notes:
   - 回归验证（非 UI）：`pytest ui_designer/tests/{engine,generator,model,renderer,settings}` 已通过，共 667 passed
   - 集成验证：`python package_ui_designer.py --sdk-root sdk/EmbeddedGUI` 成功；产物位于 `dist/EmbeddedGUI-Designer` 与 zip 包
+  - 回归验证（打包脚本）：`pytest ui_designer/tests/test_package_ui_designer.py` 通过（25 passed）
   - 回归验证（UI 子集）：`test_editor_tabs/test_diagnostics_panel/test_history_panel/test_animations_panel` 共 13 passed；`test_theme` 与 `test_workspace_dialogs` 通过（本机已验证）
   - 回归验证（smoke 修复后）：`ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI` 通过；`pytest ui_designer/tests/generator/test_code_gen_edge_cases.py::TestAppEguiConfigContent` 通过
   - MainWindow 关键用例回归：`test_main_window_file_flow.py` 中 `inspector_group_expanded_persist_and_restore` / `test_main_window_clamps_to_available_screen` / `test_open_recent_project_can_remove_missing_entry` 均通过（3 passed）
