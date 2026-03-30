@@ -15,6 +15,15 @@ class CollapsibleGroupBox(QGroupBox):
         self.setChecked(True)
         self.toggled.connect(self._on_toggled)
 
+    def apply_expanded_state(self, expanded: bool):
+        """Set expanded/collapsed without emitting ``toggled``; updates child visibility."""
+        self.blockSignals(True)
+        try:
+            self.setChecked(expanded)
+            self._on_toggled(expanded)
+        finally:
+            self.blockSignals(False)
+
     def _on_toggled(self, checked: bool):
         layout = self.layout()
         if layout is None:

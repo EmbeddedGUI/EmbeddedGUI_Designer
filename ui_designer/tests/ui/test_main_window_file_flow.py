@@ -7640,7 +7640,34 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_dock.objectName() == "diagnostics_dock"
         assert window.debug_dock.objectName() == "debug_output_dock"
         assert window._toolbar.objectName() == "main_toolbar"
+        assert isolated_config.workspace_state.get("inspector_group_expanded") == {}
         _close_window(window)
+
+    def test_inspector_group_expanded_persist_and_restore(self, qapp, isolated_config, monkeypatch):
+        from PyQt5.QtCore import QByteArray
+
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.property_panel.set_inspector_group_expanded_state(
+            {"label\tBasic": False, "__multi__\tCallbacks": False}
+        )
+        monkeypatch.setattr(window, "saveGeometry", lambda: QByteArray())
+        monkeypatch.setattr(window, "saveState", lambda: QByteArray())
+        window._save_window_state_to_config()
+        assert isolated_config.workspace_state.get("inspector_group_expanded") == {
+            "label\tBasic": False,
+            "__multi__\tCallbacks": False,
+        }
+        _close_window(window)
+
+        isolated_config.workspace_layout_version = 2
+        isolated_config.workspace_state = {
+            "inspector_group_expanded": {"button\tStyle": False},
+        }
+        window2 = MainWindow("")
+        assert window2.property_panel.inspector_group_expanded_snapshot() == {"button\tStyle": False}
+        _close_window(window2)
 
     def test_main_window_clamps_to_available_screen(self, qapp, monkeypatch):
         from PyQt5.QtCore import QRect

@@ -27,6 +27,7 @@ from ..model.widget_model import (
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
+from ..settings.ui_prefs import _normalize_inspector_group_expanded
 from .iconography import make_icon, widget_icon_key
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
@@ -123,6 +124,7 @@ class PropertyPanel(QWidget):
         self._custom_fonts = []       # C expressions from project resource/
         self._resource_catalog = None  # ResourceCatalog instance
         self._string_keys = []        # list of i18n string keys for @string/ completions
+        self._inspector_group_expanded = {}
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -167,6 +169,34 @@ class PropertyPanel(QWidget):
             self._updating = True
             self._rebuild_form()
             self._updating = False
+
+    def set_inspector_group_expanded_state(self, data):
+        """Restore persisted Inspector collapsible group expanded flags (UI-D-003)."""
+        self._inspector_group_expanded = _normalize_inspector_group_expanded(data)
+
+    def inspector_group_expanded_snapshot(self):
+        """Return flags to merge into workspace_state when saving the window."""
+        return dict(self._inspector_group_expanded)
+
+    def _inspector_group_storage_key(self, title: str) -> str:
+        title = (title or "").strip()
+        if len(self._selection) > 1:
+            return f"__multi__\t{title}"
+        if self._primary_widget is None:
+            return f"__none__\t{title}"
+        wt = (self._primary_widget.widget_type or "").strip()
+        return f"{wt}\t{title}"
+
+    def _wire_inspector_collapsible_group(self, group: CollapsibleGroupBox, title: str):
+        key = self._inspector_group_storage_key(title)
+        expanded = bool(self._inspector_group_expanded.get(key, True))
+        group.apply_expanded_state(expanded)
+        group.toggled.connect(lambda checked, k=key: self._on_inspector_collapsible_toggled(k, checked))
+
+    def _on_inspector_collapsible_toggled(self, key: str, checked: bool):
+        if self._updating:
+            return
+        self._inspector_group_expanded[key] = checked
 
     def _merged_fonts(self):
         """Return built-in FONTS merged with generated font resources (no dups)."""
@@ -537,6 +567,7 @@ class PropertyPanel(QWidget):
         basic_group = CollapsibleGroupBox("Basic")
         basic_form = _inspector_form()
         basic_group.setLayout(basic_form)
+        self._wire_inspector_collapsible_group(basic_group, "Basic")
 
         name_edit = LineEdit()
         name_edit.setText(w.name)
@@ -550,6 +581,7 @@ class PropertyPanel(QWidget):
         layout_group = CollapsibleGroupBox("Layout")
         layout_form = _inspector_form()
         layout_group.setLayout(layout_form)
+        self._wire_inspector_collapsible_group(layout_group, "Layout")
         for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
             spin = SpinBox()
             spin.setRange(-9999, 9999)
@@ -588,6 +620,7 @@ class PropertyPanel(QWidget):
         bg_group = CollapsibleGroupBox("Style")
         bg_form = _inspector_form()
         bg_group.setLayout(bg_form)
+        self._wire_inspector_collapsible_group(bg_group, "Style")
 
         bg = w.background or BackgroundModel()
 
@@ -1068,6 +1101,7 @@ class PropertyPanel(QWidget):
             group_box = CollapsibleGroupBox(group_label)
             form = _inspector_form()
             group_box.setLayout(form)
+            self._wire_inspector_collapsible_group(group_box, group_label)
 
             for prop_name, prop_info in group_props:
                 editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
@@ -1092,6 +1126,7 @@ class PropertyPanel(QWidget):
         group_box = CollapsibleGroupBox("Data")
         form = _inspector_form()
         group_box.setLayout(form)
+        self._wire_inspector_collapsible_group(group_box, "Data")
 
         for prop_name, prop_info in props.items():
             vis = prop_info.get("ui_visible_when")
@@ -1234,6 +1269,7 @@ class PropertyPanel(QWidget):
         group = CollapsibleGroupBox("Callbacks")
         form = _inspector_form()
         group.setLayout(form)
+        self._wire_inspector_collapsible_group(group, "Callbacks")
 
         for entry in entries:
             event_name = entry["event_name"]
@@ -1332,6 +1368,7 @@ class PropertyPanel(QWidget):
         group = CollapsibleGroupBox("Callbacks")
         form = _inspector_form()
         group.setLayout(form)
+        self._wire_inspector_collapsible_group(group, "Callbacks")
 
         for entry in entries:
             event_name = entry["event_name"]

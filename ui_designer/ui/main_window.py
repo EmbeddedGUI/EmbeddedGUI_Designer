@@ -2248,6 +2248,11 @@ class MainWindow(QMainWindow):
         if bool(getattr(ui_prefs, "focus_canvas_enabled", False)):
             self._set_focus_canvas_enabled(True)
 
+        if hasattr(self, "property_panel"):
+            self.property_panel.set_inspector_group_expanded_state(
+                getattr(ui_prefs, "inspector_group_expanded", {}) or {},
+            )
+
         self._clamp_window_to_available_screen()
 
     def _clamp_window_to_available_screen(self):
@@ -2297,6 +2302,11 @@ class MainWindow(QMainWindow):
                 focus_canvas_enabled=bool(getattr(self, "_focus_canvas_enabled", False)),
                 active_left_panel=getattr(self, "_current_left_panel", "project"),
                 panel_layout={},
+                inspector_group_expanded=(
+                    self.property_panel.inspector_group_expanded_snapshot()
+                    if hasattr(self, "property_panel")
+                    else {}
+                ),
             )
             self._config.workspace_state = ui_prefs.to_workspace_state()
             self._config.workspace_status_panel_state = (
