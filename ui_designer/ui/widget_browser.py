@@ -28,7 +28,7 @@ from ..services.component_catalog import ComponentCatalog
 from ..services.search_service import SearchService, SearchQuery
 from ..services.recent_service import RecentService
 from ..services.favorite_service import FavoriteService
-from .iconography import make_icon, make_widget_preview, widget_icon_key
+from .iconography import make_icon, widget_icon_key
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -108,12 +108,6 @@ class WidgetBrowserCard(QFrame):
         header.addWidget(self._favorite_btn, 0, Qt.AlignTop)
         layout.addLayout(header)
 
-        self._preview_label = QLabel()
-        self._preview_label.setObjectName("widget_browser_preview")
-        self._preview_label.setAlignment(Qt.AlignCenter)
-        self._preview_label.setPixmap(make_widget_preview(self._item.get("preview_kind", "widget"), size=(180, 104)))
-        layout.addWidget(self._preview_label)
-
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(6)
@@ -129,11 +123,7 @@ class WidgetBrowserCard(QFrame):
         chips_row.addStretch()
         layout.addLayout(chips_row)
 
-        keywords = ", ".join(self._item.get("keywords", [])[:4])
-        self._keywords_label = QLabel(keywords)
-        self._keywords_label.setObjectName("widget_browser_keywords")
-        self._keywords_label.setWordWrap(True)
-        layout.addWidget(self._keywords_label)
+        # Keep card simple: avoid keyword preview text that is not tied to actual rendering.
 
         action_row = QHBoxLayout()
         action_row.setSpacing(8)
@@ -173,7 +163,7 @@ class WidgetBrowserCard(QFrame):
     def _update_accessibility_summary(self):
         display_name = self._display_name()
         summary = self._card_summary()
-        keywords = str(self._keywords_label.text() or "").strip() or "No keywords"
+        keywords = ""
         favorite_hint = (
             f"Remove {display_name} from favorites."
             if self._favorite_btn.isChecked()
@@ -190,16 +180,7 @@ class WidgetBrowserCard(QFrame):
             tooltip=summary,
             accessible_name=f"Widget category: {str(self._meta_label.text() or 'Uncategorized').strip() or 'Uncategorized'}",
         )
-        _set_widget_metadata(
-            self._preview_label,
-            tooltip=f"Preview for {display_name}",
-            accessible_name=f"Widget preview: {display_name}",
-        )
-        _set_widget_metadata(
-            self._keywords_label,
-            tooltip=f"Widget keywords: {keywords}",
-            accessible_name=f"Widget keywords: {keywords}",
-        )
+        # keywords_label intentionally removed for visual simplicity
         _set_widget_metadata(
             self._favorite_btn,
             tooltip=favorite_hint,

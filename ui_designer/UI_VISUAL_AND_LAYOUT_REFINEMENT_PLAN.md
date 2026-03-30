@@ -362,6 +362,27 @@ notes:
   - StatusCenterPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_status_center_panel.py`（20 passed）
   - WidgetTree 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_widget_tree.py`（75 passed）
   - DiagnosticsPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_diagnostics_panel.py`（3 passed）
+  - HistoryPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_history_panel.py`（2 passed）
+  - EditorTabs 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_editor_tabs.py`（2 passed）
+  - AnimationsPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_animations_panel.py`（6 passed）
+  - PreviewWorkspace 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_preview_workspace.py`（11 passed）
+  - ProjectWorkspace 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_project_workspace.py`（2 passed）
+  - WidgetBrowser 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_widget_browser.py`（18 passed）
+  - WidgetBrowser 视觉简化（2026-03-31）：移除卡片缩略图预览，并移除 `keywords` 文案，只保留图标/标题/元信息/标签与 `Insert`；同步清理 `theme.py` 中遗留的 `#widget_browser_preview` 与 `#widget_browser_keywords` 样式
+  - DebugPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_debug_panel.py`（2 passed）
+  - PageNavigator 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_navigator.py`（3 passed）
+  - ResourcePanelFileFlow 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_resource_panel_file_flow.py`（41 passed）
+  - PageFieldsPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_fields_panel.py`（6 passed）
+  - PageTimersPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_timers_panel.py`（5 passed）
+  - ProjectDock 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_project_dock.py`（2 passed）
+  - Widgets（hex/font/color 辅助）回归（2026-03-31）：`pytest ui_designer/tests/ui/test_widgets.py`（20 passed）
+  - PageNameValidation 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_name_validation.py`（21 passed）
+  - PageNameEdgeCases 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_name_edge_cases.py`（38 passed）
+  - PageFileCleanup 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_file_cleanup.py`（7 passed）
+  - BuildMkTemplate 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_build_mk_template.py`（18 passed）
+  - ReleaseFlow 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_release_flow.py`（50 passed）
+  - RepoHealthFlow 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_repo_health_flow.py`（26 passed）
+  - MainWindowLifecycle 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_main_window_lifecycle.py`（1 passed）
   - 回归验证（smoke 修复后）：`ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI` 通过；`pytest ui_designer/tests/generator/test_code_gen_edge_cases.py::TestAppEguiConfigContent` 通过
   - MainWindow 关键用例回归：`test_main_window_file_flow.py` 中 `inspector_group_expanded_persist_and_restore` / `test_main_window_clamps_to_available_screen` / `test_open_recent_project_can_remove_missing_entry` 均通过（3 passed）
   - 集成修复点：`code_generator.generate_app_config()` 在生成 `app_egui_config.h` 时增加 `EGUI_CONFIG_FUNCTION_SUPPORT_MASK=1`，保证 circle-mask 相关实现可链接

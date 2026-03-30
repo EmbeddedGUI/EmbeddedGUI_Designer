@@ -707,11 +707,6 @@ QToolButton#widget_browser_tag:checked {{
     font-size: 11px;
 }}
 
-#widget_browser_keywords {{
-    color: {t['text_soft']};
-    font-size: 11px;
-}}
-
 #widget_browser_card_chip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
@@ -740,10 +735,6 @@ QToolButton#widget_browser_tag:checked {{
 #widget_browser_card_chip[chipTone="danger"] {{
     color: {t['danger']};
     border-color: {t['danger']};
-}}
-
-#widget_browser_preview {{
-    background-color: transparent;
 }}
 
 #widget_browser_favorite_button {{
