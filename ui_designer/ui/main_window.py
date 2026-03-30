@@ -520,6 +520,9 @@ class MainWindow(QMainWindow):
 
         self._bottom_panel_visible = False
         self._current_left_panel = "project"
+        self._focus_canvas_enabled = False
+        self._focus_canvas_saved_top_sizes = []
+        self._focus_canvas_saved_bottom_visible = False
 
         # Status bar
         self._sdk_status_label = QLabel("SDK: missing")
@@ -949,6 +952,18 @@ class MainWindow(QMainWindow):
             self._apply_action_hint(self.theme_light_action, light_hint)
         if hasattr(self, "_font_size_action"):
             self._apply_action_hint(self._font_size_action, f"Adjust the Designer font size. Current size: {font_label}.")
+        if hasattr(self, "_focus_canvas_action"):
+            if self._focus_canvas_enabled:
+                focus_hint = (
+                    "Currently focusing the canvas: left workspace rail, inspector, and bottom tools are hidden. "
+                    "Toggle to restore the full workspace."
+                )
+            else:
+                focus_hint = (
+                    "Focus the canvas by hiding the left workspace rail, inspector, and bottom tools. "
+                    "Toggle again to restore."
+                )
+            self._apply_action_hint(self._focus_canvas_action, focus_hint)
 
     def _update_build_menu_metadata(self, latest_entry=None, history_entries=None, history_file_path=""):
         if not hasattr(self, "_build_menu"):
@@ -1726,6 +1741,8 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, lambda s=scroll, w=target: s.ensureWidgetVisible(w, 24, 24))
 
     def _show_inspector_tab(self, section, inner_section=None):
+        if self._focus_canvas_enabled:
+            self._set_focus_canvas_enabled(False)
         section_map = {
             "properties": 0,
             "animations": 1,
@@ -1740,6 +1757,8 @@ class MainWindow(QMainWindow):
         self._update_workspace_tab_metadata()
 
     def _show_bottom_panel(self, section="Diagnostics"):
+        if self._focus_canvas_enabled:
+            self._set_focus_canvas_enabled(False)
         if not hasattr(self, "_bottom_tabs"):
             return
         section_map = {
@@ -3587,6 +3606,15 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda checked=False, section=label: self._show_bottom_panel(section))
             tools_menu.addAction(action)
             self._tools_view_actions[label] = action
+
+        self._focus_canvas_action = QAction("Focus Canvas", self)
+        self._focus_canvas_action.setCheckable(True)
+        self._apply_action_hint(
+            self._focus_canvas_action,
+            "Focus the canvas by hiding the left workspace rail, inspector, and bottom tools.",
+        )
+        self._focus_canvas_action.triggered.connect(self._set_focus_canvas_enabled)
+        view_menu.addAction(self._focus_canvas_action)
         view_menu.addSeparator()
 
         self._overlay_group = QActionGroup(self)
@@ -3849,6 +3877,45 @@ class MainWindow(QMainWindow):
         self._update_toolbar_action_metadata()
         self._apply_workspace_iconography()
         self._update_workspace_chips()
+
+    def _set_focus_canvas_enabled(self, enabled):
+        enabled = bool(enabled)
+        if enabled == self._focus_canvas_enabled:
+            if hasattr(self, "_focus_canvas_action"):
+                with QSignalBlocker(self._focus_canvas_action):
+                    self._focus_canvas_action.setChecked(enabled)
+            return
+
+        if enabled:
+            if hasattr(self, "_top_splitter"):
+                self._focus_canvas_saved_top_sizes = list(self._top_splitter.sizes())
+            self._focus_canvas_saved_bottom_visible = bool(getattr(self, "_bottom_panel_visible", False))
+            if hasattr(self, "_left_shell"):
+                self._left_shell.hide()
+            if hasattr(self, "_inspector_tabs"):
+                self._inspector_tabs.hide()
+            if getattr(self, "_bottom_panel_visible", False):
+                self._set_bottom_panel_visible(False)
+        else:
+            if hasattr(self, "_left_shell"):
+                self._left_shell.show()
+            if hasattr(self, "_inspector_tabs"):
+                self._inspector_tabs.show()
+            if self._focus_canvas_saved_top_sizes and hasattr(self, "_top_splitter"):
+                try:
+                    self._top_splitter.setSizes(self._focus_canvas_saved_top_sizes)
+                except Exception:
+                    pass
+            if self._focus_canvas_saved_bottom_visible:
+                self._set_bottom_panel_visible(True)
+
+        self._focus_canvas_enabled = enabled
+        if hasattr(self, "_focus_canvas_action"):
+            with QSignalBlocker(self._focus_canvas_action):
+                self._focus_canvas_action.setChecked(enabled)
+        self._update_view_and_theme_action_metadata()
+        self._update_workspace_layout_metadata()
+        self._update_view_panel_navigation_action_metadata()
 
     # 鈹€鈹€ Theme 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 

@@ -8119,6 +8119,27 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.statusTip() == window._bottom_tabs.toolTip()
         _close_window(window)
 
+    def test_focus_canvas_toggle_hides_side_panels_and_restores_on_open_actions(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        assert window._focus_canvas_enabled is False
+        assert window._left_shell.isHidden() is False
+        assert window._inspector_tabs.isHidden() is False
+
+        window._focus_canvas_action.trigger()
+        assert window._focus_canvas_enabled is True
+        assert window._focus_canvas_action.isChecked() is True
+        assert window._left_shell.isHidden() is True
+        assert window._inspector_tabs.isHidden() is True
+        assert window._bottom_panel_visible is False
+
+        window._show_inspector_tab("properties")
+        assert window._focus_canvas_enabled is False
+        assert window._left_shell.isHidden() is False
+        assert window._inspector_tabs.isHidden() is False
+        _close_window(window)
+
     def test_widget_browser_insert_updates_selection_and_recent_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
