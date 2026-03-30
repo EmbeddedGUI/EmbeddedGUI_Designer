@@ -207,19 +207,19 @@ shadow:
 ```yaml
 - id: MAC-B-001
   title: 在 theme 中补齐 token（圆角/间距/字体/颜色/阴影）并驱动 QSS
-  status: todo
+  status: done
   deps: [MAC-A-001]
   acceptance: 关键控件不再大量写死像素与色值
 
 - id: MAC-B-002
   title: 统一按钮/输入/下拉/Tab 高度与 hover/pressed/disabled/selected
-  status: todo
+  status: done
   deps: [MAC-B-001]
   acceptance: 主路径控件反馈一致
 
 - id: MAC-B-003
   title: Inspector 分组头与字段布局统一（含 property_panel / collapsible_group / inspector groups）
-  status: todo
+  status: done
   deps: [MAC-B-001, UI-B-001]
   acceptance: 标题/标签/输入区对齐，可读性明显提升
 ```
@@ -234,19 +234,19 @@ shadow:
 ```yaml
 - id: MAC-C-001
   title: 列表/树节点选中与悬停 macOS 化（左栏列表、结构树、右栏列表）
-  status: todo
+  status: done
   deps: [MAC-B-002]
   acceptance: 选中/悬停规则跨面板一致
 
 - id: MAC-C-002
   title: 空状态与提示样式统一（无工程/无选中/无资源等）
-  status: todo
+  status: done
   deps: [MAC-B-003]
   acceptance: 空界面不「死白突兀」
 
 - id: MAC-C-003
   title: 深色主题回归与对比度修复
-  status: todo
+  status: done
   deps: [MAC-B-001, MAC-B-002, MAC-B-003]
   acceptance: 文字与选中态可辨识
 ```
