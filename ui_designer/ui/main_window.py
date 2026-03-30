@@ -1,15 +1,21 @@
-"""Main window for EmbeddedGUI Designer 鈥?Android Studio-like IDE layout.
+"""Main window for EmbeddedGUI Designer.
 
-All panels (Project Explorer, Widget Tree, Properties) are QDockWidgets
-that can be freely dragged, docked, and rearranged.  Page switching uses
-a qfluentwidgets.TabBar strip above the central editor area.
+The editor workspace uses a central QSplitter layout (not floating QDockWidgets):
+left rail + stacked panels, center page TabBar and editor (preview/code), right
+inspector tabs, optional bottom tools. Menus and preferences restore splitter
+geometry and the active left/inspector/bottom panels.
 
-Layout (default):
-    鈹屸攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
-    鈹?Project  鈹? [page tabs bar]       鈹? Widget Tree  鈹?
-    鈹?Explorer 鈹? Design/Split/Code     鈹傗攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
-    鈹?         鈹?                       鈹? Properties   鈹?
-    鈹斺攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹粹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹粹攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹?
+Layout (conceptual):
+
+  +------------------------------------------------------------------+--------+
+  | command bar (toolbar)                                            |        |
+  +---------------------------+--------------------------------------+--------+
+  | [Nav] | left stack        | page tabs + editor                   | inspec |
+  | rail  | (project / tree / | (Design | Split | Code)              | tabs   |
+  |       |  components / ...) |                                    |        |
+  +---------------------------+--------------------------------------+--------+
+  | bottom tools (diagnostics / history / debug), toggleable         |
+  +------------------------------------------------------------------+
 """
 
 import copy
@@ -320,14 +326,14 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(12, 12, 12, 12)
+        editor_layout.setContentsMargins(18, 18, 18, 18)
         editor_layout.setSpacing(12)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(10, 8, 10, 8)
-        self._toolbar_host_layout.setSpacing(10)
+        self._toolbar_host_layout.setContentsMargins(14, 10, 14, 10)
+        self._toolbar_host_layout.setSpacing(12)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -404,7 +410,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame = QFrame()
         self._workspace_nav_frame.setObjectName("workspace_nav_rail")
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(8, 10, 8, 10)
+        nav_layout.setContentsMargins(10, 12, 10, 12)
         nav_layout.setSpacing(8)
         for key, label, icon_key in (
             ("project", "Project", "project"),
@@ -460,13 +466,13 @@ class MainWindow(QMainWindow):
         self._top_splitter.addWidget(self._left_shell)
         self._top_splitter.addWidget(center_shell)
         self._top_splitter.addWidget(self._inspector_tabs)
-        self._top_splitter.setSizes([350, 920, 360])
+        self._top_splitter.setSizes([340, 940, 340])
 
         self._bottom_header = QFrame()
         self._bottom_header.setObjectName("workspace_bottom_header")
         bottom_header_layout = QHBoxLayout(self._bottom_header)
-        bottom_header_layout.setContentsMargins(10, 8, 10, 8)
-        bottom_header_layout.setSpacing(8)
+        bottom_header_layout.setContentsMargins(12, 8, 12, 8)
+        bottom_header_layout.setSpacing(10)
         self._bottom_title = QLabel("Tools")
         self._bottom_title.setObjectName("workspace_section_title")
         bottom_header_layout.addWidget(self._bottom_title)
@@ -486,7 +492,7 @@ class MainWindow(QMainWindow):
         bottom_shell.setObjectName("workspace_bottom_shell")
         bottom_layout = QVBoxLayout(bottom_shell)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(8)
+        bottom_layout.setSpacing(10)
         bottom_layout.addWidget(self._bottom_header)
         bottom_layout.addWidget(self._bottom_tabs, 1)
 
@@ -3454,7 +3460,12 @@ class MainWindow(QMainWindow):
         self._update_generate_resources_action_metadata()
         self._update_build_menu_metadata()
 
-        # 鈹€鈹€ View menu 鈹€鈹€
+        # View menu surface map (UI-S0-003):
+        # - Theme / Font: global chrome.
+        # - Workspace: left rail panels (project, structure, components, assets, status).
+        # - Inspector: right tabs (properties, animations, page).
+        # - Tools + overlay/grid/mockup: bottom panel + preview presentation.
+        # There is no separate "Window" menu on this app; use the OS window frame.
         view_menu = menubar.addMenu("View")
         self._view_menu = view_menu
         self._apply_action_hint(
@@ -3699,7 +3710,7 @@ class MainWindow(QMainWindow):
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
             "QToolBar { spacing: 6px; background: transparent; border: none; }"
-            "QToolButton { padding: 6px 10px; border-radius: 10px; }"
+            "QToolButton { padding: 6px 10px; border-radius: 8px; }"
         )
         self._toolbar_host_layout.addWidget(tb, 1)
 
