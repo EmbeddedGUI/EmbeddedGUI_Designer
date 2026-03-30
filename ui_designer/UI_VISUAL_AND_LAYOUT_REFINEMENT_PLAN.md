@@ -160,21 +160,21 @@ shadow:
 ```yaml
 - id: MAC-A-001
   title: 盘点主界面样式入口（main_window / theme / 各 panel 内联样式）
-  status: todo
+  status: done
   deps: []
   output: 可修改点清单（文件 + objectName + 是否应收敛到 theme）
   acceptance: 明确 theme 与散落样式的边界
 
 - id: MAC-A-002
   title: 统一三栏容器间距与背景层级（左壳 / 中壳 / 右 inspector 容器）
-  status: todo
+  status: done
   deps: [MAC-A-001]
   output: 间距、panel 底、分割线一致
   acceptance: 三栏层级清晰，无「拼贴感」
 
 - id: MAC-A-003
   title: 顶部工具栏分组化（主操作 / 次操作 / 模式 / 状态 chips）
-  status: todo
+  status: done
   deps: [MAC-A-001]
   output: 视觉权重与间距统一
   acceptance: 高低频动作层级正确；与 page_tab_bar 的上下关系更清楚
@@ -185,19 +185,19 @@ shadow:
 ```yaml
 - id: UI-B-001
   title: 右侧 Inspector 去掉 Page 下 Fields/Timers 嵌套 Tab（改折叠组或列表+堆叠）
-  status: todo
+  status: done
   deps: [MAC-A-001]
   acceptance: 用户可见 Tab 层 ≤ 2；行为与数据绑定不变
 
 - id: UI-B-002
   title: Status / Diagnostics / chips 主导入口与跳转联动策略（文案+点击路径）
-  status: todo
+  status: done
   deps: [MAC-A-001]
   acceptance: 仅一处像「主控制台」，其余为「打开…」
 
 - id: UI-B-003
   title: 命名统一（Components vs widgets 等）在菜单与可见文案层
-  status: todo
+  status: done
   deps: []
   acceptance: 用户可见字符串一致
 ```
