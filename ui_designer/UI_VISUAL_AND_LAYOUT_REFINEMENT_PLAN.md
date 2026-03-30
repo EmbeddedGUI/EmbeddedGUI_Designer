@@ -324,17 +324,19 @@ shadow:
 
 ```yaml
 last_update: 2026-03-30
-phase: Sprint 0
+phase: Sprint A
 completed:
   - UI-S0-001
   - UI-S0-002
   - UI-S0-003
+  - MAC-A-001
 in_progress: []
 blocked: []
 next_recommended:
-  - MAC-A-001
+  - MAC-A-002
+  - MAC-A-003
 notes:
-  - Sprint 0 提交后接 MAC-A-001 盘点文档与 Sprint A 视觉统一。
+  - 样式盘点见 ui_designer/UI_STYLE_INVENTORY.md
 ```
 
 ---
