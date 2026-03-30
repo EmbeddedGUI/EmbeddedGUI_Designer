@@ -340,10 +340,10 @@ completed:
   - UI-B-003
   - MAC-C-001
   - MAC-C-002
+  - MAC-C-003
 in_progress: []
 blocked: []
-next_recommended:
-  - MAC-C-003
+next_recommended: []
 notes:
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
@@ -351,6 +351,7 @@ notes:
   - UI-B-003：菜单/工具栏/树「Widgets」与「Insert Component」命名一致；测试对齐 Data 组中的 font_file 行
   - MAC-C-001：列表/树选中态在非活动窗口下用 selection_soft；选中行 hover 保持高亮
   - MAC-C-002：欢迎页「无最近工程」与属性面板「无选中」空状态双行文案 + 面板样式
+  - MAC-C-003：dark token 对比度提升（border/text/accent/selection），并让 light surface_hover 与 test_theme 基线一致
 ```
 
 ---
