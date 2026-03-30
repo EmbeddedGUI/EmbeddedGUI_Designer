@@ -354,6 +354,7 @@ notes:
   - 回归验证（非 UI）：`pytest ui_designer/tests/{engine,generator,model,renderer,settings}` 已通过，共 667 passed
   - 集成验证：`python package_ui_designer.py --sdk-root sdk/EmbeddedGUI` 成功；产物位于 `dist/EmbeddedGUI-Designer` 与 zip 包
   - 回归验证（UI 子集）：`test_editor_tabs/test_diagnostics_panel/test_history_panel/test_animations_panel` 共 13 passed；`test_theme` 与 `test_workspace_dialogs` 通过（本机已验证）
+  - 回归验证（smoke 修复后）：`ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI` 通过；`pytest ui_designer/tests/generator/test_code_gen_edge_cases.py::TestAppEguiConfigContent` 通过
   - theme.py：布局 token（r_* / space_* / pad_* / h_tab_min / fs_*）驱动主 QSS；按钮 :pressed/:disabled、Tab :hover、导航/芯片 :pressed
   - 顶栏 SDK / Diagnostics 芯片 tooltip 区分左 Status 与底 Diagnostics
   - MAC-B-003：Inspector `_inspector_form`、property_panel 滚动根 QSS、collapsible_group 对象名与折叠高度
