@@ -10,6 +10,7 @@ class CollapsibleGroupBox(QGroupBox):
 
     def __init__(self, title: str, parent=None):
         super().__init__(title, parent)
+        self.setObjectName("inspector_collapsible_group")
         self.setCheckable(True)
         self.setChecked(True)
         self.toggled.connect(self._on_toggled)
@@ -25,4 +26,4 @@ class CollapsibleGroupBox(QGroupBox):
         if checked:
             self.setMaximumHeight(16777215)
         else:
-            self.setMaximumHeight(30)
+            self.setMaximumHeight(32)

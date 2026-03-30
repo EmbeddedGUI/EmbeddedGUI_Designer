@@ -91,6 +91,16 @@ def _count_label(count, singular, plural=None):
     return f"{value} {noun}"
 
 
+def _inspector_form():
+    """Consistent label/field rhythm for inspector property forms (macOS-style density)."""
+    form = QFormLayout()
+    form.setContentsMargins(0, 0, 0, 0)
+    form.setSpacing(8)
+    form.setHorizontalSpacing(14)
+    form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+    return form
+
+
 class PropertyPanel(QWidget):
     """Dynamic property editor for the selected widget."""
 
@@ -270,8 +280,10 @@ class PropertyPanel(QWidget):
             event.ignore()
 
     def _init_ui(self):
+        self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(4, 4, 4, 4)
+        outer.setContentsMargins(8, 8, 8, 8)
+        outer.setSpacing(8)
 
         # Search filter
         self._search_edit = SearchLineEdit()
@@ -280,12 +292,14 @@ class PropertyPanel(QWidget):
         outer.addWidget(self._search_edit)
 
         scroll = QScrollArea()
+        scroll.setObjectName("property_panel_scroll")
         scroll.setWidgetResizable(True)
         outer.addWidget(scroll)
 
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
-        self._layout.setContentsMargins(4, 4, 4, 4)
+        self._layout.setContentsMargins(4, 8, 4, 8)
+        self._layout.setSpacing(10)
         scroll.setWidget(self._container)
 
         self._no_selection_label = self._create_no_selection_label()
@@ -510,7 +524,7 @@ class PropertyPanel(QWidget):
 
         # Basic group
         basic_group = CollapsibleGroupBox("Basic")
-        basic_form = QFormLayout()
+        basic_form = _inspector_form()
         basic_group.setLayout(basic_form)
 
         name_edit = LineEdit()
@@ -523,7 +537,7 @@ class PropertyPanel(QWidget):
 
         # Layout group
         layout_group = CollapsibleGroupBox("Layout")
-        layout_form = QFormLayout()
+        layout_form = _inspector_form()
         layout_group.setLayout(layout_form)
         for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
             spin = SpinBox()
@@ -561,7 +575,7 @@ class PropertyPanel(QWidget):
 
         # Style properties
         bg_group = CollapsibleGroupBox("Style")
-        bg_form = QFormLayout()
+        bg_form = _inspector_form()
         bg_group.setLayout(bg_form)
 
         bg = w.background or BackgroundModel()
@@ -642,8 +656,8 @@ class PropertyPanel(QWidget):
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
-        summary = QGroupBox(f"Selection - {len(self._selection)} Widgets")
-        summary_form = QFormLayout()
+        summary = QGroupBox(f"Selection ({_count_label(len(self._selection), 'widget')})")
+        summary_form = _inspector_form()
         summary.setLayout(summary_form)
 
         widget_types = sorted({widget.widget_type for widget in self._selection})
@@ -657,7 +671,7 @@ class PropertyPanel(QWidget):
         self._layout.addWidget(summary)
 
         geometry_group = QGroupBox("Batch Geometry")
-        geometry_form = QFormLayout()
+        geometry_form = _inspector_form()
         geometry_group.setLayout(geometry_form)
         for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
             spin = SpinBox()
@@ -683,7 +697,7 @@ class PropertyPanel(QWidget):
 
     def _build_designer_state_group(self):
         group = QGroupBox("Designer")
-        form = QFormLayout()
+        form = _inspector_form()
         group.setLayout(form)
 
         locked = CheckBox("Locked")
@@ -771,7 +785,7 @@ class PropertyPanel(QWidget):
             return
 
         group = QGroupBox("Common Properties")
-        form = QFormLayout()
+        form = _inspector_form()
         group.setLayout(form)
 
         for prop_name, prop_info in common_props:
@@ -1041,7 +1055,7 @@ class PropertyPanel(QWidget):
             if group_label in {"Properties", "Main"}:
                 group_label = "Behavior"
             group_box = CollapsibleGroupBox(group_label)
-            form = QFormLayout()
+            form = _inspector_form()
             group_box.setLayout(form)
 
             for prop_name, prop_info in group_props:
@@ -1065,7 +1079,7 @@ class PropertyPanel(QWidget):
 
     def _build_data_group(self, w, props):
         group_box = CollapsibleGroupBox("Data")
-        form = QFormLayout()
+        form = _inspector_form()
         group_box.setLayout(form)
 
         for prop_name, prop_info in props.items():
@@ -1207,7 +1221,7 @@ class PropertyPanel(QWidget):
             return None
 
         group = CollapsibleGroupBox("Callbacks")
-        form = QFormLayout()
+        form = _inspector_form()
         group.setLayout(form)
 
         for entry in entries:
@@ -1305,7 +1319,7 @@ class PropertyPanel(QWidget):
             return None
 
         group = CollapsibleGroupBox("Callbacks")
-        form = QFormLayout()
+        form = _inspector_form()
         group.setLayout(form)
 
         for entry in entries:

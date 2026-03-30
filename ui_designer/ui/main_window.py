@@ -12,7 +12,7 @@ Layout (conceptual):
   +---------------------------+--------------------------------------+--------+
   | [Nav] | left stack        | page tabs + editor                   | inspec |
   | rail  | (project / tree / | (Design | Split | Code)              | tabs   |
-  |       |  components / ...) |                                    |        |
+  |       |  widgets / ...)     |                                    |        |
   +---------------------------+--------------------------------------+--------+
   | bottom tools (diagnostics / history / debug), toggleable         |
   +------------------------------------------------------------------+
@@ -415,7 +415,7 @@ class MainWindow(QMainWindow):
         for key, label, icon_key in (
             ("project", "Project", "project"),
             ("structure", "Structure", "structure"),
-            ("widgets", "Components", "widgets"),
+            ("widgets", "Widgets", "widgets"),
             ("assets", "Assets", "assets"),
             ("status", "Status", "diagnostics"),
         ):
@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
         return {
             "project": "Project",
             "structure": "Structure",
-            "widgets": "Components",
+            "widgets": "Widgets",
             "assets": "Assets",
             "status": "Status",
         }.get(panel_key, str(panel_key or "Project").title())
@@ -1484,12 +1484,12 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_insert_widget_button"):
             return
         if self._current_page is None:
-            tooltip = "Open or create a project to insert a widget."
-            accessible_name = "Insert widget unavailable."
+            tooltip = "Open or create a project to insert a component."
+            accessible_name = "Insert component unavailable."
         else:
             target = self._insert_target_summary(parent)
-            tooltip = f"Open Components and insert a widget into {target}."
-            accessible_name = f"Insert widget target: {target}."
+            tooltip = f"Open the Widgets panel and insert a component into {target}."
+            accessible_name = f"Insert component target: {target}."
         self._insert_widget_button.setToolTip(tooltip)
         self._insert_widget_button.setStatusTip(tooltip)
         self._insert_widget_button.setAccessibleName(accessible_name)
@@ -3552,7 +3552,7 @@ class MainWindow(QMainWindow):
         for label, key in (
             ("Project", "project"),
             ("Structure", "structure"),
-            ("Components", "widgets"),
+            ("Widgets", "widgets"),
             ("Assets", "assets"),
             ("Status", "status"),
         ):
@@ -3772,7 +3772,7 @@ class MainWindow(QMainWindow):
         ):
             action.setIcon(make_icon(icon_key))
 
-        self._insert_widget_button = PrimaryPushButton("Insert Widget")
+        self._insert_widget_button = PrimaryPushButton("Insert Component")
         self._insert_widget_button.setIcon(make_icon("widgets"))
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)

@@ -37,7 +37,7 @@ class StatusCenterPanel(QWidget):
     _ACTION_LABELS = {
         "open_project_panel": "Project",
         "open_structure_panel": "Structure",
-        "open_components_panel": "Components",
+        "open_components_panel": "Widgets",
         "open_assets_panel": "Assets",
         "open_properties_inspector": "Properties",
         "open_animations_inspector": "Animations",
@@ -263,7 +263,7 @@ class StatusCenterPanel(QWidget):
         row3.setSpacing(8)
         self._project_btn = self._build_action_button("Project", "project", "open_project_panel")
         self._structure_btn = self._build_action_button("Structure", "structure", "open_structure_panel")
-        self._components_btn = self._build_action_button("Components", "widgets", "open_components_panel")
+        self._components_btn = self._build_action_button("Widgets", "widgets", "open_components_panel")
         self._assets_btn = self._build_action_button("Assets", "assets", "open_assets_panel")
         row3.addWidget(self._project_btn)
         row3.addWidget(self._structure_btn)

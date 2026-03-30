@@ -316,6 +316,29 @@ QGroupBox::title {{
     padding: 0 {t['r_sm']}px;
 }}
 
+QWidget#property_panel_root {{
+    background-color: transparent;
+}}
+
+QScrollArea#property_panel_scroll {{
+    background-color: transparent;
+    border: none;
+}}
+
+QGroupBox#inspector_collapsible_group {{
+    border-radius: {t['r_md']}px;
+    margin-top: {t['space_sm']}px;
+    padding-top: {t['space_md']}px;
+    font-weight: 600;
+}}
+
+QGroupBox#inspector_collapsible_group::title {{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: {t['space_sm']}px;
+    color: {t['text']};
+}}
+
 #workspace_command_bar,
 #workspace_panel_header,
 #widget_browser_header,

@@ -329,7 +329,7 @@ class WidgetTreePanel(QWidget):
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
         layout.addWidget(self.tree)
-        self.add_btn.setAccessibleName("Insert widget")
+        self.add_btn.setAccessibleName("Insert component")
         self.rename_btn.setAccessibleName("Rename selected widget")
         self.del_btn.setAccessibleName("Delete selected widget")
         self.expand_btn.setAccessibleName("Expand widget tree")
@@ -1922,11 +1922,11 @@ class WidgetTreePanel(QWidget):
         insert_target = self._current_move_target_label(insert_parent, "page root") or "page root"
         can_insert = self.project is not None
         if can_insert:
-            add_tooltip = f"Open the widget browser to insert into {insert_target}."
-            add_accessible_name = f"Insert widget target: {insert_target}"
+            add_tooltip = f"Open the Widgets panel to insert a component into {insert_target}."
+            add_accessible_name = f"Insert component target: {insert_target}"
         else:
-            add_tooltip = "Open or create a project page to insert a widget."
-            add_accessible_name = "Insert widget unavailable"
+            add_tooltip = "Open or create a project page to insert a component."
+            add_accessible_name = "Insert component unavailable"
         self.add_btn.setEnabled(can_insert)
         _set_widget_metadata(self.add_btn, tooltip=add_tooltip, accessible_name=add_accessible_name)
 
@@ -1997,7 +1997,7 @@ class WidgetTreePanel(QWidget):
 
     def _context_insert_tooltip(self, preferred_parent):
         insert_target = self._context_insert_target_label(preferred_parent)
-        return f"Open the widget browser to insert into {insert_target}."
+        return f"Open the Widgets panel to insert a component into {insert_target}."
 
     def _context_insert_target_label(self, preferred_parent):
         insert_target = self._current_move_target_label(preferred_parent, "page root") or "page root"
@@ -2550,7 +2550,7 @@ class WidgetTreePanel(QWidget):
         menu.addAction(rename_action)
 
         preferred_parent = widget if widget.is_container else getattr(widget, "parent", None)
-        insert_action = QAction("Insert Widget...", self)
+        insert_action = QAction("Insert Component...", self)
         insert_action.setIcon(make_icon("widgets"))
         _set_action_metadata(insert_action, tooltip=self._context_insert_tooltip(preferred_parent))
         insert_action.triggered.connect(lambda: self.browse_widgets_requested.emit(preferred_parent))

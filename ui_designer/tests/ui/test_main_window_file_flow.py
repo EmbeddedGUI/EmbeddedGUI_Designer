@@ -3338,7 +3338,7 @@ class TestMainWindowFileFlow:
             if action.text() in {
                 "Project",
                 "Structure",
-                "Components",
+                "Widgets",
                 "Assets",
                 "Status",
                 "Properties",
@@ -3357,8 +3357,8 @@ class TestMainWindowFileFlow:
         assert actions["Project"].statusTip() == actions["Project"].toolTip()
         assert actions["Structure"].toolTip() == "Show the Structure workspace panel. Current page: none. Selection: none."
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
-        assert actions["Components"].toolTip() == "Show the Components workspace panel. Current page: none. Insert target: unavailable."
-        assert actions["Components"].statusTip() == actions["Components"].toolTip()
+        assert actions["Widgets"].toolTip() == "Show the Widgets workspace panel. Current page: none. Insert target: unavailable."
+        assert actions["Widgets"].statusTip() == actions["Widgets"].toolTip()
         assert actions["Assets"].toolTip() == "Show the Assets workspace panel. Current page: none."
         assert actions["Assets"].statusTip() == actions["Assets"].toolTip()
         assert actions["Status"].toolTip() == (
@@ -7656,27 +7656,27 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Currently showing Components panel. Current page: none. Insert target: unavailable."
+            "Currently showing Widgets panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Widgets."
         assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Widgets."
         assert window._left_panel_stack.toolTip() == (
-            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
+            "Workspace panels: Widgets visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_panel_stack.statusTip() == window._left_panel_stack.toolTip()
         assert window._left_panel_stack.accessibleName() == (
-            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
+            "Workspace panels: Widgets visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_shell.toolTip() == (
-            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
+            "Workspace left shell: Widgets panel visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_shell.statusTip() == window._left_shell.toolTip()
         assert window._left_shell.accessibleName() == (
-            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
+            "Workspace left shell: Widgets panel visible. Current page: none. Insert target: unavailable."
         )
         assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
@@ -7714,9 +7714,11 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
         assert window._sdk_status_label.toolTip() == str(sdk_root)
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
-        assert window._insert_widget_button.toolTip() == "Open Components and insert a widget into root_group."
+        assert window._insert_widget_button.toolTip() == (
+            "Open the Widgets panel and insert a component into root_group."
+        )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
-        assert window._insert_widget_button.accessibleName() == "Insert widget target: root_group."
+        assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         assert window._selection_chip.text() == "No selection"
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
@@ -7738,7 +7740,7 @@ class TestMainWindowFileFlow:
             "Open Structure panel. Current page: main_page. Selection: none."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Components panel. Current page: main_page. Insert target: root_group."
+            "Open Widgets panel. Current page: main_page. Insert target: root_group."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
         assert window._workspace_nav_buttons["status"].toolTip() == (
@@ -7758,7 +7760,7 @@ class TestMainWindowFileFlow:
             "Open Structure panel. Current page: main_page. Selection: title (label)."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Components panel. Current page: main_page. Insert target: root_group."
+            "Open Widgets panel. Current page: main_page. Insert target: root_group."
         )
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: title (label)."
@@ -7788,9 +7790,9 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.toolTip() == "No SDK root configured"
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
-        assert window._insert_widget_button.toolTip() == "Open or create a project to insert a widget."
+        assert window._insert_widget_button.toolTip() == "Open or create a project to insert a component."
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
-        assert window._insert_widget_button.accessibleName() == "Insert widget unavailable."
+        assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
         _close_window(window)
 
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -7989,7 +7991,7 @@ class TestMainWindowFileFlow:
             "Open Structure panel. Current page: none. Selection: none."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Components panel. Current page: none. Insert target: unavailable."
+            "Open Widgets panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: none."
         assert window._workspace_nav_buttons["status"].toolTip() == (

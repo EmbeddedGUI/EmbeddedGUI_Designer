@@ -330,10 +330,10 @@ class TestPropertyPanelFileFlow:
         panel.set_resource_catalog(ResourceCatalog())
         panel.set_widget(widget)
 
-        font_group = _find_group(panel, "Font Config")
+        data_group = _find_group(panel, "Data")
         editor = panel._editors["prop_font_file"]
 
-        assert "File (Missing):" in _form_labels(font_group)
+        assert "File (Missing):" in _form_labels(data_group)
         assert "not present in the project catalog" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: missing.ttf"
@@ -358,10 +358,10 @@ class TestPropertyPanelFileFlow:
         panel.set_resource_catalog(catalog)
         panel.set_widget(widget)
 
-        font_group = _find_group(panel, "Font Config")
+        data_group = _find_group(panel, "Data")
         editor = panel._editors["prop_font_file"]
 
-        assert "File (Missing):" in _form_labels(font_group)
+        assert "File (Missing):" in _form_labels(data_group)
         assert "source file is missing on disk" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: missing.ttf"
@@ -411,7 +411,7 @@ class TestPropertyPanelFileFlow:
         panel.set_selection([first, second], primary=second)
 
         summary_group = panel._layout.itemAt(0).widget()
-        assert summary_group.title() == "Selection - 2 Widgets"
+        assert summary_group.title() == "Selection (2 widgets)"
 
         checkboxes = {checkbox.text(): checkbox for checkbox in panel.findChildren(CheckBox)}
         checkboxes["Locked"].setChecked(True)
@@ -454,7 +454,7 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection - 2 Widgets")
+        summary_group = _find_group(panel, "Selection (2 widgets)")
         common_group = _find_group(panel, "Common Properties")
         text_editor = panel._editors["prop_text"]
 
@@ -524,7 +524,7 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection - 2 Widgets")
+        summary_group = _find_group(panel, "Selection (2 widgets)")
         geometry_group = _find_group(panel, "Batch Geometry")
         editor = panel._editors["multi_width"]
 
@@ -751,7 +751,7 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection - 2 Widgets")
+        summary_group = _find_group(panel, "Selection (2 widgets)")
         callbacks_group = _find_group(panel, "Callbacks")
         click_editor = panel._editors["callback_onClick"]
         value_editor = panel._editors["callback_onValueChanged"]

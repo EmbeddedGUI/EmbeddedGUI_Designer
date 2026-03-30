@@ -105,7 +105,8 @@ class TestWidgetTreePanel:
         root_menu = panel._build_context_menu(root)
         assert [action.text() for action in root_menu.actions() if action.text()] == [
             "Rename",
-            "Insert Widget...",
+            "Insert Component...",
+            "Recent Widgets",
             "Select",
             "Structure",
             "Delete",
@@ -115,7 +116,8 @@ class TestWidgetTreePanel:
         leaf_menu = panel._build_context_menu(leaf)
         assert [action.text() for action in leaf_menu.actions() if action.text()] == [
             "Rename",
-            "Insert Widget...",
+            "Insert Component...",
+            "Recent Widgets",
             "Select",
             "Structure",
             "Delete",
@@ -2405,13 +2407,13 @@ class TestWidgetTreePanel:
 
         menu = panel._build_context_menu(first)
         rename_action = next(action for action in menu.actions() if action.text() == "Rename Selected")
-        insert_action = next(action for action in menu.actions() if action.text() == "Insert Widget...")
+        insert_action = next(action for action in menu.actions() if action.text() == "Insert Component...")
         delete_action = next(action for action in menu.actions() if action.text() == "Delete")
 
         assert rename_action.shortcut().toString() == "F2"
         assert rename_action.toolTip() == "Batch rename 2 selected widgets (F2)."
         assert rename_action.statusTip() == rename_action.toolTip()
-        assert insert_action.toolTip() == "Open the widget browser to insert into root_group (group)."
+        assert insert_action.toolTip() == "Open the Widgets panel to insert a component into root_group (group)."
         assert insert_action.statusTip() == insert_action.toolTip()
         assert delete_action.shortcut().toString() == "Del"
         assert delete_action.toolTip() == "Delete first (Del)."
@@ -2434,9 +2436,9 @@ class TestWidgetTreePanel:
             "Structure: select widgets to group, move, or reorder. "
             "Drop target: drag over the tree to preview where the selection will land."
         )
-        assert panel.add_btn.toolTip() == "Open the widget browser to insert into root_group (group)."
+        assert panel.add_btn.toolTip() == "Open the Widgets panel to insert a component into root_group (group)."
         assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
-        assert panel.add_btn.accessibleName() == "Insert widget target: root_group (group)"
+        assert panel.add_btn.accessibleName() == "Insert component target: root_group (group)"
         assert panel.rename_btn.toolTip() == "Rename the current selection (F2)\nUnavailable: select at least 1 widget."
         assert panel.rename_btn.statusTip() == panel.rename_btn.toolTip()
         assert panel.rename_btn.accessibleName() == "Rename selected widget unavailable"
@@ -2488,7 +2490,7 @@ class TestWidgetTreePanel:
 
         panel.set_selected_widgets([second], primary=second)
 
-        assert panel.add_btn.accessibleName() == "Insert widget target: root_group (group)"
+        assert panel.add_btn.accessibleName() == "Insert component target: root_group (group)"
         assert panel.rename_btn.toolTip() == "Rename field_button (F2)."
         assert panel.rename_btn.accessibleName() == "Rename selected widget: field_button"
         assert panel.del_btn.toolTip() == "Delete field_button (Del)."
