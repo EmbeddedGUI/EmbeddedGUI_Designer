@@ -599,7 +599,8 @@ QToolButton#widget_browser_sort_button {{
     border: 1px solid {t['border']};
     border-radius: 8px;
     color: {t['text_muted']};
-    padding: 4px 10px;
+    font-size: 11px;
+    padding: 3px 8px;
 }}
 
 QToolButton#widget_browser_sort_button:hover {{
@@ -619,7 +620,8 @@ QToolButton#widget_browser_complexity_button {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    padding: 3px 10px;
+    font-size: 11px;
+    padding: 3px 8px;
 }}
 
 QToolButton#widget_browser_complexity_button:hover {{
@@ -654,7 +656,8 @@ QToolButton#widget_browser_tag {{
     border: 1px solid {t['border']};
     color: {t['text_muted']};
     border-radius: 999px;
-    padding: 4px 10px;
+    font-size: 11px;
+    padding: 3px 8px;
 }}
 
 QToolButton#widget_browser_tag:hover {{
