@@ -10,9 +10,9 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
 from ...engine.python_renderer import render_page
 
 
-# Thumbnail size (kept modest to reduce visual noise)
-THUMB_WIDTH = 110
-THUMB_HEIGHT = 145
+# Thumbnail size (kept minimal; preview is secondary to page names)
+THUMB_WIDTH = 96
+THUMB_HEIGHT = 128
 
 
 def _pil_to_qpixmap(pil_image):
