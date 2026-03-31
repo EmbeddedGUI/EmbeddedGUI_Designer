@@ -161,6 +161,7 @@ class WidgetBrowserCard(QFrame):
             else f"Add {display_name} to favorites."
         )
         self._meta_label.setVisible(self._selected and self._has_meta)
+        self._insert_btn.setVisible(self._selected)
         _set_widget_metadata(
             self,
             tooltip=f"{summary} Click to select. Double-click to insert.",
