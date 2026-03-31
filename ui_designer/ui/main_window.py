@@ -126,7 +126,6 @@ from ..settings.preview_settings import PreviewSettings
 from ..core.state_store import StateStore
 from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
-from ..renderer.v2_renderer_qml import V2RendererQml
 
 
 WORKSPACE_LAYOUT_VERSION = 2
@@ -139,7 +138,6 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
-PREVIEW_V2_ENABLED = os.environ.get("EGUI_PREVIEW_V2_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 _DETACHED_WORKERS = set()
@@ -621,17 +619,12 @@ class MainWindow(QMainWindow):
         pass  # Rely entirely on the global Fusion / Fluent theme
 
     def _init_renderer_manager(self):
-        """Register preview renderers and sync initial state."""
+        """Register preview renderer and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
-        self._renderer_manager.register(V2RendererQml())
 
-        configured = getattr(self._config, "preview_engine", "v1")
-        preview_settings = PreviewSettings.from_config(configured)
-        preferred_engine = preview_settings.resolve_initial_engine(env_v2_enabled=PREVIEW_V2_ENABLED)
-        active_engine = self._renderer_manager.switch(preferred_engine, fallback="v1")
-
-        # Persist resolved engine so unsupported/failed choices gracefully fall back.
-        self._config.preview_engine = active_engine
+        # V2 renderer has been removed; always persist v1.
+        active_engine = self._renderer_manager.switch("v1", fallback="v1")
+        self._config.preview_engine = "v1"
         if hasattr(self, "_state_store"):
             self._state_store.set_preview_engine(active_engine)
 
@@ -2750,35 +2743,8 @@ class MainWindow(QMainWindow):
             self._switch_to_python_preview(reason)
 
     def _render_preview_with_v2(self):
-        if self._current_page is None:
-            self.preview_panel.show_image_preview(None, reason="No page", label_prefix="V2 renderer")
-            return
-
-        renderer = self._renderer_manager.active()
-        if renderer is None:
-            self._handle_preview_failure("Preview renderer unavailable")
-            return
-
-        schema = {
-            "page": self._current_page,
-            "screen_width": int(self.project.screen_width if self.project is not None else 240),
-            "screen_height": int(self.project.screen_height if self.project is not None else 320),
-        }
-        renderer.render(schema)
-        snapshot = renderer.snapshot()
-        if not snapshot:
-            error = getattr(renderer, "last_render_error", "")
-            self._handle_preview_failure(error or "V2 preview render failed")
-            return
-
-        try:
-            qimage = QImage.fromData(snapshot)
-        except Exception:
-            qimage = QImage()
-        if qimage.isNull():
-            self._handle_preview_failure("V2 preview snapshot invalid")
-            return
-        self.preview_panel.show_image_preview(qimage, label_prefix="V2 renderer")
+        """Deprecated: V2 renderer removed."""
+        return
 
     def _persist_current_project_to_config(self):
         self._config.last_app = self.app_name or self._config.last_app
@@ -3711,13 +3677,12 @@ class MainWindow(QMainWindow):
         self._preview_engine_group = QActionGroup(self)
         self._preview_engine_group.setExclusive(True)
         self._preview_engine_actions = {}
-        for label, engine_name in (("V1 (Python)", "v1"), ("V2 (Experimental)", "v2")):
-            action = QAction(label, self)
-            action.setCheckable(True)
-            action.triggered.connect(lambda checked=False, name=engine_name: self._set_preview_engine(name))
-            self._preview_engine_group.addAction(action)
-            self._preview_engine_actions[engine_name] = action
-            self._preview_engine_menu.addAction(action)
+        action = QAction("V1 (Python)", self)
+        action.setCheckable(True)
+        action.triggered.connect(lambda checked=False: self._set_preview_engine("v1"))
+        self._preview_engine_group.addAction(action)
+        self._preview_engine_actions["v1"] = action
+        self._preview_engine_menu.addAction(action)
         self._update_preview_engine_actions()
 
         view_menu.addSeparator()
@@ -7593,10 +7558,6 @@ class MainWindow(QMainWindow):
             self.preview_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
             self.page_navigator.refresh_thumbnail(self._current_page.name)
 
-            if self._renderer_manager.active_name == "v2":
-                self._render_preview_with_v2()
-                return
-
             if self.compiler is None or not self.compiler.can_build() or self.preview_panel.is_python_preview_active():
                 reason = ""
                 if self.compiler is None:
@@ -7639,30 +7600,21 @@ class MainWindow(QMainWindow):
         self._update_preview_grid_and_mockup_action_metadata()
 
     def _set_preview_engine(self, engine_name: str) -> None:
-        name = str(engine_name or "").strip().lower()
-        if name not in ("v1", "v2"):
-            return
-        if name == "v2" and not PREVIEW_V2_ENABLED:
-            self.statusBar().showMessage("Preview V2 is disabled by feature flag", 3000)
-            self._update_preview_engine_actions()
-            return
-        active_engine = self._renderer_manager.switch(name, fallback="v1")
-        self._config.preview_engine = active_engine
+        """Preview engine selection is fixed to v1 after v2 removal."""
+        _ = engine_name
+        active_engine = self._renderer_manager.switch("v1", fallback="v1")
+        self._config.preview_engine = "v1"
         self._config.save()
         if hasattr(self, "_state_store"):
             self._state_store.set_preview_engine(active_engine)
         self._update_preview_engine_actions()
-        self.statusBar().showMessage(f"Preview engine set to {active_engine.upper()}.", 3000)
+        self.statusBar().showMessage("Preview engine is fixed to V1 (Python).", 3000)
 
     def _update_preview_engine_actions(self) -> None:
         active_engine = self._renderer_manager.active_name or "v1"
         for engine_name, action in (self._preview_engine_actions or {}).items():
             action.setChecked(engine_name == active_engine)
-            if engine_name == "v2":
-                action.setEnabled(PREVIEW_V2_ENABLED)
-                hint = "Use the experimental V2 renderer." if PREVIEW_V2_ENABLED else "V2 renderer disabled by feature flag."
-            else:
-                hint = "Use the stable V1 Python renderer."
+            hint = "Use the stable V1 Python renderer."
             self._apply_action_hint(action, hint)
 
     def _toggle_auto_compile(self, enabled):
