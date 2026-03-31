@@ -671,7 +671,7 @@ QToolButton#widget_browser_tag:checked {{
 #widget_browser_card {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 16px;
+    border-radius: 10px;
 }}
 
 #widget_browser_group_header {{
@@ -697,14 +697,9 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_card_title {{
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: {t['text']};
-}}
-
-#widget_browser_card_meta {{
-    color: {t['text_muted']};
-    font-size: 11px;
 }}
 
 #widget_browser_card_chip {{
@@ -712,8 +707,8 @@ QToolButton#widget_browser_tag:checked {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    padding: 2px 8px;
-    font-size: 10px;
+    padding: 2px 4px;
+    font-size: 8px;
 }}
 
 #widget_browser_card_chip[chipTone="accent"] {{

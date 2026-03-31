@@ -79,11 +79,11 @@ class WidgetBrowserCard(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(10)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
 
         header = QHBoxLayout()
-        header.setSpacing(8)
+        header.setSpacing(6)
 
         icon_label = QLabel()
         icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=22).pixmap(22, 22))
@@ -95,9 +95,7 @@ class WidgetBrowserCard(QFrame):
         self._title_label.setObjectName("widget_browser_card_title")
         title_layout.addWidget(self._title_label)
 
-        self._meta_label = QLabel(self._item.get("category", ""))
-        self._meta_label.setObjectName("widget_browser_card_meta")
-        title_layout.addWidget(self._meta_label)
+        # Keep card uncluttered: only display the widget title + pills.
         header.addLayout(title_layout, 1)
 
         self._favorite_btn = QToolButton()
@@ -110,10 +108,11 @@ class WidgetBrowserCard(QFrame):
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(6)
+        chips_row.setSpacing(4)
         scenario = str(self._item.get("scenario", "") or "").strip()
         if scenario:
-            chips_row.addWidget(self._build_info_chip(scenario, "accent"))
+            # Keep scenario pill visually subdued; it is informational rather than an action.
+            chips_row.addWidget(self._build_info_chip(self._shorten_scenario_label(scenario), "neutral"))
         # Keep card chips minimal: show scenario (quickly conveys intent) + container-ness.
         # Complexity pills are intentionally omitted to reduce visual noise.
         if bool(self._item.get("is_container")):
@@ -124,13 +123,28 @@ class WidgetBrowserCard(QFrame):
         # Keep card simple: avoid keyword preview text that is not tied to actual rendering.
 
         action_row = QHBoxLayout()
-        action_row.setSpacing(8)
+        action_row.setSpacing(6)
         self._insert_btn = PrimaryPushButton("Insert")
         self._insert_btn.clicked.connect(lambda: self.insert_requested.emit(self.type_name))
         action_row.addWidget(self._insert_btn)
         action_row.addStretch()
         layout.addLayout(action_row)
         self._update_accessibility_summary()
+
+    @staticmethod
+    def _shorten_scenario_label(scenario: str) -> str:
+        """Shorten scenario pill text for card visual simplicity."""
+        s = (scenario or "").strip()
+        mapping = {
+            "Feedback & Status": "Status",
+            "Data & Visualization": "Data",
+            "Media & Content": "Media",
+            "Navigation & Flow": "Navigation",
+            "Input & Forms": "Input",
+            "Layout & Containers": "Layout",
+            "Decoration": "Decor",
+        }
+        return mapping.get(s, s.split("&", 1)[0].strip() or s)
 
     def _build_info_chip(self, text, tone):
         chip = QLabel(str(text or "").strip())
@@ -173,11 +187,6 @@ class WidgetBrowserCard(QFrame):
             accessible_name=summary,
         )
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=f"Widget name: {display_name}")
-        _set_widget_metadata(
-            self._meta_label,
-            tooltip=summary,
-            accessible_name=f"Widget category: {str(self._meta_label.text() or 'Uncategorized').strip() or 'Uncategorized'}",
-        )
         # keywords_label intentionally removed for visual simplicity
         _set_widget_metadata(
             self._favorite_btn,
