@@ -63,7 +63,7 @@ class PageThumbnail(QWidget):
 
         self._name_label = QLabel(page_name)
         self._name_label.setAlignment(Qt.AlignCenter)
-        self._name_label.setStyleSheet("color: #6B7280; font-size: 10px;")
+        self._name_label.setStyleSheet("color: #9CA3AF; font-size: 10px;")
         layout.addWidget(self._name_label)
         self._update_accessibility()
 
