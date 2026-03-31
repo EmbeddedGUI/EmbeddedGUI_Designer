@@ -324,7 +324,7 @@ class WidgetBrowserPanel(QWidget):
         search_row.setSpacing(8)
 
         self._search = SearchLineEdit()
-        self._search.setPlaceholderText("Search widgets by name, category, or keyword")
+        self._search.setPlaceholderText("Search widgets")
         self._search.textChanged.connect(self.refresh)
         search_row.addWidget(self._search, 1)
         layout.addLayout(search_row)
@@ -1061,12 +1061,12 @@ class WidgetBrowserPanel(QWidget):
             icon_label.setPixmap(make_icon("widgets", size=36).pixmap(36, 36))
             empty_layout.addWidget(icon_label)
 
-            title = QLabel("No widgets match the current filters.")
+            title = QLabel("No matching widgets.")
             title.setObjectName("workspace_section_title")
             title.setAlignment(Qt.AlignCenter)
             empty_layout.addWidget(title)
 
-            hint = QLabel("Try clearing search text, removing tags, changing complexity, or switching to All Widgets.")
+            hint = QLabel("Clear filters or search to show all.")
             hint.setObjectName("workspace_section_subtitle")
             hint.setWordWrap(True)
             hint.setAlignment(Qt.AlignCenter)

@@ -728,36 +728,6 @@ QPushButton#widget_browser_insert_button:pressed {{
     background-color: {t['panel_soft']};
 }}
 
-#widget_browser_card_chip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: 999px;
-    color: {t['text_muted']};
-    padding: 2px 4px;
-    font-size: 8px;
-}}
-
-#widget_browser_card_chip[chipTone="accent"] {{
-    background-color: {t['accent_soft']};
-    color: {t['accent_hover']};
-    border-color: {t['accent']};
-}}
-
-#widget_browser_card_chip[chipTone="success"] {{
-    color: {t['success']};
-    border-color: {t['success']};
-}}
-
-#widget_browser_card_chip[chipTone="warning"] {{
-    color: {t['warning']};
-    border-color: {t['warning']};
-}}
-
-#widget_browser_card_chip[chipTone="danger"] {{
-    color: {t['danger']};
-    border-color: {t['danger']};
-}}
-
 #widget_browser_favorite_button {{
     border: none;
     background: transparent;
