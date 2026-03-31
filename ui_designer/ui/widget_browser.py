@@ -435,20 +435,11 @@ class WidgetBrowserPanel(QWidget):
         for category_id, label in self._SPECIAL_CATEGORIES:
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, category_id)
-            icon_key = {
-                "all": "widgets",
-                "favorites": "tag",
-                "recent": "history",
-                "containers": "layout",
-            }.get(category_id, "widgets")
-            item.setIcon(make_icon(icon_key, size=18))
             _set_item_metadata(item, f"Show {label} in the widget browser.")
             self._category_list.addItem(item)
         for label in self._catalog.browser_scenarios():
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, f"scenario:{label}")
-            icon_key = self._scenario_icon_key(label)
-            item.setIcon(make_icon(icon_key, size=18))
             _set_item_metadata(item, f"Show widgets for the {label} scenario.")
             self._category_list.addItem(item)
         default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
@@ -506,8 +497,7 @@ class WidgetBrowserPanel(QWidget):
             button = QToolButton()
             button.setObjectName("widget_browser_lane")
             button.setCheckable(True)
-            button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            button.setIcon(make_icon(icon_key, size=18))
+            button.setToolButtonStyle(Qt.ToolButtonTextOnly)
             button.setText(str(label))
             button.clicked.connect(lambda checked=False, value=lane_id: self._set_category_by_id(value))
             row = index // columns
