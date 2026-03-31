@@ -570,17 +570,17 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 QToolButton#widget_browser_lane {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: 10px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
     color: {t['text_muted']};
-    padding: 8px 10px;
+    padding: 6px 8px;
     text-align: left;
 }}
 
 QToolButton#widget_browser_lane:hover {{
     background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
+    border-color: {t['border']};
     color: {t['text']};
 }}
 
