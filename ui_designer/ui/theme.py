@@ -675,14 +675,14 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_group_header {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: 10px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 }}
 
 #widget_browser_group_title {{
-    color: {t['text']};
-    font-size: 12px;
+    color: {t['text_muted']};
+    font-size: 11px;
     font-weight: 600;
 }}
 
