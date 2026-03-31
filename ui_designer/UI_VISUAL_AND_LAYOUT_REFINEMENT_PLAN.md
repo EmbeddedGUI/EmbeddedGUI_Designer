@@ -369,6 +369,7 @@ notes:
   - ProjectWorkspace 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_project_workspace.py`（2 passed）
   - WidgetBrowser 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_widget_browser.py`（18 passed）
   - WidgetBrowser 视觉简化（2026-03-31）：移除卡片缩略图预览、移除 `keywords` 文案、移除 category 那一行；减少 chips 密度（仅保留 scenario/Container + `Insert`），scenario 文案进一步压缩（更短更克制）且降低视觉存在感；同时压缩卡片外边距/间距与 chip/文字字号；同步清理 `theme.py` 中遗留的 `#widget_browser_preview` 与 `#widget_browser_keywords` 样式
+  - WidgetBrowser 扁平化收口（2026-03-31）：结果区改为高密度单列列表；仅选中项显示元信息/Insert/图标（收藏在已星标时保留）；Quick Lanes、Sort/Complexity、Tags、Categories 容器统一去块感并降低 hover 对比；头部统计改为文本计数，标题/空状态/搜索文案精简；清理遗留 chip 样式
   - DebugPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_debug_panel.py`（2 passed）
   - PageNavigator 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_navigator.py`（3 passed）
   - PageNavigator 视觉降噪（2026-03-31）：降低缩略图/标题的边框与字号存在感；进一步收缩缩略图尺寸；测试通过
