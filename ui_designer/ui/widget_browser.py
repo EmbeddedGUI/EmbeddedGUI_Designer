@@ -79,8 +79,8 @@ class WidgetBrowserCard(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(8)
+        layout.setContentsMargins(8, 6, 8, 6)
+        layout.setSpacing(6)
 
         icon_label = QLabel()
         icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=20).pixmap(20, 20))
@@ -396,8 +396,8 @@ class WidgetBrowserPanel(QWidget):
         self._cards_container = QWidget()
         self._cards_layout = QGridLayout(self._cards_container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setHorizontalSpacing(12)
-        self._cards_layout.setVerticalSpacing(12)
+        self._cards_layout.setHorizontalSpacing(0)
+        self._cards_layout.setVerticalSpacing(6)
         self._scroll.setWidget(self._cards_container)
 
         layout.addLayout(body, 1)
@@ -1057,7 +1057,7 @@ class WidgetBrowserPanel(QWidget):
     def _rebuild_cards(self, items):
         self._clear_cards()
         favorites = set(self._config.widget_browser_favorites)
-        columns = 2
+        columns = 1
         if not items:
             self._selected_type = ""
             empty = QFrame()
@@ -1162,7 +1162,7 @@ class WidgetBrowserPanel(QWidget):
                 row += 1
                 column = 0
 
-        self._cards_layout.setColumnStretch(columns, 1)
+        self._cards_layout.setColumnStretch(0, 1)
 
     def _select_card(self, widget_type):
         self._selected_type = widget_type
