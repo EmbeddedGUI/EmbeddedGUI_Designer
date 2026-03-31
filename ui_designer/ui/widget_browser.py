@@ -164,13 +164,7 @@ class WidgetBrowserCard(QFrame):
         self._insert_btn.setVisible(self._selected)
         self._favorite_btn.setVisible(self._selected or self._favorite_btn.isChecked())
         self._icon_label.setVisible(self._selected)
-        _set_widget_metadata(
-            self,
-            tooltip=f"{summary} Click to select. Double-click to insert.",
-            accessible_name=summary,
-        )
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=f"Widget name: {display_name}")
-        # keywords_label intentionally removed for visual simplicity
         _set_widget_metadata(
             self._favorite_btn,
             tooltip=favorite_hint,
