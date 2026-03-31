@@ -3456,6 +3456,7 @@ class MainWindow(QMainWindow):
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
+        self._compile_action.setIcon(make_icon("compile"))
         self._compile_action.setShortcut("F5")
         self._compile_action.triggered.connect(self._do_compile_and_run)
         build_menu.addAction(self._compile_action)
@@ -3468,12 +3469,14 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self.auto_compile_action)
 
         self._stop_action = QAction("Stop Exe", self)
+        self._stop_action.setIcon(make_icon("stop"))
         self._stop_action.triggered.connect(self._stop_exe)
         build_menu.addAction(self._stop_action)
 
         build_menu.addSeparator()
 
         self._release_build_action = QAction("Release Build (EXE)...", self)
+        self._release_build_action.setIcon(make_icon("compile"))
         self._apply_action_hint(self._release_build_action, "Build an EXE release package for the current project.")
         self._release_build_action.triggered.connect(self._release_build)
         build_menu.addAction(self._release_build_action)
@@ -3512,6 +3515,7 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._open_release_history_file_action)
 
         self._release_history_action = QAction("Release History...", self)
+        self._release_history_action.setIcon(make_icon("history"))
         self._apply_action_hint(self._release_history_action, "Browse recorded release builds for the current project.")
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
