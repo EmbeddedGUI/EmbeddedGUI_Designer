@@ -290,11 +290,11 @@ class WidgetBrowserPanel(QWidget):
         header_layout.setContentsMargins(10, 10, 10, 8)
         header_layout.setSpacing(4)
 
-        self._title_label = QLabel("Widget Browser")
+        self._title_label = QLabel("Widgets")
         self._title_label.setObjectName("workspace_section_title")
         header_layout.addWidget(self._title_label)
 
-        self._subtitle_label = QLabel("Browse by scenario, filter by tags, and insert directly into the selected target.")
+        self._subtitle_label = QLabel("Filter and insert into current target.")
         self._subtitle_label.setObjectName("workspace_section_subtitle")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
