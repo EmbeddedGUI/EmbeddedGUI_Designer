@@ -956,49 +956,6 @@ class WidgetBrowserPanel(QWidget):
             for item in metas
         ]
 
-    def _sort_items(self, items, search, favorite_types, recent_types, sort_mode="relevance"):
-        mode = str(sort_mode or "relevance").strip().lower()
-        if mode == "name":
-            return sorted(
-                items,
-                key=lambda item: (
-                    str(item.get("display_name", "")).lower(),
-                    int(item.get("browse_priority", 999) or 999),
-                ),
-            )
-        if mode == "complexity":
-            rank = {"basic": 0, "intermediate": 1, "advanced": 2}
-            return sorted(
-                items,
-                key=lambda item: (
-                    rank.get(str(item.get("complexity", "") or "").strip().lower(), 9),
-                    str(item.get("display_name", "")).lower(),
-                    int(item.get("browse_priority", 999) or 999),
-                ),
-            )
-
-        search_text = str(search or "").strip().lower()
-        recent_order = {name: index for index, name in enumerate(recent_types)}
-
-        def _score(item):
-            display_name = str(item.get("display_name", "") or "").lower()
-            type_name = str(item.get("type_name", "") or "").lower()
-            is_exact = 0 if search_text and search_text in {display_name, type_name} else 1
-            is_prefix = 0 if search_text and (display_name.startswith(search_text) or type_name.startswith(search_text)) else 1
-            favorite_rank = 0 if item.get("type_name") in favorite_types else 1
-            recent_rank = recent_order.get(item.get("type_name"), 999)
-            browse_priority = int(item.get("browse_priority", 999) or 999)
-            return (
-                is_exact,
-                is_prefix,
-                favorite_rank,
-                recent_rank,
-                browse_priority,
-                display_name,
-            )
-
-        return sorted(items, key=_score)
-
     def _clear_cards(self):
         while self._cards_layout.count():
             item = self._cards_layout.takeAt(0)
