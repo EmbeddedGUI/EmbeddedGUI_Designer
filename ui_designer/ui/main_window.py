@@ -3454,7 +3454,7 @@ class MainWindow(QMainWindow):
             "Compile previews, generate resources, and manage release builds.",
         )
 
-        self._compile_action = QAction("Compile && Run", self)
+        self._compile_action = QAction("Build EXE && Run", self)
         self._compile_action.setShortcut("F5")
         self._compile_action.triggered.connect(self._do_compile_and_run)
         build_menu.addAction(self._compile_action)
@@ -3472,8 +3472,8 @@ class MainWindow(QMainWindow):
 
         build_menu.addSeparator()
 
-        self._release_build_action = QAction("Release Build...", self)
-        self._apply_action_hint(self._release_build_action, "Build a release package for the current project.")
+        self._release_build_action = QAction("Release Build (EXE)...", self)
+        self._apply_action_hint(self._release_build_action, "Build an EXE release package for the current project.")
         self._release_build_action.triggered.connect(self._release_build)
         build_menu.addAction(self._release_build_action)
 
