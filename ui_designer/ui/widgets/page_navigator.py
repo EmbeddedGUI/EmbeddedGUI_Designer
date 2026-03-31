@@ -1,11 +1,8 @@
 """Page navigator widget with thumbnails for multi-page management."""
 
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QScrollArea, QLabel, QMenu, QAction,
-    QInputDialog, QMessageBox,
-)
-from PyQt5.QtCore import pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel, QMenu
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QPixmap, QImage
 
 from ...engine.python_renderer import render_page
 
