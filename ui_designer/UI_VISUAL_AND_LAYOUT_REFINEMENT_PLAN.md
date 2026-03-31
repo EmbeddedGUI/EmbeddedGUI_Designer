@@ -238,17 +238,19 @@
 
 ```yaml
 last_update: 2026-04-01
-phase: planning
-in_progress: []
-completed: []
+phase: phase_d_cleanup_started
+in_progress:
+  - CLEAN-002
+completed:
+  - CLEAN-001
 blocked: []
 next_recommended:
   - UX-001
   - UX-002
-  - REL-001
+  - UX-003
 notes:
-  - 本计划基于“先体验后技术细节”的策略制定。
-  - 若资源有限，优先顺序：图标统一 > 交互降重 > 渲染优化 > V2清理。
+  - 已移除 MainWindow 中 V2 预览引擎分支与开关，预览入口固定为 V1。
+  - 下一步进入图标体系与视觉 token 主线改造。
 ```
 
 ---
