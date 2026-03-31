@@ -564,9 +564,9 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 #widget_browser_lanes {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 }}
 
 QToolButton#widget_browser_lane {{
