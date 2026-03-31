@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import QPointF, QRectF, Qt
-from PyQt5.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap
+from PyQt5.QtGui import QColor, QFont, QFontDatabase, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import QApplication
 
 
@@ -70,6 +70,48 @@ _WIDGET_ICON_KEYS = {
     "window": "window",
 }
 
+_MATERIAL_ICON_MAP = {
+    "project": "folder",
+    "structure": "account_tree",
+    "widgets": "widgets",
+    "assets": "imagesmode",
+    "properties": "tune",
+    "animation": "animation",
+    "page": "article",
+    "diagnostics": "error",
+    "history": "history",
+    "debug": "bug_report",
+    "save": "save",
+    "compile": "play_arrow",
+    "stop": "stop",
+    "undo": "undo",
+    "redo": "redo",
+    "button": "smart_button",
+    "layout": "dashboard",
+    "input": "input",
+    "toggle": "toggle_on",
+    "navigation": "navigation",
+    "chart": "monitoring",
+    "media": "movie",
+    "image": "image",
+    "text": "text_fields",
+    "list": "list",
+    "grid": "grid_view",
+    "status": "info",
+    "progress": "progress_activity",
+    "divider": "horizontal_rule",
+    "calendar": "calendar_month",
+    "security": "lock",
+    "window": "web_asset",
+    "time": "schedule",
+    "table": "table_chart",
+    "tag": "sell",
+    "card": "cards",
+}
+
+_MATERIAL_FONT_FAMILY = "Material Symbols Outlined"
+_MATERIAL_FONT_LOADED = False
+
 
 def _theme_mode() -> str:
     app = QApplication.instance()
@@ -103,6 +145,21 @@ def _palette_for_mode(mode: str) -> dict:
     }
 
 
+def _ensure_material_font_loaded() -> bool:
+    global _MATERIAL_FONT_LOADED
+    if _MATERIAL_FONT_LOADED:
+        return True
+    families = set(QFontDatabase().families())
+    if _MATERIAL_FONT_FAMILY in families:
+        _MATERIAL_FONT_LOADED = True
+        return True
+    return False
+
+
+def _material_glyph_for_icon(icon_key: str) -> str | None:
+    return _MATERIAL_ICON_MAP.get(str(icon_key or "").strip())
+
+
 def widget_icon_key(type_name: str) -> str:
     return _WIDGET_ICON_KEYS.get(str(type_name or "").strip(), "widget")
 
@@ -119,7 +176,18 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
     pixmap.fill(Qt.transparent)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
-    _paint_icon(painter, icon_key, QRectF(1, 1, size - 2, size - 2), palette)
+
+    glyph_name = _material_glyph_for_icon(icon_key)
+    if glyph_name and _ensure_material_font_loaded():
+        font = QFont(_MATERIAL_FONT_FAMILY)
+        font.setPixelSize(max(12, size - 3))
+        font.setStyleStrategy(QFont.PreferAntialias)
+        painter.setFont(font)
+        painter.setPen(QPen(palette["ink"]))
+        painter.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, glyph_name)
+    else:
+        _paint_icon(painter, icon_key, QRectF(1, 1, size - 2, size - 2), palette)
+
     painter.end()
     return pixmap
 

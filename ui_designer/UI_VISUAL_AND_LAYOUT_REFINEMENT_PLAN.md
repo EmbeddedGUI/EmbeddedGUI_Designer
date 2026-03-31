@@ -238,13 +238,14 @@
 
 ```yaml
 last_update: 2026-04-01
-phase: phase_d_cleanup_completed
+phase: phase_a_in_progress
 in_progress:
   - UX-001
-  - UX-002
+  - UX-003
 completed:
   - CLEAN-001
   - CLEAN-002
+  - UX-002
 blocked: []
 next_recommended:
   - UX-003
@@ -252,7 +253,8 @@ next_recommended:
   - REL-001
 notes:
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
-  - 下一步进入图标体系与视觉 token 主线改造。
+  - 已在 iconography 中增加 Material Symbols 映射与字体渲染回退机制。
+  - 下一步推进视觉 token 收敛与主界面图标替换联调。
 ```
 
 ---
