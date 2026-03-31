@@ -238,18 +238,20 @@
 
 ```yaml
 last_update: 2026-04-01
-phase: phase_d_cleanup_started
+phase: phase_d_cleanup_completed
 in_progress:
-  - CLEAN-002
-completed:
-  - CLEAN-001
-blocked: []
-next_recommended:
   - UX-001
   - UX-002
+completed:
+  - CLEAN-001
+  - CLEAN-002
+blocked: []
+next_recommended:
   - UX-003
+  - UX-004
+  - REL-001
 notes:
-  - 已移除 MainWindow 中 V2 预览引擎分支与开关，预览入口固定为 V1。
+  - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
   - 下一步进入图标体系与视觉 token 主线改造。
 ```
 
