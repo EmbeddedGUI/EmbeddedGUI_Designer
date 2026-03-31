@@ -552,15 +552,15 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 #widget_browser_tags {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 }}
 
 #widget_browser_organize {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 }}
 
 #widget_browser_lanes {{
