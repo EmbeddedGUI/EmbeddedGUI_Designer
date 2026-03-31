@@ -94,16 +94,16 @@ class WidgetBrowserCard(QFrame):
         self._title_label.setObjectName("widget_browser_card_title")
         text_layout.addWidget(self._title_label)
 
-        chips_row = QHBoxLayout()
-        chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(4)
         scenario = str(self._item.get("scenario", "") or "").strip()
+        meta_parts = []
         if scenario:
-            chips_row.addWidget(self._build_info_chip(self._shorten_scenario_label(scenario)))
+            meta_parts.append(self._shorten_scenario_label(scenario))
         if bool(self._item.get("is_container")):
-            chips_row.addWidget(self._build_info_chip("Container"))
-        chips_row.addStretch()
-        text_layout.addLayout(chips_row)
+            meta_parts.append("Container")
+        self._meta_label = QLabel(" · ".join(meta_parts))
+        self._meta_label.setObjectName("widget_browser_card_meta")
+        self._meta_label.setVisible(bool(meta_parts))
+        text_layout.addWidget(self._meta_label)
 
         layout.addLayout(text_layout, 1)
 
@@ -135,16 +135,6 @@ class WidgetBrowserCard(QFrame):
             "Decoration": "Decor",
         }
         return mapping.get(s, s.split("&", 1)[0].strip() or s)
-
-    def _build_info_chip(self, text):
-        chip = QLabel(str(text or "").strip())
-        chip.setObjectName("widget_browser_card_chip")
-        _set_widget_metadata(
-            chip,
-            tooltip=f"Widget trait: {chip.text()}",
-            accessible_name=f"Widget trait: {chip.text()}",
-        )
-        return chip
 
     def _display_name(self):
         return str(self._item.get("display_name", self.type_name) or self.type_name)

@@ -218,19 +218,20 @@ class TestWidgetBrowserPanel:
         assert favorites_lane.statusTip() == favorites_lane.toolTip()
         panel.deleteLater()
 
-    def test_container_cards_include_visual_info_chips(self, qapp, isolated_config):
+    def test_container_cards_expose_compact_meta_text(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
         panel = WidgetBrowserPanel()
         container_card = next(card for card in panel._cards.values() if card.type_name == "linearlayout")
-        chips = [
-            label.text()
+        meta_label = next(
+            label
             for label in container_card.findChildren(QLabel)
-            if label.objectName() == "widget_browser_card_chip"
-        ]
+            if label.objectName() == "widget_browser_card_meta"
+        )
 
-        assert "Container" in chips
-        assert len(chips) >= 2
+        assert "Container" in meta_label.text()
+        assert meta_label.text().strip() != ""
+        assert meta_label.isHidden() is False
         panel.deleteLater()
 
     def test_complexity_filter_limits_visible_results(self, qapp, isolated_config):
