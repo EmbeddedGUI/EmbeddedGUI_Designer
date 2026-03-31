@@ -669,9 +669,9 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_card {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 10px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
 }}
 
 #widget_browser_group_header {{
@@ -687,8 +687,8 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_card:hover {{
-    border-color: {t['border_strong']};
-    background-color: {t['panel_alt']};
+    border-color: {t['border']};
+    background-color: {t['surface_hover']};
 }}
 
 #widget_browser_card[selected="true"] {{
