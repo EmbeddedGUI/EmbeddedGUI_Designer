@@ -172,10 +172,10 @@ class PageNavigator(QWidget):
 
     def _init_ui(self):
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(3, 3, 3, 3)
+        outer.setContentsMargins(2, 2, 2, 2)
 
         self._title_label = QLabel("Pages")
-        self._title_label.setStyleSheet("font-weight: 600; color: #4B5563; font-size: 12px;")
+        self._title_label.setStyleSheet("font-weight: 600; color: #6B7280; font-size: 11px;")
         self._title_label.setAccessibleName("Pages")
         outer.addWidget(self._title_label)
 
@@ -189,7 +189,7 @@ class PageNavigator(QWidget):
         self._container.setAccessibleName("Page thumbnail list")
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(4)
+        self._layout.setSpacing(2)
         self._layout.addStretch()
         self._scroll_area.setWidget(self._container)
         self._update_accessibility_summary()
