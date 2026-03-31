@@ -100,9 +100,10 @@ class WidgetBrowserCard(QFrame):
             meta_parts.append(self._shorten_scenario_label(scenario))
         if bool(self._item.get("is_container")):
             meta_parts.append("Container")
+        self._has_meta = bool(meta_parts)
         self._meta_label = QLabel(" · ".join(meta_parts))
         self._meta_label.setObjectName("widget_browser_card_meta")
-        self._meta_label.setVisible(bool(meta_parts))
+        self._meta_label.setVisible(False)
         text_layout.addWidget(self._meta_label)
 
         layout.addLayout(text_layout, 1)
@@ -159,6 +160,7 @@ class WidgetBrowserCard(QFrame):
             if self._favorite_btn.isChecked()
             else f"Add {display_name} to favorites."
         )
+        self._meta_label.setVisible(self._selected and self._has_meta)
         _set_widget_metadata(
             self,
             tooltip=f"{summary} Click to select. Double-click to insert.",

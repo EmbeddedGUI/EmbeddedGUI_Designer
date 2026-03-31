@@ -222,6 +222,7 @@ class TestWidgetBrowserPanel:
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
         panel = WidgetBrowserPanel()
+        panel._select_card("linearlayout")
         container_card = next(card for card in panel._cards.values() if card.type_name == "linearlayout")
         meta_label = next(
             label
