@@ -368,7 +368,7 @@ notes:
   - PreviewWorkspace 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_preview_workspace.py`（11 passed）
   - ProjectWorkspace 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_project_workspace.py`（2 passed）
   - WidgetBrowser 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_widget_browser.py`（18 passed）
-  - WidgetBrowser 视觉简化（2026-03-31）：移除卡片缩略图预览，并移除 `keywords` 文案，只保留图标/标题/元信息/标签与 `Insert`；同步清理 `theme.py` 中遗留的 `#widget_browser_preview` 与 `#widget_browser_keywords` 样式
+  - WidgetBrowser 视觉简化（2026-03-31）：移除卡片缩略图预览、移除 `keywords` 文案，并减少 chips 密度（仅保留 scenario/Container + `Insert`）；同步清理 `theme.py` 中遗留的 `#widget_browser_preview` 与 `#widget_browser_keywords` 样式
   - DebugPanel 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_debug_panel.py`（2 passed）
   - PageNavigator 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_page_navigator.py`（3 passed）
   - ResourcePanelFileFlow 回归（2026-03-31）：`pytest ui_designer/tests/ui/test_resource_panel_file_flow.py`（41 passed）

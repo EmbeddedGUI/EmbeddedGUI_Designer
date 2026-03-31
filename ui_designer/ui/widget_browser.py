@@ -114,10 +114,8 @@ class WidgetBrowserCard(QFrame):
         scenario = str(self._item.get("scenario", "") or "").strip()
         if scenario:
             chips_row.addWidget(self._build_info_chip(scenario, "accent"))
-        complexity = str(self._item.get("complexity", "") or "").strip().lower()
-        complexity_tone = {"basic": "success", "intermediate": "warning", "advanced": "danger"}.get(complexity, "accent")
-        if complexity:
-            chips_row.addWidget(self._build_info_chip(complexity.title(), complexity_tone))
+        # Keep card chips minimal: show scenario (quickly conveys intent) + container-ness.
+        # Complexity pills are intentionally omitted to reduce visual noise.
         if bool(self._item.get("is_container")):
             chips_row.addWidget(self._build_info_chip("Container", "success"))
         chips_row.addStretch()
