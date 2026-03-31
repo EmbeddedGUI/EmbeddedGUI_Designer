@@ -58,7 +58,7 @@ class PageThumbnail(QWidget):
         self._thumb_label.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
         self._thumb_label.setAlignment(Qt.AlignCenter)
         # Keep thumbnail container subtle; the rendered pixmap is the actual content.
-        self._thumb_label.setStyleSheet("border: 1px solid #E5E7EB; background: transparent;")
+        self._thumb_label.setStyleSheet("border: 1px solid #F3F4F6; background: transparent;")
         layout.addWidget(self._thumb_label)
 
         self._name_label = QLabel(page_name)
