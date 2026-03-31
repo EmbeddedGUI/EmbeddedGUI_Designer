@@ -10,9 +10,9 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen, QColor
 from ...engine.python_renderer import render_page
 
 
-# Thumbnail size
-THUMB_WIDTH = 120
-THUMB_HEIGHT = 160
+# Thumbnail size (kept modest to reduce visual noise)
+THUMB_WIDTH = 110
+THUMB_HEIGHT = 145
 
 
 def _pil_to_qpixmap(pil_image):
@@ -51,18 +51,19 @@ class PageThumbnail(QWidget):
         self.setCursor(Qt.PointingHandCursor)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(2)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(1)
 
         self._thumb_label = QLabel()
         self._thumb_label.setFixedSize(THUMB_WIDTH, THUMB_HEIGHT)
         self._thumb_label.setAlignment(Qt.AlignCenter)
-        self._thumb_label.setStyleSheet("border: 1px solid #555; background: #2a2a2a;")
+        # Keep thumbnail container subtle; the rendered pixmap is the actual content.
+        self._thumb_label.setStyleSheet("border: 1px solid #E5E7EB; background: transparent;")
         layout.addWidget(self._thumb_label)
 
         self._name_label = QLabel(page_name)
         self._name_label.setAlignment(Qt.AlignCenter)
-        self._name_label.setStyleSheet("color: #ccc; font-size: 11px;")
+        self._name_label.setStyleSheet("color: #6B7280; font-size: 10px;")
         layout.addWidget(self._name_label)
         self._update_accessibility()
 
@@ -95,8 +96,8 @@ class PageThumbnail(QWidget):
 
     def set_selected(self, selected):
         self._selected = selected
-        border = "2px solid #4a9eff" if selected else "1px solid #555"
-        self._thumb_label.setStyleSheet(f"border: {border}; background: #2a2a2a;")
+        border = "2px solid #007AFF" if selected else "1px solid #E5E7EB"
+        self._thumb_label.setStyleSheet(f"border: {border}; background: transparent;")
         self._update_accessibility()
 
     def set_thumbnail(self, pixmap):
@@ -171,10 +172,10 @@ class PageNavigator(QWidget):
 
     def _init_ui(self):
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(4, 4, 4, 4)
+        outer.setContentsMargins(3, 3, 3, 3)
 
         self._title_label = QLabel("Pages")
-        self._title_label.setStyleSheet("font-weight: bold; color: #ccc; font-size: 13px;")
+        self._title_label.setStyleSheet("font-weight: 600; color: #4B5563; font-size: 12px;")
         self._title_label.setAccessibleName("Pages")
         outer.addWidget(self._title_label)
 

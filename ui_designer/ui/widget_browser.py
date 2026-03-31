@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from qfluentwidgets import PrimaryPushButton, SearchLineEdit
+from qfluentwidgets import SearchLineEdit
 
 from ..model.config import get_config
 from ..model.widget_registry import WidgetRegistry
@@ -78,57 +78,47 @@ class WidgetBrowserCard(QFrame):
         self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(8)
 
-        header = QHBoxLayout()
-        header.setSpacing(6)
-
         icon_label = QLabel()
-        icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=22).pixmap(22, 22))
-        header.addWidget(icon_label, 0, Qt.AlignTop)
+        icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=20).pixmap(20, 20))
+        layout.addWidget(icon_label, 0, Qt.AlignVCenter)
 
-        title_layout = QVBoxLayout()
-        title_layout.setSpacing(2)
+        text_layout = QVBoxLayout()
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.setSpacing(1)
+
         self._title_label = QLabel(self._item.get("display_name", self.type_name))
         self._title_label.setObjectName("widget_browser_card_title")
-        title_layout.addWidget(self._title_label)
-
-        # Keep card uncluttered: only display the widget title + pills.
-        header.addLayout(title_layout, 1)
-
-        self._favorite_btn = QToolButton()
-        self._favorite_btn.setObjectName("widget_browser_favorite_button")
-        self._favorite_btn.setCheckable(True)
-        self._favorite_btn.setText("*")
-        self._favorite_btn.toggled.connect(lambda _checked: self.favorite_toggled.emit(self.type_name))
-        header.addWidget(self._favorite_btn, 0, Qt.AlignTop)
-        layout.addLayout(header)
+        text_layout.addWidget(self._title_label)
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(4)
         scenario = str(self._item.get("scenario", "") or "").strip()
         if scenario:
-            # Keep scenario pill visually subdued; it is informational rather than an action.
-            chips_row.addWidget(self._build_info_chip(self._shorten_scenario_label(scenario), "neutral"))
-        # Keep card chips minimal: show scenario (quickly conveys intent) + container-ness.
-        # Complexity pills are intentionally omitted to reduce visual noise.
+            chips_row.addWidget(self._build_info_chip(self._shorten_scenario_label(scenario)))
         if bool(self._item.get("is_container")):
-            chips_row.addWidget(self._build_info_chip("Container", "success"))
+            chips_row.addWidget(self._build_info_chip("Container"))
         chips_row.addStretch()
-        layout.addLayout(chips_row)
+        text_layout.addLayout(chips_row)
 
-        # Keep card simple: avoid keyword preview text that is not tied to actual rendering.
+        layout.addLayout(text_layout, 1)
 
-        action_row = QHBoxLayout()
-        action_row.setSpacing(6)
-        self._insert_btn = PrimaryPushButton("Insert")
+        self._insert_btn = QPushButton("Insert")
+        self._insert_btn.setObjectName("widget_browser_insert_button")
         self._insert_btn.clicked.connect(lambda: self.insert_requested.emit(self.type_name))
-        action_row.addWidget(self._insert_btn)
-        action_row.addStretch()
-        layout.addLayout(action_row)
+        layout.addWidget(self._insert_btn, 0, Qt.AlignVCenter)
+
+        self._favorite_btn = QToolButton()
+        self._favorite_btn.setObjectName("widget_browser_favorite_button")
+        self._favorite_btn.setCheckable(True)
+        self._favorite_btn.setText("*")
+        self._favorite_btn.toggled.connect(lambda _checked: self.favorite_toggled.emit(self.type_name))
+        layout.addWidget(self._favorite_btn, 0, Qt.AlignVCenter)
+
         self._update_accessibility_summary()
 
     @staticmethod
@@ -146,10 +136,9 @@ class WidgetBrowserCard(QFrame):
         }
         return mapping.get(s, s.split("&", 1)[0].strip() or s)
 
-    def _build_info_chip(self, text, tone):
+    def _build_info_chip(self, text):
         chip = QLabel(str(text or "").strip())
         chip.setObjectName("widget_browser_card_chip")
-        chip.setProperty("chipTone", str(tone or "accent"))
         _set_widget_metadata(
             chip,
             tooltip=f"Widget trait: {chip.text()}",
@@ -175,7 +164,6 @@ class WidgetBrowserCard(QFrame):
     def _update_accessibility_summary(self):
         display_name = self._display_name()
         summary = self._card_summary()
-        keywords = ""
         favorite_hint = (
             f"Remove {display_name} from favorites."
             if self._favorite_btn.isChecked()

@@ -702,6 +702,29 @@ QToolButton#widget_browser_tag:checked {{
     color: {t['text']};
 }}
 
+#widget_browser_card_meta {{
+    color: {t['text_soft']};
+    font-size: 10px;
+}}
+
+QPushButton#widget_browser_insert_button {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 8px;
+    color: {t['text_muted']};
+    padding: 2px 8px;
+}}
+
+QPushButton#widget_browser_insert_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QPushButton#widget_browser_insert_button:pressed {{
+    background-color: {t['panel_soft']};
+}}
+
 #widget_browser_card_chip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
