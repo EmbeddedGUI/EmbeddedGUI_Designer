@@ -260,7 +260,7 @@ notes:
   - Build 菜单与失败提示已改为 EXE 优先 + Python fallback 明确提示。
   - 已完成主题 token 收敛首批调整（左栏/命令栏/导航与状态芯片降重）。
   - 已完成主界面 Build 流程相关菜单图标映射与替换联调。
-  - 正在继续推进主壳层间距降重（toolbar/nav rail 密度下调）。
+  - 已完成主壳层间距降重一批（workspace/editor/inspector/bottom 区域 spacing 与 margin 下调）。
 ```
 
 ---
