@@ -82,9 +82,9 @@ class WidgetBrowserCard(QFrame):
         layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(6)
 
-        icon_label = QLabel()
-        icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=20).pixmap(20, 20))
-        layout.addWidget(icon_label, 0, Qt.AlignVCenter)
+        self._icon_label = QLabel()
+        self._icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=18).pixmap(18, 18))
+        layout.addWidget(self._icon_label, 0, Qt.AlignVCenter)
 
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
@@ -163,6 +163,7 @@ class WidgetBrowserCard(QFrame):
         self._meta_label.setVisible(self._selected and self._has_meta)
         self._insert_btn.setVisible(self._selected)
         self._favorite_btn.setVisible(self._selected or self._favorite_btn.isChecked())
+        self._icon_label.setVisible(self._selected)
         _set_widget_metadata(
             self,
             tooltip=f"{summary} Click to select. Double-click to insert.",
