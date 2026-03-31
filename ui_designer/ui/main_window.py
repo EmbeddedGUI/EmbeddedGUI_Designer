@@ -2741,6 +2741,7 @@ class MainWindow(QMainWindow):
             return
         if reason or self.preview_panel.is_python_preview_active() or self.compiler is None:
             self._switch_to_python_preview(reason)
+            self.statusBar().showMessage("Using Python fallback preview.", 3000)
 
     def _render_preview_with_v2(self):
         """Deprecated: V2 renderer removed."""
@@ -3451,7 +3452,7 @@ class MainWindow(QMainWindow):
         self._build_menu = build_menu
         self._apply_action_hint(
             build_menu.menuAction(),
-            "Compile previews, generate resources, and manage release builds.",
+            "Build EXE previews by default, generate resources, and manage release builds with Python fallback when needed.",
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
@@ -7735,7 +7736,7 @@ class MainWindow(QMainWindow):
             self.debug_panel.log_action("Headless preview started")
         else:
             self._last_runtime_error_text = (message.splitlines()[0] if message else "Compile failed")
-            self.statusBar().showMessage("Compile FAILED - see Debug Output")
+            self.statusBar().showMessage("EXE build failed, switched to Python fallback (see Debug Output)")
             if self.compiler is not None:
                 self.compiler.stop_exe()
             self._switch_to_python_preview(message.splitlines()[0] if message else "Compile failed")

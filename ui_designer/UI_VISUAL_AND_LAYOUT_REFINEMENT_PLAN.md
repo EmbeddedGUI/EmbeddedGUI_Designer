@@ -242,20 +242,21 @@ phase: phase_a_in_progress
 in_progress:
   - UX-001
   - UX-003
-  - REL-001
 completed:
   - CLEAN-001
   - CLEAN-002
   - UX-002
+  - REL-001
+  - REL-002
 blocked: []
 next_recommended:
   - UX-004
-  - REL-002
   - PERF-001
+  - CLEAN-003
 notes:
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
   - 已在 iconography 中增加 Material Symbols 映射与字体渲染回退机制。
-  - Build 菜单文案已改为 EXE 优先（Build EXE && Run / Release Build (EXE)...）。
+  - Build 菜单与失败提示已改为 EXE 优先 + Python fallback 明确提示。
 ```
 
 ---
