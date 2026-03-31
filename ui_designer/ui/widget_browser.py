@@ -282,13 +282,13 @@ class WidgetBrowserPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(8)
 
         header = QFrame()
         header.setObjectName("widget_browser_header")
         header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(14, 14, 14, 14)
-        header_layout.setSpacing(6)
+        header_layout.setContentsMargins(10, 10, 10, 8)
+        header_layout.setSpacing(4)
 
         self._title_label = QLabel("Widget Browser")
         self._title_label.setObjectName("workspace_section_title")
