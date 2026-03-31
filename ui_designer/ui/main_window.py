@@ -336,8 +336,8 @@ class MainWindow(QMainWindow):
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(12, 10, 12, 10)
-        self._toolbar_host_layout.setSpacing(10)
+        self._toolbar_host_layout.setContentsMargins(10, 8, 10, 8)
+        self._toolbar_host_layout.setSpacing(8)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -414,8 +414,8 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame = QFrame()
         self._workspace_nav_frame.setObjectName("workspace_nav_rail")
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(10, 12, 10, 12)
-        nav_layout.setSpacing(8)
+        nav_layout.setContentsMargins(8, 10, 8, 10)
+        nav_layout.setSpacing(6)
         for key, label, icon_key in (
             ("project", "Project", "project"),
             ("structure", "Structure", "structure"),
