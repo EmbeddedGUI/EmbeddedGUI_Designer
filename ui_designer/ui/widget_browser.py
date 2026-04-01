@@ -713,6 +713,7 @@ class WidgetBrowserPanel(QWidget):
         self._update_accessibility_summary(len(items))
 
     def _update_insert_target(self):
+        self._insert_target.setVisible(self._insert_target_label != "Current page root")
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
 
     def _update_browser_stats(self, visible_count):

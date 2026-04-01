@@ -107,6 +107,7 @@ class TestWidgetBrowserPanel:
         panel._search.setText("slider")
         panel.refresh()
 
+        assert panel._insert_target.isHidden() is False
         assert "root_group / content" in panel._insert_target.text()
         visible_types = [card.type_name for card in panel._cards.values()]
         assert "slider" in visible_types
@@ -446,6 +447,7 @@ class TestWidgetBrowserPanel:
         assert panel._search.toolTip() == "Widget browser search. Current text: none."
         assert panel._search.accessibleName() == "Widget browser search: none."
         assert panel._category_list.accessibleName() == "Widget categories: All Widgets"
+        assert panel._insert_target.isHidden() is True
         assert panel._lanes_title.accessibleName() == "Quick Lanes: current category All Widgets."
         assert panel._sort_title.accessibleName() == "Sort: Recommended"
         assert panel._complexity_title.accessibleName() == "Complexity: All"
