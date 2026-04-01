@@ -531,6 +531,35 @@ class TestWidgetBrowserPanel:
         assert panel._stats_summary_label.accessibleName().endswith("Filters active.")
         panel.deleteLater()
 
+    def test_browser_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._stats_summary_label.setProperty("_widget_browser_tooltip_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = panel._stats_summary_label.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._stats_summary_label, "setToolTip", counted_set_tooltip)
+
+        panel._update_browser_stats(len(panel._cards))
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        panel._update_browser_stats(len(panel._cards))
+        assert tooltip_calls == 0
+
+        panel._search.setText("slider")
+        panel.refresh()
+        assert tooltip_calls == 1
+        assert panel._stats_summary_label.statusTip() == panel._stats_summary_label.toolTip()
+        panel.deleteLater()
+
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
