@@ -251,7 +251,9 @@ class StatusCenterPanel(QWidget):
         row.addWidget(self._debug_btn)
         quick_layout.addLayout(row)
 
-        row2 = QHBoxLayout()
+        self._diagnostic_jump_host = QWidget()
+        self._diagnostic_jump_host.setObjectName("status_center_diagnostic_jump_host")
+        row2 = QHBoxLayout(self._diagnostic_jump_host)
         row2.setContentsMargins(0, 0, 0, 0)
         row2.setSpacing(8)
         self._first_error_btn = self._build_action_button("Open First Error", "diagnostics", "open_first_error")
@@ -259,7 +261,7 @@ class StatusCenterPanel(QWidget):
         row2.addWidget(self._first_error_btn)
         row2.addWidget(self._first_warning_btn)
         row2.addStretch()
-        quick_layout.addLayout(row2)
+        quick_layout.addWidget(self._diagnostic_jump_host)
 
         row3 = QHBoxLayout()
         row3.setContentsMargins(0, 0, 0, 0)
@@ -1463,7 +1465,12 @@ class StatusCenterPanel(QWidget):
         self._health_chip.setAccessibleName(
             self._health_chip_accessible_name(self._health_chip.text(), health_hint)
         )
-        self._first_error_btn.setEnabled(error_count > 0)
+        show_error_jump = error_count > 0
+        show_warning_jump = warning_count > 0
+        self._diagnostic_jump_host.setVisible(show_error_jump or show_warning_jump)
+        self._first_error_btn.setVisible(show_error_jump)
+        self._first_warning_btn.setVisible(show_warning_jump)
+        self._first_error_btn.setEnabled(show_error_jump)
         self._first_error_btn.setText(
             f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
         )
@@ -1485,7 +1492,7 @@ class StatusCenterPanel(QWidget):
                 hint=first_error_hint,
             )
         )
-        self._first_warning_btn.setEnabled(warning_count > 0)
+        self._first_warning_btn.setEnabled(show_warning_jump)
         self._first_warning_btn.setText(
             f"Open First Warning ({warning_count})" if warning_count > 0 else "Open First Warning"
         )

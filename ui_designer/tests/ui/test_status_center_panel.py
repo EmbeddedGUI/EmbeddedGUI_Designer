@@ -73,6 +73,9 @@ class TestStatusCenterPanel:
         assert panel._error_bar.accessibleName() == "Errors share: 2 errors (50%)"
         assert panel._warning_bar.accessibleName() == "Warnings share: 1 warning (25%)"
         assert panel._info_bar.accessibleName() == "Info share: 1 info item (25%)"
+        assert panel._diagnostic_jump_host.isHidden() is False
+        assert panel._first_error_btn.isHidden() is False
+        assert panel._first_warning_btn.isHidden() is False
         assert panel._first_error_btn.isEnabled() is True
         assert panel._first_warning_btn.isEnabled() is True
         assert panel._first_error_btn.text() == "Open First Error (2)"
@@ -158,6 +161,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_panel.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._runtime_panel.statusTip() == panel._runtime_panel.toolTip()
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Runtime failed"
+        assert panel._diagnostic_jump_host.isHidden() is False
+        assert panel._first_error_btn.isHidden() is True
+        assert panel._first_warning_btn.isHidden() is False
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is True
         assert panel._first_error_btn.text() == "Open First Error"
@@ -218,6 +224,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_panel.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_panel.statusTip() == panel._runtime_panel.toolTip()
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
+        assert panel._diagnostic_jump_host.isHidden() is True
+        assert panel._first_error_btn.isHidden() is True
+        assert panel._first_warning_btn.isHidden() is True
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
@@ -278,6 +287,9 @@ class TestStatusCenterPanel:
         assert panel._error_row.accessibleName() == "Errors diagnostics: No errors active"
         assert panel._warning_row.accessibleName() == "Warnings diagnostics: No warnings active"
         assert panel._info_row.accessibleName() == "Info diagnostics: No info items active"
+        assert panel._diagnostic_jump_host.isHidden() is True
+        assert panel._first_error_btn.isHidden() is True
+        assert panel._first_warning_btn.isHidden() is True
         assert panel._first_error_btn.isEnabled() is False
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
@@ -461,6 +473,7 @@ class TestStatusCenterPanel:
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no recent actions yet."
         assert panel._actions_title.accessibleName() == "Quick actions section: No recent actions yet."
+        assert panel._diagnostic_jump_host.isHidden() is True
         assert panel._last_action_host.isHidden() is True
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."

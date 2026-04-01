@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center first-error / first-warning jump actions now stay hidden until those diagnostics exist, removing two idle disabled buttons.
   - `UX-005` updated: widget browser empty-state hint copy is now contextual, matching the specific active filter state instead of a fixed generic sentence.
   - `UX-005` updated: property panel search now hides until there is an active selection, reducing idle inspector chrome.
   - `UX-005` updated: property panel search filters now reapply after inspector rebuilds, keeping the filtered view stable while changing the current selection.
