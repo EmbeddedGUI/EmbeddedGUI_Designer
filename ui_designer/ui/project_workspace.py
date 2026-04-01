@@ -32,6 +32,7 @@ class ProjectWorkspacePanel(QWidget):
         self._current_active_page = ""
         self._current_startup_page = ""
         self._current_dirty_pages = 0
+        self._current_view_name = ""
         self._init_ui()
 
     def _init_ui(self):
@@ -182,18 +183,21 @@ class ProjectWorkspacePanel(QWidget):
         _set_widget_metadata(self._stack, tooltip=summary, accessible_name=summary)
 
     def set_view(self, view_name):
+        view_name = self.VIEW_THUMBNAILS if view_name == self.VIEW_THUMBNAILS else self.VIEW_LIST
+        if self._current_view_name == view_name:
+            return
         if view_name == self.VIEW_THUMBNAILS:
             self._thumb_btn.setChecked(True)
             self._stack.setCurrentWidget(self._thumbnail_view)
         else:
             self._list_btn.setChecked(True)
             self._stack.setCurrentWidget(self._list_view)
-            view_name = self.VIEW_LIST
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
         self._update_view_button_metadata(view_name)
         self._update_stack_metadata(view_label)
         self._update_panel_metadata()
+        self._current_view_name = view_name
         self.view_changed.emit(view_name)
 
     def current_view(self):

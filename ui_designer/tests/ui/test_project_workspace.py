@@ -75,6 +75,11 @@ class TestProjectWorkspacePanel:
         )
         assert panel._list_btn.text() == "List\nStructure first"
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        emitted_count = len(emitted)
+
+        panel.set_view(ProjectWorkspacePanel.VIEW_THUMBNAILS)
+
+        assert len(emitted) == emitted_count
 
         panel.set_view("unknown")
 
@@ -89,6 +94,11 @@ class TestProjectWorkspacePanel:
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_LIST
+        emitted_count = len(emitted)
+
+        panel.set_view(ProjectWorkspacePanel.VIEW_LIST)
+
+        assert len(emitted) == emitted_count
         panel.deleteLater()
 
     def test_workspace_snapshot_chips_show_page_active_and_dirty_state(self, qapp):
