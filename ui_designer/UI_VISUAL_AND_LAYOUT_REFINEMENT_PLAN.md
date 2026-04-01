@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center metric value labels now reuse cached text snapshots, skipping no-op `setText` rewrites while preview, SDK, compile, diagnostics, selection, dirty, and diagnostic-count summaries stay unchanged across other status refreshes.
   - `PERF-002` updated: status center diagnostic jump button accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while first-error and first-warning summaries stay unchanged across other status refreshes.
   - `PERF-002` updated: status center diagnostic jump button labels now reuse cached text snapshots, skipping no-op `setText` rewrites while first-error and first-warning counts stay unchanged across other status refreshes.
   - `PERF-002` updated: status center runtime labels now reuse cached text snapshots, skipping no-op `setText` rewrites while runtime messaging stays unchanged across unrelated status updates.

@@ -1230,16 +1230,22 @@ class StatusCenterPanel(QWidget):
         if self._status_snapshot_initialized and self._status_snapshot == status_snapshot:
             return
 
-        self._sdk_value.setText("Ready" if sdk_ready else "Missing")
-        self._compile_value.setText(self._compile_metric_text(can_compile))
-        self._dirty_value.setText(self._dirty_metric_text(dirty_count))
-        self._selection_value.setText(self._selection_metric_text(selection_total))
-        self._preview_value.setText(preview_text)
-        self._diag_value.setText(self._diagnostic_metric_text(error_count, warning_count, info_count))
+        self._set_widget_text(self._sdk_value, "Ready" if sdk_ready else "Missing")
+        self._set_widget_text(self._compile_value, self._compile_metric_text(can_compile))
+        self._set_widget_text(self._dirty_value, self._dirty_metric_text(dirty_count))
+        self._set_widget_text(self._selection_value, self._selection_metric_text(selection_total))
+        self._set_widget_text(self._preview_value, preview_text)
+        self._set_widget_text(self._diag_value, self._diagnostic_metric_text(error_count, warning_count, info_count))
         total = max(error_count + warning_count + info_count, 1)
-        self._error_value.setText(self._count_with_percent(error_count, diag_total, "error", "errors"))
-        self._warning_value.setText(self._count_with_percent(warning_count, diag_total, "warning", "warnings"))
-        self._info_value.setText(self._count_with_percent(info_count, diag_total, "info item", "info items"))
+        self._set_widget_text(self._error_value, self._count_with_percent(error_count, diag_total, "error", "errors"))
+        self._set_widget_text(
+            self._warning_value,
+            self._count_with_percent(warning_count, diag_total, "warning", "warnings"),
+        )
+        self._set_widget_text(
+            self._info_value,
+            self._count_with_percent(info_count, diag_total, "info item", "info items"),
+        )
         self._error_bar.setValue(int(round((error_count * 100.0) / total)))
         self._warning_bar.setValue(int(round((warning_count * 100.0) / total)))
         self._info_bar.setValue(int(round((info_count * 100.0) / total)))
