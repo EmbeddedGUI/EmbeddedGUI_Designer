@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QToolButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -476,6 +476,7 @@ class TestStatusCenterPanel:
         assert panel._diagnostic_jump_host.isHidden() is True
         assert panel._last_action_host.isHidden() is True
         assert panel._last_action_label.isHidden() is True
+        assert panel._repeat_action_button.popupMode() == QToolButton.DelayedPopup
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
@@ -986,6 +987,7 @@ class TestStatusCenterPanel:
         assert panel._last_action_host.isHidden() is False
         assert panel._last_action_label.text() == "Last action: Fields"
         assert panel._last_action_label.isHidden() is False
+        assert panel._repeat_action_button.popupMode() == QToolButton.MenuButtonPopup
         assert panel._last_action_label.toolTip() == "Current action: Fields. 2 recent actions tracked."
         assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (2 recent actions)"
@@ -1065,6 +1067,7 @@ class TestStatusCenterPanel:
         panel.restore_view_state({"last_action": "open_components_panel"})
         assert panel._last_action_host.isHidden() is False
         assert panel._last_action_label.isHidden() is True
+        assert panel._repeat_action_button.popupMode() == QToolButton.DelayedPopup
         panel._repeat_action_button.click()
 
         assert emitted == ["open_components_panel"]
@@ -1100,6 +1103,7 @@ class TestStatusCenterPanel:
             "open_assets_panel",
         ]
         assert panel._last_action_label.text() == "Last action: Assets"
+        assert panel._repeat_action_button.popupMode() == QToolButton.MenuButtonPopup
         assert panel._repeat_action_button.text() == "Repeat Assets"
         assert _menu_labels(panel._repeat_action_menu) == [
             "Assets",

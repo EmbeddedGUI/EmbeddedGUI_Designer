@@ -1099,6 +1099,9 @@ class StatusCenterPanel(QWidget):
         has_action = bool(self._last_action)
         self._last_action_label.setVisible(len(self._recent_actions) > 1)
         self._last_action_host.setVisible(has_action)
+        self._repeat_action_button.setPopupMode(
+            QToolButton.MenuButtonPopup if len(self._recent_actions) > 1 else QToolButton.DelayedPopup
+        )
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
         self._set_widget_icon(
