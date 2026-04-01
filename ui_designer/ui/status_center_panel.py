@@ -1396,7 +1396,8 @@ class StatusCenterPanel(QWidget):
         )
         self._set_widget_text(self._suggested_action_label, self._suggested_action_title_text(suggested_context))
         self._set_hint(self._suggested_action_label, self._suggested_action_title_tooltip(suggested_context, suggested_hint))
-        self._suggested_action_label.setAccessibleName(
+        self._set_accessible_name(
+            self._suggested_action_label,
             self._suggested_action_title_accessible_name(
                 suggested_context,
                 suggested_label,
@@ -1405,7 +1406,8 @@ class StatusCenterPanel(QWidget):
         )
         self._set_widget_text(self._suggested_action_button, suggested_label)
         self._set_widget_icon(self._suggested_action_button, suggested_icon)
-        self._suggested_action_button.setAccessibleName(
+        self._set_accessible_name(
+            self._suggested_action_button,
             self._suggested_action_button_accessible_name(
                 suggested_context,
                 suggested_label,
@@ -1416,7 +1418,8 @@ class StatusCenterPanel(QWidget):
         suggested_summary = self._suggested_action_summary_text(suggested_context, suggested_hint)
         self._set_widget_text(self._suggested_action_summary_label, suggested_summary)
         self._set_hint(self._suggested_action_summary_label, suggested_summary)
-        self._suggested_action_summary_label.setAccessibleName(
+        self._set_accessible_name(
+            self._suggested_action_summary_label,
             self._summary_accessible_name("Suggested action guidance", suggested_summary)
         )
         workspace_chip_label, workspace_chip_tone = self._workspace_chip_state(
