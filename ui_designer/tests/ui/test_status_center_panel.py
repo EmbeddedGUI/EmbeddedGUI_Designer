@@ -1230,6 +1230,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_repeat_action_popup_mode_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._repeat_action_button.setProperty("_status_center_popup_mode_snapshot", None)
+
+        popup_mode_calls = 0
+        original_set_popup_mode = panel._repeat_action_button.setPopupMode
+
+        def counted_set_popup_mode(mode):
+            nonlocal popup_mode_calls
+            popup_mode_calls += 1
+            return original_set_popup_mode(mode)
+
+        monkeypatch.setattr(panel._repeat_action_button, "setPopupMode", counted_set_popup_mode)
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert popup_mode_calls == 1
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert popup_mode_calls == 1
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel"])
+        assert popup_mode_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

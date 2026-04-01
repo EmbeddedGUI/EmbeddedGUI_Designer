@@ -407,6 +407,13 @@ class StatusCenterPanel(QWidget):
         widget.setText(value)
         widget.setProperty("_status_center_text_snapshot", value)
 
+    def _set_toolbutton_popup_mode(self, button, mode):
+        value = int(mode)
+        if int(button.property("_status_center_popup_mode_snapshot") or -1) == value:
+            return
+        button.setPopupMode(mode)
+        button.setProperty("_status_center_popup_mode_snapshot", value)
+
     def _set_widget_icon(self, widget, icon_key, size=16):
         key = str(icon_key or "history").strip() or "history"
         resolved_size = int(size or 16)
@@ -1126,8 +1133,9 @@ class StatusCenterPanel(QWidget):
         has_action = bool(self._last_action)
         self._last_action_label.setVisible(len(self._recent_actions) > 1)
         self._last_action_host.setVisible(has_action)
-        self._repeat_action_button.setPopupMode(
-            QToolButton.MenuButtonPopup if len(self._recent_actions) > 1 else QToolButton.DelayedPopup
+        self._set_toolbutton_popup_mode(
+            self._repeat_action_button,
+            QToolButton.MenuButtonPopup if len(self._recent_actions) > 1 else QToolButton.DelayedPopup,
         )
         self._repeat_action_button.setEnabled(has_action)
         self._set_widget_text(self._repeat_action_button, f"Repeat {action_label}" if has_action else "Repeat Action")
