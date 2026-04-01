@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: main toolbar now hides the idle preview chip until a Python or live preview session is actually running.
   - `UX-005` updated: main toolbar now hides the idle selection and dirty-state chips until there is an actual selection or unsaved page, reducing command-bar status noise.
   - `UX-005` updated: status center now hides the diagnostic summary line while diagnostics are clear, only surfacing that extra copy when errors, warnings, or info items exist.
   - `UX-005` updated: status center runtime detail copy now stays hidden while runtime is clear, only expanding to show text when there is an actual runtime issue.

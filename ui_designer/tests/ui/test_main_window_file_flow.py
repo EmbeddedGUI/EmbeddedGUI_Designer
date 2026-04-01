@@ -7875,6 +7875,7 @@ class TestMainWindowFileFlow:
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
         assert window._selection_chip.statusTip() == window._selection_chip.toolTip()
+        assert window._preview_chip.isHidden() is True
         assert window._preview_chip.text() == "Preview idle"
         assert window._preview_chip.accessibleName() == "Workspace status: Preview idle."
         assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."

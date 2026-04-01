@@ -2060,6 +2060,7 @@ class MainWindow(QMainWindow):
                 tool_tip="Open Structure to review the current selection.",
             )
         if hasattr(self, "_preview_chip"):
+            self._preview_chip.setVisible(preview_text != "Preview idle")
             self._set_chip(
                 self._preview_chip,
                 preview_text,
@@ -7874,5 +7875,4 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
 
