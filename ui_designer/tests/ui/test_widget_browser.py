@@ -327,6 +327,31 @@ class TestWidgetBrowserPanel:
         assert panel._complexity_buttons["all"].isChecked() is True
         panel.deleteLater()
 
+    def test_reset_all_filters_refreshes_results_once(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._search.setText("slider")
+        panel._set_sort_mode("name")
+        panel._set_complexity_filter("advanced")
+        panel._tag_buttons[sorted(panel._tag_buttons.keys())[0]].setChecked(True)
+
+        refresh_calls = 0
+        original_refresh = panel.refresh
+
+        def counted_refresh():
+            nonlocal refresh_calls
+            refresh_calls += 1
+            return original_refresh()
+
+        monkeypatch.setattr(panel, "refresh", counted_refresh)
+
+        panel._reset_all_filters()
+
+        assert refresh_calls == 1
+        assert panel._search_refresh_timer.isActive() is False
+        panel.deleteLater()
+
     def test_organizers_restore_from_config(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
@@ -486,4 +511,20 @@ class TestWidgetBrowserPanel:
         assert panel._search.accessibleName() == "Widget browser search: __no_widget_matches__."
         assert buttons["Reset Search"].toolTip() == "Clear the current widget browser search text."
         assert buttons["Show All Widgets"].toolTip() == "Reset every widget browser filter and show all widgets."
+        panel.deleteLater()
+
+    def test_reset_search_only_refreshes_immediately(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._search.setText("__no_widget_matches__")
+        panel.refresh()
+
+        assert panel._cards == {}
+
+        panel._reset_search_only()
+
+        assert panel._search.text() == ""
+        assert panel._search_refresh_timer.isActive() is False
+        assert panel._cards
         panel.deleteLater()

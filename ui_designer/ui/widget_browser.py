@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData, QSignalBlocker, QTimer
 from PyQt5.QtGui import QDrag
 from PyQt5.QtWidgets import (
     QFrame,
@@ -1151,7 +1151,10 @@ class WidgetBrowserPanel(QWidget):
 
     def _reset_search_only(self):
         if self._search.text():
+            blocker = QSignalBlocker(self._search)
             self._search.setText("")
+            del blocker
+            self.refresh()
 
     def _reset_all_filters(self):
         self._suspend_filter_persist = True
@@ -1160,7 +1163,10 @@ class WidgetBrowserPanel(QWidget):
         self._set_sort_mode("relevance", refresh=False, persist=False)
         self._set_complexity_filter("all", refresh=False, persist=False)
         self._config.set_widget_browser_organizers(sort_mode=self._sort_mode, complexity=self._complexity_filter)
+        search_blocker = QSignalBlocker(self._search)
+        category_blocker = QSignalBlocker(self._category_list)
         self._search.setText("")
-        self._sync_tags_from_config()
         self._set_category_by_id("all")
+        del category_blocker
+        del search_blocker
         self.refresh()

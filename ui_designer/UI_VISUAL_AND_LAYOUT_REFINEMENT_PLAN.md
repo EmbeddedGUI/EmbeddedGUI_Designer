@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: widget browser explicit reset actions now bypass the search debounce and collapse multi-control resets into a single immediate refresh.
   - `PERF-002` updated: clearing widget browser tags now relies on the normal refresh path, avoiding a second immediate metadata sync on the same click.
   - `PERF-002` started: widget browser search input now uses a short debounce before rebuilding results, while explicit refresh paths still apply immediately.
   - `UX-005` updated: widget browser tag reset now appears only when filters are active, removing an idle-state control from the bottom filter rail.
