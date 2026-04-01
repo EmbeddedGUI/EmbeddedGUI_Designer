@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: property panel metadata helpers now cache their last tooltip/accessibility text, skipping no-op rewrites while the current selection summary and editor guidance remain unchanged.
   - `PERF-002` updated: widget browser metadata helpers now cache their last tooltip/accessibility text, skipping no-op rewrites while visible result summaries and control guidance remain unchanged.
   - `PERF-002` updated: status center quick-action visibility now caches the last visible flag, so repeated recent-action syncs skip no-op `setVisible` rewrites for the last-action host/label and recent-actions summary when visibility state is unchanged.
   - `PERF-002` updated: project workspace metadata helpers now cache their last tooltip/accessibility text, skipping no-op rewrites while the current view and workspace summary remain unchanged.

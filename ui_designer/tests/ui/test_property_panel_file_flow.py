@@ -89,6 +89,35 @@ class TestPropertyPanelFileFlow:
         assert panel.toolTip() == "Property panel: no widget selected. Search: font."
         panel.deleteLater()
 
+    def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+        panel.setProperty("_property_panel_tooltip_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = panel.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel, "setToolTip", counted_set_tooltip)
+
+        panel._update_panel_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        panel._update_panel_metadata()
+        assert tooltip_calls == 0
+
+        panel.set_widget(WidgetModel("label", name="title"))
+        assert tooltip_calls == 1
+        assert panel.statusTip() == panel.toolTip()
+        panel.deleteLater()
+
     def test_search_field_is_contextual_and_reapplies_after_form_rebuild(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
