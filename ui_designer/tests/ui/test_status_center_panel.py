@@ -1151,6 +1151,34 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.isHidden() is True
         panel.deleteLater()
 
+    def test_health_chip_visibility_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._health_chip.setProperty("_status_center_visible_snapshot", None)
+
+        visible_calls = 0
+        original_set_visible = panel._health_chip.setVisible
+
+        def counted_set_visible(value):
+            nonlocal visible_calls
+            visible_calls += 1
+            return original_set_visible(value)
+
+        monkeypatch.setattr(panel._health_chip, "setVisible", counted_set_visible)
+
+        panel.set_status(diagnostics_errors=1)
+        assert visible_calls == 1
+
+        visible_calls = 0
+        panel.set_status(diagnostics_warnings=1)
+        assert visible_calls == 0
+
+        panel.set_status()
+        assert visible_calls == 1
+        assert panel._health_chip.isHidden() is True
+        panel.deleteLater()
+
     def test_set_widget_icon_skips_no_op_icon_refreshes(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

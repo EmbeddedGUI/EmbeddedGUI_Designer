@@ -1449,7 +1449,7 @@ class StatusCenterPanel(QWidget):
             )
         )
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
-        self._workspace_chip.setVisible(workspace_chip_label != "Ready")
+        self._set_widget_visible(self._workspace_chip, workspace_chip_label != "Ready")
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
             can_compile,
@@ -1473,11 +1473,11 @@ class StatusCenterPanel(QWidget):
             and diag_total <= 0
             and not runtime_text
         )
-        self._workspace_summary_label.setVisible(not is_workspace_fully_ready)
+        self._set_widget_visible(self._workspace_summary_label, not is_workspace_fully_ready)
         show_health_rows = diag_total > 0
-        self._error_row.setVisible(show_health_rows)
-        self._warning_row.setVisible(show_health_rows)
-        self._info_row.setVisible(show_health_rows)
+        self._set_widget_visible(self._error_row, show_health_rows)
+        self._set_widget_visible(self._warning_row, show_health_rows)
+        self._set_widget_visible(self._info_row, show_health_rows)
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
@@ -1522,7 +1522,7 @@ class StatusCenterPanel(QWidget):
         self._health_title.setAccessibleName(self._diagnostic_title_accessible_name(diag_total))
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
-        self._health_summary_label.setVisible(diag_total > 0)
+        self._set_widget_visible(self._health_summary_label, diag_total > 0)
         self._set_hint(self._health_summary_label, health_summary)
         self._health_summary_label.setAccessibleName(
             self._summary_accessible_name("Diagnostic summary", health_summary)
@@ -1548,12 +1548,12 @@ class StatusCenterPanel(QWidget):
         self._health_chip.setAccessibleName(
             self._health_chip_accessible_name(self._health_chip.text(), health_hint)
         )
-        self._health_chip.setVisible(diag_total > 0)
+        self._set_widget_visible(self._health_chip, diag_total > 0)
         show_error_jump = error_count > 0
         show_warning_jump = warning_count > 0
-        self._diagnostic_jump_host.setVisible(show_error_jump or show_warning_jump)
-        self._first_error_btn.setVisible(show_error_jump)
-        self._first_warning_btn.setVisible(show_warning_jump)
+        self._set_widget_visible(self._diagnostic_jump_host, show_error_jump or show_warning_jump)
+        self._set_widget_visible(self._first_error_btn, show_error_jump)
+        self._set_widget_visible(self._first_warning_btn, show_warning_jump)
         self._first_error_btn.setEnabled(show_error_jump)
         self._first_error_btn.setText(
             f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
