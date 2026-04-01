@@ -377,6 +377,7 @@ QGroupBox#inspector_collapsible_group::title {{
 
 #workspace_command_bar,
 #workspace_panel_header,
+#workspace_hint_strip,
 #widget_browser_header,
 #workspace_bottom_header {{
     background-color: {t['panel']};
@@ -387,6 +388,10 @@ QGroupBox#inspector_collapsible_group::title {{
 #workspace_command_bar {{
     background-color: {t['panel']};
     border-color: {t['border_strong']};
+}}
+
+#workspace_hint_strip {{
+    background-color: {t['panel_alt']};
 }}
 
 QPushButton#project_workspace_view_button {{

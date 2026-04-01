@@ -238,7 +238,7 @@
 
 ```yaml
 last_update: 2026-04-01
-phase: phase_c_in_progress
+phase: phase_b_in_progress
 in_progress:
   - UX-005
 completed:
@@ -268,6 +268,8 @@ notes:
   - 已为 PropertyPanel 几何同步与 MainWindow 拖拽刷新节流补充定向回归用例。
   - 已完成 CLEAN-003：删除 `settings/preview_settings.py`、对应测试与旧版 V1/V2 扩展计划文档，主代码/测试中不再保留 V2 入口引用。
   - 已执行残留引用扫描与预览相关回归：`test_preview_workspace.py`、`test_main_window_file_flow.py -k canvas_move|preview_failure|preview_engine_invalid_name` 通过。
+  - UX-005 首批已落地到 PropertyPanel：多选摘要改为轻量 header，Interaction Notes 改为就地提示条，多选分组统一到 collapsible inspector 组。
+  - 已补充并通过 PropertyPanel 多选摘要/提示条/混合态定向回归。
 ```
 
 ---

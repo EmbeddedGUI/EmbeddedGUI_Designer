@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication, QFormLayout, QGroupBox, QLabel
+    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QLabel
 
     _has_pyqt5 = True
 except ImportError:
@@ -58,6 +58,13 @@ def _form_value_text(group, label_text):
 
 def _group_label_texts(group):
     return [label.text() for label in group.findChildren(QLabel)]
+
+
+def _find_hint_strip(panel):
+    frame = panel.findChild(QFrame, "workspace_hint_strip")
+    if frame is None:
+        raise AssertionError("Hint strip not found")
+    return frame
 
 
 @_skip_no_qt
@@ -410,8 +417,9 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = panel._layout.itemAt(0).widget()
-        assert summary_group.title() == "Selection (2 widgets)"
+        summary_header = panel._layout.itemAt(0).widget()
+        assert summary_header.objectName() == "workspace_panel_header"
+        assert "Selected 2 widgets" in _group_label_texts(summary_header)
 
         checkboxes = {checkbox.text(): checkbox for checkbox in panel.findChildren(CheckBox)}
         checkboxes["Locked"].setChecked(True)
@@ -454,11 +462,11 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection (2 widgets)")
+        summary_header = panel._layout.itemAt(0).widget()
         common_group = _find_group(panel, "Common Properties")
         text_editor = panel._editors["prop_text"]
 
-        assert _form_value_text(summary_group, "Mixed:") == "1"
+        assert "1 mixed field" in _group_label_texts(summary_header)
         assert "Text (Mixed):" in _form_labels(common_group)
         assert text_editor.text() == ""
         assert text_editor.placeholderText() == "Mixed values"
@@ -524,11 +532,11 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection (2 widgets)")
+        summary_header = panel._layout.itemAt(0).widget()
         geometry_group = _find_group(panel, "Batch Geometry")
         editor = panel._editors["multi_width"]
 
-        assert _form_value_text(summary_group, "Mixed:") == "1"
+        assert "1 mixed field" in _group_label_texts(summary_header)
         assert "Width (Mixed):" in _form_labels(geometry_group)
         assert "different values" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
@@ -595,7 +603,7 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_widget(child)
 
-        notes = _group_label_texts(_find_group(panel, "Interaction Notes"))
+        notes = _group_label_texts(_find_hint_strip(panel))
         assert any(text.startswith("Locked:") for text in notes)
         assert any(text.startswith("Hidden:") for text in notes)
         assert any(text.startswith("Layout-managed:") for text in notes)
@@ -616,7 +624,7 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        notes = _group_label_texts(_find_group(panel, "Interaction Notes"))
+        notes = _group_label_texts(_find_hint_strip(panel))
         assert "Locked: 1 selected widget cannot be moved or resized from the canvas." in notes
         assert "Hidden: 1 selected widget is skipped by canvas hit testing." in notes
         assert "Layout-managed: 2 selected widgets use parent-controlled positioning." in notes
@@ -798,12 +806,12 @@ class TestPropertyPanelFileFlow:
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
 
-        summary_group = _find_group(panel, "Selection (2 widgets)")
+        summary_header = panel._layout.itemAt(0).widget()
         callbacks_group = _find_group(panel, "Callbacks")
         click_editor = panel._editors["callback_onClick"]
         value_editor = panel._editors["callback_onValueChanged"]
 
-        assert _form_value_text(summary_group, "Mixed:") == "1"
+        assert "1 mixed field" in _group_label_texts(summary_header)
         assert "Click (Mixed):" in _form_labels(callbacks_group)
         assert "Value Changed:" in _form_labels(callbacks_group)
         assert click_editor.text() == ""

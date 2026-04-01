@@ -590,6 +590,85 @@ class PropertyPanel(QWidget):
 
         return header
 
+    def _build_multi_selection_header(self, callback_entries):
+        header = QFrame()
+        header.setObjectName("workspace_panel_header")
+        layout = QVBoxLayout()
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+        header.setLayout(layout)
+
+        title = QLabel(f"Selected {_count_label(len(self._selection), 'widget')}")
+        title.setObjectName("workspace_section_title")
+        layout.addWidget(title)
+
+        widget_types = sorted({widget.widget_type for widget in self._selection})
+        subtitle = QLabel(
+            f"Primary: {self._primary_widget.name if self._primary_widget else 'none'}"
+            f" • Types: {', '.join(widget_types)}"
+        )
+        subtitle.setObjectName("workspace_section_subtitle")
+        subtitle.setWordWrap(True)
+        layout.addWidget(subtitle)
+
+        mixed_geometry = sum(
+            1
+            for field in ("x", "y", "width", "height")
+            if self._is_mixed_values(getattr(widget, field) for widget in self._selection)
+        )
+        mixed_props = sum(
+            1
+            for prop_name, _ in self._collect_multi_common_properties()
+            if self._is_mixed_values(widget.properties.get(prop_name) for widget in self._selection)
+        )
+        mixed_callbacks = sum(1 for entry in callback_entries if entry["is_mixed"])
+        mixed_total = mixed_geometry + mixed_props + mixed_callbacks
+
+        chips_row = QHBoxLayout()
+        chips_row.setSpacing(8)
+        chips_row.addWidget(self._make_status_chip(_count_label(len(widget_types), "type"), "accent"))
+        chips_row.addWidget(self._make_status_chip(_count_label(mixed_total, "mixed field"), "warning"))
+        chips_row.addWidget(self._make_status_chip("Batch edit", "success"))
+        chips_row.addStretch()
+        layout.addLayout(chips_row)
+
+        hint = QLabel("Batch edits apply the same value to all selected widgets.")
+        hint.setObjectName("workspace_section_subtitle")
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        return header
+
+    def _build_inspector_group(self, title):
+        group = CollapsibleGroupBox(title)
+        form = _inspector_form()
+        group.setLayout(form)
+        self._wire_inspector_collapsible_group(group, title)
+        return group, form
+
+    def _build_selection_feedback_strip(self, messages):
+        if not messages:
+            return None
+
+        frame = QFrame()
+        frame.setObjectName("workspace_hint_strip")
+        layout = QVBoxLayout()
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(4)
+        frame.setLayout(layout)
+
+        title = QLabel("Canvas Notes")
+        title.setObjectName("workspace_section_title")
+        layout.addWidget(title)
+
+        for message in messages:
+            label = QLabel(message)
+            label.setObjectName("workspace_section_subtitle")
+            label.setWordWrap(True)
+            layout.addWidget(label)
+
+        return frame
+
     def _rebuild_form(self):
         self._clear_layout(self._layout)
         self._editors = {}
@@ -747,23 +826,9 @@ class PropertyPanel(QWidget):
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
-        summary = QGroupBox(f"Selection ({_count_label(len(self._selection), 'widget')})")
-        summary_form = _inspector_form()
-        summary.setLayout(summary_form)
+        self._layout.addWidget(self._build_multi_selection_header(callback_entries))
 
-        widget_types = sorted({widget.widget_type for widget in self._selection})
-        mixed_geometry = sum(1 for field in ("x", "y", "width", "height") if self._is_mixed_values(getattr(widget, field) for widget in self._selection))
-        mixed_props = sum(1 for prop_name, _ in self._collect_multi_common_properties() if self._is_mixed_values(widget.properties.get(prop_name) for widget in self._selection))
-        mixed_callbacks = sum(1 for entry in callback_entries if entry["is_mixed"])
-        summary_form.addRow("Primary:", QLabel(self._primary_widget.name if self._primary_widget else ""))
-        summary_form.addRow("Types:", QLabel(", ".join(widget_types)))
-        summary_form.addRow("Mixed:", QLabel(str(mixed_geometry + mixed_props + mixed_callbacks)))
-        summary_form.addRow("Hint:", QLabel("Batch edits apply the same value to all selected widgets."))
-        self._layout.addWidget(summary)
-
-        geometry_group = QGroupBox("Batch Geometry")
-        geometry_form = _inspector_form()
-        geometry_group.setLayout(geometry_form)
+        geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
         for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
             spin = SpinBox()
             spin.setRange(-9999, 9999)
@@ -787,9 +852,7 @@ class PropertyPanel(QWidget):
         self._layout.addStretch()
 
     def _build_designer_state_group(self):
-        group = QGroupBox("Designer")
-        form = _inspector_form()
-        group.setLayout(form)
+        group, form = self._build_inspector_group("Designer")
 
         locked = CheckBox("Locked")
         locked.setChecked(all(getattr(widget, "designer_locked", False) for widget in self._selection) if self._selection else False)
@@ -856,28 +919,14 @@ class PropertyPanel(QWidget):
 
     def _build_selection_feedback_group(self):
         messages = self._selection_feedback_messages()
-        if not messages:
-            return None
-
-        group = QGroupBox("Interaction Notes")
-        layout = QVBoxLayout()
-        group.setLayout(layout)
-
-        for message in messages:
-            label = QLabel(message)
-            label.setWordWrap(True)
-            layout.addWidget(label)
-
-        return group
+        return self._build_selection_feedback_strip(messages)
 
     def _build_multi_common_properties_group(self):
         common_props = self._collect_multi_common_properties()
         if not common_props:
             return
 
-        group = QGroupBox("Common Properties")
-        form = _inspector_form()
-        group.setLayout(form)
+        group, form = self._build_inspector_group("Common Properties")
 
         for prop_name, prop_info in common_props:
             current_value = self._primary_widget.properties.get(prop_name)
