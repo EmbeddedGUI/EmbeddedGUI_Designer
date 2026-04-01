@@ -1437,7 +1437,8 @@ class StatusCenterPanel(QWidget):
             self._header_title,
             self._header_title_tooltip(suggested_context, workspace_chip_label),
         )
-        self._header_title.setAccessibleName(
+        self._set_accessible_name(
+            self._header_title,
             self._header_title_accessible_name(suggested_context, workspace_chip_label)
         )
         header_subtitle = self._header_subtitle_text(workspace_chip_label, suggested_label)
@@ -1446,7 +1447,8 @@ class StatusCenterPanel(QWidget):
             self._header_subtitle,
             self._header_subtitle_tooltip(workspace_chip_label, suggested_hint),
         )
-        self._header_subtitle.setAccessibleName(
+        self._set_accessible_name(
+            self._header_subtitle,
             self._header_subtitle_accessible_name(
                 workspace_chip_label,
                 suggested_label,
@@ -1455,7 +1457,8 @@ class StatusCenterPanel(QWidget):
         )
         self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)
         self._set_widget_icon(self._workspace_chip, suggested_icon, size=16)
-        self._workspace_chip.setAccessibleName(
+        self._set_accessible_name(
+            self._workspace_chip,
             self._workspace_chip_accessible_name(
                 workspace_chip_label,
                 suggested_label,
@@ -1476,7 +1479,8 @@ class StatusCenterPanel(QWidget):
         )
         self._set_widget_text(self._workspace_summary_label, workspace_summary)
         self._set_hint(self._workspace_summary_label, workspace_summary)
-        self._workspace_summary_label.setAccessibleName(
+        self._set_accessible_name(
+            self._workspace_summary_label,
             self._summary_accessible_name("Workspace summary", workspace_summary)
         )
         is_workspace_fully_ready = (

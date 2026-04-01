@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center header and workspace accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while header focus copy, workspace status, and workspace summary guidance stay unchanged across lower-priority status changes.
   - `PERF-002` updated: status center header and workspace summary labels now reuse cached text snapshots, skipping no-op `setText` rewrites while header focus copy and workspace summary guidance stay unchanged across lower-priority status changes.
   - `PERF-002` updated: status center suggested-action accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while suggested title, button summary, and guidance summary stay unchanged across lower-priority status changes.
   - `PERF-002` updated: status center suggested-action labels now reuse cached text snapshots, skipping no-op `setText` rewrites while suggested title, button text, and guidance summary stay unchanged across lower-priority status changes.
