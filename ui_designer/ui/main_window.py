@@ -3545,11 +3545,11 @@ class MainWindow(QMainWindow):
         build_menu.addSeparator()
 
         self._generate_resources_action = QAction("Generate Resources", self)
-        self._generate_resources_action.setToolTip(
+        self._apply_action_hint(
+            self._generate_resources_action,
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config."
+            "C source files from .eguiproject/resources/ assets and widget config.",
         )
-        self._generate_resources_action.setStatusTip(self._generate_resources_action.toolTip())
         self._generate_resources_action.triggered.connect(self._generate_resources)
         build_menu.addAction(self._generate_resources_action)
         self._update_generate_resources_action_metadata()

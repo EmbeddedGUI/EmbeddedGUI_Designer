@@ -3689,6 +3689,47 @@ class TestMainWindowFileFlow:
         assert window._group_selection_action.statusTip() == window._group_selection_action.toolTip()
         _close_window(window)
 
+    def test_generate_resources_action_metadata_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "GenerateResourcesHintDemo"
+        project = _create_project(project_dir, "GenerateResourcesHintDemo", sdk_root)
+
+        window = MainWindow("")
+        window._generate_resources_action.setProperty("_action_hint_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = window._generate_resources_action.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._generate_resources_action, "setToolTip", counted_set_tooltip)
+
+        window._update_generate_resources_action_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_generate_resources_action_metadata()
+        assert tooltip_calls == 0
+
+        window.project = project
+        window._project_dir = str(project_dir)
+        window.project_root = str(sdk_root)
+        window._update_generate_resources_action_metadata()
+        assert tooltip_calls == 1
+        assert window._generate_resources_action.toolTip() == (
+            "Run resource generation (app_resource_generate.py) to produce\n"
+            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"Project: open. SDK: valid. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
+        )
+        assert window._generate_resources_action.statusTip() == window._generate_resources_action.toolTip()
+        _close_window(window)
+
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow

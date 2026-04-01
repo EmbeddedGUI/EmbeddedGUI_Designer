@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: the Generate Resources action now reuses cached action hints from initialization through later metadata syncs, skipping no-op tooltip/status rewrites while project, SDK, and resource-directory state remain unchanged.
   - `PERF-002` updated: persistent Structure actions now reuse cached action hints, skipping no-op tooltip/status rewrites while the current selection and move-target history stay unchanged.
   - `PERF-002` updated: release artifact open-target actions now reuse cached action hints, skipping no-op tooltip/status rewrites while the latest release record and resolved output paths remain unchanged.
   - `PERF-002` updated: the Recent Projects submenu now skips no-op menu rebuilds when the recent-entry list, recovered SDK roots, and missing-project state have not changed, while still refreshing outer File-menu metadata.
