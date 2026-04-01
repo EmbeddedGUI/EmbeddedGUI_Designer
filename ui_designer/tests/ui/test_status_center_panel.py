@@ -592,6 +592,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
+        assert panel._suggested_action_label.isHidden() is True
         assert panel._suggested_action_button.text() == "Configure SDK"
         assert panel._suggested_action_button.accessibleName() == (
             "Suggested status action: Configure SDK. Context: Workspace. "
@@ -605,6 +606,7 @@ class TestStatusCenterPanel:
         assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Action needed now. Focus on Fix First Error (1)."
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
+        assert panel._suggested_action_label.isHidden() is True
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
         assert panel._suggested_action_button.accessibleName() == (
             "Suggested status action: Fix First Error (1). Context: Diagnostics. "

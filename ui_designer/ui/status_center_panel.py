@@ -223,6 +223,7 @@ class StatusCenterPanel(QWidget):
         suggested_row.setSpacing(8)
         self._suggested_action_label = QLabel("Suggested next step:")
         self._suggested_action_label.setObjectName("workspace_section_subtitle")
+        self._suggested_action_label.setVisible(False)
         suggested_row.addWidget(self._suggested_action_label, 0)
         self._suggested_action_button = QPushButton("Open Diagnostics")
         self._suggested_action_button.setIcon(make_icon("diagnostics"))
