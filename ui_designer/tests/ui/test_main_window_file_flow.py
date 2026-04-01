@@ -8247,6 +8247,43 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_workspace_layout_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        for widget in (
+            window._editor_container,
+            window._center_shell,
+            window._top_splitter,
+            window._workspace_splitter,
+            window._bottom_header,
+            window._bottom_shell,
+        ):
+            if hasattr(widget, "_metadata_summary_snapshot"):
+                delattr(widget, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._editor_container.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._editor_container, "setToolTip", counted_set_tooltip)
+
+        window._update_workspace_layout_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_workspace_layout_metadata()
+        assert tooltip_calls == 0
+
+        window._bottom_panel_visible = True
+        window._update_workspace_layout_metadata()
+        assert tooltip_calls == 1
+        _close_window(window)
+
     def test_workspace_nav_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

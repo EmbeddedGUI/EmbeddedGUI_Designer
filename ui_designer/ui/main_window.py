@@ -1876,43 +1876,31 @@ class MainWindow(QMainWindow):
                 f"Editor workspace. Left panel: {current_panel}. Current page: {current_page}. "
                 f"Mode: {current_mode}. Bottom tools {visibility}."
             )
-            self._editor_container.setToolTip(editor_summary)
-            self._editor_container.setStatusTip(editor_summary)
-            self._editor_container.setAccessibleName(editor_summary)
+            self._set_metadata_summary(self._editor_container, editor_summary)
         if hasattr(self, "_center_shell"):
             center_summary = f"Workspace center shell. Current page: {current_page}. Mode: {current_mode}."
-            self._center_shell.setToolTip(center_summary)
-            self._center_shell.setStatusTip(center_summary)
-            self._center_shell.setAccessibleName(center_summary)
+            self._set_metadata_summary(self._center_shell, center_summary)
         if hasattr(self, "_top_splitter"):
             top_splitter_summary = (
                 f"Workspace columns. Left panel: {current_panel}. Editor mode: {current_mode}. "
                 f"Inspector section: {inspector_section}. Current page: {current_page}."
             )
-            self._top_splitter.setToolTip(top_splitter_summary)
-            self._top_splitter.setStatusTip(top_splitter_summary)
-            self._top_splitter.setAccessibleName(top_splitter_summary)
+            self._set_metadata_summary(self._top_splitter, top_splitter_summary)
         if hasattr(self, "_workspace_splitter"):
             workspace_splitter_summary = (
                 f"Workspace rows. Editor area visible. Bottom tools {visibility}. "
                 f"Current section: {bottom_section}. Current page: {current_page}."
             )
-            self._workspace_splitter.setToolTip(workspace_splitter_summary)
-            self._workspace_splitter.setStatusTip(workspace_splitter_summary)
-            self._workspace_splitter.setAccessibleName(workspace_splitter_summary)
+            self._set_metadata_summary(self._workspace_splitter, workspace_splitter_summary)
         if hasattr(self, "_bottom_header"):
             bottom_header_summary = f"Bottom tools header. Current section: {bottom_section}. Panel {visibility}."
-            self._bottom_header.setToolTip(bottom_header_summary)
-            self._bottom_header.setStatusTip(bottom_header_summary)
-            self._bottom_header.setAccessibleName(bottom_header_summary)
+            self._set_metadata_summary(self._bottom_header, bottom_header_summary)
         if hasattr(self, "_bottom_shell"):
             bottom_shell_summary = (
                 f"Workspace bottom shell. Current section: {bottom_section}. Panel {visibility}. "
                 f"Current page: {current_page}."
             )
-            self._bottom_shell.setToolTip(bottom_shell_summary)
-            self._bottom_shell.setStatusTip(bottom_shell_summary)
-            self._bottom_shell.setAccessibleName(bottom_shell_summary)
+            self._set_metadata_summary(self._bottom_shell, bottom_shell_summary)
 
     def _update_page_tab_bar_metadata(self):
         if not hasattr(self, "page_tab_bar"):
@@ -2024,6 +2012,20 @@ class MainWindow(QMainWindow):
             tool_tip=resolved_tool_tip,
         )
         chip._workspace_chip_snapshot = snapshot
+        return True
+
+    def _set_metadata_summary(self, widget, tooltip, accessible_name=None):
+        if widget is None:
+            return False
+        resolved_tooltip = str(tooltip or "")
+        resolved_accessible_name = str(accessible_name or resolved_tooltip)
+        snapshot = (resolved_tooltip, resolved_accessible_name)
+        if getattr(widget, "_metadata_summary_snapshot", None) == snapshot:
+            return False
+        widget.setToolTip(resolved_tooltip)
+        widget.setStatusTip(resolved_tooltip)
+        widget.setAccessibleName(resolved_accessible_name)
+        widget._metadata_summary_snapshot = snapshot
         return True
 
     def _update_workspace_chips(self):
