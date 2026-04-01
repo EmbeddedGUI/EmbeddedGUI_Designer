@@ -576,6 +576,8 @@ class WidgetBrowserPanel(QWidget):
         changed = normalized != self._sort_mode
         self._sort_mode = normalized
         self._sync_organizers()
+        if not changed:
+            return
         if changed and persist:
             self._config.set_widget_browser_organizers(sort_mode=self._sort_mode)
         if refresh:
@@ -586,6 +588,8 @@ class WidgetBrowserPanel(QWidget):
         changed = normalized != self._complexity_filter
         self._complexity_filter = normalized
         self._sync_organizers()
+        if not changed:
+            return
         if changed and persist:
             self._config.set_widget_browser_organizers(complexity=self._complexity_filter)
         if refresh:

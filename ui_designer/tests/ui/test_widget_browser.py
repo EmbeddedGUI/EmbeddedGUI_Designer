@@ -295,6 +295,26 @@ class TestWidgetBrowserPanel:
             assert str(item.get("complexity", "")).lower() == "intermediate"
         panel.deleteLater()
 
+    def test_clicking_current_complexity_filter_does_not_refresh_results(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        refresh_calls = 0
+        original_refresh = panel.refresh
+
+        def counted_refresh():
+            nonlocal refresh_calls
+            refresh_calls += 1
+            return original_refresh()
+
+        monkeypatch.setattr(panel, "refresh", counted_refresh)
+
+        panel._complexity_buttons["all"].click()
+
+        assert refresh_calls == 0
+        assert panel._complexity_buttons["all"].isChecked() is True
+        panel.deleteLater()
+
     def test_sort_mode_name_orders_visible_cards_alphabetically(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
@@ -306,6 +326,26 @@ class TestWidgetBrowserPanel:
         assert isolated_config.widget_browser_sort_mode == "name"
         names = [str(card._item.get("display_name", "")).lower() for card in panel._cards.values()]
         assert names == sorted(names)
+        panel.deleteLater()
+
+    def test_clicking_current_sort_mode_does_not_refresh_results(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        refresh_calls = 0
+        original_refresh = panel.refresh
+
+        def counted_refresh():
+            nonlocal refresh_calls
+            refresh_calls += 1
+            return original_refresh()
+
+        monkeypatch.setattr(panel, "refresh", counted_refresh)
+
+        panel._sort_buttons["relevance"].click()
+
+        assert refresh_calls == 0
+        assert panel._sort_buttons["relevance"].isChecked() is True
         panel.deleteLater()
 
     def test_reset_all_filters_also_resets_complexity_and_sort_mode(self, qapp, isolated_config):

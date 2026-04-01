@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: widget browser now ignores redundant clicks on the already-active sort and complexity organizers, avoiding no-op result rebuilds.
   - `UX-005` updated: mixed-state callback code buttons in the property panel now stay hidden until the selection shares one callback target, reducing disabled inspector chrome.
   - `UX-005` updated: status center first-error / first-warning jump actions now stay hidden until those diagnostics exist, removing two idle disabled buttons.
   - `UX-005` updated: widget browser empty-state hint copy is now contextual, matching the specific active filter state instead of a fixed generic sentence.
