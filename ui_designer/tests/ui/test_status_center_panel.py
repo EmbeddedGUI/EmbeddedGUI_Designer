@@ -94,6 +94,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.toolTip() == (
             "Action Needed (Diagnostics). Start with the first error in Diagnostics. 2 errors active."
         )
+        assert panel._health_summary_label.isHidden() is False
         assert panel._health_summary_label.text() == "Summary: 2 errors, 1 warning, 1 info item need attention. Errors lead at 50%."
         assert panel._health_summary_label.toolTip() == panel._health_summary_label.text()
         assert panel._health_summary_label.accessibleName() == (
@@ -141,6 +142,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
         assert panel._health_chip.property("iconKey") == "history"
         assert panel._health_title.text() == "Diagnostic Mix (4 total)"
+        assert panel._health_summary_label.isHidden() is False
         assert panel._health_summary_label.text() == "Summary: 3 warnings, 1 info item need review. Warnings lead at 75%."
         assert panel._error_value.text() == "0 errors (0%)"
         assert panel._warning_value.text() == "3 warnings (75%)"
@@ -208,6 +210,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
         assert panel._health_chip.property("iconKey") == "debug"
         assert panel._health_title.text() == "Diagnostic Mix (2 total)"
+        assert panel._health_summary_label.isHidden() is False
         assert panel._health_summary_label.text() == "Summary: 2 info items available. Info lead at 100%."
         assert panel._error_value.text() == "0 errors (0%)"
         assert panel._warning_value.text() == "0 warnings (0%)"
@@ -268,6 +271,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._health_title.text() == "Diagnostic Mix"
+        assert panel._health_summary_label.isHidden() is True
         assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
         assert panel._error_value.text() == "No errors"
         assert panel._warning_value.text() == "No warnings"
@@ -552,6 +556,7 @@ class TestStatusCenterPanel:
         assert panel._dirty_card.accessibleName() == (
             "Dirty Pages metric: No dirty pages. Open History. No dirty pages."
         )
+        assert panel._health_summary_label.isHidden() is True
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary: Summary: Diagnostics are clear."
         assert panel._health_chip.accessibleName() == (
             "Diagnostic status: Stable. Open Diagnostics. No active diagnostics."

@@ -1445,6 +1445,7 @@ class StatusCenterPanel(QWidget):
         self._health_title.setAccessibleName(self._diagnostic_title_accessible_name(diag_total))
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._health_summary_label.setText(health_summary)
+        self._health_summary_label.setVisible(diag_total > 0)
         self._set_hint(self._health_summary_label, health_summary)
         self._health_summary_label.setAccessibleName(
             self._summary_accessible_name("Diagnostic summary", health_summary)
