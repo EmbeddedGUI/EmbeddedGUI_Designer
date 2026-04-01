@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center action button accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while diagnostics, history, structure, debug, and project action summaries stay unchanged across other status refreshes.
   - `PERF-002` updated: status center action button labels now reuse cached text snapshots, skipping no-op `setText` rewrites while diagnostics, history, structure, debug, and project button text stays unchanged across other status refreshes.
   - `PERF-002` updated: status center metric value labels now reuse cached text snapshots, skipping no-op `setText` rewrites while preview, SDK, compile, diagnostics, selection, dirty, and diagnostic-count summaries stay unchanged across other status refreshes.
   - `PERF-002` updated: status center diagnostic jump button accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while first-error and first-warning summaries stay unchanged across other status refreshes.

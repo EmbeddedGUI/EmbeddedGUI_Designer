@@ -1338,35 +1338,40 @@ class StatusCenterPanel(QWidget):
                 self._dirty_card.toolTip(),
             )
         )
-        self._diag_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._diag_btn,
             self._action_button_accessible_name(
                 "open_diagnostics",
                 self._diag_btn.text(),
                 hint=diag_hint,
             )
         )
-        self._history_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._history_btn,
             self._action_button_accessible_name(
                 "open_history",
                 self._history_btn.text(),
                 hint=history_hint,
             )
         )
-        self._debug_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._debug_btn,
             self._action_button_accessible_name(
                 "open_debug",
                 self._debug_btn.text(),
                 hint=debug_hint,
             )
         )
-        self._project_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._project_btn,
             self._action_button_accessible_name(
                 "open_project_panel",
                 self._project_btn.text(),
                 hint=project_hint,
             )
         )
-        self._structure_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._structure_btn,
             self._action_button_accessible_name(
                 "open_structure_panel",
                 self._structure_btn.text(),
