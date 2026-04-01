@@ -1417,6 +1417,15 @@ class StatusCenterPanel(QWidget):
         self._workspace_summary_label.setAccessibleName(
             self._summary_accessible_name("Workspace summary", workspace_summary)
         )
+        is_workspace_fully_ready = (
+            sdk_ready
+            and can_compile
+            and dirty_count <= 0
+            and selection_total <= 0
+            and diag_total <= 0
+            and not runtime_text
+        )
+        self._workspace_summary_label.setVisible(not is_workspace_fully_ready)
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")
