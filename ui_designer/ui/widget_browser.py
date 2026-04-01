@@ -664,7 +664,6 @@ class WidgetBrowserPanel(QWidget):
 
     def _clear_active_tags(self):
         self._config.set_widget_browser_filters(tags=[])
-        self._sync_tags_from_config()
         self.refresh()
 
     def set_insert_target_label(self, label):

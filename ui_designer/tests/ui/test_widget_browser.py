@@ -223,6 +223,29 @@ class TestWidgetBrowserPanel:
         assert panel._clear_tags_btn.isHidden() is True
         panel.deleteLater()
 
+    def test_clear_active_tags_syncs_metadata_once(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        first_tag = sorted(panel._tag_buttons.keys())[0]
+        panel._tag_buttons[first_tag].setChecked(True)
+
+        sync_calls = 0
+        original_sync = panel._sync_tags_from_config
+
+        def counted_sync():
+            nonlocal sync_calls
+            sync_calls += 1
+            return original_sync()
+
+        monkeypatch.setattr(panel, "_sync_tags_from_config", counted_sync)
+
+        panel._clear_tags_btn.click()
+
+        assert isolated_config.widget_browser_active_tags == []
+        assert sync_calls == 1
+        panel.deleteLater()
+
     def test_quick_lane_click_updates_active_category_and_results(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
