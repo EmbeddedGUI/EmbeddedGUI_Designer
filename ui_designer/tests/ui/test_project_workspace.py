@@ -37,6 +37,7 @@ class TestProjectWorkspacePanel:
         panel.view_changed.connect(emitted.append)
 
         assert panel._dirty_pages_chip.isHidden() is True
+        assert panel._active_page_chip.isHidden() is True
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
         assert panel._list_btn.statusTip() == panel._list_btn.toolTip()
         assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first. Current view."
@@ -110,6 +111,7 @@ class TestProjectWorkspacePanel:
         assert panel._page_count_chip.text() == "3 pages"
         assert panel._page_count_chip.accessibleName() == "Workspace pages: 3 pages."
         assert panel._page_count_chip.statusTip() == panel._page_count_chip.toolTip()
+        assert panel._active_page_chip.isHidden() is False
         assert panel._active_page_chip.text() == "Active: main_page"
         assert panel._active_page_chip.accessibleName() == "Workspace active page: main_page."
         assert panel._dirty_pages_chip.isHidden() is False
@@ -128,6 +130,7 @@ class TestProjectWorkspacePanel:
         panel.set_workspace_snapshot(page_count=0, active_page="", dirty_pages=0)
         assert panel._page_count_chip.text() == "0 pages"
         assert panel._page_count_chip.accessibleName() == "Workspace pages: 0 pages."
+        assert panel._active_page_chip.isHidden() is True
         assert panel._active_page_chip.text() == "No active page"
         assert panel._active_page_chip.accessibleName() == "Workspace active page: none."
         assert panel._dirty_pages_chip.isHidden() is True

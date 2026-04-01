@@ -222,6 +222,7 @@ class ProjectWorkspacePanel(QWidget):
             accessible_name=f"Workspace pages: {page_label}.",
         )
         if active != "None":
+            self._active_page_chip.setVisible(True)
             self._set_chip(
                 self._active_page_chip,
                 f"Active: {active}",
@@ -229,6 +230,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name=f"Workspace active page: {active}.",
             )
         else:
+            self._active_page_chip.setVisible(False)
             self._set_chip(
                 self._active_page_chip,
                 "No active page",
