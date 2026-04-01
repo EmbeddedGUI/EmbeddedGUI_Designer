@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: main toolbar now hides the SDK chip while the SDK binding is already valid, only surfacing that chip when SDK setup still needs attention.
   - `UX-005` updated: main toolbar now hides the diagnostics chip while there are no errors or warnings, surfacing it only when issue counts need attention.
   - `UX-005` updated: main toolbar now hides the idle preview chip until a Python or live preview session is actually running.
   - `UX-005` updated: main toolbar now hides the idle selection and dirty-state chips until there is an actual selection or unsaved page, reducing command-bar status noise.

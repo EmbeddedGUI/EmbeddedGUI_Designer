@@ -7854,6 +7854,7 @@ class TestMainWindowFileFlow:
         window._update_workspace_chips()
         window._clear_selection(sync_tree=False, sync_preview=False)
 
+        assert window._sdk_chip.isHidden() is True
         assert window._sdk_chip.text() == "SDK ready"
         assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
         assert window._sdk_chip.toolTip() == (
@@ -7954,6 +7955,9 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.toolTip() == "No SDK root configured"
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
+        assert window._sdk_chip.isHidden() is False
+        assert window._sdk_chip.text() == "SDK missing"
+        assert window._sdk_chip.accessibleName() == "Workspace status: SDK missing."
         assert window._insert_widget_button.toolTip() == "Open or create a project to insert a component."
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."

@@ -2009,6 +2009,7 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, "_sdk_chip"):
             sdk_text = "SDK ready" if self._has_valid_sdk_root() else "SDK missing"
+            self._sdk_chip.setVisible(not self._has_valid_sdk_root())
             self._set_chip(
                 self._sdk_chip,
                 sdk_text,
