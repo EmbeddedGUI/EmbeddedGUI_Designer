@@ -3875,7 +3875,7 @@ class MainWindow(QMainWindow):
         mode_host = QWidget()
         mode_layout = QHBoxLayout(mode_host)
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(6)
+        mode_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         self._mode_buttons = {}
         for label, mode, icon_key in (
             ("Design", MODE_DESIGN, "widgets"),
@@ -3894,7 +3894,7 @@ class MainWindow(QMainWindow):
         chips_host = QWidget()
         chips_layout = QHBoxLayout(chips_host)
         chips_layout.setContentsMargins(0, 0, 0, 0)
-        chips_layout.setSpacing(8)
+        chips_layout.setSpacing(_SPACE_SM)
         self._sdk_chip = QToolButton()
         self._sdk_chip.setAutoRaise(True)
         self._sdk_chip.clicked.connect(lambda checked=False: self._select_left_panel("status"))
