@@ -474,24 +474,28 @@ class StatusCenterPanel(QWidget):
 
     def _recent_actions_title(self):
         count = len(self._recent_actions)
-        if count <= 0:
+        if count <= 1:
             return "Quick Actions"
-        noun = "recent action" if count == 1 else "recent actions"
-        return f"Quick Actions ({count} {noun})"
+        return f"Quick Actions ({count} recent actions)"
 
     def _recent_actions_title_tooltip(self):
         count = len(self._recent_actions)
         if count <= 0:
             return "Quick actions with no recent actions yet."
-        noun = "action" if count == 1 else "actions"
-        return f"Quick actions with {count} recent {noun} tracked."
+        if count == 1:
+            return "Quick actions with the current action ready to repeat."
+        return f"Quick actions with {count} recent actions tracked."
 
     def _recent_actions_title_accessible_name(self):
         count = len(self._recent_actions)
         if count <= 0:
             return "Quick actions section: No recent actions yet."
-        noun = "recent action" if count == 1 else "recent actions"
-        return f"Quick actions section: {count} {noun} tracked."
+        if count == 1:
+            return "Quick actions section: Current action ready to repeat."
+        return f"Quick actions section: {count} recent actions tracked."
+
+    def _show_recent_actions_summary(self):
+        return len(self._recent_actions) > 1
 
     def _recent_actions_tooltip(self):
         count = len(self._recent_actions)
@@ -1085,6 +1089,7 @@ class StatusCenterPanel(QWidget):
         self._recent_actions_label.setText(self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._recent_actions_label.setAccessibleName(self._recent_actions_accessible_name())
+        self._recent_actions_label.setVisible(self._show_recent_actions_summary())
         has_action = bool(self._last_action)
         self._repeat_action_button.setEnabled(has_action)
         self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")

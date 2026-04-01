@@ -258,6 +258,7 @@ next_recommended:
   - UX-005
   - PERF-002
 notes:
+  - `UX-005` updated: status center now hides the recent-actions summary until there is older history to replay, and keeps the Quick Actions title quiet for the single-action state.
   - `UX-005` updated: widget browser header stats were collapsed from three separate count labels into one compact summary line to cut top-of-panel noise.
   - `UX-006` expanded: widget browser insert/reveal and diagnostics target navigation also auto-focus the Properties inspector after selecting a widget.
   - `UX-006` started: tree/preview selection entry points now auto-focus the Properties inspector to shorten the select -> edit loop, with targeted MainWindow file-flow coverage.

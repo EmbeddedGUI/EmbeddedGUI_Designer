@@ -467,6 +467,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
         assert panel._recent_actions_label.toolTip() == "No recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
+        assert panel._recent_actions_label.isHidden() is True
         assert panel._suggested_action_label.text() == "Suggested next step (Workspace):"
         assert panel._suggested_action_label.toolTip() == (
             "Suggested next step in Workspace. Open Project to configure the SDK workspace. SDK root is missing or invalid."
@@ -809,6 +810,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.accessibleName() == (
             "Recent actions summary: 4 recent actions tracked. Assets, Widgets, Structure, Project."
         )
+        assert panel._recent_actions_label.isHidden() is False
         assert panel._repeat_action_button.toolTip() == (
             "Repeat Assets. 4 recent actions tracked. Use the menu arrow to replay an older action."
         )
@@ -980,6 +982,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.accessibleName() == (
             "Recent actions summary: 2 recent actions tracked. Fields, Debug Output."
         )
+        assert panel._recent_actions_label.isHidden() is False
         assert panel._repeat_action_button.toolTip() == (
             "Repeat Fields. 2 recent actions tracked. Use the menu arrow to replay an older action."
         )
@@ -999,6 +1002,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
         assert panel._recent_actions_label.toolTip() == "No recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
+        assert panel._recent_actions_label.isHidden() is True
         assert panel._repeat_action_button.toolTip() == "No recent action to repeat yet."
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
@@ -1043,6 +1047,10 @@ class TestStatusCenterPanel:
         assert emitted == ["open_components_panel"]
         assert panel._last_action_label.text() == "Last action: Widgets"
         assert panel._repeat_action_button.text() == "Repeat Widgets"
+        assert panel._actions_title.text() == "Quick Actions"
+        assert panel._actions_title.toolTip() == "Quick actions with the current action ready to repeat."
+        assert panel._actions_title.accessibleName() == "Quick actions section: Current action ready to repeat."
+        assert panel._recent_actions_label.isHidden() is True
         assert panel._repeat_action_button.accessibleName() == (
             "Repeat action: Widgets. 1 recent action tracked."
         )
@@ -1101,6 +1109,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_label.text() == "Recent actions: none yet."
         assert panel._recent_actions_label.toolTip() == "No recent actions yet."
         assert panel._recent_actions_label.accessibleName() == "Recent actions: none yet."
+        assert panel._recent_actions_label.isHidden() is True
         assert panel.view_state() == {"last_action": "", "recent_actions": []}
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
         panel.deleteLater()
