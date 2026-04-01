@@ -36,6 +36,7 @@ class TestProjectWorkspacePanel:
         emitted = []
         panel.view_changed.connect(emitted.append)
 
+        assert panel._page_count_chip.isHidden() is True
         assert panel._dirty_pages_chip.isHidden() is True
         assert panel._active_page_chip.isHidden() is True
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
@@ -108,6 +109,7 @@ class TestProjectWorkspacePanel:
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
 
         panel.set_workspace_snapshot(page_count=3, active_page="main_page", startup_page="detail_page", dirty_pages=2)
+        assert panel._page_count_chip.isHidden() is False
         assert panel._page_count_chip.text() == "3 pages"
         assert panel._page_count_chip.accessibleName() == "Workspace pages: 3 pages."
         assert panel._page_count_chip.statusTip() == panel._page_count_chip.toolTip()
@@ -128,6 +130,7 @@ class TestProjectWorkspacePanel:
         assert panel._dirty_pages_chip.text() == "1 dirty page"
 
         panel.set_workspace_snapshot(page_count=0, active_page="", dirty_pages=0)
+        assert panel._page_count_chip.isHidden() is True
         assert panel._page_count_chip.text() == "0 pages"
         assert panel._page_count_chip.accessibleName() == "Workspace pages: 0 pages."
         assert panel._active_page_chip.isHidden() is True

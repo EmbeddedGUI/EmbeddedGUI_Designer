@@ -215,12 +215,14 @@ class ProjectWorkspacePanel(QWidget):
         self._current_startup_page = "" if startup == "None" else startup
         self._current_dirty_pages = dirty
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
+        self._page_count_chip.setVisible(pages > 0)
         self._set_chip(
             self._page_count_chip,
             page_label,
             "success" if pages > 0 else "warning",
             accessible_name=f"Workspace pages: {page_label}.",
         )
+        self._page_count_chip.setVisible(pages > 0)
         if active != "None":
             self._active_page_chip.setVisible(True)
             self._set_chip(
