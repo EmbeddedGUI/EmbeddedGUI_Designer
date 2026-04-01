@@ -8126,6 +8126,45 @@ class TestMainWindowFileFlow:
         assert tooltip_calls == 1
         _close_window(window)
 
+    def test_insert_widget_button_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _FakeWidget:
+            def __init__(self, name, widget_type="group", parent=None):
+                self.name = name
+                self.widget_type = widget_type
+                self.parent = parent
+
+        window = MainWindow("")
+        if hasattr(window._insert_widget_button, "_metadata_summary_snapshot"):
+            delattr(window._insert_widget_button, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._insert_widget_button.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._insert_widget_button, "setToolTip", counted_set_tooltip)
+
+        window._update_insert_widget_button_metadata()
+        assert tooltip_calls == 1
+        assert window._insert_widget_button.toolTip() == "Open or create a project to insert a component."
+
+        tooltip_calls = 0
+        window._update_insert_widget_button_metadata()
+        assert tooltip_calls == 0
+
+        window._current_page = object()
+        root_group = _FakeWidget("root_group")
+        window._update_insert_widget_button_metadata(root_group)
+        assert tooltip_calls == 1
+        assert window._insert_widget_button.toolTip() == "Open the Widgets panel and insert a component into root_group."
+        assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
+        _close_window(window)
+
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -8501,6 +8540,38 @@ class TestMainWindowFileFlow:
         assert window._bottom_shell.accessibleName() == (
             "Workspace bottom shell. Current section: Diagnostics. Panel visible. Current page: none."
         )
+        _close_window(window)
+
+    def test_bottom_toggle_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        if hasattr(window._bottom_toggle_button, "_metadata_summary_snapshot"):
+            delattr(window._bottom_toggle_button, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._bottom_toggle_button.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._bottom_toggle_button, "setToolTip", counted_set_tooltip)
+
+        window._update_bottom_toggle_button_metadata()
+        assert tooltip_calls == 1
+        assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
+
+        tooltip_calls = 0
+        window._update_bottom_toggle_button_metadata()
+        assert tooltip_calls == 0
+
+        window._bottom_panel_visible = True
+        window._update_bottom_toggle_button_metadata()
+        assert tooltip_calls == 1
+        assert window._bottom_toggle_button.toolTip() == "Hide the bottom tools panel."
+        assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: shown. Activate to hide."
         _close_window(window)
 
     def test_workspace_nav_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):

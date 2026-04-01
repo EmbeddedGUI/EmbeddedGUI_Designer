@@ -1494,9 +1494,7 @@ class MainWindow(QMainWindow):
             target = self._insert_target_summary(parent)
             tooltip = f"Open the Widgets panel and insert a component into {target}."
             accessible_name = f"Insert component target: {target}."
-        self._insert_widget_button.setToolTip(tooltip)
-        self._insert_widget_button.setStatusTip(tooltip)
-        self._insert_widget_button.setAccessibleName(accessible_name)
+        self._set_metadata_summary(self._insert_widget_button, tooltip, accessible_name)
 
     def _action_hint(self, base_text, enabled, blocked_reason=""):
         if enabled or not blocked_reason:
@@ -1793,9 +1791,7 @@ class MainWindow(QMainWindow):
         else:
             tooltip = "Show the bottom tools panel."
             accessible_name = "Bottom tools toggle: hidden. Activate to show."
-        self._bottom_toggle_button.setToolTip(tooltip)
-        self._bottom_toggle_button.setStatusTip(tooltip)
-        self._bottom_toggle_button.setAccessibleName(accessible_name)
+        self._set_metadata_summary(self._bottom_toggle_button, tooltip, accessible_name)
 
     def _current_tab_text(self, tab_widget, fallback):
         if tab_widget is None or tab_widget.count() <= 0:

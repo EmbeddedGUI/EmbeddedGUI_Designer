@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: the insert-widget launcher and bottom-tools toggle now reuse cached tooltip/accessibility metadata, skipping no-op rewrites while their target summary or visible/hidden state remains unchanged.
   - `PERF-002` updated: the main view stack summary now reuses cached metadata, skipping no-op tooltip/accessibility rewrites while the app stays on the same welcome or editor view.
   - `PERF-002` updated: editor-mode buttons now reuse cached tooltip/accessibility metadata, skipping no-op rewrites while the current workspace mode remains unchanged.
   - `PERF-002` updated: the static command-bar and toolbar summaries now reuse cached metadata, skipping no-op tooltip/accessibility rewrites during repeated toolbar state syncs.
