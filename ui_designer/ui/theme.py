@@ -752,18 +752,22 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #status_center_header,
-#status_center_metrics,
 #status_center_health,
-#status_center_actions,
 #status_center_runtime {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
     border-radius: 14px;
 }}
 
+#status_center_metrics,
+#status_center_actions {{
+    background-color: transparent;
+    border: none;
+}}
+
 #status_center_metric_card {{
     background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
+    border: 1px solid transparent;
     border-radius: 10px;
 }}
 

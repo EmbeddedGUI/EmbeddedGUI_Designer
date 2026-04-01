@@ -258,6 +258,7 @@ next_recommended:
   - UX-005
   - PERF-002
 notes:
+  - `UX-005` updated: status center metrics/actions outer wrappers were flattened, and metric cards now keep their border emphasis for hover/focus instead of the resting state.
   - `UX-005` updated: status center now hides the recent-actions summary until there is older history to replay, and keeps the Quick Actions title quiet for the single-action state.
   - `UX-005` updated: widget browser header stats were collapsed from three separate count labels into one compact summary line to cut top-of-panel noise.
   - `UX-006` expanded: widget browser insert/reveal and diagnostics target navigation also auto-focus the Properties inspector after selecting a widget.

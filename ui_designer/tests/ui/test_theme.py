@@ -24,3 +24,19 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert str(t["space_sm"]) in nav and str(t["space_xs"]) in nav
         chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         assert str(t["space_xs"]) in chip and str(t["space_sm"]) in chip
+
+
+def test_status_center_styles_reduce_resting_container_weight():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+        metrics = css.split("#status_center_metrics", 1)[1].split("}", 1)[0]
+        actions = css.split("#status_center_actions", 1)[1].split("}", 1)[0]
+        metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
+
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "background-color: transparent;" in actions
+        assert "border: none;" in actions
+        assert f"background-color: {t['panel_alt']};" in metric_card
+        assert "border: 1px solid transparent;" in metric_card
