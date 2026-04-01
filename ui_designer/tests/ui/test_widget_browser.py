@@ -588,6 +588,35 @@ class TestWidgetBrowserPanel:
         assert item.statusTip() == item.toolTip()
         assert item.data(Qt.AccessibleTextRole) == item.toolTip()
 
+    def test_card_insert_visibility_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        button_card = next(card for card in panel._cards.values() if card.type_name == "button")
+        button_card._insert_btn.setProperty("_widget_browser_visible_snapshot", None)
+
+        visible_calls = 0
+        original_set_visible = button_card._insert_btn.setVisible
+
+        def counted_set_visible(value):
+            nonlocal visible_calls
+            visible_calls += 1
+            return original_set_visible(value)
+
+        monkeypatch.setattr(button_card._insert_btn, "setVisible", counted_set_visible)
+
+        button_card.set_selected(True)
+        assert visible_calls == 1
+
+        visible_calls = 0
+        button_card.set_selected(True)
+        assert visible_calls == 0
+
+        button_card.set_selected(False)
+        assert visible_calls == 1
+        assert button_card._insert_btn.isHidden() is True
+        panel.deleteLater()
+
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 

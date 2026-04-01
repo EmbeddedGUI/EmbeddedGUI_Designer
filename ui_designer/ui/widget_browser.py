@@ -49,6 +49,15 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
             widget.setProperty("_widget_browser_accessible_snapshot", resolved_accessible_name)
 
 
+def _set_widget_visible(widget, visible):
+    value = bool(visible)
+    current_value = widget.property("_widget_browser_visible_snapshot")
+    if current_value is not None and bool(current_value) == value:
+        return
+    widget.setVisible(value)
+    widget.setProperty("_widget_browser_visible_snapshot", value)
+
+
 def _set_item_metadata(item, tooltip):
     hint = str(tooltip or "").strip()
     current_hint = item.data(_ITEM_METADATA_SNAPSHOT_ROLE)
@@ -174,10 +183,10 @@ class WidgetBrowserCard(QFrame):
             if self._favorite_btn.isChecked()
             else f"Add {display_name} to favorites."
         )
-        self._meta_label.setVisible(self._selected and self._has_meta)
-        self._insert_btn.setVisible(self._selected)
-        self._favorite_btn.setVisible(self._selected or self._favorite_btn.isChecked())
-        self._icon_label.setVisible(self._selected)
+        _set_widget_visible(self._meta_label, self._selected and self._has_meta)
+        _set_widget_visible(self._insert_btn, self._selected)
+        _set_widget_visible(self._favorite_btn, self._selected or self._favorite_btn.isChecked())
+        _set_widget_visible(self._icon_label, self._selected)
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=f"Widget name: {display_name}")
         _set_widget_metadata(
             self._favorite_btn,
