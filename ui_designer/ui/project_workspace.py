@@ -10,10 +10,18 @@ from .iconography import make_icon
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        resolved_tooltip = str(tooltip or "")
+        current_tooltip = widget.property("_workspace_metadata_tooltip_snapshot")
+        if current_tooltip is None or str(current_tooltip) != resolved_tooltip:
+            widget.setToolTip(resolved_tooltip)
+            widget.setStatusTip(resolved_tooltip)
+            widget.setProperty("_workspace_metadata_tooltip_snapshot", resolved_tooltip)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        resolved_accessible_name = str(accessible_name or "")
+        current_accessible_name = widget.property("_workspace_metadata_accessible_snapshot")
+        if current_accessible_name is None or str(current_accessible_name) != resolved_accessible_name:
+            widget.setAccessibleName(resolved_accessible_name)
+            widget.setProperty("_workspace_metadata_accessible_snapshot", resolved_accessible_name)
 
 
 class ProjectWorkspacePanel(QWidget):

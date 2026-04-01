@@ -170,3 +170,32 @@ class TestProjectWorkspacePanel:
         panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=2)
         assert metadata_updates == 2
         panel.deleteLater()
+
+    def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        panel._header.setProperty("_workspace_metadata_tooltip_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = panel._header.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header, "setToolTip", counted_set_tooltip)
+
+        panel._update_panel_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        panel._update_panel_metadata()
+        assert tooltip_calls == 0
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=1)
+        assert tooltip_calls == 1
+        assert panel._header.toolTip() == panel.accessibleName()
+        assert panel._header.statusTip() == panel._header.toolTip()
+        panel.deleteLater()
