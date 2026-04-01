@@ -8370,6 +8370,57 @@ class TestMainWindowFileFlow:
         assert window.widget_browser._selected_type == "label"
         _close_window(window)
 
+    @pytest.mark.parametrize(
+        "handler_name",
+        [
+            "_on_tree_selection_changed",
+            "_on_preview_selection_changed",
+            "_on_widget_selected",
+            "_on_preview_widget_selected",
+        ],
+    )
+    def test_widget_selection_handlers_focus_properties_inspector(self, qapp, isolated_config, monkeypatch, handler_name):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+        window._show_inspector_tab("animations")
+
+        if handler_name in {"_on_tree_selection_changed", "_on_preview_selection_changed"}:
+            getattr(window, handler_name)([label], label)
+        else:
+            getattr(window, handler_name)(label)
+
+        assert window._inspector_tabs.currentIndex() == 0
+        _close_window(window)
+
+    @pytest.mark.parametrize("handler_name", ["_on_tree_selection_changed", "_on_preview_selection_changed"])
+    def test_selection_sync_handlers_keep_current_inspector_tab_when_selection_clears(
+        self, qapp, isolated_config, monkeypatch, handler_name
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
+            window._selection_state.set_widgets(widgets or [], primary=primary)
+            window._selected_widget = window._selection_state.primary
+
+        monkeypatch.setattr(window, "_set_selection", fake_set_selection)
+        window._show_inspector_tab("animations")
+
+        getattr(window, handler_name)([], None)
+
+        assert window._inspector_tabs.currentIndex() == 1
+        _close_window(window)
+
     def test_status_center_workspace_actions_switch_left_panel(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

@@ -241,6 +241,7 @@ last_update: 2026-04-01
 phase: phase_b_in_progress
 in_progress:
   - UX-005
+  - UX-006
 completed:
   - CLEAN-001
   - CLEAN-002
@@ -256,8 +257,8 @@ blocked: []
 next_recommended:
   - UX-005
   - PERF-002
-  - UX-006
 notes:
+  - `UX-006` started: tree/preview selection entry points now auto-focus the Properties inspector to shorten the select -> edit loop, with targeted MainWindow file-flow coverage.
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
   - 已在 iconography 中增加 Material Symbols 映射与字体渲染回退机制。
   - Build 菜单与失败提示已改为 EXE 优先 + Python fallback 明确提示。

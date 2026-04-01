@@ -7332,17 +7332,27 @@ class MainWindow(QMainWindow):
 
     def _on_tree_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=False, sync_preview=True)
+        self._focus_properties_for_selection()
 
     def _on_preview_selection_changed(self, widgets, primary):
         self._set_selection(widgets, primary=primary, sync_tree=True, sync_preview=False)
+        self._focus_properties_for_selection()
 
     def _on_widget_selected(self, widget):
         """Widget selected from tree panel."""
         self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=False, sync_preview=True)
+        self._focus_properties_for_selection()
 
     def _on_preview_widget_selected(self, widget):
         """Widget selected from preview panel overlay."""
         self._set_selection([widget] if widget is not None else [], primary=widget, sync_tree=True, sync_preview=False)
+        self._focus_properties_for_selection()
+
+    def _focus_properties_for_selection(self):
+        if self._selection_state.primary is None:
+            return
+        if hasattr(self, "_inspector_tabs") and self._inspector_tabs.currentIndex() != 0:
+            self._show_inspector_tab("properties")
 
     def _on_widget_moved(self, widget, new_x, new_y):
         """Widget dragged on preview overlay."""
@@ -7859,7 +7869,6 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
 
 
 
