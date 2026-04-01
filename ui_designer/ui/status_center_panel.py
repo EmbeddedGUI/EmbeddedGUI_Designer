@@ -77,6 +77,8 @@ class StatusCenterPanel(QWidget):
         self._recent_actions = []
         self._health_chip_action = "open_diagnostics"
         self._suggested_action_key = "open_diagnostics"
+        self._status_snapshot = None
+        self._status_snapshot_initialized = False
         self._init_ui()
         self._set_last_action("", [])
         self.set_status()
@@ -1166,6 +1168,19 @@ class StatusCenterPanel(QWidget):
         info_count = max(int(diagnostics_infos or 0), 0)
         diag_total = error_count + warning_count + info_count
         runtime_text = str(runtime_error or "").strip()
+        status_snapshot = (
+            sdk_ready,
+            can_compile,
+            dirty_count,
+            selection_total,
+            preview_text,
+            error_count,
+            warning_count,
+            info_count,
+            runtime_text,
+        )
+        if self._status_snapshot_initialized and self._status_snapshot == status_snapshot:
+            return
 
         self._sdk_value.setText("Ready" if sdk_ready else "Missing")
         self._compile_value.setText(self._compile_metric_text(can_compile))
@@ -1552,3 +1567,5 @@ class StatusCenterPanel(QWidget):
             self._runtime_chip.setAccessibleName(self._runtime_chip_accessible_name(""))
             self._runtime_chip.setVisible(False)
             self._set_hint(self._runtime_panel, "Open Debug Output. No runtime errors.")
+        self._status_snapshot = status_snapshot
+        self._status_snapshot_initialized = True

@@ -822,6 +822,30 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.text() == "Repeat Diagnostics"
         panel.deleteLater()
 
+    def test_status_updates_skip_no_op_refreshes(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        metric_updates = 0
+        original_set_metric_context = panel._set_metric_context
+
+        def counted_set_metric_context(*args, **kwargs):
+            nonlocal metric_updates
+            metric_updates += 1
+            return original_set_metric_context(*args, **kwargs)
+
+        monkeypatch.setattr(panel, "_set_metric_context", counted_set_metric_context)
+
+        panel.set_status(sdk_ready=True, can_compile=True, preview_label="Preview idle")
+        assert metric_updates == 6
+
+        panel.set_status(sdk_ready=True, can_compile=True, preview_label="Preview idle")
+        assert metric_updates == 6
+
+        panel.set_status(sdk_ready=True, can_compile=True, preview_label="Preview idle", dirty_pages=1)
+        assert metric_updates == 12
+        panel.deleteLater()
+
     def test_workspace_navigation_buttons_emit_expected_actions(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
