@@ -1108,13 +1108,13 @@ class StatusCenterPanel(QWidget):
         action_label = self._action_label(self._last_action)
         self._last_action_label.setText(f"Last action: {action_label}")
         self._set_hint(self._last_action_label, self._last_action_tooltip(action_label))
-        self._last_action_label.setAccessibleName(self._last_action_accessible_name(action_label))
+        self._set_accessible_name(self._last_action_label, self._last_action_accessible_name(action_label))
         self._actions_title.setText(self._recent_actions_title())
         self._set_hint(self._actions_title, self._recent_actions_title_tooltip())
-        self._actions_title.setAccessibleName(self._recent_actions_title_accessible_name())
+        self._set_accessible_name(self._actions_title, self._recent_actions_title_accessible_name())
         self._recent_actions_label.setText(self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
-        self._recent_actions_label.setAccessibleName(self._recent_actions_accessible_name())
+        self._set_accessible_name(self._recent_actions_label, self._recent_actions_accessible_name())
         self._recent_actions_label.setVisible(self._show_recent_actions_summary())
         has_action = bool(self._last_action)
         self._last_action_label.setVisible(len(self._recent_actions) > 1)
@@ -1130,7 +1130,7 @@ class StatusCenterPanel(QWidget):
             size=20,
         )
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
-        self._repeat_action_button.setAccessibleName(self._repeat_action_accessible_name(action_label))
+        self._set_accessible_name(self._repeat_action_button, self._repeat_action_accessible_name(action_label))
         self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):
