@@ -1961,9 +1961,7 @@ class MainWindow(QMainWindow):
             else:
                 tooltip = f"Switch the workspace editor to {label} mode."
                 accessible_name = f"Editor mode button: {label}."
-            button.setToolTip(tooltip)
-            button.setStatusTip(tooltip)
-            button.setAccessibleName(accessible_name)
+            self._set_metadata_summary(button, tooltip, accessible_name)
 
     def _set_chip(self, chip, text, tone=None, accessible_name=None, tool_tip=None):
         if chip is None:

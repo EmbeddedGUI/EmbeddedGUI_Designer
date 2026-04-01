@@ -8341,6 +8341,35 @@ class TestMainWindowFileFlow:
         assert tooltip_calls == 1
         _close_window(window)
 
+    def test_editor_mode_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        for button in window._mode_buttons.values():
+            if hasattr(button, "_metadata_summary_snapshot"):
+                delattr(button, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._mode_buttons["design"].setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._mode_buttons["design"], "setToolTip", counted_set_tooltip)
+
+        window._update_editor_mode_button_metadata("design")
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_editor_mode_button_metadata("design")
+        assert tooltip_calls == 0
+
+        window._update_editor_mode_button_metadata("code")
+        assert tooltip_calls == 1
+        _close_window(window)
+
     def test_workspace_nav_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
