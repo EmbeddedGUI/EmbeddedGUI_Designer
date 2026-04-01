@@ -1448,6 +1448,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_debug_button_text_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._debug_btn.setProperty("_status_center_text_snapshot", None)
+
+        text_calls = 0
+        original_set_text = panel._debug_btn.setText
+
+        def counted_set_text(text):
+            nonlocal text_calls
+            text_calls += 1
+            return original_set_text(text)
+
+        monkeypatch.setattr(panel._debug_btn, "setText", counted_set_text)
+
+        panel.set_status(sdk_ready=True, can_compile=True)
+        assert text_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=1)
+        assert text_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=False, dirty_pages=1)
+        assert text_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
