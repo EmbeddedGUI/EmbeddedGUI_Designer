@@ -8097,6 +8097,35 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
         _close_window(window)
 
+    def test_main_view_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        if hasattr(window._central_stack, "_metadata_summary_snapshot"):
+            delattr(window._central_stack, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._central_stack.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._central_stack, "setToolTip", counted_set_tooltip)
+
+        window._update_main_view_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_main_view_metadata()
+        assert tooltip_calls == 0
+
+        window._central_stack.setCurrentIndex(1)
+        window._update_main_view_metadata()
+        assert tooltip_calls == 1
+        _close_window(window)
+
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

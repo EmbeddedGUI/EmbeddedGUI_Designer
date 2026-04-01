@@ -1930,9 +1930,7 @@ class MainWindow(QMainWindow):
         current_index = self._central_stack.currentIndex()
         view_label = "Welcome page" if current_index == 0 else "Editor workspace"
         summary = f"Main view stack: {view_label} visible."
-        self._central_stack.setToolTip(summary)
-        self._central_stack.setStatusTip(summary)
-        self._central_stack.setAccessibleName(summary)
+        self._set_metadata_summary(self._central_stack, summary)
         self._update_workspace_layout_metadata()
 
     def _sync_editor_mode_controls(self, mode):

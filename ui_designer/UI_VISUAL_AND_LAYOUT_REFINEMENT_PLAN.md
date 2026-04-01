@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: the main view stack summary now reuses cached metadata, skipping no-op tooltip/accessibility rewrites while the app stays on the same welcome or editor view.
   - `PERF-002` updated: editor-mode buttons now reuse cached tooltip/accessibility metadata, skipping no-op rewrites while the current workspace mode remains unchanged.
   - `PERF-002` updated: the static command-bar and toolbar summaries now reuse cached metadata, skipping no-op tooltip/accessibility rewrites during repeated toolbar state syncs.
   - `PERF-002` updated: shared action-hint updates now cache their latest tooltip/status text, so workspace, inspector, tools, and other reused menu actions skip no-op hint rewrites when their guidance text has not changed.
