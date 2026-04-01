@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: project workspace now hides the default list-view chip and only surfaces that header badge when thumbnails are active, cutting duplicate view chrome.
   - `UX-005` updated: project workspace now hides the page-count chip while no pages are available, trimming one more empty-state badge from the header rail.
   - `UX-005` updated: widget browser stats now collapse zero-count favorites and recent segments, leaving the default header summary focused on visible results instead of empty counters.
   - `UX-005` updated: project workspace now hides the active-page chip until a page is actually active, reducing header noise in the empty/default state.

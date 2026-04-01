@@ -194,6 +194,7 @@ class ProjectWorkspacePanel(QWidget):
             self._stack.setCurrentWidget(self._list_view)
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
+        self._view_chip.setVisible(view_name != self.VIEW_LIST)
         self._update_view_button_metadata(view_name)
         self._update_stack_metadata(view_label)
         self._update_panel_metadata()

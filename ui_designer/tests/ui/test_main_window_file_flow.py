@@ -7806,6 +7806,7 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window._project_workspace._view_chip.isHidden() is False
         assert window._project_workspace._page_count_chip.isHidden() is True
         assert window._project_workspace._active_page_chip.isHidden() is True
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
@@ -7890,6 +7891,7 @@ class TestMainWindowFileFlow:
             "Use the left Status panel for SDK overview and actions."
         )
         assert window._diagnostics_chip.statusTip() == window._diagnostics_chip.toolTip()
+        assert window._project_workspace._view_chip.isHidden() is True
         assert window._project_workspace._page_count_chip.isHidden() is False
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
