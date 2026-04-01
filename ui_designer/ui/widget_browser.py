@@ -1080,7 +1080,7 @@ class WidgetBrowserPanel(QWidget):
 
             action_row = QHBoxLayout()
             action_row.setContentsMargins(0, 0, 0, 0)
-            action_row.setSpacing(8)
+            action_row.setSpacing(_SPACE_SM)
             if bool((self._search.text() or "").strip()):
                 reset_search_btn = QPushButton("Reset Search")
                 reset_search_btn.clicked.connect(self._reset_search_only)
