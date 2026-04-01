@@ -1203,6 +1203,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._last_action_label.setProperty("_status_center_text_snapshot", None)
+
+        text_calls = 0
+        original_set_text = panel._last_action_label.setText
+
+        def counted_set_text(text):
+            nonlocal text_calls
+            text_calls += 1
+            return original_set_text(text)
+
+        monkeypatch.setattr(panel._last_action_label, "setText", counted_set_text)
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert text_calls == 1
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert text_calls == 1
+
+        panel._set_last_action("open_debug", ["open_debug", "open_assets_panel"])
+        assert text_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

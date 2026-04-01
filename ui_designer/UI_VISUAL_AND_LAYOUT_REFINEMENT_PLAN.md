@@ -260,6 +260,7 @@ next_recommended:
 notes:
   - `UX-006` updated: resource-usage navigation、资源拖放绑定、以及画布拖放插入 widget 后会自动切回 Properties inspector，进一步缩短“选中 -> 编辑属性”路径。
   - `PERF-002` updated: status center quick-action metadata now reuses cached accessible-name snapshots, skipping no-op setAccessibleName rewrites for last-action, actions-title, recent-actions, and repeat-action controls when labels remain unchanged.
+  - `PERF-002` updated: status center quick-action labels now cache text snapshots, so repeated recent-action syncs skip no-op setText rewrites when action history output remains unchanged.
   - `PERF-002` updated: status center repeat-action menu metadata now caches accessible-name snapshots, so repeated recent-action syncs skip no-op setAccessibleName rewrites when menu summary text remains unchanged.
   - `PERF-002` updated: status center metric/context updates now cache accessible-name snapshots, so repeated dashboard syncs skip no-op setAccessibleName rewrites when semantic text remains unchanged.
   - `PERF-002` updated: status center icon updates now cache their last icon-key/size snapshot, so repeated dashboard syncs skip no-op setIcon refreshes when icon state remains unchanged.

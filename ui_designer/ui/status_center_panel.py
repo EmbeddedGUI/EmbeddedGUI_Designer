@@ -400,6 +400,13 @@ class StatusCenterPanel(QWidget):
         chip.style().polish(chip)
         chip.update()
 
+    def _set_widget_text(self, widget, text):
+        value = str(text or "")
+        if str(widget.property("_status_center_text_snapshot") or "") == value:
+            return
+        widget.setText(value)
+        widget.setProperty("_status_center_text_snapshot", value)
+
     def _set_widget_icon(self, widget, icon_key, size=16):
         key = str(icon_key or "history").strip() or "history"
         resolved_size = int(size or 16)
@@ -1106,13 +1113,13 @@ class StatusCenterPanel(QWidget):
             prepend_action=self._last_action,
         )
         action_label = self._action_label(self._last_action)
-        self._last_action_label.setText(f"Last action: {action_label}")
+        self._set_widget_text(self._last_action_label, f"Last action: {action_label}")
         self._set_hint(self._last_action_label, self._last_action_tooltip(action_label))
         self._set_accessible_name(self._last_action_label, self._last_action_accessible_name(action_label))
-        self._actions_title.setText(self._recent_actions_title())
+        self._set_widget_text(self._actions_title, self._recent_actions_title())
         self._set_hint(self._actions_title, self._recent_actions_title_tooltip())
         self._set_accessible_name(self._actions_title, self._recent_actions_title_accessible_name())
-        self._recent_actions_label.setText(self._recent_actions_summary())
+        self._set_widget_text(self._recent_actions_label, self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._set_accessible_name(self._recent_actions_label, self._recent_actions_accessible_name())
         self._recent_actions_label.setVisible(self._show_recent_actions_summary())
@@ -1123,7 +1130,7 @@ class StatusCenterPanel(QWidget):
             QToolButton.MenuButtonPopup if len(self._recent_actions) > 1 else QToolButton.DelayedPopup
         )
         self._repeat_action_button.setEnabled(has_action)
-        self._repeat_action_button.setText(f"Repeat {action_label}" if has_action else "Repeat Action")
+        self._set_widget_text(self._repeat_action_button, f"Repeat {action_label}" if has_action else "Repeat Action")
         self._set_widget_icon(
             self._repeat_action_button,
             self._action_icon_key(self._last_action if has_action else "history"),
