@@ -1471,6 +1471,7 @@ class StatusCenterPanel(QWidget):
         self._health_chip.setAccessibleName(
             self._health_chip_accessible_name(self._health_chip.text(), health_hint)
         )
+        self._health_chip.setVisible(diag_total > 0)
         show_error_jump = error_count > 0
         show_warning_jump = warning_count > 0
         self._diagnostic_jump_host.setVisible(show_error_jump or show_warning_jump)

@@ -39,6 +39,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
 
+        assert panel._health_chip.isHidden() is False
         assert panel._health_chip.text() == "Critical (2)"
         assert panel._health_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
@@ -126,6 +127,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=3, diagnostics_infos=1, runtime_error="Runtime failed")
 
+        assert panel._health_chip.isHidden() is False
         assert panel._health_chip.text() == "Attention (3)"
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.text() == "Check Workspace (Diagnostics)"
@@ -201,6 +203,7 @@ class TestStatusCenterPanel:
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
 
+        assert panel._health_chip.isHidden() is False
         assert panel._health_chip.text() == "Info (2)"
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._workspace_chip.text() == "Check Workspace (Setup)"
@@ -262,6 +265,7 @@ class TestStatusCenterPanel:
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0, runtime_error="")
 
+        assert panel._health_chip.isHidden() is True
         assert panel._health_chip.text() == "Stable"
         assert panel._health_chip.property("chipTone") == "success"
         assert panel._workspace_chip.text() == "Check Workspace (Setup)"
@@ -558,6 +562,7 @@ class TestStatusCenterPanel:
         )
         assert panel._health_summary_label.isHidden() is True
         assert panel._health_summary_label.accessibleName() == "Diagnostic summary: Summary: Diagnostics are clear."
+        assert panel._health_chip.isHidden() is True
         assert panel._health_chip.accessibleName() == (
             "Diagnostic status: Stable. Open Diagnostics. No active diagnostics."
         )
@@ -795,7 +800,8 @@ class TestStatusCenterPanel:
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=3)
         panel._health_chip.click()
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=0)
-        panel._health_chip.click()
+        assert panel._health_chip.isHidden() is True
+        panel._diag_btn.click()
 
         assert emitted == [
             "open_error_diagnostics",
