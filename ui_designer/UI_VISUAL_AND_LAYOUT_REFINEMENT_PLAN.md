@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center hint helpers now cache their last tooltip text, so repeated quick-action and dashboard metadata refreshes skip no-op tooltip/status rewrites when the visible guidance has not changed.
   - `PERF-002` updated: the Generate Resources action now reuses cached action hints from initialization through later metadata syncs, skipping no-op tooltip/status rewrites while project, SDK, and resource-directory state remain unchanged.
   - `PERF-002` updated: persistent Structure actions now reuse cached action hints, skipping no-op tooltip/status rewrites while the current selection and move-target history stay unchanged.
   - `PERF-002` updated: release artifact open-target actions now reuse cached action hints, skipping no-op tooltip/status rewrites while the latest release record and resolved output paths remain unchanged.

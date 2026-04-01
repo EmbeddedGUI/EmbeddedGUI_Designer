@@ -1094,6 +1094,35 @@ class TestStatusCenterPanel:
         assert _menu_labels(panel._repeat_action_menu) == ["No recent actions yet"]
         panel.deleteLater()
 
+    def test_last_action_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._last_action_label.setProperty("_status_center_hint_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = panel._last_action_label.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._last_action_label, "setToolTip", counted_set_tooltip)
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert tooltip_calls == 0
+
+        panel._set_last_action("open_debug", ["open_debug", "open_assets_panel"])
+        assert tooltip_calls == 1
+        assert panel._last_action_label.toolTip() == "Current action: Debug Output. 2 recent actions tracked."
+        assert panel._last_action_label.statusTip() == panel._last_action_label.toolTip()
+        panel.deleteLater()
+
     def test_runtime_panel_emits_debug_action(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

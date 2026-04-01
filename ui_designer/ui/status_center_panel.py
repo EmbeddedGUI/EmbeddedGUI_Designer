@@ -587,14 +587,20 @@ class StatusCenterPanel(QWidget):
 
     def _set_hint(self, widget, text):
         hint = str(text or "").strip()
+        if str(widget.property("_status_center_hint_snapshot") or "") == hint:
+            return
         widget.setToolTip(hint)
         widget.setStatusTip(hint)
+        widget.setProperty("_status_center_hint_snapshot", hint)
 
     def _set_action_hint(self, action, text):
         hint = str(text or "").strip()
+        if str(action.property("_status_center_hint_snapshot") or "") == hint:
+            return
         action.setToolTip(hint)
         action.setStatusTip(hint)
         action.setWhatsThis(hint)
+        action.setProperty("_status_center_hint_snapshot", hint)
 
     def _count_label(self, count, singular, plural):
         value = max(int(count or 0), 0)
