@@ -3022,7 +3022,7 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in {
                 "Auto Compile",
-                "Release Build...",
+                "Release Build (EXE)...",
                 "Release Profiles...",
                 "Release History...",
                 "Repository Health...",
@@ -3035,14 +3035,14 @@ class TestMainWindowFileFlow:
             "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
         )
         assert actions["Auto Compile"].statusTip() == actions["Auto Compile"].toolTip()
-        assert actions["Release Build..."].toolTip() == (
+        assert actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             "SDK: invalid. Output root: none. History file: none. "
             "Source resources: missing. Resource directory: none. Release profiles: unavailable. "
             "Output root state: unavailable. History file state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
             "Unavailable: open a project first."
         )
-        assert actions["Release Build..."].statusTip() == actions["Release Build..."].toolTip()
+        assert actions["Release Build (EXE)..."].statusTip() == actions["Release Build (EXE)..."].toolTip()
         assert actions["Release Profiles..."].toolTip() == (
             "Edit release profiles for the current project. "
             "SDK: invalid. Output root: none. Profiles: unavailable. History file: none. "
@@ -3089,15 +3089,15 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
-        assert unsaved_actions["Release Build..."].toolTip() == (
+        assert unsaved_actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             "SDK: valid. Output root: none. History file: not created yet. "
             "Source resources: missing. Resource directory: none. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
             "Output root state: unavailable. History file state: unavailable. Release records: unavailable. Latest release: none. Latest release SDK: none. Release open targets: unavailable. "
             "Unavailable: save the project to disk first."
         )
-        assert unsaved_actions["Release Build..."].statusTip() == unsaved_actions["Release Build..."].toolTip()
-        assert unsaved_actions["Release Build..."].isEnabled() is False
+        assert unsaved_actions["Release Build (EXE)..."].statusTip() == unsaved_actions["Release Build (EXE)..."].toolTip()
+        assert unsaved_actions["Release Build (EXE)..."].isEnabled() is False
         assert unsaved_actions["Release History..."].toolTip() == (
             "Browse recorded release builds for the current project. "
             "SDK: valid. History file: not created yet. History file state: unavailable. "
@@ -3131,14 +3131,14 @@ class TestMainWindowFileFlow:
             "Automatically compile and rerun the preview after changes. Project: open. SDK: valid. Preview: stopped."
         )
         assert refreshed_actions["Auto Compile"].statusTip() == refreshed_actions["Auto Compile"].toolTip()
-        assert refreshed_actions["Release Build..."].toolTip() == (
+        assert refreshed_actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             f"SDK: valid. Output root: {window._release_output_root()}. Default profile: stm32-sim (STM32 Simulator). "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
-        assert refreshed_actions["Release Build..."].statusTip() == refreshed_actions["Release Build..."].toolTip()
+        assert refreshed_actions["Release Build (EXE)..."].statusTip() == refreshed_actions["Release Build (EXE)..."].toolTip()
         assert refreshed_actions["Release Profiles..."].toolTip() == (
             f"Edit release profiles for the current project. SDK: valid. Output root: {window._release_output_root()}. "
             f"Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
@@ -3200,7 +3200,7 @@ class TestMainWindowFileFlow:
             "Automatically compile and rerun the preview after changes. "
             "Project: open. SDK: invalid. Preview: stopped. Unavailable: set a valid SDK root first."
         )
-        assert invalid_actions["Release Build..."].toolTip() == (
+        assert invalid_actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             f"SDK: invalid. Output root: {window._release_output_root()}. "
             f"History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
@@ -3208,8 +3208,8 @@ class TestMainWindowFileFlow:
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available. "
             "Unavailable: set a valid SDK root first."
         )
-        assert invalid_actions["Release Build..."].statusTip() == invalid_actions["Release Build..."].toolTip()
-        assert invalid_actions["Release Build..."].isEnabled() is False
+        assert invalid_actions["Release Build (EXE)..."].statusTip() == invalid_actions["Release Build (EXE)..."].toolTip()
+        assert invalid_actions["Release Build (EXE)..."].isEnabled() is False
         assert invalid_actions["Release Profiles..."].toolTip() == (
             f"Edit release profiles for the current project. SDK: invalid. Output root: {window._release_output_root()}. "
             f"Profiles: 2 profiles. Default: stm32-sim (STM32 Simulator). History file: {release_history_path(str(project_dir), output_dir=window._release_output_root())}. "
@@ -3278,7 +3278,7 @@ class TestMainWindowFileFlow:
                 "Open Last Release Package",
                 "Open Last Release Log",
                 "Open Release History File",
-                "Release Build...",
+                "Release Build (EXE)...",
                 "Release Profiles...",
                 "Release History...",
                 "Repository Health...",
@@ -3319,7 +3319,7 @@ class TestMainWindowFileFlow:
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
             "Output root state: missing. History file state: missing. Release records: 0 entries. Latest release: none. Latest release SDK: none. Release open targets: 0 of 7 available."
         )
-        assert actions["Release Build..."].toolTip() == (
+        assert actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             f"SDK: valid. Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             f"History file: {history_path}. "
@@ -3425,7 +3425,7 @@ class TestMainWindowFileFlow:
             f"Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. "
             "Output root state: available. History file state: available. Release records: 1 entry. Latest release: 20260329-010203 (stm32-sim (STM32 Simulator), success). Latest release SDK: git abc1234. Release open targets: 7 of 7 available."
         )
-        assert actions["Release Build..."].toolTip() == (
+        assert actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             f"SDK: valid. Output root: {output_root}. Default profile: windows-pc (Windows PC). "
             f"History file: {history_path}. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}. Release profiles: 2 profiles. Default: windows-pc (Windows PC). "
@@ -3560,6 +3560,86 @@ class TestMainWindowFileFlow:
         assert tooltip_calls == 2
         assert action.toolTip() == "Hint B"
         assert action.statusTip() == "Hint B"
+        _close_window(window)
+
+    def test_release_artifact_hints_skip_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.engine.release_engine import release_history_path
+        from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BuildReadyCompiler:
+            def can_build(self):
+                return True
+
+            def is_preview_running(self):
+                return False
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReleaseHintDemo"
+        project = _create_project(project_dir, "ReleaseHintDemo", sdk_root)
+        project.release_config = ReleaseConfig(
+            profiles=[ReleaseProfile(id="stm32-sim", name="STM32 Simulator", port="stm32")],
+            default_profile="stm32-sim",
+        )
+
+        window = MainWindow("")
+        window.project = project
+        window._project_dir = str(project_dir)
+        window.project_root = str(sdk_root)
+        window.compiler = _BuildReadyCompiler()
+
+        output_root = window._release_output_root()
+        release_root = Path(output_root) / "stm32-sim" / "20260329-010203"
+        dist_dir = release_root / "dist"
+        dist_dir.mkdir(parents=True)
+        (release_root / "release-manifest.json").write_text("{}", encoding="utf-8")
+        (dist_dir / "VERSION.txt").write_text("1.0.0\n", encoding="utf-8")
+        (release_root / "ReleaseHintDemo.zip").write_text("zip\n", encoding="utf-8")
+        log_path = release_root / "logs" / "build.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text("build log\n", encoding="utf-8")
+        history_path = Path(release_history_path(str(project_dir), output_dir=output_root))
+        history_path.parent.mkdir(parents=True, exist_ok=True)
+        latest_entry = {
+            "build_id": "20260329-010203",
+            "profile_id": "stm32-sim",
+            "status": "success",
+            "sdk": {"source_kind": "git", "commit_short": "abc1234"},
+            "release_root": str(release_root),
+            "dist_dir": str(dist_dir),
+            "manifest_path": str(release_root / "release-manifest.json"),
+            "log_path": str(log_path),
+            "zip_path": str(release_root / "ReleaseHintDemo.zip"),
+        }
+        history_path.write_text(json.dumps([latest_entry], indent=2) + "\n", encoding="utf-8")
+        monkeypatch.setattr(main_window_module, "latest_release_entry", lambda *args, **kwargs: latest_entry)
+
+        window._update_compile_availability()
+
+        tooltip_calls = 0
+        original_set_tooltip = window._open_last_release_dir_action.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._open_last_release_dir_action, "setToolTip", counted_set_tooltip)
+
+        window._update_compile_availability()
+        window._update_compile_availability()
+
+        assert tooltip_calls == 0
+        assert window._open_last_release_dir_action.toolTip() == (
+            "Open last release folder\n\nLatest release: 20260329-010203 | stm32-sim (STM32 Simulator) | success | sdk git abc1234\n\n"
+            f"{release_root}"
+        )
+        assert window._open_last_release_dir_action.statusTip() == window._open_last_release_dir_action.toolTip()
         _close_window(window)
 
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):

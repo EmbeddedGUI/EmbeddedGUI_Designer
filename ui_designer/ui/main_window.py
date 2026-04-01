@@ -2645,7 +2645,8 @@ class MainWindow(QMainWindow):
             self._open_last_release_package_action.setEnabled(zip_exists)
             self._open_last_release_log_action.setEnabled(log_exists)
             self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
-            self._open_last_release_dir_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_dir_action,
                 _release_action_tooltip(
                     "Open last release folder",
                     latest_entry,
@@ -2657,10 +2658,10 @@ class MainWindow(QMainWindow):
                         if release_root
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_dir_action.setStatusTip(self._open_last_release_dir_action.toolTip())
-            self._open_last_release_dist_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_dist_action,
                 _release_action_tooltip(
                     "Open last release dist",
                     latest_entry,
@@ -2672,10 +2673,10 @@ class MainWindow(QMainWindow):
                         if dist_dir
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_dist_action.setStatusTip(self._open_last_release_dist_action.toolTip())
-            self._open_last_release_manifest_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_manifest_action,
                 _release_action_tooltip(
                     "Open last release manifest",
                     latest_entry,
@@ -2687,10 +2688,10 @@ class MainWindow(QMainWindow):
                         if manifest_path
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_manifest_action.setStatusTip(self._open_last_release_manifest_action.toolTip())
-            self._open_last_release_version_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_version_action,
                 _release_action_tooltip(
                     "Open last release version",
                     latest_entry,
@@ -2702,10 +2703,10 @@ class MainWindow(QMainWindow):
                         if version_expected_path
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_version_action.setStatusTip(self._open_last_release_version_action.toolTip())
-            self._open_last_release_package_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_package_action,
                 _release_action_tooltip(
                     "Open last release package",
                     latest_entry,
@@ -2717,10 +2718,10 @@ class MainWindow(QMainWindow):
                         if zip_path
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_package_action.setStatusTip(self._open_last_release_package_action.toolTip())
-            self._open_last_release_log_action.setToolTip(
+            self._apply_action_hint(
+                self._open_last_release_log_action,
                 _release_action_tooltip(
                     "Open last release log",
                     latest_entry,
@@ -2732,10 +2733,10 @@ class MainWindow(QMainWindow):
                         if log_path
                         else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
                     ),
-                )
+                ),
             )
-            self._open_last_release_log_action.setStatusTip(self._open_last_release_log_action.toolTip())
-            self._open_release_history_file_action.setToolTip(
+            self._apply_action_hint(
+                self._open_release_history_file_action,
                 _release_action_tooltip(
                     "Open release history file",
                     latest_entry,
@@ -2743,9 +2744,8 @@ class MainWindow(QMainWindow):
                     unavailable_label="Release history file unavailable",
                     profile_label=latest_release_profile_label,
                     fallback_hint=f"{history_file_state_summary}\nExpected file: {history_file_path or 'none'}",
-                )
+                ),
             )
-            self._open_release_history_file_action.setStatusTip(self._open_release_history_file_action.toolTip())
         self._update_build_menu_metadata(latest_entry=latest_entry, history_entries=history_entries, history_file_path=history_file_path)
         self._update_file_menu_metadata()
         self._update_file_project_action_metadata()
