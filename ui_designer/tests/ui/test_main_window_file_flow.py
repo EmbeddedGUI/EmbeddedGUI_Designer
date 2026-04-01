@@ -7880,6 +7880,7 @@ class TestMainWindowFileFlow:
         assert window._preview_chip.accessibleName() == "Workspace status: Preview idle."
         assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."
         assert window._preview_chip.statusTip() == window._preview_chip.toolTip()
+        assert window._diagnostics_chip.isHidden() is True
         assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 0 errors and 0 warnings."
         assert window._diagnostics_chip.toolTip() == (
             "Open the bottom Diagnostics tab (full design-time issue list). "
@@ -7933,6 +7934,13 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["status"].toolTip() == (
             "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: 1 dirty page."
         )
+
+        monkeypatch.setattr(window.diagnostics_panel, "severity_counts", lambda: {"error": 1, "warning": 0, "info": 0})
+        window._update_workspace_chips()
+
+        assert window._diagnostics_chip.isHidden() is False
+        assert window._diagnostics_chip.text() == "Diagnostics 1E/0W"
+        assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 1 errors and 0 warnings."
         _close_window(window)
 
     def test_welcome_view_and_sdk_status_label_expose_accessible_metadata(self, qapp, isolated_config):

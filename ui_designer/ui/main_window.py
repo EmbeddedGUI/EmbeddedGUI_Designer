@@ -2071,6 +2071,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_diagnostics_chip"):
             error_count = int(diagnostics_counts.get("error", 0) or 0)
             warning_count = int(diagnostics_counts.get("warning", 0) or 0)
+            self._diagnostics_chip.setVisible(error_count > 0 or warning_count > 0)
             if error_count:
                 tone = "danger"
             elif warning_count:
@@ -7875,4 +7876,3 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
