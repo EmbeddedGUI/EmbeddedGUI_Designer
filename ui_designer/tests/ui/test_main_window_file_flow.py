@@ -7806,6 +7806,7 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window._project_workspace._active_page_chip.isHidden() is True
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
             "Currently showing Widgets panel. Current page: none. Insert target: unavailable."
         )
