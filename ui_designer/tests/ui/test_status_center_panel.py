@@ -1123,6 +1123,32 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.statusTip() == panel._last_action_label.toolTip()
         panel.deleteLater()
 
+    def test_set_widget_icon_skips_no_op_icon_refreshes(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        icon_calls = 0
+        original_set_icon = panel._suggested_action_button.setIcon
+
+        def counted_set_icon(icon):
+            nonlocal icon_calls
+            icon_calls += 1
+            return original_set_icon(icon)
+
+        monkeypatch.setattr(panel._suggested_action_button, "setIcon", counted_set_icon)
+
+        panel._set_widget_icon(panel._suggested_action_button, "diagnostics", size=16)
+        assert icon_calls == 1
+
+        panel._set_widget_icon(panel._suggested_action_button, "diagnostics", size=16)
+        assert icon_calls == 1
+
+        panel._set_widget_icon(panel._suggested_action_button, "history", size=16)
+        assert icon_calls == 2
+
+        panel.deleteLater()
+
     def test_runtime_panel_emits_debug_action(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

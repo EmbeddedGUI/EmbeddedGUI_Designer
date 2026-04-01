@@ -402,8 +402,13 @@ class StatusCenterPanel(QWidget):
 
     def _set_widget_icon(self, widget, icon_key, size=16):
         key = str(icon_key or "history").strip() or "history"
+        resolved_size = int(size or 16)
+        snapshot = (key, resolved_size)
+        if widget.property("_status_center_icon_snapshot") == snapshot:
+            return
         widget.setProperty("iconKey", key)
-        widget.setIcon(make_icon(key, size=size))
+        widget.setIcon(make_icon(key, size=resolved_size))
+        widget.setProperty("_status_center_icon_snapshot", snapshot)
 
     def _build_action_button(self, text, icon_key, action_key):
         button = QPushButton(text)
