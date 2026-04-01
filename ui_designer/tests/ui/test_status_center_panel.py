@@ -178,7 +178,7 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning (3)"
         assert panel._diag_btn.text() == "Diagnostics (4 active)"
-        assert panel._history_btn.text() == "History (Clean)"
+        assert panel._history_btn.text() == "History"
         assert panel._debug_btn.text() == "Debug Output (Issue)"
         assert panel._debug_btn.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
         assert panel._debug_btn.accessibleName() == (
@@ -194,7 +194,7 @@ class TestStatusCenterPanel:
             "Diagnostics action: Diagnostics (4 active). Open Diagnostics. 0 errors, 3 warnings, 1 info item."
         )
         assert panel._history_btn.accessibleName() == (
-            "History action: History (Clean). Open History. No dirty pages."
+            "History action: History. Open History. No dirty pages."
         )
         assert panel._first_error_btn.accessibleName() == (
             "First Error action unavailable: Open First Error. No errors are active."
@@ -245,7 +245,7 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning"
         assert panel._diag_btn.text() == "Diagnostics (2 active)"
-        assert panel._history_btn.text() == "History (Clean)"
+        assert panel._history_btn.text() == "History"
         assert panel._debug_btn.text() == "Debug Output (Build)"
         assert panel._debug_btn.toolTip() == "Open Debug Output. Compile is unavailable."
         assert panel._debug_btn.accessibleName() == (
@@ -311,9 +311,9 @@ class TestStatusCenterPanel:
         assert panel._first_warning_btn.isEnabled() is False
         assert panel._first_error_btn.text() == "Open First Error"
         assert panel._first_warning_btn.text() == "Open First Warning"
-        assert panel._diag_btn.text() == "Diagnostics (Clear)"
-        assert panel._history_btn.text() == "History (Clean)"
-        assert panel._structure_btn.text() == "Structure (Idle)"
+        assert panel._diag_btn.text() == "Diagnostics"
+        assert panel._history_btn.text() == "History"
+        assert panel._structure_btn.text() == "Structure"
         assert panel._diag_btn.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._history_btn.toolTip() == "Open History. No dirty pages."
         assert panel._structure_btn.toolTip() == "Open Structure. No widgets selected."
@@ -332,13 +332,13 @@ class TestStatusCenterPanel:
         assert panel._first_error_btn.toolTip() == "No errors are active."
         assert panel._first_warning_btn.toolTip() == "No warnings are active."
         assert panel._diag_btn.accessibleName() == (
-            "Diagnostics action: Diagnostics (Clear). Open Diagnostics. No active diagnostics."
+            "Diagnostics action: Diagnostics. Open Diagnostics. No active diagnostics."
         )
         assert panel._history_btn.accessibleName() == (
-            "History action: History (Clean). Open History. No dirty pages."
+            "History action: History. Open History. No dirty pages."
         )
         assert panel._structure_btn.accessibleName() == (
-            "Structure action: Structure (Idle). Open Structure. No widgets selected."
+            "Structure action: Structure. Open Structure. No widgets selected."
         )
         assert panel._first_error_btn.accessibleName() == (
             "First Error action unavailable: Open First Error. No errors are active."
@@ -592,9 +592,9 @@ class TestStatusCenterPanel:
         assert panel._project_btn.accessibleName() == (
             "Project action: Project (Setup). Open Project. SDK root is missing or invalid."
         )
-        assert panel._diag_btn.text() == "Diagnostics (Clear)"
-        assert panel._history_btn.text() == "History (Clean)"
-        assert panel._structure_btn.text() == "Structure (Idle)"
+        assert panel._diag_btn.text() == "Diagnostics"
+        assert panel._history_btn.text() == "History"
+        assert panel._structure_btn.text() == "Structure"
         assert panel._runtime_label.isHidden() is True
         assert panel._diag_btn.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._history_btn.toolTip() == "Open History. No dirty pages."
@@ -607,13 +607,13 @@ class TestStatusCenterPanel:
         assert panel._components_btn.statusTip() == "Open Widgets."
         assert panel._components_btn.accessibleName() == "Widgets action: Widgets. Open Widgets."
         assert panel._diag_btn.accessibleName() == (
-            "Diagnostics action: Diagnostics (Clear). Open Diagnostics. No active diagnostics."
+            "Diagnostics action: Diagnostics. Open Diagnostics. No active diagnostics."
         )
         assert panel._history_btn.accessibleName() == (
-            "History action: History (Clean). Open History. No dirty pages."
+            "History action: History. Open History. No dirty pages."
         )
         assert panel._structure_btn.accessibleName() == (
-            "Structure action: Structure (Idle). Open Structure. No widgets selected."
+            "Structure action: Structure. Open Structure. No widgets selected."
         )
         assert panel._first_error_btn.accessibleName() == (
             "First Error action unavailable: Open First Error. No errors are active."

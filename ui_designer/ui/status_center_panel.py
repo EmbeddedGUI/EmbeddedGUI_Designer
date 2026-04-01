@@ -656,15 +656,15 @@ class StatusCenterPanel(QWidget):
 
     def _diagnostics_button_text(self, total_count):
         total = max(int(total_count or 0), 0)
-        return f"Diagnostics ({total} active)" if total > 0 else "Diagnostics (Clear)"
+        return f"Diagnostics ({total} active)" if total > 0 else "Diagnostics"
 
     def _history_button_text(self, dirty_count):
         total = max(int(dirty_count or 0), 0)
-        return f"History ({total} dirty)" if total > 0 else "History (Clean)"
+        return f"History ({total} dirty)" if total > 0 else "History"
 
     def _structure_button_text(self, selection_total):
         total = max(int(selection_total or 0), 0)
-        return f"Structure ({total} selected)" if total > 0 else "Structure (Idle)"
+        return f"Structure ({total} selected)" if total > 0 else "Structure"
 
     def _diagnostics_hint(self, error_count, warning_count, info_count):
         total = max(int(error_count or 0), 0) + max(int(warning_count or 0), 0) + max(int(info_count or 0), 0)
