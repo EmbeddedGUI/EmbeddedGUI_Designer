@@ -1328,6 +1328,45 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_runtime_text_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._runtime_title.setProperty("_status_center_text_snapshot", None)
+        panel._runtime_label.setProperty("_status_center_text_snapshot", None)
+
+        title_text_calls = 0
+        label_text_calls = 0
+        original_title_set_text = panel._runtime_title.setText
+        original_label_set_text = panel._runtime_label.setText
+
+        def counted_title_set_text(text):
+            nonlocal title_text_calls
+            title_text_calls += 1
+            return original_title_set_text(text)
+
+        def counted_label_set_text(text):
+            nonlocal label_text_calls
+            label_text_calls += 1
+            return original_label_set_text(text)
+
+        monkeypatch.setattr(panel._runtime_title, "setText", counted_title_set_text)
+        monkeypatch.setattr(panel._runtime_label, "setText", counted_label_set_text)
+
+        panel.set_status(runtime_error="Runtime failed", diagnostics_errors=1)
+        assert title_text_calls == 1
+        assert label_text_calls == 1
+
+        panel.set_status(runtime_error="Runtime failed", diagnostics_warnings=2)
+        assert title_text_calls == 1
+        assert label_text_calls == 1
+
+        panel.set_status(runtime_error="Bridge lost", diagnostics_warnings=2)
+        assert title_text_calls == 1
+        assert label_text_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
