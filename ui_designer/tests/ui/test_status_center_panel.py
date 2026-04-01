@@ -1610,6 +1610,45 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_health_summary_text_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._health_title.setProperty("_status_center_text_snapshot", None)
+        panel._health_summary_label.setProperty("_status_center_text_snapshot", None)
+
+        title_text_calls = 0
+        summary_text_calls = 0
+        original_title_set_text = panel._health_title.setText
+        original_summary_set_text = panel._health_summary_label.setText
+
+        def counted_title_set_text(text):
+            nonlocal title_text_calls
+            title_text_calls += 1
+            return original_title_set_text(text)
+
+        def counted_summary_set_text(text):
+            nonlocal summary_text_calls
+            summary_text_calls += 1
+            return original_summary_set_text(text)
+
+        monkeypatch.setattr(panel._health_title, "setText", counted_title_set_text)
+        monkeypatch.setattr(panel._health_summary_label, "setText", counted_summary_set_text)
+
+        panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
+        assert title_text_calls == 1
+        assert summary_text_calls == 1
+
+        panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1, dirty_pages=1)
+        assert title_text_calls == 1
+        assert summary_text_calls == 1
+
+        panel.set_status(diagnostics_errors=1, diagnostics_warnings=2, diagnostics_infos=1, dirty_pages=1)
+        assert title_text_calls == 1
+        assert summary_text_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
