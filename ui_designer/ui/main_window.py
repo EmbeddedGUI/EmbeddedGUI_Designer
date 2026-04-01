@@ -421,8 +421,8 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame = QFrame()
         self._workspace_nav_frame.setObjectName("workspace_nav_rail")
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(8, 10, 8, 10)
-        nav_layout.setSpacing(6)
+        nav_layout.setContentsMargins(_SPACE_SM, _SPACE_SM + _SPACE_XXS, _SPACE_SM, _SPACE_SM + _SPACE_XXS)
+        nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         for key, label, icon_key in (
             ("project", "Project", "project"),
             ("structure", "Structure", "structure"),
@@ -439,7 +439,7 @@ class MainWindow(QMainWindow):
         self._left_shell.setObjectName("workspace_left_shell")
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
-        left_shell_layout.setSpacing(10)
+        left_shell_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
         left_shell_layout.addWidget(self._workspace_nav_frame, 0)
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
@@ -448,7 +448,7 @@ class MainWindow(QMainWindow):
         center_shell.setObjectName("workspace_center_shell")
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(10)
+        center_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
 
         self.page_tab_bar = self._create_page_tab_bar()
         center_layout.addWidget(self.page_tab_bar)
