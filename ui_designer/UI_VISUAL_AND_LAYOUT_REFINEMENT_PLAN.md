@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: project workspace chip visibility now reuses cached visible-state updates, skipping no-op `setVisible` rewrites while page, dirty, active, and current-view chips remain shown or hidden across snapshot refreshes.
   - `PERF-002` updated: widget browser list-item metadata now caches the last hint string, skipping no-op tooltip/status/accessibility rewrites while category and scenario entries retain the same browser guidance.
   - `PERF-002` updated: status center runtime visibility now reuses cached visible-state updates, skipping no-op `setVisible` rewrites while runtime error text changes but the runtime section stays shown or hidden.
   - `PERF-002` updated: status center diagnostics/workspace visibility now reuses cached visible-state updates, skipping no-op `setVisible` rewrites while section visibility stays unchanged across different non-idle status snapshots.

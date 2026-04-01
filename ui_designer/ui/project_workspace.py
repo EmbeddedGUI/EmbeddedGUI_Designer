@@ -24,6 +24,15 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
             widget.setProperty("_workspace_metadata_accessible_snapshot", resolved_accessible_name)
 
 
+def _set_widget_visible(widget, visible):
+    value = bool(visible)
+    current_value = widget.property("_workspace_visible_snapshot")
+    if current_value is not None and bool(current_value) == value:
+        return
+    widget.setVisible(value)
+    widget.setProperty("_workspace_visible_snapshot", value)
+
+
 class ProjectWorkspacePanel(QWidget):
     """Hosts project explorer list and page thumbnails in one panel."""
 
@@ -203,7 +212,7 @@ class ProjectWorkspacePanel(QWidget):
             self._stack.setCurrentWidget(self._list_view)
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
-        self._view_chip.setVisible(view_name != self.VIEW_LIST)
+        _set_widget_visible(self._view_chip, view_name != self.VIEW_LIST)
         self._update_view_button_metadata(view_name)
         self._update_stack_metadata(view_label)
         self._update_panel_metadata()
@@ -241,9 +250,9 @@ class ProjectWorkspacePanel(QWidget):
             "success" if pages > 0 else "warning",
             accessible_name=f"Workspace pages: {page_label}.",
         )
-        self._page_count_chip.setVisible(pages > 0)
+        _set_widget_visible(self._page_count_chip, pages > 0)
         if active != "None":
-            self._active_page_chip.setVisible(True)
+            _set_widget_visible(self._active_page_chip, True)
             self._set_chip(
                 self._active_page_chip,
                 f"Active: {active}",
@@ -251,7 +260,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name=f"Workspace active page: {active}.",
             )
         else:
-            self._active_page_chip.setVisible(False)
+            _set_widget_visible(self._active_page_chip, False)
             self._set_chip(
                 self._active_page_chip,
                 "No active page",
@@ -259,7 +268,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name="Workspace active page: none.",
             )
         if dirty > 0:
-            self._dirty_pages_chip.setVisible(True)
+            _set_widget_visible(self._dirty_pages_chip, True)
             dirty_label = f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages"
             self._set_chip(
                 self._dirty_pages_chip,
@@ -268,7 +277,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name=f"Workspace dirty pages: {dirty_label}.",
             )
         else:
-            self._dirty_pages_chip.setVisible(False)
+            _set_widget_visible(self._dirty_pages_chip, False)
             self._set_chip(
                 self._dirty_pages_chip,
                 "No dirty pages",

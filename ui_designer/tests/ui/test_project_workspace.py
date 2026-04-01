@@ -199,3 +199,31 @@ class TestProjectWorkspacePanel:
         assert panel._header.toolTip() == panel.accessibleName()
         assert panel._header.statusTip() == panel._header.toolTip()
         panel.deleteLater()
+
+    def test_dirty_chip_visibility_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        panel._dirty_pages_chip.setProperty("_workspace_visible_snapshot", None)
+
+        visible_calls = 0
+        original_set_visible = panel._dirty_pages_chip.setVisible
+
+        def counted_set_visible(value):
+            nonlocal visible_calls
+            visible_calls += 1
+            return original_set_visible(value)
+
+        monkeypatch.setattr(panel._dirty_pages_chip, "setVisible", counted_set_visible)
+
+        panel.set_workspace_snapshot(page_count=2, dirty_pages=1)
+        assert visible_calls == 1
+
+        visible_calls = 0
+        panel.set_workspace_snapshot(page_count=2, dirty_pages=2)
+        assert visible_calls == 0
+
+        panel.set_workspace_snapshot(page_count=2, dirty_pages=0)
+        assert visible_calls == 1
+        assert panel._dirty_pages_chip.isHidden() is True
+        panel.deleteLater()
