@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: widget browser now skips config saves and panel refreshes when recording an insert for the widget type that is already at the top of Recent, avoiding a no-op rebuild on repeated inserts.
   - `PERF-002` updated: project workspace now ignores redundant requests for the already-active list or thumbnail view, avoiding no-op metadata refreshes and `view_changed` emissions.
   - `UX-005` updated: project workspace now hides the clean dirty-pages chip until there are unsaved pages, keeping the header summary focused on actionable state.
   - `UX-005` updated: main toolbar now hides the SDK chip while the SDK binding is already valid, only surfacing that chip when SDK setup still needs attention.

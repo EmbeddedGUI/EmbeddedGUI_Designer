@@ -362,11 +362,16 @@ class DesignerConfig:
         """Add a widget type to the browser MRU list."""
         widget_type = str(widget_type or "").strip()
         if not widget_type:
-            return
-        self.widget_browser_recent = [item for item in self.widget_browser_recent if item != widget_type]
-        self.widget_browser_recent.insert(0, widget_type)
-        self.widget_browser_recent = self.widget_browser_recent[:24]
+            return False
+        current_recent = [str(item).strip() for item in self.widget_browser_recent if str(item).strip()]
+        updated_recent = [item for item in current_recent if item != widget_type]
+        updated_recent.insert(0, widget_type)
+        updated_recent = updated_recent[:24]
+        if updated_recent == current_recent[:24]:
+            return False
+        self.widget_browser_recent = updated_recent
         self.save()
+        return True
 
     def toggle_widget_browser_favorite(self, widget_type):
         """Toggle a widget type in the browser favorites list."""

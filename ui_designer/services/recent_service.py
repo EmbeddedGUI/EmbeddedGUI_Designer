@@ -14,5 +14,5 @@ class RecentService:
     def list_recent_types(self) -> list[str]:
         return list(getattr(self._config, "widget_browser_recent", []) or [])
 
-    def record_insert(self, type_name: str) -> None:
-        self._config.record_widget_browser_recent(str(type_name or "").strip())
+    def record_insert(self, type_name: str) -> bool:
+        return bool(self._config.record_widget_browser_recent(str(type_name or "").strip()))

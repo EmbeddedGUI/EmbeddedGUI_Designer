@@ -692,8 +692,8 @@ class WidgetBrowserPanel(QWidget):
             card.set_selected(card.type_name == widget_type)
 
     def record_insert(self, widget_type):
-        self._recent_service.record_insert(widget_type)
-        self.refresh()
+        if self._recent_service.record_insert(widget_type):
+            self.refresh()
 
     def recent_types(self):
         return list(self._recent_service.list_recent_types())
