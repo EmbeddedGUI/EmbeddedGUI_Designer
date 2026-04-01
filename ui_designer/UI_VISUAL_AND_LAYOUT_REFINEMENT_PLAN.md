@@ -238,12 +238,13 @@
 
 ```yaml
 last_update: 2026-04-01
-phase: phase_a_in_progress
+phase: phase_c_in_progress
 in_progress:
-  - PERF-001
+  - CLEAN-003
 completed:
   - CLEAN-001
   - CLEAN-002
+  - PERF-001
   - UX-001
   - UX-002
   - UX-003
@@ -252,9 +253,9 @@ completed:
   - REL-002
 blocked: []
 next_recommended:
-  - PERF-001
   - CLEAN-003
   - UX-005
+  - PERF-002
 notes:
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
   - 已在 iconography 中增加 Material Symbols 映射与字体渲染回退机制。
@@ -262,7 +263,8 @@ notes:
   - 已完成主题 token 收敛首批调整（左栏/命令栏/导航与状态芯片降重）。
   - 已完成主界面 Build 流程相关菜单图标映射与替换联调。
   - 已完成主壳层间距降重一批（workspace/editor/inspector/bottom 区域 spacing 与 margin 下调）。
-  - UX-004 已阶段完成，切入 PERF-001：梳理高频触发路径（编译/预览/状态刷新）。
+  - 已完成 PERF-001 首批治理：canvas move/resize 改为拖拽中轻量刷新、拖拽结束后统一补做 overlay/XML/资源面板同步。
+  - 已为 PropertyPanel 几何同步与 MainWindow 拖拽刷新节流补充定向回归用例。
 ```
 
 ---

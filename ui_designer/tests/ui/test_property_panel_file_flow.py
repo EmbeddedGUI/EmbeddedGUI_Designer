@@ -535,6 +535,53 @@ class TestPropertyPanelFileFlow:
         assert editor.accessibleName() == "Batch Width: mixed values"
         panel.deleteLater()
 
+    def test_live_geometry_refresh_updates_single_selection_without_rebuild(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("switch", name="toggle", x=10, y=20, width=80, height=24)
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        original_name_editor = panel._editors["name"]
+        widget.x = 32
+        widget.y = 48
+        widget.width = 120
+        widget.height = 36
+
+        refreshed = panel.refresh_live_geometry([widget], primary=widget)
+
+        assert refreshed is True
+        assert panel._editors["name"] is original_name_editor
+        assert panel._editors["x"].value() == 32
+        assert panel._editors["y"].value() == 48
+        assert panel._editors["width"].value() == 120
+        assert panel._editors["height"].value() == 36
+        assert panel._header_size_chip.text() == "120×36"
+        panel.deleteLater()
+
+    def test_live_geometry_refresh_updates_multi_selection_primary_geometry_without_rebuild(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first", x=10, y=20, width=80, height=24)
+        second = WidgetModel("button", name="second", x=30, y=40, width=96, height=28)
+
+        panel = PropertyPanel()
+        panel.set_selection([first, second], primary=second)
+
+        original_editor = panel._editors["multi_width"]
+        second.width = 144
+        second.height = 40
+
+        refreshed = panel.refresh_live_geometry([first, second], primary=second)
+
+        assert refreshed is True
+        assert panel._editors["multi_width"] is original_editor
+        assert panel._editors["multi_width"].value() == 144
+        assert panel._editors["multi_height"].value() == 40
+        panel.deleteLater()
+
     def test_single_selection_shows_interaction_notes_for_locked_hidden_layout_widget(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

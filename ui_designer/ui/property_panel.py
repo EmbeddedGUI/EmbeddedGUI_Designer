@@ -125,6 +125,7 @@ class PropertyPanel(QWidget):
         self._resource_catalog = None  # ResourceCatalog instance
         self._string_keys = []        # list of i18n string keys for @string/ completions
         self._inspector_group_expanded = {}
+        self._header_size_chip = None
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -378,6 +379,50 @@ class PropertyPanel(QWidget):
         self._widget = primary
         self._rebuild_form()
 
+    def _selection_matches(self, widgets, primary=None):
+        widgets = [widget for widget in (widgets or []) if widget is not None]
+        if primary is None or all(widget is not primary for widget in widgets):
+            primary = widgets[-1] if widgets else None
+        if primary is not self._primary_widget:
+            return False
+        if len(widgets) != len(self._selection):
+            return False
+        return all(current is incoming for current, incoming in zip(self._selection, widgets))
+
+    def _update_numeric_editor_value(self, key, value):
+        editor = self._editors.get(key)
+        if editor is None or not hasattr(editor, "value") or not hasattr(editor, "setValue"):
+            return
+        try:
+            current_value = int(editor.value())
+        except Exception:
+            current_value = None
+        if current_value == int(value):
+            return
+        with QSignalBlocker(editor):
+            editor.setValue(int(value))
+
+    def refresh_live_geometry(self, widgets, primary=None):
+        """Refresh geometry editors for the current selection without rebuilding the form."""
+        if not self._selection_matches(widgets, primary=primary):
+            return False
+        if self._primary_widget is None:
+            return False
+
+        if len(self._selection) == 1:
+            widget = self._primary_widget
+            size_chip = getattr(self, "_header_size_chip", None)
+            if size_chip is not None:
+                size_chip.setText(f"{widget.width}×{widget.height}")
+            for field in ("x", "y", "width", "height"):
+                self._update_numeric_editor_value(field, getattr(widget, field))
+            return True
+
+        primary_widget = self._primary_widget
+        for field in ("x", "y", "width", "height"):
+            self._update_numeric_editor_value(f"multi_{field}", getattr(primary_widget, field))
+        return True
+
     def _clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -531,7 +576,8 @@ class PropertyPanel(QWidget):
 
         chips_row = QHBoxLayout()
         chips_row.setSpacing(8)
-        chips_row.addWidget(self._make_status_chip(f"{widget.width}×{widget.height}", "accent"))
+        self._header_size_chip = self._make_status_chip(f"{widget.width}×{widget.height}", "accent")
+        chips_row.addWidget(self._header_size_chip)
         if getattr(widget, "designer_locked", False):
             chips_row.addWidget(self._make_status_chip("Locked", "warning"))
         if getattr(widget, "designer_hidden", False):
@@ -548,6 +594,7 @@ class PropertyPanel(QWidget):
         self._clear_layout(self._layout)
         self._editors = {}
         self._callback_open_buttons = {}
+        self._header_size_chip = None
 
         if self._primary_widget is None:
             self._no_selection_label = self._create_no_selection_label()

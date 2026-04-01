@@ -7354,15 +7354,33 @@ class MainWindow(QMainWindow):
         """Widget dragged on preview overlay."""
         self._active_batch_source = "canvas move"
         if widget == self._selection_state.primary:
-            self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
-        self._on_model_changed(source="canvas move")
+            self.property_panel.refresh_live_geometry(
+                self._selection_state.widgets,
+                self._selection_state.primary,
+            )
+        self._record_page_state_change(
+            update_preview=False,
+            trigger_compile=True,
+            sync_xml=False,
+            refresh_resources=False,
+            source="canvas move",
+        )
 
     def _on_widget_resized(self, widget, new_width, new_height):
         """Widget resized on preview overlay."""
         self._active_batch_source = "canvas resize"
         if widget == self._selection_state.primary:
-            self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
-        self._on_model_changed(source="canvas resize")
+            self.property_panel.refresh_live_geometry(
+                self._selection_state.widgets,
+                self._selection_state.primary,
+            )
+        self._record_page_state_change(
+            update_preview=False,
+            trigger_compile=True,
+            sync_xml=False,
+            refresh_resources=False,
+            source="canvas resize",
+        )
 
     def _on_widget_reordered(self, widget, new_index):
         """Widget reordered within a layout container."""
@@ -7412,7 +7430,14 @@ class MainWindow(QMainWindow):
             return ""
         return f"Changed {self._current_page.name}: {source}."
 
-    def _record_page_state_change(self, update_preview=True, trigger_compile=True, source=""):
+    def _record_page_state_change(
+        self,
+        update_preview=True,
+        trigger_compile=True,
+        sync_xml=True,
+        refresh_resources=True,
+        source="",
+    ):
         """Record the current page snapshot and refresh dependent UI state."""
         if self._current_page and not self._undoing:
             xml = self._current_page.to_xml_string()
@@ -7420,8 +7445,10 @@ class MainWindow(QMainWindow):
             stack.push(xml, label=source or "property edit")
         if update_preview:
             self._update_preview_overlay()
-        self._sync_xml_to_editors()
-        self._update_resource_usage_panel()
+        if sync_xml:
+            self._sync_xml_to_editors()
+        if refresh_resources:
+            self._update_resource_usage_panel()
         if trigger_compile:
             self._trigger_compile()
         self._update_undo_actions()
@@ -7496,7 +7523,12 @@ class MainWindow(QMainWindow):
         if self._current_page:
             xml = self._current_page.to_xml_string()
             stack = self._undo_manager.get_stack(self._current_page.name)
+            should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize"}
             stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
+            if should_finalize_canvas_refresh:
+                self._update_preview_overlay()
+                self._sync_xml_to_editors()
+                self._update_resource_usage_panel()
             self._active_batch_source = ""
             self._update_undo_actions()
             self._update_window_title()
@@ -7830,7 +7862,6 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
 
 
 

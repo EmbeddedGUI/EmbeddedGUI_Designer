@@ -2103,6 +2103,91 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_canvas_move_defers_full_refresh_until_drag_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CanvasMovePerfDemo"
+        project = _create_project(project_dir, "CanvasMovePerfDemo", sdk_root)
+        widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
+        project.get_startup_page().root_widget.add_child(widget)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        calls = {
+            "property_panel_refresh_live_geometry": 0,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 0,
+        }
+
+        monkeypatch.setattr(
+            window.property_panel,
+            "refresh_live_geometry",
+            lambda *args, **kwargs: calls.__setitem__(
+                "property_panel_refresh_live_geometry",
+                calls["property_panel_refresh_live_geometry"] + 1,
+            ) or True,
+        )
+        monkeypatch.setattr(
+            window,
+            "_update_preview_overlay",
+            lambda: calls.__setitem__("update_preview_overlay", calls["update_preview_overlay"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_sync_xml_to_editors",
+            lambda: calls.__setitem__("sync_xml_to_editors", calls["sync_xml_to_editors"] + 1),
+        )
+        monkeypatch.setattr(
+            window,
+            "_update_resource_usage_panel",
+            lambda: calls.__setitem__(
+                "update_resource_usage_panel",
+                calls["update_resource_usage_panel"] + 1,
+            ),
+        )
+        monkeypatch.setattr(
+            window,
+            "_trigger_compile",
+            lambda: calls.__setitem__("trigger_compile", calls["trigger_compile"] + 1),
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([widget], primary=widget, sync_tree=False, sync_preview=False)
+        for key in calls:
+            calls[key] = 0
+        window._on_drag_started()
+        widget.x = 20
+        widget.display_x = 20
+
+        window._on_widget_moved(widget, 20, 10)
+
+        assert calls == {
+            "property_panel_refresh_live_geometry": 1,
+            "update_preview_overlay": 0,
+            "sync_xml_to_editors": 0,
+            "update_resource_usage_panel": 0,
+            "trigger_compile": 1,
+        }
+
+        window._on_drag_finished()
+
+        assert calls == {
+            "property_panel_refresh_live_geometry": 1,
+            "update_preview_overlay": 1,
+            "sync_xml_to_editors": 1,
+            "update_resource_usage_panel": 1,
+            "trigger_compile": 1,
+        }
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_new_project_prefers_recovered_cached_sdk_for_defaults(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
