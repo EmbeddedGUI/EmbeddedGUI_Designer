@@ -771,7 +771,6 @@ class StatusCenterPanel(QWidget):
         self._set_hint(value_label, f"{label_text}: {summary_text}")
         self._set_accessible_name(value_label, f"{label_text} value: {summary_text}")
         self._set_hint(card, f"Open {label_text}. {summary_text}")
-        self._set_accessible_name(card, f"{label_text} metric: {summary_text}")
 
     def _metric_card_accessible_name(self, label, summary, hint):
         label_text = str(label or "").strip() or "Metric"
@@ -1308,30 +1307,36 @@ class StatusCenterPanel(QWidget):
             project_hint,
         )
         self._set_hint(self._structure_btn, structure_hint)
-        self._sdk_card.setAccessibleName(
+        self._set_accessible_name(
+            self._sdk_card,
             self._metric_card_accessible_name("SDK", self._sdk_value.text(), self._sdk_card.toolTip())
         )
-        self._compile_card.setAccessibleName(
+        self._set_accessible_name(
+            self._compile_card,
             self._metric_card_accessible_name("Compile", self._compile_value.text(), self._compile_card.toolTip())
         )
-        self._diag_card.setAccessibleName(
+        self._set_accessible_name(
+            self._diag_card,
             self._metric_card_accessible_name(
                 "Diagnostics",
                 self._diagnostic_metric_summary(error_count, warning_count, info_count),
                 self._diag_card.toolTip(),
             )
         )
-        self._preview_card.setAccessibleName(
+        self._set_accessible_name(
+            self._preview_card,
             self._metric_card_accessible_name("Preview", self._preview_value.text(), preview_hint)
         )
-        self._selection_card.setAccessibleName(
+        self._set_accessible_name(
+            self._selection_card,
             self._metric_card_accessible_name(
                 "Selection",
                 self._selection_metric_summary(selection_total),
                 self._selection_card.toolTip(),
             )
         )
-        self._dirty_card.setAccessibleName(
+        self._set_accessible_name(
+            self._dirty_card,
             self._metric_card_accessible_name(
                 "Dirty Pages",
                 self._dirty_metric_summary(dirty_count),
