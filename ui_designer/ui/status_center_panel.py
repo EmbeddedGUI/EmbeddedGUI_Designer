@@ -1386,6 +1386,7 @@ class StatusCenterPanel(QWidget):
             )
         )
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
+        self._workspace_chip.setVisible(workspace_chip_label != "Ready")
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
             can_compile,

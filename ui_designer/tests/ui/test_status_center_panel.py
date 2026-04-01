@@ -42,6 +42,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.isHidden() is False
         assert panel._health_chip.text() == "Critical (2)"
         assert panel._health_chip.property("chipTone") == "danger"
+        assert panel._workspace_chip.isHidden() is False
         assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._health_title.text() == "Diagnostic Mix (4 total)"
@@ -365,6 +366,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_summary_label.accessibleName() == (
             "Workspace summary: Workspace: SDK ready, compile ready, Preview Running, runtime issue detected, 2 dirty pages, 1 widget selected, 6 diagnostics. Next: Fix First Error (2)."
         )
+        assert panel._workspace_chip.isHidden() is False
         assert panel._workspace_chip.text() == "Action Needed (Diagnostics)"
         assert panel._workspace_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.property("iconKey") == "diagnostics"
@@ -732,6 +734,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Workspace looks ready. Open Diagnostics is available."
+        assert panel._workspace_chip.isHidden() is True
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Open Diagnostics"
         assert panel._debug_btn.text() == "Debug Output"

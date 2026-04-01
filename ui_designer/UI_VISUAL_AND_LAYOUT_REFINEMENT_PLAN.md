@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center now hides the workspace-status chip once the workspace reaches the fully ready state, keeping setup / diagnostics / in-progress states prominent while dropping the idle-ready badge.
   - `UX-005` updated: status center now hides the Diagnostic Mix chip while diagnostics are clear, relying on the section title and Diagnostics action until an actual error, warning, or info item needs attention.
   - `UX-005` updated: project workspace now hides the default list-view chip and only surfaces that header badge when thumbnails are active, cutting duplicate view chrome.
   - `UX-005` updated: project workspace now hides the page-count chip while no pages are available, trimming one more empty-state badge from the header rail.
