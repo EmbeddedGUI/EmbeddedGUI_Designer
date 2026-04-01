@@ -71,6 +71,7 @@ _WIDGET_ICON_KEYS = {
 }
 
 _MATERIAL_ICON_MAP = {
+    # Global/navigation
     "project": "folder",
     "structure": "account_tree",
     "widgets": "widgets",
@@ -81,11 +82,13 @@ _MATERIAL_ICON_MAP = {
     "diagnostics": "error",
     "history": "history",
     "debug": "bug_report",
+    # Toolbar/actions
     "save": "save",
     "compile": "play_arrow",
     "stop": "stop",
     "undo": "undo",
     "redo": "redo",
+    # Widget semantics
     "button": "smart_button",
     "layout": "dashboard",
     "input": "input",
@@ -107,10 +110,35 @@ _MATERIAL_ICON_MAP = {
     "table": "table_chart",
     "tag": "sell",
     "card": "cards",
+    # Extended aliases for upcoming UX rollouts
+    "resource": "inventory_2",
+    "resources": "inventory_2",
+    "preview": "preview",
+    "search": "search",
+    "filter": "filter_alt",
+    "favorite": "star",
+    "settings": "settings",
+    "help": "help",
+    "build": "construction",
+    "release": "deployed_code",
+    "folder_open": "folder_open",
+    "close": "close",
+    "add": "add",
+    "remove": "remove",
+    "edit": "edit",
+    "warning": "warning",
+    "success": "check_circle",
+    "info": "info",
 }
 
 _MATERIAL_FONT_FAMILY = "Material Symbols Outlined"
+_MATERIAL_FONT_FALLBACKS = (
+    "Material Symbols Outlined",
+    "Material Symbols Rounded",
+    "Material Symbols Sharp",
+)
 _MATERIAL_FONT_LOADED = False
+_MATERIAL_ACTIVE_FONT_FAMILY = _MATERIAL_FONT_FAMILY
 
 
 def _theme_mode() -> str:
@@ -146,13 +174,15 @@ def _palette_for_mode(mode: str) -> dict:
 
 
 def _ensure_material_font_loaded() -> bool:
-    global _MATERIAL_FONT_LOADED
+    global _MATERIAL_FONT_LOADED, _MATERIAL_ACTIVE_FONT_FAMILY
     if _MATERIAL_FONT_LOADED:
         return True
     families = set(QFontDatabase().families())
-    if _MATERIAL_FONT_FAMILY in families:
-        _MATERIAL_FONT_LOADED = True
-        return True
+    for family in _MATERIAL_FONT_FALLBACKS:
+        if family in families:
+            _MATERIAL_ACTIVE_FONT_FAMILY = family
+            _MATERIAL_FONT_LOADED = True
+            return True
     return False
 
 
@@ -179,8 +209,8 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
 
     glyph_name = _material_glyph_for_icon(icon_key)
     if glyph_name and _ensure_material_font_loaded():
-        font = QFont(_MATERIAL_FONT_FAMILY)
-        font.setPixelSize(max(12, size - 3))
+        font = QFont(_MATERIAL_ACTIVE_FONT_FAMILY)
+        font.setPixelSize(max(12, size - 2))
         font.setStyleStrategy(QFont.PreferAntialias)
         painter.setFont(font)
         painter.setPen(QPen(palette["ink"]))

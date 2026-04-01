@@ -49,8 +49,22 @@ _TOKENS = {
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
+        "fs_display": 20,
+        "fs_h1": 17,
+        "fs_h2": 15,
         "fs_panel_title": 13,
+        "fs_body": 13,
+        "fs_body_sm": 12,
         "fs_caption": 11,
+        "fs_micro": 10,
+        "fw_regular": 400,
+        "fw_medium": 500,
+        "fw_semibold": 600,
+        "fw_bold": 700,
+        "icon_xs": 14,
+        "icon_sm": 16,
+        "icon_md": 18,
+        "icon_lg": 20,
     },
     "light": {
         "bg": "#F5F5F7",
@@ -88,8 +102,22 @@ _TOKENS = {
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
+        "fs_display": 20,
+        "fs_h1": 17,
+        "fs_h2": 15,
         "fs_panel_title": 13,
+        "fs_body": 13,
+        "fs_body_sm": 12,
         "fs_caption": 11,
+        "fs_micro": 10,
+        "fw_regular": 400,
+        "fw_medium": 500,
+        "fw_semibold": 600,
+        "fw_bold": 700,
+        "icon_xs": 14,
+        "icon_sm": 16,
+        "icon_md": 18,
+        "icon_lg": 20,
     },
 }
 
@@ -120,10 +148,13 @@ QFrame, QScrollArea {{
 QLabel, QCheckBox, QRadioButton {{
     color: {t['text']};
     background: transparent;
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
 }}
 
 QLabel[hintTone="muted"] {{
     color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
 }}
 
 QLabel[hintTone="success"] {{
@@ -149,6 +180,8 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
     border-radius: {t['r_md']}px;
     padding: {t['pad_input_v']}px {t['pad_input_h']}px;
     selection-background-color: {t['selection']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
 }}
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
@@ -167,6 +200,8 @@ QPushButton, QToolButton {{
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     padding: {t['pad_btn_v']}px {t['pad_btn_h']}px;
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
 }}
 
 QPushButton:hover, QToolButton:hover {{
@@ -527,13 +562,14 @@ QToolButton#workspace_status_chip:focus {{
 
 #workspace_section_title {{
     color: {t['text']};
-    font-size: {t['fs_panel_title']}px;
-    font-weight: 600;
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #workspace_section_subtitle {{
     color: {t['text_muted']};
     font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_regular']};
 }}
 
 #workspace_empty_state {{
