@@ -421,6 +421,14 @@ class StatusCenterPanel(QWidget):
         widget.setEnabled(value)
         widget.setProperty("_status_center_enabled_snapshot", value)
 
+    def _set_widget_visible(self, widget, visible):
+        value = bool(visible)
+        current_value = widget.property("_status_center_visible_snapshot")
+        if current_value is not None and bool(current_value) == value:
+            return
+        widget.setVisible(value)
+        widget.setProperty("_status_center_visible_snapshot", value)
+
     def _set_widget_icon(self, widget, icon_key, size=16):
         key = str(icon_key or "history").strip() or "history"
         resolved_size = int(size or 16)
@@ -1136,10 +1144,10 @@ class StatusCenterPanel(QWidget):
         self._set_widget_text(self._recent_actions_label, self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._set_accessible_name(self._recent_actions_label, self._recent_actions_accessible_name())
-        self._recent_actions_label.setVisible(self._show_recent_actions_summary())
+        self._set_widget_visible(self._recent_actions_label, self._show_recent_actions_summary())
         has_action = bool(self._last_action)
-        self._last_action_label.setVisible(len(self._recent_actions) > 1)
-        self._last_action_host.setVisible(has_action)
+        self._set_widget_visible(self._last_action_label, len(self._recent_actions) > 1)
+        self._set_widget_visible(self._last_action_host, has_action)
         self._set_toolbutton_popup_mode(
             self._repeat_action_button,
             QToolButton.MenuButtonPopup if len(self._recent_actions) > 1 else QToolButton.DelayedPopup,

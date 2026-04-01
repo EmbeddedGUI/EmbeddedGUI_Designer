@@ -1123,6 +1123,34 @@ class TestStatusCenterPanel:
         assert panel._last_action_label.statusTip() == panel._last_action_label.toolTip()
         panel.deleteLater()
 
+    def test_recent_actions_visibility_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._recent_actions_label.setProperty("_status_center_visible_snapshot", None)
+
+        visible_calls = 0
+        original_set_visible = panel._recent_actions_label.setVisible
+
+        def counted_set_visible(value):
+            nonlocal visible_calls
+            visible_calls += 1
+            return original_set_visible(value)
+
+        monkeypatch.setattr(panel._recent_actions_label, "setVisible", counted_set_visible)
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert visible_calls == 1
+
+        visible_calls = 0
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert visible_calls == 0
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel"])
+        assert visible_calls == 1
+        assert panel._recent_actions_label.isHidden() is True
+        panel.deleteLater()
+
     def test_set_widget_icon_skips_no_op_icon_refreshes(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

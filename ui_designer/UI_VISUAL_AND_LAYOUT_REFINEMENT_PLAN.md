@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center quick-action visibility now caches the last visible flag, so repeated recent-action syncs skip no-op `setVisible` rewrites for the last-action host/label and recent-actions summary when visibility state is unchanged.
   - `PERF-002` updated: project workspace metadata helpers now cache their last tooltip/accessibility text, skipping no-op rewrites while the current view and workspace summary remain unchanged.
   - `UX-006` updated: resource-usage navigation、资源拖放绑定、以及画布拖放插入 widget 后会自动切回 Properties inspector，进一步缩短“选中 -> 编辑属性”路径。
   - `PERF-002` updated: status center quick-action metadata now reuses cached accessible-name snapshots, skipping no-op setAccessibleName rewrites for last-action, actions-title, recent-actions, and repeat-action controls when labels remain unchanged.
