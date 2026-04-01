@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: the Recent Projects submenu now skips no-op menu rebuilds when the recent-entry list, recovered SDK roots, and missing-project state have not changed, while still refreshing outer File-menu metadata.
   - `PERF-002` updated: the SDK binding label now caches its text and metadata summary, skipping no-op rewrites while the resolved SDK root and binding label remain unchanged.
   - `PERF-002` updated: the insert-widget launcher and bottom-tools toggle now reuse cached tooltip/accessibility metadata, skipping no-op rewrites while their target summary or visible/hidden state remains unchanged.
   - `PERF-002` updated: the main view stack summary now reuses cached metadata, skipping no-op tooltip/accessibility rewrites while the app stays on the same welcome or editor view.

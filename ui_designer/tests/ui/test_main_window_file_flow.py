@@ -2863,6 +2863,48 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    def test_recent_menu_skips_no_op_rebuilds(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir(parents=True)
+        project_path.write_text("<egui />\n", encoding="utf-8")
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": "",
+                "display_name": "DemoApp",
+            }
+        ]
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_resolve_ui_sdk_root", lambda *args: "")
+        if hasattr(window._recent_menu, "_recent_menu_snapshot"):
+            delattr(window._recent_menu, "_recent_menu_snapshot")
+
+        clear_calls = 0
+        original_clear = window._recent_menu.clear
+
+        def counted_clear():
+            nonlocal clear_calls
+            clear_calls += 1
+            return original_clear()
+
+        monkeypatch.setattr(window._recent_menu, "clear", counted_clear)
+
+        window._update_recent_menu()
+        assert clear_calls == 1
+
+        clear_calls = 0
+        window._update_recent_menu()
+        assert clear_calls == 0
+
+        isolated_config.recent_projects = []
+        window._update_recent_menu()
+        assert clear_calls == 1
+        assert window._recent_menu.actions()[0].text() == "(No recent projects)"
+        _close_window(window)
+
     def test_recent_and_view_submenu_categories_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from PyQt5.QtGui import QPixmap
         from ui_designer.ui import main_window as main_window_module

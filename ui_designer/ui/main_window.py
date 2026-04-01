@@ -4005,36 +4005,14 @@ class MainWindow(QMainWindow):
 
     def _update_recent_menu(self):
         """Update the Recent Projects submenu."""
-        self._recent_menu.clear()
         recent = self._config.recent_projects
-        if not recent:
-            hint = "Open a recently used project. No recent projects are available."
-            self._recent_menu.menuAction().setToolTip(hint)
-            self._recent_menu.menuAction().setStatusTip(hint)
-            action = QAction("(No recent projects)", self)
-            action.setEnabled(False)
-            action.setToolTip("No recent projects are available.")
-            action.setStatusTip(action.toolTip())
-            self._recent_menu.addAction(action)
-            self._update_file_open_action_metadata()
-            self._update_file_menu_metadata()
-            return
-
-        recent_count = min(len(recent), 10)
-        noun = "project" if recent_count == 1 else "projects"
-        hint = f"Open a recently used project. {recent_count} recent {noun} available."
-        self._recent_menu.menuAction().setToolTip(hint)
-        self._recent_menu.menuAction().setStatusTip(hint)
-
+        snapshot = []
         for item in recent[:10]:
             project_path = item.get("project_path", "")
-            sdk_root = self._resolve_ui_sdk_root(
-                item.get("sdk_root", ""),
-            )
+            sdk_root = self._resolve_ui_sdk_root(item.get("sdk_root", ""))
             display_name = item.get("display_name") or os.path.splitext(os.path.basename(project_path))[0]
             project_exists = bool(project_path) and os.path.exists(project_path)
             action_label = display_name if project_exists else f"[Missing] {display_name}"
-            action = QAction(action_label, self)
             sdk_label = sdk_root or "not recorded"
             tooltip = f"Project: {project_path}\nSDK root: {sdk_label}."
             if not project_exists:
@@ -4043,8 +4021,33 @@ class MainWindow(QMainWindow):
                     f"SDK root: {sdk_label}.\n"
                     "Project path is missing. Selecting it will offer to remove the stale entry."
                 )
-            action.setToolTip(tooltip)
-            action.setStatusTip(tooltip)
+            snapshot.append((action_label, tooltip, project_path, sdk_root, bool(project_exists)))
+        snapshot = tuple(snapshot)
+        if getattr(self._recent_menu, "_recent_menu_snapshot", None) == snapshot:
+            self._update_file_open_action_metadata()
+            self._update_file_menu_metadata()
+            return
+        self._recent_menu.clear()
+        self._recent_menu._recent_menu_snapshot = snapshot
+        if not recent:
+            hint = "Open a recently used project. No recent projects are available."
+            self._apply_action_hint(self._recent_menu.menuAction(), hint)
+            action = QAction("(No recent projects)", self)
+            action.setEnabled(False)
+            self._apply_action_hint(action, "No recent projects are available.")
+            self._recent_menu.addAction(action)
+            self._update_file_open_action_metadata()
+            self._update_file_menu_metadata()
+            return
+
+        recent_count = min(len(recent), 10)
+        noun = "project" if recent_count == 1 else "projects"
+        hint = f"Open a recently used project. {recent_count} recent {noun} available."
+        self._apply_action_hint(self._recent_menu.menuAction(), hint)
+
+        for action_label, tooltip, project_path, sdk_root, _project_exists in snapshot:
+            action = QAction(action_label, self)
+            self._apply_action_hint(action, tooltip)
             action.triggered.connect(
                 lambda checked, p=project_path, r=sdk_root: self._open_recent_project(p, r)
             )
