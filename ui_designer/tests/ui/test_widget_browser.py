@@ -482,6 +482,9 @@ class TestWidgetBrowserPanel:
         assert first_category.toolTip() == "Show All Widgets in the widget browser."
         assert first_category.statusTip() == first_category.toolTip()
         assert first_category.data(Qt.AccessibleTextRole) == first_category.toolTip()
+        assert panel._stats_summary_label.text().startswith("Visible ")
+        assert "Favorites 0" not in panel._stats_summary_label.text()
+        assert "Recent 0" not in panel._stats_summary_label.text()
         assert panel._stats_summary_label.accessibleName() == (
             f"Widget browser stats: {panel._stats_summary_label.text()}."
         )
@@ -512,6 +515,7 @@ class TestWidgetBrowserPanel:
 
         assert "Favorites 2" in panel._stats_summary_label.text()
         assert "Recent 1" in panel._stats_summary_label.text()
+        assert panel._stats_summary_label.text().startswith("Visible ")
         assert panel._stats_summary_label.accessibleName() == (
             f"Widget browser stats: {panel._stats_summary_label.text()}."
         )

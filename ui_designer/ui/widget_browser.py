@@ -302,7 +302,7 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target.setWordWrap(True)
         header_layout.addWidget(self._insert_target)
 
-        self._stats_summary_label = QLabel("Visible 0/0 | Favorites 0 | Recent 0")
+        self._stats_summary_label = QLabel("Visible 0/0")
         self._stats_summary_label.setObjectName("widget_browser_stats")
         self._stats_summary_label.setWordWrap(True)
         header_layout.addWidget(self._stats_summary_label)
@@ -726,7 +726,12 @@ class WidgetBrowserPanel(QWidget):
             or self._selected_category() != "all"
             or self._complexity_filter != "all"
         )
-        summary = f"Visible {visible_count}/{total} | Favorites {favorites} | Recent {recent}"
+        summary_parts = [f"Visible {visible_count}/{total}"]
+        if favorites:
+            summary_parts.append(f"Favorites {favorites}")
+        if recent:
+            summary_parts.append(f"Recent {recent}")
+        summary = " | ".join(summary_parts)
         tooltip = (
             f"Widget browser stats. Visible widgets: {visible_count} of {total}. "
             f"Favorite widget types: {favorites}. Recently inserted widget types: {recent}."
