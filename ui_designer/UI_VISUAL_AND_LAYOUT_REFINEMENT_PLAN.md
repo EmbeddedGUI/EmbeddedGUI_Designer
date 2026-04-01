@@ -258,6 +258,7 @@ next_recommended:
   - UX-005
   - PERF-002
 notes:
+  - `UX-005` updated: widget browser header stats were collapsed from three separate count labels into one compact summary line to cut top-of-panel noise.
   - `UX-006` expanded: widget browser insert/reveal and diagnostics target navigation also auto-focus the Properties inspector after selecting a widget.
   - `UX-006` started: tree/preview selection entry points now auto-focus the Properties inspector to shorten the select -> edit loop, with targeted MainWindow file-flow coverage.
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。

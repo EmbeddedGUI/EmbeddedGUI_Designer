@@ -343,7 +343,9 @@ class TestWidgetBrowserPanel:
         assert first_category.toolTip() == "Show All Widgets in the widget browser."
         assert first_category.statusTip() == first_category.toolTip()
         assert first_category.data(Qt.AccessibleTextRole) == first_category.toolTip()
-        assert panel._visible_count_chip.accessibleName() == f"Visible widgets: {panel._visible_count_chip.text()}"
+        assert panel._stats_summary_label.accessibleName() == (
+            f"Widget browser stats: {panel._stats_summary_label.text()}."
+        )
         assert panel._clear_tags_btn.toolTip() == "No active widget tags to clear."
         assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
         assert panel._sort_buttons["relevance"].accessibleName() == "Sort mode: Recommended. Current."
@@ -359,6 +361,28 @@ class TestWidgetBrowserPanel:
         )
         assert scenario_item.statusTip() == scenario_item.toolTip()
         assert scenario_item.data(Qt.AccessibleTextRole) == scenario_item.toolTip()
+        panel.deleteLater()
+
+    def test_browser_stats_summary_compacts_counts_and_marks_active_filters(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        isolated_config.widget_browser_favorites = ["button", "slider"]
+        isolated_config.widget_browser_recent = ["label"]
+        panel = WidgetBrowserPanel()
+
+        assert "Favorites 2" in panel._stats_summary_label.text()
+        assert "Recent 1" in panel._stats_summary_label.text()
+        assert panel._stats_summary_label.accessibleName() == (
+            f"Widget browser stats: {panel._stats_summary_label.text()}."
+        )
+        initial_summary = panel._stats_summary_label.text()
+
+        panel._search.setText("slider")
+        panel.refresh()
+
+        assert panel._stats_summary_label.text() != initial_summary
+        assert panel._stats_summary_label.toolTip().endswith("Filters active.")
+        assert panel._stats_summary_label.accessibleName().endswith("Filters active.")
         panel.deleteLater()
 
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):

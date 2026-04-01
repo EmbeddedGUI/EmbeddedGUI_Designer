@@ -298,19 +298,10 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target.setWordWrap(True)
         header_layout.addWidget(self._insert_target)
 
-        stats_row = QHBoxLayout()
-        stats_row.setContentsMargins(0, 0, 0, 0)
-        stats_row.setSpacing(8)
-        self._visible_count_chip = QLabel("Visible 0")
-        self._visible_count_chip.setObjectName("widget_browser_stat_text")
-        self._favorites_count_chip = QLabel("Favorites 0")
-        self._favorites_count_chip.setObjectName("widget_browser_stat_text")
-        self._recent_count_chip = QLabel("Recent 0")
-        self._recent_count_chip.setObjectName("widget_browser_stat_text")
-        for chip in (self._visible_count_chip, self._favorites_count_chip, self._recent_count_chip):
-            stats_row.addWidget(chip)
-        stats_row.addStretch()
-        header_layout.addLayout(stats_row)
+        self._stats_summary_label = QLabel("Visible 0/0 | Favorites 0 | Recent 0")
+        self._stats_summary_label.setObjectName("widget_browser_stats")
+        self._stats_summary_label.setWordWrap(True)
+        header_layout.addWidget(self._stats_summary_label)
         layout.addWidget(header)
 
         search_row = QHBoxLayout()
@@ -709,14 +700,6 @@ class WidgetBrowserPanel(QWidget):
     def _update_insert_target(self):
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
 
-    def _set_chip_text(self, chip, text, tone=None):
-        chip.setText(text)
-        if tone is not None:
-            chip.setProperty("chipTone", tone)
-        chip.style().unpolish(chip)
-        chip.style().polish(chip)
-        chip.update()
-
     def _update_browser_stats(self, visible_count):
         total = len(self._registry.browser_items(addable_only=True))
         favorites = len(self._config.widget_browser_favorites)
@@ -727,24 +710,20 @@ class WidgetBrowserPanel(QWidget):
             or self._selected_category() != "all"
             or self._complexity_filter != "all"
         )
-        tone = "accent" if active_filters else "success"
-        self._set_chip_text(self._visible_count_chip, f"Visible {visible_count}/{total}", tone)
-        self._set_chip_text(self._favorites_count_chip, f"Favorites {favorites}", "success" if favorites else "accent")
-        self._set_chip_text(self._recent_count_chip, f"Recent {recent}", "warning" if recent else "accent")
-        _set_widget_metadata(
-            self._visible_count_chip,
-            tooltip=f"Visible widgets: {visible_count} of {total}.",
-            accessible_name=f"Visible widgets: {self._visible_count_chip.text()}",
+        summary = f"Visible {visible_count}/{total} | Favorites {favorites} | Recent {recent}"
+        tooltip = (
+            f"Widget browser stats. Visible widgets: {visible_count} of {total}. "
+            f"Favorite widget types: {favorites}. Recently inserted widget types: {recent}."
         )
+        accessible_name = f"Widget browser stats: {summary}."
+        if active_filters:
+            tooltip += " Filters active."
+            accessible_name += " Filters active."
+        self._stats_summary_label.setText(summary)
         _set_widget_metadata(
-            self._favorites_count_chip,
-            tooltip=f"Favorite widget types: {favorites}.",
-            accessible_name=f"Favorite widgets: {self._favorites_count_chip.text()}",
-        )
-        _set_widget_metadata(
-            self._recent_count_chip,
-            tooltip=f"Recently inserted widget types: {recent}.",
-            accessible_name=f"Recent widgets: {self._recent_count_chip.text()}",
+            self._stats_summary_label,
+            tooltip=tooltip,
+            accessible_name=accessible_name,
         )
 
     def _lane_counts(self):
