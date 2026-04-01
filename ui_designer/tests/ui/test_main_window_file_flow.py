@@ -5992,12 +5992,16 @@ class TestMainWindowFileFlow:
 
         assert window._current_page.name == "main_page"
 
+        window._show_inspector_tab("animations")
+        assert window._inspector_tabs.currentIndex() == 1
+
         window.res_panel._select_resource_item("image", "star.png")
         window.res_panel._on_usage_item_activated(window.res_panel._usage_table.item(0, 0))
 
         assert window._current_page.name == "detail_page"
         assert window._selection_state.primary is hero
         assert window._selection_state.widgets == [hero]
+        assert window._inspector_tabs.currentIndex() == 0
         assert window.statusBar().currentMessage() == "Focused resource usage: detail_page/hero."
         window._undo_manager.mark_all_saved()
         _close_window(window)

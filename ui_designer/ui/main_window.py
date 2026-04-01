@@ -5482,6 +5482,7 @@ class MainWindow(QMainWindow):
         target_widget = self._find_widget_in_page(target_page, widget_name)
         if target_widget is not None:
             self._set_selection([target_widget], primary=target_widget, sync_tree=True, sync_preview=True)
+            self._focus_properties_for_selection()
             self.statusBar().showMessage(f"Focused resource usage: {page_name}/{widget_name}.", 4000)
 
     def _rewrite_resource_references(self, res_type, old_name, new_name):
@@ -5525,6 +5526,7 @@ class MainWindow(QMainWindow):
     def _on_resource_dropped(self, widget, res_type, filename):
         """Resource was dropped onto a widget in the preview overlay."""
         self._set_selection([widget], primary=widget, sync_tree=True, sync_preview=False)
+        self._focus_properties_for_selection()
         if not assign_resource_to_widget(widget, res_type, filename):
             return
         self.property_panel.set_selection(self._selection_state.widgets, self._selection_state.primary)
@@ -5553,6 +5555,7 @@ class MainWindow(QMainWindow):
 
         self.widget_tree.rebuild_tree()
         self._set_selection([inserted], primary=inserted, sync_tree=True, sync_preview=True)
+        self._focus_properties_for_selection()
         self._record_page_state_change(source=f"widget drag insert: {widget_type}")
 
         if hasattr(self, "widget_browser"):
