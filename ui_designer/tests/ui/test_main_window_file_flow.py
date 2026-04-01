@@ -7870,6 +7870,7 @@ class TestMainWindowFileFlow:
         )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
+        assert window._selection_chip.isHidden() is True
         assert window._selection_chip.text() == "No selection"
         assert window._selection_chip.accessibleName() == "Workspace status: no selection."
         assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
@@ -7887,6 +7888,7 @@ class TestMainWindowFileFlow:
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
+        assert window._dirty_chip.isHidden() is True
         assert window._workspace_nav_buttons["structure"].toolTip() == (
             "Open Structure panel. Current page: main_page. Selection: none."
         )
@@ -7905,6 +7907,7 @@ class TestMainWindowFileFlow:
         )
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
+        assert window._selection_chip.isHidden() is False
         assert window._selection_chip.text() == "1 selected"
         assert window._selection_chip.accessibleName() == "Workspace status: 1 selected."
         assert window._workspace_nav_buttons["structure"].toolTip() == (
@@ -7921,6 +7924,7 @@ class TestMainWindowFileFlow:
         window._update_window_title()
 
         assert window._dirty_chip.text() == "Dirty 1"
+        assert window._dirty_chip.isHidden() is False
         assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
         assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
         assert window._dirty_chip.statusTip() == window._dirty_chip.toolTip()

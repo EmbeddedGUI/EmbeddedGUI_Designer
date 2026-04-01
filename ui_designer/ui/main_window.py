@@ -2022,6 +2022,7 @@ class MainWindow(QMainWindow):
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         if hasattr(self, "_dirty_chip"):
             dirty_count = len(dirty_pages)
+            self._dirty_chip.setVisible(bool(dirty_pages))
             dirty_text = f"Dirty {dirty_count}" if dirty_pages else "Clean"
             dirty_summary = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
             if not dirty_pages:
@@ -2049,6 +2050,7 @@ class MainWindow(QMainWindow):
             )
         if hasattr(self, "_selection_chip"):
             count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
+            self._selection_chip.setVisible(count > 0)
             selection_text = f"{count} selected" if count else "No selection"
             selection_summary = f"{count} selected" if count else "no selection"
             self._set_chip(
@@ -7872,6 +7874,5 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
 
 
