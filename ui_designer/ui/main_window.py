@@ -3461,10 +3461,8 @@ class MainWindow(QMainWindow):
             self._move_bottom_action: ("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)", "move_bottom_reason"),
         }
         for action, (hint, _reason_attr) in self._structure_action_hints.items():
-            action.setToolTip(hint)
-            action.setStatusTip(hint)
-        self._quick_move_into_menu.menuAction().setToolTip(self._quick_move_into_menu_hint())
-        self._quick_move_into_menu.menuAction().setStatusTip(self._quick_move_into_menu_hint())
+            self._apply_action_hint(action, hint)
+        self._apply_action_hint(self._quick_move_into_menu.menuAction(), self._quick_move_into_menu_hint())
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
@@ -7329,22 +7327,19 @@ class MainWindow(QMainWindow):
         self._move_bottom_action.setEnabled(structure_state.can_move_bottom)
         for action, (base_text, reason_attr) in self._structure_action_hints.items():
             hint = self._structure_action_hint(base_text, action.isEnabled(), self._structure_action_reason(structure_state, reason_attr))
-            action.setToolTip(hint)
-            action.setStatusTip(hint)
+            self._apply_action_hint(action, hint)
         repeat_hint = self._structure_action_hint(
             self._move_into_last_target_hint(selected_widgets),
             repeat_move_target_choice is not None,
             self._move_into_last_target_reason(selected_widgets),
         )
-        self._move_into_last_target_action.setToolTip(repeat_hint)
-        self._move_into_last_target_action.setStatusTip(repeat_hint)
+        self._apply_action_hint(self._move_into_last_target_action, repeat_hint)
         clear_history_hint = self._structure_action_hint(
             self._clear_move_target_history_hint(),
             has_recent_move_targets,
             "no recent move targets are saved.",
         )
-        self._clear_move_target_history_action.setToolTip(clear_history_hint)
-        self._clear_move_target_history_action.setStatusTip(clear_history_hint)
+        self._apply_action_hint(self._clear_move_target_history_action, clear_history_hint)
         has_quick_move_history = repeat_move_target_choice is not None or has_recent_move_targets
         quick_menu_enabled = structure_state.can_move_into or has_quick_move_history
         quick_hint = self._structure_action_hint(
@@ -7353,8 +7348,7 @@ class MainWindow(QMainWindow):
             self._structure_action_reason(structure_state, "move_into_reason"),
         )
         self._quick_move_into_menu.menuAction().setEnabled(quick_menu_enabled)
-        self._quick_move_into_menu.menuAction().setToolTip(quick_hint)
-        self._quick_move_into_menu.menuAction().setStatusTip(quick_hint)
+        self._apply_action_hint(self._quick_move_into_menu.menuAction(), quick_hint)
         self._refresh_quick_move_into_menu()
         self._update_toolbar_action_metadata()
         self._update_arrange_menu_metadata()

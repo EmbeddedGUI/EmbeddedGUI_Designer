@@ -3642,6 +3642,53 @@ class TestMainWindowFileFlow:
         assert window._open_last_release_dir_action.statusTip() == window._open_last_release_dir_action.toolTip()
         _close_window(window)
 
+    def test_structure_action_hints_skip_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "StructureHintDemo"
+        project = _create_project(project_dir, "StructureHintDemo", sdk_root)
+        root = project.get_startup_page().root_widget
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        root.add_child(first)
+        root.add_child(second)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        window._group_selection_action.setProperty("_action_hint_snapshot", None)
+
+        tooltip_calls = 0
+        original_set_tooltip = window._group_selection_action.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._group_selection_action, "setToolTip", counted_set_tooltip)
+
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._set_selection([first], primary=first, sync_tree=True, sync_preview=True)
+        assert tooltip_calls == 0
+
+        window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=True)
+        assert tooltip_calls == 1
+        assert window._group_selection_action.toolTip() == "Group the current selection (Ctrl+G)"
+        assert window._group_selection_action.statusTip() == window._group_selection_action.toolTip()
+        _close_window(window)
+
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
