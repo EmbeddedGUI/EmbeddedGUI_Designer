@@ -638,6 +638,7 @@ class WidgetBrowserPanel(QWidget):
                 accessible_name=accessible_name,
             )
         self._clear_tags_btn.setEnabled(bool(active))
+        self._clear_tags_btn.setVisible(bool(active))
         clear_hint = "Clear active widget tags." if active else "No active widget tags to clear."
         _set_widget_metadata(
             self._clear_tags_btn,

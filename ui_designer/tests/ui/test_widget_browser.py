@@ -182,6 +182,7 @@ class TestWidgetBrowserPanel:
 
         panel = WidgetBrowserPanel()
         assert panel._tag_buttons
+        assert panel._clear_tags_btn.isHidden() is True
         first_tag = sorted(panel._tag_buttons.keys())[0]
         first_tag_button = panel._tag_buttons[first_tag]
         first_tag_button.setChecked(True)
@@ -190,6 +191,7 @@ class TestWidgetBrowserPanel:
         assert first_tag_button.accessibleName() == f"Widget tag: {first_tag_button.text()}. Active."
         assert panel._clear_tags_btn.toolTip() == "Clear active widget tags."
         assert panel._clear_tags_btn.accessibleName() == "Clear widget tags"
+        assert panel._clear_tags_btn.isHidden() is False
         for item in panel._filtered_items():
             item_tags = {str(tag).lower() for tag in item.get("tags", [])}
             assert first_tag in item_tags
@@ -198,6 +200,7 @@ class TestWidgetBrowserPanel:
         assert isolated_config.widget_browser_active_tags == []
         assert first_tag_button.accessibleName() == f"Widget tag: {first_tag_button.text()}. Inactive."
         assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
+        assert panel._clear_tags_btn.isHidden() is True
         panel.deleteLater()
 
     def test_quick_lane_click_updates_active_category_and_results(self, qapp, isolated_config):
@@ -348,6 +351,7 @@ class TestWidgetBrowserPanel:
         )
         assert panel._clear_tags_btn.toolTip() == "No active widget tags to clear."
         assert panel._clear_tags_btn.accessibleName() == "Clear widget tags unavailable"
+        assert panel._clear_tags_btn.isHidden() is True
         assert panel._sort_buttons["relevance"].accessibleName() == "Sort mode: Recommended. Current."
         assert panel._sort_buttons["name"].accessibleName() == "Sort mode: A-Z. Available."
         assert panel._complexity_buttons["all"].accessibleName() == "Complexity filter: All. Current."
