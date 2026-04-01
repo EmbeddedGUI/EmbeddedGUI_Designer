@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
         bottom_shell.setObjectName("workspace_bottom_shell")
         bottom_layout = QVBoxLayout(bottom_shell)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(8)
+        bottom_layout.setSpacing(_SPACE_SM)
         bottom_layout.addWidget(self._bottom_header)
         bottom_layout.addWidget(self._bottom_tabs, 1)
 
