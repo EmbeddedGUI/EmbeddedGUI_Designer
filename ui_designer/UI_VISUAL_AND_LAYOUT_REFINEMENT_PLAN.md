@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: widget browser list-item metadata now caches the last hint string, skipping no-op tooltip/status/accessibility rewrites while category and scenario entries retain the same browser guidance.
   - `PERF-002` updated: status center runtime visibility now reuses cached visible-state updates, skipping no-op `setVisible` rewrites while runtime error text changes but the runtime section stays shown or hidden.
   - `PERF-002` updated: status center diagnostics/workspace visibility now reuses cached visible-state updates, skipping no-op `setVisible` rewrites while section visibility stays unchanged across different non-idle status snapshots.
   - `PERF-002` updated: property panel metadata helpers now cache their last tooltip/accessibility text, skipping no-op rewrites while the current selection summary and editor guidance remain unchanged.

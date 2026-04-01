@@ -30,6 +30,8 @@ from ..services.recent_service import RecentService
 from ..services.favorite_service import FavoriteService
 from .iconography import make_icon, widget_icon_key
 
+_ITEM_METADATA_SNAPSHOT_ROLE = Qt.UserRole + 1024
+
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
@@ -49,9 +51,13 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
 
 def _set_item_metadata(item, tooltip):
     hint = str(tooltip or "").strip()
+    current_hint = item.data(_ITEM_METADATA_SNAPSHOT_ROLE)
+    if current_hint is not None and str(current_hint) == hint:
+        return
     item.setToolTip(hint)
     item.setStatusTip(hint)
     item.setData(Qt.AccessibleTextRole, hint)
+    item.setData(_ITEM_METADATA_SNAPSHOT_ROLE, hint)
 
 
 def _count_label(count, singular, plural=None):

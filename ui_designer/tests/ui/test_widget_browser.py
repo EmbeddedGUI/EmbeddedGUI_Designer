@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PyQt5.QtCore import Qt
     from PyQt5.QtTest import QTest
-    from PyQt5.QtWidgets import QApplication, QLabel, QPushButton
+    from PyQt5.QtWidgets import QApplication, QLabel, QListWidgetItem, QPushButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -559,6 +559,34 @@ class TestWidgetBrowserPanel:
         assert tooltip_calls == 1
         assert panel._stats_summary_label.statusTip() == panel._stats_summary_label.toolTip()
         panel.deleteLater()
+
+    def test_item_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widget_browser import _ITEM_METADATA_SNAPSHOT_ROLE, _set_item_metadata
+
+        item = QListWidgetItem("All Widgets")
+        item.setData(_ITEM_METADATA_SNAPSHOT_ROLE, None)
+
+        tooltip_calls = 0
+        original_set_tooltip = item.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(item, "setToolTip", counted_set_tooltip)
+
+        _set_item_metadata(item, "Show All Widgets in the widget browser.")
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        _set_item_metadata(item, "Show All Widgets in the widget browser.")
+        assert tooltip_calls == 0
+
+        _set_item_metadata(item, "Show widgets for the Forms scenario.")
+        assert tooltip_calls == 1
+        assert item.statusTip() == item.toolTip()
+        assert item.data(Qt.AccessibleTextRole) == item.toolTip()
 
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
