@@ -1452,6 +1452,7 @@ class PropertyPanel(QWidget):
         self._update_callback_editor_metadata(editor, event_name, tooltip)
         button = self._callback_open_buttons.get(f"callback_{event_name}")
         if button is not None:
+            button.setVisible(not is_mixed)
             button.setEnabled(not is_mixed)
             if is_mixed:
                 button_tooltip = "Normalize this callback first to open a single user function."
@@ -1531,6 +1532,7 @@ class PropertyPanel(QWidget):
 
         button = ToolButton()
         button.setText("Code")
+        button.setVisible(enabled)
         button.setEnabled(enabled)
         self._update_callback_button_metadata(button, event_name, enabled, tooltip)
         button.clicked.connect(open_handler)

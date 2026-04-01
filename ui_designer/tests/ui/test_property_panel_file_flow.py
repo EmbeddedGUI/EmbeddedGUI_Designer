@@ -867,6 +867,7 @@ class TestPropertyPanelFileFlow:
         button = panel._callback_open_buttons["callback_onClick"]
 
         assert editor.accessibleName() == "Click callback: mixed values"
+        assert button.isHidden() is True
         assert button.isEnabled() is False
         assert button.accessibleName() == "Open Click callback code unavailable"
         panel.deleteLater()
@@ -886,12 +887,15 @@ class TestPropertyPanelFileFlow:
         panel.set_selection([first, second], primary=second)
 
         editor = panel._editors["callback_onValueChanged"]
+        button = panel._callback_open_buttons["callback_onValueChanged"]
         editor.setText("handle volume changed")
         editor.editingFinished.emit()
 
         assert first.events["onValueChanged"] == "handle_volume_changed"
         assert second.events["onValueChanged"] == "handle_volume_changed"
         assert editor.text() == "handle_volume_changed"
+        assert button.isHidden() is False
+        assert button.isEnabled() is True
         assert property_events == ["changed"]
         assert messages[-1] == "Callback name normalized to 'handle_volume_changed'."
         panel.deleteLater()
