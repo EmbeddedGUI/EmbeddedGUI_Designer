@@ -1016,38 +1016,47 @@ class WidgetBrowserPanel(QWidget):
             action_row = QHBoxLayout()
             action_row.setContentsMargins(0, 0, 0, 0)
             action_row.setSpacing(8)
-            reset_search_btn = QPushButton("Reset Search")
-            reset_search_btn.clicked.connect(self._reset_search_only)
-            _set_widget_metadata(
-                reset_search_btn,
-                tooltip="Clear the current widget browser search text.",
-                accessible_name="Reset widget browser search",
-            )
-            action_row.addWidget(reset_search_btn)
-            clear_tags_btn = QPushButton("Clear Tags")
-            clear_tags_btn.clicked.connect(self._clear_active_tags)
-            _set_widget_metadata(
-                clear_tags_btn,
-                tooltip="Clear active widget browser tags.",
-                accessible_name="Clear widget browser tags",
-            )
-            action_row.addWidget(clear_tags_btn)
-            reset_organize_btn = QPushButton("Reset Organize")
-            reset_organize_btn.clicked.connect(self._reset_organizers)
-            _set_widget_metadata(
-                reset_organize_btn,
-                tooltip="Reset sort mode and complexity filters.",
-                accessible_name="Reset widget browser organize filters",
-            )
-            action_row.addWidget(reset_organize_btn)
-            show_all_btn = QPushButton("Show All Widgets")
-            show_all_btn.clicked.connect(self._reset_all_filters)
-            _set_widget_metadata(
-                show_all_btn,
-                tooltip="Reset every widget browser filter and show all widgets.",
-                accessible_name="Show all widgets",
-            )
-            action_row.addWidget(show_all_btn)
+            if bool((self._search.text() or "").strip()):
+                reset_search_btn = QPushButton("Reset Search")
+                reset_search_btn.clicked.connect(self._reset_search_only)
+                _set_widget_metadata(
+                    reset_search_btn,
+                    tooltip="Clear the current widget browser search text.",
+                    accessible_name="Reset widget browser search",
+                )
+                action_row.addWidget(reset_search_btn)
+            if bool(self._active_tag_values()):
+                clear_tags_btn = QPushButton("Clear Tags")
+                clear_tags_btn.clicked.connect(self._clear_active_tags)
+                _set_widget_metadata(
+                    clear_tags_btn,
+                    tooltip="Clear active widget browser tags.",
+                    accessible_name="Clear widget browser tags",
+                )
+                action_row.addWidget(clear_tags_btn)
+            if self._sort_mode != "relevance" or self._complexity_filter != "all":
+                reset_organize_btn = QPushButton("Reset Organize")
+                reset_organize_btn.clicked.connect(self._reset_organizers)
+                _set_widget_metadata(
+                    reset_organize_btn,
+                    tooltip="Reset sort mode and complexity filters.",
+                    accessible_name="Reset widget browser organize filters",
+                )
+                action_row.addWidget(reset_organize_btn)
+            if (
+                str(self._selected_category() or "all").strip().lower() != "all"
+                or bool(self._active_tag_values())
+                or self._sort_mode != "relevance"
+                or self._complexity_filter != "all"
+            ):
+                show_all_btn = QPushButton("Show All Widgets")
+                show_all_btn.clicked.connect(self._reset_all_filters)
+                _set_widget_metadata(
+                    show_all_btn,
+                    tooltip="Reset every widget browser filter and show all widgets.",
+                    accessible_name="Show all widgets",
+                )
+                action_row.addWidget(show_all_btn)
             empty_layout.addLayout(action_row)
             _set_widget_metadata(
                 empty,

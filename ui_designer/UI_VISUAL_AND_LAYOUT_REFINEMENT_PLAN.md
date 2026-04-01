@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: widget browser empty-state actions are now contextual, showing only the reset controls relevant to the active filters instead of a fixed full button row.
   - `PERF-002` updated: widget browser explicit reset actions now bypass the search debounce and collapse multi-control resets into a single immediate refresh.
   - `PERF-002` updated: clearing widget browser tags now relies on the normal refresh path, avoiding a second immediate metadata sync on the same click.
   - `PERF-002` started: widget browser search input now uses a short debounce before rebuilding results, while explicit refresh paths still apply immediately.

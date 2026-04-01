@@ -509,7 +509,28 @@ class TestWidgetBrowserPanel:
         assert empty_state.accessibleName() == "No widgets match the current filters."
         assert panel._search.toolTip() == "Widget browser search. Current text: __no_widget_matches__."
         assert panel._search.accessibleName() == "Widget browser search: __no_widget_matches__."
+        assert sorted(buttons) == ["Reset Search"]
         assert buttons["Reset Search"].toolTip() == "Clear the current widget browser search text."
+        panel.deleteLater()
+
+    def test_empty_state_shows_all_widgets_action_for_non_default_category(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        _select_category(panel, "favorites")
+        panel.refresh()
+
+        empty_state = next(
+            widget
+            for widget in (
+                panel._cards_layout.itemAt(index).widget()
+                for index in range(panel._cards_layout.count())
+            )
+            if widget is not None and widget.objectName() == "widget_browser_empty_state"
+        )
+        buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
+
+        assert sorted(buttons) == ["Show All Widgets"]
         assert buttons["Show All Widgets"].toolTip() == "Reset every widget browser filter and show all widgets."
         panel.deleteLater()
 
