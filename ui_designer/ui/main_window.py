@@ -1607,14 +1607,10 @@ class MainWindow(QMainWindow):
     def _update_toolbar_action_metadata(self):
         command_bar_summary = "Workspace command bar with insert, edit, preview, mode, and status controls."
         if hasattr(self, "_toolbar_host"):
-            self._toolbar_host.setToolTip(command_bar_summary)
-            self._toolbar_host.setStatusTip(command_bar_summary)
-            self._toolbar_host.setAccessibleName(command_bar_summary)
+            self._set_metadata_summary(self._toolbar_host, command_bar_summary)
         toolbar_summary = "Main toolbar: insert, save, edit, and preview commands."
         if hasattr(self, "_toolbar"):
-            self._toolbar.setToolTip(toolbar_summary)
-            self._toolbar.setStatusTip(toolbar_summary)
-            self._toolbar.setAccessibleName(toolbar_summary)
+            self._set_metadata_summary(self._toolbar, toolbar_summary)
         if hasattr(self, "_save_action"):
             has_project = getattr(self, "project", None) is not None
             self._save_action.setEnabled(has_project)

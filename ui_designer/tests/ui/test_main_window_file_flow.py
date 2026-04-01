@@ -8196,6 +8196,32 @@ class TestMainWindowFileFlow:
         assert window._stop_action.statusTip() == window._stop_action.toolTip()
         _close_window(window)
 
+    def test_toolbar_summaries_skip_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        for widget in (window._toolbar, window._toolbar_host):
+            if hasattr(widget, "_metadata_summary_snapshot"):
+                delattr(widget, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._toolbar.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._toolbar, "setToolTip", counted_set_tooltip)
+
+        window._update_toolbar_action_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_toolbar_action_metadata()
+        assert tooltip_calls == 0
+        _close_window(window)
+
     def test_save_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
