@@ -984,6 +984,24 @@ class WidgetBrowserPanel(QWidget):
             and self._sort_mode == "relevance"
         )
 
+    def _empty_state_hint_text(self):
+        search_active = bool((self._search.text() or "").strip())
+        tags_active = bool(self._active_tag_values())
+        organizers_active = self._sort_mode != "relevance" or self._complexity_filter != "all"
+        category_active = str(self._selected_category() or "all").strip().lower() != "all"
+
+        active_states = [search_active, tags_active, organizers_active, category_active]
+        if sum(1 for state in active_states if state) > 1:
+            return "Reset the active filters to show more widgets."
+        if search_active:
+            return "Clear search to show matching widgets."
+        if tags_active:
+            return "Clear tag filters to show more widgets."
+        if organizers_active:
+            return "Reset organize filters to show more widgets."
+        if category_active:
+            return "Show all widgets to leave the current category."
+        return "Adjust search or filters to show more widgets."
 
     def _rebuild_cards(self, items):
         self._clear_cards()
@@ -1007,7 +1025,7 @@ class WidgetBrowserPanel(QWidget):
             title.setAlignment(Qt.AlignCenter)
             empty_layout.addWidget(title)
 
-            hint = QLabel("Clear filters or search to show all.")
+            hint = QLabel(self._empty_state_hint_text())
             hint.setObjectName("workspace_section_subtitle")
             hint.setWordWrap(True)
             hint.setAlignment(Qt.AlignCenter)

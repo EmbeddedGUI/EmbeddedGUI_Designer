@@ -505,8 +505,14 @@ class TestWidgetBrowserPanel:
             )
             if widget is not None and widget.objectName() == "widget_browser_empty_state"
         )
+        hint = next(
+            label
+            for label in empty_state.findChildren(QLabel)
+            if label.objectName() == "workspace_section_subtitle"
+        )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
         assert empty_state.accessibleName() == "No widgets match the current filters."
+        assert hint.text() == "Clear search to show matching widgets."
         assert panel._search.toolTip() == "Widget browser search. Current text: __no_widget_matches__."
         assert panel._search.accessibleName() == "Widget browser search: __no_widget_matches__."
         assert sorted(buttons) == ["Reset Search"]
@@ -528,8 +534,14 @@ class TestWidgetBrowserPanel:
             )
             if widget is not None and widget.objectName() == "widget_browser_empty_state"
         )
+        hint = next(
+            label
+            for label in empty_state.findChildren(QLabel)
+            if label.objectName() == "workspace_section_subtitle"
+        )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
+        assert hint.text() == "Show all widgets to leave the current category."
         assert sorted(buttons) == ["Show All Widgets"]
         assert buttons["Show All Widgets"].toolTip() == "Reset every widget browser filter and show all widgets."
         panel.deleteLater()
