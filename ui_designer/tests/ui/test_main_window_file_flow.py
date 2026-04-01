@@ -7951,6 +7951,63 @@ class TestMainWindowFileFlow:
         assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 1 errors and 0 warnings."
         _close_window(window)
 
+    def test_workspace_chips_skip_no_op_toolbar_refreshes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WorkspaceChipNoOpDemo"
+        project = _create_project(project_dir, "WorkspaceChipNoOpDemo", sdk_root)
+        page = project.get_startup_page()
+        label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
+        page.root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        monkeypatch.setattr(window.preview_panel, "is_python_preview_active", lambda: False)
+        monkeypatch.setattr(window.diagnostics_panel, "severity_counts", lambda: {"error": 0, "warning": 0, "info": 0})
+        window._clear_selection(sync_tree=False, sync_preview=False)
+
+        for chip in (
+            window._sdk_chip,
+            window._dirty_chip,
+            window._selection_chip,
+            window._preview_chip,
+            window._diagnostics_chip,
+        ):
+            if hasattr(chip, "_workspace_chip_snapshot"):
+                delattr(chip, "_workspace_chip_snapshot")
+
+        set_chip_calls = 0
+        original_set_chip = window._set_chip
+
+        def counted_set_chip(*args, **kwargs):
+            nonlocal set_chip_calls
+            set_chip_calls += 1
+            return original_set_chip(*args, **kwargs)
+
+        monkeypatch.setattr(window, "_set_chip", counted_set_chip)
+
+        window._update_workspace_chips()
+        assert set_chip_calls == 5
+
+        set_chip_calls = 0
+        window._update_workspace_chips()
+        assert set_chip_calls == 0
+
+        window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
+        assert set_chip_calls == 1
+
+        set_chip_calls = 0
+        window._update_workspace_chips()
+        assert set_chip_calls == 0
+        _close_window(window)
+
     def test_welcome_view_and_sdk_status_label_expose_accessible_metadata(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
