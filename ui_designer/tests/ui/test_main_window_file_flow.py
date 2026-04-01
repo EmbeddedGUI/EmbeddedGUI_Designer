@@ -6093,6 +6093,45 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_page_tab_bar_metadata_skips_no_op_refreshes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PageTabMetadataNoOpDemo"
+        project = _create_project(project_dir, "PageTabMetadataNoOpDemo", sdk_root)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        if hasattr(window, "_page_tab_bar_metadata_snapshot"):
+            delattr(window, "_page_tab_bar_metadata_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window.page_tab_bar.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window.page_tab_bar, "setToolTip", counted_set_tooltip)
+
+        window._update_page_tab_bar_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_page_tab_bar_metadata()
+        assert tooltip_calls == 0
+
+        window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
+        window._update_window_title()
+        assert tooltip_calls == 1
+        _close_window(window)
+
     def test_page_tab_context_menu_actions_expose_status_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

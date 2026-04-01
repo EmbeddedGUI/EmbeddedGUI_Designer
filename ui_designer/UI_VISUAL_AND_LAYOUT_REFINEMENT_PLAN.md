@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: page tab bar accessibility metadata now skips no-op tooltip/status/accessibility rewrites when the open-page, current-page, startup-page, and dirty-page summary has not changed.
   - `PERF-002` updated: main toolbar workspace chips now cache their visible/text/tone/tooltip snapshot, skipping no-op style refreshes when SDK, dirty, selection, preview, and diagnostics state have not changed.
   - `UX-005` updated: status center now hides the Errors / Warnings / Info health rows while diagnostics are fully clear, collapsing the section to its title and actions until real diagnostic counts exist.
   - `UX-005` updated: status center idle runtime titles now stay at plain `Runtime`, keeping the `(Issue)` suffix only for actual runtime problems after the clear-state chip was removed.

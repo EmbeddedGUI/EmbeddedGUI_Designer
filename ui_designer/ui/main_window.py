@@ -1937,9 +1937,12 @@ class MainWindow(QMainWindow):
             else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
         )
         summary = f"Page tabs: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
+        if getattr(self, "_page_tab_bar_metadata_snapshot", None) == summary:
+            return
         self.page_tab_bar.setToolTip(summary)
         self.page_tab_bar.setStatusTip(summary)
         self.page_tab_bar.setAccessibleName(summary)
+        self._page_tab_bar_metadata_snapshot = summary
 
     def _update_main_view_metadata(self):
         if not hasattr(self, "_central_stack"):
