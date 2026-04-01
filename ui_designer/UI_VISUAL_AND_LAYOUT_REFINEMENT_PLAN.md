@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center runtime detail copy now stays hidden while runtime is clear, only expanding to show text when there is an actual runtime issue.
   - `UX-005` updated: status center repeat action control now uses a plain button for the single-action state, only showing the split menu chrome when older history exists.
   - `UX-005` updated: status center now hides the last-action label for the single-action state, leaving only the repeat button until there is richer history to summarize.
   - `UX-005` updated: widget browser now hides the insert-target chip while it is still on the default page root, reducing header noise until a more specific target is active.

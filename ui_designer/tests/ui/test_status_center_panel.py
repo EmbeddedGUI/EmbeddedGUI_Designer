@@ -99,6 +99,7 @@ class TestStatusCenterPanel:
         assert panel._health_summary_label.accessibleName() == (
             "Diagnostic summary: Summary: 2 errors, 1 warning, 1 info item need attention. Errors lead at 50%."
         )
+        assert panel._runtime_label.isHidden() is True
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
         assert panel._error_row.toolTip() == "Open Errors. 2 errors active."
@@ -145,6 +146,7 @@ class TestStatusCenterPanel:
         assert panel._warning_value.text() == "3 warnings (75%)"
         assert panel._info_value.text() == "1 info item (25%)"
         assert panel._warning_bar.toolTip() == "Warnings share: 3 warnings (75%)"
+        assert panel._runtime_label.isHidden() is False
         assert panel._runtime_label.text() == "Runtime failed"
         assert panel._runtime_label.toolTip() == "Runtime failed"
         assert panel._runtime_label.accessibleName() == "Runtime details: Runtime failed"
@@ -211,6 +213,7 @@ class TestStatusCenterPanel:
         assert panel._warning_value.text() == "0 warnings (0%)"
         assert panel._info_value.text() == "2 info items (100%)"
         assert panel._info_bar.toolTip() == "Info share: 2 info items (100%)"
+        assert panel._runtime_label.isHidden() is True
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
@@ -275,6 +278,7 @@ class TestStatusCenterPanel:
         assert panel._error_bar.accessibleName() == "Errors share: No active diagnostics"
         assert panel._warning_bar.accessibleName() == "Warnings share: No active diagnostics"
         assert panel._info_bar.accessibleName() == "Info share: No active diagnostics"
+        assert panel._runtime_label.isHidden() is True
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
@@ -360,6 +364,7 @@ class TestStatusCenterPanel:
         assert panel._health_title.accessibleName() == "Diagnostic mix title: 6 total diagnostics."
         assert panel._runtime_title.text() == "Runtime (Issue)"
         assert panel._runtime_title.accessibleName() == "Runtime title: Issue detected. Bridge disconnected"
+        assert panel._runtime_label.isHidden() is False
         assert panel._runtime_label.toolTip() == "Bridge disconnected"
         assert panel._runtime_label.accessibleName() == "Runtime details: Bridge disconnected"
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Bridge disconnected"
@@ -470,6 +475,7 @@ class TestStatusCenterPanel:
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
         assert panel._runtime_title.text() == "Runtime (Clear)"
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
+        assert panel._runtime_label.isHidden() is True
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no recent actions yet."
         assert panel._actions_title.accessibleName() == "Quick actions section: No recent actions yet."
@@ -570,6 +576,7 @@ class TestStatusCenterPanel:
         assert panel._diag_btn.text() == "Diagnostics (Clear)"
         assert panel._history_btn.text() == "History (Clean)"
         assert panel._structure_btn.text() == "Structure (Idle)"
+        assert panel._runtime_label.isHidden() is True
         assert panel._diag_btn.toolTip() == "Open Diagnostics. No active diagnostics."
         assert panel._history_btn.toolTip() == "Open History. No dirty pages."
         assert panel._structure_btn.toolTip() == "Open Structure. No widgets selected."
