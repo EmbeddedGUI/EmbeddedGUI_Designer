@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData
+from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData, QTimer
 from PyQt5.QtGui import QDrag
 from PyQt5.QtWidgets import (
     QFrame,
@@ -228,6 +228,7 @@ class WidgetBrowserPanel(QWidget):
     reveal_requested = pyqtSignal(str)
 
     WIDGET_DRAG_MIME = "application/x-egui-widget-type"
+    _SEARCH_REFRESH_DEBOUNCE_MS = 90
 
     _SPECIAL_CATEGORIES = (
         ("all", "All Widgets"),
@@ -267,6 +268,9 @@ class WidgetBrowserPanel(QWidget):
             getattr(self._config, "widget_browser_complexity_filter", "all")
         )
         self._suspend_filter_persist = False
+        self._search_refresh_timer = QTimer(self)
+        self._search_refresh_timer.setSingleShot(True)
+        self._search_refresh_timer.timeout.connect(self.refresh)
         self._init_ui()
         self._populate_categories()
         self._populate_quick_lanes()
@@ -310,7 +314,7 @@ class WidgetBrowserPanel(QWidget):
 
         self._search = SearchLineEdit()
         self._search.setPlaceholderText("Search widgets")
-        self._search.textChanged.connect(self.refresh)
+        self._search.textChanged.connect(self._schedule_search_refresh)
         search_row.addWidget(self._search, 1)
         layout.addLayout(search_row)
 
@@ -667,6 +671,11 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target_label = (label or "").strip() or "Current page root"
         self._update_insert_target()
 
+    def _schedule_search_refresh(self):
+        if self._search_refresh_timer.isActive():
+            self._search_refresh_timer.stop()
+        self._search_refresh_timer.start(self._SEARCH_REFRESH_DEBOUNCE_MS)
+
     def focus_search(self):
         self._search.setFocus()
         self._search.selectAll()
@@ -690,6 +699,8 @@ class WidgetBrowserPanel(QWidget):
         return self._favorite_service.list_favorites()
 
     def refresh(self):
+        if self._search_refresh_timer.isActive():
+            self._search_refresh_timer.stop()
         self._sync_organizers()
         self._sync_tags_from_config()
         items = self._filtered_items()

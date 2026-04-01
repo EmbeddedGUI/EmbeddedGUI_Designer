@@ -242,6 +242,7 @@ phase: phase_b_in_progress
 in_progress:
   - UX-005
   - UX-006
+  - PERF-002
 completed:
   - CLEAN-001
   - CLEAN-002
@@ -256,8 +257,8 @@ completed:
 blocked: []
 next_recommended:
   - UX-005
-  - PERF-002
 notes:
+  - `PERF-002` started: widget browser search input now uses a short debounce before rebuilding results, while explicit refresh paths still apply immediately.
   - `UX-005` updated: widget browser tag reset now appears only when filters are active, removing an idle-state control from the bottom filter rail.
   - `UX-005` updated: status center suggested-action chrome now relies on the action button and guidance copy, with the redundant visible prefix label removed from the layout.
   - `UX-005` updated: status center metrics/actions outer wrappers were flattened, and metric cards now keep their border emphasis for hover/focus instead of the resting state.

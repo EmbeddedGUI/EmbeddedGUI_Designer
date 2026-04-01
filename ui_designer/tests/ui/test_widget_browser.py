@@ -8,6 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication, QLabel, QPushButton
 
     _has_pyqt5 = True
@@ -116,6 +117,25 @@ class TestWidgetBrowserPanel:
         slider_card.insert_requested.emit(slider_card.type_name)
 
         assert inserted == ["slider"]
+        panel.deleteLater()
+
+    def test_search_input_debounces_result_refresh(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        assert panel._cards
+        initial_types = list(panel._cards.keys())
+
+        panel._search.setText("__no_widget_matches__")
+
+        assert panel._search_refresh_timer.isActive() is True
+        assert list(panel._cards.keys()) == initial_types
+
+        QTest.qWait(panel._SEARCH_REFRESH_DEBOUNCE_MS + 40)
+        qapp.processEvents()
+
+        assert panel._search_refresh_timer.isActive() is False
+        assert panel._cards == {}
         panel.deleteLater()
 
     def test_card_context_menu_can_reveal_and_toggle_favorite(self, qapp, isolated_config, monkeypatch):
