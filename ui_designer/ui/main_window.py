@@ -119,7 +119,7 @@ from ..engine.compiler import CompilerEngine
 from ..engine.release_engine import collect_release_diagnostics, latest_release_entry, load_release_history, release_history_path, release_project
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
-from .theme import apply_theme
+from .theme import apply_theme, theme_tokens
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
@@ -637,8 +637,10 @@ class MainWindow(QMainWindow):
         button.setProperty("workspaceNav", True)
         button.setCheckable(True)
         button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        button.setIcon(make_icon(icon_key, size=22))
-        button.setIconSize(QSize(22, 22))
+        tokens = theme_tokens(getattr(self._config, "theme", "dark"))
+        nav_icon_size = int(tokens.get("icon_lg", 20)) + 2
+        button.setIcon(make_icon(icon_key, size=nav_icon_size))
+        button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         button.setText(label)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
@@ -2120,6 +2122,10 @@ class MainWindow(QMainWindow):
         self._update_view_panel_navigation_action_metadata()
 
     def _apply_workspace_iconography(self):
+        tokens = theme_tokens(getattr(self._config, "theme", "dark"))
+        nav_icon_size = int(tokens.get("icon_lg", 20)) + 2
+        toolbar_icon_size = int(tokens.get("icon_md", 18))
+        mode_icon_size = int(tokens.get("icon_sm", 16))
         if hasattr(self, "_workspace_nav_buttons"):
             icon_map = {
                 "project": "project",
@@ -2129,12 +2135,13 @@ class MainWindow(QMainWindow):
                 "status": "diagnostics",
             }
             for key, button in self._workspace_nav_buttons.items():
-                button.setIcon(make_icon(icon_map.get(key, "widgets"), size=22))
+                button.setIcon(make_icon(icon_map.get(key, "widgets"), size=nav_icon_size))
+                button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         if hasattr(self, "_insert_widget_button"):
-            self._insert_widget_button.setIcon(make_icon("widgets"))
+            self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
         if hasattr(self, "_mode_buttons"):
             for mode, icon_key in ((MODE_DESIGN, "widgets"), (MODE_SPLIT, "layout"), (MODE_CODE, "page")):
-                self._mode_buttons[mode].setIcon(make_icon(icon_key))
+                self._mode_buttons[mode].setIcon(make_icon(icon_key, size=mode_icon_size))
 
     def _on_status_center_action_requested(self, action_key):
         action = str(action_key or "").strip().lower()
@@ -3809,7 +3816,8 @@ class MainWindow(QMainWindow):
         tb = QToolBar("Main Toolbar", self)
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
-        tb.setIconSize(QSize(18, 18))
+        toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_md", 18))
+        tb.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
             "QToolBar { spacing: 6px; background: transparent; border: none; }"
@@ -3836,7 +3844,7 @@ class MainWindow(QMainWindow):
             action.setIcon(make_icon(icon_key))
 
         self._insert_widget_button = PrimaryPushButton("Insert Component")
-        self._insert_widget_button.setIcon(make_icon("widgets"))
+        self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()

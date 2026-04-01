@@ -29,8 +29,13 @@ from ..services.search_service import SearchService, SearchQuery
 from ..services.recent_service import RecentService
 from ..services.favorite_service import FavoriteService
 from .iconography import make_icon, widget_icon_key
+from .theme import theme_tokens
 
 _ITEM_METADATA_SNAPSHOT_ROLE = Qt.UserRole + 1024
+_DEFAULT_UI_TOKENS = theme_tokens("dark")
+_ICON_SM = int(_DEFAULT_UI_TOKENS.get("icon_sm", 16))
+_ICON_MD = int(_DEFAULT_UI_TOKENS.get("icon_md", 18))
+_ICON_LG = int(_DEFAULT_UI_TOKENS.get("icon_lg", 20))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -106,7 +111,9 @@ class WidgetBrowserCard(QFrame):
         layout.setSpacing(6)
 
         self._icon_label = QLabel()
-        self._icon_label.setPixmap(make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=18).pixmap(18, 18))
+        self._icon_label.setPixmap(
+            make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD)
+        )
         layout.addWidget(self._icon_label, 0, Qt.AlignVCenter)
 
         text_layout = QVBoxLayout()
@@ -988,7 +995,7 @@ class WidgetBrowserPanel(QWidget):
         layout.setContentsMargins(10, 6, 10, 6)
         layout.setSpacing(8)
         icon_label = QLabel()
-        icon_label.setPixmap(make_icon(self._scenario_icon_key(scenario), size=16).pixmap(16, 16))
+        icon_label.setPixmap(make_icon(self._scenario_icon_key(scenario), size=_ICON_SM).pixmap(_ICON_SM, _ICON_SM))
         layout.addWidget(icon_label, 0, Qt.AlignVCenter)
         title = QLabel(str(scenario or "Other"))
         title.setObjectName("widget_browser_group_title")
@@ -1050,7 +1057,8 @@ class WidgetBrowserPanel(QWidget):
 
             icon_label = QLabel()
             icon_label.setAlignment(Qt.AlignCenter)
-            icon_label.setPixmap(make_icon("widgets", size=36).pixmap(36, 36))
+            empty_icon_size = _ICON_LG * 2
+            icon_label.setPixmap(make_icon("widgets", size=empty_icon_size).pixmap(empty_icon_size, empty_icon_size))
             empty_layout.addWidget(icon_label)
 
             title = QLabel("No matching widgets.")
@@ -1194,7 +1202,7 @@ class WidgetBrowserPanel(QWidget):
         drag.setMimeData(mime)
         item = self._catalog.by_type(widget_type)
         if item is not None:
-            drag.setPixmap(make_icon(item.icon_key or widget_icon_key(widget_type), size=18).pixmap(18, 18))
+            drag.setPixmap(make_icon(item.icon_key or widget_icon_key(widget_type), size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
             drag.setHotSpot(QPoint(9, 9))
         if global_pos is not None:
             self.statusTip()  # keep QObject state touched for accessibility update rhythm
