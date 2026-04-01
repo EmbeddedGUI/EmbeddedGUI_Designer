@@ -146,3 +146,27 @@ class TestProjectWorkspacePanel:
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
         panel.deleteLater()
+
+    def test_workspace_snapshot_skips_no_op_metadata_refreshes(self, qapp, monkeypatch):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        metadata_updates = 0
+        original_update_panel_metadata = panel._update_panel_metadata
+
+        def counted_update_panel_metadata():
+            nonlocal metadata_updates
+            metadata_updates += 1
+            return original_update_panel_metadata()
+
+        monkeypatch.setattr(panel, "_update_panel_metadata", counted_update_panel_metadata)
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=1)
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=1)
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=2)
+        assert metadata_updates == 2
+        panel.deleteLater()

@@ -33,6 +33,7 @@ class ProjectWorkspacePanel(QWidget):
         self._current_startup_page = ""
         self._current_dirty_pages = 0
         self._current_view_name = ""
+        self._workspace_snapshot_initialized = False
         self._init_ui()
 
     def _init_ui(self):
@@ -211,12 +212,21 @@ class ProjectWorkspacePanel(QWidget):
         dirty = max(int(dirty_pages or 0), 0)
         active = str(active_page or "").strip() or "None"
         startup = str(startup_page or "").strip() or "None"
+        normalized_active = "" if active == "None" else active
+        normalized_startup = "" if startup == "None" else startup
+        if (
+            self._workspace_snapshot_initialized
+            and self._current_page_count == pages
+            and self._current_active_page == normalized_active
+            and self._current_startup_page == normalized_startup
+            and self._current_dirty_pages == dirty
+        ):
+            return
         self._current_page_count = pages
-        self._current_active_page = "" if active == "None" else active
-        self._current_startup_page = "" if startup == "None" else startup
+        self._current_active_page = normalized_active
+        self._current_startup_page = normalized_startup
         self._current_dirty_pages = dirty
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
-        self._page_count_chip.setVisible(pages > 0)
         self._set_chip(
             self._page_count_chip,
             page_label,
@@ -257,4 +267,5 @@ class ProjectWorkspacePanel(QWidget):
                 "success",
                 accessible_name="Workspace dirty pages: no dirty pages.",
             )
+        self._workspace_snapshot_initialized = True
         self._update_panel_metadata()
