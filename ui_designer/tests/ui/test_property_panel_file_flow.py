@@ -74,6 +74,7 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
 
+        assert panel._search_edit.isHidden() is True
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
@@ -86,6 +87,35 @@ class TestPropertyPanelFileFlow:
 
         assert panel._search_edit.accessibleName() == "Property search: font"
         assert panel.toolTip() == "Property panel: no widget selected. Search: font."
+        panel.deleteLater()
+
+    def test_search_field_is_contextual_and_reapplies_after_form_rebuild(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        panel = PropertyPanel()
+        assert panel._search_edit.isHidden() is True
+
+        panel.set_widget(first)
+        assert panel._search_edit.isHidden() is False
+
+        panel._search_edit.setText("name")
+        assert _find_group(panel, "Basic").isHidden() is False
+        assert _find_group(panel, "Data").isHidden() is True
+
+        panel.set_widget(second)
+
+        assert panel._search_edit.isHidden() is False
+        assert panel._search_edit.text() == "name"
+        assert _find_group(panel, "Basic").isHidden() is False
+        assert _find_group(panel, "Data").isHidden() is True
+
+        panel.set_widget(None)
+
+        assert panel._search_edit.isHidden() is True
         panel.deleteLater()
 
     def test_file_selector_sets_accessibility_metadata(self, qapp):

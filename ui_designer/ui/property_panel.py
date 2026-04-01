@@ -320,6 +320,7 @@ class PropertyPanel(QWidget):
         self._search_edit = SearchLineEdit()
         self._search_edit.setPlaceholderText("Filter properties...")
         self._search_edit.textChanged.connect(self._on_search_changed)
+        self._search_edit.setVisible(False)
         outer.addWidget(self._search_edit)
 
         scroll = QScrollArea()
@@ -676,14 +677,16 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
 
         if self._primary_widget is None:
+            self._search_edit.setVisible(False)
             self._no_selection_label = self._create_no_selection_label()
             self._layout.addWidget(self._no_selection_label)
             self._update_panel_metadata()
             return
 
+        self._search_edit.setVisible(True)
         if len(self._selection) > 1:
             self._build_multi_selection_form()
-            self._update_panel_metadata()
+            self._on_search_changed(self._search_edit.text())
             return
 
         w = self._primary_widget
@@ -822,7 +825,7 @@ class PropertyPanel(QWidget):
 
         self._layout.addWidget(bg_group)
         self._layout.addStretch()
-        self._update_panel_metadata()
+        self._on_search_changed(self._search_edit.text())
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()

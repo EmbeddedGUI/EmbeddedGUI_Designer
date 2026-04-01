@@ -258,6 +258,8 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: property panel search now hides until there is an active selection, reducing idle inspector chrome.
+  - `UX-005` updated: property panel search filters now reapply after inspector rebuilds, keeping the filtered view stable while changing the current selection.
   - `UX-005` updated: status center now hides the last-action repeat row until there is actionable history, removing idle-state repeat chrome.
   - `UX-005` updated: widget browser empty-state actions are now contextual, showing only the reset controls relevant to the active filters instead of a fixed full button row.
   - `PERF-002` updated: widget browser explicit reset actions now bypass the search debounce and collapse multi-control resets into a single immediate refresh.
