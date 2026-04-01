@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center now hides the last-action label for the single-action state, leaving only the repeat button until there is richer history to summarize.
   - `UX-005` updated: widget browser now hides the insert-target chip while it is still on the default page root, reducing header noise until a more specific target is active.
   - `PERF-002` updated: widget browser now ignores redundant clicks on the already-active sort and complexity organizers, avoiding no-op result rebuilds.
   - `UX-005` updated: mixed-state callback code buttons in the property panel now stay hidden until the selection shares one callback target, reducing disabled inspector chrome.

@@ -475,6 +475,7 @@ class TestStatusCenterPanel:
         assert panel._actions_title.accessibleName() == "Quick actions section: No recent actions yet."
         assert panel._diagnostic_jump_host.isHidden() is True
         assert panel._last_action_host.isHidden() is True
+        assert panel._last_action_label.isHidden() is True
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
@@ -984,6 +985,7 @@ class TestStatusCenterPanel:
         panel.restore_view_state({"last_action": "open_page_fields", "recent_actions": ["open_page_fields", "open_debug"]})
         assert panel._last_action_host.isHidden() is False
         assert panel._last_action_label.text() == "Last action: Fields"
+        assert panel._last_action_label.isHidden() is False
         assert panel._last_action_label.toolTip() == "Current action: Fields. 2 recent actions tracked."
         assert panel._last_action_label.accessibleName() == "Last action: Fields. 2 recent actions tracked."
         assert panel._actions_title.text() == "Quick Actions (2 recent actions)"
@@ -1011,6 +1013,7 @@ class TestStatusCenterPanel:
 
         panel.restore_view_state(None)
         assert panel._last_action_host.isHidden() is True
+        assert panel._last_action_label.isHidden() is True
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."
         assert panel._last_action_label.accessibleName() == "Last action: None. No recent actions yet."
@@ -1061,6 +1064,7 @@ class TestStatusCenterPanel:
 
         panel.restore_view_state({"last_action": "open_components_panel"})
         assert panel._last_action_host.isHidden() is False
+        assert panel._last_action_label.isHidden() is True
         panel._repeat_action_button.click()
 
         assert emitted == ["open_components_panel"]
@@ -1121,6 +1125,7 @@ class TestStatusCenterPanel:
         clear_action.trigger()
 
         assert panel._last_action_host.isHidden() is True
+        assert panel._last_action_label.isHidden() is True
         assert panel._last_action_label.text() == "Last action: None"
         assert panel._last_action_label.toolTip() == "No recent action yet."
         assert panel._actions_title.text() == "Quick Actions"
