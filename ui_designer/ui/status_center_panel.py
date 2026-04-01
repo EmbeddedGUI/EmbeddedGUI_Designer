@@ -1426,6 +1426,10 @@ class StatusCenterPanel(QWidget):
             and not runtime_text
         )
         self._workspace_summary_label.setVisible(not is_workspace_fully_ready)
+        show_health_rows = diag_total > 0
+        self._error_row.setVisible(show_health_rows)
+        self._warning_row.setVisible(show_health_rows)
+        self._info_row.setVisible(show_health_rows)
         self._set_hint(self._error_row, f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}")
         self._set_hint(self._warning_row, f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}")
         self._set_hint(self._info_row, f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}")

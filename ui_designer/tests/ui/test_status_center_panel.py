@@ -51,6 +51,9 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.text() == "Runtime"
         assert panel._runtime_title.toolTip() == "Runtime status: clear."
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
+        assert panel._error_row.isHidden() is False
+        assert panel._warning_row.isHidden() is False
+        assert panel._info_row.isHidden() is False
         assert panel._runtime_chip.isHidden() is True
         assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warning, 1 info item"
         assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warning, 1 info item"
@@ -281,6 +284,9 @@ class TestStatusCenterPanel:
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_summary_label.isHidden() is True
         assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
+        assert panel._error_row.isHidden() is True
+        assert panel._warning_row.isHidden() is True
+        assert panel._info_row.isHidden() is True
         assert panel._error_value.text() == "No errors"
         assert panel._warning_value.text() == "No warnings"
         assert panel._info_value.text() == "No info items"
@@ -490,6 +496,9 @@ class TestStatusCenterPanel:
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
         assert panel._runtime_title.text() == "Runtime"
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
+        assert panel._error_row.isHidden() is True
+        assert panel._warning_row.isHidden() is True
+        assert panel._info_row.isHidden() is True
         assert panel._runtime_label.isHidden() is True
         assert panel._runtime_chip.isHidden() is True
         assert panel._actions_title.text() == "Quick Actions"
