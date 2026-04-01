@@ -68,8 +68,8 @@ class ProjectWorkspacePanel(QWidget):
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
         header_layout = QVBoxLayout(self._header)
-        header_layout.setContentsMargins(14, 14, 14, 14)
-        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(_SPACE_MD + 2, _SPACE_MD + 2, _SPACE_MD + 2, _SPACE_MD + 2)
+        header_layout.setSpacing(_SPACE_SM)
 
         self._title_label = QLabel("Project Workspace")
         self._title_label.setObjectName("workspace_section_title")
@@ -103,7 +103,7 @@ class ProjectWorkspacePanel(QWidget):
 
         toggle_row = QHBoxLayout()
         toggle_row.setContentsMargins(0, 0, 0, 0)
-        toggle_row.setSpacing(8)
+        toggle_row.setSpacing(_SPACE_SM)
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
