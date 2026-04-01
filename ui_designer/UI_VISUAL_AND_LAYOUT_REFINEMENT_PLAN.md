@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: shared action-hint updates now cache their latest tooltip/status text, so workspace, inspector, tools, and other reused menu actions skip no-op hint rewrites when their guidance text has not changed.
   - `PERF-002` updated: inspector tabs, page tools, and bottom tools summaries now cache their tooltip/accessibility metadata, skipping no-op rewrites while the current section, page focus, selection, and bottom-panel visibility remain unchanged.
   - `PERF-002` updated: workspace navigation buttons and left-shell summaries now cache their tooltip/accessibility metadata, skipping no-op rewrites while the current panel and its page / diagnostics context remain unchanged.
   - `PERF-002` updated: workspace layout shells now cache their tooltip/accessibility summaries, skipping no-op metadata rewrites while the current page, left panel, editor mode, inspector section, and bottom-panel visibility remain unchanged.

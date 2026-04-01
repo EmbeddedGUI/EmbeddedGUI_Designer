@@ -1507,8 +1507,12 @@ class MainWindow(QMainWindow):
     def _apply_action_hint(self, action, hint):
         if action is None:
             return
-        action.setToolTip(hint)
-        action.setStatusTip(hint)
+        resolved_hint = str(hint or "")
+        if str(action.property("_action_hint_snapshot") or "") == resolved_hint:
+            return
+        action.setToolTip(resolved_hint)
+        action.setStatusTip(resolved_hint)
+        action.setProperty("_action_hint_snapshot", resolved_hint)
 
     def _page_tab_state_summary(self, page_name):
         page_label = str(page_name or "").strip() or "unknown page"

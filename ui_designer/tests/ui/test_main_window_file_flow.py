@@ -3489,6 +3489,37 @@ class TestMainWindowFileFlow:
         assert actions["History"].toolTip() == "Currently showing the History tools panel. Current page: none. Panel visible."
         _close_window(window)
 
+    def test_apply_action_hint_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        action_type = type(window._save_action)
+        action = action_type("Temp Action", window)
+
+        tooltip_calls = 0
+        original_set_tooltip = action.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(action, "setToolTip", counted_set_tooltip)
+
+        window._apply_action_hint(action, "Hint A")
+        assert tooltip_calls == 1
+        assert action.toolTip() == "Hint A"
+        assert action.statusTip() == "Hint A"
+
+        window._apply_action_hint(action, "Hint A")
+        assert tooltip_calls == 1
+
+        window._apply_action_hint(action, "Hint B")
+        assert tooltip_calls == 2
+        assert action.toolTip() == "Hint B"
+        assert action.statusTip() == "Hint B"
+        _close_window(window)
+
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
