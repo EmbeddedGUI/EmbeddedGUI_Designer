@@ -1257,6 +1257,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_repeat_action_enabled_state_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._repeat_action_button.setProperty("_status_center_enabled_snapshot", None)
+
+        enabled_calls = 0
+        original_set_enabled = panel._repeat_action_button.setEnabled
+
+        def counted_set_enabled(value):
+            nonlocal enabled_calls
+            enabled_calls += 1
+            return original_set_enabled(value)
+
+        monkeypatch.setattr(panel._repeat_action_button, "setEnabled", counted_set_enabled)
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert enabled_calls == 1
+
+        panel._set_last_action("open_assets_panel", ["open_assets_panel", "open_components_panel"])
+        assert enabled_calls == 1
+
+        panel._set_last_action("", [])
+        assert enabled_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
