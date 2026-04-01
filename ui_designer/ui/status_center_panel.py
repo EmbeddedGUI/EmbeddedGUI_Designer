@@ -607,6 +607,13 @@ class StatusCenterPanel(QWidget):
         action.setWhatsThis(hint)
         action.setProperty("_status_center_hint_snapshot", hint)
 
+    def _set_accessible_name(self, widget, text):
+        name = str(text or "").strip()
+        if str(widget.property("_status_center_accessible_snapshot") or "") == name:
+            return
+        widget.setAccessibleName(name)
+        widget.setProperty("_status_center_accessible_snapshot", name)
+
     def _count_label(self, count, singular, plural):
         value = max(int(count or 0), 0)
         return f"{value} {singular if value == 1 else plural}"
@@ -733,9 +740,9 @@ class StatusCenterPanel(QWidget):
         summary_text = str(summary or "").strip()
         label_text = str(label or "").strip() or "Metric"
         self._set_hint(value_label, f"{label_text}: {summary_text}")
-        value_label.setAccessibleName(f"{label_text} value: {summary_text}")
+        self._set_accessible_name(value_label, f"{label_text} value: {summary_text}")
         self._set_hint(card, f"Open {label_text}. {summary_text}")
-        card.setAccessibleName(f"{label_text} metric: {summary_text}")
+        self._set_accessible_name(card, f"{label_text} metric: {summary_text}")
 
     def _metric_card_accessible_name(self, label, summary, hint):
         label_text = str(label or "").strip() or "Metric"
