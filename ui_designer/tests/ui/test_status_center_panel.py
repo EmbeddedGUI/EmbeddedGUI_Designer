@@ -1649,6 +1649,45 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_health_summary_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._health_title.setProperty("_status_center_accessible_snapshot", None)
+        panel._health_summary_label.setProperty("_status_center_accessible_snapshot", None)
+
+        title_accessible_calls = 0
+        summary_accessible_calls = 0
+        original_title_set_accessible_name = panel._health_title.setAccessibleName
+        original_summary_set_accessible_name = panel._health_summary_label.setAccessibleName
+
+        def counted_title_set_accessible_name(text):
+            nonlocal title_accessible_calls
+            title_accessible_calls += 1
+            return original_title_set_accessible_name(text)
+
+        def counted_summary_set_accessible_name(text):
+            nonlocal summary_accessible_calls
+            summary_accessible_calls += 1
+            return original_summary_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._health_title, "setAccessibleName", counted_title_set_accessible_name)
+        monkeypatch.setattr(panel._health_summary_label, "setAccessibleName", counted_summary_set_accessible_name)
+
+        panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
+        assert title_accessible_calls == 1
+        assert summary_accessible_calls == 1
+
+        panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1, dirty_pages=1)
+        assert title_accessible_calls == 1
+        assert summary_accessible_calls == 1
+
+        panel.set_status(diagnostics_errors=1, diagnostics_warnings=2, diagnostics_infos=1, dirty_pages=1)
+        assert title_accessible_calls == 1
+        assert summary_accessible_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

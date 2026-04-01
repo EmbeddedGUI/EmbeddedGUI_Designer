@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center diagnostic title and summary accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while total-diagnostic titles and unchanged health summaries stay stable across unrelated status refreshes.
   - `PERF-002` updated: status center diagnostic title and summary labels now reuse cached text snapshots, skipping no-op `setText` rewrites while total-diagnostic titles and unchanged health summaries stay stable across unrelated status refreshes.
   - `PERF-002` updated: status center header and workspace accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while header focus copy, workspace status, and workspace summary guidance stay unchanged across lower-priority status changes.
   - `PERF-002` updated: status center header and workspace summary labels now reuse cached text snapshots, skipping no-op `setText` rewrites while header focus copy and workspace summary guidance stay unchanged across lower-priority status changes.

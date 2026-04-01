@@ -1537,12 +1537,13 @@ class StatusCenterPanel(QWidget):
         self._info_bar.setAccessibleName(info_share)
         self._set_widget_text(self._health_title, self._diagnostic_title_text(diag_total))
         self._set_hint(self._health_title, self._diagnostic_title_tooltip(diag_total))
-        self._health_title.setAccessibleName(self._diagnostic_title_accessible_name(diag_total))
+        self._set_accessible_name(self._health_title, self._diagnostic_title_accessible_name(diag_total))
         health_summary = self._diagnostic_summary_text(error_count, warning_count, info_count)
         self._set_widget_text(self._health_summary_label, health_summary)
         self._set_widget_visible(self._health_summary_label, diag_total > 0)
         self._set_hint(self._health_summary_label, health_summary)
-        self._health_summary_label.setAccessibleName(
+        self._set_accessible_name(
+            self._health_summary_label,
             self._summary_accessible_name("Diagnostic summary", health_summary)
         )
         if error_count > 0:
