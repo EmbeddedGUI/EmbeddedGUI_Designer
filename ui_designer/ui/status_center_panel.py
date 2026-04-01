@@ -784,7 +784,7 @@ class StatusCenterPanel(QWidget):
         return f"Diagnostic mix title: {total} total diagnostics."
 
     def _runtime_title_text(self, runtime_text):
-        return "Runtime (Issue)" if str(runtime_text or "").strip() else "Runtime (Clear)"
+        return "Runtime (Issue)" if str(runtime_text or "").strip() else "Runtime"
 
     def _runtime_title_tooltip(self, runtime_text):
         message = str(runtime_text or "").strip()

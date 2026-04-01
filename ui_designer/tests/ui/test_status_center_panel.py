@@ -48,7 +48,7 @@ class TestStatusCenterPanel:
         assert panel._health_title.text() == "Diagnostic Mix (4 total)"
         assert panel._health_title.toolTip() == "Diagnostic mix with 4 total diagnostics."
         assert panel._health_title.accessibleName() == "Diagnostic mix title: 4 total diagnostics."
-        assert panel._runtime_title.text() == "Runtime (Clear)"
+        assert panel._runtime_title.text() == "Runtime"
         assert panel._runtime_title.toolTip() == "Runtime status: clear."
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
         assert panel._runtime_chip.isHidden() is True
@@ -488,7 +488,7 @@ class TestStatusCenterPanel:
         )
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
-        assert panel._runtime_title.text() == "Runtime (Clear)"
+        assert panel._runtime_title.text() == "Runtime"
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
         assert panel._runtime_label.isHidden() is True
         assert panel._runtime_chip.isHidden() is True

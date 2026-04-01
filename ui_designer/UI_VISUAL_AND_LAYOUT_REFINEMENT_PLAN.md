@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center idle runtime titles now stay at plain `Runtime`, keeping the `(Issue)` suffix only for actual runtime problems after the clear-state chip was removed.
   - `UX-005` updated: status center now hides the workspace summary line once the workspace is fully ready, letting that header area collapse to the title and suggested action instead of restating an all-clear state.
   - `PERF-002` updated: status center now ignores repeated `set_status()` calls with unchanged workspace state, avoiding no-op metric and metadata refreshes during frequent panel syncs.
   - `PERF-002` updated: project workspace now ignores repeated snapshots with unchanged page, startup, active, and dirty-state data, avoiding no-op metadata refreshes from repeated workspace syncs.
