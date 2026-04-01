@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: status center chip helpers now cache text and tone snapshots, skipping no-op chip `setText` and style refreshes while workspace, health, and runtime chip presentation stays unchanged across lower-priority status changes.
   - `PERF-002` updated: status center metric card accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while SDK, compile, diagnostics, preview, selection, and dirty summaries stay unchanged across unrelated status refreshes.
   - `PERF-002` updated: status center diagnostic share accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while error, warning, and info share summaries stay unchanged across unrelated status refreshes.
   - `PERF-002` updated: status center diagnostic value accessibility labels now reuse cached accessible-name snapshots, skipping no-op `setAccessibleName` rewrites while error, warning, and info value summaries stay unchanged across unrelated status refreshes.

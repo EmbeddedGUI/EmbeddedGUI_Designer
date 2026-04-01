@@ -393,9 +393,23 @@ class StatusCenterPanel(QWidget):
         return value_label, bar, row
 
     def _set_chip_text(self, chip, text, tone=None):
-        chip.setText(str(text or ""))
-        if tone is not None:
-            chip.setProperty("chipTone", str(tone or "accent"))
+        resolved_text = str(text or "")
+        resolved_tone = None if tone is None else str(tone or "accent")
+        current_text = chip.property("_status_center_chip_text_snapshot")
+        current_tone = chip.property("_status_center_chip_tone_snapshot")
+        text_changed = current_text is None or str(current_text) != resolved_text
+        tone_changed = resolved_tone is not None and (current_tone is None or str(current_tone) != resolved_tone)
+        if not text_changed and not tone_changed:
+            return
+        if text_changed:
+            chip.setText(resolved_text)
+            chip.setProperty("_status_center_chip_text_snapshot", resolved_text)
+        if resolved_tone is not None:
+            if tone_changed:
+                chip.setProperty("chipTone", resolved_tone)
+                chip.setProperty("_status_center_chip_tone_snapshot", resolved_tone)
+        elif current_tone is None:
+            chip.setProperty("_status_center_chip_tone_snapshot", None)
         chip.style().unpolish(chip)
         chip.style().polish(chip)
         chip.update()
