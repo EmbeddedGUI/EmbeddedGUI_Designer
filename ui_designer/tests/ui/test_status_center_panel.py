@@ -1367,6 +1367,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_first_warning_button_text_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._first_warning_btn.setProperty("_status_center_text_snapshot", None)
+
+        text_calls = 0
+        original_set_text = panel._first_warning_btn.setText
+
+        def counted_set_text(text):
+            nonlocal text_calls
+            text_calls += 1
+            return original_set_text(text)
+
+        monkeypatch.setattr(panel._first_warning_btn, "setText", counted_set_text)
+
+        panel.set_status(diagnostics_warnings=2)
+        assert text_calls == 1
+
+        panel.set_status(diagnostics_warnings=2, diagnostics_infos=1)
+        assert text_calls == 1
+
+        panel.set_status(diagnostics_warnings=3, diagnostics_infos=1)
+        assert text_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

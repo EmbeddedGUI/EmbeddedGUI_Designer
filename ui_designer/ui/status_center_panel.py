@@ -1555,7 +1555,8 @@ class StatusCenterPanel(QWidget):
         self._set_widget_visible(self._first_error_btn, show_error_jump)
         self._set_widget_visible(self._first_warning_btn, show_warning_jump)
         self._first_error_btn.setEnabled(show_error_jump)
-        self._first_error_btn.setText(
+        self._set_widget_text(
+            self._first_error_btn,
             f"Open First Error ({error_count})" if error_count > 0 else "Open First Error"
         )
         first_error_hint = (
@@ -1577,7 +1578,8 @@ class StatusCenterPanel(QWidget):
             )
         )
         self._first_warning_btn.setEnabled(show_warning_jump)
-        self._first_warning_btn.setText(
+        self._set_widget_text(
+            self._first_warning_btn,
             f"Open First Warning ({warning_count})" if warning_count > 0 else "Open First Warning"
         )
         first_warning_hint = (
