@@ -10981,7 +10981,7 @@ class TestMainWindowCanvasActions:
         assert window.statusBar().currentMessage() == "Selected 3 widgets at depth 2."
         _close_window(window)
 
-    def test_preview_failure_forces_v1_and_syncs_config_and_state_store(self, qapp, isolated_config, monkeypatch):
+    def test_preview_failure_restores_v1_and_syncs_config_and_state_store(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         class CompilerWithStopCount:
@@ -10991,11 +10991,14 @@ class TestMainWindowCanvasActions:
             def stop_exe(self):
                 self.stop_calls += 1
 
+            def cleanup(self):
+                return None
+
         window = MainWindow("")
         compiler = CompilerWithStopCount()
         window.compiler = compiler
-        window._config.preview_engine = "v2"
-        window._state_store.set_preview_engine("v2")
+        window._config.preview_engine = "legacy"
+        window._state_store.set_preview_engine("legacy")
 
         switch_calls = []
         monkeypatch.setattr(window._renderer_manager, "switch", lambda engine, fallback="v1": switch_calls.append((engine, fallback)) or "v1")
@@ -11012,205 +11015,11 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
-    def test_v2_snapshot_failure_routes_to_preview_failure_handler(self, qapp, isolated_config, monkeypatch):
-        from ui_designer.ui.main_window import MainWindow
-
-        class FakeRenderer:
-            def __init__(self):
-                self.last_render_error = ""
-                self.rendered = False
-
-            def render(self, _schema):
-                self.rendered = True
-
-            def snapshot(self):
-                return b""
-
-        renderer = FakeRenderer()
-        window = MainWindow("")
-        window._current_page = None
-
-        failures = []
-        image_preview_calls = []
-        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
-        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
-        monkeypatch.setattr(
-            window.preview_panel,
-            "show_image_preview",
-            lambda image, reason="", label_prefix="": image_preview_calls.append((image, reason, label_prefix)),
-        )
-
-        window._render_preview_with_v2()
-
-        assert renderer.rendered is False
-        assert failures == []
-        assert image_preview_calls == [(None, "No page", "V2 renderer")]
-
-        window._current_page = object()
-
-        window._render_preview_with_v2()
-
-        assert renderer.rendered is True
-        assert failures[-1] == "V2 preview render failed"
-
-        _close_window(window)
-
-    def test_v2_snapshot_failure_prefers_renderer_error_text(self, qapp, isolated_config, monkeypatch):
-        from ui_designer.ui.main_window import MainWindow
-
-        class FakeRenderer:
-            def __init__(self):
-                self.last_render_error = "render exploded"
-
-            def render(self, _schema):
-                return None
-
-            def snapshot(self):
-                return b""
-
-        renderer = FakeRenderer()
-        window = MainWindow("")
-        window._current_page = object()
-
-        failures = []
-        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
-        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
-
-        window._render_preview_with_v2()
-
-        assert failures == ["render exploded"]
-
-        _close_window(window)
-
-    def test_v2_snapshot_invalid_routes_to_preview_failure(self, qapp, isolated_config, monkeypatch):
-        from ui_designer.ui.main_window import MainWindow
-
-        class FakeRenderer:
-            def __init__(self):
-                self.last_render_error = ""
-
-            def render(self, _schema):
-                return None
-
-            def snapshot(self):
-                return b"not-a-real-image"
-
-        renderer = FakeRenderer()
-        window = MainWindow("")
-        window._current_page = object()
-
-        failures = []
-        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
-        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
-
-        window._render_preview_with_v2()
-
-        assert failures == ["V2 preview snapshot invalid"]
-
-        _close_window(window)
-
-    def test_v2_valid_snapshot_shows_image_preview_without_failure(self, qapp, isolated_config, monkeypatch):
-        from PyQt5.QtGui import QImage
-        from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
-        from ui_designer.ui.main_window import MainWindow
-
-        class FakeRenderer:
-            def __init__(self, payload):
-                self.last_render_error = ""
-                self._payload = payload
-
-            def render(self, _schema):
-                return None
-
-            def snapshot(self):
-                return self._payload
-
-        image = QImage(3, 2, QImage.Format_ARGB32)
-        image.fill(0xFF00FF00)
-        ba = QByteArray()
-        buffer = QBuffer(ba)
-        buffer.open(QIODevice.WriteOnly)
-        image.save(buffer, "PNG")
-        png_bytes = bytes(ba)
-
-        renderer = FakeRenderer(png_bytes)
-        window = MainWindow("")
-        window._current_page = object()
-
-        failures = []
-        previews = []
-        monkeypatch.setattr(window._renderer_manager, "active", lambda: renderer)
-        monkeypatch.setattr(window, "_handle_preview_failure", lambda reason: failures.append(reason))
-        monkeypatch.setattr(
-            window.preview_panel,
-            "show_image_preview",
-            lambda qimage, reason="", label_prefix="": previews.append((qimage, reason, label_prefix)),
-        )
-
-        window._render_preview_with_v2()
-
-        assert failures == []
-        assert len(previews) == 1
-        rendered_image, reason, label_prefix = previews[0]
-        assert rendered_image.isNull() is False
-        assert reason == ""
-        assert label_prefix == "V2 renderer"
-
-    def test_preview_engine_switch_fallback_updates_actions_and_state(self, qapp, isolated_config, monkeypatch):
-        from ui_designer.ui import main_window as main_window_module
-        from ui_designer.ui.main_window import MainWindow
-
-        monkeypatch.setattr(main_window_module, "PREVIEW_V2_ENABLED", True)
-
-        window = MainWindow("")
-
-        def fake_switch(engine, fallback="v1"):
-            window._renderer_manager.active_name = "v1"
-            return "v1"
-
-        monkeypatch.setattr(window._renderer_manager, "switch", fake_switch)
-
-        window._set_preview_engine("v2")
-
-        assert window._config.preview_engine == "v1"
-        assert window._state_store.state.preview_engine == "v1"
-        assert window._preview_engine_actions["v1"].isChecked() is True
-        assert window._preview_engine_actions["v2"].isChecked() is False
-
-        _close_window(window)
-
-    def test_preview_engine_v2_disabled_keeps_v1_selected(self, qapp, isolated_config, monkeypatch):
-        from ui_designer.ui import main_window as main_window_module
-        from ui_designer.ui.main_window import MainWindow
-
-        monkeypatch.setattr(main_window_module, "PREVIEW_V2_ENABLED", False)
-
-        window = MainWindow("")
-        window._preview_engine_actions["v1"].setChecked(True)
-        window._preview_engine_actions["v2"].setChecked(False)
-        window._config.preview_engine = "v1"
-        window._state_store.set_preview_engine("v1")
-
-        switch_calls = []
-        monkeypatch.setattr(window._renderer_manager, "switch", lambda *args, **kwargs: switch_calls.append(args) or "v2")
-
-        window._set_preview_engine("v2")
-
-        assert switch_calls == []
-        assert window._config.preview_engine == "v1"
-        assert window._state_store.state.preview_engine == "v1"
-        assert window._preview_engine_actions["v1"].isChecked() is True
-        assert window._preview_engine_actions["v2"].isChecked() is False
-        assert window.statusBar().currentMessage() == "Preview V2 is disabled by feature flag"
-
-        _close_window(window)
-
     def test_preview_engine_invalid_name_is_ignored(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
         window._preview_engine_actions["v1"].setChecked(True)
-        window._preview_engine_actions["v2"].setChecked(False)
         window._config.preview_engine = "v1"
         window._state_store.set_preview_engine("v1")
 
@@ -11223,6 +11032,5 @@ class TestMainWindowCanvasActions:
         assert window._config.preview_engine == "v1"
         assert window._state_store.state.preview_engine == "v1"
         assert window._preview_engine_actions["v1"].isChecked() is True
-        assert window._preview_engine_actions["v2"].isChecked() is False
 
         _close_window(window)

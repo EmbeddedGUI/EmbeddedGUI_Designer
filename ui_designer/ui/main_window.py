@@ -122,7 +122,6 @@ from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_conten
 from .theme import apply_theme
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
-from ..settings.preview_settings import PreviewSettings
 from ..core.state_store import StateStore
 from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
@@ -622,7 +621,6 @@ class MainWindow(QMainWindow):
         """Register preview renderer and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
 
-        # V2 renderer has been removed; always persist v1.
         active_engine = self._renderer_manager.switch("v1", fallback="v1")
         self._config.preview_engine = "v1"
         if hasattr(self, "_state_store"):
@@ -2742,10 +2740,6 @@ class MainWindow(QMainWindow):
         if reason or self.preview_panel.is_python_preview_active() or self.compiler is None:
             self._switch_to_python_preview(reason)
             self.statusBar().showMessage("Using Python fallback preview.", 3000)
-
-    def _render_preview_with_v2(self):
-        """Deprecated: V2 renderer removed."""
-        return
 
     def _persist_current_project_to_config(self):
         self._config.last_app = self.app_name or self._config.last_app
@@ -7638,7 +7632,10 @@ class MainWindow(QMainWindow):
 
     def _set_preview_engine(self, engine_name: str) -> None:
         """Preview engine selection is fixed to v1 after v2 removal."""
-        _ = engine_name
+        engine_name = str(engine_name or "").strip().lower()
+        if engine_name != "v1":
+            self._update_preview_engine_actions()
+            return
         active_engine = self._renderer_manager.switch("v1", fallback="v1")
         self._config.preview_engine = "v1"
         self._config.save()
@@ -7862,8 +7859,6 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
-
 
 
 

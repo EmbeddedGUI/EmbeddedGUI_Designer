@@ -240,10 +240,11 @@
 last_update: 2026-04-01
 phase: phase_c_in_progress
 in_progress:
-  - CLEAN-003
+  - UX-005
 completed:
   - CLEAN-001
   - CLEAN-002
+  - CLEAN-003
   - PERF-001
   - UX-001
   - UX-002
@@ -253,9 +254,9 @@ completed:
   - REL-002
 blocked: []
 next_recommended:
-  - CLEAN-003
   - UX-005
   - PERF-002
+  - UX-006
 notes:
   - 已清理 V2 预览代码与测试残留：删除 `renderer/v2_renderer_qml.py` 与 `tests/renderer/test_v2_renderer.py`。
   - 已在 iconography 中增加 Material Symbols 映射与字体渲染回退机制。
@@ -265,6 +266,8 @@ notes:
   - 已完成主壳层间距降重一批（workspace/editor/inspector/bottom 区域 spacing 与 margin 下调）。
   - 已完成 PERF-001 首批治理：canvas move/resize 改为拖拽中轻量刷新、拖拽结束后统一补做 overlay/XML/资源面板同步。
   - 已为 PropertyPanel 几何同步与 MainWindow 拖拽刷新节流补充定向回归用例。
+  - 已完成 CLEAN-003：删除 `settings/preview_settings.py`、对应测试与旧版 V1/V2 扩展计划文档，主代码/测试中不再保留 V2 入口引用。
+  - 已执行残留引用扫描与预览相关回归：`test_preview_workspace.py`、`test_main_window_file_flow.py -k canvas_move|preview_failure|preview_engine_invalid_name` 通过。
 ```
 
 ---
