@@ -669,7 +669,7 @@ class WidgetBrowserPanel(QWidget):
                 accessible_name=accessible_name,
             )
         self._clear_tags_btn.setEnabled(bool(active))
-        self._clear_tags_btn.setVisible(bool(active))
+        _set_widget_visible(self._clear_tags_btn, bool(active))
         clear_hint = "Clear active widget tags." if active else "No active widget tags to clear."
         _set_widget_metadata(
             self._clear_tags_btn,
@@ -736,7 +736,7 @@ class WidgetBrowserPanel(QWidget):
         self._update_accessibility_summary(len(items))
 
     def _update_insert_target(self):
-        self._insert_target.setVisible(self._insert_target_label != "Current page root")
+        _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
 
     def _update_browser_stats(self, visible_count):

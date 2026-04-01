@@ -617,6 +617,34 @@ class TestWidgetBrowserPanel:
         assert button_card._insert_btn.isHidden() is True
         panel.deleteLater()
 
+    def test_insert_target_visibility_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel._insert_target.setProperty("_widget_browser_visible_snapshot", None)
+
+        visible_calls = 0
+        original_set_visible = panel._insert_target.setVisible
+
+        def counted_set_visible(value):
+            nonlocal visible_calls
+            visible_calls += 1
+            return original_set_visible(value)
+
+        monkeypatch.setattr(panel._insert_target, "setVisible", counted_set_visible)
+
+        panel.set_insert_target_label("root_group / content")
+        assert visible_calls == 1
+
+        visible_calls = 0
+        panel.set_insert_target_label("root_group / footer")
+        assert visible_calls == 0
+
+        panel.set_insert_target_label("Current page root")
+        assert visible_calls == 1
+        assert panel._insert_target.isHidden() is True
+        panel.deleteLater()
+
     def test_card_metadata_tracks_selection_and_favorite_state(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
