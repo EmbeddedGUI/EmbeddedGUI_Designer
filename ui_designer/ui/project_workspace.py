@@ -6,6 +6,13 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
 
 from .iconography import make_icon
+from .theme import theme_tokens
+
+
+_TOKENS = theme_tokens("dark")
+_SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_TOKENS.get("space_md", 12))
+_ICON_SM = int(_TOKENS.get("icon_sm", 16))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -56,7 +63,7 @@ class ProjectWorkspacePanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(_SPACE_MD)
 
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
@@ -75,7 +82,7 @@ class ProjectWorkspacePanel(QWidget):
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(6)
+        chips_row.setSpacing(_SPACE_SM)
         self._page_count_chip = QLabel("0 pages")
         self._page_count_chip.setObjectName("workspace_status_chip")
         chips_row.addWidget(self._page_count_chip)
@@ -103,7 +110,7 @@ class ProjectWorkspacePanel(QWidget):
         self._list_btn = QPushButton("List\nStructure first")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
-        self._list_btn.setIcon(make_icon("project"))
+        self._list_btn.setIcon(make_icon("project", size=_ICON_SM))
         _set_widget_metadata(
             self._list_btn,
             tooltip="Show the page list for structure-first editing.",
@@ -112,7 +119,7 @@ class ProjectWorkspacePanel(QWidget):
         self._thumb_btn = QPushButton("Thumbnails\nVisual scan")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
-        self._thumb_btn.setIcon(make_icon("image"))
+        self._thumb_btn.setIcon(make_icon("image", size=_ICON_SM))
         _set_widget_metadata(
             self._thumb_btn,
             tooltip="Show page thumbnails for a visual scan.",

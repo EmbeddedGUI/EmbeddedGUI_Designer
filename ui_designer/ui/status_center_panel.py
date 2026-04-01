@@ -6,6 +6,18 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QProgressBar, QPushButton, QToolButton, QVBoxLayout, QWidget
 
 from .iconography import make_icon
+from .theme import theme_tokens
+
+
+_TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
+_SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_TOKENS.get("space_md", 12))
+_SPACE_LG = int(_TOKENS.get("space_lg", 16))
+_ICON_XS = int(_TOKENS.get("icon_xs", 14))
+_ICON_SM = int(_TOKENS.get("icon_sm", 16))
+_ICON_MD = int(_TOKENS.get("icon_md", 18))
+_ICON_LG = int(_TOKENS.get("icon_lg", 20))
 
 
 class _ClickableFrame(QFrame):
@@ -86,7 +98,7 @@ class StatusCenterPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(_SPACE_MD)
 
         header = QFrame()
         header.setObjectName("status_center_header")
@@ -212,7 +224,7 @@ class StatusCenterPanel(QWidget):
         last_action_row.addStretch(1)
         self._repeat_action_menu = QMenu(self)
         self._repeat_action_button = QToolButton()
-        self._repeat_action_button.setIcon(make_icon("history"))
+        self._repeat_action_button.setIcon(make_icon("history", size=_ICON_MD))
         self._repeat_action_button.setPopupMode(QToolButton.MenuButtonPopup)
         self._repeat_action_button.setMenu(self._repeat_action_menu)
         self._repeat_action_button.setEnabled(False)
@@ -231,7 +243,7 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_label.setVisible(False)
         suggested_row.addWidget(self._suggested_action_label, 0)
         self._suggested_action_button = QPushButton("Open Diagnostics")
-        self._suggested_action_button.setIcon(make_icon("diagnostics"))
+        self._suggested_action_button.setIcon(make_icon("diagnostics", size=_ICON_SM))
         self._suggested_action_button.setAccessibleName("Suggested status action")
         self._suggested_action_button.clicked.connect(self._trigger_suggested_action)
         suggested_row.addWidget(self._suggested_action_button, 0)
@@ -343,7 +355,7 @@ class StatusCenterPanel(QWidget):
         top.setContentsMargins(0, 0, 0, 0)
         top.setSpacing(6)
         icon_label = QLabel()
-        icon_label.setPixmap(make_icon(icon_key, size=16).pixmap(16, 16))
+        icon_label.setPixmap(make_icon(icon_key, size=_ICON_SM).pixmap(_ICON_SM, _ICON_SM))
         top.addWidget(icon_label, 0, Qt.AlignVCenter)
         title = QLabel(label)
         title.setObjectName("workspace_section_subtitle")
@@ -371,7 +383,7 @@ class StatusCenterPanel(QWidget):
         top.setContentsMargins(0, 0, 0, 0)
         top.setSpacing(6)
         icon_label = QLabel()
-        icon_label.setPixmap(make_icon(icon_key, size=14).pixmap(14, 14))
+        icon_label.setPixmap(make_icon(icon_key, size=_ICON_XS).pixmap(_ICON_XS, _ICON_XS))
         top.addWidget(icon_label, 0, Qt.AlignVCenter)
         title = QLabel(label)
         title.setObjectName("workspace_section_subtitle")
@@ -456,7 +468,7 @@ class StatusCenterPanel(QWidget):
     def _build_action_button(self, text, icon_key, action_key):
         button = QPushButton(text)
         button.setProperty("baseText", text)
-        button.setIcon(make_icon(icon_key))
+        button.setIcon(make_icon(icon_key, size=_ICON_SM))
         default_hint = f"Open {self._action_label(action_key)}."
         button.setAccessibleName(
             self._action_button_accessible_name(action_key, text, hint=default_hint)
@@ -505,7 +517,7 @@ class StatusCenterPanel(QWidget):
         for action_key in self._recent_actions:
             action_label = self._action_label(action_key)
             menu_action = self._repeat_action_menu.addAction(action_label)
-            menu_action.setIcon(make_icon(self._action_icon_key(action_key), size=16))
+            menu_action.setIcon(make_icon(self._action_icon_key(action_key), size=_ICON_SM))
             if action_key == self._last_action:
                 menu_tooltip = f"Repeat the current action: {action_label}."
             else:
@@ -514,7 +526,7 @@ class StatusCenterPanel(QWidget):
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
-        clear_action.setIcon(make_icon("history", size=16))
+        clear_action.setIcon(make_icon("history", size=_ICON_SM))
         self._set_action_hint(clear_action, self._clear_recent_actions_tooltip())
         clear_action.triggered.connect(self._clear_recent_actions)
         self._update_repeat_action_menu_metadata()
@@ -1170,7 +1182,7 @@ class StatusCenterPanel(QWidget):
         self._set_widget_icon(
             self._repeat_action_button,
             self._action_icon_key(self._last_action if has_action else "history"),
-            size=20,
+            size=_ICON_LG,
         )
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
         self._set_accessible_name(self._repeat_action_button, self._repeat_action_accessible_name(action_label))
