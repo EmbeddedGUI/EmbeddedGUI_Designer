@@ -8388,6 +8388,52 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_workspace_nav_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        for widget in (
+            *window._workspace_nav_buttons.values(),
+            window._workspace_nav_frame,
+            window._left_panel_stack,
+            window._left_shell,
+        ):
+            if hasattr(widget, "_metadata_summary_snapshot"):
+                delattr(widget, "_metadata_summary_snapshot")
+
+        project_tooltip_calls = 0
+        stack_tooltip_calls = 0
+        original_project_set_tooltip = window._workspace_nav_buttons["project"].setToolTip
+        original_stack_set_tooltip = window._left_panel_stack.setToolTip
+
+        def counted_project_set_tooltip(text):
+            nonlocal project_tooltip_calls
+            project_tooltip_calls += 1
+            return original_project_set_tooltip(text)
+
+        def counted_stack_set_tooltip(text):
+            nonlocal stack_tooltip_calls
+            stack_tooltip_calls += 1
+            return original_stack_set_tooltip(text)
+
+        monkeypatch.setattr(window._workspace_nav_buttons["project"], "setToolTip", counted_project_set_tooltip)
+        monkeypatch.setattr(window._left_panel_stack, "setToolTip", counted_stack_set_tooltip)
+
+        window._update_workspace_nav_button_metadata("project")
+        assert project_tooltip_calls == 1
+        assert stack_tooltip_calls == 1
+
+        project_tooltip_calls = 0
+        stack_tooltip_calls = 0
+        window._update_workspace_nav_button_metadata("project")
+        assert project_tooltip_calls == 0
+        assert stack_tooltip_calls == 0
+
+        window._update_workspace_nav_button_metadata("status")
+        assert project_tooltip_calls == 1
+        assert stack_tooltip_calls == 1
+        _close_window(window)
+
     def test_workspace_tab_widgets_expose_current_section_metadata(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 

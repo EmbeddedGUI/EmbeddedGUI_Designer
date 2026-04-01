@@ -729,30 +729,22 @@ class MainWindow(QMainWindow):
             if context:
                 tooltip = f"{tooltip} {context}"
                 accessible_name = f"{accessible_name} {context}"
-            button.setToolTip(tooltip)
-            button.setStatusTip(tooltip)
-            button.setAccessibleName(accessible_name)
+            self._set_metadata_summary(button, tooltip, accessible_name)
         current_label = self._workspace_panel_label(current_panel)
         current_context = self._workspace_menu_action_context(current_panel)
         if hasattr(self, "_workspace_nav_frame"):
             nav_summary = f"Workspace navigation rail. Current panel: {current_label}."
-            self._workspace_nav_frame.setToolTip(nav_summary)
-            self._workspace_nav_frame.setStatusTip(nav_summary)
-            self._workspace_nav_frame.setAccessibleName(nav_summary)
+            self._set_metadata_summary(self._workspace_nav_frame, nav_summary)
         if hasattr(self, "_left_panel_stack"):
             stack_summary = f"Workspace panels: {current_label} visible."
             if current_context:
                 stack_summary = f"{stack_summary} {current_context}"
-            self._left_panel_stack.setToolTip(stack_summary)
-            self._left_panel_stack.setStatusTip(stack_summary)
-            self._left_panel_stack.setAccessibleName(stack_summary)
+            self._set_metadata_summary(self._left_panel_stack, stack_summary)
         if hasattr(self, "_left_shell"):
             shell_summary = f"Workspace left shell: {current_label} panel visible."
             if current_context:
                 shell_summary = f"{shell_summary} {current_context}"
-            self._left_shell.setToolTip(shell_summary)
-            self._left_shell.setStatusTip(shell_summary)
-            self._left_shell.setAccessibleName(shell_summary)
+            self._set_metadata_summary(self._left_shell, shell_summary)
         self._update_workspace_layout_metadata()
 
     def _workspace_menu_action_context(self, panel_key):

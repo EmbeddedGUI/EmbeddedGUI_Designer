@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `PERF-002` updated: workspace navigation buttons and left-shell summaries now cache their tooltip/accessibility metadata, skipping no-op rewrites while the current panel and its page / diagnostics context remain unchanged.
   - `PERF-002` updated: workspace layout shells now cache their tooltip/accessibility summaries, skipping no-op metadata rewrites while the current page, left panel, editor mode, inspector section, and bottom-panel visibility remain unchanged.
   - `PERF-002` updated: page tab bar accessibility metadata now skips no-op tooltip/status/accessibility rewrites when the open-page, current-page, startup-page, and dirty-page summary has not changed.
   - `PERF-002` updated: main toolbar workspace chips now cache their visible/text/tone/tooltip snapshot, skipping no-op style refreshes when SDK, dirty, selection, preview, and diagnostics state have not changed.
