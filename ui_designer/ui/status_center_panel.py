@@ -533,7 +533,7 @@ class StatusCenterPanel(QWidget):
     def _update_repeat_action_menu_metadata(self):
         summary = self._repeat_action_menu_summary()
         self._set_hint(self._repeat_action_menu, summary)
-        self._repeat_action_menu.setAccessibleName(summary)
+        self._set_accessible_name(self._repeat_action_menu, summary)
 
     def _recent_actions_accessible_name(self):
         count = len(self._recent_actions)
