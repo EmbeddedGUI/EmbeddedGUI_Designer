@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-005` updated: status center now hides the Runtime chip while runtime is clear, leaving the section title as the idle-state cue and only surfacing the chip when an actual runtime issue appears.
   - `UX-005` updated: widget browser quick lanes now drop the visible `0` count badge in empty lanes, while keeping the detailed tooltip and accessibility copy for lane availability.
   - `UX-005` updated: status center now hides the workspace-status chip once the workspace reaches the fully ready state, keeping setup / diagnostics / in-progress states prominent while dropping the idle-ready badge.
   - `UX-005` updated: status center now hides the Diagnostic Mix chip while diagnostics are clear, relying on the section title and Diagnostics action until an actual error, warning, or info item needs attention.

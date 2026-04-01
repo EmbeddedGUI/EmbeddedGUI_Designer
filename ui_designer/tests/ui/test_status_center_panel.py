@@ -51,6 +51,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.text() == "Runtime (Clear)"
         assert panel._runtime_title.toolTip() == "Runtime status: clear."
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
+        assert panel._runtime_chip.isHidden() is True
         assert panel._diag_value.toolTip() == "Diagnostics: 2 errors, 1 warning, 1 info item"
         assert panel._diag_value.accessibleName() == "Diagnostics value: 2 errors, 1 warning, 1 info item"
         assert panel._diag_card.accessibleName() == (
@@ -158,6 +159,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.text() == "Runtime (Issue)"
         assert panel._runtime_title.toolTip() == "Runtime status: issue detected. Runtime failed"
         assert panel._runtime_title.accessibleName() == "Runtime title: Issue detected. Runtime failed"
+        assert panel._runtime_chip.isHidden() is False
         assert panel._runtime_chip.text() == "Issue"
         assert panel._runtime_chip.property("chipTone") == "danger"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
@@ -224,6 +226,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.text() == "No runtime errors."
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
+        assert panel._runtime_chip.isHidden() is True
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.property("chipTone") == "success"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
@@ -292,6 +295,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
+        assert panel._runtime_chip.isHidden() is True
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.property("chipTone") == "success"
         assert panel._error_row.toolTip() == "Open Errors. No errors active."
@@ -378,6 +382,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.toolTip() == "Bridge disconnected"
         assert panel._runtime_label.accessibleName() == "Runtime details: Bridge disconnected"
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Bridge disconnected"
+        assert panel._runtime_chip.isHidden() is False
         assert panel._sdk_value.toolTip() == "SDK: Ready"
         assert panel._sdk_value.accessibleName() == "SDK value: Ready"
         assert panel._sdk_card.accessibleName() == "SDK metric: Ready. Open Project. SDK workspace is ready."
@@ -486,6 +491,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.text() == "Runtime (Clear)"
         assert panel._runtime_title.accessibleName() == "Runtime title: Clear. No runtime errors."
         assert panel._runtime_label.isHidden() is True
+        assert panel._runtime_chip.isHidden() is True
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with no recent actions yet."
         assert panel._actions_title.accessibleName() == "Quick actions section: No recent actions yet."
@@ -571,6 +577,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.property("iconKey") == "diagnostics"
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
+        assert panel._runtime_chip.isHidden() is True
         assert panel._runtime_chip.text() == "Clear"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. No runtime errors."
         assert panel._runtime_chip.accessibleName() == (
@@ -1071,6 +1078,7 @@ class TestStatusCenterPanel:
         ]
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
         assert panel._runtime_chip.text() == "Clear"
+        assert panel._runtime_chip.isHidden() is True
         assert panel._runtime_chip.accessibleName() == (
             "Runtime status: Clear. Open Debug Output. No runtime errors."
         )
