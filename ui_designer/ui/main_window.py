@@ -120,6 +120,14 @@ from ..engine.release_engine import collect_release_diagnostics, latest_release_
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme, theme_tokens
+
+
+_DEFAULT_UI_TOKENS = theme_tokens("dark")
+_SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
+_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
+_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
+_SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
@@ -329,14 +337,14 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(14, 14, 14, 14)
-        editor_layout.setSpacing(10)
+        editor_layout.setContentsMargins(_SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS)
+        editor_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(10, 8, 10, 8)
-        self._toolbar_host_layout.setSpacing(8)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM, _SPACE_SM + _SPACE_XXS, _SPACE_SM)
+        self._toolbar_host_layout.setSpacing(_SPACE_SM)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)

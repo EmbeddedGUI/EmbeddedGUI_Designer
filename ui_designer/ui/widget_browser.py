@@ -33,6 +33,12 @@ from .theme import theme_tokens
 
 _ITEM_METADATA_SNAPSHOT_ROLE = Qt.UserRole + 1024
 _DEFAULT_UI_TOKENS = theme_tokens("dark")
+_SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
+_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
+_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
+_SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
+_SPACE_XL = int(_DEFAULT_UI_TOKENS.get("space_xl", 20))
 _ICON_SM = int(_DEFAULT_UI_TOKENS.get("icon_sm", 16))
 _ICON_MD = int(_DEFAULT_UI_TOKENS.get("icon_md", 18))
 _ICON_LG = int(_DEFAULT_UI_TOKENS.get("icon_lg", 20))
@@ -107,8 +113,8 @@ class WidgetBrowserCard(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 6, 8, 6)
-        layout.setSpacing(6)
+        layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        layout.setSpacing(_SPACE_SM - _SPACE_XXS)
 
         self._icon_label = QLabel()
         self._icon_label.setPixmap(
@@ -310,7 +316,7 @@ class WidgetBrowserPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(_SPACE_SM)
 
         header = QFrame()
         header.setObjectName("widget_browser_header")
