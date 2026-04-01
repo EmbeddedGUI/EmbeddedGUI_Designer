@@ -258,6 +258,7 @@ blocked: []
 next_recommended:
   - UX-005
 notes:
+  - `UX-006` updated: resource-usage navigation、资源拖放绑定、以及画布拖放插入 widget 后会自动切回 Properties inspector，进一步缩短“选中 -> 编辑属性”路径。
   - `PERF-002` updated: status center hint helpers now cache their last tooltip text, so repeated quick-action and dashboard metadata refreshes skip no-op tooltip/status rewrites when the visible guidance has not changed.
   - `PERF-002` updated: the Generate Resources action now reuses cached action hints from initialization through later metadata syncs, skipping no-op tooltip/status rewrites while project, SDK, and resource-directory state remain unchanged.
   - `PERF-002` updated: persistent Structure actions now reuse cached action hints, skipping no-op tooltip/status rewrites while the current selection and move-target history stay unchanged.
