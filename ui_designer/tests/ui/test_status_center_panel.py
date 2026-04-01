@@ -1179,6 +1179,48 @@ class TestStatusCenterPanel:
         assert panel._health_chip.isHidden() is True
         panel.deleteLater()
 
+    def test_runtime_visibility_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._runtime_label.setProperty("_status_center_visible_snapshot", None)
+        panel._runtime_chip.setProperty("_status_center_visible_snapshot", None)
+
+        label_visible_calls = 0
+        chip_visible_calls = 0
+        original_label_set_visible = panel._runtime_label.setVisible
+        original_chip_set_visible = panel._runtime_chip.setVisible
+
+        def counted_label_set_visible(value):
+            nonlocal label_visible_calls
+            label_visible_calls += 1
+            return original_label_set_visible(value)
+
+        def counted_chip_set_visible(value):
+            nonlocal chip_visible_calls
+            chip_visible_calls += 1
+            return original_chip_set_visible(value)
+
+        monkeypatch.setattr(panel._runtime_label, "setVisible", counted_label_set_visible)
+        monkeypatch.setattr(panel._runtime_chip, "setVisible", counted_chip_set_visible)
+
+        panel.set_status(runtime_error="Runtime failed")
+        assert label_visible_calls == 1
+        assert chip_visible_calls == 1
+
+        label_visible_calls = 0
+        chip_visible_calls = 0
+        panel.set_status(runtime_error="Bridge lost")
+        assert label_visible_calls == 0
+        assert chip_visible_calls == 0
+
+        panel.set_status()
+        assert label_visible_calls == 1
+        assert chip_visible_calls == 1
+        assert panel._runtime_label.isHidden() is True
+        assert panel._runtime_chip.isHidden() is True
+        panel.deleteLater()
+
     def test_set_widget_icon_skips_no_op_icon_refreshes(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
