@@ -232,6 +232,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name="Workspace active page: none.",
             )
         if dirty > 0:
+            self._dirty_pages_chip.setVisible(True)
             dirty_label = f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages"
             self._set_chip(
                 self._dirty_pages_chip,
@@ -240,6 +241,7 @@ class ProjectWorkspacePanel(QWidget):
                 accessible_name=f"Workspace dirty pages: {dirty_label}.",
             )
         else:
+            self._dirty_pages_chip.setVisible(False)
             self._set_chip(
                 self._dirty_pages_chip,
                 "No dirty pages",

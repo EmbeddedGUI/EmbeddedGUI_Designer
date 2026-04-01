@@ -7890,6 +7890,7 @@ class TestMainWindowFileFlow:
         assert window._diagnostics_chip.statusTip() == window._diagnostics_chip.toolTip()
         assert window._project_workspace._page_count_chip.text() == "1 page"
         assert window._project_workspace._active_page_chip.text() == "Active: main_page"
+        assert window._project_workspace._dirty_pages_chip.isHidden() is True
         assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
         assert window._dirty_chip.isHidden() is True
         assert window._workspace_nav_buttons["structure"].toolTip() == (
@@ -7931,6 +7932,7 @@ class TestMainWindowFileFlow:
         assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
         assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
         assert window._dirty_chip.statusTip() == window._dirty_chip.toolTip()
+        assert window._project_workspace._dirty_pages_chip.isHidden() is False
         assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
         assert window._workspace_nav_buttons["status"].toolTip() == (
             "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: 1 dirty page."
