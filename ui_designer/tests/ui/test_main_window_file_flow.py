@@ -7399,9 +7399,11 @@ class TestMainWindowFileFlow:
 
         assert window._current_page.name == "main_page"
 
+        window._show_inspector_tab("animations")
         window._on_diagnostic_requested("detail_page", "target")
 
         assert window._current_page.name == "detail_page"
+        assert window._inspector_tabs.currentIndex() == 0
         assert window._selection_state.primary is target
         assert window._selection_state.widgets == [target]
         assert window.statusBar().currentMessage() == "Opened diagnostic target: detail_page/target."
@@ -8309,9 +8311,11 @@ class TestMainWindowFileFlow:
         window._set_selection([container], primary=container, sync_tree=True, sync_preview=True)
 
         window._show_widget_browser_for_parent(container)
+        window._show_inspector_tab("animations")
         window._insert_widget_from_browser("button")
 
         assert window._current_left_panel == "widgets"
+        assert window._inspector_tabs.currentIndex() == 0
         assert len(container.children) == 1
         inserted = container.children[0]
         assert inserted.widget_type == "button"
@@ -8339,9 +8343,11 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
+        window._show_inspector_tab("animations")
         window._reveal_widget_type_in_structure("button")
 
         assert window._current_left_panel == "structure"
+        assert window._inspector_tabs.currentIndex() == 0
         assert window._selection_state.primary is button
         assert window.widget_tree._get_selected_widget() is button
         assert "Revealed Button in structure." == window.statusBar().currentMessage()

@@ -1695,6 +1695,7 @@ class MainWindow(QMainWindow):
         inserted = self.widget_tree.insert_widget(widget_type, parent=parent)
         if inserted is None:
             return
+        self._focus_properties_for_selection()
         self.widget_browser.refresh()
         self._pending_insert_parent = None
         self._update_widget_browser_target()
@@ -1715,6 +1716,7 @@ class MainWindow(QMainWindow):
 
         primary = next((widget for widget in widgets if widget is not getattr(self._current_page, "root_widget", None)), widgets[0])
         self._set_selection([primary], primary=primary, sync_tree=True, sync_preview=True)
+        self._focus_properties_for_selection()
         self.statusBar().showMessage(
             f"Revealed {WidgetRegistry.instance().display_name(widget_type)} in structure.",
             3000,
@@ -5911,6 +5913,7 @@ class MainWindow(QMainWindow):
             return
 
         self._set_selection([widget], primary=widget, sync_tree=True, sync_preview=True)
+        self._focus_properties_for_selection()
         if diagnostic_entry is not None and getattr(diagnostic_entry, "resource_type", "") and getattr(diagnostic_entry, "resource_name", ""):
             self._select_left_panel("assets")
             self.res_panel._select_resource_item(diagnostic_entry.resource_type, diagnostic_entry.resource_name)
@@ -7869,7 +7872,6 @@ class _PageProjectShim:
         if self._page and self._page.root_widget:
             return [self._page.root_widget]
         return []
-
 
 
 
