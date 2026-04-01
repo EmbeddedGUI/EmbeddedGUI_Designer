@@ -1569,7 +1569,8 @@ class StatusCenterPanel(QWidget):
             self._first_error_btn,
             first_error_hint,
         )
-        self._first_error_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._first_error_btn,
             self._action_button_accessible_name(
                 "open_first_error",
                 self._first_error_btn.text(),
@@ -1592,7 +1593,8 @@ class StatusCenterPanel(QWidget):
             self._first_warning_btn,
             first_warning_hint,
         )
-        self._first_warning_btn.setAccessibleName(
+        self._set_accessible_name(
+            self._first_warning_btn,
             self._action_button_accessible_name(
                 "open_first_warning",
                 self._first_warning_btn.text(),

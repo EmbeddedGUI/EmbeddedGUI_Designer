@@ -1394,6 +1394,33 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_first_warning_button_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._first_warning_btn.setProperty("_status_center_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._first_warning_btn.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._first_warning_btn, "setAccessibleName", counted_set_accessible_name)
+
+        panel.set_status(diagnostics_warnings=2)
+        assert accessible_calls == 1
+
+        panel.set_status(diagnostics_warnings=2, diagnostics_infos=1)
+        assert accessible_calls == 1
+
+        panel.set_status(diagnostics_warnings=3, diagnostics_infos=1)
+        assert accessible_calls == 2
+
+        panel.deleteLater()
+
     def test_last_action_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
