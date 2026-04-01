@@ -762,7 +762,7 @@ class WidgetBrowserPanel(QWidget):
         for lane_id, button in self._lane_buttons.items():
             base_label = button.text().split("\n", 1)[0]
             count = int(counts.get(lane_id, 0) or 0)
-            button.setText(f"{base_label}\n{count}")
+            button.setText(f"{base_label}\n{count}" if count > 0 else base_label)
             button.blockSignals(True)
             button.setChecked(lane_id == selected)
             button.blockSignals(False)

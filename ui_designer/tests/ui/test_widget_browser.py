@@ -286,6 +286,7 @@ class TestWidgetBrowserPanel:
         assert panel._selected_category() == "favorites"
         assert [card.type_name for card in panel._cards.values()] == ["button"]
         assert favorites_lane.isChecked() is True
+        assert favorites_lane.text() == "Favorites\n1"
         assert favorites_lane.toolTip() == "Quick lane Favorites: 1 widget. Current lane."
         assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget. Current lane."
         assert favorites_lane.statusTip() == favorites_lane.toolTip()
@@ -495,6 +496,7 @@ class TestWidgetBrowserPanel:
         assert panel._sort_buttons["name"].accessibleName() == "Sort mode: A-Z. Available."
         assert panel._complexity_buttons["all"].accessibleName() == "Complexity filter: All. Current."
         assert panel._complexity_buttons["advanced"].accessibleName() == "Complexity filter: Advanced. Available."
+        assert panel._lane_buttons["favorites"].text() == "Favorites"
         assert panel._lane_buttons["favorites"].accessibleName() == "Quick lane: Favorites. 0 widgets. No widgets available."
 
         scenario_item = next(
@@ -561,6 +563,7 @@ class TestWidgetBrowserPanel:
         panel = WidgetBrowserPanel()
         favorites_lane = panel._lane_buttons["favorites"]
 
+        assert favorites_lane.text() == "Favorites\n1"
         assert favorites_lane.toolTip() == "Quick lane Favorites: 1 widget."
         assert favorites_lane.accessibleName() == "Quick lane: Favorites. 1 widget. Available."
 
