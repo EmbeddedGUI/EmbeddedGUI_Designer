@@ -8097,6 +8097,39 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
         _close_window(window)
 
+    def test_sdk_status_label_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        if hasattr(window._sdk_status_label, "_sdk_status_label_snapshot"):
+            delattr(window._sdk_status_label, "_sdk_status_label_snapshot")
+        if hasattr(window._sdk_status_label, "_metadata_summary_snapshot"):
+            delattr(window._sdk_status_label, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._sdk_status_label.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._sdk_status_label, "setToolTip", counted_set_tooltip)
+
+        window._update_sdk_status_label()
+        assert tooltip_calls == 1
+        assert window._sdk_status_label.toolTip() == "No SDK root configured"
+
+        tooltip_calls = 0
+        window._update_sdk_status_label()
+        assert tooltip_calls == 0
+
+        monkeypatch.setattr(window, "_active_sdk_root", lambda: "C:\\sdk")
+        window._update_sdk_status_label()
+        assert tooltip_calls == 1
+        assert window._sdk_status_label.toolTip() == "C:\\sdk"
+        _close_window(window)
+
     def test_main_view_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

@@ -4076,10 +4076,12 @@ class MainWindow(QMainWindow):
         sdk_root = self.project_root or self._active_sdk_root()
         binding_label = format_sdk_binding_label(sdk_root, _DESIGNER_REPO_ROOT)
         tooltip = sdk_root or "No SDK root configured"
-        self._sdk_status_label.setText(binding_label)
-        self._sdk_status_label.setToolTip(tooltip)
-        self._sdk_status_label.setStatusTip(tooltip)
-        self._sdk_status_label.setAccessibleName(f"SDK binding: {binding_label}.")
+        accessible_name = f"SDK binding: {binding_label}."
+        snapshot = (binding_label, str(tooltip or ""), accessible_name)
+        if getattr(self._sdk_status_label, "_sdk_status_label_snapshot", None) != snapshot:
+            self._sdk_status_label.setText(binding_label)
+            self._set_metadata_summary(self._sdk_status_label, tooltip, accessible_name)
+            self._sdk_status_label._sdk_status_label_snapshot = snapshot
         self._update_new_project_action_metadata(binding_label)
         self._update_file_open_action_metadata(binding_label)
         self._update_download_sdk_action_metadata(binding_label)
