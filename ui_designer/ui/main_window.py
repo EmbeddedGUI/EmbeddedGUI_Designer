@@ -1825,10 +1825,10 @@ class MainWindow(QMainWindow):
             current_page = self._current_page_accessibility_text()
             selection_text = self._selection_accessibility_text()
             tooltip = f"Inspector tabs. Current section: {current}. Current page: {current_page}. {selection_text}"
-            self._inspector_tabs.setToolTip(tooltip)
-            self._inspector_tabs.setStatusTip(tooltip)
-            self._inspector_tabs.setAccessibleName(
-                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. Current page: {current_page}. {selection_text}"
+            self._set_metadata_summary(
+                self._inspector_tabs,
+                tooltip,
+                f"Inspector tabs: {current} selected. {self._inspector_tabs.count()} tabs. Current page: {current_page}. {selection_text}",
             )
         if hasattr(self, "_page_tools_scroll"):
             current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
@@ -1838,21 +1838,21 @@ class MainWindow(QMainWindow):
                 f"Page inspector (Fields and Timers). Scroll focus: {focus_label}. "
                 f"Current page: {current_page}."
             )
-            self._page_tools_scroll.setToolTip(tooltip)
-            self._page_tools_scroll.setStatusTip(tooltip)
-            self._page_tools_scroll.setAccessibleName(
+            self._set_metadata_summary(
+                self._page_tools_scroll,
+                tooltip,
                 f"Page inspector: Fields and Timers sections. Scroll focus: {focus_label}. "
-                f"Current page: {current_page}."
+                f"Current page: {current_page}.",
             )
         if hasattr(self, "_bottom_tabs"):
             current = self._current_tab_text(self._bottom_tabs, "Diagnostics")
             current_page = self._current_page_accessibility_text()
             visibility = "visible" if self._bottom_panel_visible else "hidden"
             tooltip = f"Bottom tools tabs. Current section: {current}. Current page: {current_page}. Panel {visibility}."
-            self._bottom_tabs.setToolTip(tooltip)
-            self._bottom_tabs.setStatusTip(tooltip)
-            self._bottom_tabs.setAccessibleName(
-                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Current page: {current_page}. Panel {visibility}."
+            self._set_metadata_summary(
+                self._bottom_tabs,
+                tooltip,
+                f"Bottom tools tabs: {current} selected. {self._bottom_tabs.count()} tabs. Current page: {current_page}. Panel {visibility}.",
             )
         self._update_workspace_layout_metadata()
 

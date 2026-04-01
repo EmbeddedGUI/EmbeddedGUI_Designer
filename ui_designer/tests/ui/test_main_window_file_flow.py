@@ -8473,6 +8473,40 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.statusTip() == window._bottom_tabs.toolTip()
         _close_window(window)
 
+    def test_workspace_tab_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        for widget in (
+            window._inspector_tabs,
+            window._page_tools_scroll,
+            window._bottom_tabs,
+        ):
+            if hasattr(widget, "_metadata_summary_snapshot"):
+                delattr(widget, "_metadata_summary_snapshot")
+
+        tooltip_calls = 0
+        original_set_tooltip = window._bottom_tabs.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(window._bottom_tabs, "setToolTip", counted_set_tooltip)
+
+        window._update_workspace_tab_metadata()
+        assert tooltip_calls == 1
+
+        tooltip_calls = 0
+        window._update_workspace_tab_metadata()
+        assert tooltip_calls == 0
+
+        window._bottom_panel_visible = True
+        window._update_workspace_tab_metadata()
+        assert tooltip_calls == 1
+        _close_window(window)
+
     def test_focus_canvas_toggle_hides_side_panels_and_restores_on_open_actions(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
