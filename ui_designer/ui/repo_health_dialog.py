@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
 from .iconography import make_icon
+from .iconography import make_icon
 from ..model.config import get_config
 from ..model.repo_health import (
     collect_repo_health,
@@ -67,10 +68,15 @@ class RepositoryHealthDialog(QDialog):
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_summary_button = QPushButton("Copy Summary")
+        self._copy_summary_button.setIcon(make_icon("toolbar.copy"))
         self._export_summary_button = QPushButton("Export Summary...")
+        self._export_summary_button.setIcon(make_icon("toolbar.export"))
         self._copy_report_button = QPushButton("Copy Report")
+        self._copy_report_button.setIcon(make_icon("toolbar.copy"))
         self._copy_json_button = QPushButton("Copy JSON")
+        self._copy_json_button.setIcon(make_icon("toolbar.copy"))
         self._export_report_button = QPushButton("Export Report...")
+        self._export_report_button.setIcon(make_icon("toolbar.export"))
         self._copy_repo_button = QPushButton("Copy Repo")
         self._open_repo_button = QPushButton("Open Repo")
         self._copy_sdk_button = QPushButton("Copy SDK")
