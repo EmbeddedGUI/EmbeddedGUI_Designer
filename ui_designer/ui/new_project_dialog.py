@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
 
 from qfluentwidgets import LineEdit, PrimaryPushButton, PushButton
 
+from .iconography import make_icon
 from ..model.config import get_config
 from ..model.sdk_bootstrap import default_sdk_install_dir
 from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_configured_sdk_root, resolve_sdk_root_candidate
@@ -70,9 +71,11 @@ class NewProjectDialog(QDialog):
         sdk_row = QHBoxLayout()
         sdk_row.addWidget(self._sdk_edit, 1)
         self._sdk_browse_btn = PushButton("Browse...")
+        self._sdk_browse_btn.setIcon(make_icon("toolbar.open"))
         self._sdk_browse_btn.clicked.connect(self._browse_sdk_root)
         sdk_row.addWidget(self._sdk_browse_btn)
         self._sdk_clear_btn = PushButton("Clear")
+        self._sdk_clear_btn.setIcon(make_icon("toolbar.delete"))
         self._sdk_clear_btn.clicked.connect(self._clear_sdk_root)
         sdk_row.addWidget(self._sdk_clear_btn)
         form.addRow("SDK Root", sdk_row)
@@ -88,6 +91,7 @@ class NewProjectDialog(QDialog):
         parent_row = QHBoxLayout()
         parent_row.addWidget(self._parent_edit, 1)
         self._parent_browse_btn = PushButton("Browse...")
+        self._parent_browse_btn.setIcon(make_icon("toolbar.open"))
         self._parent_browse_btn.clicked.connect(self._browse_parent_dir)
         parent_row.addWidget(self._parent_browse_btn)
         form.addRow("Parent Dir", parent_row)
@@ -117,6 +121,7 @@ class NewProjectDialog(QDialog):
         self._cancel_btn.clicked.connect(self.reject)
         buttons.addWidget(self._cancel_btn)
         self._create_btn = PrimaryPushButton("Create")
+        self._create_btn.setIcon(make_icon("toolbar.new"))
         self._create_btn.clicked.connect(self._accept_if_valid)
         buttons.addWidget(self._create_btn)
         layout.addLayout(buttons)

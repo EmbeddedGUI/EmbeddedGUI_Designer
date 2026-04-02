@@ -8,6 +8,7 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
+from .iconography import make_icon
 from ..model.config import get_config
 from ..model.repo_health import (
     collect_repo_health,
@@ -59,7 +60,9 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addLayout(action_row)
 
         self._refresh_button = QPushButton("Refresh")
+        self._refresh_button.setIcon(make_icon("state.info"))
         self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button.setIcon(make_icon("toolbar.undo"))
         self._critical_only_check = QCheckBox("Critical Only")
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
