@@ -3439,6 +3439,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._toggle_lock_action)
 
         self._toggle_hide_action = QAction("Toggle Hide", self)
+        self._toggle_hide_action.setIcon(make_icon("edit.hidden"))
         self._apply_action_hint(
             self._toggle_hide_action,
             "Toggle the designer visibility state for the current selection.",
@@ -3454,11 +3455,13 @@ class MainWindow(QMainWindow):
         self._structure_menu = structure_menu
 
         self._group_selection_action = QAction("Group Selection", self)
+        self._group_selection_action.setIcon(make_icon("nav.page_group"))
         self._group_selection_action.setShortcut("Ctrl+G")
         self._group_selection_action.triggered.connect(self._group_selection)
         structure_menu.addAction(self._group_selection_action)
 
         self._ungroup_selection_action = QAction("Ungroup", self)
+        self._ungroup_selection_action.setIcon(make_icon("nav.component_library"))
         self._ungroup_selection_action.setShortcut("Ctrl+Shift+G")
         self._ungroup_selection_action.triggered.connect(self._ungroup_selection)
         structure_menu.addAction(self._ungroup_selection_action)
