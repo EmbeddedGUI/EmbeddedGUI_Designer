@@ -487,9 +487,9 @@ class MainWindow(QMainWindow):
 
         self._inspector_tabs = QTabWidget()
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
-        self._inspector_tabs.addTab(self.props_dock, make_icon("properties"), "Properties")
-        self._inspector_tabs.addTab(self.animations_panel, make_icon("animation"), "Animations")
-        self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("page"), "Page")
+        self._inspector_tabs.addTab(self.props_dock, make_icon("toolbar.settings.global"), "Properties")
+        self._inspector_tabs.addTab(self.animations_panel, make_icon("toolbar.preview"), "Animations")
+        self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("nav.page"), "Page")
         self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._top_splitter = QSplitter(Qt.Horizontal)
@@ -517,9 +517,9 @@ class MainWindow(QMainWindow):
         bottom_header_layout.addWidget(self._bottom_toggle_button)
 
         self._bottom_tabs = QTabWidget()
-        self._bottom_tabs.addTab(self.diagnostics_panel, make_icon("diagnostics"), "Diagnostics")
-        self._bottom_tabs.addTab(self.history_panel, make_icon("history"), "History")
-        self._bottom_tabs.addTab(self.debug_panel, make_icon("debug"), "Debug Output")
+        self._bottom_tabs.addTab(self.diagnostics_panel, make_icon("state.error"), "Diagnostics")
+        self._bottom_tabs.addTab(self.history_panel, make_icon("state.info"), "History")
+        self._bottom_tabs.addTab(self.debug_panel, make_icon("state.warn"), "Debug Output")
         self._bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
         bottom_shell = QWidget()
@@ -2155,22 +2155,22 @@ class MainWindow(QMainWindow):
         mode_icon_size = int(tokens.get("icon_sm", 16))
         if hasattr(self, "_workspace_nav_buttons"):
             icon_map = {
-                "project": "project",
-                "structure": "structure",
-                "widgets": "widgets",
-                "assets": "assets",
-                "status": "diagnostics",
+                "project": "nav.page_group",
+                "structure": "nav.page_group",
+                "widgets": "nav.component_library",
+                "assets": "nav.resource",
+                "status": "state.error",
             }
             for key, button in self._workspace_nav_buttons.items():
                 button.setIcon(make_icon(icon_map.get(key, "widgets"), size=nav_icon_size))
                 button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         if hasattr(self, "_insert_widget_button"):
-            self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
+            self._insert_widget_button.setIcon(make_icon("nav.component_library", size=toolbar_icon_size))
         if hasattr(self, "_toolbar_more_button"):
-            self._toolbar_more_button.setIcon(make_icon("more", size=toolbar_icon_size))
+            self._toolbar_more_button.setIcon(make_icon("toolbar.settings.global", size=toolbar_icon_size))
             self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         if hasattr(self, "_mode_buttons"):
-            for mode, icon_key in ((MODE_DESIGN, "widgets"), (MODE_SPLIT, "layout"), (MODE_CODE, "page")):
+            for mode, icon_key in ((MODE_DESIGN, "nav.component_library"), (MODE_SPLIT, "layout.align.left"), (MODE_CODE, "nav.page")):
                 self._mode_buttons[mode].setIcon(make_icon(icon_key, size=mode_icon_size))
 
     def _on_status_center_action_requested(self, action_key):
@@ -3510,7 +3510,7 @@ class MainWindow(QMainWindow):
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
-        self._compile_action.setIcon(make_icon("compile"))
+        self._compile_action.setIcon(make_icon("toolbar.compile"))
         self._compile_action.setShortcut("F5")
         self._compile_action.triggered.connect(self._do_compile_and_run)
         build_menu.addAction(self._compile_action)
@@ -3523,14 +3523,14 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self.auto_compile_action)
 
         self._stop_action = QAction("Stop Exe", self)
-        self._stop_action.setIcon(make_icon("stop"))
+        self._stop_action.setIcon(make_icon("toolbar.stop"))
         self._stop_action.triggered.connect(self._stop_exe)
         build_menu.addAction(self._stop_action)
 
         build_menu.addSeparator()
 
         self._release_build_action = QAction("Release Build (EXE)...", self)
-        self._release_build_action.setIcon(make_icon("compile"))
+        self._release_build_action.setIcon(make_icon("toolbar.compile"))
         self._apply_action_hint(self._release_build_action, "Build an EXE release package for the current project.")
         self._release_build_action.triggered.connect(self._release_build)
         build_menu.addAction(self._release_build_action)
@@ -3569,7 +3569,7 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._open_release_history_file_action)
 
         self._release_history_action = QAction("Release History...", self)
-        self._release_history_action.setIcon(make_icon("history"))
+        self._release_history_action.setIcon(make_icon("state.info"))
         self._apply_action_hint(self._release_history_action, "Browse recorded release builds for the current project.")
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
@@ -3863,18 +3863,18 @@ class MainWindow(QMainWindow):
         self._toolbar_host_layout.addWidget(toolbar_rail_sep, 0)
 
         for action, icon_key in (
-            (self._save_action, "save"),
-            (self._undo_action, "undo"),
-            (self._redo_action, "redo"),
-            (self._compile_action, "compile"),
-            (self._stop_action, "stop"),
+            (self._save_action, "toolbar.save"),
+            (self._undo_action, "toolbar.undo"),
+            (self._redo_action, "toolbar.redo"),
+            (self._compile_action, "toolbar.compile"),
+            (self._stop_action, "toolbar.stop"),
         ):
             action.setIcon(make_icon(icon_key, size=toolbar_icon_size))
-        self._copy_action.setIcon(make_icon("copy", size=toolbar_icon_size))
-        self._paste_action.setIcon(make_icon("paste", size=toolbar_icon_size))
+        self._copy_action.setIcon(make_icon("toolbar.copy", size=toolbar_icon_size))
+        self._paste_action.setIcon(make_icon("toolbar.paste", size=toolbar_icon_size))
 
         self._insert_widget_button = PrimaryPushButton("Insert Component")
-        self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
+        self._insert_widget_button.setIcon(make_icon("nav.component_library", size=toolbar_icon_size))
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
@@ -3893,7 +3893,7 @@ class MainWindow(QMainWindow):
         self._toolbar_more_button.setObjectName("workspace_toolbar_more")
         self._toolbar_more_button.setToolTip("More: copy, paste")
         self._toolbar_more_button.setAccessibleName("More toolbar actions")
-        self._toolbar_more_button.setIcon(make_icon("more", size=toolbar_icon_size))
+        self._toolbar_more_button.setIcon(make_icon("toolbar.settings.global", size=toolbar_icon_size))
         self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         self._toolbar_more_button.setPopupMode(QToolButton.InstantPopup)
         self._toolbar_more_button.setMenu(more_menu)
@@ -3911,9 +3911,9 @@ class MainWindow(QMainWindow):
         mode_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         self._mode_buttons = {}
         for label, mode, icon_key in (
-            ("Design", MODE_DESIGN, "widgets"),
-            ("Split", MODE_SPLIT, "layout"),
-            ("Code", MODE_CODE, "page"),
+            ("Design", MODE_DESIGN, "nav.component_library"),
+            ("Split", MODE_SPLIT, "layout.align.left"),
+            ("Code", MODE_CODE, "nav.page"),
         ):
             button = QPushButton(label)
             button.setCheckable(True)

@@ -70,73 +70,108 @@ _WIDGET_ICON_KEYS = {
     "window": "window",
 }
 
-_MATERIAL_ICON_MAP = {
-    # Global/navigation
-    "project": "folder",
-    "structure": "account_tree",
-    "widgets": "widgets",
-    "assets": "imagesmode",
-    "properties": "tune",
-    "animation": "animation",
-    "page": "article",
-    "diagnostics": "error",
-    "history": "history",
-    "debug": "bug_report",
-    # Toolbar/actions
-    "save": "save",
-    "compile": "play_arrow",
-    "stop": "stop",
-    "undo": "undo",
-    "redo": "redo",
-    # Widget semantics
-    "button": "smart_button",
-    "layout": "dashboard",
-    "input": "input",
-    "toggle": "toggle_on",
-    "navigation": "navigation",
-    "chart": "monitoring",
-    "media": "movie",
-    "image": "image",
-    "text": "text_fields",
-    "list": "list",
-    "grid": "grid_view",
-    "status": "info",
-    "progress": "progress_activity",
-    "divider": "horizontal_rule",
-    "calendar": "calendar_month",
-    "security": "lock",
-    "window": "web_asset",
-    "time": "schedule",
-    "table": "table_chart",
-    "tag": "sell",
-    "card": "cards",
-    "widget": "widgets",
-    # Extended aliases for upcoming UX rollouts
-    "resource": "inventory_2",
-    "resources": "inventory_2",
-    "preview": "preview",
-    "search": "search",
-    "filter": "filter_alt",
-    "favorite": "star",
-    "settings": "settings",
-    "help": "help",
-    "build": "construction",
-    "release": "deployed_code",
-    "folder_open": "folder_open",
-    "close": "close",
-    "add": "add",
-    "remove": "remove",
-    "edit": "edit",
-    "warning": "warning",
-    "success": "check_circle",
-    "info": "info",
-    "copy": "content_copy",
-    "paste": "content_paste",
-    "more": "more_horiz",
+# ICON guideline v1: same-semantics-single-icon + rounded outlined style.
+# Canonical semantic IDs (toolbar/nav/layout/state) are mapped to Material glyphs.
+_ICON_DEFINITIONS = {
+    # Toolbar P0
+    "toolbar.new": {"glyph": "add", "size": 20, "token": "default"},
+    "toolbar.open": {"glyph": "folder_open", "size": 20, "token": "default"},
+    "toolbar.save": {"glyph": "save", "size": 20, "token": "default"},
+    "toolbar.undo": {"glyph": "undo", "size": 20, "token": "default"},
+    "toolbar.redo": {"glyph": "redo", "size": 20, "token": "default"},
+    "toolbar.copy": {"glyph": "content_copy", "size": 20, "token": "default"},
+    "toolbar.paste": {"glyph": "content_paste", "size": 20, "token": "default"},
+    "toolbar.delete": {"glyph": "delete", "size": 20, "token": "default"},
+    "toolbar.preview": {"glyph": "preview", "size": 20, "token": "default"},
+    "toolbar.compile": {"glyph": "play_arrow", "size": 20, "token": "default"},
+    "toolbar.stop": {"glyph": "stop", "size": 20, "token": "default"},
+    "toolbar.export": {"glyph": "file_export", "size": 20, "token": "default"},
+    "toolbar.settings.project": {"glyph": "settings", "size": 20, "token": "default"},
+    "toolbar.settings.global": {"glyph": "tune", "size": 20, "token": "default"},
+
+    # Navigation P0
+    "nav.page": {"glyph": "article", "size": 20, "token": "default"},
+    "nav.page_group": {"glyph": "folder", "size": 20, "token": "default"},
+    "nav.template": {"glyph": "dashboard_customize", "size": 20, "token": "default"},
+    "nav.component_library": {"glyph": "widgets", "size": 20, "token": "default"},
+    "nav.resource": {"glyph": "inventory_2", "size": 20, "token": "default"},
+    "nav.expand": {"glyph": "chevron_right", "size": 20, "token": "muted"},
+    "nav.collapse": {"glyph": "expand_more", "size": 20, "token": "muted"},
+
+    # Inspector/layout P0
+    "layout.align.left": {"glyph": "format_align_left", "size": 18, "token": "default"},
+    "layout.align.center": {"glyph": "format_align_center", "size": 18, "token": "default"},
+    "layout.align.right": {"glyph": "format_align_right", "size": 18, "token": "default"},
+    "layout.distribute.h": {"glyph": "align_horizontal_left", "size": 18, "token": "default"},
+    "layout.distribute.v": {"glyph": "vertical_align_center", "size": 18, "token": "default"},
+    "edit.visible": {"glyph": "visibility", "size": 18, "token": "default"},
+    "edit.hidden": {"glyph": "visibility_off", "size": 18, "token": "muted"},
+    "edit.lock": {"glyph": "lock", "size": 18, "token": "default"},
+    "edit.unlock": {"glyph": "lock_open", "size": 18, "token": "default"},
+
+    # State/status
+    "state.success": {"glyph": "check_circle", "size": 16, "token": "success"},
+    "state.warn": {"glyph": "warning", "size": 16, "token": "warn"},
+    "state.error": {"glyph": "error", "size": 16, "token": "error"},
+    "state.info": {"glyph": "info", "size": 16, "token": "info"},
+    "state.progress": {"glyph": "hourglass_top", "size": 16, "token": "info"},
 }
 
-# Single dictionary for action/widget semantics → Material glyph name (UIX-003).
-ICON_SEMANTIC_MAP = dict(_MATERIAL_ICON_MAP)
+# Legacy key compatibility: all old callsites still route to canonical semantics.
+_ICON_ALIASES = {
+    "project": "nav.page_group",
+    "structure": "nav.page_group",
+    "widgets": "nav.component_library",
+    "assets": "nav.resource",
+    "properties": "toolbar.settings.global",
+    "animation": "toolbar.preview",
+    "page": "nav.page",
+    "diagnostics": "state.error",
+    "history": "state.info",
+    "debug": "state.warn",
+    "save": "toolbar.save",
+    "compile": "toolbar.compile",
+    "stop": "toolbar.delete",
+    "undo": "toolbar.undo",
+    "redo": "toolbar.redo",
+    "copy": "toolbar.copy",
+    "paste": "toolbar.paste",
+    "more": "toolbar.settings.global",
+    "settings": "toolbar.settings.global",
+    "warning": "state.warn",
+    "success": "state.success",
+    "info": "state.info",
+    "resource": "nav.resource",
+    "resources": "nav.resource",
+    "preview": "toolbar.preview",
+    "add": "toolbar.new",
+    "remove": "toolbar.delete",
+    # Widget semantics fallback
+    "button": "nav.component_library",
+    "layout": "layout.align.left",
+    "input": "nav.component_library",
+    "toggle": "edit.visible",
+    "navigation": "nav.page",
+    "chart": "nav.template",
+    "media": "toolbar.preview",
+    "image": "nav.resource",
+    "text": "nav.page",
+    "list": "nav.page",
+    "grid": "nav.template",
+    "status": "state.info",
+    "progress": "state.progress",
+    "divider": "layout.distribute.h",
+    "calendar": "nav.template",
+    "security": "edit.lock",
+    "window": "nav.template",
+    "time": "state.progress",
+    "table": "nav.template",
+    "tag": "nav.template",
+    "card": "nav.template",
+    "widget": "nav.component_library",
+}
+
+ICON_SEMANTIC_MAP = {k: v["glyph"] for k, v in _ICON_DEFINITIONS.items()}
 
 _MATERIAL_FONT_FAMILY = "Material Symbols Rounded"
 _MATERIAL_FONT_FALLBACKS = (
@@ -166,6 +201,8 @@ def _palette_for_mode(mode: str) -> dict:
             "surface": QColor("#FFFFFF"),
             "surface_alt": QColor("#EEF3FA"),
             "stroke": QColor("#CDD8E6"),
+            "warn": QColor("#9A6B18"),
+            "info": QColor("#1E6FD9"),
         }
     return {
         "ink": QColor("#E7EDF7"),
@@ -177,6 +214,8 @@ def _palette_for_mode(mode: str) -> dict:
         "surface": QColor("#17202B"),
         "surface_alt": QColor("#223041"),
         "stroke": QColor("#314355"),
+        "warn": QColor("#F4C47A"),
+        "info": QColor("#63A5FF"),
     }
 
 
@@ -198,8 +237,41 @@ def semantic_icon_keys() -> tuple[str, ...]:
     return tuple(sorted(ICON_SEMANTIC_MAP.keys()))
 
 
+def _resolve_icon_spec(icon_key: str) -> dict | None:
+    key = str(icon_key or "").strip()
+    if not key:
+        return None
+    canonical = _ICON_ALIASES.get(key, key)
+    return _ICON_DEFINITIONS.get(canonical)
+
+
 def _material_glyph_for_icon(icon_key: str) -> str | None:
-    return ICON_SEMANTIC_MAP.get(str(icon_key or "").strip())
+    spec = _resolve_icon_spec(icon_key)
+    if spec is None:
+        return None
+    return str(spec.get("glyph") or "").strip() or None
+
+
+def _icon_token_for_key(icon_key: str) -> str:
+    spec = _resolve_icon_spec(icon_key)
+    if spec is None:
+        return "default"
+    token = str(spec.get("token") or "default").strip()
+    return token if token in {"default", "muted", "active", "disabled", "success", "warn", "error", "info"} else "default"
+
+
+def _icon_color_for_token(palette: dict, token: str) -> QColor:
+    token_to_palette = {
+        "default": "ink",
+        "muted": "muted",
+        "active": "accent",
+        "disabled": "stroke",
+        "success": "success",
+        "warn": "warn",
+        "error": "danger",
+        "info": "info",
+    }
+    return palette.get(token_to_palette.get(token, "ink"), palette["ink"])
 
 
 def widget_icon_key(type_name: str) -> str:
@@ -220,12 +292,14 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
     painter.setRenderHint(QPainter.Antialiasing)
 
     glyph_name = _material_glyph_for_icon(icon_key)
+    token = _icon_token_for_key(icon_key)
+    icon_color = _icon_color_for_token(palette, token)
     if glyph_name and _ensure_material_font_loaded():
         font = QFont(_MATERIAL_ACTIVE_FONT_FAMILY)
         font.setPixelSize(max(12, size - 2))
         font.setStyleStrategy(QFont.PreferAntialias)
         painter.setFont(font)
-        painter.setPen(QPen(palette["ink"]))
+        painter.setPen(QPen(icon_color))
         painter.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, glyph_name)
     else:
         _paint_icon(painter, icon_key, QRectF(1, 1, size - 2, size - 2), palette)
