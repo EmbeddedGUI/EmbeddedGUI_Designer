@@ -129,12 +129,18 @@ _MATERIAL_ICON_MAP = {
     "warning": "warning",
     "success": "check_circle",
     "info": "info",
+    "copy": "content_copy",
+    "paste": "content_paste",
+    "more": "more_horiz",
 }
 
-_MATERIAL_FONT_FAMILY = "Material Symbols Outlined"
+# Single dictionary for action/widget semantics → Material glyph name (UIX-003).
+ICON_SEMANTIC_MAP = dict(_MATERIAL_ICON_MAP)
+
+_MATERIAL_FONT_FAMILY = "Material Symbols Rounded"
 _MATERIAL_FONT_FALLBACKS = (
-    "Material Symbols Outlined",
     "Material Symbols Rounded",
+    "Material Symbols Outlined",
     "Material Symbols Sharp",
 )
 _MATERIAL_FONT_LOADED = False
