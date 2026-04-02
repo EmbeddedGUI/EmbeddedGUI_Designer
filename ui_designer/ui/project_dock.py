@@ -124,7 +124,7 @@ class ProjectExplorerDock(QDockWidget):
 
         # Add page button
         self._add_page_button = QPushButton("+ New Page")
-        self._add_page_button.setIcon(make_icon("page"))
+        self._add_page_button.setIcon(make_icon("toolbar.new"))
         self._add_page_button.clicked.connect(self._on_add_page)
         layout.addWidget(self._add_page_button)
 
@@ -268,7 +268,7 @@ class ProjectExplorerDock(QDockWidget):
             name = page.name
             item = QTreeWidgetItem([self._page_item_text(name)])
             item.setData(0, Qt.UserRole, name)
-            item.setIcon(0, make_icon("page", size=16))
+            item.setIcon(0, make_icon("nav.page", size=16))
             if name == self._current_page_name:
                 font = item.font(0)
                 font.setBold(True)

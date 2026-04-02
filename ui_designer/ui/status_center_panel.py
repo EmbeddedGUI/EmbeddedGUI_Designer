@@ -529,7 +529,7 @@ class StatusCenterPanel(QWidget):
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
-        clear_action.setIcon(make_icon("history", size=_ICON_SM))
+        clear_action.setIcon(make_icon("state.info", size=_ICON_SM))
         self._set_action_hint(clear_action, self._clear_recent_actions_tooltip())
         clear_action.triggered.connect(self._clear_recent_actions)
         self._update_repeat_action_menu_metadata()

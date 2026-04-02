@@ -31,7 +31,7 @@ class HistoryPanel(QWidget):
         top_row.setSpacing(_SPACE_SM)
 
         page_icon = QLabel()
-        page_icon.setPixmap(make_icon("history", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
+        page_icon.setPixmap(make_icon("state.info", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
         top_row.addWidget(page_icon, 0, Qt.AlignTop)
 
         self._page_value = QLabel("")

@@ -51,7 +51,7 @@ class DebugPanel(QWidget):
         toolbar.setSpacing(_SPACE_XS)
 
         title_icon = QLabel()
-        title_icon.setPixmap(make_icon("debug", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
+        title_icon.setPixmap(make_icon("state.warn", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
         toolbar.addWidget(title_icon)
 
         self._title_label = QLabel("Debug Output")
@@ -60,7 +60,7 @@ class DebugPanel(QWidget):
         toolbar.addWidget(self._title_label)
 
         self._clear_btn = QPushButton("Clear")
-        self._clear_btn.setIcon(make_icon("stop", size=_ICON_SM))
+        self._clear_btn.setIcon(make_icon("toolbar.delete", size=_ICON_SM))
         self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
         toolbar.addWidget(self._clear_btn)

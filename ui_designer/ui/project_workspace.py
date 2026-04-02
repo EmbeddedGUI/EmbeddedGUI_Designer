@@ -110,7 +110,7 @@ class ProjectWorkspacePanel(QWidget):
         self._list_btn = QPushButton("List\nStructure first")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
-        self._list_btn.setIcon(make_icon("project", size=_ICON_SM))
+        self._list_btn.setIcon(make_icon("nav.page_group", size=_ICON_SM))
         _set_widget_metadata(
             self._list_btn,
             tooltip="Show the page list for structure-first editing.",
@@ -119,7 +119,7 @@ class ProjectWorkspacePanel(QWidget):
         self._thumb_btn = QPushButton("Thumbnails\nVisual scan")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
-        self._thumb_btn.setIcon(make_icon("image", size=_ICON_SM))
+        self._thumb_btn.setIcon(make_icon("nav.resource", size=_ICON_SM))
         _set_widget_metadata(
             self._thumb_btn,
             tooltip="Show page thumbnails for a visual scan.",
