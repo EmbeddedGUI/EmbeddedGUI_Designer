@@ -166,6 +166,7 @@ class StatusCenterPanel(QWidget):
 
         health = QFrame()
         health.setObjectName("status_center_health")
+        self._health_section = health
         health_layout = QVBoxLayout(health)
         health_layout.setContentsMargins(12, 12, 12, 12)
         health_layout.setSpacing(8)
@@ -205,6 +206,7 @@ class StatusCenterPanel(QWidget):
 
         quick_actions = QFrame()
         quick_actions.setObjectName("status_center_actions")
+        self._quick_actions_section = quick_actions
         quick_layout = QVBoxLayout(quick_actions)
         quick_layout.setContentsMargins(12, 12, 12, 12)
         quick_layout.setSpacing(8)
@@ -309,6 +311,7 @@ class StatusCenterPanel(QWidget):
 
         runtime = _ClickableFrame()
         runtime.setObjectName("status_center_runtime")
+        self._runtime_section = runtime
         runtime.clicked.connect(lambda: self._emit_action("open_debug"))
         self._set_hint(runtime, "Open Debug Output")
         runtime.setAccessibleName("Runtime section")
@@ -991,6 +994,22 @@ class StatusCenterPanel(QWidget):
         summary = str(summary_text or "").strip()
         return f"{prefix}: {summary}" if summary else prefix
 
+    def _status_focus_rank(self, *, sdk_ready, can_compile, error_count, warning_count, runtime_text, dirty_count, selection_total, info_count):
+        """Return a monotonically comparable focus rank for UIX-007 noise reduction."""
+        if int(error_count or 0) > 0:
+            return 6
+        if int(warning_count or 0) > 0:
+            return 5
+        if str(runtime_text or "").strip():
+            return 4
+        if not bool(sdk_ready) or not bool(can_compile):
+            return 3
+        if int(dirty_count or 0) > 0 or int(selection_total or 0) > 0:
+            return 2
+        if int(info_count or 0) > 0:
+            return 1
+        return 0
+
     def _action_button_accessible_name(self, action_key, button_text, available=True, hint=""):
         label = self._action_label(action_key)
         text = str(button_text or "").strip() or label
@@ -1243,6 +1262,16 @@ class StatusCenterPanel(QWidget):
         info_count = max(int(diagnostics_infos or 0), 0)
         diag_total = error_count + warning_count + info_count
         runtime_text = str(runtime_error or "").strip()
+        focus_rank = self._status_focus_rank(
+            sdk_ready=sdk_ready,
+            can_compile=can_compile,
+            error_count=error_count,
+            warning_count=warning_count,
+            runtime_text=runtime_text,
+            dirty_count=dirty_count,
+            selection_total=selection_total,
+            info_count=info_count,
+        )
         status_snapshot = (
             sdk_ready,
             can_compile,
@@ -1253,6 +1282,7 @@ class StatusCenterPanel(QWidget):
             warning_count,
             info_count,
             runtime_text,
+            focus_rank,
         )
         if self._status_snapshot_initialized and self._status_snapshot == status_snapshot:
             return
@@ -1503,6 +1533,11 @@ class StatusCenterPanel(QWidget):
         )
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
         self._set_widget_visible(self._workspace_chip, workspace_chip_label != "Ready")
+
+        # UIX-007: default hide non-critical sections to reduce status center noise.
+        is_anomaly_state = focus_rank >= 4
+        self._set_widget_visible(self._quick_actions_section, is_anomaly_state)
+        self._set_widget_visible(self._runtime_section, bool(runtime_text))
         workspace_summary = self._workspace_summary_text(
             sdk_ready,
             can_compile,
