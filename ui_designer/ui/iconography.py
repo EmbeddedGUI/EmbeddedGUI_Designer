@@ -192,8 +192,13 @@ def _ensure_material_font_loaded() -> bool:
     return False
 
 
+def semantic_icon_keys() -> tuple[str, ...]:
+    """Return sorted semantic icon keys for consistency checks (UIX-003)."""
+    return tuple(sorted(ICON_SEMANTIC_MAP.keys()))
+
+
 def _material_glyph_for_icon(icon_key: str) -> str | None:
-    return _MATERIAL_ICON_MAP.get(str(icon_key or "").strip())
+    return ICON_SEMANTIC_MAP.get(str(icon_key or "").strip())
 
 
 def widget_icon_key(type_name: str) -> str:
