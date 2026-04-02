@@ -1,3 +1,4 @@
+from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.theme import _build_stylesheet, theme_tokens
 
 
@@ -40,3 +41,15 @@ def test_status_center_styles_reduce_resting_container_weight():
         assert "border: none;" in actions
         assert f"background-color: {t['panel_alt']};" in metric_card
         assert "border: 1px solid transparent;" in metric_card
+
+
+def test_tokens_include_xxs_spacing_for_all_themes():
+    for mode in ("light", "dark"):
+        tokens = theme_tokens(mode)
+        assert "space_xxs" in tokens
+        assert int(tokens["space_xxs"]) == 2
+
+
+def test_icon_semantic_dictionary_contains_core_workspace_keys():
+    keys = set(semantic_icon_keys())
+    assert {"project", "structure", "widgets", "assets", "diagnostics", "debug"}.issubset(keys)
