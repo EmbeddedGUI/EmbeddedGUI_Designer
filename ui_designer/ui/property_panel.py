@@ -46,6 +46,11 @@ _CALLBACK_INVALID_MESSAGE = (
     "and it cannot start with a digit."
 )
 
+# UIX-005: default expanded groups ≤2 — core geometry first; rest progressive disclosure.
+_DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset(
+    {"Basic", "Layout", "Batch Geometry", "Common Properties"}
+)
+
 _MULTI_SUPPORTED_PROPERTY_TYPES = {
     "string",
     "int",
@@ -196,9 +201,19 @@ class PropertyPanel(QWidget):
         wt = (self._primary_widget.widget_type or "").strip()
         return f"{wt}\t{title}"
 
+    def _inspector_group_default_expanded(self, title: str, key: str) -> bool:
+        t = (title or "").strip()
+        if t in _DEFAULT_EXPANDED_INSPECTOR_TITLES:
+            return True
+        # Multi-select callback batching: keep Callbacks open so Code actions stay usable.
+        if t == "Callbacks" and str(key).startswith("__multi__\t"):
+            return True
+        return False
+
     def _wire_inspector_collapsible_group(self, group: CollapsibleGroupBox, title: str):
         key = self._inspector_group_storage_key(title)
-        expanded = bool(self._inspector_group_expanded.get(key, True))
+        default_open = self._inspector_group_default_expanded(title, key)
+        expanded = bool(self._inspector_group_expanded.get(key, default_open))
         group.apply_expanded_state(expanded)
         group.toggled.connect(lambda checked, k=key: self._on_inspector_collapsible_toggled(k, checked))
 
