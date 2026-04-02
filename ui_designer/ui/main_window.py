@@ -3334,11 +3334,13 @@ class MainWindow(QMainWindow):
         )
 
         self._align_left_action = QAction("Align Left", self)
+        self._align_left_action.setIcon(make_icon("layout.align.left"))
         self._apply_action_hint(self._align_left_action, "Align the current selection to the left edge of the primary widget.")
         self._align_left_action.triggered.connect(lambda: self._align_selection("left"))
         arrange_menu.addAction(self._align_left_action)
 
         self._align_right_action = QAction("Align Right", self)
+        self._align_right_action.setIcon(make_icon("layout.align.right"))
         self._apply_action_hint(self._align_right_action, "Align the current selection to the right edge of the primary widget.")
         self._align_right_action.triggered.connect(lambda: self._align_selection("right"))
         arrange_menu.addAction(self._align_right_action)
@@ -3357,6 +3359,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._align_bottom_action)
 
         self._align_hcenter_action = QAction("Align Horizontal Center", self)
+        self._align_hcenter_action.setIcon(make_icon("layout.align.center"))
         self._apply_action_hint(
             self._align_hcenter_action,
             "Align the current selection to the horizontal center of the primary widget.",
@@ -3375,6 +3378,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._distribute_h_action = QAction("Distribute Horizontally", self)
+        self._distribute_h_action.setIcon(make_icon("layout.distribute.h"))
         self._apply_action_hint(
             self._distribute_h_action,
             "Distribute the current selection evenly across the horizontal axis.",
@@ -3383,6 +3387,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._distribute_h_action)
 
         self._distribute_v_action = QAction("Distribute Vertically", self)
+        self._distribute_v_action.setIcon(make_icon("layout.distribute.v"))
         self._apply_action_hint(
             self._distribute_v_action,
             "Distribute the current selection evenly across the vertical axis.",
@@ -3393,6 +3398,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._bring_front_action = QAction("Bring to Front", self)
+        self._bring_front_action.setIcon(make_icon("canvas.layer.top"))
         self._apply_action_hint(
             self._bring_front_action,
             "Bring the current selection to the front of its parent stack.",
@@ -3401,6 +3407,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._bring_front_action)
 
         self._send_back_action = QAction("Send to Back", self)
+        self._send_back_action.setIcon(make_icon("canvas.layer.bottom"))
         self._apply_action_hint(
             self._send_back_action,
             "Send the current selection to the back of its parent stack.",
@@ -3411,6 +3418,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addSeparator()
 
         self._toggle_lock_action = QAction("Toggle Lock", self)
+        self._toggle_lock_action.setIcon(make_icon("edit.lock"))
         self._apply_action_hint(
             self._toggle_lock_action,
             "Toggle the designer lock state for the current selection.",
@@ -3469,21 +3477,25 @@ class MainWindow(QMainWindow):
         structure_menu.addSeparator()
 
         self._move_up_action = QAction("Move Up", self)
+        self._move_up_action.setIcon(make_icon("canvas.layer.up"))
         self._move_up_action.setShortcut("Alt+Up")
         self._move_up_action.triggered.connect(self._move_selection_up)
         structure_menu.addAction(self._move_up_action)
 
         self._move_down_action = QAction("Move Down", self)
+        self._move_down_action.setIcon(make_icon("canvas.layer.down"))
         self._move_down_action.setShortcut("Alt+Down")
         self._move_down_action.triggered.connect(self._move_selection_down)
         structure_menu.addAction(self._move_down_action)
 
         self._move_top_action = QAction("Move To Top", self)
+        self._move_top_action.setIcon(make_icon("canvas.layer.top"))
         self._move_top_action.setShortcut("Alt+Shift+Up")
         self._move_top_action.triggered.connect(self._move_selection_to_top)
         structure_menu.addAction(self._move_top_action)
 
         self._move_bottom_action = QAction("Move To Bottom", self)
+        self._move_bottom_action.setIcon(make_icon("canvas.layer.bottom"))
         self._move_bottom_action.setShortcut("Alt+Shift+Down")
         self._move_bottom_action.triggered.connect(self._move_selection_to_bottom)
         structure_menu.addAction(self._move_bottom_action)
@@ -3768,6 +3780,7 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         self._show_grid_action = QAction("Show Grid", self)
+        self._show_grid_action.setIcon(make_icon("canvas.grid"))
         self._show_grid_action.setCheckable(True)
         self._show_grid_action.setChecked(self.preview_panel.show_grid())
         self._apply_action_hint(self._show_grid_action, "Toggle the preview grid overlay.")
@@ -3775,6 +3788,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self._show_grid_action)
 
         self._grid_menu = view_menu.addMenu("Grid Size")
+        self._grid_menu.setIcon(make_icon("canvas.snap"))
         self._apply_action_hint(self._grid_menu.menuAction(), "Choose the grid snap size.")
         self._grid_size_group = QActionGroup(self)
         self._grid_size_group.setExclusive(True)
