@@ -21,10 +21,27 @@ _TYPO_ROLES = {
     "caption": ("fs_caption", "fw_regular"),
 }
 
+# Control baseline map (UIX-002): make common control text rhythm explicit.
+# Consumers can use this to keep label/control pairing stable.
+_CONTROL_BASELINE_ROLES = {
+    "panel_header": "panel_title",
+    "field_label": "meta",
+    "field_value": "body",
+    "button_label": "meta",
+    "chip_label": "caption",
+    "hint_text": "caption",
+}
+
 
 def typography_role_keys(role: str) -> tuple[str, str] | None:
     """Return (font_size_key, font_weight_key) for a role, or None if unknown."""
     return _TYPO_ROLES.get(str(role or "").strip().lower())
+
+
+def control_baseline_role(control_name: str) -> str | None:
+    """Return the preferred typography role for a common control semantic name."""
+    key = str(control_name or "").strip().lower()
+    return _CONTROL_BASELINE_ROLES.get(key)
 
 
 def _app_theme_mode() -> str:
