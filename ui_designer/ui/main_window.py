@@ -3398,6 +3398,15 @@ class MainWindow(QMainWindow):
         self._distribute_v_action.triggered.connect(lambda: self._distribute_selection("vertical"))
         arrange_menu.addAction(self._distribute_v_action)
 
+        self._rotate_selection_action = QAction("Rotate 90°", self)
+        self._rotate_selection_action.setIcon(make_icon("canvas.rotate"))
+        self._rotate_selection_action.setEnabled(False)
+        self._apply_action_hint(
+            self._rotate_selection_action,
+            "Rotate action entry is reserved for upcoming canvas transform rollout.",
+        )
+        arrange_menu.addAction(self._rotate_selection_action)
+
         arrange_menu.addSeparator()
 
         self._bring_front_action = QAction("Bring to Front", self)
