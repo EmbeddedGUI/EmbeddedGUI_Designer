@@ -1908,6 +1908,28 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_core_task_walkthrough_prefers_expected_actions(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        panel.set_status(sdk_ready=False, can_compile=False)
+        assert panel._suggested_action_button.text() == "Configure SDK"
+
+        panel.set_status(sdk_ready=True, can_compile=False)
+        assert panel._suggested_action_button.text() == "Inspect Compile Output"
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
+        assert panel._suggested_action_button.text() == "Fix First Error (1)"
+
+        panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
+        assert panel._suggested_action_button.text() == "Review First Warning (2)"
+
+        panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
+        assert panel._suggested_action_button.text() == "Review History (2)"
+
+        panel.deleteLater()
+
     def test_runtime_panel_emits_debug_action(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
