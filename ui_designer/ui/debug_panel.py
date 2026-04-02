@@ -14,6 +14,14 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
 from .iconography import make_icon
+from .theme import theme_tokens
+
+
+_TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
+_SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_ICON_SM = int(_TOKENS.get("icon_sm", 16))
+_ICON_MD = int(_TOKENS.get("icon_md", 18))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -39,11 +47,11 @@ class DebugPanel(QWidget):
 
         # Toolbar
         toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(4, 2, 4, 2)
-        toolbar.setSpacing(4)
+        toolbar.setContentsMargins(_SPACE_XS, max(_SPACE_XS - 2, 0), _SPACE_XS, max(_SPACE_XS - 2, 0))
+        toolbar.setSpacing(_SPACE_XS)
 
         title_icon = QLabel()
-        title_icon.setPixmap(make_icon("debug", size=18).pixmap(18, 18))
+        title_icon.setPixmap(make_icon("debug", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
         toolbar.addWidget(title_icon)
 
         self._title_label = QLabel("Debug Output")
@@ -52,7 +60,7 @@ class DebugPanel(QWidget):
         toolbar.addWidget(self._title_label)
 
         self._clear_btn = QPushButton("Clear")
-        self._clear_btn.setIcon(make_icon("stop"))
+        self._clear_btn.setIcon(make_icon("stop", size=_ICON_SM))
         self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
         toolbar.addWidget(self._clear_btn)
