@@ -328,7 +328,8 @@ class WidgetBrowserPanel(QWidget):
         self._title_label.setObjectName("workspace_section_title")
         header_layout.addWidget(self._title_label)
 
-        self._subtitle_label = QLabel("Filter and insert into current target.")
+        # UIX-006: task-oriented, low-noise subtitle.
+        self._subtitle_label = QLabel("Search, filter, and insert widgets quickly.")
         self._subtitle_label.setObjectName("workspace_section_subtitle")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
@@ -339,6 +340,7 @@ class WidgetBrowserPanel(QWidget):
         header_layout.addWidget(self._insert_target)
 
         self._stats_summary_label = QLabel("Visible 0/0")
+        self._stats_summary_label.setVisible(False)
         self._stats_summary_label.setObjectName("widget_browser_stats")
         self._stats_summary_label.setWordWrap(True)
         header_layout.addWidget(self._stats_summary_label)
@@ -768,6 +770,8 @@ class WidgetBrowserPanel(QWidget):
         if recent:
             summary_parts.append(f"Recent {recent}")
         summary = " | ".join(summary_parts)
+        # UIX-006: stats are useful context but not always visible to reduce header noise.
+        self._stats_summary_label.setVisible(active_filters or visible_count <= 8)
         tooltip = (
             f"Widget browser stats. Visible widgets: {visible_count} of {total}. "
             f"Favorite widget types: {favorites}. Recently inserted widget types: {recent}."
