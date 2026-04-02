@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF, QEvent
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage
 
+from .iconography import make_icon
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -1151,9 +1152,11 @@ class PreviewPanel(QWidget):
             "QPushButton:pressed { background:#606060; }"
         )
 
-        self._btn_zoom_out = QPushButton("\u2212")  # minus sign
+        self._btn_zoom_out = QPushButton()
         self._btn_zoom_out.setFixedSize(28, 28)
         self._btn_zoom_out.setStyleSheet(_zbtn_style)
+        self._btn_zoom_out.setIcon(make_icon("canvas.zoom_out", size=18))
+        self._btn_zoom_out.setIconSize(self._btn_zoom_out.size())
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
@@ -1161,9 +1164,11 @@ class PreviewPanel(QWidget):
         self._zoom_label.setAlignment(Qt.AlignCenter)
         self._zoom_label.setStyleSheet("color:#ccc; font-size:13px;")
 
-        self._btn_zoom_in = QPushButton("+")
+        self._btn_zoom_in = QPushButton()
         self._btn_zoom_in.setFixedSize(28, 28)
         self._btn_zoom_in.setStyleSheet(_zbtn_style)
+        self._btn_zoom_in.setIcon(make_icon("canvas.zoom_in", size=18))
+        self._btn_zoom_in.setIconSize(self._btn_zoom_in.size())
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
 
         sbl.addWidget(self._btn_zoom_out)

@@ -115,6 +115,21 @@ _ICON_DEFINITIONS = {
     "state.error": {"glyph": "error", "size": 16, "token": "error"},
     "state.info": {"glyph": "info", "size": 16, "token": "info"},
     "state.progress": {"glyph": "hourglass_top", "size": 16, "token": "info"},
+
+    # Canvas operations P1
+    "canvas.select": {"glyph": "gesture_select", "size": 18, "token": "default"},
+    "canvas.drag": {"glyph": "pan_tool", "size": 18, "token": "default"},
+    "canvas.zoom_in": {"glyph": "zoom_in", "size": 18, "token": "default"},
+    "canvas.zoom_out": {"glyph": "zoom_out", "size": 18, "token": "default"},
+    "canvas.rotate": {"glyph": "rotate_right", "size": 18, "token": "default"},
+    "canvas.layer.up": {"glyph": "vertical_align_top", "size": 18, "token": "default"},
+    "canvas.layer.down": {"glyph": "vertical_align_bottom", "size": 18, "token": "default"},
+    "canvas.layer.top": {"glyph": "flip_to_front", "size": 18, "token": "default"},
+    "canvas.layer.bottom": {"glyph": "flip_to_back", "size": 18, "token": "default"},
+    "canvas.grid": {"glyph": "grid_view", "size": 18, "token": "muted"},
+    "canvas.snap": {"glyph": "my_location", "size": 18, "token": "muted"},
+    "canvas.ruler": {"glyph": "straighten", "size": 18, "token": "muted"},
+    "canvas.guides": {"glyph": "space_dashboard", "size": 18, "token": "muted"},
 }
 
 # Legacy key compatibility: all old callsites still route to canonical semantics.
@@ -143,6 +158,10 @@ _ICON_ALIASES = {
     "info": "state.info",
     "resource": "nav.resource",
     "resources": "nav.resource",
+    "zoom_in": "canvas.zoom_in",
+    "zoom_out": "canvas.zoom_out",
+    "grid": "canvas.grid",
+    "ruler": "canvas.ruler",
     "preview": "toolbar.preview",
     "add": "toolbar.new",
     "remove": "toolbar.delete",
