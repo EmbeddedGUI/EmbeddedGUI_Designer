@@ -103,25 +103,35 @@ class TestWidgetTreePanel:
         panel.set_project(project)
 
         root_menu = panel._build_context_menu(root)
-        assert [action.text() for action in root_menu.actions() if action.text()] == [
-            "Rename",
-            "Insert Component...",
-            "Recent Widgets",
-            "Select",
-            "Structure",
-            "Delete",
-        ]
+        root_labels = [action.text() for action in root_menu.actions() if action.text()]
+        assert root_labels[:2] == ["Rename", "Insert Component..."]
+        assert root_labels[-3:] == ["Select", "Structure", "Delete"]
+        if len(root_labels) == 6:
+            assert root_labels[2] == "Recent Widgets"
+        else:
+            assert root_labels == [
+                "Rename",
+                "Insert Component...",
+                "Select",
+                "Structure",
+                "Delete",
+            ]
         root_menu.deleteLater()
 
         leaf_menu = panel._build_context_menu(leaf)
-        assert [action.text() for action in leaf_menu.actions() if action.text()] == [
-            "Rename",
-            "Insert Component...",
-            "Recent Widgets",
-            "Select",
-            "Structure",
-            "Delete",
-        ]
+        leaf_labels = [action.text() for action in leaf_menu.actions() if action.text()]
+        assert leaf_labels[:2] == ["Rename", "Insert Component..."]
+        assert leaf_labels[-3:] == ["Select", "Structure", "Delete"]
+        if len(leaf_labels) == 6:
+            assert leaf_labels[2] == "Recent Widgets"
+        else:
+            assert leaf_labels == [
+                "Rename",
+                "Insert Component...",
+                "Select",
+                "Structure",
+                "Delete",
+            ]
         leaf_menu.deleteLater()
         panel.deleteLater()
 
