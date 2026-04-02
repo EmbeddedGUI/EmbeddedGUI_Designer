@@ -46,10 +46,8 @@ _CALLBACK_INVALID_MESSAGE = (
     "and it cannot start with a digit."
 )
 
-# UIX-005: default expanded groups ≤2 — core geometry first; rest progressive disclosure.
-_DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset(
-    {"Basic", "Layout", "Batch Geometry", "Common Properties"}
-)
+# UIX-005: default expanded groups <=2 — keep first-edit path focused.
+_DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
 
 _MULTI_SUPPORTED_PROPERTY_TYPES = {
     "string",
@@ -205,7 +203,7 @@ class PropertyPanel(QWidget):
         t = (title or "").strip()
         if t in _DEFAULT_EXPANDED_INSPECTOR_TITLES:
             return True
-        # Multi-select callback batching: keep Callbacks open so Code actions stay usable.
+        # Keep callbacks discoverable for multi-select batch editing.
         if t == "Callbacks" and str(key).startswith("__multi__\t"):
             return True
         return False
