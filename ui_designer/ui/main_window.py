@@ -144,6 +144,15 @@ MAIN_WINDOW_DEFAULT_WIDTH = 1400
 MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 280
 
+# UIX-004: workspace shell proportions (top-level frame balance)
+LEFT_PANEL_DEFAULT_WIDTH = 320
+CENTER_PANEL_DEFAULT_WIDTH = 980
+INSPECTOR_PANEL_DEFAULT_WIDTH = 320
+WORKSPACE_TOP_VISIBLE_HEIGHT = 860
+WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
+WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
+WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
+
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
@@ -488,7 +497,11 @@ class MainWindow(QMainWindow):
         self._top_splitter.addWidget(self._left_shell)
         self._top_splitter.addWidget(center_shell)
         self._top_splitter.addWidget(self._inspector_tabs)
-        self._top_splitter.setSizes([340, 940, 340])
+        self._top_splitter.setSizes([
+            LEFT_PANEL_DEFAULT_WIDTH,
+            CENTER_PANEL_DEFAULT_WIDTH,
+            INSPECTOR_PANEL_DEFAULT_WIDTH,
+        ])
 
         self._bottom_header = QFrame()
         self._bottom_header.setObjectName("workspace_bottom_header")
@@ -1775,10 +1788,16 @@ class MainWindow(QMainWindow):
         self._bottom_panel_visible = bool(visible)
         self._bottom_tabs.setVisible(self._bottom_panel_visible)
         if self._bottom_panel_visible:
-            self._workspace_splitter.setSizes([760, 220])
+            self._workspace_splitter.setSizes([
+                WORKSPACE_TOP_VISIBLE_HEIGHT,
+                WORKSPACE_BOTTOM_VISIBLE_HEIGHT,
+            ])
             self._bottom_toggle_button.setText("Hide")
         else:
-            self._workspace_splitter.setSizes([1000, 0])
+            self._workspace_splitter.setSizes([
+                WORKSPACE_TOP_HIDDEN_HEIGHT,
+                WORKSPACE_BOTTOM_HIDDEN_HEIGHT,
+            ])
             self._bottom_toggle_button.setText("Show")
         self._update_bottom_toggle_button_metadata()
         self._update_workspace_tab_metadata()

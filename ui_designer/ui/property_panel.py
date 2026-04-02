@@ -861,7 +861,8 @@ class PropertyPanel(QWidget):
             if is_mixed:
                 self._update_mixed_editor_metadata(spin, f"Batch {label[:-1]}")
             spin.valueChanged.connect(lambda value, f=field: self._on_multi_common_changed(f, value))
-            geometry_form.addRow(f"{label[:-1]} (Mixed):" if is_mixed else label, spin)
+            # UIX-005: mixed-state hint is centralized; avoid repeating "(Mixed)" on every row.
+            geometry_form.addRow(label, spin)
             self._editors[f"multi_{field}"] = spin
         self._layout.addWidget(geometry_group)
 
@@ -972,8 +973,6 @@ class PropertyPanel(QWidget):
                 self._apply_missing_file_editor_state(editor, prop_name, prop_info, current_value, values=values)
 
             label = prop_name.replace("_", " ").title()
-            if is_mixed:
-                label += " (Mixed)"
             if has_missing_file:
                 label += " (Missing)"
             label += ":"
@@ -1531,8 +1530,6 @@ class PropertyPanel(QWidget):
             )
             self._callback_open_buttons[f"callback_{event_name}"] = button
             label = self._humanize_callback_name(event_name)
-            if entry["is_mixed"]:
-                label += " (Mixed)"
             form.addRow(f"{label}:", container)
 
         return group
