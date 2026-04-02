@@ -4,6 +4,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
 
 from .iconography import make_icon
+from .theme import theme_tokens
+
+
+_TOKENS = theme_tokens("dark")
+_SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_ICON_SM = int(_TOKENS.get("icon_sm", 16))
+_ICON_LG = int(_TOKENS.get("icon_lg", 20))
 
 
 class HistoryPanel(QWidget):
@@ -16,15 +23,15 @@ class HistoryPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        layout.setSpacing(_SPACE_SM - 2)
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(8)
+        top_row.setSpacing(_SPACE_SM)
 
         page_icon = QLabel()
-        page_icon.setPixmap(make_icon("history", size=20).pixmap(20, 20))
+        page_icon.setPixmap(make_icon("history", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
         top_row.addWidget(page_icon, 0, Qt.AlignTop)
 
         self._page_value = QLabel("")
@@ -162,7 +169,7 @@ class HistoryPanel(QWidget):
                 icon_key = "navigation"
             elif entry.get("is_saved"):
                 icon_key = "save"
-            item.setIcon(make_icon(icon_key, size=16))
+            item.setIcon(make_icon(icon_key, size=_ICON_SM))
             marker_summary = ". ".join(markers) + ". " if markers else ""
             item_tooltip = f"History entry {entry.get('index', 0) + 1}. {marker_summary}{label}"
             item.setToolTip(item_tooltip)
