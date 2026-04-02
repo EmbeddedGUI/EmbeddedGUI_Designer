@@ -131,7 +131,7 @@ _ICON_ALIASES = {
     "debug": "state.warn",
     "save": "toolbar.save",
     "compile": "toolbar.compile",
-    "stop": "toolbar.delete",
+    "stop": "toolbar.stop",
     "undo": "toolbar.undo",
     "redo": "toolbar.redo",
     "copy": "toolbar.copy",

@@ -65,22 +65,22 @@ class StatusCenterPanel(QWidget):
         "open_first_warning": "First Warning",
     }
     _ACTION_ICONS = {
-        "open_project_panel": "project",
-        "open_structure_panel": "structure",
-        "open_components_panel": "widgets",
-        "open_assets_panel": "assets",
-        "open_properties_inspector": "properties",
-        "open_animations_inspector": "animation",
-        "open_page_fields": "page",
-        "open_page_timers": "time",
-        "open_diagnostics": "diagnostics",
-        "open_error_diagnostics": "diagnostics",
-        "open_warning_diagnostics": "history",
-        "open_info_diagnostics": "debug",
-        "open_history": "history",
-        "open_debug": "debug",
-        "open_first_error": "diagnostics",
-        "open_first_warning": "diagnostics",
+        "open_project_panel": "nav.page_group",
+        "open_structure_panel": "nav.page_group",
+        "open_components_panel": "nav.component_library",
+        "open_assets_panel": "nav.resource",
+        "open_properties_inspector": "toolbar.settings.global",
+        "open_animations_inspector": "toolbar.preview",
+        "open_page_fields": "nav.page",
+        "open_page_timers": "state.progress",
+        "open_diagnostics": "state.error",
+        "open_error_diagnostics": "state.error",
+        "open_warning_diagnostics": "state.warn",
+        "open_info_diagnostics": "state.info",
+        "open_history": "state.info",
+        "open_debug": "state.warn",
+        "open_first_error": "state.error",
+        "open_first_warning": "state.warn",
     }
 
     def __init__(self, parent=None):
@@ -145,22 +145,22 @@ class StatusCenterPanel(QWidget):
         metrics_layout.setHorizontalSpacing(10)
         metrics_layout.setVerticalSpacing(10)
         self._sdk_value, self._sdk_card = self._create_metric(
-            metrics_layout, 0, 0, "SDK", "Missing", "assets", "open_project_panel"
+            metrics_layout, 0, 0, "SDK", "Missing", "nav.resource", "open_project_panel"
         )
         self._compile_value, self._compile_card = self._create_metric(
-            metrics_layout, 0, 1, "Compile", "Unavailable", "compile", "open_debug"
+            metrics_layout, 0, 1, "Compile", "Unavailable", "toolbar.compile", "open_debug"
         )
         self._diag_value, self._diag_card = self._create_metric(
-            metrics_layout, 1, 0, "Diagnostics", "No active diagnostics", "diagnostics", "open_diagnostics"
+            metrics_layout, 1, 0, "Diagnostics", "No active diagnostics", "state.error", "open_diagnostics"
         )
         self._preview_value, self._preview_card = self._create_metric(
-            metrics_layout, 1, 1, "Preview", "Preview idle", "debug", "open_debug"
+            metrics_layout, 1, 1, "Preview", "Preview idle", "state.warn", "open_debug"
         )
         self._selection_value, self._selection_card = self._create_metric(
-            metrics_layout, 2, 0, "Selection", "No widgets selected", "structure", "open_structure_panel"
+            metrics_layout, 2, 0, "Selection", "No widgets selected", "nav.page_group", "open_structure_panel"
         )
         self._dirty_value, self._dirty_card = self._create_metric(
-            metrics_layout, 2, 1, "Dirty Pages", "No dirty pages", "history", "open_history"
+            metrics_layout, 2, 1, "Dirty Pages", "No dirty pages", "state.info", "open_history"
         )
         layout.addWidget(metrics)
 
@@ -189,13 +189,13 @@ class StatusCenterPanel(QWidget):
         health_layout.addLayout(health_title_row)
 
         self._error_value, self._error_bar, self._error_row = self._create_health_row(
-            health_layout, "Errors", "diagnostics", "status_center_health_error_bar", "open_error_diagnostics"
+            health_layout, "Errors", "state.error", "status_center_health_error_bar", "open_error_diagnostics"
         )
         self._warning_value, self._warning_bar, self._warning_row = self._create_health_row(
-            health_layout, "Warnings", "history", "status_center_health_warning_bar", "open_warning_diagnostics"
+            health_layout, "Warnings", "state.warn", "status_center_health_warning_bar", "open_warning_diagnostics"
         )
         self._info_value, self._info_bar, self._info_row = self._create_health_row(
-            health_layout, "Info", "debug", "status_center_health_info_bar", "open_info_diagnostics"
+            health_layout, "Info", "state.info", "status_center_health_info_bar", "open_info_diagnostics"
         )
         self._health_summary_label = QLabel("Summary: Diagnostics are clear.")
         self._health_summary_label.setObjectName("workspace_section_subtitle")
@@ -226,7 +226,7 @@ class StatusCenterPanel(QWidget):
         last_action_row.addStretch(1)
         self._repeat_action_menu = QMenu(self)
         self._repeat_action_button = QToolButton()
-        self._repeat_action_button.setIcon(make_icon("history", size=_ICON_MD))
+        self._repeat_action_button.setIcon(make_icon("state.info", size=_ICON_MD))
         self._repeat_action_button.setPopupMode(QToolButton.MenuButtonPopup)
         self._repeat_action_button.setMenu(self._repeat_action_menu)
         self._repeat_action_button.setEnabled(False)
@@ -245,7 +245,7 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_label.setVisible(False)
         suggested_row.addWidget(self._suggested_action_label, 0)
         self._suggested_action_button = QPushButton("Open Diagnostics")
-        self._suggested_action_button.setIcon(make_icon("diagnostics", size=_ICON_SM))
+        self._suggested_action_button.setIcon(make_icon("state.error", size=_ICON_SM))
         self._suggested_action_button.setAccessibleName("Suggested status action")
         self._suggested_action_button.clicked.connect(self._trigger_suggested_action)
         suggested_row.addWidget(self._suggested_action_button, 0)
@@ -260,9 +260,9 @@ class StatusCenterPanel(QWidget):
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
-        self._diag_btn = self._build_action_button("Diagnostics", "diagnostics", "open_diagnostics")
-        self._history_btn = self._build_action_button("History", "history", "open_history")
-        self._debug_btn = self._build_action_button("Debug Output", "debug", "open_debug")
+        self._diag_btn = self._build_action_button("Diagnostics", "state.error", "open_diagnostics")
+        self._history_btn = self._build_action_button("History", "state.info", "open_history")
+        self._debug_btn = self._build_action_button("Debug Output", "state.warn", "open_debug")
         row.addWidget(self._diag_btn)
         row.addWidget(self._history_btn)
         row.addWidget(self._debug_btn)
@@ -273,8 +273,8 @@ class StatusCenterPanel(QWidget):
         row2 = QHBoxLayout(self._diagnostic_jump_host)
         row2.setContentsMargins(0, 0, 0, 0)
         row2.setSpacing(8)
-        self._first_error_btn = self._build_action_button("Open First Error", "diagnostics", "open_first_error")
-        self._first_warning_btn = self._build_action_button("Open First Warning", "diagnostics", "open_first_warning")
+        self._first_error_btn = self._build_action_button("Open First Error", "state.error", "open_first_error")
+        self._first_warning_btn = self._build_action_button("Open First Warning", "state.warn", "open_first_warning")
         row2.addWidget(self._first_error_btn)
         row2.addWidget(self._first_warning_btn)
         row2.addStretch()
@@ -283,10 +283,10 @@ class StatusCenterPanel(QWidget):
         row3 = QHBoxLayout()
         row3.setContentsMargins(0, 0, 0, 0)
         row3.setSpacing(8)
-        self._project_btn = self._build_action_button("Project", "project", "open_project_panel")
-        self._structure_btn = self._build_action_button("Structure", "structure", "open_structure_panel")
-        self._components_btn = self._build_action_button("Widgets", "widgets", "open_components_panel")
-        self._assets_btn = self._build_action_button("Assets", "assets", "open_assets_panel")
+        self._project_btn = self._build_action_button("Project", "nav.page_group", "open_project_panel")
+        self._structure_btn = self._build_action_button("Structure", "nav.page_group", "open_structure_panel")
+        self._components_btn = self._build_action_button("Widgets", "nav.component_library", "open_components_panel")
+        self._assets_btn = self._build_action_button("Assets", "nav.resource", "open_assets_panel")
         row3.addWidget(self._project_btn)
         row3.addWidget(self._structure_btn)
         row3.addWidget(self._components_btn)
@@ -297,10 +297,10 @@ class StatusCenterPanel(QWidget):
         row4 = QHBoxLayout()
         row4.setContentsMargins(0, 0, 0, 0)
         row4.setSpacing(8)
-        self._properties_btn = self._build_action_button("Properties", "properties", "open_properties_inspector")
-        self._animations_btn = self._build_action_button("Animations", "animation", "open_animations_inspector")
-        self._fields_btn = self._build_action_button("Fields", "page", "open_page_fields")
-        self._timers_btn = self._build_action_button("Timers", "time", "open_page_timers")
+        self._properties_btn = self._build_action_button("Properties", "toolbar.settings.global", "open_properties_inspector")
+        self._animations_btn = self._build_action_button("Animations", "toolbar.preview", "open_animations_inspector")
+        self._fields_btn = self._build_action_button("Fields", "nav.page", "open_page_fields")
+        self._timers_btn = self._build_action_button("Timers", "state.progress", "open_page_timers")
         row4.addWidget(self._properties_btn)
         row4.addWidget(self._animations_btn)
         row4.addWidget(self._fields_btn)
@@ -1702,7 +1702,7 @@ class StatusCenterPanel(QWidget):
             self._set_accessible_name(self._runtime_label, f"Runtime details: {runtime_text}")
             self._set_accessible_name(self._runtime_panel, self._runtime_panel_accessible_name(runtime_text))
             self._set_chip_text(self._runtime_chip, "Issue", "danger")
-            self._set_widget_icon(self._runtime_chip, "debug", size=16)
+            self._set_widget_icon(self._runtime_chip, "state.warn", size=16)
             self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
             self._set_accessible_name(self._runtime_chip, self._runtime_chip_accessible_name(runtime_text))
             self._set_widget_visible(self._runtime_chip, True)
