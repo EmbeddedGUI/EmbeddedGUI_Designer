@@ -1,4 +1,12 @@
-"""Token-driven application theme for EmbeddedGUI Designer."""
+"""Token-driven application theme for EmbeddedGUI Designer.
+
+Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
+- Color roles: canvas bg, panel bg, text primary/muted/soft, accent, status.
+- Typography scale: Display / Heading / Section / Body / Meta / Caption (px sizes).
+- Spacing: 4pt baseline; 8/12/16/20/24 via space_* keys.
+- Radii: r_sm=inputs(6), r_md/cards/buttons(8), r_xl≈elevated(12).
+- Icons: icon_sm/md/lg = 16/18/20 (toolbar leans toward lg).
+"""
 
 from __future__ import annotations
 
@@ -36,7 +44,7 @@ _TOKENS = {
         "selection_soft": "#2A4262",
         "r_sm": 6,
         "r_md": 8,
-        "r_lg": 10,
+        "r_lg": 8,
         "r_xl": 12,
         "r_2xl": 14,
         "r_3xl": 16,
@@ -44,13 +52,15 @@ _TOKENS = {
         "space_sm": 8,
         "space_md": 12,
         "space_lg": 16,
+        "space_xl": 20,
+        "space_2xl": 24,
         "pad_btn_v": 7,
         "pad_btn_h": 13,
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
-        "fs_display": 20,
-        "fs_h1": 17,
+        "fs_display": 24,
+        "fs_h1": 18,
         "fs_h2": 15,
         "fs_panel_title": 13,
         "fs_body": 13,
@@ -89,7 +99,7 @@ _TOKENS = {
         "selection_soft": "#EEF5FF",
         "r_sm": 6,
         "r_md": 8,
-        "r_lg": 10,
+        "r_lg": 8,
         "r_xl": 12,
         "r_2xl": 14,
         "r_3xl": 16,
@@ -97,13 +107,15 @@ _TOKENS = {
         "space_sm": 8,
         "space_md": 12,
         "space_lg": 16,
+        "space_xl": 20,
+        "space_2xl": 24,
         "pad_btn_v": 7,
         "pad_btn_h": 13,
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
-        "fs_display": 20,
-        "fs_h1": 17,
+        "fs_display": 24,
+        "fs_h1": 18,
         "fs_h2": 15,
         "fs_panel_title": 13,
         "fs_body": 13,
@@ -125,6 +137,31 @@ _TOKENS = {
 def theme_tokens(mode="dark"):
     """Return the active token map."""
     return dict(_TOKENS["light" if mode == "light" else "dark"])
+
+
+# Semantic aliases (spec names → existing keys) for documentation and future refactors.
+TOKEN_SEMANTIC_ALIASES = {
+    "bg.canvas": "bg",
+    "bg.panel": "panel",
+    "bg.elevated": "panel_alt",
+    "text.primary": "text",
+    "text.secondary": "text_muted",
+    "text.tertiary": "text_soft",
+    "accent.primary": "accent",
+    "status.success": "success",
+    "status.warn": "warning",
+    "status.error": "danger",
+    "status.info": "accent",
+}
+
+
+def resolve_semantic_token(mode: str, semantic_name: str, tokens: dict | None = None):
+    """Resolve a semantic token name (e.g. ``text.primary``) to a concrete value."""
+    key = TOKEN_SEMANTIC_ALIASES.get(str(semantic_name or "").strip())
+    if not key:
+        return None
+    t = tokens if isinstance(tokens, dict) else theme_tokens(mode)
+    return t.get(key)
 
 
 def _build_stylesheet(mode="dark"):
