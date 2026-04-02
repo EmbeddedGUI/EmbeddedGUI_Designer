@@ -110,6 +110,7 @@ _MATERIAL_ICON_MAP = {
     "table": "table_chart",
     "tag": "sell",
     "card": "cards",
+    "widget": "widgets",
     # Extended aliases for upcoming UX rollouts
     "resource": "inventory_2",
     "resources": "inventory_2",

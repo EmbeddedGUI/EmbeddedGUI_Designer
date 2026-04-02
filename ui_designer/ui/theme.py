@@ -680,7 +680,7 @@ QToolButton#widget_browser_sort_button {{
     border: 1px solid {t['border']};
     border-radius: 8px;
     color: {t['text_muted']};
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
     padding: 3px 8px;
 }}
 
@@ -701,7 +701,7 @@ QToolButton#widget_browser_complexity_button {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
     padding: 3px 8px;
 }}
 
@@ -737,7 +737,7 @@ QToolButton#widget_browser_tag {{
     border: 1px solid {t['border']};
     color: {t['text_muted']};
     border-radius: 999px;
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
     padding: 3px 8px;
 }}
 
@@ -766,13 +766,13 @@ QToolButton#widget_browser_tag:checked {{
 
 #widget_browser_group_title {{
     color: {t['text_muted']};
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
     font-weight: 600;
 }}
 
 #widget_browser_stats {{
     color: {t['text_soft']};
-    font-size: 11px;
+    font-size: {t['fs_caption']}px;
 }}
 
 #widget_browser_card:hover {{
@@ -786,14 +786,14 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_card_title {{
-    font-size: 12px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: 600;
     color: {t['text']};
 }}
 
 #widget_browser_card_meta {{
     color: {t['text_soft']};
-    font-size: 10px;
+    font-size: {t['fs_micro']}px;
 }}
 
 QPushButton#widget_browser_insert_button {{
@@ -818,7 +818,7 @@ QPushButton#widget_browser_insert_button:pressed {{
     border: none;
     background: transparent;
     color: {t['text_soft']};
-    font-size: 16px;
+    font-size: {t['icon_sm']}px;
     padding: 0;
 }}
 
@@ -831,7 +831,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_runtime {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 14px;
+    border-radius: {t['r_xl']}px;
 }}
 
 #status_center_metrics,
@@ -858,7 +858,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 
 #status_center_metric_value {{
     color: {t['text']};
-    font-size: 14px;
+    font-size: {t['fs_body']}px;
     font-weight: 600;
 }}
 
@@ -880,7 +880,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 
 #status_center_health_value {{
     color: {t['text']};
-    font-size: 12px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: 600;
 }}
 
