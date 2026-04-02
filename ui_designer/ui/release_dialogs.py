@@ -1185,14 +1185,17 @@ class ReleaseHistoryDialog(QDialog):
         filter_row.addWidget(self._diagnostics_breakdown_label)
 
         self._clear_filters_button = QPushButton("Clear Filters")
+        self._clear_filters_button.setIcon(make_icon("toolbar.delete"))
         self._clear_filters_button.clicked.connect(self._clear_filters)
         filter_row.addWidget(self._clear_filters_button)
 
         self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button.setIcon(make_icon("toolbar.undo"))
         self._reset_view_button.clicked.connect(self._reset_view)
         filter_row.addWidget(self._reset_view_button)
 
         self._copy_filtered_button = QPushButton("Copy Filtered")
+        self._copy_filtered_button.setIcon(make_icon("toolbar.copy"))
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
         filter_row.addWidget(self._copy_filtered_button)
 
@@ -1201,6 +1204,7 @@ class ReleaseHistoryDialog(QDialog):
         filter_row.addWidget(self._copy_filtered_json_button)
 
         self._export_filtered_button = QPushButton("Export Filtered...")
+        self._export_filtered_button.setIcon(make_icon("toolbar.export"))
         self._export_filtered_button.clicked.connect(self._export_filtered_summary)
         filter_row.addWidget(self._export_filtered_button)
 
