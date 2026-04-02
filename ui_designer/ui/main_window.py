@@ -3346,11 +3346,13 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._align_right_action)
 
         self._align_top_action = QAction("Align Top", self)
+        self._align_top_action.setIcon(make_icon("layout.align.top"))
         self._apply_action_hint(self._align_top_action, "Align the current selection to the top edge of the primary widget.")
         self._align_top_action.triggered.connect(lambda: self._align_selection("top"))
         arrange_menu.addAction(self._align_top_action)
 
         self._align_bottom_action = QAction("Align Bottom", self)
+        self._align_bottom_action.setIcon(make_icon("layout.align.bottom"))
         self._apply_action_hint(
             self._align_bottom_action,
             "Align the current selection to the bottom edge of the primary widget.",
@@ -3368,6 +3370,7 @@ class MainWindow(QMainWindow):
         arrange_menu.addAction(self._align_hcenter_action)
 
         self._align_vcenter_action = QAction("Align Vertical Center", self)
+        self._align_vcenter_action.setIcon(make_icon("layout.align.middle"))
         self._apply_action_hint(
             self._align_vcenter_action,
             "Align the current selection to the vertical center of the primary widget.",
