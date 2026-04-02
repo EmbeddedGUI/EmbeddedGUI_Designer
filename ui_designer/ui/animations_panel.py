@@ -32,6 +32,12 @@ from ..model.widget_animations import (
     normalize_widget_animations,
 )
 from .iconography import make_icon
+from .theme import theme_tokens
+
+
+_TOKENS = theme_tokens("dark")
+_SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_ICON_SM = int(_TOKENS.get("icon_sm", 16))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -64,8 +70,8 @@ class AnimationsPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        layout.setSpacing(_SPACE_SM - 2)
 
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
@@ -95,13 +101,13 @@ class AnimationsPanel(QWidget):
 
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(6)
+        buttons.setSpacing(_SPACE_SM - 2)
         self._add_button = QPushButton("Add Animation")
-        self._add_button.setIcon(make_icon("animation"))
+        self._add_button.setIcon(make_icon("animation", size=_ICON_SM))
         self._duplicate_button = QPushButton("Duplicate")
-        self._duplicate_button.setIcon(make_icon("page"))
+        self._duplicate_button.setIcon(make_icon("page", size=_ICON_SM))
         self._remove_button = QPushButton("Remove")
-        self._remove_button.setIcon(make_icon("stop"))
+        self._remove_button.setIcon(make_icon("stop", size=_ICON_SM))
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)
