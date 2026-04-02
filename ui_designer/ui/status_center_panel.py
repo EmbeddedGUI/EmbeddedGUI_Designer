@@ -929,24 +929,24 @@ class StatusCenterPanel(QWidget):
             return ("Check Workspace (Setup)", "warning")
         if not can_compile:
             return ("Check Workspace (Build)", "warning")
-        if dirty_count > 0:
-            return ("In Progress (History)", "accent")
-        if selection_total > 0:
-            return ("In Progress (Selection)", "accent")
-        if info_count > 0:
-            return ("In Progress (Diagnostics)", "accent")
+        # UIX-007: idle header — metrics rows cover dirty/selection/info; chip only for anomalies.
         return ("Ready", "success")
 
-    def _header_subtitle_text(self, workspace_chip_label, suggested_label):
+    def _header_subtitle_text(self, workspace_chip_label, suggested_label, suggested_context=""):
         status = str(workspace_chip_label or "").strip()
         focus = str(suggested_label or "").strip() or "Open Diagnostics"
+        ctx = str(suggested_context or "").strip()
         if status.startswith("Action Needed"):
             return f"Action needed now. Focus on {focus}."
         if status.startswith("Check Workspace"):
             return f"Workspace checks are pending. Focus on {focus}."
         if status.startswith("In Progress"):
             return f"Work is in progress. Focus on {focus}."
-        return f"Workspace looks ready. {focus} is available."
+        if ctx in ("History", "Selection"):
+            return f"Work is in progress. Focus on {focus}."
+        if ctx == "Diagnostics" and focus.startswith("Inspect Info"):
+            return f"Work is in progress. Focus on {focus}."
+        return f"{focus} - use the metrics below when you need details."
 
     def _header_subtitle_tooltip(self, workspace_chip_label, suggested_hint):
         status = str(workspace_chip_label or "").strip() or "Ready"
@@ -955,8 +955,10 @@ class StatusCenterPanel(QWidget):
             return f"Status Center: {status}. {hint}"
         return f"Status Center: {status}."
 
-    def _header_subtitle_accessible_name(self, workspace_chip_label, suggested_label, suggested_hint):
-        summary = self._header_subtitle_text(workspace_chip_label, suggested_label)
+    def _header_subtitle_accessible_name(
+        self, workspace_chip_label, suggested_label, suggested_hint, suggested_context=""
+    ):
+        summary = self._header_subtitle_text(workspace_chip_label, suggested_label, suggested_context)
         hint = str(suggested_hint or "").strip()
         if hint:
             return f"Status Center summary: {summary} {hint}"
@@ -1472,7 +1474,9 @@ class StatusCenterPanel(QWidget):
             self._header_title,
             self._header_title_accessible_name(suggested_context, workspace_chip_label)
         )
-        header_subtitle = self._header_subtitle_text(workspace_chip_label, suggested_label)
+        header_subtitle = self._header_subtitle_text(
+            workspace_chip_label, suggested_label, suggested_context
+        )
         self._set_widget_text(self._header_subtitle, header_subtitle)
         self._set_hint(
             self._header_subtitle,
@@ -1484,6 +1488,7 @@ class StatusCenterPanel(QWidget):
                 workspace_chip_label,
                 suggested_label,
                 suggested_hint,
+                suggested_context,
             )
         )
         self._set_chip_text(self._workspace_chip, workspace_chip_label, workspace_chip_tone)

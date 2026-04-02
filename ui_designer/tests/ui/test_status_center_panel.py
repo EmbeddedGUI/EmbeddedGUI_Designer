@@ -750,7 +750,10 @@ class TestStatusCenterPanel:
 
         panel.set_status(sdk_ready=True, can_compile=True)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
-        assert panel._header_subtitle.text() == "Workspace looks ready. Open Diagnostics is available."
+        assert (
+            panel._header_subtitle.text()
+            == "Open Diagnostics - use the metrics below when you need details."
+        )
         assert panel._workspace_chip.isHidden() is True
         assert panel._workspace_summary_label.isHidden() is True
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
