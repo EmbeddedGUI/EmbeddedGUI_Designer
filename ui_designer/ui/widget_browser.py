@@ -1058,78 +1058,32 @@ class WidgetBrowserPanel(QWidget):
             empty = QFrame()
             empty.setObjectName("widget_browser_empty_state")
             empty_layout = QVBoxLayout(empty)
-            empty_layout.setContentsMargins(_SPACE_XL, _SPACE_XL, _SPACE_XL, _SPACE_XL)
-            empty_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
+            empty_layout.setContentsMargins(_SPACE_LG, _SPACE_LG, _SPACE_LG, _SPACE_LG)
+            empty_layout.setSpacing(_SPACE_SM)
 
-            icon_label = QLabel()
-            icon_label.setAlignment(Qt.AlignCenter)
-            empty_icon_size = _ICON_LG * 2
-            icon_label.setPixmap(make_icon("widgets", size=empty_icon_size).pixmap(empty_icon_size, empty_icon_size))
-            empty_layout.addWidget(icon_label)
+            summary = QLabel(
+                "<b>No matching widgets.</b><br>%s" % self._empty_state_hint_text()
+            )
+            summary.setObjectName("workspace_section_subtitle")
+            summary.setWordWrap(True)
+            summary.setAlignment(Qt.AlignCenter)
+            summary.setTextFormat(Qt.RichText)
+            empty_layout.addWidget(summary)
 
-            title = QLabel("No matching widgets.")
-            title.setObjectName("workspace_section_title")
-            title.setAlignment(Qt.AlignCenter)
-            empty_layout.addWidget(title)
-
-            hint = QLabel(self._empty_state_hint_text())
-            hint.setObjectName("workspace_section_subtitle")
-            hint.setWordWrap(True)
-            hint.setAlignment(Qt.AlignCenter)
-            empty_layout.addWidget(hint)
-
-            action_row = QHBoxLayout()
-            action_row.setContentsMargins(0, 0, 0, 0)
-            action_row.setSpacing(_SPACE_SM)
-            if bool((self._search.text() or "").strip()):
-                reset_search_btn = QPushButton("Reset Search")
-                reset_search_btn.clicked.connect(self._reset_search_only)
-                _set_widget_metadata(
-                    reset_search_btn,
-                    tooltip="Clear the current widget browser search text.",
-                    accessible_name="Reset widget browser search",
-                )
-                action_row.addWidget(reset_search_btn)
-            if bool(self._active_tag_values()):
-                clear_tags_btn = QPushButton("Clear Tags")
-                clear_tags_btn.clicked.connect(self._clear_active_tags)
-                _set_widget_metadata(
-                    clear_tags_btn,
-                    tooltip="Clear active widget browser tags.",
-                    accessible_name="Clear widget browser tags",
-                )
-                action_row.addWidget(clear_tags_btn)
-            if self._sort_mode != "relevance" or self._complexity_filter != "all":
-                reset_organize_btn = QPushButton("Reset Organize")
-                reset_organize_btn.clicked.connect(self._reset_organizers)
-                _set_widget_metadata(
-                    reset_organize_btn,
-                    tooltip="Reset sort mode and complexity filters.",
-                    accessible_name="Reset widget browser organize filters",
-                )
-                action_row.addWidget(reset_organize_btn)
-            if (
-                str(self._selected_category() or "all").strip().lower() != "all"
-                or bool(self._active_tag_values())
-                or self._sort_mode != "relevance"
-                or self._complexity_filter != "all"
-            ):
-                show_all_btn = QPushButton("Show All Widgets")
-                show_all_btn.clicked.connect(self._reset_all_filters)
-                _set_widget_metadata(
-                    show_all_btn,
-                    tooltip="Reset every widget browser filter and show all widgets.",
-                    accessible_name="Show all widgets",
-                )
-                action_row.addWidget(show_all_btn)
-            empty_layout.addLayout(action_row)
+            primary = QPushButton("Show All Widgets")
+            primary.clicked.connect(self._reset_all_filters)
+            _set_widget_metadata(
+                primary,
+                tooltip="Reset filters and show the full catalog.",
+                accessible_name="Show all widgets",
+            )
+            empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
             _set_widget_metadata(
                 empty,
                 tooltip="No widgets match the current widget browser filters.",
                 accessible_name="No widgets match the current filters.",
             )
-            _set_widget_metadata(title, tooltip=title.text(), accessible_name=title.text())
-            _set_widget_metadata(hint, tooltip=hint.text(), accessible_name=hint.text())
+            _set_widget_metadata(summary, tooltip=summary.text(), accessible_name="Widget browser empty state.")
             self._cards_layout.addWidget(empty, 0, 0, 1, columns)
             return
 
