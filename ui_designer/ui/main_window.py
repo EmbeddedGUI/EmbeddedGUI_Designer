@@ -2132,7 +2132,7 @@ class MainWindow(QMainWindow):
     def _apply_workspace_iconography(self):
         tokens = theme_tokens(getattr(self._config, "theme", "dark"))
         nav_icon_size = int(tokens.get("icon_lg", 20)) + 2
-        toolbar_icon_size = int(tokens.get("icon_md", 18))
+        toolbar_icon_size = int(tokens.get("icon_lg", 20))
         mode_icon_size = int(tokens.get("icon_sm", 16))
         if hasattr(self, "_workspace_nav_buttons"):
             icon_map = {
@@ -2147,6 +2147,9 @@ class MainWindow(QMainWindow):
                 button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         if hasattr(self, "_insert_widget_button"):
             self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
+        if hasattr(self, "_toolbar_more_button"):
+            self._toolbar_more_button.setIcon(make_icon("more", size=toolbar_icon_size))
+            self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         if hasattr(self, "_mode_buttons"):
             for mode, icon_key in ((MODE_DESIGN, "widgets"), (MODE_SPLIT, "layout"), (MODE_CODE, "page")):
                 self._mode_buttons[mode].setIcon(make_icon(icon_key, size=mode_icon_size))
@@ -3824,7 +3827,7 @@ class MainWindow(QMainWindow):
         tb = QToolBar("Main Toolbar", self)
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
-        toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_md", 18))
+        toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_lg", 20))
         tb.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
@@ -3844,12 +3847,12 @@ class MainWindow(QMainWindow):
             (self._save_action, "save"),
             (self._undo_action, "undo"),
             (self._redo_action, "redo"),
-            (self._copy_action, "properties"),
-            (self._paste_action, "properties"),
             (self._compile_action, "compile"),
             (self._stop_action, "stop"),
         ):
-            action.setIcon(make_icon(icon_key))
+            action.setIcon(make_icon(icon_key, size=toolbar_icon_size))
+        self._copy_action.setIcon(make_icon("copy", size=toolbar_icon_size))
+        self._paste_action.setIcon(make_icon("paste", size=toolbar_icon_size))
 
         self._insert_widget_button = PrimaryPushButton("Insert Component")
         self._insert_widget_button.setIcon(make_icon("widgets", size=toolbar_icon_size))
@@ -3864,8 +3867,19 @@ class MainWindow(QMainWindow):
 
         tb.addAction(self._undo_action)
         tb.addAction(self._redo_action)
-        tb.addAction(self._copy_action)
-        tb.addAction(self._paste_action)
+        more_menu = QMenu(self)
+        more_menu.addAction(self._copy_action)
+        more_menu.addAction(self._paste_action)
+        self._toolbar_more_button = QToolButton()
+        self._toolbar_more_button.setObjectName("workspace_toolbar_more")
+        self._toolbar_more_button.setToolTip("More: copy, paste")
+        self._toolbar_more_button.setAccessibleName("More toolbar actions")
+        self._toolbar_more_button.setIcon(make_icon("more", size=toolbar_icon_size))
+        self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
+        self._toolbar_more_button.setPopupMode(QToolButton.InstantPopup)
+        self._toolbar_more_button.setMenu(more_menu)
+        self._toolbar_more_button.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        tb.addWidget(self._toolbar_more_button)
 
         tb.addSeparator()
 
