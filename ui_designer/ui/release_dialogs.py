@@ -1,4 +1,4 @@
-﻿"""Release build dialogs."""
+"""Release build dialogs."""
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from .iconography import make_icon
 from ..model.config import get_config
 from ..model.release import ReleaseConfig, ReleaseProfile
 
@@ -738,9 +739,13 @@ class ReleaseProfilesDialog(QDialog):
 
         left_actions = QHBoxLayout()
         self._add_btn = QPushButton("Add")
+        self._add_btn.setIcon(make_icon("toolbar.new"))
         self._copy_btn = QPushButton("Copy")
+        self._copy_btn.setIcon(make_icon("toolbar.copy"))
         self._delete_btn = QPushButton("Delete")
+        self._delete_btn.setIcon(make_icon("toolbar.delete"))
         self._set_default_btn = QPushButton("Set Default")
+        self._set_default_btn.setIcon(make_icon("state.success"))
         self._add_btn.clicked.connect(self._add_profile)
         self._copy_btn.clicked.connect(self._copy_profile)
         self._delete_btn.clicked.connect(self._delete_profile)
