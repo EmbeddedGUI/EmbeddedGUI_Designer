@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (
     QListWidgetItem, QFileDialog, QMessageBox,
     QDialog, QDialogButtonBox, QMenu, QApplication,
     QSplitter, QSizePolicy, QAbstractItemView,
-    QInputDialog, QTableWidget, QTableWidgetItem, QHeaderView,
+    QInputDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QComboBox, QCheckBox, QToolButton,
 )
 from PyQt5.QtCore import (
@@ -93,6 +93,31 @@ def _set_item_metadata(item, tooltip):
     item.setToolTip(hint)
     item.setStatusTip(hint)
     item.setData(Qt.AccessibleTextRole, hint)
+
+
+def _create_dialog_metric_card(layout, label_text):
+    card = QFrame()
+    card.setObjectName("resource_dialog_metric_card")
+    card_layout = QVBoxLayout(card)
+    card_layout.setContentsMargins(14, 12, 14, 12)
+    card_layout.setSpacing(4)
+
+    label = QLabel(label_text)
+    label.setObjectName("resource_dialog_metric_label")
+    card_layout.addWidget(label)
+
+    value = QLabel("")
+    value.setObjectName("resource_dialog_metric_value")
+    value.setWordWrap(True)
+    card_layout.addWidget(value)
+
+    layout.addWidget(card)
+    return value
+
+
+def _prepare_dialog_table(table):
+    table.setObjectName("resource_dialog_table")
+    table.setAlternatingRowColors(False)
 
 
 def _count_label(count, singular, plural=None):
@@ -382,25 +407,72 @@ class _MissingResourceReplaceDialog(QDialog):
         self._source_paths = list(source_paths)
         self._combos = []
         self.setWindowTitle("Replace Missing Resources")
-        self.resize(640, 360)
+        self.setMinimumSize(760, 520)
+        self.resize(820, 560)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Resource Recovery")
+        self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Replace Missing Resources")
+        self._title_label.setObjectName("resource_dialog_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Map each missing project asset to an external file before the replacement batch updates resource names inside the project."
+        )
+        self._subtitle_label.setObjectName("resource_dialog_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._missing_metric_value = _create_dialog_metric_card(metrics_layout, "Missing")
+        self._candidate_metric_value = _create_dialog_metric_card(metrics_layout, "Candidates")
+        self._selected_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
+
+        content_card = QFrame()
+        content_card.setObjectName("resource_dialog_card")
+        content_layout = QVBoxLayout(content_card)
+        content_layout.setContentsMargins(22, 22, 22, 22)
+        content_layout.setSpacing(12)
 
         self._caption = CaptionLabel(
             "Choose replacement files for missing resources. "
             "The selected file names become the new project resource names."
         )
+        self._caption.setObjectName("resource_dialog_summary")
         self._caption.setWordWrap(True)
-        layout.addWidget(self._caption)
+        content_layout.addWidget(self._caption)
 
         self._table = QTableWidget(len(self._missing_names), 2, self)
+        _prepare_dialog_table(self._table)
         self._table.setHorizontalHeaderLabels(["Missing Resource", "Replacement File"])
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self._table.verticalHeader().setVisible(False)
         self._table.setSelectionMode(QAbstractItemView.NoSelection)
         self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        layout.addWidget(self._table, 1)
+        content_layout.addWidget(self._table, 1)
 
         for row, missing_name in enumerate(self._missing_names):
             name_item = QTableWidgetItem(missing_name)
@@ -425,6 +497,7 @@ class _MissingResourceReplaceDialog(QDialog):
 
             self._table.setCellWidget(row, 1, combo)
             self._combos.append((missing_name, combo))
+        layout.addWidget(content_card, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         self._ok_button = buttons.button(QDialogButtonBox.Ok)
@@ -457,6 +530,14 @@ class _MissingResourceReplaceDialog(QDialog):
         )
         if duplicate_count:
             summary += f" {_count_label(duplicate_count, 'duplicate replacement file')} selected."
+
+        self._missing_metric_value.setText(_count_label(len(self._missing_names), "resource"))
+        self._candidate_metric_value.setText(_count_label(len(self._source_paths), "file"))
+        self._selected_metric_value.setText(
+            f"{_count_label(selected_count, 'replacement')} | {_count_label(duplicate_count, 'duplicate')}"
+            if duplicate_count
+            else _count_label(selected_count, "replacement")
+        )
 
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
@@ -549,17 +630,62 @@ class _ReferenceImpactDialog(QDialog):
         self._usages = list(usages)
         self._selected_usage = ("", "")
         self.setWindowTitle(title)
-        self.resize(560, 360)
+        self.setMinimumSize(760, 520)
+        self.resize(860, 560)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Impact Review")
+        self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel(title or "Review Reference Impact")
+        self._title_label.setObjectName("resource_dialog_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Inspect every affected widget reference before confirming a destructive resource operation or navigating directly to a usage."
+        )
+        self._subtitle_label.setObjectName("resource_dialog_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Affected Usages")
+        self._selection_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
+        self._action_metric_value = _create_dialog_metric_card(metrics_layout, "Action")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
+
+        content_card = QFrame()
+        content_card.setObjectName("resource_dialog_card")
+        content_layout = QVBoxLayout(content_card)
+        content_layout.setContentsMargins(22, 22, 22, 22)
+        content_layout.setSpacing(12)
 
         self._summary_label = QLabel(summary)
+        self._summary_label.setObjectName("resource_dialog_summary")
         self._summary_label.setWordWrap(True)
-        layout.addWidget(self._summary_label)
+        content_layout.addWidget(self._summary_label)
 
         self._table = QTableWidget(len(usages), 3, self)
+        _prepare_dialog_table(self._table)
         self._table.setHorizontalHeaderLabels(["Page", "Widget", "Property"])
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -588,7 +714,8 @@ class _ReferenceImpactDialog(QDialog):
             self._table.selectRow(0)
         self._table.itemDoubleClicked.connect(lambda *_args: self._open_selected_usage())
         self._table.itemSelectionChanged.connect(self._update_accessibility_summary)
-        layout.addWidget(self._table, 1)
+        content_layout.addWidget(self._table, 1)
+        layout.addWidget(content_card, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
@@ -623,6 +750,9 @@ class _ReferenceImpactDialog(QDialog):
             f"{self.windowTitle()}: {_count_label(len(self._usages), 'affected usage')}. "
             f"Current selection: {selection_label}."
         )
+        self._usage_metric_value.setText(_count_label(len(self._usages), "usage"))
+        self._selection_metric_value.setText(selection_label)
+        self._action_metric_value.setText(self._ok_button.text() if self._ok_button is not None else "Continue")
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._summary_label,
@@ -671,30 +801,85 @@ class _BatchReplaceImpactDialog(QDialog):
         self._total_rename_count = total_rename_count
         self._current_page_name = current_page_name or ""
         self.setWindowTitle(title)
-        self.resize(720, 460)
+        self.setMinimumSize(920, 660)
+        self.resize(980, 720)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Batch Rename Impact")
+        self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel(title or "Review Batch Replace Impact")
+        self._title_label.setObjectName("resource_dialog_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Review grouped rename effects, optionally focus the current page, and inspect the downstream widget usages before applying the batch."
+        )
+        self._subtitle_label.setObjectName("resource_dialog_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._rename_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Renames")
+        self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Usages")
+        self._filter_metric_value = _create_dialog_metric_card(metrics_layout, "Page Filter")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
+
+        summary_card = QFrame()
+        summary_card.setObjectName("resource_dialog_card")
+        summary_layout = QVBoxLayout(summary_card)
+        summary_layout.setContentsMargins(22, 22, 22, 22)
+        summary_layout.setSpacing(12)
 
         self._summary_label = QLabel("")
+        self._summary_label.setObjectName("resource_dialog_summary")
         self._summary_label.setWordWrap(True)
-        layout.addWidget(self._summary_label)
+        summary_layout.addWidget(self._summary_label)
 
         if self._current_page_name:
             filter_row = QHBoxLayout()
+            filter_row.setContentsMargins(0, 0, 0, 0)
+            filter_row.setSpacing(10)
             self._current_page_only = QCheckBox("Current Page Only")
             self._current_page_only.toggled.connect(self._refresh_impact_view)
             filter_row.addWidget(self._current_page_only)
             filter_row.addStretch()
-            layout.addLayout(filter_row)
+            summary_layout.addLayout(filter_row)
         else:
             self._current_page_only = None
+        layout.addWidget(summary_card)
+
+        impact_card = QFrame()
+        impact_card.setObjectName("resource_dialog_card")
+        impact_layout = QVBoxLayout(impact_card)
+        impact_layout.setContentsMargins(22, 22, 22, 22)
+        impact_layout.setSpacing(12)
 
         self._group_caption = QLabel("Rename Impact Summary")
-        layout.addWidget(self._group_caption)
+        self._group_caption.setObjectName("workspace_section_title")
+        impact_layout.addWidget(self._group_caption)
 
         self._impact_table = QTableWidget(0, 4, self)
+        _prepare_dialog_table(self._impact_table)
         self._impact_table.setHorizontalHeaderLabels(["Missing Resource", "Replacement File", "Widgets", "Pages"])
         self._impact_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self._impact_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -706,12 +891,21 @@ class _BatchReplaceImpactDialog(QDialog):
         self._impact_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._impact_table.setMinimumHeight(160)
         self._impact_table.itemSelectionChanged.connect(self._refresh_usage_view)
-        layout.addWidget(self._impact_table)
+        impact_layout.addWidget(self._impact_table, 1)
+        layout.addWidget(impact_card, 1)
+
+        usage_card = QFrame()
+        usage_card.setObjectName("resource_dialog_card")
+        usage_layout = QVBoxLayout(usage_card)
+        usage_layout.setContentsMargins(22, 22, 22, 22)
+        usage_layout.setSpacing(12)
 
         self._usage_caption = QLabel("Affected Usages")
-        layout.addWidget(self._usage_caption)
+        self._usage_caption.setObjectName("workspace_section_title")
+        usage_layout.addWidget(self._usage_caption)
 
         self._usage_table = QTableWidget(0, 3, self)
+        _prepare_dialog_table(self._usage_table)
         self._usage_table.setHorizontalHeaderLabels(["Page", "Widget", "Property"])
         self._usage_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self._usage_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -722,7 +916,8 @@ class _BatchReplaceImpactDialog(QDialog):
         self._usage_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._usage_table.itemDoubleClicked.connect(lambda *_args: self._open_selected_usage())
         self._usage_table.itemSelectionChanged.connect(self._update_accessibility_summary)
-        layout.addWidget(self._usage_table, 1)
+        usage_layout.addWidget(self._usage_table, 1)
+        layout.addWidget(usage_card, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
         self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
@@ -778,6 +973,9 @@ class _BatchReplaceImpactDialog(QDialog):
             f"{_count_label(total_usage_count, 'visible usage')} shown. "
             f"{filter_summary} Current rename: {impact_label}. Current usage: {usage_label}."
         )
+        self._rename_metric_value.setText(_count_label(len(self._visible_impacts), "rename"))
+        self._usage_metric_value.setText(_count_label(total_usage_count, "usage"))
+        self._filter_metric_value.setText("Current page only" if self._filter_to_current_page() else "All pages")
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
         _set_widget_metadata(
             self._summary_label,
