@@ -628,6 +628,49 @@ QWidget#property_panel_root {{
     background-color: transparent;
 }}
 
+QFrame#property_panel_overview {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.74 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+QFrame#property_panel_search_shell {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#property_panel_eyebrow,
+#property_panel_header_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#property_panel_title {{
+    color: {t['text']};
+    font-size: {t['fs_h1'] + 4}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#property_panel_meta,
+#property_panel_search_hint,
+#property_panel_header_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#property_panel_search_label {{
+    color: {t['text']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_medium']};
+}}
+
 QScrollArea#property_panel_scroll {{
     background-color: transparent;
     border: none;
@@ -667,6 +710,21 @@ QGroupBox#inspector_collapsible_group::title {{
 
 #workspace_hint_strip {{
     background-color: {t['panel_alt']};
+    border-color: {t['border']};
+}}
+
+#workspace_panel_header[panelTone="property"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.76 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#workspace_hint_strip[panelTone="property"] {{
+    background-color: {t['panel_soft']};
     border-color: {t['border']};
 }}
 
@@ -840,6 +898,44 @@ QToolButton#workspace_status_chip:focus {{
     background-color: transparent;
     color: {t['danger']};
     border-color: {t['danger']};
+}}
+
+QFrame#property_panel_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid transparent;
+    border-radius: {t['r_md']}px;
+}}
+
+QFrame#property_panel_metric_card[metricTone="accent"] {{
+    background-color: {t['selection_soft']};
+    border-color: {t['accent']};
+}}
+
+QFrame#property_panel_metric_card[metricTone="success"] {{
+    background-color: {t['selection_soft']};
+    border-color: {t['success']};
+}}
+
+QFrame#property_panel_metric_card[metricTone="warning"] {{
+    background-color: {t['accent_soft']};
+    border-color: {t['warning']};
+}}
+
+QFrame#property_panel_metric_card[metricTone="danger"] {{
+    background-color: {t['accent_soft']};
+    border-color: {t['danger']};
+}}
+
+#property_panel_metric_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#property_panel_metric_value {{
+    color: {t['text']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 QToolButton#workspace_summary_indicator {{

@@ -7,6 +7,7 @@ import json
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLabel,
     QGroupBox, QScrollArea, QHBoxLayout,
+    QGridLayout,
     QDialog, QListWidget, QListWidgetItem,
     QDialogButtonBox, QMessageBox, QFileDialog, QFrame,
 )
@@ -334,15 +335,56 @@ class PropertyPanel(QWidget):
     def _init_ui(self):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(6, 6, 6, 6)
-        outer.setSpacing(6)
+        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setSpacing(10)
 
-        # Search filter
+        self._overview_frame = QFrame()
+        self._overview_frame.setObjectName("property_panel_overview")
+        overview_layout = QVBoxLayout(self._overview_frame)
+        overview_layout.setContentsMargins(12, 12, 12, 12)
+        overview_layout.setSpacing(8)
+
+        self._overview_eyebrow = QLabel("Workspace Inspector")
+        self._overview_eyebrow.setObjectName("property_panel_eyebrow")
+        overview_layout.addWidget(self._overview_eyebrow)
+
+        self._overview_title = QLabel("Property Inspector")
+        self._overview_title.setObjectName("property_panel_title")
+        overview_layout.addWidget(self._overview_title)
+
+        self._overview_meta = QLabel("Select a widget to inspect geometry, behavior, resources, and callback wiring.")
+        self._overview_meta.setObjectName("property_panel_meta")
+        self._overview_meta.setWordWrap(True)
+        overview_layout.addWidget(self._overview_meta)
+
+        self._overview_chip_row = QHBoxLayout()
+        self._overview_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._overview_chip_row.setSpacing(6)
+        overview_layout.addLayout(self._overview_chip_row)
+
+        self._search_shell = QFrame()
+        self._search_shell.setObjectName("property_panel_search_shell")
+        search_layout = QVBoxLayout(self._search_shell)
+        search_layout.setContentsMargins(10, 10, 10, 10)
+        search_layout.setSpacing(4)
+
+        search_label = QLabel("Filter Visible Fields")
+        search_label.setObjectName("property_panel_search_label")
+        search_layout.addWidget(search_label)
+
+        self._search_hint = QLabel("Search labels, resource bindings, and callbacks for the current selection.")
+        self._search_hint.setObjectName("property_panel_search_hint")
+        self._search_hint.setWordWrap(True)
+        search_layout.addWidget(self._search_hint)
+
         self._search_edit = SearchLineEdit()
         self._search_edit.setPlaceholderText("Filter properties...")
         self._search_edit.textChanged.connect(self._on_search_changed)
         self._search_edit.setVisible(False)
-        outer.addWidget(self._search_edit)
+        search_layout.addWidget(self._search_edit)
+        self._search_shell.setVisible(False)
+        overview_layout.addWidget(self._search_shell)
+        outer.addWidget(self._overview_frame)
 
         scroll = QScrollArea()
         scroll.setObjectName("property_panel_scroll")
@@ -460,17 +502,84 @@ class PropertyPanel(QWidget):
             chip.setProperty("chipTone", tone)
         return chip
 
+    def _populate_chip_row(self, layout, items):
+        self._clear_layout(layout)
+        for text, tone in items:
+            layout.addWidget(self._make_status_chip(text, tone))
+        layout.addStretch()
+
+    def _make_metric_card(self, label, value, tone=None):
+        card = QFrame()
+        card.setObjectName("property_panel_metric_card")
+        if tone:
+            card.setProperty("metricTone", tone)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(2)
+
+        caption = QLabel(label)
+        caption.setObjectName("property_panel_metric_label")
+        metric_value = QLabel(value)
+        metric_value.setObjectName("property_panel_metric_value")
+        metric_value.setWordWrap(True)
+
+        layout.addWidget(caption)
+        layout.addWidget(metric_value)
+        return card
+
+    def _build_metric_grid(self, metrics):
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setHorizontalSpacing(8)
+        grid.setVerticalSpacing(8)
+        for index, (label, value, tone) in enumerate(metrics):
+            grid.addWidget(self._make_metric_card(label, value, tone), index // 2, index % 2)
+        return grid
+
+    def _resource_binding_count(self, widget):
+        descriptor = WidgetRegistry.instance().get(widget.widget_type)
+        return sum(
+            1
+            for prop_name, prop_info in descriptor.get("properties", {}).items()
+            if prop_info.get("type") in {"image_file", "font_file", "text_file"} and widget.properties.get(prop_name)
+        )
+
+    def _active_callback_count(self, widget):
+        return sum(1 for entry in self._callback_entries(widget) if entry.get("value"))
+
+    def _selection_mixed_field_count(self, callback_entries=None, common_props=None):
+        if len(self._selection) <= 1:
+            return 0
+
+        callback_entries = list(callback_entries or self._collect_multi_callback_entries())
+        common_props = list(common_props or self._collect_multi_common_properties())
+        mixed_geometry = sum(
+            1
+            for field in ("x", "y", "width", "height")
+            if self._is_mixed_values(getattr(widget, field) for widget in self._selection)
+        )
+        mixed_props = sum(
+            1
+            for prop_name, _ in common_props
+            if self._is_mixed_values(widget.properties.get(prop_name) for widget in self._selection)
+        )
+        mixed_callbacks = sum(1 for entry in callback_entries if entry["is_mixed"])
+        return mixed_geometry + mixed_props + mixed_callbacks
+
     def _create_no_selection_label(self):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(12, 14, 12, 14)
         layout.setSpacing(6)
+        eyebrow = QLabel("Inspector")
+        eyebrow.setObjectName("property_panel_eyebrow")
         title = QLabel("No selection")
         title.setObjectName("workspace_section_title")
         sub = QLabel("Select a widget in the structure tree or on the canvas to edit properties.")
         sub.setObjectName("workspace_section_subtitle")
         sub.setWordWrap(True)
+        layout.addWidget(eyebrow)
         layout.addWidget(title)
         layout.addWidget(sub)
         _set_widget_metadata(
@@ -520,6 +629,7 @@ class PropertyPanel(QWidget):
 
     def _update_panel_metadata(self):
         search_summary = self._current_search_summary()
+        self._update_overview_content()
         _set_widget_metadata(
             self._search_edit,
             tooltip=f"Filter visible property rows by label. Current filter: {search_summary}.",
@@ -541,6 +651,57 @@ class PropertyPanel(QWidget):
                 f"Search: {search_summary}."
             )
         _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
+
+    def _update_overview_content(self):
+        if not hasattr(self, "_overview_title"):
+            return
+
+        if self._primary_widget is None:
+            self._overview_meta.setText(
+                "Select a widget to inspect geometry, behavior, resources, and callback wiring."
+            )
+            self._search_hint.setText("Search becomes available after you select a widget.")
+            self._populate_chip_row(self._overview_chip_row, [("Idle", "accent"), ("Canvas or Tree", None)])
+            return
+
+        if len(self._selection) > 1:
+            widget_types = sorted({widget.widget_type for widget in self._selection})
+            callback_entries = self._collect_multi_callback_entries()
+            common_props = self._collect_multi_common_properties()
+            mixed_total = self._selection_mixed_field_count(callback_entries, common_props)
+            primary_name = self._primary_widget.name if self._primary_widget else "none"
+            self._overview_meta.setText(
+                f"Batch editing {_count_label(len(self._selection), 'widget')} across "
+                f"{_count_label(len(widget_types), 'type')}. Primary widget: {primary_name}."
+            )
+            self._search_hint.setText("Search common fields, resource bindings, and callbacks for the current batch selection.")
+            self._populate_chip_row(
+                self._overview_chip_row,
+                [
+                    (_count_label(len(self._selection), "widget"), "accent"),
+                    (_count_label(mixed_total, "mixed field"), "warning"),
+                    ("Batch", "success"),
+                ],
+            )
+            return
+
+        widget = self._primary_widget
+        layout_parent = self._layout_parent_name(widget)
+        display_name = WidgetRegistry.instance().display_name(widget.widget_type)
+        bound_assets = self._resource_binding_count(widget)
+        active_callbacks = self._active_callback_count(widget)
+        placement = f"Managed by {layout_parent}" if layout_parent else "Freeform placement"
+        self._overview_meta.setText(
+            f"{widget.name} - {display_name} ({widget.widget_type}). {placement}. "
+            f"{_count_label(bound_assets, 'asset binding')} and {_count_label(active_callbacks, 'active callback')}."
+        )
+        self._search_hint.setText("Search fields, resource bindings, and callbacks for the current widget.")
+        chips = [
+            (widget.widget_type, "accent"),
+            (f"{widget.width} x {widget.height}", None),
+            ("Layout-managed", "warning") if layout_parent else ("Freeform", "success"),
+        ]
+        self._populate_chip_row(self._overview_chip_row, chips)
 
     def _update_file_selector_metadata(self, prop_name, combo, tooltip=None):
         value_text = self._editor_value_summary(combo)
@@ -577,28 +738,52 @@ class PropertyPanel(QWidget):
     def _build_single_selection_header(self, widget):
         header = QFrame()
         header.setObjectName("workspace_panel_header")
+        header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(4)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
         header.setLayout(layout)
+
+        eyebrow = QLabel("Widget Profile")
+        eyebrow.setObjectName("property_panel_header_eyebrow")
+        layout.addWidget(eyebrow)
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(8)
+        top_row.setSpacing(10)
         icon = QLabel()
-        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=20).pixmap(20, 20))
+        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=22).pixmap(22, 22))
         top_row.addWidget(icon, 0, Qt.AlignTop)
 
         title_col = QVBoxLayout()
+        title_col.setContentsMargins(0, 0, 0, 0)
+        title_col.setSpacing(2)
         title = QLabel(widget.name)
         title.setObjectName("workspace_section_title")
         title_col.addWidget(title)
 
-        subtitle = QLabel(f"{WidgetRegistry.instance().display_name(widget.widget_type)} • {widget.widget_type}")
+        subtitle = QLabel(f"{WidgetRegistry.instance().display_name(widget.widget_type)} - {widget.widget_type}")
         subtitle.setObjectName("workspace_section_subtitle")
+        subtitle.setWordWrap(True)
         title_col.addWidget(subtitle)
         top_row.addLayout(title_col, 1)
         layout.addLayout(top_row)
+
+        header_meta = QLabel("Tune geometry, behavior, resources, and callback wiring for this widget.")
+        header_meta.setObjectName("property_panel_header_meta")
+        header_meta.setWordWrap(True)
+        layout.addWidget(header_meta)
+
+        layout_parent = self._layout_parent_name(widget)
+        bound_assets = self._resource_binding_count(widget)
+        active_callbacks = self._active_callback_count(widget)
+        metrics = [
+            ("Origin", f"{widget.x}, {widget.y}", "accent"),
+            ("Placement", "Layout-managed" if layout_parent else "Freeform", "warning" if layout_parent else "success"),
+            ("Assets", _count_label(bound_assets, "binding"), "success" if bound_assets else None),
+            ("Callbacks", _count_label(active_callbacks, "active callback"), "success" if active_callbacks else None),
+        ]
+        layout.addLayout(self._build_metric_grid(metrics))
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
@@ -609,7 +794,6 @@ class PropertyPanel(QWidget):
             chips_row.addWidget(self._make_status_chip("Locked", "warning"))
         if getattr(widget, "designer_hidden", False):
             chips_row.addWidget(self._make_status_chip("Hidden", "danger"))
-        layout_parent = self._layout_parent_name(widget)
         if layout_parent:
             chips_row.addWidget(self._make_status_chip(f"Managed by {layout_parent}", "warning"))
         chips_row.addStretch()
@@ -618,12 +802,18 @@ class PropertyPanel(QWidget):
         return header
 
     def _build_multi_selection_header(self, callback_entries):
+        common_props = self._collect_multi_common_properties()
         header = QFrame()
         header.setObjectName("workspace_panel_header")
+        header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(4)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(10)
         header.setLayout(layout)
+
+        eyebrow = QLabel("Batch Inspector")
+        eyebrow.setObjectName("property_panel_header_eyebrow")
+        layout.addWidget(eyebrow)
 
         title = QLabel(f"Selected {_count_label(len(self._selection), 'widget')}")
         title.setObjectName("workspace_section_title")
@@ -632,24 +822,25 @@ class PropertyPanel(QWidget):
         widget_types = sorted({widget.widget_type for widget in self._selection})
         subtitle = QLabel(
             f"Primary: {self._primary_widget.name if self._primary_widget else 'none'}"
-            f" • Types: {', '.join(widget_types)}"
+            f" - Types: {', '.join(widget_types)}"
         )
         subtitle.setObjectName("workspace_section_subtitle")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        mixed_geometry = sum(
-            1
-            for field in ("x", "y", "width", "height")
-            if self._is_mixed_values(getattr(widget, field) for widget in self._selection)
-        )
-        mixed_props = sum(
-            1
-            for prop_name, _ in self._collect_multi_common_properties()
-            if self._is_mixed_values(widget.properties.get(prop_name) for widget in self._selection)
-        )
-        mixed_callbacks = sum(1 for entry in callback_entries if entry["is_mixed"])
-        mixed_total = mixed_geometry + mixed_props + mixed_callbacks
+        header_meta = QLabel("Common fields and callbacks apply to every selected widget in this batch.")
+        header_meta.setObjectName("property_panel_header_meta")
+        header_meta.setWordWrap(True)
+        layout.addWidget(header_meta)
+
+        mixed_total = self._selection_mixed_field_count(callback_entries, common_props)
+        metrics = [
+            ("Types", _count_label(len(widget_types), "type"), "accent"),
+            ("Mixed", _count_label(mixed_total, "mixed field"), "warning"),
+            ("Common", _count_label(len(common_props), "shared property"), "success" if common_props else None),
+            ("Callbacks", _count_label(len(callback_entries), "shared callback"), None),
+        ]
+        layout.addLayout(self._build_metric_grid(metrics))
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
@@ -675,10 +866,15 @@ class PropertyPanel(QWidget):
 
         frame = QFrame()
         frame.setObjectName("workspace_hint_strip")
+        frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(3)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(4)
         frame.setLayout(layout)
+
+        eyebrow = QLabel("Interaction Notes")
+        eyebrow.setObjectName("property_panel_header_eyebrow")
+        layout.addWidget(eyebrow)
 
         for message in messages:
             label = QLabel(message)
@@ -695,12 +891,14 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
 
         if self._primary_widget is None:
+            self._search_shell.setVisible(False)
             self._search_edit.setVisible(False)
             self._no_selection_label = self._create_no_selection_label()
             self._layout.addWidget(self._no_selection_label)
             self._update_panel_metadata()
             return
 
+        self._search_shell.setVisible(True)
         self._search_edit.setVisible(True)
         if len(self._selection) > 1:
             self._build_multi_selection_form()
