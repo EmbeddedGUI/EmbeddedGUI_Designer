@@ -3470,9 +3470,8 @@ class TestMainWindowFileFlow:
             if action.text() in {
                 "Project",
                 "Structure",
-                "Widgets",
+                "Components",
                 "Assets",
-                "Status",
                 "Properties",
                 "Animations",
                 "Page",
@@ -3489,14 +3488,10 @@ class TestMainWindowFileFlow:
         assert actions["Project"].statusTip() == actions["Project"].toolTip()
         assert actions["Structure"].toolTip() == "Show the Structure workspace panel. Current page: none. Selection: none."
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
-        assert actions["Widgets"].toolTip() == "Show the Widgets workspace panel. Current page: none. Insert target: unavailable."
-        assert actions["Widgets"].statusTip() == actions["Widgets"].toolTip()
+        assert actions["Components"].toolTip() == "Show the Components workspace panel. Current page: none. Insert target: unavailable."
+        assert actions["Components"].statusTip() == actions["Components"].toolTip()
         assert actions["Assets"].toolTip() == "Show the Assets workspace panel. Current page: none."
         assert actions["Assets"].statusTip() == actions["Assets"].toolTip()
-        assert actions["Status"].toolTip() == (
-            "Show the Status workspace panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
-        )
-        assert actions["Status"].statusTip() == actions["Status"].toolTip()
         assert actions["Properties"].toolTip() == (
             "Currently showing the Properties inspector section. Current page: none. Selection: none."
         )
@@ -3514,16 +3509,16 @@ class TestMainWindowFileFlow:
         assert actions["Debug Output"].toolTip() == "Show the Debug Output tools panel. Current page: none. Panel hidden."
         assert actions["Debug Output"].statusTip() == actions["Debug Output"].toolTip()
 
-        window._select_left_panel("status")
+        window._select_left_panel("widgets")
         window._show_inspector_tab("page")
         window._show_bottom_panel("History")
 
         assert actions["Project"].toolTip() == (
             "Show the Project workspace panel. View: List view. Active page: none. Startup page: none."
         )
-        assert actions["Status"].toolTip() == (
-            "Currently showing the Status workspace panel. "
-            "Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        assert actions["Components"].toolTip() == (
+            "Currently showing the Components workspace panel. "
+            "Current page: none. Insert target: unavailable."
         )
         assert actions["Properties"].toolTip() == (
             "Show the Properties inspector section. Current page: none. Selection: none."
@@ -6177,9 +6172,12 @@ class TestMainWindowFileFlow:
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
-        assert window._workspace_nav_buttons["status"].toolTip() == (
-            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        assert window._workspace_context_label.text() == "NavigatorDemo / main_page"
+        assert window._workspace_context_label.toolTip() == (
+            "Current workspace context: NavigatorDemo. Current page: main_page. Project contains 2 pages."
         )
+        assert window._workspace_health_chip.text() == "Workspace Stable"
+        assert window._runtime_chip.text() == "Python Preview"
         assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page."
@@ -6213,6 +6211,10 @@ class TestMainWindowFileFlow:
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: detail_page."
+        assert window._workspace_context_label.text() == "NavigatorDemo / detail_page"
+        assert window._workspace_context_label.toolTip() == (
+            "Current workspace context: NavigatorDemo. Current page: detail_page. Project contains 2 pages."
+        )
         assert window._left_panel_stack.toolTip() == (
             "Workspace panels: Project visible. View: List view. Active page: detail_page. Startup page: main_page."
         )
@@ -6245,6 +6247,7 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: detail_page."
         )
+        assert window._workspace_context_label.text() == "NavigatorDemo / detail_page"
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Project visible. View: List view. Active page: detail_page. Startup page: detail_page."
         )
@@ -8302,12 +8305,12 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "assets"
         assert window._left_panel_stack.currentWidget() is window.res_panel
 
-        status_button = window._workspace_nav_buttons["status"]
-        QTest.mouseClick(status_button, Qt.LeftButton)
+        structure_button = window._workspace_nav_buttons["structure"]
+        QTest.mouseClick(structure_button, Qt.LeftButton)
         qapp.processEvents()
 
-        assert window._current_left_panel == "status"
-        assert window._left_panel_stack.currentWidget() is window.status_center_panel
+        assert window._current_left_panel == "structure"
+        assert window._left_panel_stack.currentWidget() is window.widget_tree
 
         _close_window(window)
 
@@ -8367,31 +8370,32 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "widgets"
         assert window._left_panel_stack.currentWidget() is window.widget_browser
         assert window._project_workspace.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
+        assert window._project_workspace._view_chip.text() == "Thumbnails"
         assert window._project_workspace._view_chip.isHidden() is False
-        assert window._project_workspace._page_count_chip.isHidden() is True
-        assert window._project_workspace._active_page_chip.isHidden() is True
+        assert window._project_workspace._summary_label.text() == "0 pages. Active: none. Clean."
+        assert window._project_workspace._meta_label.text() == "Startup: none"
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Currently showing Widgets panel. Current page: none. Insert target: unavailable."
+            "Currently showing Components panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Widgets."
+        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Components."
         assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Widgets."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
         assert window._left_panel_stack.toolTip() == (
-            "Workspace panels: Widgets visible. Current page: none. Insert target: unavailable."
+            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_panel_stack.statusTip() == window._left_panel_stack.toolTip()
         assert window._left_panel_stack.accessibleName() == (
-            "Workspace panels: Widgets visible. Current page: none. Insert target: unavailable."
+            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_shell.toolTip() == (
-            "Workspace left shell: Widgets panel visible. Current page: none. Insert target: unavailable."
+            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_shell.statusTip() == window._left_shell.toolTip()
         assert window._left_shell.accessibleName() == (
-            "Workspace left shell: Widgets panel visible. Current page: none. Insert target: unavailable."
+            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
         )
         assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
@@ -8418,14 +8422,18 @@ class TestMainWindowFileFlow:
         window._update_workspace_chips()
         window._clear_selection(sync_tree=False, sync_preview=False)
 
-        assert window._sdk_chip.isHidden() is True
-        assert window._sdk_chip.text() == "SDK ready"
-        assert window._sdk_chip.accessibleName() == "Workspace status: SDK ready."
-        assert window._sdk_chip.toolTip() == (
-            "Open the left Status panel (SDK, compile readiness, and workspace summary). "
-            "Design-time issues open from the bottom Diagnostics tab or the diagnostics chip."
+        assert window._workspace_context_label.text() == "WorkspaceChipDemo / main_page"
+        assert window._workspace_context_label.toolTip() == (
+            "Current workspace context: WorkspaceChipDemo. Current page: main_page. Project contains 1 page."
         )
-        assert window._sdk_chip.statusTip() == window._sdk_chip.toolTip()
+        assert window._workspace_health_chip.text() == "Workspace Stable"
+        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: Workspace Stable."
+        assert window._workspace_health_chip.toolTip() == "Pages, inspector, and diagnostics are clear."
+        assert window._workspace_health_chip.statusTip() == window._workspace_health_chip.toolTip()
+        assert window._runtime_chip.text() == "Build Unavailable"
+        assert window._runtime_chip.accessibleName() == "Preview runtime indicator: Build Unavailable."
+        assert window._runtime_chip.toolTip() == "Open Debug Output. preview disabled for test."
+        assert window._runtime_chip.statusTip() == window._runtime_chip.toolTip()
         assert window._central_stack.accessibleName() == "Main view stack: Editor workspace visible."
         assert window._sdk_status_label.accessibleName().startswith("SDK binding: SDK: ")
         assert window._sdk_status_label.toolTip() == str(sdk_root)
@@ -8435,40 +8443,16 @@ class TestMainWindowFileFlow:
         )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
-        assert window._selection_chip.isHidden() is True
-        assert window._selection_chip.text() == "No selection"
-        assert window._selection_chip.accessibleName() == "Workspace status: no selection."
-        assert window._selection_chip.toolTip() == "Open Structure to review the current selection."
-        assert window._selection_chip.statusTip() == window._selection_chip.toolTip()
-        assert window._preview_chip.isHidden() is True
-        assert window._preview_chip.text() == "Preview idle"
-        assert window._preview_chip.accessibleName() == "Workspace status: Preview idle."
-        assert window._preview_chip.toolTip() == "Open Debug Output to inspect preview runtime details."
-        assert window._preview_chip.statusTip() == window._preview_chip.toolTip()
-        assert window._diagnostics_chip.isHidden() is True
-        assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 0 errors and 0 warnings."
-        assert window._diagnostics_chip.toolTip() == (
-            "Open the bottom Diagnostics tab (full design-time issue list). "
-            "Use the left Status panel for SDK overview and actions."
-        )
-        assert window._diagnostics_chip.statusTip() == window._diagnostics_chip.toolTip()
-        assert window._project_workspace._view_chip.isHidden() is True
-        assert window._project_workspace._page_count_chip.isHidden() is False
-        assert window._project_workspace._page_count_chip.text() == "1 page"
-        assert window._project_workspace._active_page_chip.text() == "Active: main_page"
-        assert window._project_workspace._dirty_pages_chip.isHidden() is True
-        assert window._project_workspace._dirty_pages_chip.text() == "No dirty pages"
-        assert window._dirty_chip.isHidden() is True
+        assert window._project_workspace._view_chip.isHidden() is False
+        assert window._project_workspace._summary_label.text() == "1 page. Active: main_page. Clean."
+        assert window._project_workspace._meta_label.text() == "Startup: main_page"
         assert window._workspace_nav_buttons["structure"].toolTip() == (
             "Open Structure panel. Current page: main_page. Selection: none."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Widgets panel. Current page: main_page. Insert target: root_group."
+            "Open Components panel. Current page: main_page. Insert target: root_group."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
-        assert window._workspace_nav_buttons["status"].toolTip() == (
-            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
-        )
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: none."
         )
@@ -8477,14 +8461,14 @@ class TestMainWindowFileFlow:
         )
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
-        assert window._selection_chip.isHidden() is False
-        assert window._selection_chip.text() == "1 selected"
-        assert window._selection_chip.accessibleName() == "Workspace status: 1 selected."
+        assert window._workspace_health_chip.text() == "1 Selected"
+        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: 1 Selected."
+        assert window._workspace_health_chip.toolTip() == "Open Structure to inspect the current selection."
         assert window._workspace_nav_buttons["structure"].toolTip() == (
             "Open Structure panel. Current page: main_page. Selection: title (label)."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Widgets panel. Current page: main_page. Insert target: root_group."
+            "Open Components panel. Current page: main_page. Insert target: root_group."
         )
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: title (label)."
@@ -8493,23 +8477,17 @@ class TestMainWindowFileFlow:
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
         window._update_window_title()
 
-        assert window._dirty_chip.text() == "Dirty 1"
-        assert window._dirty_chip.isHidden() is False
-        assert window._dirty_chip.accessibleName() == "Workspace status: 1 dirty page."
-        assert window._dirty_chip.toolTip() == "Open History to review unsaved changes."
-        assert window._dirty_chip.statusTip() == window._dirty_chip.toolTip()
-        assert window._project_workspace._dirty_pages_chip.isHidden() is False
-        assert window._project_workspace._dirty_pages_chip.text() == "1 dirty page"
-        assert window._workspace_nav_buttons["status"].toolTip() == (
-            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: 1 dirty page."
-        )
+        assert window._workspace_health_chip.text() == "Dirty 1"
+        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: Dirty 1."
+        assert window._workspace_health_chip.toolTip() == "Open History to review unsaved changes."
+        assert window._project_workspace._summary_label.text() == "1 page. Active: main_page. 1 dirty page."
 
         monkeypatch.setattr(window.diagnostics_panel, "severity_counts", lambda: {"error": 1, "warning": 0, "info": 0})
         window._update_workspace_chips()
 
-        assert window._diagnostics_chip.isHidden() is False
-        assert window._diagnostics_chip.text() == "Diagnostics 1E/0W"
-        assert window._diagnostics_chip.accessibleName() == "Workspace diagnostics: 1 errors and 0 warnings."
+        assert window._workspace_health_chip.text() == "1 Error"
+        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: 1 Error."
+        assert window._workspace_health_chip.toolTip() == "Open Diagnostics. Current issues: 1 errors and 0 warnings."
         _close_window(window)
 
     def test_workspace_chips_skip_no_op_toolbar_refreshes(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -8534,39 +8512,46 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window.diagnostics_panel, "severity_counts", lambda: {"error": 0, "warning": 0, "info": 0})
         window._clear_selection(sync_tree=False, sync_preview=False)
 
-        for chip in (
-            window._sdk_chip,
-            window._dirty_chip,
-            window._selection_chip,
-            window._preview_chip,
-            window._diagnostics_chip,
-        ):
-            if hasattr(chip, "_workspace_chip_snapshot"):
-                delattr(chip, "_workspace_chip_snapshot")
+        for chip in (window._workspace_health_chip, window._runtime_chip):
+            if hasattr(chip, "_workspace_indicator_snapshot"):
+                delattr(chip, "_workspace_indicator_snapshot")
+        health_tooltip_calls = 0
+        runtime_tooltip_calls = 0
+        original_health_set_tooltip = window._workspace_health_chip.setToolTip
+        original_runtime_set_tooltip = window._runtime_chip.setToolTip
 
-        set_chip_calls = 0
-        original_set_chip = window._set_chip
+        def counted_health_set_tooltip(text):
+            nonlocal health_tooltip_calls
+            health_tooltip_calls += 1
+            return original_health_set_tooltip(text)
 
-        def counted_set_chip(*args, **kwargs):
-            nonlocal set_chip_calls
-            set_chip_calls += 1
-            return original_set_chip(*args, **kwargs)
+        def counted_runtime_set_tooltip(text):
+            nonlocal runtime_tooltip_calls
+            runtime_tooltip_calls += 1
+            return original_runtime_set_tooltip(text)
 
-        monkeypatch.setattr(window, "_set_chip", counted_set_chip)
+        monkeypatch.setattr(window._workspace_health_chip, "setToolTip", counted_health_set_tooltip)
+        monkeypatch.setattr(window._runtime_chip, "setToolTip", counted_runtime_set_tooltip)
 
         window._update_workspace_chips()
-        assert set_chip_calls == 5
+        assert health_tooltip_calls == 1
+        assert runtime_tooltip_calls == 1
 
-        set_chip_calls = 0
+        health_tooltip_calls = 0
+        runtime_tooltip_calls = 0
         window._update_workspace_chips()
-        assert set_chip_calls == 0
+        assert health_tooltip_calls == 0
+        assert runtime_tooltip_calls == 0
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
-        assert set_chip_calls == 1
+        assert health_tooltip_calls == 1
+        assert runtime_tooltip_calls == 0
 
-        set_chip_calls = 0
+        health_tooltip_calls = 0
+        runtime_tooltip_calls = 0
         window._update_workspace_chips()
-        assert set_chip_calls == 0
+        assert health_tooltip_calls == 0
+        assert runtime_tooltip_calls == 0
         _close_window(window)
 
     def test_welcome_view_and_sdk_status_label_expose_accessible_metadata(self, qapp, isolated_config):
@@ -8580,9 +8565,12 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.toolTip() == "No SDK root configured"
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
-        assert window._sdk_chip.isHidden() is False
-        assert window._sdk_chip.text() == "SDK missing"
-        assert window._sdk_chip.accessibleName() == "Workspace status: SDK missing."
+        assert window._workspace_context_label.text() == "No project open"
+        assert window._workspace_context_label.toolTip() == "Open or create a project to start editing."
+        assert window._workspace_health_chip.text() == "Open Project"
+        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: Open Project."
+        assert window._runtime_chip.text() == "Preview Idle"
+        assert window._runtime_chip.accessibleName() == "Preview runtime indicator: Preview Idle."
         assert window._insert_widget_button.toolTip() == "Open or create a project to insert a component."
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
@@ -8697,8 +8685,11 @@ class TestMainWindowFileFlow:
 
         assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
-        assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, edit, preview, mode, and status controls."
+        assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
+        assert window._workspace_context_label.text() == "No project open"
+        assert window._workspace_health_chip.text() == "Open Project"
+        assert window._runtime_chip.text() == "Preview Idle"
         assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unavailable: open a project first."
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is False
@@ -8728,6 +8719,12 @@ class TestMainWindowFileFlow:
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
+        assert window._workspace_context_label.text() == "ToolbarHintDemo / main_page"
+        assert window._workspace_context_label.toolTip() == (
+            "Current workspace context: ToolbarHintDemo. Current page: main_page. Project contains 1 page."
+        )
+        assert window._workspace_health_chip.text() == "Workspace Stable"
+        assert window._runtime_chip.text() == "Python Preview"
         assert window._save_action.toolTip() == (
             "Save the current project (Ctrl+S). "
             f"Unsaved pages: none. Target: {window._project_dir}."
@@ -8754,6 +8751,7 @@ class TestMainWindowFileFlow:
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
 
+        assert window._workspace_health_chip.text() == "1 Selected"
         assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C)."
         assert window._copy_action.statusTip() == window._copy_action.toolTip()
 
@@ -8971,7 +8969,6 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["structure"].text() == "Tree"
         assert window._workspace_nav_buttons["widgets"].text() == "Insert"
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
-        assert window._workspace_nav_buttons["status"].text() == "Status"
         assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextUnderIcon
 
         assert window._workspace_nav_buttons["project"].toolTip() == (
@@ -8984,15 +8981,11 @@ class TestMainWindowFileFlow:
             "Open Structure panel. Current page: none. Selection: none."
         )
         assert window._workspace_nav_buttons["widgets"].toolTip() == (
-            "Open Widgets panel. Current page: none. Insert target: unavailable."
+            "Open Components panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: none."
-        assert window._workspace_nav_buttons["status"].toolTip() == (
-            "Open Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
-        )
-        assert window._workspace_nav_buttons["status"].statusTip() == window._workspace_nav_buttons["status"].toolTip()
-        assert window._workspace_nav_buttons["status"].accessibleName() == (
-            "Workspace panel button: Status. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        assert window._workspace_nav_buttons["widgets"].accessibleName() == (
+            "Workspace panel button: Components. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Project."
         assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
@@ -9029,30 +9022,30 @@ class TestMainWindowFileFlow:
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
 
-        window._select_left_panel("status")
+        window._select_left_panel("widgets")
 
-        assert window._workspace_nav_buttons["status"].toolTip() == (
-            "Currently showing Status panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+            "Currently showing Components panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["status"].accessibleName() == (
-            "Workspace panel button: Status. Current panel. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+        assert window._workspace_nav_buttons["widgets"].accessibleName() == (
+            "Workspace panel button: Components. Current panel. Current page: none. Insert target: unavailable."
         )
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Open Project panel. View: List view. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Status."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
         assert window._left_panel_stack.accessibleName() == (
-            "Workspace panels: Status visible. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+            "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
         )
         assert window._left_shell.accessibleName() == (
-            "Workspace left shell: Status panel visible. Diagnostics: 0 errors and 0 warnings. Dirty state: no dirty pages."
+            "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
         )
         assert window._editor_container.accessibleName() == (
-            "Editor workspace. Left panel: Status. Current page: none. Mode: Design. Bottom tools hidden."
+            "Editor workspace. Left panel: Components. Current page: none. Mode: Design. Bottom tools hidden."
         )
         assert window._center_shell.accessibleName() == "Workspace center shell. Current page: none. Mode: Design."
         assert window._top_splitter.accessibleName() == (
-            "Workspace columns. Left panel: Status. Editor mode: Design. Inspector section: Properties. Current page: none."
+            "Workspace columns. Left panel: Components. Editor mode: Design. Inspector section: Properties. Current page: none."
         )
 
         window._set_bottom_panel_visible(True)
@@ -9062,7 +9055,7 @@ class TestMainWindowFileFlow:
         assert window._bottom_toggle_button.statusTip() == window._bottom_toggle_button.toolTip()
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: shown. Activate to hide."
         assert window._editor_container.accessibleName() == (
-            "Editor workspace. Left panel: Status. Current page: none. Mode: Design. Bottom tools visible."
+            "Editor workspace. Left panel: Components. Current page: none. Mode: Design. Bottom tools visible."
         )
         assert window._workspace_splitter.accessibleName() == (
             "Workspace rows. Editor area visible. Bottom tools visible. Current section: Diagnostics. Current page: none."
@@ -9146,7 +9139,7 @@ class TestMainWindowFileFlow:
         assert project_tooltip_calls == 0
         assert stack_tooltip_calls == 0
 
-        window._update_workspace_nav_button_metadata("status")
+        window._update_workspace_nav_button_metadata("widgets")
         assert project_tooltip_calls == 1
         assert stack_tooltip_calls == 1
         _close_window(window)

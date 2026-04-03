@@ -135,7 +135,7 @@ from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
 
 
-WORKSPACE_LAYOUT_VERSION = 4
+WORKSPACE_LAYOUT_VERSION = 5
 
 # UI-D-002: usable on 1280-wide laptops; clamp to primary screen on startup / restore.
 MAIN_WINDOW_MIN_WIDTH = 960
@@ -146,10 +146,10 @@ INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 # UIX-004: workspace shell proportions (top-level frame balance)
 WORKSPACE_NAV_RAIL_WIDTH = 72
-LEFT_PANEL_STACK_MIN_WIDTH = 244
-LEFT_PANEL_DEFAULT_WIDTH = 312
-CENTER_PANEL_DEFAULT_WIDTH = 1040
-INSPECTOR_PANEL_DEFAULT_WIDTH = 332
+LEFT_PANEL_STACK_MIN_WIDTH = 192
+LEFT_PANEL_DEFAULT_WIDTH = 264
+CENTER_PANEL_DEFAULT_WIDTH = 860
+INSPECTOR_PANEL_DEFAULT_WIDTH = 276
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
@@ -363,7 +363,7 @@ class MainWindow(QMainWindow):
 
         self.project_dock = ProjectExplorerDock(self)
         self.project_dock.setObjectName("project_explorer_dock")
-        self.project_dock.setMinimumWidth(220)
+        self.project_dock.setMinimumWidth(192)
         self._prepare_workspace_dock(self.project_dock)
 
         self.page_navigator = PageNavigator()
@@ -429,7 +429,6 @@ class MainWindow(QMainWindow):
             "structure": self.widget_tree,
             "widgets": self.widget_browser,
             "assets": self.res_panel,
-            "status": self.status_center_panel,
         }
         for panel in self._left_panel_pages.values():
             self._left_panel_stack.addWidget(panel)
@@ -445,9 +444,8 @@ class MainWindow(QMainWindow):
         for key, label, short_label, icon_key in (
             ("project", "Project", "Pages", "nav.project"),
             ("structure", "Structure", "Tree", "nav.structure"),
-            ("widgets", "Widgets", "Insert", "nav.component_library"),
+            ("widgets", "Components", "Insert", "nav.component_library"),
             ("assets", "Assets", "Assets", "nav.resource"),
-            ("status", "Status", "Status", "state.info"),
         ):
             button = self._create_workspace_nav_button(label, short_label, icon_key, key)
             self._workspace_nav_buttons[key] = button
@@ -691,7 +689,7 @@ class MainWindow(QMainWindow):
         button.setIcon(make_icon(icon_key, size=nav_icon_size))
         button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         button.setText(str(short_label or label or ""))
-        button.setFixedSize(60, 56)
+        button.setFixedSize(62, 60)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
@@ -699,9 +697,8 @@ class MainWindow(QMainWindow):
         return {
             "project": "Project",
             "structure": "Structure",
-            "widgets": "Widgets",
+            "widgets": "Components",
             "assets": "Assets",
-            "status": "Status",
         }.get(panel_key, str(panel_key or "Project").title())
 
     def _project_workspace_nav_context(self):
@@ -747,14 +744,6 @@ class MainWindow(QMainWindow):
         current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
         return f"Current page: {current_page}."
 
-    def _status_workspace_nav_context(self):
-        diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
-        error_count = int(diagnostics_counts.get("error", 0) or 0)
-        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
-        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
-        dirty_text = "no dirty pages" if dirty_count == 0 else ("1 dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
-        return f"Diagnostics: {error_count} errors and {warning_count} warnings. Dirty state: {dirty_text}."
-
     def _update_workspace_nav_button_metadata(self, current_panel):
         if not hasattr(self, "_workspace_nav_buttons"):
             return
@@ -768,8 +757,6 @@ class MainWindow(QMainWindow):
                 context = self._components_workspace_nav_context()
             elif key == "assets":
                 context = self._assets_workspace_nav_context()
-            elif key == "status":
-                context = self._status_workspace_nav_context()
             else:
                 context = ""
             if key == current_panel:
@@ -808,8 +795,6 @@ class MainWindow(QMainWindow):
             return self._components_workspace_nav_context()
         if panel_key == "assets":
             return self._assets_workspace_nav_context()
-        if panel_key == "status":
-            return self._status_workspace_nav_context()
         return ""
 
     def _inspector_menu_action_context(self):
@@ -1657,12 +1642,19 @@ class MainWindow(QMainWindow):
         return f"Project: {project_state}. Preview: {preview_state}."
 
     def _update_toolbar_action_metadata(self):
-        command_bar_summary = "Workspace command bar with insert, edit, preview, mode, and status controls."
+        command_bar_summary = "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         if hasattr(self, "_toolbar_host"):
             self._set_metadata_summary(self._toolbar_host, command_bar_summary)
         toolbar_summary = "Main toolbar: insert, save, edit, and preview commands."
         if hasattr(self, "_toolbar"):
             self._set_metadata_summary(self._toolbar, toolbar_summary)
+        if hasattr(self, "_workspace_context_label"):
+            current_text = str(self._workspace_context_label.text() or "No project open")
+            self._set_metadata_summary(
+                self._workspace_context_label,
+                f"Workspace context label. {current_text}.",
+                f"Workspace context label: {current_text}.",
+            )
         if hasattr(self, "_save_action"):
             has_project = getattr(self, "project", None) is not None
             self._save_action.setEnabled(has_project)
@@ -2083,6 +2075,27 @@ class MainWindow(QMainWindow):
         chip._workspace_chip_snapshot = snapshot
         return True
 
+    def _set_summary_indicator_state(self, chip, *, text, tone="", accessible_name=None, tool_tip=None):
+        if chip is None:
+            return False
+        resolved_text = str(text or "")
+        resolved_accessible_name = str(accessible_name or resolved_text)
+        resolved_tool_tip = str(tool_tip or "")
+        resolved_tone = str(tone or "")
+        snapshot = (resolved_text, resolved_tone, resolved_accessible_name, resolved_tool_tip)
+        if getattr(chip, "_workspace_indicator_snapshot", None) == snapshot:
+            return False
+        chip.setText(resolved_text)
+        chip.setToolTip(resolved_tool_tip)
+        chip.setStatusTip(resolved_tool_tip)
+        chip.setAccessibleName(resolved_accessible_name)
+        chip.setProperty("indicatorTone", resolved_tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+        chip._workspace_indicator_snapshot = snapshot
+        return True
+
     def _set_metadata_summary(self, widget, tooltip, accessible_name=None):
         if widget is None:
             return False
@@ -2097,15 +2110,50 @@ class MainWindow(QMainWindow):
         widget._metadata_summary_snapshot = snapshot
         return True
 
+    def _update_workspace_context_label(self, *, page_count=0):
+        if not hasattr(self, "_workspace_context_label"):
+            return
+        if getattr(self, "project", None) is None:
+            text = "No project open"
+            tooltip = "Open or create a project to start editing."
+        else:
+            project_label = os.path.basename(normalize_path(self._project_dir) or "") or getattr(self, "app_name", "Project")
+            current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "No page")
+            text = f"{project_label} / {current_page}"
+            page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
+            tooltip = f"Current workspace context: {project_label}. Current page: {current_page}. Project contains {page_label}."
+        self._workspace_context_label.setText(text)
+        self._set_metadata_summary(self._workspace_context_label, tooltip, f"Workspace context: {text}.")
+
+    def _open_workspace_health_surface(self):
+        diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
+        error_count = int(diagnostics_counts.get("error", 0) or 0)
+        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
+        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+        selection_count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
+        if getattr(self, "project", None) is None or not self._has_valid_sdk_root():
+            self._select_left_panel("project")
+            return
+        if error_count or warning_count:
+            self._show_bottom_panel("Diagnostics")
+            return
+        if dirty_count:
+            self._show_bottom_panel("History")
+            return
+        if selection_count:
+            self._select_left_panel("structure")
+            return
+        self._select_left_panel("project")
+
     def _update_workspace_chips(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0, "info": 0}
-        preview_text = "Preview idle"
-        preview_tone = "accent"
+        preview_text = "Preview Ready"
+        preview_tone = ""
         if self.preview_panel.is_python_preview_active():
-            preview_text = "Python preview"
+            preview_text = "Python Preview"
             preview_tone = "warning"
         elif self.compiler is not None and self.compiler.is_preview_running():
-            preview_text = "Live preview"
+            preview_text = "Live Preview"
             preview_tone = "success"
 
         sdk_ready = self._has_valid_sdk_root()
@@ -2155,43 +2203,83 @@ class MainWindow(QMainWindow):
                 startup_page=startup_page_name,
                 dirty_pages=dirty_count,
             )
-        if hasattr(self, "_selection_chip"):
-            selection_text = f"{selection_count} selected" if selection_count else "No selection"
-            selection_summary = f"{selection_count} selected" if selection_count else "no selection"
-            self._set_workspace_chip_state(
-                self._selection_chip,
-                visible=selection_count > 0,
-                text=selection_text,
-                accessible_name=f"Workspace status: {selection_summary}.",
-                tool_tip="Open Structure to review the current selection.",
-            )
-        if hasattr(self, "_preview_chip"):
-            self._set_workspace_chip_state(
-                self._preview_chip,
-                visible=preview_text != "Preview idle",
-                text=preview_text,
-                tone=preview_tone,
-                accessible_name=f"Workspace status: {preview_text}.",
-                tool_tip="Open Debug Output to inspect preview runtime details.",
-            )
-        if hasattr(self, "_diagnostics_chip"):
-            if error_count:
-                tone = "danger"
-            elif warning_count:
-                tone = "warning"
+        self._update_workspace_context_label(page_count=page_count)
+
+        runtime_error = str(self._last_runtime_error_text or "").strip()
+        if not runtime_error and self.compiler is not None:
+            try:
+                runtime_error = str(self.compiler.get_last_runtime_error() or "").strip()
+            except Exception:
+                runtime_error = ""
+
+        if hasattr(self, "_workspace_health_chip"):
+            if getattr(self, "project", None) is None:
+                health_text = "Open Project"
+                health_tone = "warning"
+                health_tip = "Open or create a project to start editing."
+            elif not sdk_ready:
+                health_text = "SDK Setup"
+                health_tone = "warning"
+                health_tip = "SDK root is missing or invalid. Open Pages to rebind the project workspace."
+            elif error_count > 0:
+                health_text = f"{error_count} Error" if error_count == 1 else f"{error_count} Errors"
+                health_tone = "danger"
+                health_tip = f"Open Diagnostics. Current issues: {error_count} errors and {warning_count} warnings."
+            elif warning_count > 0:
+                health_text = f"{warning_count} Warning" if warning_count == 1 else f"{warning_count} Warnings"
+                health_tone = "warning"
+                health_tip = f"Open Diagnostics. Current warnings: {warning_count}. Dirty pages: {dirty_count}."
+            elif dirty_count > 0:
+                health_text = f"Dirty {dirty_count}"
+                health_tone = "warning"
+                health_tip = "Open History to review unsaved changes."
+            elif selection_count > 0:
+                health_text = f"{selection_count} Selected"
+                health_tone = "success"
+                health_tip = "Open Structure to inspect the current selection."
             else:
-                tone = "success"
-            label = f"Diagnostics {error_count}E/{warning_count}W"
-            self._set_workspace_chip_state(
-                self._diagnostics_chip,
-                visible=error_count > 0 or warning_count > 0,
-                text=label,
-                tone=tone,
-                accessible_name=f"Workspace diagnostics: {error_count} errors and {warning_count} warnings.",
-                tool_tip=(
-                    "Open the bottom Diagnostics tab (full design-time issue list). "
-                    "Use the left Status panel for SDK overview and actions."
-                ),
+                health_text = "Workspace Stable"
+                health_tone = "success"
+                health_tip = "Pages, inspector, and diagnostics are clear."
+            self._set_summary_indicator_state(
+                self._workspace_health_chip,
+                text=health_text,
+                tone=health_tone,
+                accessible_name=f"Workspace health indicator: {health_text}.",
+                tool_tip=health_tip,
+            )
+
+        if hasattr(self, "_runtime_chip"):
+            if runtime_error:
+                runtime_text = "Runtime Issue"
+                runtime_tone = "danger"
+                runtime_tip = f"Open Debug Output. Runtime issue: {runtime_error}"
+            elif self.preview_panel.is_python_preview_active():
+                runtime_text = "Python Preview"
+                runtime_tone = "warning"
+                runtime_tip = "Open Debug Output. Python preview is active."
+            elif self.compiler is not None and self.compiler.is_preview_running():
+                runtime_text = "Live Preview"
+                runtime_tone = "success"
+                runtime_tip = "Open Debug Output. The executable preview is running."
+            elif getattr(self, "project", None) is None:
+                runtime_text = "Preview Idle"
+                runtime_tone = ""
+                runtime_tip = "Open a project to start compile-backed preview."
+            elif getattr(self, "_compile_action", None) is not None and not self._compile_action.isEnabled():
+                runtime_text = "Build Unavailable"
+                runtime_tone = "warning"
+                runtime_tip = f"Open Debug Output. {self._compile_action_blocked_reason()}."
+            else:
+                runtime_text = "Preview Ready"
+                runtime_tone = ""
+                runtime_tip = "Compile and run the preview to inspect runtime output."
+            self._set_summary_indicator_state(
+                self._runtime_chip,
+                text=runtime_text,
+                tone=runtime_tone,
+                accessible_name=f"Preview runtime indicator: {runtime_text}.",
+                tool_tip=runtime_tip,
             )
 
         self._update_status_center(
@@ -2215,7 +2303,6 @@ class MainWindow(QMainWindow):
                 "structure": "nav.structure",
                 "widgets": "nav.component_library",
                 "assets": "nav.resource",
-                "status": "state.info",
             }
             for key, button in self._workspace_nav_buttons.items():
                 button.setIcon(make_icon(icon_map.get(key, "widgets"), size=nav_icon_size))
@@ -2348,14 +2435,28 @@ class MainWindow(QMainWindow):
 
         self._select_left_panel(saved_active_left_panel or getattr(self._config, "workspace_left_panel", "project"))
         if hasattr(self, "_inspector_tabs") and self._inspector_tabs.count() > 0:
-            self._inspector_tabs.setCurrentIndex(max(0, min(ui_prefs.inspector_tab_index, self._inspector_tabs.count() - 1)))
+            inspector_index = {
+                "properties": 0,
+                "animations": 1,
+                "page": 2,
+            }.get(str(getattr(ui_prefs, "inspector_section", "properties") or "properties").strip().lower())
+            if inspector_index is None:
+                inspector_index = max(0, min(ui_prefs.inspector_tab_index, self._inspector_tabs.count() - 1))
+            self._inspector_tabs.setCurrentIndex(inspector_index)
         if hasattr(self, "_page_tools_scroll"):
             idx = max(0, min(int(getattr(ui_prefs, "page_tools_tab_index", 0) or 0), 1))
             self._page_tools_section_focus = "timers" if idx else "fields"
             if hasattr(self, "_inspector_tabs") and self._inspector_tabs.currentIndex() == 2:
                 self._focus_page_inspector_section(self._page_tools_section_focus)
         if hasattr(self, "_bottom_tabs") and self._bottom_tabs.count() > 0:
-            self._bottom_tabs.setCurrentIndex(max(0, min(ui_prefs.bottom_tab_index, self._bottom_tabs.count() - 1)))
+            bottom_index = {
+                "diagnostics": 0,
+                "history": 1,
+                "debug_output": 2,
+            }.get(str(getattr(ui_prefs, "bottom_panel_kind", "diagnostics") or "diagnostics").strip().lower())
+            if bottom_index is None:
+                bottom_index = max(0, min(ui_prefs.bottom_tab_index, self._bottom_tabs.count() - 1))
+            self._bottom_tabs.setCurrentIndex(bottom_index)
         self._set_bottom_panel_visible(bool(ui_prefs.bottom_panel_visible))
         if bool(getattr(ui_prefs, "focus_canvas_enabled", False)):
             self._set_focus_canvas_enabled(True)
@@ -2419,12 +2520,22 @@ class MainWindow(QMainWindow):
                 top_splitter=bytes(self._top_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_top_splitter") else "",
                 workspace_splitter=bytes(self._workspace_splitter.saveState().toBase64()).decode("ascii") if hasattr(self, "_workspace_splitter") else "",
                 inspector_tab_index=self._inspector_tabs.currentIndex() if hasattr(self, "_inspector_tabs") else 0,
+                inspector_section=(
+                    {0: "properties", 1: "animations", 2: "page"}.get(self._inspector_tabs.currentIndex(), "properties")
+                    if hasattr(self, "_inspector_tabs")
+                    else "properties"
+                ),
                 page_tools_tab_index=(
                     (1 if getattr(self, "_page_tools_section_focus", "fields") == "timers" else 0)
                     if hasattr(self, "_page_tools_scroll")
                     else 0
                 ),
                 bottom_tab_index=self._bottom_tabs.currentIndex() if hasattr(self, "_bottom_tabs") else 0,
+                bottom_panel_kind=(
+                    {0: "diagnostics", 1: "history", 2: "debug_output"}.get(self._bottom_tabs.currentIndex(), "diagnostics")
+                    if hasattr(self, "_bottom_tabs")
+                    else "diagnostics"
+                ),
                 bottom_panel_visible=bool(getattr(self, "_bottom_panel_visible", False)),
                 focus_canvas_enabled=bool(getattr(self, "_focus_canvas_enabled", False)),
                 active_left_panel=getattr(self, "_current_left_panel", "project"),
@@ -3707,7 +3818,7 @@ class MainWindow(QMainWindow):
 
         # View menu surface map (UI-S0-003):
         # - Theme / Font: global chrome.
-        # - Workspace: left rail panels (project, structure, components, assets, status).
+        # - Workspace: left rail panels (project, structure, components, assets).
         # - Inspector: right tabs (properties, animations, page).
         # - Tools + overlay/grid/mockup: bottom panel + preview presentation.
         # There is no separate "Window" menu on this app; use the OS window frame.
@@ -3792,9 +3903,8 @@ class MainWindow(QMainWindow):
         for label, key in (
             ("Project", "project"),
             ("Structure", "structure"),
-            ("Widgets", "widgets"),
+            ("Components", "widgets"),
             ("Assets", "assets"),
-            ("Status", "status"),
         ):
             action = QAction(label, self)
             self._apply_action_hint(action, f"Show the {label} workspace panel.")
@@ -4001,7 +4111,7 @@ class MainWindow(QMainWindow):
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
             "QToolBar { spacing: 6px; background: transparent; border: none; }"
-            "QToolButton { padding: 6px 10px; border-radius: 2px; }"
+            "QToolButton { padding: 6px 10px; border-radius: 8px; }"
         )
         self._toolbar_host_layout.addWidget(tb, 1)
 
@@ -4011,6 +4121,11 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFrameShadow(QFrame.Plain)
         toolbar_rail_sep.setFixedHeight(26)
         self._toolbar_host_layout.addWidget(toolbar_rail_sep, 0)
+
+        self._workspace_context_label = QLabel("No project open")
+        self._workspace_context_label.setObjectName("workspace_section_subtitle")
+        self._workspace_context_label.setMinimumWidth(180)
+        self._toolbar_host_layout.addWidget(self._workspace_context_label, 0)
 
         for action, icon_key in (
             (self._save_action, "toolbar.save"),
@@ -4056,6 +4171,7 @@ class MainWindow(QMainWindow):
         tb.addAction(self._stop_action)
 
         mode_host = QWidget()
+        mode_host.setObjectName("workspace_mode_switch")
         mode_layout = QHBoxLayout(mode_host)
         mode_layout.setContentsMargins(0, 0, 0, 0)
         mode_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
@@ -4066,6 +4182,7 @@ class MainWindow(QMainWindow):
             ("Code", MODE_CODE, "nav.page"),
         ):
             button = QPushButton(label)
+            button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
             button.setIcon(make_icon(icon_key))
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
@@ -4075,33 +4192,19 @@ class MainWindow(QMainWindow):
         self._update_editor_mode_button_metadata(self.editor_tabs.mode)
 
         chips_host = QWidget()
+        chips_host.setObjectName("workspace_indicator_strip")
         chips_layout = QHBoxLayout(chips_host)
         chips_layout.setContentsMargins(0, 0, 0, 0)
         chips_layout.setSpacing(_SPACE_SM)
-        self._sdk_chip = QToolButton()
-        self._sdk_chip.setAutoRaise(True)
-        self._sdk_chip.clicked.connect(lambda checked=False: self._select_left_panel("status"))
-        self._sdk_chip.setObjectName("workspace_status_chip")
-        self._sdk_chip.setProperty("chipTone", "accent")
-        self._dirty_chip = QToolButton()
-        self._dirty_chip.setAutoRaise(True)
-        self._dirty_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("History"))
-        self._dirty_chip.setObjectName("workspace_status_chip")
-        self._dirty_chip.setProperty("chipTone", "success")
-        self._selection_chip = QToolButton()
-        self._selection_chip.setAutoRaise(True)
-        self._selection_chip.clicked.connect(lambda checked=False: self._select_left_panel("structure"))
-        self._selection_chip.setObjectName("workspace_status_chip")
-        self._preview_chip = QToolButton()
-        self._preview_chip.setAutoRaise(True)
-        self._preview_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
-        self._preview_chip.setObjectName("workspace_status_chip")
-        self._diagnostics_chip = QToolButton()
-        self._diagnostics_chip.setAutoRaise(True)
-        self._diagnostics_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Diagnostics"))
-        self._diagnostics_chip.setObjectName("workspace_status_chip")
-        self._diagnostics_chip.setProperty("chipTone", "warning")
-        for chip in (self._sdk_chip, self._dirty_chip, self._selection_chip, self._preview_chip, self._diagnostics_chip):
+        self._workspace_health_chip = QToolButton()
+        self._workspace_health_chip.setAutoRaise(True)
+        self._workspace_health_chip.setObjectName("workspace_summary_indicator")
+        self._workspace_health_chip.clicked.connect(lambda checked=False: self._open_workspace_health_surface())
+        self._runtime_chip = QToolButton()
+        self._runtime_chip.setAutoRaise(True)
+        self._runtime_chip.setObjectName("workspace_summary_indicator")
+        self._runtime_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
+        for chip in (self._workspace_health_chip, self._runtime_chip):
             chips_layout.addWidget(chip)
         self._toolbar_host_layout.addWidget(chips_host, 0)
 

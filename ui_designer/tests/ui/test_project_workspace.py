@@ -36,10 +36,13 @@ class TestProjectWorkspacePanel:
         emitted = []
         panel.view_changed.connect(emitted.append)
 
-        assert panel._page_count_chip.isHidden() is True
-        assert panel._dirty_pages_chip.isHidden() is True
-        assert panel._active_page_chip.isHidden() is True
-        assert panel._view_chip.isHidden() is True
+        assert panel._view_chip.isHidden() is False
+        assert panel._view_chip.text() == "List view"
+        assert panel._view_chip.accessibleName() == "Workspace view: List view."
+        assert panel._summary_label.text() == "0 pages. Active: none. Clean."
+        assert panel._summary_label.accessibleName() == "Pages summary: 0 pages. Active: none. Clean."
+        assert panel._meta_label.text() == "Startup: none"
+        assert panel._meta_label.accessibleName() == "Pages startup summary: Startup: none"
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
         assert panel._list_btn.statusTip() == panel._list_btn.toolTip()
         assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first. Current view."
@@ -53,7 +56,7 @@ class TestProjectWorkspacePanel:
         assert panel._title_label.toolTip() == panel.accessibleName()
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
         assert panel._subtitle_label.accessibleName() == (
-            "List and thumbnails for page navigation."
+            "Page navigation, startup flow, and visual scan."
         )
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
@@ -89,7 +92,7 @@ class TestProjectWorkspacePanel:
 
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_LIST
         assert panel._stack.currentWidget() is list_view
-        assert panel._view_chip.isHidden() is True
+        assert panel._view_chip.isHidden() is False
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
@@ -112,16 +115,10 @@ class TestProjectWorkspacePanel:
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
 
         panel.set_workspace_snapshot(page_count=3, active_page="main_page", startup_page="detail_page", dirty_pages=2)
-        assert panel._page_count_chip.isHidden() is False
-        assert panel._page_count_chip.text() == "3 pages"
-        assert panel._page_count_chip.accessibleName() == "Workspace pages: 3 pages."
-        assert panel._page_count_chip.statusTip() == panel._page_count_chip.toolTip()
-        assert panel._active_page_chip.isHidden() is False
-        assert panel._active_page_chip.text() == "Active: main_page"
-        assert panel._active_page_chip.accessibleName() == "Workspace active page: main_page."
-        assert panel._dirty_pages_chip.isHidden() is False
-        assert panel._dirty_pages_chip.text() == "2 dirty pages"
-        assert panel._dirty_pages_chip.accessibleName() == "Workspace dirty pages: 2 dirty pages."
+        assert panel._summary_label.text() == "3 pages. Active: main_page. 2 dirty pages."
+        assert panel._summary_label.accessibleName() == "Pages summary: 3 pages. Active: main_page. 2 dirty pages."
+        assert panel._meta_label.text() == "Startup: detail_page"
+        assert panel._meta_label.accessibleName() == "Pages startup summary: Startup: detail_page"
         assert panel._header.accessibleName() == panel.accessibleName()
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
         assert panel.accessibleName() == (
@@ -129,19 +126,14 @@ class TestProjectWorkspacePanel:
         )
 
         panel.set_workspace_snapshot(page_count=1, active_page="main_page", dirty_pages=1)
-        assert panel._page_count_chip.text() == "1 page"
-        assert panel._dirty_pages_chip.text() == "1 dirty page"
+        assert panel._summary_label.text() == "1 page. Active: main_page. 1 dirty page."
+        assert panel._meta_label.text() == "Startup: none"
 
         panel.set_workspace_snapshot(page_count=0, active_page="", dirty_pages=0)
-        assert panel._page_count_chip.isHidden() is True
-        assert panel._page_count_chip.text() == "0 pages"
-        assert panel._page_count_chip.accessibleName() == "Workspace pages: 0 pages."
-        assert panel._active_page_chip.isHidden() is True
-        assert panel._active_page_chip.text() == "No active page"
-        assert panel._active_page_chip.accessibleName() == "Workspace active page: none."
-        assert panel._dirty_pages_chip.isHidden() is True
-        assert panel._dirty_pages_chip.text() == "No dirty pages"
-        assert panel._dirty_pages_chip.accessibleName() == "Workspace dirty pages: no dirty pages."
+        assert panel._summary_label.text() == "0 pages. Active: none. Clean."
+        assert panel._summary_label.accessibleName() == "Pages summary: 0 pages. Active: none. Clean."
+        assert panel._meta_label.text() == "Startup: none"
+        assert panel._meta_label.accessibleName() == "Pages startup summary: Startup: none"
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
@@ -200,30 +192,31 @@ class TestProjectWorkspacePanel:
         assert panel._header.statusTip() == panel._header.toolTip()
         panel.deleteLater()
 
-    def test_dirty_chip_visibility_skips_no_op_rewrites(self, qapp, monkeypatch):
+    def test_summary_label_metadata_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.project_workspace import ProjectWorkspacePanel
 
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
-        panel._dirty_pages_chip.setProperty("_workspace_visible_snapshot", None)
+        panel._summary_label.setProperty("_workspace_metadata_tooltip_snapshot", None)
 
-        visible_calls = 0
-        original_set_visible = panel._dirty_pages_chip.setVisible
+        tooltip_calls = 0
+        original_set_tooltip = panel._summary_label.setToolTip
 
-        def counted_set_visible(value):
-            nonlocal visible_calls
-            visible_calls += 1
-            return original_set_visible(value)
+        def counted_set_tooltip(text):
+            nonlocal tooltip_calls
+            tooltip_calls += 1
+            return original_set_tooltip(text)
 
-        monkeypatch.setattr(panel._dirty_pages_chip, "setVisible", counted_set_visible)
+        monkeypatch.setattr(panel._summary_label, "setToolTip", counted_set_tooltip)
 
         panel.set_workspace_snapshot(page_count=2, dirty_pages=1)
-        assert visible_calls == 1
+        assert tooltip_calls == 1
 
-        visible_calls = 0
+        tooltip_calls = 0
         panel.set_workspace_snapshot(page_count=2, dirty_pages=2)
-        assert visible_calls == 0
+        assert tooltip_calls == 1
+        assert panel._summary_label.text() == "2 pages. Active: none. 2 dirty pages."
 
-        panel.set_workspace_snapshot(page_count=2, dirty_pages=0)
-        assert visible_calls == 1
-        assert panel._dirty_pages_chip.isHidden() is True
+        tooltip_calls = 0
+        panel.set_workspace_snapshot(page_count=2, dirty_pages=2)
+        assert tooltip_calls == 0
         panel.deleteLater()

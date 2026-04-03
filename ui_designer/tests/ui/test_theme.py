@@ -5,7 +5,6 @@ from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
-    apply_theme,
     theme_tokens,
 )
 
@@ -30,7 +29,7 @@ def test_build_stylesheet_uses_surface_hover_tokens_for_light_theme():
     stylesheet = _build_stylesheet("light")
 
     assert tokens["surface_hover"] in stylesheet
-    assert tokens["surface_hover"] == "#E8F0FA"
+    assert tokens["surface_hover"] == "#DCE8F6"
     assert tokens["surface_hover"] in stylesheet.split("#status_center_metric_card:hover", 1)[1]
     assert tokens["surface_hover"] in stylesheet.split("#status_center_health_row:hover", 1)[1]
 
@@ -41,12 +40,13 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         css = _build_stylesheet(mode)
         assert "QLabel[hintTone=" in css
         assert t["success"] in css.split('QLabel[hintTone="success"]', 1)[1].split("}", 1)[0]
+        assert t["shell_bg"] in css.split("QMainWindow, QDialog", 1)[1].split("}", 1)[0]
         assert "QTabBar::tab:selected" in css
-        assert t["panel"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
-        nav = css.split("#workspace_nav_rail", 1)[1].split("}}", 1)[0]
+        assert t["panel_raised"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
+        nav = css.split("#workspace_nav_rail", 1)[1].split("}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
-        chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
-        assert str(t["space_xxs"]) in chip and str(t["space_xs"]) in chip
+        indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
+        assert str(t["space_xs"]) in indicator and str(t["space_sm"]) in indicator
 
 
 def test_status_center_styles_reduce_resting_container_weight():
@@ -69,7 +69,7 @@ def test_tokens_include_xxs_spacing_for_all_themes():
     for mode in ("light", "dark"):
         tokens = theme_tokens(mode)
         assert "space_xxs" in tokens
-        assert int(tokens["space_xxs"]) == 2
+        assert int(tokens["space_xxs"]) == 4
 
 
 def test_engineering_theme_radii_remove_pill_shapes():
@@ -77,12 +77,12 @@ def test_engineering_theme_radii_remove_pill_shapes():
         tokens = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        assert int(tokens["r_sm"]) == 1
-        assert int(tokens["r_md"]) == 2
-        assert int(tokens["r_xl"]) == 2
+        assert int(tokens["r_sm"]) == 4
+        assert int(tokens["r_md"]) == 8
+        assert int(tokens["r_xl"]) == 10
         assert "999px" not in css
 
-        chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
+        chip = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         browser_card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
 
@@ -102,18 +102,25 @@ def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     ]
 
     try:
-        apply_theme(app, "dark")
+        manager = _ensure_fluent_engineering_style_manager(app)
+        assert manager is not None
+        for _, widget in widgets:
+            widget.show()
+        app.processEvents()
+        manager.refresh_all()
         app.processEvents()
 
         for expected_kind, widget in widgets:
             assert widget.property("_designer_fluent_engineering_style") == expected_kind
 
-        assert "border-radius: 2px;" in widgets[0][1].styleSheet()
-        assert "border-radius: 2px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 6px;" in widgets[0][1].styleSheet()
+        assert "border-radius: 6px;" in widgets[1][1].styleSheet()
         assert "#lineEditButton" in widgets[1][1].styleSheet()
-        assert "border-radius: 2px;" in widgets[2][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 6px;" in widgets[2][1].styleSheet()
         assert "SpinButton" in widgets[3][1].styleSheet()
-        assert "border-radius: 1px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 6px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 4px;" in widgets[3][1].styleSheet()
     finally:
         for _, widget in widgets:
             widget.close()
@@ -136,8 +143,8 @@ def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
 
         assert button.property("_designer_fluent_engineering_style") == "button"
         assert search.property("_designer_fluent_engineering_style") == "line_edit"
-        assert "border-radius: 2px;" in button.styleSheet()
-        assert "border-radius: 2px;" in search.styleSheet()
+        assert "border-radius: 6px;" in button.styleSheet()
+        assert "border-radius: 6px;" in search.styleSheet()
     finally:
         button.close()
         button.deleteLater()

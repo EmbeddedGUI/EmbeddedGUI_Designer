@@ -38,8 +38,8 @@ except ImportError:
     set_fluent_custom_stylesheet = None
 
 
-_ENGINEERING_RADIUS_SM = 1
-_ENGINEERING_RADIUS_MD = 2
+_ENGINEERING_RADIUS_SM = 4
+_ENGINEERING_RADIUS_MD = 6
 _FLUENT_STYLE_MARKER = "_designer_fluent_engineering_style"
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
@@ -114,33 +114,39 @@ else:
 
 _TOKENS = {
     "dark": {
-        "bg": "#1C1C1E",
-        "panel": "#2C2C2E",
-        "panel_alt": "#3A3A3C",
-        "panel_soft": "#45454C",
-        "surface": "#323235",
-        "surface_hover": "#3D3D41",
-        "surface_pressed": "#4A4A50",
-        "border": "#5A5A63",
-        "border_strong": "#6A6A74",
-        "text": "#F2F2F7",
-        "text_muted": "#D0D0D8",
-        "text_soft": "#ACACB6",
-        "accent": "#0A84FF",
-        "accent_hover": "#6AB1FF",
-        "accent_soft": "#1A436D",
-        "danger": "#FF453A",
-        "success": "#30D158",
-        "warning": "#FFD60A",
-        "selection": "#2E5EA7",
-        "selection_soft": "#2A4262",
-        "r_sm": 1,
-        "r_md": 2,
-        "r_lg": 2,
-        "r_xl": 2,
-        "r_2xl": 2,
-        "r_3xl": 2,
-        "space_xxs": 2,
+        "bg": "#12161B",
+        "shell_bg": "#12161B",
+        "sidebar_bg": "#161B21",
+        "panel": "#1C232C",
+        "panel_alt": "#202833",
+        "panel_soft": "#283241",
+        "panel_raised": "#242E3A",
+        "surface": "#2D3947",
+        "surface_hover": "#364453",
+        "surface_pressed": "#3F4E60",
+        "canvas_bg": "#101418",
+        "canvas_stage": "#0D1116",
+        "border": "#344150",
+        "border_strong": "#425164",
+        "focus_ring": "#4B9DFF",
+        "text": "#F3F6FA",
+        "text_muted": "#BCC7D4",
+        "text_soft": "#93A1B2",
+        "accent": "#4B9DFF",
+        "accent_hover": "#78B5FF",
+        "accent_soft": "#163451",
+        "danger": "#FF6B5F",
+        "success": "#46C98B",
+        "warning": "#FFB84D",
+        "selection": "#2B5F98",
+        "selection_soft": "#1B2E46",
+        "r_sm": 4,
+        "r_md": 8,
+        "r_lg": 8,
+        "r_xl": 10,
+        "r_2xl": 12,
+        "r_3xl": 14,
+        "space_xxs": 4,
         "space_xs": 4,
         "space_sm": 8,
         "space_md": 12,
@@ -148,10 +154,10 @@ _TOKENS = {
         "space_xl": 20,
         "space_2xl": 24,
         "pad_btn_v": 8,
-        "pad_btn_h": 14,
-        "pad_input_v": 7,
-        "pad_input_h": 11,
-        "h_tab_min": 28,
+        "pad_btn_h": 12,
+        "pad_input_v": 8,
+        "pad_input_h": 12,
+        "h_tab_min": 30,
         "fs_display": 24,
         "fs_h1": 18,
         "fs_h2": 16,
@@ -170,33 +176,39 @@ _TOKENS = {
         "icon_lg": 20,
     },
     "light": {
-        "bg": "#F5F5F7",
+        "bg": "#EEF2F6",
+        "shell_bg": "#EEF2F6",
+        "sidebar_bg": "#F6F8FA",
         "panel": "#FFFFFF",
-        "panel_alt": "#F2F3F5",
-        "panel_soft": "#E9EAED",
-        "surface": "#F3F4F6",
-        "surface_hover": "#E8F0FA",
-        "surface_pressed": "#E1E3E8",
-        "border": "#E0E1E6",
-        "border_strong": "#C7C9D1",
-        "text": "#1C1C1E",
-        "text_muted": "#5B5C61",
-        "text_soft": "#8E8E93",
-        "accent": "#0A84FF",
-        "accent_hover": "#2F8CFF",
-        "accent_soft": "#D6E7FF",
-        "danger": "#D92D20",
-        "success": "#1F8F4C",
-        "warning": "#A56B00",
-        "selection": "#D6E7FF",
-        "selection_soft": "#EEF5FF",
-        "r_sm": 1,
-        "r_md": 2,
-        "r_lg": 2,
-        "r_xl": 2,
-        "r_2xl": 2,
-        "r_3xl": 2,
-        "space_xxs": 2,
+        "panel_alt": "#F7F9FC",
+        "panel_soft": "#EDF2F8",
+        "panel_raised": "#FFFFFF",
+        "surface": "#E7EDF5",
+        "surface_hover": "#DCE8F6",
+        "surface_pressed": "#D4E0EF",
+        "canvas_bg": "#DDE5EE",
+        "canvas_stage": "#F8FBFF",
+        "border": "#CFD8E3",
+        "border_strong": "#B4C0CE",
+        "focus_ring": "#287DDA",
+        "text": "#17212B",
+        "text_muted": "#55606F",
+        "text_soft": "#7B8696",
+        "accent": "#287DDA",
+        "accent_hover": "#3C8CE7",
+        "accent_soft": "#DCEBFA",
+        "danger": "#D9534F",
+        "success": "#2E8B57",
+        "warning": "#A5691A",
+        "selection": "#D8E7F9",
+        "selection_soft": "#EDF4FD",
+        "r_sm": 4,
+        "r_md": 8,
+        "r_lg": 8,
+        "r_xl": 10,
+        "r_2xl": 12,
+        "r_3xl": 14,
+        "space_xxs": 4,
         "space_xs": 4,
         "space_sm": 8,
         "space_md": 12,
@@ -204,10 +216,10 @@ _TOKENS = {
         "space_xl": 20,
         "space_2xl": 24,
         "pad_btn_v": 8,
-        "pad_btn_h": 14,
-        "pad_input_v": 7,
-        "pad_input_h": 11,
-        "h_tab_min": 28,
+        "pad_btn_h": 12,
+        "pad_input_v": 8,
+        "pad_input_h": 12,
+        "h_tab_min": 30,
         "fs_display": 24,
         "fs_h1": 18,
         "fs_h2": 16,
@@ -357,12 +369,12 @@ def _build_stylesheet(mode="dark", density="standard"):
     t = theme_tokens(mode, density=density)
     return f"""
 QMainWindow, QDialog {{
-    background-color: {t['bg']};
+    background-color: {t['shell_bg']};
     color: {t['text']};
 }}
 
 QWidget {{
-    background-color: {t['bg']};
+    background-color: {t['shell_bg']};
     color: {t['text']};
 }}
 
@@ -400,7 +412,7 @@ QLabel#dialog_muted_hint {{
 }}
 
 QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox, QComboBox {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
@@ -411,8 +423,8 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
 }}
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
-    border: 1px solid {t['accent']};
-    background-color: {t['panel']};
+    border: 1px solid {t['focus_ring']};
+    background-color: {t['panel_raised']};
 }}
 
 QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
@@ -421,7 +433,7 @@ QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBo
 }}
 
 QPushButton, QToolButton {{
-    background-color: {t['surface']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
@@ -446,7 +458,7 @@ QPushButton:disabled, QToolButton:disabled {{
 }}
 
 QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
@@ -489,7 +501,7 @@ QHeaderView::section {{
 QTabWidget::pane {{
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
-    background-color: {t['panel']};
+    background-color: {t['panel_alt']};
     top: -1px;
 }}
 
@@ -497,20 +509,17 @@ QTabBar::tab {{
     background-color: transparent;
     color: {t['text_muted']};
     padding: {t['space_sm']}px {t['space_md']}px;
-    margin-right: {t['space_sm']}px;
+    margin-right: {t['space_xs']}px;
     min-height: {t['h_tab_min']}px;
     border: 1px solid transparent;
-    border-bottom: none;
-    border-top-left-radius: {t['r_md']}px;
-    border-top-right-radius: {t['r_md']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 QTabBar::tab:selected {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-bottom-color: {t['panel']};
-    margin-bottom: -1px;
+    border-bottom-color: {t['border']};
 }}
 
 QTabBar::tab:hover:!selected {{
@@ -518,7 +527,7 @@ QTabBar::tab:hover:!selected {{
 }}
 
 QMenuBar {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border-bottom: 1px solid {t['border']};
 }}
@@ -534,7 +543,7 @@ QMenuBar::item:selected {{
 }}
 
 QMenu {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
@@ -583,7 +592,7 @@ QScrollBar::handle:horizontal {{
 }}
 
 QToolTip {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
@@ -591,13 +600,13 @@ QToolTip {{
 }}
 
 QStatusBar {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     color: {t['text_muted']};
     border-top: 1px solid {t['border']};
 }}
 
 QGroupBox {{
-    background-color: {t['panel']};
+    background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
     margin-top: {t['space_lg']}px;
@@ -647,18 +656,17 @@ QGroupBox#inspector_collapsible_group::title {{
 #widget_browser_header,
 #widget_browser_filter_bar,
 #workspace_bottom_header {{
-    background-color: {t['panel_alt']};
-    border: 1px solid transparent;
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
 
 #workspace_command_bar {{
-    background-color: {t['panel_alt']};
-    border-color: {t['border']};
+    background-color: {t['panel_raised']};
 }}
 
 #workspace_hint_strip {{
-    background-color: transparent;
+    background-color: {t['panel_alt']};
     border-color: {t['border']};
 }}
 
@@ -695,8 +703,8 @@ QPushButton#project_workspace_view_button:checked {{
 }}
 
 #workspace_left_shell {{
-    background-color: {t['panel_alt']};
-    border: 1px solid transparent;
+    background-color: {t['sidebar_bg']};
+    border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
 
@@ -705,6 +713,32 @@ QPushButton#project_workspace_view_button:checked {{
     border: none;
     border-right: 1px solid {t['border']};
     padding: {t['space_xxs']}px {t['space_xs']}px;
+}}
+
+#workspace_mode_switch,
+#workspace_indicator_strip {{
+    background-color: transparent;
+    border: none;
+}}
+
+QPushButton#workspace_mode_button {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-width: 78px;
+}}
+
+QPushButton#workspace_mode_button:hover {{
+    background-color: {t['surface_hover']};
+    color: {t['text']};
+}}
+
+QPushButton#workspace_mode_button:checked {{
+    background-color: {t['accent_soft']};
+    border-color: {t['accent']};
+    color: {t['accent_hover']};
 }}
 
 #page_inspector_scroll {{
@@ -746,8 +780,8 @@ QToolButton[workspaceNav="true"]:pressed {{
 }}
 
 QToolButton[workspaceNav="true"]:checked {{
-    background-color: {t['selection_soft']};
-    color: {t['accent']};
+    background-color: {t['accent_soft']};
+    color: {t['accent_hover']};
     border: 1px solid {t['accent']};
 }}
 
@@ -808,6 +842,44 @@ QToolButton#workspace_status_chip:focus {{
     border-color: {t['danger']};
 }}
 
+QToolButton#workspace_summary_indicator {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 30px;
+}}
+
+QToolButton#workspace_summary_indicator:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
+QToolButton#workspace_summary_indicator:focus {{
+    border-color: {t['focus_ring']};
+}}
+
+QToolButton#workspace_summary_indicator[indicatorTone="success"] {{
+    background-color: {t['selection_soft']};
+    color: {t['success']};
+    border-color: {t['success']};
+}}
+
+QToolButton#workspace_summary_indicator[indicatorTone="warning"] {{
+    background-color: {t['accent_soft']};
+    color: {t['warning']};
+    border-color: {t['warning']};
+}}
+
+QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
+    background-color: {t['accent_soft']};
+    color: {t['danger']};
+    border-color: {t['danger']};
+}}
+
 #workspace_section_title {{
     color: {t['text']};
     font-size: {t['fs_h2']}px;
@@ -825,9 +897,26 @@ QToolButton#workspace_status_chip:focus {{
     padding: 20px;
 }}
 
+#project_workspace_summary {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#project_workspace_meta {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+}}
+
 #property_panel_empty_state {{
     background-color: {t['panel_alt']};
     border: 1px dashed {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#structure_selection_strip {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
 
@@ -939,6 +1028,46 @@ QPushButton#widget_browser_insert_button:pressed {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
     font-weight: 600;
+}}
+
+#preview_title {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#preview_content {{
+    background-color: {t['canvas_bg']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#preview_stage_frame {{
+    background-color: {t['canvas_stage']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#preview_status_shell {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#preview_status_value {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+QPushButton#preview_status_button {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    padding: 0;
+}}
+
+QPushButton#preview_status_button:hover {{
+    background-color: {t['surface_hover']};
 }}
 
 #status_center_health_row {{

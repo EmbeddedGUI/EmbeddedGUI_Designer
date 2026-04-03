@@ -243,6 +243,8 @@ class DesignerConfig:
             workspace_left_panel = str(data.get("workspace_left_panel", "project") or "project")
             if workspace_left_panel == "components":
                 workspace_left_panel = "widgets"
+            elif workspace_left_panel == "status":
+                workspace_left_panel = "project"
             self.workspace_left_panel = workspace_left_panel
             workspace_state = data.get("workspace_state", {})
             self.workspace_state = workspace_state if isinstance(workspace_state, dict) else {}

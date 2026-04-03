@@ -188,11 +188,28 @@ class WidgetTreePanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
-        # Button bar
-        btn_layout = QHBoxLayout()
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("workspace_panel_header")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(12, 12, 12, 12)
+        header_layout.setSpacing(8)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(8)
+        self._title_label = QLabel("Structure")
+        self._title_label.setObjectName("workspace_section_title")
+        title_row.addWidget(self._title_label)
+        title_row.addStretch()
+        self._selection_summary_chip = QLabel("No selection")
+        self._selection_summary_chip.setObjectName("workspace_status_chip")
+        self._selection_summary_chip.setProperty("chipTone", "accent")
+        title_row.addWidget(self._selection_summary_chip)
+        header_layout.addLayout(title_row)
+
         self.add_btn = QPushButton("Insert")
         self.add_btn.setIcon(make_icon("widgets"))
         self.add_btn.setToolTip("Open the widget browser for the current insert target.")
@@ -218,12 +235,20 @@ class WidgetTreePanel(QWidget):
         self.collapse_btn = QPushButton("Collapse")
         self.collapse_btn.setIcon(make_icon("navigation"))
         self.collapse_btn.clicked.connect(self._collapse_all_items)
-        btn_layout.addWidget(self.add_btn)
-        btn_layout.addWidget(self.rename_btn)
-        btn_layout.addWidget(self.del_btn)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.structure_actions_btn)
-        layout.addLayout(btn_layout)
+
+        self._structure_base_hint_text = "Select widgets to inspect hierarchy, batch-edit grouping, and reorder layout."
+        self.structure_hint_label = QLabel(self._structure_base_hint_text)
+        self.structure_hint_label.setWordWrap(True)
+        self.structure_hint_label.setObjectName("workspace_section_subtitle")
+        header_layout.addWidget(self.structure_hint_label)
+
+        primary_row = QHBoxLayout()
+        primary_row.setContentsMargins(0, 0, 0, 0)
+        primary_row.setSpacing(6)
+        primary_row.addWidget(self.add_btn)
+        primary_row.addWidget(self.structure_actions_btn)
+        primary_row.addStretch()
+        header_layout.addLayout(primary_row)
 
         self.group_btn = QPushButton("Group")
         self.group_btn.setIcon(make_icon("layout"))
@@ -286,16 +311,26 @@ class WidgetTreePanel(QWidget):
         self.expand_btn.hide()
         self.collapse_btn.hide()
 
-        self._structure_base_hint_text = "Structure: select widgets to group, move, or reorder."
-        self.structure_hint_label = QLabel(self._structure_base_hint_text)
-        self.structure_hint_label.setWordWrap(True)
-        self._structure_summary_frame = QFrame()
-        self._structure_summary_frame.setObjectName("workspace_hint_strip")
-        structure_summary_layout = QVBoxLayout(self._structure_summary_frame)
-        structure_summary_layout.setContentsMargins(10, 8, 10, 8)
-        structure_summary_layout.setSpacing(0)
-        structure_summary_layout.addWidget(self.structure_hint_label)
-        layout.addWidget(self._structure_summary_frame)
+        self._selection_toolbar = QFrame()
+        self._selection_toolbar.setObjectName("structure_selection_strip")
+        selection_layout = QHBoxLayout(self._selection_toolbar)
+        selection_layout.setContentsMargins(10, 8, 10, 8)
+        selection_layout.setSpacing(6)
+        for button in (
+            self.rename_btn,
+            self.del_btn,
+            self.group_btn,
+            self.ungroup_btn,
+            self.into_btn,
+            self.lift_btn,
+            self.up_btn,
+            self.down_btn,
+        ):
+            selection_layout.addWidget(button)
+        selection_layout.addStretch()
+        self._selection_toolbar.hide()
+        header_layout.addWidget(self._selection_toolbar)
+
         self.drag_target_label = QLabel(self._default_drag_target_text())
         self.drag_target_label.setWordWrap(True)
         self._set_drag_target_label(self._default_drag_target_text(), tone="default")
@@ -325,7 +360,8 @@ class WidgetTreePanel(QWidget):
         filter_layout.addWidget(self.filter_position_label)
         self.filter_status_label = QLabel("All widgets")
         filter_layout.addWidget(self.filter_status_label)
-        layout.addLayout(filter_layout)
+        header_layout.addLayout(filter_layout)
+        layout.addWidget(self._header_frame)
 
         # Tree
         self.tree = _StructureTreeWidget(
@@ -2161,6 +2197,7 @@ class WidgetTreePanel(QWidget):
         if not hasattr(self, "group_btn"):
             return
         state = self._structure_action_state()
+        selected_count = len(state.widgets)
         has_quick_move_history = self._remembered_move_target_choice(state.widgets) is not None or self.has_recent_move_targets()
         self.group_btn.setEnabled(state.can_group)
         self.ungroup_btn.setEnabled(state.can_ungroup)
@@ -2177,6 +2214,22 @@ class WidgetTreePanel(QWidget):
         if not state.can_move_into and has_quick_move_history:
             self.into_btn.setToolTip(self._into_button_history_hint())
             self.into_btn.setStatusTip(self.into_btn.toolTip())
+        if hasattr(self, "_selection_toolbar"):
+            self._selection_toolbar.setVisible(selected_count > 0)
+        if hasattr(self, "_selection_summary_chip"):
+            if selected_count <= 0:
+                self._selection_summary_chip.setText("No selection")
+                self._selection_summary_chip.setProperty("chipTone", "warning")
+            elif selected_count == 1:
+                widget = state.widgets[0]
+                self._selection_summary_chip.setText(f"1 selected · {self._widget_label(widget)}")
+                self._selection_summary_chip.setProperty("chipTone", "accent")
+            else:
+                self._selection_summary_chip.setText(f"{selected_count} selected")
+                self._selection_summary_chip.setProperty("chipTone", "accent")
+            self._selection_summary_chip.style().unpolish(self._selection_summary_chip)
+            self._selection_summary_chip.style().polish(self._selection_summary_chip)
+            self._selection_summary_chip.update()
         self._refresh_into_button_menu(state)
         self._structure_base_hint_text = self._structure_hint_text(state)
         self._apply_structure_status_summary()

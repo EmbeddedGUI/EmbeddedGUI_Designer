@@ -1086,25 +1086,28 @@ class PreviewPanel(QWidget):
     def _init_ui(self):
         self._main_layout = QVBoxLayout(self)
         self._main_layout.setContentsMargins(4, 4, 4, 4)
-        self._main_layout.setSpacing(4)
+        self._main_layout.setSpacing(8)
 
         # Status label
         self.status_label = QLabel("Preview - waiting for exe...")
         self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setObjectName("preview_title")
         self._main_layout.addWidget(self.status_label)
 
         # Container for the preview + overlay arrangement
         self._content = QWidget()
+        self._content.setObjectName("preview_content")
         self._main_layout.addWidget(self._content, 1)
 
         # Create the preview frame (always exists)
         self.preview_frame = QFrame()
+        self.preview_frame.setObjectName("preview_stage_frame")
         self.preview_frame.setFrameStyle(QFrame.Box | QFrame.Sunken)
         self.preview_frame.setFixedSize(self.screen_width + 4, self.screen_height + 4)
-        self.preview_frame.setStyleSheet("background-color: #333;")
 
         # Label inside preview_frame for headless frame rendering
         self._preview_label = QLabel(self.preview_frame)
+        self._preview_label.setObjectName("preview_surface_label")
         self._preview_label.setGeometry(2, 2, self.screen_width, self.screen_height)
         self._preview_label.setMouseTracking(True)
         self._preview_label.installEventFilter(self)
@@ -1132,41 +1135,35 @@ class PreviewPanel(QWidget):
 
         # Status bar at bottom (coordinates + zoom controls)
         self._status_bar = QWidget()
+        self._status_bar.setObjectName("preview_status_shell")
         sbl = QHBoxLayout(self._status_bar)
         sbl.setContentsMargins(8, 2, 8, 2)
         sbl.setSpacing(8)
 
         # Status label on the left (shows coordinates)
         self._status_label = QLabel("")
-        self._status_label.setStyleSheet("color:#ccc; font-size:13px; font-family:Consolas,monospace;")
+        self._status_label.setObjectName("preview_status_value")
         self._status_label.setMinimumWidth(280)
         sbl.addWidget(self._status_label)
 
         sbl.addStretch()
 
         # Zoom controls on the right
-        _zbtn_style = (
-            "QPushButton { background:#3c3c3c; color:#ccc; border:1px solid #555;"
-            "  border-radius:1px; font-size:16px; font-weight:bold; }"
-            "QPushButton:hover { background:#505050; }"
-            "QPushButton:pressed { background:#606060; }"
-        )
-
         self._btn_zoom_out = QPushButton()
+        self._btn_zoom_out.setObjectName("preview_status_button")
         self._btn_zoom_out.setFixedSize(28, 28)
-        self._btn_zoom_out.setStyleSheet(_zbtn_style)
         self._btn_zoom_out.setIcon(make_icon("canvas.zoom_out", size=18))
         self._btn_zoom_out.setIconSize(self._btn_zoom_out.size())
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
+        self._zoom_label.setObjectName("preview_status_value")
         self._zoom_label.setFixedWidth(90)
         self._zoom_label.setAlignment(Qt.AlignCenter)
-        self._zoom_label.setStyleSheet("color:#ccc; font-size:13px;")
 
         self._btn_zoom_in = QPushButton()
+        self._btn_zoom_in.setObjectName("preview_status_button")
         self._btn_zoom_in.setFixedSize(28, 28)
-        self._btn_zoom_in.setStyleSheet(_zbtn_style)
         self._btn_zoom_in.setIcon(make_icon("canvas.zoom_in", size=18))
         self._btn_zoom_in.setIconSize(self._btn_zoom_in.size())
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
