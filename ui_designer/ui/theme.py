@@ -2132,10 +2132,32 @@ QPushButton#widget_browser_insert_button:pressed {{
     font-weight: 600;
 }}
 
-#preview_title {{
+#preview_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#preview_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#preview_meta {{
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_medium']};
+}}
+
+#preview_title {{
+    color: {t['text']};
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #preview_content {{
@@ -2144,10 +2166,38 @@ QPushButton#widget_browser_insert_button:pressed {{
     border-radius: {t['r_xl']}px;
 }}
 
+#preview_stage_shell,
+#preview_overlay_shell {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+QScrollArea#preview_overlay_scroll {{
+    background-color: transparent;
+    border: none;
+}}
+
+QWidget#preview_overlay_surface[solidBackground="true"] {{
+    background-color: {t['canvas_stage']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+QWidget#preview_overlay_surface[solidBackground="false"] {{
+    background-color: transparent;
+    border: none;
+}}
+
 #preview_stage_frame {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
+}}
+
+QSplitter#preview_splitter::handle {{
+    background-color: {t['border']};
+    margin: {t['space_xs']}px;
 }}
 
 #preview_status_shell {{

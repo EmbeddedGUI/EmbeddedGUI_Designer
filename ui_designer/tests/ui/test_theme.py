@@ -125,6 +125,22 @@ def test_editor_tabs_styles_use_engineering_shell_tokens():
         assert f"border-radius: {t['r_md']}px;" in editor
 
 
+def test_preview_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("#preview_header {", 1)[1].split("}", 1)[0]
+        content = css.split("#preview_content {", 1)[1].split("}", 1)[0]
+        overlay = css.split('QWidget#preview_overlay_surface[solidBackground="true"] {', 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-radius: {t['r_xl']}px;" in header
+        assert f"background-color: {t['canvas_bg']};" in content
+        assert f"background-color: {t['canvas_stage']};" in overlay
+        assert f"border-radius: {t['r_md']}px;" in overlay
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()

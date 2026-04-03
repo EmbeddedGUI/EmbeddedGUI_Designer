@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage
 
 from .iconography import make_icon
+from .theme import theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -65,6 +66,12 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         widget.setAccessibleName(accessible_name)
 
 
+_DEFAULT_UI_TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
+_SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
+
+
 class WidgetOverlay(QWidget):
     """Overlay showing widget bounds with drag, resize, and grid snap.
 
@@ -91,6 +98,8 @@ class WidgetOverlay(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setObjectName("preview_overlay_surface")
+        self.setProperty("solidBackground", False)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
@@ -144,6 +153,12 @@ class WidgetOverlay(QWidget):
         self._rubber_base_primary = None
 
         self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard events
+
+    def _refresh_surface_style(self):
+        self.setProperty("solidBackground", bool(self._solid_background))
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
 
     # ── Zoom helpers ───────────────────────────────────────────────
 
@@ -218,13 +233,8 @@ class WidgetOverlay(QWidget):
         """Switch between transparent overlay and solid background mode."""
         self._solid_background = solid
         self.setAttribute(Qt.WA_TranslucentBackground, not solid)
-        if solid:
-            self.setAutoFillBackground(True)
-            self.setStyleSheet("background-color: #2a2a2a;")
-        else:
-            self.setAutoFillBackground(False)
-            self.setStyleSheet("")
-        self.update()
+        self.setAutoFillBackground(bool(solid))
+        self._refresh_surface_style()
 
     # ── Background mockup image ──────────────────────────────────
 
@@ -1085,33 +1095,70 @@ class PreviewPanel(QWidget):
 
     def _init_ui(self):
         self._main_layout = QVBoxLayout(self)
-        self._main_layout.setContentsMargins(4, 4, 4, 4)
-        self._main_layout.setSpacing(8)
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self._main_layout.setSpacing(_SPACE_SM)
 
-        # Status label
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("preview_header")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout.setSpacing(_SPACE_SM)
+
+        self._eyebrow_label = QLabel("Live Preview")
+        self._eyebrow_label.setObjectName("preview_eyebrow")
+        header_layout.addWidget(self._eyebrow_label)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(_SPACE_SM)
         self.status_label = QLabel("Preview - waiting for exe...")
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_label.setObjectName("preview_title")
-        self._main_layout.addWidget(self.status_label)
+        title_row.addWidget(self.status_label)
+        title_row.addStretch(1)
+        self._mode_chip = self._make_status_chip("Horizontal split", tone="accent")
+        title_row.addWidget(self._mode_chip)
+        header_layout.addLayout(title_row)
 
-        # Container for the preview + overlay arrangement
-        self._content = QWidget()
+        self._header_meta_label = QLabel(
+            "Compare renderer output and the editable overlay while tracking zoom, grid state, and pointer diagnostics."
+        )
+        self._header_meta_label.setObjectName("preview_meta")
+        self._header_meta_label.setWordWrap(True)
+        header_layout.addWidget(self._header_meta_label)
+
+        chip_row = QHBoxLayout()
+        chip_row.setContentsMargins(0, 0, 0, 0)
+        chip_row.setSpacing(_SPACE_XS)
+        self._grid_chip = self._make_status_chip("Grid on", tone="success")
+        self._pointer_chip = self._make_status_chip("Pointer idle")
+        chip_row.addWidget(self._grid_chip)
+        chip_row.addWidget(self._pointer_chip)
+        chip_row.addStretch(1)
+        header_layout.addLayout(chip_row)
+        self._main_layout.addWidget(self._header_frame)
+
+        self._content = QFrame()
         self._content.setObjectName("preview_content")
         self._main_layout.addWidget(self._content, 1)
 
-        # Create the preview frame (always exists)
         self.preview_frame = QFrame()
         self.preview_frame.setObjectName("preview_stage_frame")
-        self.preview_frame.setFrameStyle(QFrame.Box | QFrame.Sunken)
         self.preview_frame.setFixedSize(self.screen_width + 4, self.screen_height + 4)
 
-        # Label inside preview_frame for headless frame rendering
         self._preview_label = QLabel(self.preview_frame)
         self._preview_label.setObjectName("preview_surface_label")
         self._preview_label.setGeometry(2, 2, self.screen_width, self.screen_height)
         self._preview_label.setMouseTracking(True)
         self._preview_label.installEventFilter(self)
         self._mouse_pressed = False
+
+        self._preview_shell = QFrame()
+        self._preview_shell.setObjectName("preview_stage_shell")
+        preview_shell_layout = QVBoxLayout(self._preview_shell)
+        preview_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        preview_shell_layout.setSpacing(0)
+        preview_shell_layout.addWidget(self.preview_frame, 0, Qt.AlignCenter)
 
         # Create the overlay (always exists) — zoomable
         self.overlay = WidgetOverlay()
@@ -1127,20 +1174,25 @@ class PreviewPanel(QWidget):
         self.overlay.drag_finished.connect(self.drag_finished.emit)
         self.overlay.widget_type_dropped.connect(self.widget_type_dropped.emit)
 
-        # Wrap overlay in a scroll area so it can be zoomed bigger than the panel
         self._overlay_scroll = QScrollArea()
+        self._overlay_scroll.setObjectName("preview_overlay_scroll")
         self._overlay_scroll.setWidgetResizable(False)
         self._overlay_scroll.setAlignment(Qt.AlignCenter)
         self._overlay_scroll.setWidget(self.overlay)
 
-        # Status bar at bottom (coordinates + zoom controls)
+        self._overlay_shell = QFrame()
+        self._overlay_shell.setObjectName("preview_overlay_shell")
+        overlay_shell_layout = QVBoxLayout(self._overlay_shell)
+        overlay_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        overlay_shell_layout.setSpacing(0)
+        overlay_shell_layout.addWidget(self._overlay_scroll, 1)
+
         self._status_bar = QWidget()
         self._status_bar.setObjectName("preview_status_shell")
         sbl = QHBoxLayout(self._status_bar)
-        sbl.setContentsMargins(8, 2, 8, 2)
-        sbl.setSpacing(8)
+        sbl.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        sbl.setSpacing(_SPACE_SM)
 
-        # Status label on the left (shows coordinates)
         self._status_label = QLabel("")
         self._status_label.setObjectName("preview_status_value")
         self._status_label.setMinimumWidth(280)
@@ -1148,7 +1200,6 @@ class PreviewPanel(QWidget):
 
         sbl.addStretch()
 
-        # Zoom controls on the right
         self._btn_zoom_out = QPushButton()
         self._btn_zoom_out.setObjectName("preview_status_button")
         self._btn_zoom_out.setFixedSize(28, 28)
@@ -1183,6 +1234,20 @@ class PreviewPanel(QWidget):
         self._update_zoom_label()
         self._update_accessibility_summary()
 
+    def _make_status_chip(self, text, tone=None):
+        chip = QLabel(str(text or ""))
+        chip.setObjectName("workspace_status_chip")
+        if tone:
+            chip.setProperty("chipTone", tone)
+        return chip
+
+    def _set_status_chip_state(self, chip, text, tone=None):
+        chip.setText(str(text or ""))
+        chip.setProperty("chipTone", tone if tone else None)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
     def _clear_content_layout(self):
         """Remove all widgets from the content layout without deleting them."""
         # Detach splitter children first so they aren't deleted
@@ -1212,61 +1277,62 @@ class PreviewPanel(QWidget):
 
         if self._mode == MODE_VERTICAL:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            # Splitter for adjustable top/bottom split
+            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+            layout.setSpacing(_SPACE_SM)
             self._splitter = QSplitter(Qt.Vertical)
+            self._splitter.setObjectName("preview_splitter")
             self.overlay.set_solid_background(True)
-            self._overlay_scroll.setParent(None)
+            self._overlay_shell.setParent(None)
+            self._preview_shell.setParent(None)
             if self._flipped:
-                self._splitter.addWidget(self._overlay_scroll)
-                self._splitter.addWidget(self.preview_frame)
+                self._splitter.addWidget(self._overlay_shell)
+                self._splitter.addWidget(self._preview_shell)
                 self._splitter.setStretchFactor(0, 1)
                 self._splitter.setStretchFactor(1, 0)
             else:
-                self._splitter.addWidget(self.preview_frame)
-                self._splitter.addWidget(self._overlay_scroll)
+                self._splitter.addWidget(self._preview_shell)
+                self._splitter.addWidget(self._overlay_shell)
                 self._splitter.setStretchFactor(0, 0)
                 self._splitter.setStretchFactor(1, 1)
             layout.addWidget(self._splitter, 1)
-            self.preview_frame.show()
-            self._overlay_scroll.show()
+            self._preview_shell.show()
+            self._overlay_shell.show()
             self._status_bar.show()
 
         elif self._mode == MODE_HORIZONTAL:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            # Splitter for adjustable left/right split
+            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+            layout.setSpacing(_SPACE_SM)
             self._splitter = QSplitter(Qt.Horizontal)
+            self._splitter.setObjectName("preview_splitter")
             self.overlay.set_solid_background(True)
-            self._overlay_scroll.setParent(None)
+            self._overlay_shell.setParent(None)
+            self._preview_shell.setParent(None)
             if self._flipped:
-                self._splitter.addWidget(self._overlay_scroll)
-                self._splitter.addWidget(self.preview_frame)
+                self._splitter.addWidget(self._overlay_shell)
+                self._splitter.addWidget(self._preview_shell)
                 self._splitter.setStretchFactor(0, 1)
                 self._splitter.setStretchFactor(1, 0)
             else:
-                self._splitter.addWidget(self.preview_frame)
-                self._splitter.addWidget(self._overlay_scroll)
+                self._splitter.addWidget(self._preview_shell)
+                self._splitter.addWidget(self._overlay_shell)
                 self._splitter.setStretchFactor(0, 0)
                 self._splitter.setStretchFactor(1, 1)
             layout.addWidget(self._splitter, 1)
-            self.preview_frame.show()
-            self._overlay_scroll.show()
+            self._preview_shell.show()
+            self._overlay_shell.show()
             self._status_bar.show()
 
         elif self._mode == MODE_HIDDEN:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            # Overlay mode: hide exe preview, only show overlay
+            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+            layout.setSpacing(_SPACE_SM)
             self.overlay.set_solid_background(True)
-            self._overlay_scroll.setParent(self._content)
-            layout.addWidget(self._overlay_scroll, 1)
-            self.preview_frame.setParent(self._content)
-            self.preview_frame.hide()
-            self._overlay_scroll.show()
+            self._overlay_shell.setParent(self._content)
+            layout.addWidget(self._overlay_shell, 1)
+            self._preview_shell.setParent(self._content)
+            self._preview_shell.hide()
+            self._overlay_shell.show()
             self._status_bar.show()
         self._update_accessibility_summary()
 
@@ -1346,11 +1412,50 @@ class PreviewPanel(QWidget):
             f"Zoom: {zoom_text}. Grid: {grid_text}. Pointer: {pointer_text}."
         )
         controls_summary = f"Preview controls: Zoom {zoom_text}. Pointer {pointer_text}."
+        self._set_status_chip_state(
+            self._mode_chip,
+            mode_text,
+            "accent" if self._mode != MODE_HIDDEN else "warning",
+        )
+        self._set_status_chip_state(
+            self._grid_chip,
+            f"Grid {grid_text}",
+            "success" if grid_text == "on" else "warning",
+        )
+        self._set_status_chip_state(
+            self._pointer_chip,
+            "Pointer active" if pointer_text != "Pointer idle" else "Pointer idle",
+            "accent" if pointer_text != "Pointer idle" else None,
+        )
+        self._header_meta_label.setText(
+            f"Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}. Use the overlay surface to inspect selection and positioning feedback."
+        )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(self._header_frame, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self.status_label,
             tooltip=status_text,
             accessible_name=f"Preview status: {status_text}",
+        )
+        _set_widget_metadata(
+            self._header_meta_label,
+            tooltip=self._header_meta_label.text(),
+            accessible_name=self._header_meta_label.text(),
+        )
+        _set_widget_metadata(
+            self._mode_chip,
+            tooltip=f"Preview mode: {mode_text}",
+            accessible_name=f"Preview mode: {mode_text}",
+        )
+        _set_widget_metadata(
+            self._grid_chip,
+            tooltip=f"Preview grid: {grid_text}",
+            accessible_name=f"Preview grid: {grid_text}",
+        )
+        _set_widget_metadata(
+            self._pointer_chip,
+            tooltip=f"Preview pointer summary: {pointer_text}",
+            accessible_name=f"Preview pointer summary: {pointer_text}",
         )
         _set_widget_metadata(
             self.preview_frame,
@@ -1371,6 +1476,16 @@ class PreviewPanel(QWidget):
             self._overlay_scroll,
             tooltip=f"Preview overlay canvas. Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
             accessible_name=f"Preview overlay canvas: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}.",
+        )
+        _set_widget_metadata(
+            self._preview_shell,
+            tooltip=f"Preview renderer shell. Mode: {mode_text}.",
+            accessible_name=f"Preview renderer shell: {mode_text}.",
+        )
+        _set_widget_metadata(
+            self._overlay_shell,
+            tooltip=f"Preview overlay shell. Mode: {mode_text}. Zoom: {zoom_text}.",
+            accessible_name=f"Preview overlay shell: {mode_text}. Zoom: {zoom_text}.",
         )
         _set_widget_metadata(
             self._status_bar,
