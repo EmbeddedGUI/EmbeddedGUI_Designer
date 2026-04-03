@@ -6,9 +6,24 @@ import os
 from pathlib import Path
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+)
 
-from .iconography import make_icon
 from .iconography import make_icon
 from ..model.config import get_config
 from ..model.repo_health import (
@@ -36,7 +51,8 @@ class RepositoryHealthDialog(QDialog):
     def __init__(self, repo_root: str, open_path_callback=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Repository Health")
-        self.resize(920, 520)
+        self.setMinimumSize(1120, 720)
+        self.resize(1180, 760)
         self._config = get_config()
         self._repo_root = str(Path(repo_root).resolve())
         self._open_path_callback = open_path_callback
@@ -44,21 +60,100 @@ class RepositoryHealthDialog(QDialog):
         self._payload: dict[str, object] = {}
 
         root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(24, 24, 24, 24)
+        root_layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("repo_health_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Workspace Diagnostics")
+        self._eyebrow_label.setObjectName("repo_health_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Repository Health")
+        self._title_label.setFont(QFont("Segoe UI", 26, QFont.Light))
+        self._title_label.setObjectName("repo_health_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Inspect repository readiness, stale temp artifacts, and SDK workspace wiring before builds, smoke checks, or release packaging."
+        )
+        self._subtitle_label.setObjectName("repo_health_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
 
         self._summary_label = QLabel()
+        self._summary_label.setObjectName("repo_health_summary_text")
         self._summary_label.setWordWrap(True)
-        root_layout.addWidget(self._summary_label)
+        hero_copy.addWidget(self._summary_label)
 
         self._overview_label = QLabel("critical 0 | suggestions 0 | stale 0 | blocked 0")
+        self._overview_label.setObjectName("repo_health_overview_text")
         self._overview_label.setWordWrap(True)
-        root_layout.addWidget(self._overview_label)
+        hero_copy.addWidget(self._overview_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QGridLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setHorizontalSpacing(10)
+        metrics_layout.setVerticalSpacing(10)
+        self._critical_metric_value = self._create_metric_card(metrics_layout, 0, 0, "Critical")
+        self._suggestions_metric_value = self._create_metric_card(metrics_layout, 0, 1, "Suggestions")
+        self._stale_metric_value = self._create_metric_card(metrics_layout, 1, 0, "Stale Dirs")
+        self._blocked_metric_value = self._create_metric_card(metrics_layout, 1, 1, "Blocked")
+        header_layout.addLayout(metrics_layout, 2)
+        root_layout.addWidget(header)
+
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(16)
+
+        details_card = QFrame()
+        details_card.setObjectName("repo_health_details_card")
+        details_layout = QVBoxLayout(details_card)
+        details_layout.setContentsMargins(22, 22, 22, 22)
+        details_layout.setSpacing(12)
+
+        details_title = QLabel("Repository Report")
+        details_title.setObjectName("workspace_section_title")
+        details_layout.addWidget(details_title)
+
+        details_hint = QLabel("Use text view for a compact operator report, or switch to JSON when you need the raw diagnostic payload.")
+        details_hint.setObjectName("workspace_section_subtitle")
+        details_hint.setWordWrap(True)
+        details_layout.addWidget(details_hint)
 
         self._details_edit = QTextEdit()
+        self._details_edit.setObjectName("repo_health_details")
         self._details_edit.setReadOnly(True)
-        root_layout.addWidget(self._details_edit, 1)
+        details_layout.addWidget(self._details_edit, 1)
+        content_layout.addWidget(details_card, 7)
 
-        action_row = QHBoxLayout()
-        root_layout.addLayout(action_row)
+        sidebar = QVBoxLayout()
+        sidebar.setContentsMargins(0, 0, 0, 0)
+        sidebar.setSpacing(16)
+
+        controls_card = QFrame()
+        controls_card.setObjectName("repo_health_tool_card")
+        controls_layout = QVBoxLayout(controls_card)
+        controls_layout.setContentsMargins(22, 22, 22, 22)
+        controls_layout.setSpacing(12)
+
+        controls_title = QLabel("View Controls")
+        controls_title.setObjectName("workspace_section_title")
+        controls_layout.addWidget(controls_title)
+
+        controls_hint = QLabel("Refresh diagnostics, reset filtered state, and switch between focused views without leaving this surface.")
+        controls_hint.setObjectName("workspace_section_subtitle")
+        controls_hint.setWordWrap(True)
+        controls_layout.addWidget(controls_hint)
 
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setIcon(make_icon("state.info"))
@@ -108,29 +203,99 @@ class RepositoryHealthDialog(QDialog):
         self._copy_stale_path_button.clicked.connect(self._copy_selected_stale_path)
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
-        action_row.addWidget(self._refresh_button)
-        action_row.addWidget(self._reset_view_button)
-        action_row.addWidget(self._critical_only_check)
-        action_row.addWidget(self._blocked_only_check)
-        action_row.addWidget(self._show_json_check)
-        for button in (
-            self._copy_summary_button,
-            self._export_summary_button,
-            self._copy_report_button,
-            self._copy_json_button,
-            self._export_report_button,
-            self._copy_repo_button,
-            self._open_repo_button,
-            self._copy_sdk_button,
-            self._open_sdk_button,
-            self._copy_smoke_button,
-            self._open_smoke_button,
-        ):
-            action_row.addWidget(button)
-        action_row.addWidget(self._stale_dir_combo, 1)
-        action_row.addWidget(self._copy_stale_path_button)
-        action_row.addWidget(self._open_stale_button)
-        action_row.addStretch(1)
+        controls_row = QHBoxLayout()
+        controls_row.setSpacing(10)
+        controls_row.addWidget(self._refresh_button)
+        controls_row.addWidget(self._reset_view_button)
+        controls_layout.addLayout(controls_row)
+
+        filters_row = QHBoxLayout()
+        filters_row.setSpacing(12)
+        filters_row.addWidget(self._critical_only_check)
+        filters_row.addWidget(self._blocked_only_check)
+        filters_row.addWidget(self._show_json_check)
+        filters_row.addStretch(1)
+        controls_layout.addLayout(filters_row)
+        sidebar.addWidget(controls_card)
+
+        reports_card = QFrame()
+        reports_card.setObjectName("repo_health_tool_card")
+        reports_layout = QVBoxLayout(reports_card)
+        reports_layout.setContentsMargins(22, 22, 22, 22)
+        reports_layout.setSpacing(10)
+
+        reports_title = QLabel("Reports")
+        reports_title.setObjectName("workspace_section_title")
+        reports_layout.addWidget(reports_title)
+
+        reports_hint = QLabel("Copy or export either the summary line or the full diagnostic report in text or JSON form.")
+        reports_hint.setObjectName("workspace_section_subtitle")
+        reports_hint.setWordWrap(True)
+        reports_layout.addWidget(reports_hint)
+
+        reports_grid = QGridLayout()
+        reports_grid.setHorizontalSpacing(10)
+        reports_grid.setVerticalSpacing(10)
+        reports_grid.addWidget(self._copy_summary_button, 0, 0)
+        reports_grid.addWidget(self._export_summary_button, 0, 1)
+        reports_grid.addWidget(self._copy_report_button, 1, 0)
+        reports_grid.addWidget(self._copy_json_button, 1, 1)
+        reports_grid.addWidget(self._export_report_button, 2, 0, 1, 2)
+        reports_layout.addLayout(reports_grid)
+        sidebar.addWidget(reports_card)
+
+        paths_card = QFrame()
+        paths_card.setObjectName("repo_health_tool_card")
+        paths_layout = QVBoxLayout(paths_card)
+        paths_layout.setContentsMargins(22, 22, 22, 22)
+        paths_layout.setSpacing(10)
+
+        paths_title = QLabel("Workspace Paths")
+        paths_title.setObjectName("workspace_section_title")
+        paths_layout.addWidget(paths_title)
+
+        paths_hint = QLabel("Jump directly to repository, SDK, and smoke-sample locations without leaving the diagnostics context.")
+        paths_hint.setObjectName("workspace_section_subtitle")
+        paths_hint.setWordWrap(True)
+        paths_layout.addWidget(paths_hint)
+
+        paths_grid = QGridLayout()
+        paths_grid.setHorizontalSpacing(10)
+        paths_grid.setVerticalSpacing(10)
+        paths_grid.addWidget(self._copy_repo_button, 0, 0)
+        paths_grid.addWidget(self._open_repo_button, 0, 1)
+        paths_grid.addWidget(self._copy_sdk_button, 1, 0)
+        paths_grid.addWidget(self._open_sdk_button, 1, 1)
+        paths_grid.addWidget(self._copy_smoke_button, 2, 0)
+        paths_grid.addWidget(self._open_smoke_button, 2, 1)
+        paths_layout.addLayout(paths_grid)
+        sidebar.addWidget(paths_card)
+
+        stale_card = QFrame()
+        stale_card.setObjectName("repo_health_tool_card")
+        stale_layout = QVBoxLayout(stale_card)
+        stale_layout.setContentsMargins(22, 22, 22, 22)
+        stale_layout.setSpacing(10)
+
+        stale_title = QLabel("Stale Temp Directories")
+        stale_title.setObjectName("workspace_section_title")
+        stale_layout.addWidget(stale_title)
+
+        stale_hint = QLabel("Inspect directories left behind by prior checks and open or copy the currently selected stale path.")
+        stale_hint.setObjectName("workspace_section_subtitle")
+        stale_hint.setWordWrap(True)
+        stale_layout.addWidget(stale_hint)
+
+        stale_layout.addWidget(self._stale_dir_combo)
+        stale_row = QHBoxLayout()
+        stale_row.setSpacing(10)
+        stale_row.addWidget(self._copy_stale_path_button)
+        stale_row.addWidget(self._open_stale_button)
+        stale_layout.addLayout(stale_row)
+        sidebar.addWidget(stale_card)
+        sidebar.addStretch(1)
+        content_layout.addLayout(sidebar, 5)
+        root_layout.addLayout(content_layout, 1)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
         button_box.rejected.connect(self.reject)
@@ -170,6 +335,25 @@ class RepositoryHealthDialog(QDialog):
     def refresh(self) -> None:
         self._payload = collect_repo_health(self._repo_root)
         self._render_details()
+
+    def _create_metric_card(self, layout: QGridLayout, row: int, column: int, label_text: str) -> QLabel:
+        card = QFrame()
+        card.setObjectName("repo_health_metric_card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        label = QLabel(label_text)
+        label.setObjectName("repo_health_metric_label")
+        card_layout.addWidget(label)
+
+        value = QLabel("0")
+        value.setObjectName("repo_health_metric_value")
+        value.setWordWrap(True)
+        card_layout.addWidget(value)
+
+        layout.addWidget(card, row, column)
+        return value
 
     def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
         value = max(int(count or 0), 0)
@@ -228,6 +412,10 @@ class RepositoryHealthDialog(QDialog):
     def _update_accessibility_summary(self) -> None:
         view_payload = self._current_view_payload()
         counts = repo_health_counts(view_payload)
+        self._critical_metric_value.setText(str(counts["critical"]))
+        self._suggestions_metric_value.setText(str(counts["suggestions"]))
+        self._stale_metric_value.setText(str(counts["stale_dirs"]))
+        self._blocked_metric_value.setText(str(counts["blocked_stale_dirs"]))
         summary_text = str(self._summary_label.text() or "Repository health looks good.").strip() or "Repository health looks good."
         counts_text = (
             "Repository health counts: "
@@ -378,6 +566,26 @@ class RepositoryHealthDialog(QDialog):
             self._stale_dir_combo,
             tooltip=stale_summary,
             accessible_name=f"Stale temp directories: {stale_summary.removesuffix('.')}.",
+        )
+        _set_widget_metadata(
+            self._critical_metric_value,
+            tooltip=self._critical_metric_value.text(),
+            accessible_name=f"Repository health metric: Critical. {self._critical_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._suggestions_metric_value,
+            tooltip=self._suggestions_metric_value.text(),
+            accessible_name=f"Repository health metric: Suggestions. {self._suggestions_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._stale_metric_value,
+            tooltip=self._stale_metric_value.text(),
+            accessible_name=f"Repository health metric: Stale directories. {self._stale_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._blocked_metric_value,
+            tooltip=self._blocked_metric_value.text(),
+            accessible_name=f"Repository health metric: Blocked stale directories. {self._blocked_metric_value.text()}",
         )
         _set_widget_metadata(
             self._copy_stale_path_button,

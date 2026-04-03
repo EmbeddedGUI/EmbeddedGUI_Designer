@@ -1044,6 +1044,67 @@ QListWidget#app_selector_list::item:hover {{
     border-color: {t['warning']};
 }}
 
+#repo_health_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.7 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_2xl']}px;
+}}
+
+#repo_health_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#repo_health_title {{
+    color: {t['text']};
+    font-size: {t['fs_display'] + 6}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#repo_health_subtitle,
+#repo_health_summary_text,
+#repo_health_overview_text {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#repo_health_details_card,
+#repo_health_tool_card {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#repo_health_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#repo_health_metric_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#repo_health_metric_value {{
+    color: {t['text']};
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+QTextEdit#repo_health_details {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #new_project_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
