@@ -1362,7 +1362,8 @@ class ReleaseHistoryDialog(QDialog):
     ):
         super().__init__(parent)
         self.setWindowTitle("Release History")
-        self.resize(1040, 680)
+        self.setMinimumSize(1120, 760)
+        self.resize(1220, 820)
         self._config = get_config()
         self._open_path_callback = open_path_callback
         self._history_path = os.path.abspath(os.path.normpath(history_path)) if history_path else ""
@@ -1373,34 +1374,102 @@ class ReleaseHistoryDialog(QDialog):
         self._filtered_history_entries: list[dict[str, object]] = []
 
         root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(24, 24, 24, 24)
+        root_layout.setSpacing(16)
 
-        filter_row = QHBoxLayout()
-        root_layout.addLayout(filter_row)
+        header = QFrame()
+        header.setObjectName("release_history_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
 
-        filter_row.addWidget(QLabel("Range"))
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Release Intelligence")
+        self._eyebrow_label.setObjectName("release_history_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Inspect Release History")
+        self._title_label.setObjectName("release_history_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Audit recent release runs, isolate failures with structured filters, and open the exact manifest, log, or packaged output behind each build."
+        )
+        self._subtitle_label.setObjectName("release_history_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._result_metric_value = self._create_metric_card(metrics_layout, "Visible")
+        self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
+        self._preview_metric_value = self._create_metric_card(metrics_layout, "Preview")
+        header_layout.addLayout(metrics_layout, 2)
+        root_layout.addWidget(header)
+
+        controls_layout = QHBoxLayout()
+        controls_layout.setSpacing(16)
+        root_layout.addLayout(controls_layout)
+
+        filters_card = QFrame()
+        filters_card.setObjectName("release_history_card")
+        filters_layout = QVBoxLayout(filters_card)
+        filters_layout.setContentsMargins(22, 22, 22, 22)
+        filters_layout.setSpacing(12)
+
+        filters_title = QLabel("Filter Stack")
+        filters_title.setObjectName("workspace_section_title")
+        filters_layout.addWidget(filters_title)
+
+        filters_hint = QLabel(
+            "Use time range, release state, artifact presence, diagnostics, and text search together to narrow the list before drilling into a single run."
+        )
+        filters_hint.setObjectName("workspace_section_subtitle")
+        filters_hint.setWordWrap(True)
+        filters_layout.addWidget(filters_hint)
+
+        filters_grid = QGridLayout()
+        filters_grid.setHorizontalSpacing(12)
+        filters_grid.setVerticalSpacing(8)
+
+        range_label = QLabel("Range")
+        range_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(range_label, 0, 0)
         self._range_filter_combo = QComboBox()
         self._range_filter_combo.addItem("Any", "")
         self._range_filter_combo.addItem("Last 24h", "24h")
         self._range_filter_combo.addItem("Last 7d", "7d")
         self._range_filter_combo.addItem("Last 30d", "30d")
         self._range_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._range_filter_combo)
+        filters_grid.addWidget(self._range_filter_combo, 1, 0)
 
-        filter_row.addWidget(QLabel("Status"))
+        status_label = QLabel("Status")
+        status_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(status_label, 0, 1)
         self._status_filter_combo = QComboBox()
         self._status_filter_combo.addItem("All", "")
         self._status_filter_combo.addItem("Success", "success")
         self._status_filter_combo.addItem("Failed", "failed")
         self._status_filter_combo.addItem("Unknown", "unknown")
         self._status_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._status_filter_combo)
+        filters_grid.addWidget(self._status_filter_combo, 1, 1)
 
-        filter_row.addWidget(QLabel("Profile"))
+        profile_label = QLabel("Profile")
+        profile_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(profile_label, 0, 2)
         self._profile_filter_combo = QComboBox()
         self._profile_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._profile_filter_combo)
+        filters_grid.addWidget(self._profile_filter_combo, 1, 2)
 
-        filter_row.addWidget(QLabel("Artifact"))
+        artifact_label = QLabel("Artifact")
+        artifact_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(artifact_label, 0, 3)
         self._artifact_filter_combo = QComboBox()
         self._artifact_filter_combo.addItem("Any", "")
         self._artifact_filter_combo.addItem("Has Manifest", "manifest")
@@ -1412,9 +1481,11 @@ class ReleaseHistoryDialog(QDialog):
         self._artifact_filter_combo.addItem("Has Version", "version")
         self._artifact_filter_combo.addItem("Missing Version", "missing_version")
         self._artifact_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._artifact_filter_combo)
+        filters_grid.addWidget(self._artifact_filter_combo, 1, 3)
 
-        filter_row.addWidget(QLabel("Diagnostics"))
+        diagnostics_label = QLabel("Diagnostics")
+        diagnostics_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(diagnostics_label, 2, 0)
         self._diagnostics_filter_combo = QComboBox()
         self._diagnostics_filter_combo.addItem("Any", "")
         self._diagnostics_filter_combo.addItem("Clean", "clean")
@@ -1423,9 +1494,11 @@ class ReleaseHistoryDialog(QDialog):
         self._diagnostics_filter_combo.addItem("Issues", "issues")
         self._diagnostics_filter_combo.addItem("Unknown", "unknown")
         self._diagnostics_filter_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._diagnostics_filter_combo)
+        filters_grid.addWidget(self._diagnostics_filter_combo, 3, 0)
 
-        filter_row.addWidget(QLabel("Sort"))
+        sort_label = QLabel("Sort")
+        sort_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(sort_label, 2, 1)
         self._sort_combo = QComboBox()
         self._sort_combo.addItem("Newest First", "newest")
         self._sort_combo.addItem("Oldest First", "oldest")
@@ -1433,104 +1506,200 @@ class ReleaseHistoryDialog(QDialog):
         self._sort_combo.addItem("Diagnostics", "diagnostics")
         self._sort_combo.addItem("Profile", "profile")
         self._sort_combo.currentIndexChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._sort_combo)
+        filters_grid.addWidget(self._sort_combo, 3, 1)
 
-        filter_row.addWidget(QLabel("Search"))
+        search_label = QLabel("Search")
+        search_label.setObjectName("release_history_field_label")
+        filters_grid.addWidget(search_label, 2, 2, 1, 2)
         self._search_edit = QLineEdit()
         self._search_edit.setPlaceholderText("build id, message, SDK revision...")
         self._search_edit.textChanged.connect(self._apply_history_filter)
-        filter_row.addWidget(self._search_edit, 1)
+        filters_grid.addWidget(self._search_edit, 3, 2, 1, 2)
+        filters_grid.setColumnStretch(0, 1)
+        filters_grid.setColumnStretch(1, 1)
+        filters_grid.setColumnStretch(2, 1)
+        filters_grid.setColumnStretch(3, 1)
+        filters_layout.addLayout(filters_grid)
+        controls_layout.addWidget(filters_card, 5)
 
+        overview_card = QFrame()
+        overview_card.setObjectName("release_history_card")
+        overview_layout = QVBoxLayout(overview_card)
+        overview_layout.setContentsMargins(22, 22, 22, 22)
+        overview_layout.setSpacing(12)
+
+        overview_title = QLabel("History State")
+        overview_title.setObjectName("workspace_section_title")
+        overview_layout.addWidget(overview_title)
+
+        overview_hint = QLabel(
+            "Track filtered volume, artifact coverage, and history file availability before copying or exporting a batch."
+        )
+        overview_hint.setObjectName("workspace_section_subtitle")
+        overview_hint.setWordWrap(True)
+        overview_layout.addWidget(overview_hint)
+
+        stats_grid = QGridLayout()
+        stats_grid.setHorizontalSpacing(12)
+        stats_grid.setVerticalSpacing(8)
         self._result_count_label = QLabel("0 / 0")
-        filter_row.addWidget(self._result_count_label)
+        self._result_count_label.setObjectName("release_history_stat_value")
+        stats_grid.addWidget(QLabel("Results"), 0, 0)
+        stats_grid.itemAtPosition(0, 0).widget().setObjectName("release_history_field_label")
+        stats_grid.addWidget(self._result_count_label, 0, 1)
 
         self._status_breakdown_label = QLabel("success 0 | failed 0 | unknown 0")
-        filter_row.addWidget(self._status_breakdown_label)
+        self._status_breakdown_label.setObjectName("release_history_stat_value")
+        self._status_breakdown_label.setWordWrap(True)
+        stats_grid.addWidget(QLabel("Status"), 1, 0)
+        stats_grid.itemAtPosition(1, 0).widget().setObjectName("release_history_field_label")
+        stats_grid.addWidget(self._status_breakdown_label, 1, 1)
 
         self._artifact_breakdown_label = QLabel("manifest 0 | log 0 | package 0 | version 0")
-        filter_row.addWidget(self._artifact_breakdown_label)
+        self._artifact_breakdown_label.setObjectName("release_history_stat_value")
+        self._artifact_breakdown_label.setWordWrap(True)
+        stats_grid.addWidget(QLabel("Artifacts"), 2, 0)
+        stats_grid.itemAtPosition(2, 0).widget().setObjectName("release_history_field_label")
+        stats_grid.addWidget(self._artifact_breakdown_label, 2, 1)
 
         self._diagnostics_breakdown_label = QLabel("clean 0 | warnings 0 | errors 0 | unknown 0")
-        filter_row.addWidget(self._diagnostics_breakdown_label)
+        self._diagnostics_breakdown_label.setObjectName("release_history_stat_value")
+        self._diagnostics_breakdown_label.setWordWrap(True)
+        stats_grid.addWidget(QLabel("Diagnostics"), 3, 0)
+        stats_grid.itemAtPosition(3, 0).widget().setObjectName("release_history_field_label")
+        stats_grid.addWidget(self._diagnostics_breakdown_label, 3, 1)
+
+        self._history_file_value_label = QLabel("")
+        self._history_file_value_label.setObjectName("release_history_file_path")
+        self._history_file_value_label.setWordWrap(True)
+        stats_grid.addWidget(QLabel("History File"), 4, 0)
+        stats_grid.itemAtPosition(4, 0).widget().setObjectName("release_history_field_label")
+        stats_grid.addWidget(self._history_file_value_label, 4, 1)
+        stats_grid.setColumnStretch(1, 1)
+        overview_layout.addLayout(stats_grid)
+
+        actions_grid = QGridLayout()
+        actions_grid.setHorizontalSpacing(10)
+        actions_grid.setVerticalSpacing(10)
 
         self._clear_filters_button = QPushButton("Clear Filters")
         self._clear_filters_button.setIcon(make_icon("toolbar.delete"))
         self._clear_filters_button.clicked.connect(self._clear_filters)
-        filter_row.addWidget(self._clear_filters_button)
+        actions_grid.addWidget(self._clear_filters_button, 0, 0)
 
         self._reset_view_button = QPushButton("Reset View")
         self._reset_view_button.setIcon(make_icon("toolbar.undo"))
         self._reset_view_button.clicked.connect(self._reset_view)
-        filter_row.addWidget(self._reset_view_button)
+        actions_grid.addWidget(self._reset_view_button, 0, 1)
 
         self._copy_filtered_button = QPushButton("Copy Filtered")
         self._copy_filtered_button.setIcon(make_icon("toolbar.copy"))
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
-        filter_row.addWidget(self._copy_filtered_button)
+        actions_grid.addWidget(self._copy_filtered_button, 1, 0)
 
         self._copy_filtered_json_button = QPushButton("Copy Filtered JSON")
         self._copy_filtered_json_button.setIcon(make_icon("toolbar.copy"))
         self._copy_filtered_json_button.clicked.connect(self._copy_filtered_json)
-        filter_row.addWidget(self._copy_filtered_json_button)
+        actions_grid.addWidget(self._copy_filtered_json_button, 1, 1)
 
         self._export_filtered_button = QPushButton("Export Filtered...")
         self._export_filtered_button.setIcon(make_icon("toolbar.export"))
         self._export_filtered_button.clicked.connect(self._export_filtered_summary)
-        filter_row.addWidget(self._export_filtered_button)
+        actions_grid.addWidget(self._export_filtered_button, 2, 0)
 
         self._copy_history_file_button = QPushButton("Copy History Path")
         self._copy_history_file_button.setIcon(make_icon("toolbar.copy"))
         self._copy_history_file_button.clicked.connect(self._copy_history_file_path)
-        filter_row.addWidget(self._copy_history_file_button)
+        actions_grid.addWidget(self._copy_history_file_button, 3, 0)
 
         self._copy_history_json_button = QPushButton("Copy History JSON")
         self._copy_history_json_button.setIcon(make_icon("toolbar.copy"))
         self._copy_history_json_button.clicked.connect(self._copy_history_file_json)
-        filter_row.addWidget(self._copy_history_json_button)
+        actions_grid.addWidget(self._copy_history_json_button, 3, 1)
 
         self._export_history_json_button = QPushButton("Export History JSON...")
         self._export_history_json_button.setIcon(make_icon("toolbar.export"))
         self._export_history_json_button.clicked.connect(self._export_history_file_json)
-        filter_row.addWidget(self._export_history_json_button)
+        actions_grid.addWidget(self._export_history_json_button, 4, 0)
 
         self._open_history_file_button = QPushButton("Open History File")
         self._open_history_file_button.setIcon(make_icon("toolbar.open"))
         self._open_history_file_button.clicked.connect(self._open_history_file)
-        filter_row.addWidget(self._open_history_file_button)
+        actions_grid.addWidget(self._open_history_file_button, 4, 1)
 
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setIcon(make_icon("state.info"))
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
         self._refresh_button.clicked.connect(self._reload_history_entries)
-        filter_row.addWidget(self._refresh_button)
+        actions_grid.addWidget(self._refresh_button, 2, 1)
+        actions_grid.setColumnStretch(0, 1)
+        actions_grid.setColumnStretch(1, 1)
+        overview_layout.addLayout(actions_grid)
+        controls_layout.addWidget(overview_card, 4)
 
         content_layout = QHBoxLayout()
+        content_layout.setSpacing(16)
         root_layout.addLayout(content_layout, 1)
 
+        history_card = QFrame()
+        history_card.setObjectName("release_history_card")
+        history_layout = QVBoxLayout(history_card)
+        history_layout.setContentsMargins(22, 22, 22, 22)
+        history_layout.setSpacing(12)
+
+        history_title = QLabel("Release Runs")
+        history_title.setObjectName("workspace_section_title")
+        history_layout.addWidget(history_title)
+
+        history_hint = QLabel(
+            "Entries stay sorted by the active rule, with each row surfacing profile, SDK revision, and the first diagnostic signal."
+        )
+        history_hint.setObjectName("workspace_section_subtitle")
+        history_hint.setWordWrap(True)
+        history_layout.addWidget(history_hint)
+
         self._history_list = QListWidget()
+        self._history_list.setObjectName("release_history_list")
+        self._history_list.setSpacing(8)
         self._history_list.currentRowChanged.connect(self._update_current_entry)
-        content_layout.addWidget(self._history_list, 2)
+        history_layout.addWidget(self._history_list, 1)
+        content_layout.addWidget(history_card, 3)
 
         right_layout = QVBoxLayout()
-        content_layout.addLayout(right_layout, 3)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(16)
+        content_layout.addLayout(right_layout, 5)
+
+        details_card = QFrame()
+        details_card.setObjectName("release_history_card")
+        details_layout = QVBoxLayout(details_card)
+        details_layout.setContentsMargins(22, 22, 22, 22)
+        details_layout.setSpacing(12)
+
+        details_title = QLabel("Selection Details")
+        details_title.setObjectName("workspace_section_title")
+        details_layout.addWidget(details_title)
+
+        details_hint = QLabel(
+            "The selected release row expands into a structured summary and raw metadata so build context remains visible while exporting."
+        )
+        details_hint.setObjectName("workspace_section_subtitle")
+        details_hint.setWordWrap(True)
+        details_layout.addWidget(details_hint)
 
         self._summary_label = QLabel("Select a release entry to inspect its metadata.")
+        self._summary_label.setObjectName("release_history_summary")
         self._summary_label.setWordWrap(True)
-        right_layout.addWidget(self._summary_label)
+        details_layout.addWidget(self._summary_label)
 
         self._details_edit = QTextEdit()
+        self._details_edit.setObjectName("release_history_details")
         self._details_edit.setReadOnly(True)
-        right_layout.addWidget(self._details_edit, 1)
+        details_layout.addWidget(self._details_edit, 1)
 
-        self._preview_label = QLabel("Preview")
-        right_layout.addWidget(self._preview_label)
-
-        self._preview_edit = QTextEdit()
-        self._preview_edit.setReadOnly(True)
-        right_layout.addWidget(self._preview_edit, 2)
-
-        action_row = QHBoxLayout()
-        right_layout.addLayout(action_row)
+        details_actions = QGridLayout()
+        details_actions.setHorizontalSpacing(10)
+        details_actions.setVerticalSpacing(10)
 
         self._preview_auto_button = QPushButton("Auto Preview")
         self._preview_auto_button.setIcon(make_icon("toolbar.preview"))
@@ -1608,33 +1777,77 @@ class ReleaseHistoryDialog(QDialog):
         self._open_manifest_button.clicked.connect(lambda: self._open_selected_path("manifest_path", "Release Manifest"))
         self._open_log_button.clicked.connect(lambda: self._open_selected_path("log_path", "Release Log"))
         self._open_package_button.clicked.connect(lambda: self._open_selected_path("zip_path", "Release Package"))
-        for button in (
-            self._preview_auto_button,
-            self._preview_manifest_button,
-            self._preview_log_button,
-            self._preview_version_button,
-            self._copy_summary_button,
-            self._export_summary_button,
-            self._copy_details_button,
-            self._copy_preview_button,
-            self._copy_preview_path_button,
-            self._export_preview_button,
-            self._open_preview_button,
-            self._copy_folder_path_button,
-            self._copy_dist_path_button,
-            self._copy_package_path_button,
-            self._export_details_button,
-            self._copy_entry_json_button,
-            self._export_entry_json_button,
-            self._open_folder_button,
-            self._open_dist_button,
-            self._open_version_button,
-            self._open_manifest_button,
-            self._open_log_button,
-            self._open_package_button,
-        ):
-            action_row.addWidget(button)
-        action_row.addStretch(1)
+
+        details_actions.addWidget(self._copy_summary_button, 0, 0)
+        details_actions.addWidget(self._export_summary_button, 0, 1)
+        details_actions.addWidget(self._copy_details_button, 0, 2)
+        details_actions.addWidget(self._export_details_button, 1, 0)
+        details_actions.addWidget(self._copy_entry_json_button, 1, 1)
+        details_actions.addWidget(self._export_entry_json_button, 1, 2)
+        details_actions.setColumnStretch(0, 1)
+        details_actions.setColumnStretch(1, 1)
+        details_actions.setColumnStretch(2, 1)
+        details_layout.addLayout(details_actions)
+        right_layout.addWidget(details_card, 3)
+
+        preview_card = QFrame()
+        preview_card.setObjectName("release_history_card")
+        preview_layout = QVBoxLayout(preview_card)
+        preview_layout.setContentsMargins(22, 22, 22, 22)
+        preview_layout.setSpacing(12)
+
+        preview_title = QLabel("Artifacts & Preview")
+        preview_title.setObjectName("workspace_section_title")
+        preview_layout.addWidget(preview_title)
+
+        preview_hint = QLabel(
+            "Switch preview modes without losing selection, then copy paths or open the exact release folder, dist directory, or artifact file."
+        )
+        preview_hint.setObjectName("workspace_section_subtitle")
+        preview_hint.setWordWrap(True)
+        preview_layout.addWidget(preview_hint)
+
+        self._preview_label = QLabel("Preview")
+        self._preview_label.setObjectName("release_history_preview_label")
+        preview_layout.addWidget(self._preview_label)
+
+        self._preview_edit = QTextEdit()
+        self._preview_edit.setObjectName("release_history_preview")
+        self._preview_edit.setReadOnly(True)
+        preview_layout.addWidget(self._preview_edit, 1)
+
+        preview_mode_row = QHBoxLayout()
+        preview_mode_row.setContentsMargins(0, 0, 0, 0)
+        preview_mode_row.setSpacing(10)
+        preview_mode_row.addWidget(self._preview_auto_button)
+        preview_mode_row.addWidget(self._preview_manifest_button)
+        preview_mode_row.addWidget(self._preview_log_button)
+        preview_mode_row.addWidget(self._preview_version_button)
+        preview_mode_row.addStretch(1)
+        preview_layout.addLayout(preview_mode_row)
+
+        preview_actions = QGridLayout()
+        preview_actions.setHorizontalSpacing(10)
+        preview_actions.setVerticalSpacing(10)
+        preview_actions.addWidget(self._copy_preview_button, 0, 0)
+        preview_actions.addWidget(self._copy_preview_path_button, 0, 1)
+        preview_actions.addWidget(self._export_preview_button, 0, 2)
+        preview_actions.addWidget(self._open_preview_button, 0, 3)
+        preview_actions.addWidget(self._copy_folder_path_button, 1, 0)
+        preview_actions.addWidget(self._copy_dist_path_button, 1, 1)
+        preview_actions.addWidget(self._copy_package_path_button, 1, 2)
+        preview_actions.addWidget(self._open_folder_button, 1, 3)
+        preview_actions.addWidget(self._open_dist_button, 2, 0)
+        preview_actions.addWidget(self._open_version_button, 2, 1)
+        preview_actions.addWidget(self._open_manifest_button, 2, 2)
+        preview_actions.addWidget(self._open_log_button, 2, 3)
+        preview_actions.addWidget(self._open_package_button, 3, 0)
+        preview_actions.setColumnStretch(0, 1)
+        preview_actions.setColumnStretch(1, 1)
+        preview_actions.setColumnStretch(2, 1)
+        preview_actions.setColumnStretch(3, 1)
+        preview_layout.addLayout(preview_actions)
+        right_layout.addWidget(preview_card, 4)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
         button_box.rejected.connect(self.reject)
@@ -1702,6 +1915,25 @@ class ReleaseHistoryDialog(QDialog):
         self._restore_view_state()
         self._update_history_file_button()
         self._sync_preview_mode_buttons()
+
+    def _create_metric_card(self, layout: QVBoxLayout, label_text: str) -> QLabel:
+        card = QFrame()
+        card.setObjectName("release_history_metric_card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        label = QLabel(label_text)
+        label.setObjectName("release_history_metric_label")
+        card_layout.addWidget(label)
+
+        value = QLabel("")
+        value.setObjectName("release_history_metric_value")
+        value.setWordWrap(True)
+        card_layout.addWidget(value)
+
+        layout.addWidget(card)
+        return value
 
     def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
         value = max(int(count or 0), 0)
@@ -1846,8 +2078,34 @@ class ReleaseHistoryDialog(QDialog):
         selection_context = f"Current selection: {selection_label}."
         has_filters = self._filters_are_active()
         default_view_active = self._default_view_is_active()
+        history_state = "available" if history_exists else ("missing" if self._history_path else "unavailable")
+
+        self._result_metric_value.setText(f"{visible_entries} / {total_entries}")
+        self._selection_metric_value.setText(selection_label)
+        self._preview_metric_value.setText(f"{self._preview_mode.title()} | {preview_label_text}")
+        self._history_file_value_label.setText(f"{history_state} | {self._history_path or 'No history file configured'}")
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._result_metric_value,
+            tooltip=result_summary,
+            accessible_name=f"Release history metric: Visible entries. {self._result_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._selection_metric_value,
+            tooltip=selection_label,
+            accessible_name=f"Release history metric: Selection. {selection_label}",
+        )
+        _set_widget_metadata(
+            self._preview_metric_value,
+            tooltip=f"Preview mode {self._preview_mode}. Current preview: {preview_label_text}.",
+            accessible_name=f"Release history metric: Preview. {self._preview_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._history_file_value_label,
+            tooltip=f"Release history file state: {history_state}. Current path: {self._history_path or 'none'}.",
+            accessible_name=f"Release history file state: {history_state}",
+        )
         if getattr(self, "_close_button", None) is not None:
             _set_widget_metadata(
                 self._close_button,

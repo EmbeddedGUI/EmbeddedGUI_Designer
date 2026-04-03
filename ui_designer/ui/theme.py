@@ -1106,7 +1106,8 @@ QTextEdit#repo_health_details {{
 }}
 
 #release_build_header,
-#release_profiles_header {{
+#release_profiles_header,
+#release_history_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
         stop: 0 {t['panel_raised']},
@@ -1118,42 +1119,49 @@ QTextEdit#repo_health_details {{
 }}
 
 #release_build_eyebrow,
-#release_profiles_eyebrow {{
+#release_profiles_eyebrow,
+#release_history_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_semibold']};
 }}
 
 #release_build_title,
-#release_profiles_title {{
+#release_profiles_title,
+#release_history_title {{
     color: {t['text']};
     font-size: {t['fs_display'] + 6}px;
     font-weight: {t['fw_regular']};
 }}
 
 #release_build_subtitle,
-#release_profiles_subtitle {{
+#release_profiles_subtitle,
+#release_history_subtitle {{
     color: {t['text_muted']};
     font-size: {t['fs_body']}px;
     font-weight: {t['fw_regular']};
 }}
 
 #release_build_card,
-#release_profiles_card {{
+#release_profiles_card,
+#release_history_card {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
 
 #release_build_metric_card,
-#release_profiles_metric_card {{
+#release_profiles_metric_card,
+#release_history_metric_card {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
 
 #release_build_metric_label,
-#release_profiles_metric_label {{
+#release_profiles_metric_label,
+#release_history_metric_label,
+#release_history_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_semibold']};
@@ -1161,14 +1169,27 @@ QTextEdit#repo_health_details {{
 
 #release_build_metric_value,
 #release_profiles_metric_value,
-#release_profiles_summary_value {{
+#release_profiles_summary_value,
+#release_history_metric_value,
+#release_history_summary,
+#release_history_stat_value,
+#release_history_file_path,
+#release_history_preview_label {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_semibold']};
 }}
 
-QListWidget#release_profiles_list {{
+QListWidget#release_profiles_list,
+QListWidget#release_history_list {{
     background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+QTextEdit#release_history_details,
+QTextEdit#release_history_preview {{
+    background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
