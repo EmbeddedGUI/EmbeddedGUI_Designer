@@ -224,12 +224,12 @@ _FLUENT_ICON_MAP = {
     "nav.expand": "CHEVRON_RIGHT",
     "nav.collapse": "CHEVRON_DOWN_MED",
 
-    "layout.align.left": "ALIGNMENT",
+    "layout.align.left": "LEFT",
     "layout.align.center": "ALIGNMENT",
-    "layout.align.right": "ALIGNMENT",
-    "layout.align.top": "ALIGNMENT",
+    "layout.align.right": "RIGHT",
+    "layout.align.top": "UP",
     "layout.align.middle": "ALIGNMENT",
-    "layout.align.bottom": "ALIGNMENT",
+    "layout.align.bottom": "DOWN",
     "layout.distribute.h": "TILES",
     "layout.distribute.v": "LAYOUT",
 

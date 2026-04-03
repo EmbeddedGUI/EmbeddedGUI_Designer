@@ -12,9 +12,10 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtCore import QByteArray, Qt
+    from PyQt5.QtCore import QByteArray, Qt, QPoint
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel
     from PyQt5.QtWidgets import QMessageBox
+    from PyQt5.QtTest import QTest
 
     _has_pyqt5 = True
 except ImportError:
@@ -8074,6 +8075,254 @@ class TestMainWindowFileFlow:
         assert window._focus_canvas_action.isChecked() is True
         assert window._left_shell.isHidden() is True
         assert window._inspector_tabs.isHidden() is True
+        _close_window(window)
+
+    def test_bottom_panel_toggle_preserves_user_splitter_sizes(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._set_bottom_panel_visible(True)
+        window._workspace_splitter.setSizes([777, 333])
+        expected_visible_sizes = window._workspace_splitter.sizes()
+
+        window._set_bottom_panel_visible(False)
+        assert window._bottom_panel_visible is False
+        assert window._bottom_panel_last_visible_sizes == expected_visible_sizes[:2]
+
+        window._set_bottom_panel_visible(True)
+        assert window._bottom_panel_visible is True
+        restored = window._workspace_splitter.sizes()
+        assert restored[1] > 0
+        assert abs(restored[0] - expected_visible_sizes[0]) <= 2
+        assert abs(restored[1] - expected_visible_sizes[1]) <= 2
+
+        _close_window(window)
+
+    def test_show_bottom_panel_does_not_reset_splitter_when_already_visible(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._set_bottom_panel_visible(True)
+        window._workspace_splitter.setSizes([643, 289])
+        before = window._workspace_splitter.sizes()
+
+        window._show_bottom_panel("History")
+
+        after = window._workspace_splitter.sizes()
+        assert window._bottom_panel_visible is True
+        assert after[1] > 0
+        assert abs(after[0] - before[0]) <= 2
+        assert abs(after[1] - before[1]) <= 2
+
+        _close_window(window)
+
+    def test_focus_canvas_restore_reuses_last_bottom_splitter_sizes(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._set_bottom_panel_visible(True)
+        window._workspace_splitter.setSizes([702, 198])
+        expected_visible_sizes = window._workspace_splitter.sizes()
+
+        window._set_focus_canvas_enabled(True)
+        assert window._bottom_panel_visible is False
+
+        window._set_focus_canvas_enabled(False)
+
+        restored = window._workspace_splitter.sizes()
+        assert window._bottom_panel_visible is True
+        assert restored[1] > 0
+        assert abs(restored[0] - expected_visible_sizes[0]) <= 2
+        assert abs(restored[1] - expected_visible_sizes[1]) <= 2
+
+        _close_window(window)
+
+    def test_top_splitter_sizes_survive_left_panel_switches(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._top_splitter.setSizes([281, 654, 299])
+        before = window._top_splitter.sizes()
+
+        window._select_left_panel("widgets")
+        window._select_left_panel("assets")
+        window._select_left_panel("project")
+
+        after = window._top_splitter.sizes()
+        assert abs(after[0] - before[0]) <= 2
+        assert abs(after[1] - before[1]) <= 2
+        assert abs(after[2] - before[2]) <= 2
+
+        _close_window(window)
+
+    def test_top_splitter_sizes_survive_inspector_tab_switches(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._top_splitter.setSizes([305, 620, 321])
+        before = window._top_splitter.sizes()
+
+        window._show_inspector_tab("animations")
+        window._show_inspector_tab("page", "timers")
+        window._show_inspector_tab("properties")
+
+        after = window._top_splitter.sizes()
+        assert abs(after[0] - before[0]) <= 2
+        assert abs(after[1] - before[1]) <= 2
+        assert abs(after[2] - before[2]) <= 2
+
+        _close_window(window)
+
+    def test_focus_canvas_roundtrip_restores_top_splitter_sizes(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+
+        window._top_splitter.setSizes([263, 701, 287])
+        expected = window._top_splitter.sizes()
+
+        window._set_focus_canvas_enabled(True)
+        assert window._focus_canvas_enabled is True
+
+        window._set_focus_canvas_enabled(False)
+        restored = window._top_splitter.sizes()
+
+        assert window._focus_canvas_enabled is False
+        assert abs(restored[0] - expected[0]) <= 2
+        assert abs(restored[1] - expected[1]) <= 2
+        assert abs(restored[2] - expected[2]) <= 2
+
+        _close_window(window)
+
+    def test_status_panel_top_splitter_handle_drag_with_qtest(self, qapp, isolated_config, monkeypatch):
+        from PyQt5.QtCore import QRect
+
+        if os.environ.get("QT_QPA_PLATFORM", "").strip().lower() == "offscreen":
+            pytest.skip("QTest splitter drag requires a non-offscreen platform plugin")
+
+        class _FakeScreen:
+            def availableGeometry(self):
+                return QRect(0, 0, 1800, 1200)
+
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QGuiApplication.primaryScreen",
+            staticmethod(lambda: _FakeScreen()),
+        )
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.resize(1800, 1000)
+        window.showNormal()
+        window.show()
+        qapp.processEvents()
+        QTest.qWait(80)
+
+        window._select_left_panel("status")
+        split = window._top_splitter
+        split.setSizes([360, 920, 360])
+        qapp.processEvents()
+        QTest.qWait(30)
+
+        before = split.sizes()
+        handle = split.handle(1)
+        handle.show()
+        qapp.processEvents()
+        start = handle.rect().center()
+
+        # Drag right on the first splitter handle: left pane should grow.
+        QTest.mousePress(handle, Qt.LeftButton, Qt.NoModifier, start)
+        for step in range(1, 7):
+            QTest.mouseMove(handle, QPoint(start.x() + step * 14, start.y()))
+            QTest.qWait(5)
+        QTest.mouseRelease(handle, Qt.LeftButton, Qt.NoModifier, QPoint(start.x() + 84, start.y()))
+        qapp.processEvents()
+        after_right = split.sizes()
+
+        # Drag left from the same handle: left pane should shrink.
+        start2 = handle.rect().center()
+        QTest.mousePress(handle, Qt.LeftButton, Qt.NoModifier, start2)
+        for step in range(1, 7):
+            QTest.mouseMove(handle, QPoint(start2.x() - step * 16, start2.y()))
+            QTest.qWait(5)
+        QTest.mouseRelease(handle, Qt.LeftButton, Qt.NoModifier, QPoint(start2.x() - 96, start2.y()))
+        qapp.processEvents()
+        after_left = split.sizes()
+
+        assert after_right[0] > before[0]
+        assert after_right[1] < before[1]
+        assert after_left[0] < after_right[0]
+        assert after_left[1] > after_right[1]
+
+        _close_window(window)
+
+    def test_workspace_left_nav_buttons_switch_panels_via_click(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.show()
+        qapp.processEvents()
+
+        assets_button = window._workspace_nav_buttons["assets"]
+        QTest.mouseClick(assets_button, Qt.LeftButton)
+        qapp.processEvents()
+
+        assert window._current_left_panel == "assets"
+        assert window._left_panel_stack.currentWidget() is window.res_panel
+
+        status_button = window._workspace_nav_buttons["status"]
+        QTest.mouseClick(status_button, Qt.LeftButton)
+        qapp.processEvents()
+
+        assert window._current_left_panel == "status"
+        assert window._left_panel_stack.currentWidget() is window.status_center_panel
+
+        _close_window(window)
+
+    def test_workspace_inspector_tabs_switch_via_tabbar_click(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.show()
+        qapp.processEvents()
+
+        tab_bar = window._inspector_tabs.tabBar()
+        page_rect = tab_bar.tabRect(2)
+        QTest.mouseClick(tab_bar, Qt.LeftButton, Qt.NoModifier, page_rect.center())
+        qapp.processEvents()
+
+        assert window._inspector_tabs.currentIndex() == 2
+
+        animations_rect = tab_bar.tabRect(1)
+        QTest.mouseClick(tab_bar, Qt.LeftButton, Qt.NoModifier, animations_rect.center())
+        qapp.processEvents()
+
+        assert window._inspector_tabs.currentIndex() == 1
+
+        _close_window(window)
+
+    def test_bottom_toggle_button_click_hides_and_shows_bottom_panel(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.show()
+        qapp.processEvents()
+
+        window._set_bottom_panel_visible(True)
+        assert window._bottom_panel_visible is True
+
+        QTest.mouseClick(window._bottom_toggle_button, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._bottom_panel_visible is False
+
+        QTest.mouseClick(window._bottom_toggle_button, Qt.LeftButton)
+        qapp.processEvents()
+        assert window._bottom_panel_visible is True
+
         _close_window(window)
 
     def test_workspace_panel_preferences_restore_from_config(self, qapp, isolated_config):

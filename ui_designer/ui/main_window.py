@@ -30,7 +30,7 @@ from PyQt5.QtWidgets import (
     QAction, QActionGroup, QFileDialog, QStatusBar,
     QMessageBox, QScrollArea, QDockWidget, QMenu,
     QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
-    QLineEdit, QPlainTextEdit, QTextEdit,
+    QLineEdit, QPlainTextEdit, QTextEdit, QSizePolicy,
 )
 from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QGuiApplication, QIcon
@@ -409,6 +409,7 @@ class MainWindow(QMainWindow):
         self.widget_browser.setObjectName("widgets_browser_panel")
         self.status_center_panel = StatusCenterPanel()
         self.status_center_panel.setObjectName("workspace_status_center_panel")
+        self.status_center_panel.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
 
         self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
         self._project_workspace.setObjectName("project_workspace_panel")
@@ -416,6 +417,7 @@ class MainWindow(QMainWindow):
         self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
 
         self._left_panel_stack = QStackedWidget()
+        self._left_panel_stack.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self._left_panel_pages = {
             "project": self._project_workspace,
             "structure": self.widget_tree,
@@ -446,6 +448,7 @@ class MainWindow(QMainWindow):
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
+        self._left_shell.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
         left_shell_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
@@ -455,6 +458,7 @@ class MainWindow(QMainWindow):
         center_shell = QWidget()
         self._center_shell = center_shell
         center_shell.setObjectName("workspace_center_shell")
+        center_shell.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
         center_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
@@ -543,6 +547,10 @@ class MainWindow(QMainWindow):
         self._update_main_view_metadata()
 
         self._bottom_panel_visible = False
+        self._bottom_panel_last_visible_sizes = [
+            WORKSPACE_TOP_VISIBLE_HEIGHT,
+            WORKSPACE_BOTTOM_VISIBLE_HEIGHT,
+        ]
         self._current_left_panel = "project"
         self._focus_canvas_enabled = False
         self._focus_canvas_saved_top_sizes = []
@@ -942,6 +950,8 @@ class MainWindow(QMainWindow):
         snap_label = self._current_grid_snap_label()
         font_size = int(getattr(self._config, "font_size_px", 0) or 0)
         font_label = "app default" if font_size <= 0 else f"{font_size}pt"
+        density = str(getattr(self._config, "ui_density", "standard") or "standard").strip().lower()
+        density_label = "Roomy+" if density in {"roomy_plus", "roomy+"} else ("Roomy" if density == "roomy" else "Standard")
         has_mockup, mockup_visible, _opacity, _mockup_context = self._preview_mockup_action_context()
         mockup_state = "none loaded" if not has_mockup else ("visible" if mockup_visible else "hidden")
         if hasattr(self, "_view_menu"):
@@ -949,7 +959,7 @@ class MainWindow(QMainWindow):
                 self._view_menu.menuAction(),
                 (
                     "Change workspace layout, themes, preview modes, and mockup options. "
-                    f"Theme: {theme_label}. Font size: {font_label}. Layout: {layout_label}. "
+                    f"Theme: {theme_label}. Density: {density_label}. Font size: {font_label}. Layout: {layout_label}. "
                     f"Grid: {grid_state}. Snap: {snap_label}. Mockup: {mockup_state}."
                 ),
             )
@@ -1785,20 +1795,45 @@ class MainWindow(QMainWindow):
     def _set_bottom_panel_visible(self, visible):
         if not hasattr(self, "_workspace_splitter"):
             return
-        self._bottom_panel_visible = bool(visible)
+
+        should_show = bool(visible)
+        was_visible = bool(getattr(self, "_bottom_panel_visible", False))
+
+        # Preserve user-adjusted splitter ratio when hiding/showing bottom tools.
+        try:
+            current_sizes = [int(v) for v in self._workspace_splitter.sizes()]
+        except Exception:
+            current_sizes = []
+        if len(current_sizes) >= 2 and sum(current_sizes) > 0 and current_sizes[1] > 0:
+            live_visible_sizes = current_sizes[:2]
+        else:
+            live_visible_sizes = []
+
+        if was_visible and not should_show and live_visible_sizes:
+            self._bottom_panel_last_visible_sizes = live_visible_sizes
+
+        self._bottom_panel_visible = should_show
         self._bottom_tabs.setVisible(self._bottom_panel_visible)
+
         if self._bottom_panel_visible:
-            self._workspace_splitter.setSizes([
-                WORKSPACE_TOP_VISIBLE_HEIGHT,
-                WORKSPACE_BOTTOM_VISIBLE_HEIGHT,
-            ])
+            if was_visible:
+                # Keep current splitter geometry while already visible.
+                if live_visible_sizes:
+                    self._bottom_panel_last_visible_sizes = live_visible_sizes
+            else:
+                restored_sizes = getattr(self, "_bottom_panel_last_visible_sizes", [])
+                if not isinstance(restored_sizes, list) or len(restored_sizes) < 2 or sum(restored_sizes[:2]) <= 0:
+                    restored_sizes = [WORKSPACE_TOP_VISIBLE_HEIGHT, WORKSPACE_BOTTOM_VISIBLE_HEIGHT]
+                self._workspace_splitter.setSizes(restored_sizes[:2])
             self._bottom_toggle_button.setText("Hide")
         else:
-            self._workspace_splitter.setSizes([
-                WORKSPACE_TOP_HIDDEN_HEIGHT,
-                WORKSPACE_BOTTOM_HIDDEN_HEIGHT,
-            ])
+            if was_visible:
+                self._workspace_splitter.setSizes([
+                    WORKSPACE_TOP_HIDDEN_HEIGHT,
+                    WORKSPACE_BOTTOM_HIDDEN_HEIGHT,
+                ])
             self._bottom_toggle_button.setText("Show")
+
         self._update_bottom_toggle_button_metadata()
         self._update_workspace_tab_metadata()
 
@@ -3654,7 +3689,42 @@ class MainWindow(QMainWindow):
         self.theme_light_action.triggered.connect(lambda: self._set_theme('light'))
         theme_group.addAction(self.theme_light_action)
         theme_menu.addAction(self.theme_light_action)
-        
+
+        density_menu = view_menu.addMenu("UI Density")
+        self._density_menu = density_menu
+        self._apply_action_hint(density_menu.menuAction(), "Choose standard or roomy UI density.")
+        density_group = QActionGroup(self)
+        density_group.setExclusive(True)
+
+        self._density_standard_action = QAction("Standard", self)
+        self._density_standard_action.setCheckable(True)
+        self._density_standard_action.setChecked(str(getattr(self._config, "ui_density", "standard") or "standard") == "standard")
+        self._apply_action_hint(self._density_standard_action, "Use the default compact-balanced UI density.")
+        self._density_standard_action.triggered.connect(lambda: self._set_ui_density("standard"))
+        density_group.addAction(self._density_standard_action)
+        density_menu.addAction(self._density_standard_action)
+
+        self._density_roomy_action = QAction("Roomy", self)
+        self._density_roomy_action.setCheckable(True)
+        self._density_roomy_action.setChecked(str(getattr(self._config, "ui_density", "standard") or "standard") == "roomy")
+        self._apply_action_hint(self._density_roomy_action, "Use larger text and roomier controls for readability.")
+        self._density_roomy_action.triggered.connect(lambda: self._set_ui_density("roomy"))
+        density_group.addAction(self._density_roomy_action)
+        density_menu.addAction(self._density_roomy_action)
+
+        self._density_roomy_plus_action = QAction("Roomy+", self)
+        self._density_roomy_plus_action.setCheckable(True)
+        self._density_roomy_plus_action.setChecked(
+            str(getattr(self._config, "ui_density", "standard") or "standard") in {"roomy_plus", "roomy+"}
+        )
+        self._apply_action_hint(
+            self._density_roomy_plus_action,
+            "Use the most readable profile with larger text and extra spacing.",
+        )
+        self._density_roomy_plus_action.triggered.connect(lambda: self._set_ui_density("roomy_plus"))
+        density_group.addAction(self._density_roomy_plus_action)
+        density_menu.addAction(self._density_roomy_plus_action)
+
         view_menu.addSeparator()
 
         self._font_size_action = QAction("Font Size...", self)
@@ -4034,13 +4104,39 @@ class MainWindow(QMainWindow):
 
     def _set_theme(self, theme):
         """Set the application theme and save to config."""
-        apply_theme(QApplication.instance(), theme)
+        apply_theme(
+            QApplication.instance(),
+            theme,
+            density=str(getattr(self._config, "ui_density", "standard") or "standard"),
+        )
         self._config.theme = theme
         self._config.save()
         self._apply_workspace_iconography()
         self._update_view_and_theme_action_metadata()
         if hasattr(self, "widget_browser"):
             self.widget_browser.refresh()
+
+    def _set_ui_density(self, density):
+        """Set UI density profile and save to config."""
+        normalized = str(density or "standard").strip().lower()
+        if normalized in {"roomy+", "plus", "spacious"}:
+            normalized = "roomy_plus"
+        elif normalized not in {"standard", "roomy", "roomy_plus"}:
+            normalized = "standard"
+        apply_theme(QApplication.instance(), self._config.theme, density=normalized)
+        self._config.ui_density = normalized
+        self._config.save()
+        self._apply_workspace_iconography()
+        self._update_view_and_theme_action_metadata()
+        if hasattr(self, "widget_browser"):
+            self.widget_browser.refresh()
+        if normalized == "roomy_plus":
+            label = "Roomy+"
+        elif normalized == "roomy":
+            label = "Roomy"
+        else:
+            label = "Standard"
+        self.statusBar().showMessage(f"UI density set to {label} (saved)", 3000)
 
     def _set_font_sizes(self):
         """Set a single font size for the entire UI."""
