@@ -416,9 +416,9 @@ class TestWidgetBrowserPanel:
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
         assert hint.text() == "<b>No matching widgets.</b><br>Switch back to All to browse the full widget catalog."
-        assert sorted(buttons) == ["Show All Widgets"]
+        assert sorted(buttons) == ["Show All Components"]
 
-        buttons["Show All Widgets"].click()
+        buttons["Show All Components"].click()
 
         assert panel._selected_category() == "all"
         panel.deleteLater()

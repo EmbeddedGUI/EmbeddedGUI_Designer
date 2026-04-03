@@ -268,7 +268,7 @@ class WidgetBrowserPanel(QWidget):
         title_row.setContentsMargins(0, 0, 0, 0)
         title_row.setSpacing(_SPACE_SM)
 
-        self._title_label = QLabel("Widgets")
+        self._title_label = QLabel("Components")
         self._title_label.setObjectName("workspace_section_title")
         title_row.addWidget(self._title_label)
 
@@ -279,7 +279,7 @@ class WidgetBrowserPanel(QWidget):
         title_row.addWidget(self._insert_target, 0, Qt.AlignVCenter)
         header_layout.addLayout(title_row)
 
-        self._subtitle_label = QLabel("Search, filter, and insert widgets.")
+        self._subtitle_label = QLabel("Search, filter, and insert components.")
         self._subtitle_label.setObjectName("workspace_section_subtitle")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
@@ -291,7 +291,7 @@ class WidgetBrowserPanel(QWidget):
         filter_layout.setSpacing(_SPACE_XS)
 
         self._search = SearchLineEdit()
-        self._search.setPlaceholderText("Search widgets")
+        self._search.setPlaceholderText("Search components")
         self._search.textChanged.connect(self._schedule_search_refresh)
         filter_layout.addWidget(self._search, 1)
 
@@ -560,12 +560,12 @@ class WidgetBrowserPanel(QWidget):
                 )
                 empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
             elif self._selected_category() != "all":
-                primary = QPushButton("Show All Widgets")
+                primary = QPushButton("Show All Components")
                 primary.clicked.connect(self._reset_to_all_categories)
                 _set_widget_metadata(
                     primary,
                     tooltip="Switch back to All and show the full catalog.",
-                    accessible_name="Show all widgets",
+                    accessible_name="Show all components",
                 )
                 empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
 
