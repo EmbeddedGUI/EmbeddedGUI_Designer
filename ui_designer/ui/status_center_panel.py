@@ -98,12 +98,12 @@ class StatusCenterPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_MD)
+        layout.setSpacing(_SPACE_SM)
 
         header = QFrame()
         header.setObjectName("status_center_header")
         header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(14, 14, 14, 14)
+        header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(6)
 
         header_title_row = QHBoxLayout()
@@ -141,9 +141,9 @@ class StatusCenterPanel(QWidget):
         metrics = QFrame()
         metrics.setObjectName("status_center_metrics")
         metrics_layout = QGridLayout(metrics)
-        metrics_layout.setContentsMargins(10, 10, 10, 10)
-        metrics_layout.setHorizontalSpacing(10)
-        metrics_layout.setVerticalSpacing(10)
+        metrics_layout.setContentsMargins(6, 2, 6, 2)
+        metrics_layout.setHorizontalSpacing(8)
+        metrics_layout.setVerticalSpacing(8)
         self._sdk_value, self._sdk_card = self._create_metric(
             metrics_layout, 0, 0, "SDK", "Missing", "nav.resource", "open_project_panel"
         )
@@ -168,8 +168,8 @@ class StatusCenterPanel(QWidget):
         health.setObjectName("status_center_health")
         self._health_section = health
         health_layout = QVBoxLayout(health)
-        health_layout.setContentsMargins(12, 12, 12, 12)
-        health_layout.setSpacing(8)
+        health_layout.setContentsMargins(10, 10, 10, 10)
+        health_layout.setSpacing(6)
 
         health_title_row = QHBoxLayout()
         health_title_row.setContentsMargins(0, 0, 0, 0)
@@ -208,8 +208,8 @@ class StatusCenterPanel(QWidget):
         quick_actions.setObjectName("status_center_actions")
         self._quick_actions_section = quick_actions
         quick_layout = QVBoxLayout(quick_actions)
-        quick_layout.setContentsMargins(12, 12, 12, 12)
-        quick_layout.setSpacing(8)
+        quick_layout.setContentsMargins(10, 8, 10, 10)
+        quick_layout.setSpacing(6)
 
         self._actions_title = QLabel("Quick Actions")
         self._actions_title.setObjectName("workspace_section_title")
@@ -316,7 +316,7 @@ class StatusCenterPanel(QWidget):
         self._set_hint(runtime, "Open Debug Output")
         runtime.setAccessibleName("Runtime section")
         runtime_layout = QVBoxLayout(runtime)
-        runtime_layout.setContentsMargins(12, 12, 12, 12)
+        runtime_layout.setContentsMargins(10, 10, 10, 10)
         runtime_layout.setSpacing(6)
         runtime_title_row = QHBoxLayout()
         runtime_title_row.setContentsMargins(0, 0, 0, 0)
@@ -352,8 +352,8 @@ class StatusCenterPanel(QWidget):
             self._set_hint(card, f"Open {label}")
             card.setAccessibleName(f"{label} metric")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(10, 10, 10, 10)
-        card_layout.setSpacing(6)
+        card_layout.setContentsMargins(8, 8, 8, 8)
+        card_layout.setSpacing(4)
         top = QHBoxLayout()
         top.setContentsMargins(0, 0, 0, 0)
         top.setSpacing(6)

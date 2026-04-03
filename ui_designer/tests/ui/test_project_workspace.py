@@ -53,7 +53,7 @@ class TestProjectWorkspacePanel:
         assert panel._title_label.toolTip() == panel.accessibleName()
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
         assert panel._subtitle_label.accessibleName() == (
-            "Switch between fast list management and visual page thumbnails."
+            "List and thumbnails for page navigation."
         )
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
@@ -77,7 +77,7 @@ class TestProjectWorkspacePanel:
         assert panel.accessibleName() == (
             "Project workspace: Thumbnails. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
-        assert panel._list_btn.text() == "List\nStructure first"
+        assert panel._list_btn.text() == "List"
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_THUMBNAILS
         emitted_count = len(emitted)
 

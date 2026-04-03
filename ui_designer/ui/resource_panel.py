@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (
     QDialog, QDialogButtonBox, QMenu, QApplication,
     QSplitter, QSizePolicy, QAbstractItemView,
     QInputDialog, QTableWidget, QTableWidgetItem, QHeaderView,
-    QComboBox, QCheckBox,
+    QComboBox, QCheckBox, QToolButton,
 )
 from PyQt5.QtCore import (
     Qt, QSize, pyqtSignal, QMimeData, QUrl, QTimer, QRect,
@@ -1022,6 +1022,7 @@ class ResourcePanel(QWidget):
         self._current_resource_name = ""
         self._usage_page_name = ""
         self._resource_action_buttons = {}
+        self._resource_more_menus = {}
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -1077,6 +1078,18 @@ class ResourcePanel(QWidget):
         next_missing_img_btn.setIcon(make_icon("nav.page"))
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
+        image_more_btn = self._create_resource_more_button(
+            "image",
+            {
+                "restore": restore_img_btn,
+                "replace": replace_img_btn,
+                "next_missing": next_missing_img_btn,
+            },
+        )
+        img_btn_layout.addWidget(image_more_btn)
+        restore_img_btn.hide()
+        replace_img_btn.hide()
+        next_missing_img_btn.hide()
         img_btn_layout.addStretch()
         img_tab_layout.addLayout(img_btn_layout)
         self._resource_action_buttons["image"] = {
@@ -1120,6 +1133,18 @@ class ResourcePanel(QWidget):
         next_missing_font_btn.setIcon(make_icon("navigation"))
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
+        font_more_btn = self._create_resource_more_button(
+            "font",
+            {
+                "restore": restore_font_btn,
+                "replace": replace_font_btn,
+                "next_missing": next_missing_font_btn,
+            },
+        )
+        font_btn_layout.addWidget(font_more_btn)
+        restore_font_btn.hide()
+        replace_font_btn.hide()
+        next_missing_font_btn.hide()
         font_btn_layout.addStretch()
         font_tab_layout.addLayout(font_btn_layout)
         self._resource_action_buttons["font"] = {
@@ -1163,6 +1188,18 @@ class ResourcePanel(QWidget):
         next_missing_text_btn.setIcon(make_icon("navigation"))
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
+        text_more_btn = self._create_resource_more_button(
+            "text",
+            {
+                "restore": restore_text_btn,
+                "replace": replace_text_btn,
+                "next_missing": next_missing_text_btn,
+            },
+        )
+        text_btn_layout.addWidget(text_more_btn)
+        restore_text_btn.hide()
+        replace_text_btn.hide()
+        next_missing_text_btn.hide()
         text_btn_layout.addStretch()
         text_tab_layout.addLayout(text_btn_layout)
         self._resource_action_buttons["text"] = {
@@ -1287,6 +1324,55 @@ class ResourcePanel(QWidget):
         self._update_resource_action_metadata()
         self._update_string_action_metadata()
         self._update_usage_accessibility_metadata()
+
+    def _create_resource_more_button(self, resource_type, buttons):
+        button = QToolButton()
+        button.setText("More")
+        button.setPopupMode(QToolButton.InstantPopup)
+        menu = QMenu(button)
+        menu.setToolTipsVisible(True)
+        actions = {}
+        for key, label in (
+            ("restore", "Restore Missing"),
+            ("replace", "Replace Missing"),
+            ("next_missing", "Next Missing"),
+        ):
+            action = menu.addAction(label)
+            action.triggered.connect(lambda checked=False, source_button=buttons[key]: source_button.click())
+            actions[key] = action
+        button.setMenu(menu)
+        button.setToolTip(f"Open more {resource_type} actions.")
+        button.setStatusTip(button.toolTip())
+        button.setAccessibleName(f"More {resource_type} actions")
+        self._resource_more_menus[resource_type] = {"button": button, "actions": actions}
+        return button
+
+    def _sync_resource_more_menu(self, resource_type):
+        spec = self._resource_more_menus.get(resource_type)
+        buttons = self._resource_action_buttons.get(resource_type, {})
+        if not spec or not buttons:
+            return
+        enabled_count = 0
+        for action_key, action in spec["actions"].items():
+            source_button = buttons.get(action_key)
+            if source_button is None:
+                action.setEnabled(False)
+                continue
+            action.setEnabled(source_button.isEnabled())
+            tooltip = source_button.toolTip() or source_button.statusTip() or ""
+            action.setToolTip(tooltip)
+            action.setStatusTip(tooltip)
+            if source_button.isEnabled():
+                enabled_count += 1
+        button = spec["button"]
+        button.setEnabled(enabled_count > 0 or bool(self._resource_dir))
+        if button.isEnabled():
+            tooltip = f"Open more {resource_type} actions."
+        else:
+            tooltip = f"Save or open a project first to manage {resource_type} resources."
+        button.setToolTip(tooltip)
+        button.setStatusTip(tooltip)
+        button.setAccessibleName(f"More {resource_type} actions")
 
     # -- Public API --
 
@@ -1510,6 +1596,7 @@ class ResourcePanel(QWidget):
                     tooltip = self._resource_action_unavailable_tooltip(action, resource_type)
                     accessible_name = f"{action_label} unavailable"
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
+            self._sync_resource_more_menu(resource_type)
 
     def _selected_string_key(self):
         if not hasattr(self, "_string_table"):

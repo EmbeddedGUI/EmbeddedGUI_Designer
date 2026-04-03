@@ -95,6 +95,8 @@ _ICON_DEFINITIONS = {
     "toolbar.settings.global": {"glyph": "tune", "size": 20, "token": "default"},
 
     # Navigation P0
+    "nav.project": {"glyph": "folder", "size": 20, "token": "default"},
+    "nav.structure": {"glyph": "account_tree", "size": 20, "token": "default"},
     "nav.page": {"glyph": "description", "size": 20, "token": "default"},
     "nav.page_group": {"glyph": "folder", "size": 20, "token": "default"},
     "nav.template": {"glyph": "dashboard", "size": 20, "token": "default"},
@@ -142,8 +144,8 @@ _ICON_DEFINITIONS = {
 
 # Legacy key compatibility: all old callsites still route to canonical semantics.
 _ICON_ALIASES = {
-    "project": "nav.page_group",
-    "structure": "nav.page_group",
+    "project": "nav.project",
+    "structure": "nav.structure",
     "widgets": "nav.component_library",
     "assets": "nav.resource",
     "properties": "toolbar.settings.global",
@@ -216,6 +218,8 @@ _FLUENT_ICON_MAP = {
     "toolbar.settings.project": "SETTING",
     "toolbar.settings.global": "SETTING",
 
+    "nav.project": "FOLDER",
+    "nav.structure": "MENU",
     "nav.page": "DOCUMENT",
     "nav.page_group": "FOLDER",
     "nav.template": "LAYOUT",

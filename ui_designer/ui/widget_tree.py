@@ -3,7 +3,7 @@
 import re
 
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
+    QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem, QFrame,
     QPushButton, QToolButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
@@ -189,6 +189,7 @@ class WidgetTreePanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(6)
 
         # Button bar
         btn_layout = QHBoxLayout()
@@ -204,6 +205,13 @@ class WidgetTreePanel(QWidget):
         self.del_btn.setIcon(make_icon("stop"))
         self.del_btn.setToolTip("Delete the current selection (Del)")
         self.del_btn.clicked.connect(self._on_delete_clicked)
+        self.structure_actions_btn = QToolButton()
+        self.structure_actions_btn.setText("Actions")
+        self.structure_actions_btn.setIcon(make_icon("layout"))
+        self.structure_actions_btn.setPopupMode(QToolButton.InstantPopup)
+        self._structure_actions_menu = QMenu(self)
+        self._structure_actions_menu.setToolTipsVisible(True)
+        self.structure_actions_btn.setMenu(self._structure_actions_menu)
         self.expand_btn = QPushButton("Expand")
         self.expand_btn.setIcon(make_icon("navigation"))
         self.expand_btn.clicked.connect(self._expand_all_items)
@@ -213,11 +221,10 @@ class WidgetTreePanel(QWidget):
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.rename_btn)
         btn_layout.addWidget(self.del_btn)
-        btn_layout.addWidget(self.expand_btn)
-        btn_layout.addWidget(self.collapse_btn)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.structure_actions_btn)
         layout.addLayout(btn_layout)
 
-        structure_layout = QHBoxLayout()
         self.group_btn = QPushButton("Group")
         self.group_btn.setIcon(make_icon("layout"))
         self.group_btn.setToolTip("Group the current selection (Ctrl+G)")
@@ -275,15 +282,24 @@ class WidgetTreePanel(QWidget):
             self.top_btn,
             self.bottom_btn,
         ):
-            structure_layout.addWidget(button)
-        layout.addLayout(structure_layout)
-        self.structure_hint_label = QLabel("Structure: select widgets to group, move, or reorder.")
+            button.hide()
+        self.expand_btn.hide()
+        self.collapse_btn.hide()
+
+        self._structure_base_hint_text = "Structure: select widgets to group, move, or reorder."
+        self.structure_hint_label = QLabel(self._structure_base_hint_text)
         self.structure_hint_label.setWordWrap(True)
-        layout.addWidget(self.structure_hint_label)
+        self._structure_summary_frame = QFrame()
+        self._structure_summary_frame.setObjectName("workspace_hint_strip")
+        structure_summary_layout = QVBoxLayout(self._structure_summary_frame)
+        structure_summary_layout.setContentsMargins(10, 8, 10, 8)
+        structure_summary_layout.setSpacing(0)
+        structure_summary_layout.addWidget(self.structure_hint_label)
+        layout.addWidget(self._structure_summary_frame)
         self.drag_target_label = QLabel(self._default_drag_target_text())
         self.drag_target_label.setWordWrap(True)
         self._set_drag_target_label(self._default_drag_target_text(), tone="default")
-        layout.addWidget(self.drag_target_label)
+        self.drag_target_label.hide()
 
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter widgets by name or type")
@@ -320,8 +336,9 @@ class WidgetTreePanel(QWidget):
             clear_drag_hover_handler=self._clear_tree_drag_hover,
             parent=self,
         )
-        self.tree.setHeaderLabels(["Widget", "Details"])
-        self.tree.setColumnWidth(0, 140)
+        self.tree.setColumnCount(1)
+        self.tree.setHeaderLabels(["Structure"])
+        self.tree.header().setStretchLastSection(True)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._on_context_menu)
@@ -332,6 +349,7 @@ class WidgetTreePanel(QWidget):
         self.add_btn.setAccessibleName("Insert component")
         self.rename_btn.setAccessibleName("Rename selected widget")
         self.del_btn.setAccessibleName("Delete selected widget")
+        self.structure_actions_btn.setAccessibleName("Open structure actions")
         self.expand_btn.setAccessibleName("Expand widget tree")
         self.collapse_btn.setAccessibleName("Collapse widget tree")
         self.group_btn.setAccessibleName("Group selected widgets")
@@ -356,6 +374,11 @@ class WidgetTreePanel(QWidget):
             self.collapse_btn,
             tooltip="Collapse all widgets in the tree.",
             accessible_name="Collapse all widget tree items",
+        )
+        _set_widget_metadata(
+            self.structure_actions_btn,
+            tooltip="Open structure actions for grouping, moving, and reordering widgets.",
+            accessible_name="Open structure actions",
         )
         self._update_structure_controls()
         self._update_filter_accessibility()
@@ -409,15 +432,11 @@ class WidgetTreePanel(QWidget):
     def _add_widget_to_tree(self, widget, parent_item):
         item = QTreeWidgetItem()
         item.setText(0, self._display_name(widget))
-        item.setText(1, self._widget_state_summary(widget))
         item.setIcon(0, make_icon(widget_icon_key(widget.widget_type), size=18))
-        item_tooltip = f"Widget {self._display_name(widget)}: {self._widget_state_summary(widget)}"
+        item_tooltip = self._tree_item_tooltip(widget)
         item.setToolTip(0, item_tooltip)
         item.setStatusTip(0, item_tooltip)
-        item.setToolTip(1, item_tooltip)
-        item.setStatusTip(1, item_tooltip)
         item.setData(0, Qt.AccessibleTextRole, item_tooltip)
-        item.setData(1, Qt.AccessibleTextRole, item_tooltip)
         self._widget_map[id(item)] = widget
         self._item_map[id(widget)] = item
 
@@ -432,7 +451,11 @@ class WidgetTreePanel(QWidget):
         return item
 
     def _display_name(self, widget):
-        return widget.name
+        base = f"{widget.name} · {widget.widget_type}"
+        states = self._widget_state_tags(widget)
+        if states:
+            return f"{base} [{', '.join(states)}]"
+        return base
 
     def _widget_state_summary(self, widget):
         parts = [widget.widget_type]
@@ -443,6 +466,21 @@ class WidgetTreePanel(QWidget):
         if widget.parent is not None and self._parent_has_layout(widget):
             parts.append("managed")
         return " | ".join(parts)
+
+    def _widget_state_tags(self, widget):
+        tags = []
+        if getattr(widget, "designer_locked", False):
+            tags.append("locked")
+        if getattr(widget, "designer_hidden", False):
+            tags.append("hidden")
+        if widget.parent is not None and self._parent_has_layout(widget):
+            tags.append("managed")
+        return tags
+
+    def _tree_item_tooltip(self, widget):
+        state_tags = self._widget_state_tags(widget)
+        state_text = f"State: {', '.join(state_tags)}." if state_tags else "State: default."
+        return f"Widget {self._widget_label(widget)}. Type: {widget.widget_type}. {state_text}"
 
     def _parent_has_layout(self, widget):
         parent = getattr(widget, "parent", None)
@@ -2140,9 +2178,162 @@ class WidgetTreePanel(QWidget):
             self.into_btn.setToolTip(self._into_button_history_hint())
             self.into_btn.setStatusTip(self.into_btn.toolTip())
         self._refresh_into_button_menu(state)
-        self.structure_hint_label.setText(self._structure_hint_text(state))
+        self._structure_base_hint_text = self._structure_hint_text(state)
+        self._apply_structure_status_summary()
+        self._refresh_structure_actions_menu(state)
+        self._update_structure_actions_button_metadata(state)
         self._update_primary_action_metadata()
         self._update_accessibility_summary()
+
+    def _apply_structure_status_summary(self):
+        base_text = (self._structure_base_hint_text or "").strip() or "Structure hint unavailable."
+        drag_text = self.drag_target_label.text().strip() or self._default_drag_target_text()
+        default_drag_text = self._default_drag_target_text()
+        if drag_text and drag_text != default_drag_text:
+            summary = f"{base_text} {drag_text}"
+            tone = self._drag_target_tone if hasattr(self, "_drag_target_tone") else "default"
+            self.structure_hint_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+        else:
+            summary = base_text
+            self.structure_hint_label.setStyleSheet("")
+        self.structure_hint_label.setText(summary)
+
+    def _add_structure_menu_action(self, menu, text, *, tooltip="", enabled=True, handler=None, shortcut=""):
+        action = QAction(text, self)
+        if shortcut:
+            action.setShortcut(shortcut)
+        action.setEnabled(bool(enabled))
+        if tooltip:
+            _set_action_metadata(action, tooltip=tooltip)
+        if handler is not None:
+            action.triggered.connect(handler)
+        menu.addAction(action)
+        return action
+
+    def _refresh_structure_actions_menu(self, state=None):
+        if not hasattr(self, "_structure_actions_menu"):
+            return
+
+        state = state or self._structure_action_state()
+        widgets = list(state.widgets)
+        menu = self._structure_actions_menu
+        menu.clear()
+
+        self._add_structure_menu_action(
+            menu,
+            "Group Selection",
+            tooltip=self._structure_tooltip("Group the current selection (Ctrl+G)", state.can_group, self._structure_action_reason(state, "group_reason")),
+            enabled=state.can_group,
+            handler=lambda checked=False: self._group_selected_widgets(widgets),
+            shortcut="Ctrl+G",
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Ungroup",
+            tooltip=self._structure_tooltip("Ungroup the selected group widgets (Ctrl+Shift+G)", state.can_ungroup, self._structure_action_reason(state, "ungroup_reason")),
+            enabled=state.can_ungroup,
+            handler=lambda checked=False: self._ungroup_selected_widgets(widgets),
+            shortcut="Ctrl+Shift+G",
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Move Into...",
+            tooltip=self._structure_tooltip("Move the current selection into another container (Ctrl+Shift+I)", state.can_move_into, self._structure_action_reason(state, "move_into_reason")),
+            enabled=state.can_move_into,
+            handler=lambda checked=False: self._move_selected_widgets_into(widgets=widgets),
+            shortcut="Ctrl+Shift+I",
+        )
+        quick_move_menu = menu.addMenu("Quick Move Into")
+        quick_move_menu.setToolTipsVisible(True)
+        _set_action_metadata(quick_move_menu.menuAction(), tooltip=self._quick_move_menu_hint())
+        self._populate_quick_move_menu(quick_move_menu, widgets, max_targets=5, include_management_actions=True)
+        self._add_structure_menu_action(
+            menu,
+            "Lift To Parent",
+            tooltip=self._structure_tooltip("Lift the current selection to the parent container (Ctrl+Shift+L)", state.can_lift, self._structure_action_reason(state, "lift_reason")),
+            enabled=state.can_lift,
+            handler=lambda checked=False: self._lift_selected_widgets(widgets),
+            shortcut="Ctrl+Shift+L",
+        )
+
+        menu.addSeparator()
+
+        self._add_structure_menu_action(
+            menu,
+            "Move Up",
+            tooltip=self._structure_tooltip("Move the current selection up among its siblings (Alt+Up)", state.can_move_up, self._structure_action_reason(state, "move_up_reason")),
+            enabled=state.can_move_up,
+            handler=lambda checked=False: self._move_selected_widgets_up(widgets),
+            shortcut="Alt+Up",
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Move Down",
+            tooltip=self._structure_tooltip("Move the current selection down among its siblings (Alt+Down)", state.can_move_down, self._structure_action_reason(state, "move_down_reason")),
+            enabled=state.can_move_down,
+            handler=lambda checked=False: self._move_selected_widgets_down(widgets),
+            shortcut="Alt+Down",
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Move To Top",
+            tooltip=self._structure_tooltip("Move the current selection to the top of its sibling list (Alt+Shift+Up)", state.can_move_top, self._structure_action_reason(state, "move_top_reason")),
+            enabled=state.can_move_top,
+            handler=lambda checked=False: self._move_selected_widgets_to_top(widgets),
+            shortcut="Alt+Shift+Up",
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Move To Bottom",
+            tooltip=self._structure_tooltip("Move the current selection to the bottom of its sibling list (Alt+Shift+Down)", state.can_move_bottom, self._structure_action_reason(state, "move_bottom_reason")),
+            enabled=state.can_move_bottom,
+            handler=lambda checked=False: self._move_selected_widgets_to_bottom(widgets),
+            shortcut="Alt+Shift+Down",
+        )
+
+        menu.addSeparator()
+
+        has_items = bool(self._item_map)
+        self._add_structure_menu_action(
+            menu,
+            "Expand All",
+            tooltip="Expand all widgets in the tree.",
+            enabled=has_items,
+            handler=self._expand_all_items,
+        )
+        self._add_structure_menu_action(
+            menu,
+            "Collapse All",
+            tooltip="Collapse all widgets in the tree.",
+            enabled=has_items,
+            handler=self._collapse_all_items,
+        )
+
+    def _update_structure_actions_button_metadata(self, state):
+        if not hasattr(self, "structure_actions_btn"):
+            return
+        has_project = self.project is not None
+        enabled = bool(
+            has_project
+            or self.has_recent_move_targets()
+            or state.can_group
+            or state.can_ungroup
+            or state.can_move_into
+            or state.can_lift
+            or state.can_move_up
+            or state.can_move_down
+            or state.can_move_top
+            or state.can_move_bottom
+            or self._item_map
+        )
+        self.structure_actions_btn.setEnabled(enabled)
+        if enabled:
+            tooltip = "Open structure actions for grouping, moving, history, and tree visibility."
+            accessible_name = "Open structure actions"
+        else:
+            tooltip = "Open a project page to manage structure actions."
+            accessible_name = "Structure actions unavailable"
+        _set_widget_metadata(self.structure_actions_btn, tooltip=tooltip, accessible_name=accessible_name)
 
     def _refresh_into_button_menu(self, state=None):
         if not hasattr(self, "_into_quick_menu"):
@@ -2243,8 +2434,10 @@ class WidgetTreePanel(QWidget):
         return "Drop target: drag over the tree to preview where the selection will land."
 
     def _set_drag_target_label(self, text, tone="default"):
+        self._drag_target_tone = tone
         self.drag_target_label.setText(text)
         self.drag_target_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+        self._apply_structure_status_summary()
         self._update_accessibility_summary()
 
     def _update_filter_accessibility(self):
@@ -2316,7 +2509,6 @@ class WidgetTreePanel(QWidget):
                 "filter_status_label",
                 "filter_position_label",
                 "structure_hint_label",
-                "drag_target_label",
             )
         ):
             return
@@ -2328,11 +2520,12 @@ class WidgetTreePanel(QWidget):
         filter_status = self.filter_status_label.text().strip() or "All widgets"
         filter_position = self.filter_position_label.text().strip() or "none"
         structure_hint = self.structure_hint_label.text().strip() or "Structure hint unavailable."
-        drag_target_text = self.drag_target_label.text().strip() or self._default_drag_target_text()
+        drag_target_text = getattr(self, "drag_target_label", None)
+        drag_target_text = drag_target_text.text().strip() if drag_target_text is not None else self._default_drag_target_text()
         summary = (
             f"Widget tree: {widget_count}. {selected_count}. Current widget: {current_widget}. "
             f"Filter: {filter_query}. Status: {filter_status}. Position: {filter_position}. "
-            f"{structure_hint} {drag_target_text}"
+            f"{structure_hint}"
         )
         tree_summary = f"Widget tree: {widget_count}. {selected_count}. Current widget: {current_widget}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
@@ -2341,11 +2534,12 @@ class WidgetTreePanel(QWidget):
             tooltip=structure_hint,
             accessible_name=structure_hint,
         )
-        _set_widget_metadata(
-            self.drag_target_label,
-            tooltip=drag_target_text,
-            accessible_name=drag_target_text,
-        )
+        if hasattr(self, "drag_target_label"):
+            _set_widget_metadata(
+                self.drag_target_label,
+                tooltip=drag_target_text,
+                accessible_name=drag_target_text,
+            )
         _set_widget_metadata(
             self.tree,
             tooltip=tree_summary,

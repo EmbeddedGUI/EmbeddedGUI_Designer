@@ -135,7 +135,7 @@ from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
 
 
-WORKSPACE_LAYOUT_VERSION = 3
+WORKSPACE_LAYOUT_VERSION = 4
 
 # UI-D-002: usable on 1280-wide laptops; clamp to primary screen on startup / restore.
 MAIN_WINDOW_MIN_WIDTH = 960
@@ -145,9 +145,11 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-LEFT_PANEL_DEFAULT_WIDTH = 280
-CENTER_PANEL_DEFAULT_WIDTH = 1100
-INSPECTOR_PANEL_DEFAULT_WIDTH = 300
+WORKSPACE_NAV_RAIL_WIDTH = 72
+LEFT_PANEL_STACK_MIN_WIDTH = 244
+LEFT_PANEL_DEFAULT_WIDTH = 312
+CENTER_PANEL_DEFAULT_WIDTH = 1040
+INSPECTOR_PANEL_DEFAULT_WIDTH = 332
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
@@ -332,6 +334,9 @@ class MainWindow(QMainWindow):
         self.resize(MAIN_WINDOW_DEFAULT_WIDTH, MAIN_WINDOW_DEFAULT_HEIGHT)
 
         self._central_stack = QStackedWidget()
+        self._central_stack.currentChanged.connect(
+            lambda _index: QTimer.singleShot(0, self._apply_pending_workspace_splitter_defaults)
+        )
 
         self._welcome_page = WelcomePage()
         self._welcome_page.open_recent.connect(self._open_recent_project)
@@ -417,7 +422,8 @@ class MainWindow(QMainWindow):
         self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
 
         self._left_panel_stack = QStackedWidget()
-        self._left_panel_stack.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self._left_panel_stack.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
+        self._left_panel_stack.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self._left_panel_pages = {
             "project": self._project_workspace,
             "structure": self.widget_tree,
@@ -431,24 +437,27 @@ class MainWindow(QMainWindow):
         self._workspace_nav_buttons = {}
         self._workspace_nav_frame = QFrame()
         self._workspace_nav_frame.setObjectName("workspace_nav_rail")
+        self._workspace_nav_frame.setFixedWidth(WORKSPACE_NAV_RAIL_WIDTH)
+        self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
         nav_layout.setContentsMargins(_SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS)
         nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
-        for key, label, icon_key in (
-            ("project", "Project", "project"),
-            ("structure", "Structure", "structure"),
-            ("widgets", "Widgets", "widgets"),
-            ("assets", "Assets", "assets"),
-            ("status", "Status", "diagnostics"),
+        for key, label, short_label, icon_key in (
+            ("project", "Project", "Pages", "nav.project"),
+            ("structure", "Structure", "Tree", "nav.structure"),
+            ("widgets", "Widgets", "Insert", "nav.component_library"),
+            ("assets", "Assets", "Assets", "nav.resource"),
+            ("status", "Status", "Status", "state.info"),
         ):
-            button = self._create_workspace_nav_button(label, icon_key, key)
+            button = self._create_workspace_nav_button(label, short_label, icon_key, key)
             self._workspace_nav_buttons[key] = button
             nav_layout.addWidget(button)
         nav_layout.addStretch()
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
-        self._left_shell.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_SM + _SPACE_XXS)
+        self._left_shell.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
         left_shell_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
@@ -458,7 +467,7 @@ class MainWindow(QMainWindow):
         center_shell = QWidget()
         self._center_shell = center_shell
         center_shell.setObjectName("workspace_center_shell")
-        center_shell.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        center_shell.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
         center_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
@@ -491,6 +500,8 @@ class MainWindow(QMainWindow):
 
         self._inspector_tabs = QTabWidget()
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
+        self._inspector_tabs.setMinimumWidth(INSPECTOR_SCROLL_MIN_WIDTH)
+        self._inspector_tabs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
         self._inspector_tabs.addTab(self.props_dock, make_icon("toolbar.settings.global"), "Properties")
         self._inspector_tabs.addTab(self.animations_panel, make_icon("toolbar.preview"), "Animations")
         self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("nav.page"), "Page")
@@ -501,6 +512,9 @@ class MainWindow(QMainWindow):
         self._top_splitter.addWidget(self._left_shell)
         self._top_splitter.addWidget(center_shell)
         self._top_splitter.addWidget(self._inspector_tabs)
+        self._top_splitter.setStretchFactor(0, 0)
+        self._top_splitter.setStretchFactor(1, 1)
+        self._top_splitter.setStretchFactor(2, 0)
         self._top_splitter.setSizes([
             LEFT_PANEL_DEFAULT_WIDTH,
             CENTER_PANEL_DEFAULT_WIDTH,
@@ -555,6 +569,7 @@ class MainWindow(QMainWindow):
         self._focus_canvas_enabled = False
         self._focus_canvas_saved_top_sizes = []
         self._focus_canvas_saved_bottom_visible = False
+        self._pending_default_top_splitter_sizes = False
 
         # Status bar
         self._sdk_status_label = QLabel("SDK: missing")
@@ -646,6 +661,10 @@ class MainWindow(QMainWindow):
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self._apply_pending_workspace_splitter_defaults)
+
     def _init_renderer_manager(self):
         """Register preview renderer and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
@@ -661,16 +680,18 @@ class MainWindow(QMainWindow):
         dock_widget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         dock_widget.setTitleBarWidget(QWidget(dock_widget))
 
-    def _create_workspace_nav_button(self, label, icon_key, panel_key):
+    def _create_workspace_nav_button(self, label, short_label, icon_key, panel_key):
         button = QToolButton(self)
+        button.setObjectName(f"workspace_nav_button_{panel_key}")
         button.setProperty("workspaceNav", True)
         button.setCheckable(True)
         button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         tokens = theme_tokens(getattr(self._config, "theme", "dark"))
-        nav_icon_size = int(tokens.get("icon_lg", 20)) + 2
+        nav_icon_size = int(tokens.get("icon_md", 18))
         button.setIcon(make_icon(icon_key, size=nav_icon_size))
         button.setIconSize(QSize(nav_icon_size, nav_icon_size))
-        button.setText(label)
+        button.setText(str(short_label or label or ""))
+        button.setFixedSize(60, 56)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
@@ -2185,16 +2206,16 @@ class MainWindow(QMainWindow):
 
     def _apply_workspace_iconography(self):
         tokens = theme_tokens(getattr(self._config, "theme", "dark"))
-        nav_icon_size = int(tokens.get("icon_lg", 20)) + 2
+        nav_icon_size = int(tokens.get("icon_md", 18))
         toolbar_icon_size = int(tokens.get("icon_lg", 20))
         mode_icon_size = int(tokens.get("icon_sm", 16))
         if hasattr(self, "_workspace_nav_buttons"):
             icon_map = {
-                "project": "nav.page_group",
-                "structure": "nav.page_group",
+                "project": "nav.project",
+                "structure": "nav.structure",
                 "widgets": "nav.component_library",
                 "assets": "nav.resource",
-                "status": "state.error",
+                "status": "state.info",
             }
             for key, button in self._workspace_nav_buttons.items():
                 button.setIcon(make_icon(icon_map.get(key, "widgets"), size=nav_icon_size))
@@ -2298,31 +2319,34 @@ class MainWindow(QMainWindow):
             except Exception:
                 pass
 
-        if int(getattr(self._config, "workspace_layout_version", 0) or 0) != WORKSPACE_LAYOUT_VERSION:
-            return
-
-        state = (self._config.window_state or "").strip()
-        if state:
-            try:
-                self.restoreState(QByteArray.fromBase64(state.encode("ascii")))
-            except Exception:
-                pass
+        layout_state_matches = int(getattr(self._config, "workspace_layout_version", 0) or 0) == WORKSPACE_LAYOUT_VERSION
 
         workspace_state = getattr(self._config, "workspace_state", {}) if isinstance(getattr(self._config, "workspace_state", {}), dict) else {}
         ui_prefs = UIPreferences.from_workspace_state(workspace_state)
-        for splitter, state in (
-            (getattr(self, "_top_splitter", None), ui_prefs.top_splitter),
-            (getattr(self, "_workspace_splitter", None), ui_prefs.workspace_splitter),
-        ):
-            state = str(state or "").strip()
-            if splitter is None or not state:
-                continue
-            try:
-                splitter.restoreState(QByteArray.fromBase64(state.encode("ascii")))
-            except Exception:
-                pass
+        saved_active_left_panel = str(workspace_state.get("active_left_panel", "") or "").strip()
+        self._pending_default_top_splitter_sizes = (not layout_state_matches) or not str(ui_prefs.top_splitter or "").strip()
 
-        self._select_left_panel(ui_prefs.active_left_panel or getattr(self._config, "workspace_left_panel", "project"))
+        if layout_state_matches:
+            state = (self._config.window_state or "").strip()
+            if state:
+                try:
+                    self.restoreState(QByteArray.fromBase64(state.encode("ascii")))
+                except Exception:
+                    pass
+
+            for splitter, state in (
+                (getattr(self, "_top_splitter", None), ui_prefs.top_splitter),
+                (getattr(self, "_workspace_splitter", None), ui_prefs.workspace_splitter),
+            ):
+                state = str(state or "").strip()
+                if splitter is None or not state:
+                    continue
+                try:
+                    splitter.restoreState(QByteArray.fromBase64(state.encode("ascii")))
+                except Exception:
+                    pass
+
+        self._select_left_panel(saved_active_left_panel or getattr(self._config, "workspace_left_panel", "project"))
         if hasattr(self, "_inspector_tabs") and self._inspector_tabs.count() > 0:
             self._inspector_tabs.setCurrentIndex(max(0, min(ui_prefs.inspector_tab_index, self._inspector_tabs.count() - 1)))
         if hasattr(self, "_page_tools_scroll"):
@@ -2342,6 +2366,21 @@ class MainWindow(QMainWindow):
             )
 
         self._clamp_window_to_available_screen()
+
+    def _apply_pending_workspace_splitter_defaults(self):
+        if not getattr(self, "_pending_default_top_splitter_sizes", False):
+            return
+        if not hasattr(self, "_central_stack") or self._central_stack.currentWidget() is not getattr(self, "_editor_container", None):
+            return
+        if not hasattr(self, "_top_splitter"):
+            self._pending_default_top_splitter_sizes = False
+            return
+        self._top_splitter.setSizes([
+            LEFT_PANEL_DEFAULT_WIDTH,
+            CENTER_PANEL_DEFAULT_WIDTH,
+            INSPECTOR_PANEL_DEFAULT_WIDTH,
+        ])
+        self._pending_default_top_splitter_sizes = False
 
     def _clamp_window_to_available_screen(self):
         """Shrink and/or reposition so the frame fits the primary screen work area."""

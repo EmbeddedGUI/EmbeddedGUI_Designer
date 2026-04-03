@@ -8967,6 +8967,13 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
 
+        assert window._workspace_nav_buttons["project"].text() == "Pages"
+        assert window._workspace_nav_buttons["structure"].text() == "Tree"
+        assert window._workspace_nav_buttons["widgets"].text() == "Insert"
+        assert window._workspace_nav_buttons["assets"].text() == "Assets"
+        assert window._workspace_nav_buttons["status"].text() == "Status"
+        assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextUnderIcon
+
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: none. Startup page: none."
         )

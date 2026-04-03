@@ -334,8 +334,8 @@ class PropertyPanel(QWidget):
     def _init_ui(self):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(8, 8, 8, 8)
-        outer.setSpacing(8)
+        outer.setContentsMargins(6, 6, 6, 6)
+        outer.setSpacing(6)
 
         # Search filter
         self._search_edit = SearchLineEdit()
@@ -351,8 +351,8 @@ class PropertyPanel(QWidget):
 
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
-        self._layout.setContentsMargins(4, 8, 4, 8)
-        self._layout.setSpacing(10)
+        self._layout.setContentsMargins(2, 6, 2, 6)
+        self._layout.setSpacing(8)
         scroll.setWidget(self._container)
 
         self._no_selection_label = self._create_no_selection_label()
@@ -578,11 +578,15 @@ class PropertyPanel(QWidget):
         header = QFrame()
         header.setObjectName("workspace_panel_header")
         layout = QVBoxLayout()
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(4)
         header.setLayout(layout)
 
         top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(8)
         icon = QLabel()
-        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=26).pixmap(26, 26))
+        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=20).pixmap(20, 20))
         top_row.addWidget(icon, 0, Qt.AlignTop)
 
         title_col = QVBoxLayout()
@@ -597,7 +601,8 @@ class PropertyPanel(QWidget):
         layout.addLayout(top_row)
 
         chips_row = QHBoxLayout()
-        chips_row.setSpacing(8)
+        chips_row.setContentsMargins(0, 0, 0, 0)
+        chips_row.setSpacing(6)
         self._header_size_chip = self._make_status_chip(f"{widget.width}×{widget.height}", "accent")
         chips_row.addWidget(self._header_size_chip)
         if getattr(widget, "designer_locked", False):
@@ -616,8 +621,8 @@ class PropertyPanel(QWidget):
         header = QFrame()
         header.setObjectName("workspace_panel_header")
         layout = QVBoxLayout()
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(4)
         header.setLayout(layout)
 
         title = QLabel(f"Selected {_count_label(len(self._selection), 'widget')}")
@@ -647,17 +652,13 @@ class PropertyPanel(QWidget):
         mixed_total = mixed_geometry + mixed_props + mixed_callbacks
 
         chips_row = QHBoxLayout()
-        chips_row.setSpacing(8)
+        chips_row.setContentsMargins(0, 0, 0, 0)
+        chips_row.setSpacing(6)
         chips_row.addWidget(self._make_status_chip(_count_label(len(widget_types), "type"), "accent"))
         chips_row.addWidget(self._make_status_chip(_count_label(mixed_total, "mixed field"), "warning"))
         chips_row.addWidget(self._make_status_chip("Batch edit", "success"))
         chips_row.addStretch()
         layout.addLayout(chips_row)
-
-        hint = QLabel("Batch edits apply the same value to all selected widgets.")
-        hint.setObjectName("workspace_section_subtitle")
-        hint.setWordWrap(True)
-        layout.addWidget(hint)
 
         return header
 
@@ -675,13 +676,9 @@ class PropertyPanel(QWidget):
         frame = QFrame()
         frame.setObjectName("workspace_hint_strip")
         layout = QVBoxLayout()
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(4)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(3)
         frame.setLayout(layout)
-
-        title = QLabel("Canvas Notes")
-        title.setObjectName("workspace_section_title")
-        layout.addWidget(title)
 
         for message in messages:
             label = QLabel(message)

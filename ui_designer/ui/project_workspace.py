@@ -10,6 +10,7 @@ from .theme import theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ICON_SM = int(_TOKENS.get("icon_sm", 16))
@@ -63,26 +64,29 @@ class ProjectWorkspacePanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_MD)
+        layout.setSpacing(_SPACE_SM)
 
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
         header_layout = QVBoxLayout(self._header)
-        header_layout.setContentsMargins(_SPACE_MD + 2, _SPACE_MD + 2, _SPACE_MD + 2, _SPACE_MD + 2)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM + 4, _SPACE_SM + 4, _SPACE_SM + 4, _SPACE_SM + 4)
+        header_layout.setSpacing(_SPACE_XS)
 
-        self._title_label = QLabel("Project Workspace")
+        summary_row = QHBoxLayout()
+        summary_row.setContentsMargins(0, 0, 0, 0)
+        summary_row.setSpacing(_SPACE_SM)
+
+        self._title_label = QLabel("Project")
         self._title_label.setObjectName("workspace_section_title")
-        header_layout.addWidget(self._title_label)
-
-        self._subtitle_label = QLabel("Switch between fast list management and visual page thumbnails.")
-        self._subtitle_label.setObjectName("workspace_section_subtitle")
-        self._subtitle_label.setWordWrap(True)
-        header_layout.addWidget(self._subtitle_label)
+        summary_row.addWidget(self._title_label)
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(_SPACE_SM)
+        chips_row.setSpacing(_SPACE_XS)
+
+        self._subtitle_label = QLabel("List and thumbnails for page navigation.")
+        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        self._subtitle_label.setWordWrap(True)
         self._page_count_chip = QLabel("0 pages")
         self._page_count_chip.setObjectName("workspace_status_chip")
         chips_row.addWidget(self._page_count_chip)
@@ -98,16 +102,17 @@ class ProjectWorkspacePanel(QWidget):
         self._view_chip.setObjectName("workspace_status_chip")
         self._view_chip.setProperty("chipTone", "accent")
         chips_row.addWidget(self._view_chip)
-        chips_row.addStretch()
-        header_layout.addLayout(chips_row)
+        summary_row.addLayout(chips_row, 1)
+        header_layout.addLayout(summary_row)
+        header_layout.addWidget(self._subtitle_label)
 
         toggle_row = QHBoxLayout()
         toggle_row.setContentsMargins(0, 0, 0, 0)
-        toggle_row.setSpacing(_SPACE_SM)
+        toggle_row.setSpacing(_SPACE_XS)
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self._list_btn = QPushButton("List\nStructure first")
+        self._list_btn = QPushButton("List")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         self._list_btn.setIcon(make_icon("nav.page_group", size=_ICON_SM))
@@ -116,7 +121,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show the page list for structure-first editing.",
             accessible_name="Workspace view button: List. Structure first.",
         )
-        self._thumb_btn = QPushButton("Thumbnails\nVisual scan")
+        self._thumb_btn = QPushButton("Thumbnails")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         self._thumb_btn.setIcon(make_icon("nav.resource", size=_ICON_SM))

@@ -256,34 +256,39 @@ class WidgetBrowserPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_SM)
+        layout.setSpacing(_SPACE_XS)
 
         header = QFrame()
         header.setObjectName("widget_browser_header")
         header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
         header_layout.setSpacing(_SPACE_XS)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(_SPACE_SM)
 
         self._title_label = QLabel("Widgets")
         self._title_label.setObjectName("workspace_section_title")
-        header_layout.addWidget(self._title_label)
-
-        self._subtitle_label = QLabel("Browse by type and insert quickly.")
-        self._subtitle_label.setObjectName("workspace_section_subtitle")
-        self._subtitle_label.setWordWrap(True)
-        header_layout.addWidget(self._subtitle_label)
+        title_row.addWidget(self._title_label)
 
         self._insert_target = QLabel("")
         self._insert_target.setObjectName("workspace_status_chip")
         self._insert_target.setWordWrap(True)
-        header_layout.addWidget(self._insert_target)
-        layout.addWidget(header)
+        title_row.addStretch()
+        title_row.addWidget(self._insert_target, 0, Qt.AlignVCenter)
+        header_layout.addLayout(title_row)
+
+        self._subtitle_label = QLabel("Search, filter, and insert widgets.")
+        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        header_layout.addWidget(self._subtitle_label)
 
         self._filter_bar = QFrame()
         self._filter_bar.setObjectName("widget_browser_filter_bar")
         filter_layout = QHBoxLayout(self._filter_bar)
-        filter_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
-        filter_layout.setSpacing(_SPACE_SM)
+        filter_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        filter_layout.setSpacing(_SPACE_XS)
 
         self._search = SearchLineEdit()
         self._search.setPlaceholderText("Search widgets")
@@ -295,7 +300,8 @@ class WidgetBrowserPanel(QWidget):
         self._category_combo.setMinimumWidth(184)
         self._category_combo.currentIndexChanged.connect(self._on_category_changed)
         filter_layout.addWidget(self._category_combo, 0)
-        layout.addWidget(self._filter_bar)
+        header_layout.addWidget(self._filter_bar)
+        layout.addWidget(header)
 
         self._scroll = QScrollArea()
         self._scroll.setObjectName("widget_browser_results")

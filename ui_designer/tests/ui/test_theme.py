@@ -46,7 +46,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         nav = css.split("#workspace_nav_rail", 1)[1].split("}}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
         chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
-        assert str(t["space_xs"]) in chip and str(t["space_sm"]) in chip
+        assert str(t["space_xxs"]) in chip and str(t["space_xs"]) in chip
 
 
 def test_status_center_styles_reduce_resting_container_weight():
@@ -61,7 +61,7 @@ def test_status_center_styles_reduce_resting_container_weight():
         assert "border: none;" in metrics
         assert "background-color: transparent;" in actions
         assert "border: none;" in actions
-        assert f"background-color: {t['panel_alt']};" in metric_card
+        assert f"background-color: {t['panel_soft']};" in metric_card
         assert "border: 1px solid transparent;" in metric_card
 
 

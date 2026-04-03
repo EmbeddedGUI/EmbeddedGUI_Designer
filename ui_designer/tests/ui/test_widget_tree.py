@@ -2443,8 +2443,7 @@ class TestWidgetTreePanel:
         assert panel.accessibleName() == (
             "Widget tree: 1 widget. 0 selected widgets. Current widget: none. "
             "Filter: none. Status: All widgets. Position: none. "
-            "Structure: select widgets to group, move, or reorder. "
-            "Drop target: drag over the tree to preview where the selection will land."
+            "Structure: select widgets to group, move, or reorder."
         )
         assert panel.add_btn.toolTip() == "Open the Widgets panel to insert a component into root_group (group)."
         assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
@@ -2461,6 +2460,26 @@ class TestWidgetTreePanel:
         assert panel.collapse_btn.toolTip() == "Collapse all widgets in the tree."
         assert panel.collapse_btn.statusTip() == panel.collapse_btn.toolTip()
         assert panel.collapse_btn.accessibleName() == "Collapse all widget tree items"
+        assert panel.structure_actions_btn.toolTip() == (
+            "Open structure actions for grouping, moving, history, and tree visibility."
+        )
+        assert panel.structure_actions_btn.statusTip() == panel.structure_actions_btn.toolTip()
+        assert panel.structure_actions_btn.accessibleName() == "Open structure actions"
+        assert panel.tree.columnCount() == 1
+        assert panel.tree.headerItem().text(0) == "Structure"
+        assert [action.text() for action in panel.structure_actions_btn.menu().actions() if action.text()] == [
+            "Group Selection",
+            "Ungroup",
+            "Move Into...",
+            "Quick Move Into",
+            "Lift To Parent",
+            "Move Up",
+            "Move Down",
+            "Move To Top",
+            "Move To Bottom",
+            "Expand All",
+            "Collapse All",
+        ]
         assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
         assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
         assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
@@ -2469,9 +2488,8 @@ class TestWidgetTreePanel:
         assert panel.filter_next_btn.accessibleName() == "Next widget filter match unavailable"
         assert panel.filter_select_btn.accessibleName() == "Select widget filter matches unavailable"
         assert panel.tree.accessibleName() == "Widget tree: 1 widget. 0 selected widgets. Current widget: none."
-        assert panel.tree.topLevelItem(0).toolTip(0) == f"Widget {root.name}: {root.widget_type}"
+        assert panel.tree.topLevelItem(0).toolTip(0) == f"Widget {root.name}. Type: {root.widget_type}. State: default."
         assert panel.tree.topLevelItem(0).data(0, Qt.AccessibleTextRole) == panel.tree.topLevelItem(0).toolTip(0)
-        assert panel.tree.topLevelItem(0).data(1, Qt.AccessibleTextRole) == panel.tree.topLevelItem(0).toolTip(1)
         panel.deleteLater()
 
     def test_tree_panel_filter_accessibility_updates_with_matches_and_selection(self, qapp):

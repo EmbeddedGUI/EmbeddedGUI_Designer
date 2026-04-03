@@ -625,9 +625,11 @@ QScrollArea#property_panel_scroll {{
 }}
 
 QGroupBox#inspector_collapsible_group {{
+    background-color: transparent;
+    border: 1px solid transparent;
     border-radius: {t['r_md']}px;
-    margin-top: {t['space_sm']}px;
-    padding-top: {t['space_md']}px;
+    margin-top: {t['space_xs']}px;
+    padding-top: {t['space_sm']}px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
@@ -635,8 +637,8 @@ QGroupBox#inspector_collapsible_group {{
 QGroupBox#inspector_collapsible_group::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: {t['space_sm']}px;
-    color: {t['text']};
+    left: {t['space_xs']}px;
+    color: {t['text_muted']};
 }}
 
 #workspace_command_bar,
@@ -645,8 +647,8 @@ QGroupBox#inspector_collapsible_group::title {{
 #widget_browser_header,
 #widget_browser_filter_bar,
 #workspace_bottom_header {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
+    background-color: {t['panel_alt']};
+    border: 1px solid transparent;
     border-radius: {t['r_xl']}px;
 }}
 
@@ -656,23 +658,24 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_hint_strip {{
-    background-color: {t['panel_alt']};
-    border-color: transparent;
+    background-color: transparent;
+    border-color: {t['border']};
 }}
 
 #widget_browser_filter_bar {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
+    border: none;
 }}
 
 QPushButton#project_workspace_view_button {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 9px 12px;
+    padding: 6px 10px;
     text-align: left;
-    min-height: 46px;
+    min-height: 34px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -692,8 +695,8 @@ QPushButton#project_workspace_view_button:checked {{
 }}
 
 #workspace_left_shell {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
+    background-color: {t['panel_alt']};
+    border: 1px solid transparent;
     border-radius: {t['r_xl']}px;
 }}
 
@@ -721,15 +724,20 @@ QFrame#toolbar_host_separator {{
 QToolButton[workspaceNav="true"] {{
     background-color: transparent;
     color: {t['text_muted']};
-    border: none;
+    border: 1px solid transparent;
     border-radius: {t['r_md']}px;
-    font-size: {t['fs_body_sm']}px;
-    padding: 6px 6px;
-    min-height: 28px;
+    font-size: {t['fs_micro']}px;
+    font-weight: {t['fw_medium']};
+    padding: {t['space_xxs']}px 0 {t['space_xs']}px 0;
+    min-width: 60px;
+    max-width: 60px;
+    min-height: 56px;
+    max-height: 56px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
     background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
     color: {t['text']};
 }}
 
@@ -739,26 +747,26 @@ QToolButton[workspaceNav="true"]:pressed {{
 
 QToolButton[workspaceNav="true"]:checked {{
     background-color: {t['selection_soft']};
-    color: {t['text']};
-    border: 1px solid {t['accent_soft']};
+    color: {t['accent']};
+    border: 1px solid {t['accent']};
 }}
 
 #workspace_status_chip {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
+    padding: {t['space_xxs']}px {t['space_xs']}px;
 }}
 
 QToolButton#workspace_status_chip {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 28px;
+    padding: {t['space_xxs']}px {t['space_xs']}px;
+    min-height: 24px;
 }}
 
 QToolButton#workspace_status_chip:hover {{
@@ -777,25 +785,25 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 #workspace_status_chip[chipTone="accent"] {{
-    background-color: {t['accent_soft']};
+    background-color: {t['selection_soft']};
     color: {t['accent_hover']};
     border-color: {t['accent']};
 }}
 
 #workspace_status_chip[chipTone="success"] {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     color: {t['success']};
     border-color: {t['success']};
 }}
 
 #workspace_status_chip[chipTone="warning"] {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     color: {t['warning']};
     border-color: {t['warning']};
 }}
 
 #workspace_status_chip[chipTone="danger"] {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     color: {t['danger']};
     border-color: {t['danger']};
 }}
@@ -834,7 +842,7 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 #widget_browser_card {{
-    background-color: {t['panel']};
+    background-color: {t['panel_alt']};
     border: 1px solid transparent;
     border-radius: {t['r_md']}px;
 }}
@@ -861,18 +869,18 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 #widget_browser_empty_state {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px dashed {t['border']};
     border-radius: {t['r_md']}px;
 }}
 
 QPushButton#widget_browser_insert_button {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 4px 9px;
+    padding: 3px 8px;
 }}
 
 QPushButton#widget_browser_insert_button:hover {{
@@ -900,8 +908,8 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_header,
 #status_center_health,
 #status_center_runtime {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
+    background-color: {t['panel_alt']};
+    border: 1px solid transparent;
     border-radius: {t['r_xl']}px;
 }}
 
@@ -912,7 +920,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #status_center_metric_card {{
-    background-color: {t['panel_alt']};
+    background-color: {t['panel_soft']};
     border: 1px solid transparent;
     border-radius: {t['r_md']}px;
 }}
@@ -997,7 +1005,14 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
     mode = "light" if mode == "light" else "dark"
     density = _normalize_density(density)
     if HAS_FLUENT:
-        setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
+        try:
+            setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
+        except RuntimeError as exc:
+            # qfluentwidgets keeps a process-global QConfig that can outlive a
+            # prior QApplication in tests; keep applying Designer theming even
+            # if Fluent's theme dispatcher is already invalid.
+            if "QConfig" not in str(exc):
+                raise
     app.setProperty("designer_theme_mode", mode)
     app.setProperty("designer_ui_density", density)
     app.setStyleSheet(_build_stylesheet(mode, density=density))
