@@ -120,6 +120,35 @@ def _prepare_dialog_table(table):
     table.setAlternatingRowColors(False)
 
 
+def _create_resource_panel_metric_card(layout, label_text):
+    card = QFrame()
+    card.setObjectName("resource_panel_metric_card")
+    card_layout = QVBoxLayout(card)
+    card_layout.setContentsMargins(12, 10, 12, 10)
+    card_layout.setSpacing(4)
+
+    label = QLabel(label_text)
+    label.setObjectName("resource_panel_metric_label")
+    card_layout.addWidget(label)
+
+    value = QLabel("")
+    value.setObjectName("resource_panel_metric_value")
+    value.setWordWrap(True)
+    card_layout.addWidget(value)
+
+    layout.addWidget(card)
+    return value
+
+
+def _prepare_resource_panel_table(table):
+    table.setObjectName("resource_panel_table")
+    table.setAlternatingRowColors(False)
+
+
+def _prepare_resource_panel_list(widget, object_name="resource_panel_list"):
+    widget.setObjectName(object_name)
+
+
 def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
@@ -256,6 +285,7 @@ class _PreviewWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setMinimumHeight(140)
         self._mode = None
         self._pixmap = None
@@ -1206,6 +1236,7 @@ class ResourcePanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self._resource_dir = ""      # .eguiproject/resources/ base directory
         self._src_dir = ""           # same as _resource_dir (fonts/text root)
         self._images_dir = ""        # .eguiproject/resources/images/ subfolder
@@ -1227,30 +1258,87 @@ class ResourcePanel(QWidget):
     # -- UI construction --
 
     def _init_ui(self):
+        self.setObjectName("resource_panel_shell")
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+
+        header = QFrame()
+        header.setObjectName("resource_panel_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(18, 16, 18, 16)
+        header_layout.setSpacing(18)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(4)
+
+        self._panel_eyebrow = QLabel("Asset Pipeline")
+        self._panel_eyebrow.setObjectName("resource_panel_eyebrow")
+        hero_copy.addWidget(self._panel_eyebrow, 0, Qt.AlignLeft)
+
+        self._panel_title = QLabel("Project Resources")
+        self._panel_title.setObjectName("resource_panel_title")
+        hero_copy.addWidget(self._panel_title)
+
+        self._panel_subtitle = QLabel(
+            "Manage image, font, text, and string assets from one structured workspace, then inspect previews and usage references before editing."
+        )
+        self._panel_subtitle.setObjectName("resource_panel_subtitle")
+        self._panel_subtitle.setWordWrap(True)
+        hero_copy.addWidget(self._panel_subtitle)
+
+        self._panel_status = QLabel("")
+        self._panel_status.setObjectName("resource_panel_status")
+        self._panel_status.setWordWrap(True)
+        hero_copy.addWidget(self._panel_status)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(6)
+        self._catalog_metric_value = _create_resource_panel_metric_card(metrics_layout, "Catalog")
+        self._missing_metric_value = _create_resource_panel_metric_card(metrics_layout, "Missing")
+        self._selection_metric_value = _create_resource_panel_metric_card(metrics_layout, "Selection")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
 
         splitter = QSplitter(Qt.Vertical)
+        splitter.setObjectName("resource_panel_splitter")
         splitter.setChildrenCollapsible(False)
         layout.addWidget(splitter, 1)
 
         # -- Top: Tabs --
-        top_widget = QWidget()
+        top_widget = QFrame()
+        top_widget.setObjectName("resource_panel_card")
         top_layout = QVBoxLayout(top_widget)
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setSpacing(2)
+        top_layout.setContentsMargins(18, 18, 18, 18)
+        top_layout.setSpacing(12)
+
+        catalog_title = QLabel("Resource Catalog")
+        catalog_title.setObjectName("workspace_section_title")
+        top_layout.addWidget(catalog_title)
+
+        catalog_hint = QLabel(
+            "Switch between binary assets and string resources, then use the per-tab action rail to import, restore, replace, or navigate missing entries."
+        )
+        catalog_hint.setObjectName("workspace_section_subtitle")
+        catalog_hint.setWordWrap(True)
+        top_layout.addWidget(catalog_hint)
 
         self._tabs = TabWidget()
-        self._tabs.currentChanged.connect(lambda _: self._refresh_usage_view())
+        self._tabs.setObjectName("resource_panel_tabs")
+        self._tabs.currentChanged.connect(self._on_panel_tab_changed)
 
         # Images tab
         img_tab = QWidget()
         img_tab_layout = QVBoxLayout(img_tab)
-        img_tab_layout.setContentsMargins(2, 2, 2, 2)
-        img_tab_layout.setSpacing(2)
+        img_tab_layout.setContentsMargins(8, 8, 8, 8)
+        img_tab_layout.setSpacing(10)
 
         self._image_list = _LazyImageList()
+        _prepare_resource_panel_list(self._image_list, "resource_panel_image_list")
         self._image_list.itemClicked.connect(self._on_image_clicked)
         self._image_list.itemDoubleClicked.connect(self._on_image_double_clicked)
         self._image_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1260,6 +1348,7 @@ class ResourcePanel(QWidget):
         img_tab_layout.addWidget(self._image_list, 1)
 
         img_btn_layout = QHBoxLayout()
+        img_btn_layout.setSpacing(8)
         import_img_btn = PushButton("Import Image...")
         import_img_btn.setIcon(make_icon("nav.resource"))
         import_img_btn.clicked.connect(self._on_import_image)
@@ -1302,10 +1391,11 @@ class ResourcePanel(QWidget):
         # Fonts tab
         font_tab = QWidget()
         font_tab_layout = QVBoxLayout(font_tab)
-        font_tab_layout.setContentsMargins(2, 2, 2, 2)
-        font_tab_layout.setSpacing(2)
+        font_tab_layout.setContentsMargins(8, 8, 8, 8)
+        font_tab_layout.setSpacing(10)
 
         self._font_list = _DragResourceList("font")
+        _prepare_resource_panel_list(self._font_list)
         self._font_list.itemClicked.connect(self._on_font_clicked)
         self._font_list.itemDoubleClicked.connect(self._on_font_double_clicked)
         self._font_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1315,6 +1405,7 @@ class ResourcePanel(QWidget):
         font_tab_layout.addWidget(self._font_list, 1)
 
         font_btn_layout = QHBoxLayout()
+        font_btn_layout.setSpacing(8)
         import_font_btn = PushButton("Import Font...")
         import_font_btn.setIcon(make_icon("nav.page"))
         import_font_btn.clicked.connect(self._on_import_font)
@@ -1357,10 +1448,11 @@ class ResourcePanel(QWidget):
         # Text tab
         text_tab = QWidget()
         text_tab_layout = QVBoxLayout(text_tab)
-        text_tab_layout.setContentsMargins(2, 2, 2, 2)
-        text_tab_layout.setSpacing(2)
+        text_tab_layout.setContentsMargins(8, 8, 8, 8)
+        text_tab_layout.setSpacing(10)
 
         self._text_list = _DragResourceList("text")
+        _prepare_resource_panel_list(self._text_list)
         self._text_list.itemClicked.connect(self._on_text_clicked)
         self._text_list.itemDoubleClicked.connect(self._on_text_double_clicked)
         self._text_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1370,6 +1462,7 @@ class ResourcePanel(QWidget):
         text_tab_layout.addWidget(self._text_list, 1)
 
         text_btn_layout = QHBoxLayout()
+        text_btn_layout.setSpacing(8)
         import_text_btn = PushButton("Import Text...")
         import_text_btn.setIcon(make_icon("text"))
         import_text_btn.clicked.connect(self._on_import_text)
@@ -1412,14 +1505,17 @@ class ResourcePanel(QWidget):
         # Strings (i18n) tab
         strings_tab = QWidget()
         strings_tab_layout = QVBoxLayout(strings_tab)
-        strings_tab_layout.setContentsMargins(2, 2, 2, 2)
-        strings_tab_layout.setSpacing(2)
+        strings_tab_layout.setContentsMargins(8, 8, 8, 8)
+        strings_tab_layout.setSpacing(10)
 
         # Locale selector
         locale_row = QHBoxLayout()
-        locale_row.addWidget(QLabel("Locale:"))
+        locale_row.setSpacing(8)
+        locale_label = QLabel("Locale")
+        locale_label.setObjectName("resource_panel_field_label")
+        locale_row.addWidget(locale_label)
         self._locale_combo = QComboBox()
-        self._locale_combo.setMinimumWidth(80)
+        self._locale_combo.setMinimumWidth(96)
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
         self._add_locale_btn = PushButton("Add Locale...")
@@ -1435,6 +1531,7 @@ class ResourcePanel(QWidget):
 
         # String table
         self._string_table = QTableWidget()
+        _prepare_resource_panel_table(self._string_table)
         self._string_table.setColumnCount(2)
         self._string_table.setHorizontalHeaderLabels(["Key", "Value"])
         self._string_table.horizontalHeader().setStretchLastSection(True)
@@ -1450,6 +1547,7 @@ class ResourcePanel(QWidget):
 
         # Buttons
         str_btn_layout = QHBoxLayout()
+        str_btn_layout.setSpacing(8)
         self._add_key_btn = PushButton("Add Key...")
         self._add_key_btn.setIcon(make_icon("toolbar.new"))
         self._add_key_btn.clicked.connect(self._on_add_string_key)
@@ -1475,33 +1573,60 @@ class ResourcePanel(QWidget):
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(4)
+        bottom_layout.setSpacing(8)
 
-        preview_caption = QLabel("Preview")
+        preview_card = QFrame()
+        preview_card.setObjectName("resource_panel_card")
+        preview_layout = QVBoxLayout(preview_card)
+        preview_layout.setContentsMargins(18, 18, 18, 18)
+        preview_layout.setSpacing(10)
+
+        preview_caption = QLabel("Preview Surface")
         preview_caption.setObjectName("workspace_section_title")
-        bottom_layout.addWidget(preview_caption)
+        preview_layout.addWidget(preview_caption)
+
+        preview_hint = QLabel("Inspect the selected asset before editing references or replacing missing files.")
+        preview_hint.setObjectName("workspace_section_subtitle")
+        preview_hint.setWordWrap(True)
+        preview_layout.addWidget(preview_hint)
 
         self._preview = _PreviewWidget()
+        self._preview.setObjectName("resource_panel_preview")
         self._preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        bottom_layout.addWidget(self._preview, 1)
+        preview_layout.addWidget(self._preview, 1)
+        bottom_layout.addWidget(preview_card, 1)
 
-        usage_caption = QLabel("Usage")
+        usage_card = QFrame()
+        usage_card.setObjectName("resource_panel_card")
+        usage_layout = QVBoxLayout(usage_card)
+        usage_layout.setContentsMargins(18, 18, 18, 18)
+        usage_layout.setSpacing(10)
+
+        usage_caption = QLabel("Reference Map")
         usage_caption.setObjectName("workspace_section_title")
-        bottom_layout.addWidget(usage_caption)
+        usage_layout.addWidget(usage_caption)
+
+        usage_hint = QLabel("Trace every widget that consumes the selected resource and optionally focus the current page only.")
+        usage_hint.setObjectName("workspace_section_subtitle")
+        usage_hint.setWordWrap(True)
+        usage_layout.addWidget(usage_hint)
 
         usage_filter_row = QHBoxLayout()
+        usage_filter_row.setSpacing(8)
         self._usage_current_page_only = QCheckBox("Current Page Only")
         self._usage_current_page_only.toggled.connect(self._refresh_usage_view)
         self._usage_current_page_only.toggled.connect(self._update_usage_accessibility_metadata)
         usage_filter_row.addWidget(self._usage_current_page_only)
         usage_filter_row.addStretch()
-        bottom_layout.addLayout(usage_filter_row)
+        usage_layout.addLayout(usage_filter_row)
 
         self._usage_summary = QLabel("Select an image, font, text resource, or string key to inspect references.")
+        self._usage_summary.setObjectName("resource_panel_summary")
         self._usage_summary.setWordWrap(True)
-        bottom_layout.addWidget(self._usage_summary)
+        usage_layout.addWidget(self._usage_summary)
 
         self._usage_table = QTableWidget()
+        _prepare_resource_panel_table(self._usage_table)
         self._usage_table.setColumnCount(3)
         self._usage_table.setHorizontalHeaderLabels(["Page", "Widget", "Property"])
         self._usage_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -1513,7 +1638,8 @@ class ResourcePanel(QWidget):
         self._usage_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self._usage_table.itemDoubleClicked.connect(self._on_usage_item_activated)
         self._usage_table.itemSelectionChanged.connect(self._update_usage_accessibility_metadata)
-        bottom_layout.addWidget(self._usage_table, 1)
+        usage_layout.addWidget(self._usage_table, 1)
+        bottom_layout.addWidget(usage_card, 1)
 
         splitter.addWidget(bottom_widget)
 
@@ -1522,6 +1648,7 @@ class ResourcePanel(QWidget):
         self._update_resource_action_metadata()
         self._update_string_action_metadata()
         self._update_usage_accessibility_metadata()
+        self._update_panel_overview()
 
     def _create_resource_more_button(self, resource_type, buttons):
         button = QToolButton()
@@ -1571,6 +1698,69 @@ class ResourcePanel(QWidget):
         button.setToolTip(tooltip)
         button.setStatusTip(tooltip)
         button.setAccessibleName(f"More {resource_type} actions")
+
+    def _active_panel_tab_label(self):
+        if not hasattr(self, "_tabs"):
+            return "Resources"
+        labels = {0: "Images", 1: "Fonts", 2: "Text", 3: "Strings"}
+        return labels.get(self._tabs.currentIndex(), "Resources")
+
+    def _current_panel_selection_label(self):
+        if not hasattr(self, "_tabs"):
+            return "none"
+        active_type, active_name = self._selected_resource_for_active_tab()
+        if active_name:
+            return active_name
+        if self._current_resource_name and (
+            (active_type == self._current_resource_type) or not active_type
+        ):
+            return self._current_resource_name
+        return "none"
+
+    def _update_panel_overview(self):
+        if not hasattr(self, "_catalog_metric_value"):
+            return
+
+        total_resources = (
+            len(self._catalog.images)
+            + len(self._catalog.fonts)
+            + len(self._catalog.text_files)
+            + len(self._string_catalog.all_keys)
+        )
+        total_missing = sum(len(self._missing_resource_names(resource_type)) for resource_type in ("image", "font", "text"))
+        active_tab = self._active_panel_tab_label()
+        selection_label = self._current_panel_selection_label()
+        workspace_state = "configured" if self._resource_dir else "not configured"
+
+        self._panel_status.setText(f"Workspace {workspace_state} | Active tab: {active_tab}")
+        self._catalog_metric_value.setText(_count_label(total_resources, "asset"))
+        self._missing_metric_value.setText(_count_label(total_missing, "missing file"))
+        self._selection_metric_value.setText(f"{active_tab}: {selection_label}")
+
+        _set_widget_metadata(
+            self._panel_status,
+            tooltip=f"Resource workspace state: {workspace_state}. Active tab: {active_tab}.",
+            accessible_name=f"Resource workspace state: {workspace_state}. Active tab: {active_tab}",
+        )
+        _set_widget_metadata(
+            self._catalog_metric_value,
+            tooltip=self._catalog_metric_value.text(),
+            accessible_name=f"Resource panel metric: Catalog. {self._catalog_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._missing_metric_value,
+            tooltip=self._missing_metric_value.text(),
+            accessible_name=f"Resource panel metric: Missing. {self._missing_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._selection_metric_value,
+            tooltip=self._selection_metric_value.text(),
+            accessible_name=f"Resource panel metric: Selection. {self._selection_metric_value.text()}",
+        )
+
+    def _on_panel_tab_changed(self, _index):
+        self._refresh_usage_view()
+        self._update_panel_overview()
 
     # -- Public API --
 
@@ -1943,6 +2133,7 @@ class ResourcePanel(QWidget):
         selection_label = self._current_usage_selection_label()
         table_summary = f"Resource usage table: {_count_label(row_count, 'row')}. Current selection: {selection_label}."
         _set_widget_metadata(self._usage_table, tooltip=table_summary, accessible_name=table_summary)
+        self._update_panel_overview()
 
     def _update_tab_titles(self):
         n_img = len(self._catalog.images)
@@ -1957,6 +2148,7 @@ class ResourcePanel(QWidget):
         self._tabs.setTabText(2, self._format_resource_tab_title("Text", n_text, missing_text))
         self._tabs.setTabText(3, f"Strings ({n_str})")
         self._update_resource_action_metadata()
+        self._update_panel_overview()
 
     def _selected_resource_for_active_tab(self):
         current_index = self._tabs.currentIndex()
@@ -1979,6 +2171,7 @@ class ResourcePanel(QWidget):
         self._current_resource_type = resource_type or ""
         self._current_resource_name = filename or ""
         self._refresh_usage_view()
+        self._update_panel_overview()
 
     def _clear_usage_view(self, summary):
         self._usage_summary.setText(summary)

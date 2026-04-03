@@ -914,6 +914,90 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     border-radius: {t['r_md']}px;
 }}
 
+#resource_panel_shell {{
+    background-color: transparent;
+}}
+
+#resource_panel_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#resource_panel_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#resource_panel_title {{
+    color: {t['text']};
+    font-size: {t['fs_h1'] + 4}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#resource_panel_subtitle,
+#resource_panel_status,
+#resource_panel_summary {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#resource_panel_card {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#resource_panel_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#resource_panel_metric_label,
+#resource_panel_field_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#resource_panel_metric_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+QListWidget#resource_panel_list,
+QListWidget#resource_panel_image_list,
+QTableWidget#resource_panel_table {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    gridline-color: {t['border']};
+}}
+
+QTableWidget#resource_panel_table QHeaderView::section {{
+    background-color: {t['panel_soft']};
+    color: {t['text_muted']};
+    border: none;
+    border-bottom: 1px solid {t['border']};
+    padding: 8px;
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#resource_panel_preview {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #structure_selection_strip {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
