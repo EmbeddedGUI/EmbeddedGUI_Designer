@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "project": "EmbeddedGUI Designer",
+  "lastUpdated": "2026-04-02",
+  "iconStyle": {
+    "family": "rounded-outlined",
+    "defaultStrokeWidth": 1.75,
+    "defaultFill": "none",
+    "allowedSizes": [16, 18, 20, 24]
+  },
+  "tokens": {
+    "default": "icon.default",
+    "muted": "icon.muted",
+    "active": "icon.active",
+    "disabled": "icon.disabled",
+    "success": "icon.success",
+    "warn": "icon.warn",
+    "error": "icon.error",
+    "info": "icon.info"
+  },
+  "naming": {
+    "pattern": "ic_{domain}_{actionOrObject}_{size}_{style}",
+    "example": "ic_toolbar_save_20_rounded",
+    "allowedDomains": [
+      "toolbar",
+      "nav",
+      "edit",
+      "layout",
+      "style",
+      "state",
+      "resource",
+      "device"
+    ],
+    "allowedStyles": ["rounded"]
+  },
+  "states": ["default", "hover", "active", "disabled"],
+  "icons": [
+    {
+      "id": "toolbar.new",
+      "name": "ic_toolbar_new_20_rounded",
+      "semantic": "create_new_file_or_project",
+      "domain": "toolbar",
+      "size": 20,
+      "style": "rounded",
+      "states": {
+        "default": "ui_designer/assets/icons/20/ic_toolbar_new_20_rounded.svg",
+        "hover": "ui_designer/assets/icons/20/ic_toolbar_new_20_rounded.svg",
+        "active": "ui_designer/assets/icons/20/ic_toolbar_new_20_rounded.svg",
+        "disabled": "ui_designer/assets/icons/20/ic_toolbar_new_20_rounded.svg"
+      },
+      "colorTokenByState": {
+        "default": "icon.default",
+        "hover": "icon.default",
+        "active": "icon.active",
+        "disabled": "icon.disabled"
+      },
+      "replaces": ["iconfont-new", "legacy-new-file"],
+      "status": "implemented",
+      "owner": "@ui-team",
+      "notes": "Toolbar P0"
+    },
+    {
+      "id": "toolbar.save",
+      "name": "ic_toolbar_save_20_rounded",
+      "semantic": "save_current_work",
+      "domain": "toolbar",
+      "size": 20,
+      "style": "rounded",
+      "states": {
+        "default": "ui_designer/assets/icons/20/ic_toolbar_save_20_rounded.svg",
+        "hover": "ui_designer/assets/icons/20/ic_toolbar_save_20_rounded.svg",
+        "active": "ui_designer/assets/icons/20/ic_toolbar_save_20_rounded.svg",
+        "disabled": "ui_designer/assets/icons/20/ic_toolbar_save_20_rounded.svg"
+      },
+      "colorTokenByState": {
+        "default": "icon.default",
+        "hover": "icon.default",
+        "active": "icon.active",
+        "disabled": "icon.disabled"
+      },
+      "replaces": ["iconfont-save", "legacy-save"],
+      "status": "planned",
+      "owner": "@ui-team",
+      "notes": "Toolbar P0"
+    },
+    {
+      "id": "nav.page",
+      "name": "ic_nav_page_20_rounded",
+      "semantic": "page_entry_in_navigation",
+      "domain": "nav",
+      "size": 20,
+      "style": "rounded",
+      "states": {
+        "default": "ui_designer/assets/icons/20/ic_nav_page_20_rounded.svg",
+        "hover": "ui_designer/assets/icons/20/ic_nav_page_20_rounded.svg",
+        "active": "ui_designer/assets/icons/20/ic_nav_page_20_rounded.svg",
+        "disabled": "ui_designer/assets/icons/20/ic_nav_page_20_rounded.svg"
+      },
+      "colorTokenByState": {
+        "default": "icon.default",
+        "hover": "icon.default",
+        "active": "icon.active",
+        "disabled": "icon.disabled"
+      },
+      "replaces": ["iconfont-page", "legacy-page-entry"],
+      "status": "planned",
+      "owner": "@ui-team",
+      "notes": "Navigation P0"
+    },
+    {
+      "id": "layout.align.left",
+      "name": "ic_layout_align_left_18_rounded",
+      "semantic": "align_selected_items_left",
+      "domain": "layout",
+      "size": 18,
+      "style": "rounded",
+      "states": {
+        "default": "ui_designer/assets/icons/18/ic_layout_align_left_18_rounded.svg",
+        "hover": "ui_designer/assets/icons/18/ic_layout_align_left_18_rounded.svg",
+        "active": "ui_designer/assets/icons/18/ic_layout_align_left_18_rounded.svg",
+        "disabled": "ui_designer/assets/icons/18/ic_layout_align_left_18_rounded.svg"
+      },
+      "colorTokenByState": {
+        "default": "icon.default",
+        "hover": "icon.default",
+        "active": "icon.active",
+        "disabled": "icon.disabled"
+      },
+      "replaces": ["iconfont-align-left", "legacy-align-left"],
+      "status": "planned",
+      "owner": "@ui-team",
+      "notes": "Inspector P0"
+    },
+    {
+      "id": "state.error",
+      "name": "ic_state_error_16_rounded",
+      "semantic": "error_status_indicator",
+      "domain": "state",
+      "size": 16,
+      "style": "rounded",
+      "states": {
+        "default": "ui_designer/assets/icons/16/ic_state_error_16_rounded.svg",
+        "hover": "ui_designer/assets/icons/16/ic_state_error_16_rounded.svg",
+        "active": "ui_designer/assets/icons/16/ic_state_error_16_rounded.svg",
+        "disabled": "ui_designer/assets/icons/16/ic_state_error_16_rounded.svg"
+      },
+      "colorTokenByState": {
+        "default": "icon.error",
+        "hover": "icon.error",
+        "active": "icon.error",
+        "disabled": "icon.disabled"
+      },
+      "replaces": ["iconfont-error", "legacy-status-error"],
+      "status": "planned",
+      "owner": "@ui-team",
+      "notes": "Status bar P1"
+    }
+  ],
+  "migrationChecklist": {
+    "noLegacyIconfontReference": true,
+    "allIconsMapped": true,
+    "allInteractiveStatesCovered": true,
+    "allColorsTokenized": true,
+    "lightDarkThemeReviewed": true
+  }
+}

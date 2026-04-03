@@ -104,11 +104,11 @@ def _count_label(count, singular, plural=None):
 
 
 def _inspector_form():
-    """Consistent label/field rhythm for inspector property forms (macOS-style density)."""
+    """Consistent label/field rhythm for inspector property forms (readable balanced density)."""
     form = QFormLayout()
     form.setContentsMargins(0, 0, 0, 0)
-    form.setSpacing(8)
-    form.setHorizontalSpacing(14)
+    form.setSpacing(10)
+    form.setHorizontalSpacing(16)
     form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
     return form
 

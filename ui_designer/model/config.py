@@ -82,6 +82,7 @@ class DesignerConfig:
         self.show_grid = True
         self.grid_size = 8
         self.font_size_px = 0
+        self.ui_density = "standard"
         self.show_all_examples = False
         self.window_geometry = ""
         self.window_state = ""
@@ -232,6 +233,8 @@ class DesignerConfig:
             self.show_grid = data.get("show_grid", True)
             self.grid_size = int(data.get("grid_size", 8))
             self.font_size_px = data.get("font_size_px", 0)
+            ui_density = str(data.get("ui_density", "standard") or "standard").strip().lower()
+            self.ui_density = ui_density if ui_density in {"standard", "roomy"} else "standard"
             self.show_all_examples = data.get("show_all_examples", False)
             self.window_geometry = data.get("window_geometry", "")
             self.window_state = data.get("window_state", "")
@@ -287,6 +290,7 @@ class DesignerConfig:
                 "show_grid": self.show_grid,
                 "grid_size": self.grid_size,
                 "font_size_px": self.font_size_px,
+                "ui_density": self.ui_density,
                 "show_all_examples": self.show_all_examples,
                 "window_geometry": self.window_geometry,
                 "window_state": self.window_state,

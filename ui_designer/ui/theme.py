@@ -55,19 +55,19 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 7,
-        "pad_btn_h": 13,
-        "pad_input_v": 6,
-        "pad_input_h": 10,
+        "pad_btn_v": 8,
+        "pad_btn_h": 14,
+        "pad_input_v": 7,
+        "pad_input_h": 11,
         "h_tab_min": 28,
         "fs_display": 24,
         "fs_h1": 18,
-        "fs_h2": 15,
-        "fs_panel_title": 13,
-        "fs_body": 13,
-        "fs_body_sm": 12,
-        "fs_caption": 11,
-        "fs_micro": 10,
+        "fs_h2": 16,
+        "fs_panel_title": 14,
+        "fs_body": 14,
+        "fs_body_sm": 13,
+        "fs_caption": 12,
+        "fs_micro": 11,
         "fw_regular": 400,
         "fw_medium": 500,
         "fw_semibold": 600,
@@ -111,19 +111,19 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 7,
-        "pad_btn_h": 13,
-        "pad_input_v": 6,
-        "pad_input_h": 10,
+        "pad_btn_v": 8,
+        "pad_btn_h": 14,
+        "pad_input_v": 7,
+        "pad_input_h": 11,
         "h_tab_min": 28,
         "fs_display": 24,
         "fs_h1": 18,
-        "fs_h2": 15,
-        "fs_panel_title": 13,
-        "fs_body": 13,
-        "fs_body_sm": 12,
-        "fs_caption": 11,
-        "fs_micro": 10,
+        "fs_h2": 16,
+        "fs_panel_title": 14,
+        "fs_body": 14,
+        "fs_body_sm": 13,
+        "fs_caption": 12,
+        "fs_micro": 11,
         "fw_regular": 400,
         "fw_medium": 500,
         "fw_semibold": 600,
@@ -136,9 +136,49 @@ _TOKENS = {
 }
 
 
-def theme_tokens(mode="dark"):
+def _normalize_density(density="standard"):
+    value = str(density or "standard").strip().lower()
+    if value in {"roomy_plus", "roomy+", "plus", "spacious"}:
+        return "roomy_plus"
+    if value in {"roomy", "comfortable", "relaxed"}:
+        return "roomy"
+    return "standard"
+
+
+def _density_adjusted_tokens(tokens: dict, density="standard"):
+    """Return a copy of tokens adjusted for UI density profile."""
+    out = dict(tokens or {})
+    normalized = _normalize_density(density)
+    if normalized == "standard":
+        return out
+
+    text_delta = 1 if normalized == "roomy" else 2
+    control_delta = 1 if normalized == "roomy" else 2
+    tab_delta = 2 if normalized == "roomy" else 4
+
+    # Comfortable profiles: larger text and touch targets.
+    for key in ("fs_h2", "fs_panel_title", "fs_body", "fs_body_sm", "fs_caption", "fs_micro"):
+        try:
+            out[key] = int(out.get(key, 0)) + text_delta
+        except Exception:
+            pass
+    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h"):
+        try:
+            out[key] = int(out.get(key, 0)) + control_delta
+        except Exception:
+            pass
+    for key, delta in (("h_tab_min", tab_delta), ("icon_sm", 0), ("icon_md", 0), ("icon_lg", 0)):
+        try:
+            out[key] = int(out.get(key, 0)) + int(delta)
+        except Exception:
+            pass
+    return out
+
+
+def theme_tokens(mode="dark", density="standard"):
     """Return the active token map."""
-    return dict(_TOKENS["light" if mode == "light" else "dark"])
+    base = dict(_TOKENS["light" if mode == "light" else "dark"])
+    return _density_adjusted_tokens(base, density)
 
 
 # Semantic aliases (spec names → existing keys) for documentation and future refactors.
@@ -166,8 +206,8 @@ def resolve_semantic_token(mode: str, semantic_name: str, tokens: dict | None = 
     return t.get(key)
 
 
-def _build_stylesheet(mode="dark"):
-    t = theme_tokens(mode)
+def _build_stylesheet(mode="dark", density="standard"):
+    t = theme_tokens(mode, density=density)
     return f"""
 QMainWindow, QDialog {{
     background-color: {t['bg']};
@@ -267,7 +307,7 @@ QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
 }}
 
 QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {{
-    padding: 6px 8px;
+    padding: 7px 9px;
 }}
 
 QListView::item:hover, QTreeView::item:hover, QTableView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
@@ -423,6 +463,8 @@ QGroupBox::title {{
     left: {t['space_md']}px;
     top: 0px;
     color: {t['text_muted']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_medium']};
     padding: 0 {t['r_sm']}px;
 }}
 
@@ -439,7 +481,8 @@ QGroupBox#inspector_collapsible_group {{
     border-radius: {t['r_md']}px;
     margin-top: {t['space_sm']}px;
     padding-top: {t['space_md']}px;
-    font-weight: 600;
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 QGroupBox#inspector_collapsible_group::title {{
@@ -473,9 +516,10 @@ QPushButton#project_workspace_view_button {{
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
-    padding: 8px 10px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 9px 12px;
     text-align: left;
-    min-height: 42px;
+    min-height: 46px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -526,7 +570,9 @@ QToolButton[workspaceNav="true"] {{
     color: {t['text_muted']};
     border: none;
     border-radius: {t['r_md']}px;
-    padding: 7px 6px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 8px 8px;
+    min-height: 32px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
@@ -557,7 +603,9 @@ QToolButton#workspace_status_chip {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
     padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 QToolButton#workspace_status_chip:hover {{
@@ -607,7 +655,7 @@ QToolButton#workspace_status_chip:focus {{
 
 #workspace_section_subtitle {{
     color: {t['text_muted']};
-    font-size: {t['fs_caption']}px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_regular']};
 }}
 
@@ -655,7 +703,9 @@ QToolButton#widget_browser_lane {{
     border: 1px solid transparent;
     border-radius: 8px;
     color: {t['text_muted']};
-    padding: 6px 8px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 7px 9px;
+    min-height: 32px;
     text-align: left;
 }}
 
@@ -680,8 +730,8 @@ QToolButton#widget_browser_sort_button {{
     border: 1px solid {t['border']};
     border-radius: 8px;
     color: {t['text_muted']};
-    font-size: {t['fs_caption']}px;
-    padding: 3px 8px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 4px 9px;
 }}
 
 QToolButton#widget_browser_sort_button:hover {{
@@ -701,8 +751,9 @@ QToolButton#widget_browser_complexity_button {{
     border: 1px solid {t['border']};
     border-radius: 999px;
     color: {t['text_muted']};
-    font-size: {t['fs_caption']}px;
-    padding: 3px 8px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 4px 9px;
+    min-height: 26px;
 }}
 
 QToolButton#widget_browser_complexity_button:hover {{
@@ -737,8 +788,9 @@ QToolButton#widget_browser_tag {{
     border: 1px solid {t['border']};
     color: {t['text_muted']};
     border-radius: 999px;
-    font-size: {t['fs_caption']}px;
-    padding: 3px 8px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 4px 9px;
+    min-height: 26px;
 }}
 
 QToolButton#widget_browser_tag:hover {{
@@ -793,7 +845,7 @@ QToolButton#widget_browser_tag:checked {{
 
 #widget_browser_card_meta {{
     color: {t['text_soft']};
-    font-size: {t['fs_micro']}px;
+    font-size: {t['fs_caption']}px;
 }}
 
 QPushButton#widget_browser_insert_button {{
@@ -801,7 +853,8 @@ QPushButton#widget_browser_insert_button {{
     border: 1px solid {t['border']};
     border-radius: 8px;
     color: {t['text_muted']};
-    padding: 2px 8px;
+    font-size: {t['fs_body_sm']}px;
+    padding: 4px 9px;
 }}
 
 QPushButton#widget_browser_insert_button:hover {{
@@ -921,10 +974,12 @@ QProgressBar#status_center_health_info_bar::chunk {{
 """
 
 
-def apply_theme(app: QApplication, mode="dark"):
-    """Apply the requested theme mode."""
+def apply_theme(app: QApplication, mode="dark", density="standard"):
+    """Apply the requested theme mode and density profile."""
     mode = "light" if mode == "light" else "dark"
+    density = _normalize_density(density)
     if HAS_FLUENT:
         setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
     app.setProperty("designer_theme_mode", mode)
-    app.setStyleSheet(_build_stylesheet(mode))
+    app.setProperty("designer_ui_density", density)
+    app.setStyleSheet(_build_stylesheet(mode, density=density))

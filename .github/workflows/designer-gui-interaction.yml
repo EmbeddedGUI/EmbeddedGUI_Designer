@@ -1,0 +1,49 @@
+name: Designer GUI Interaction Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      pytest_filter:
+        description: "Optional pytest -k expression override"
+        required: false
+        default: "status_panel_top_splitter_handle_drag_with_qtest or workspace_left_nav_buttons_switch_panels_via_click or workspace_inspector_tabs_switch_via_tabbar_click or bottom_toggle_button_click_hides_and_shows_bottom_panel"
+
+jobs:
+  gui-interaction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system GUI dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            xvfb \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libgl1
+
+      - name: Install Python dependencies
+        run: python -m pip install -r ui_designer/requirements-desktop.txt
+
+      - name: Run GUI interaction tests script
+        run: >
+          python scripts/ui_designer/run_gui_pytest.py
+          --pytest-filter "${{ inputs.pytest_filter }}"
