@@ -920,8 +920,140 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     border-radius: {t['r_md']}px;
 }}
 
+#welcome_shell,
+#welcome_center {{
+    background-color: transparent;
+    border: none;
+}}
+
+#welcome_hero {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.68 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_2xl']}px;
+}}
+
+#welcome_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#welcome_hero_title {{
+    color: {t['text']};
+    font-size: {t['fs_display'] + 8}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#welcome_hero_subtitle {{
+    color: {t['text_muted']};
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#welcome_hero_hint {{
+    color: {t['text_soft']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#welcome_action_panel,
+#welcome_recent_panel {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#welcome_sdk_panel {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#welcome_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#welcome_metric_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_micro']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#welcome_metric_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#welcome_recent_item {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#welcome_recent_item:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
+#welcome_recent_item:focus {{
+    border-color: {t['focus_ring']};
+}}
+
+#welcome_recent_icon_shell {{
+    background-color: {t['accent_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#welcome_recent_name {{
+    color: {t['text']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#welcome_recent_path {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+}}
+
+#welcome_recent_status {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_medium']};
+    padding: {t['space_xxs']}px {t['space_sm']}px;
+}}
+
+#welcome_recent_status[chipTone="success"] {{
+    color: {t['success']};
+    border-color: {t['success']};
+}}
+
+#welcome_recent_status[chipTone="warning"] {{
+    color: {t['warning']};
+    border-color: {t['warning']};
+}}
+
+#welcome_recent_status[chipTone="danger"] {{
+    color: {t['danger']};
+    border-color: {t['danger']};
+}}
+
 #welcome_recent_empty {{
-    padding: 4px 0 0 0;
+    background-color: transparent;
+    border: 1px dashed {t['border']};
+    border-radius: {t['r_md']}px;
+    padding: 18px;
 }}
 
 #widget_browser_results,

@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QLabel
+    from PyQt5.QtWidgets import QApplication, QLabel, QWidget
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -723,6 +723,36 @@ class TestWelcomePage:
         assert any("No recent projects" in (lb.text() or "") for lb in widget.findChildren(QLabel))
         assert "No recent projects." in page.accessibleName()
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
+        page.deleteLater()
+
+    def test_refresh_replaces_empty_recent_state_without_stale_widgets(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        isolated_config.recent_projects = []
+        page = WelcomePage()
+
+        assert page.findChildren(QWidget, "welcome_recent_empty")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir()
+        project_path.write_text("")
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": str(sdk_root),
+                "display_name": "DemoApp",
+            }
+        ]
+
+        page.refresh()
+
+        assert not page.findChildren(QWidget, "welcome_recent_empty")
+        assert page._recent_list.count() == 1
+        widget = page._recent_list.itemAt(0).widget()
+        assert widget is not None
+        assert widget.display_name == "DemoApp"
         page.deleteLater()
 
     def test_recent_click_emits_project_path_and_sdk(self, qapp, isolated_config, tmp_path):

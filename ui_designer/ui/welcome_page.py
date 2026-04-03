@@ -6,7 +6,7 @@ import os
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QLabel, QHBoxLayout, QVBoxLayout, QWidget
 
 from qfluentwidgets import PrimaryPushButton, PushButton
 
@@ -40,30 +40,39 @@ class RecentProjectItem(QWidget):
         self.project_path = project_path
         self.sdk_root = sdk_root
         self.display_name = display_name
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedHeight(82)
-        self.setObjectName("workspace_panel_header")
+        self.setMinimumHeight(96)
+        self.setObjectName("welcome_recent_item")
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(12)
+        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setSpacing(14)
+
+        icon_shell = QFrame()
+        icon_shell.setObjectName("welcome_recent_icon_shell")
+        icon_shell.setFixedSize(44, 44)
+        icon_layout = QVBoxLayout(icon_shell)
+        icon_layout.setContentsMargins(0, 0, 0, 0)
 
         icon_label = QLabel()
-        icon_label.setFixedSize(40, 40)
         icon_label.setAlignment(Qt.AlignCenter)
         icon_label.setPixmap(make_icon("nav.page_group", size=28).pixmap(28, 28))
-        layout.addWidget(icon_label)
+        icon_layout.addWidget(icon_label)
+        layout.addWidget(icon_shell, 0, Qt.AlignTop)
 
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(4)
+        text_layout.setSpacing(6)
 
         self._name_label = QLabel(display_name)
         self._name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
-        self._name_label.setObjectName("workspace_section_title")
+        self._name_label.setObjectName("welcome_recent_name")
         text_layout.addWidget(self._name_label)
 
         self._path_label = QLabel(project_path)
-        self._path_label.setObjectName("workspace_section_subtitle")
+        self._path_label.setObjectName("welcome_recent_path")
+        self._path_label.setWordWrap(True)
         text_layout.addWidget(self._path_label)
 
         self._project_status = "ready" if os.path.exists(project_path) else "missing"
@@ -72,7 +81,8 @@ class RecentProjectItem(QWidget):
         self._status_label = QLabel(
             f"Project: {self._project_status}  |  SDK: {self._sdk_status} ({sdk_source})"
         )
-        self._status_label.setObjectName("workspace_status_chip")
+        self._status_label.setObjectName("welcome_recent_status")
+        self._status_label.setWordWrap(True)
         if self._project_status != "ready":
             self._status_label.setProperty("chipTone", "danger")
         elif self._sdk_status == "ready":
@@ -136,28 +146,71 @@ class WelcomePage(QWidget):
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
+        shell = QWidget()
+        shell.setAttribute(Qt.WA_StyledBackground, True)
+        shell.setObjectName("welcome_shell")
+        shell_layout = QVBoxLayout(shell)
+        shell_layout.setContentsMargins(28, 28, 28, 28)
+        shell_layout.setSpacing(18)
+
         center_widget = QWidget()
-        center_widget.setMaximumWidth(900)
+        center_widget.setAttribute(Qt.WA_StyledBackground, True)
+        center_widget.setObjectName("welcome_center")
+        center_widget.setMaximumWidth(1180)
         center_layout = QVBoxLayout(center_widget)
-        center_layout.setContentsMargins(40, 40, 40, 40)
-        center_layout.setSpacing(24)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+        center_layout.setSpacing(18)
+
+        self._hero = QFrame()
+        self._hero.setObjectName("welcome_hero")
+        hero_layout = QHBoxLayout(self._hero)
+        hero_layout.setContentsMargins(28, 26, 28, 26)
+        hero_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(8)
+
+        self._eyebrow_label = QLabel("Workspace Launcher")
+        self._eyebrow_label.setObjectName("welcome_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("EmbeddedGUI Designer")
         self._title_label.setFont(QFont("Segoe UI", 28, QFont.Light))
-        self._title_label.setObjectName("workspace_section_title")
-        center_layout.addWidget(self._title_label)
+        self._title_label.setObjectName("welcome_hero_title")
+        hero_copy.addWidget(self._title_label)
 
-        self._subtitle_label = QLabel("Visual designer with SDK-backed preview and external app workspace support")
+        self._subtitle_label = QLabel("Visual UI design, compile-backed preview, and SDK workspace control in one shell")
         self._subtitle_label.setFont(QFont("Segoe UI", 12))
-        self._subtitle_label.setObjectName("workspace_section_subtitle")
-        center_layout.addWidget(self._subtitle_label)
+        self._subtitle_label.setObjectName("welcome_hero_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
 
-        center_layout.addSpacing(20)
+        self._hero_hint_label = QLabel(
+            "Create a project, reopen recent work, or attach an SDK example. The launch surface stays lightweight while the editor shell stays canvas-first."
+        )
+        self._hero_hint_label.setObjectName("welcome_hero_hint")
+        self._hero_hint_label.setWordWrap(True)
+        hero_copy.addWidget(self._hero_hint_label)
+        hero_copy.addStretch(1)
+        hero_layout.addLayout(hero_copy, 3)
+
+        hero_metrics = QVBoxLayout()
+        hero_metrics.setContentsMargins(0, 0, 0, 0)
+        hero_metrics.setSpacing(10)
+        self._overview_sdk_value = self._create_overview_metric(hero_metrics, "SDK Binding")
+        self._overview_preview_value = self._create_overview_metric(hero_metrics, "Preview Mode")
+        self._overview_recent_value = self._create_overview_metric(hero_metrics, "Recent Work")
+        hero_layout.addLayout(hero_metrics, 2)
+        center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(40)
+        content_layout.setSpacing(18)
 
-        left_col = QVBoxLayout()
+        left_card = QFrame()
+        left_card.setObjectName("welcome_action_panel")
+        left_col = QVBoxLayout(left_card)
+        left_col.setContentsMargins(22, 22, 22, 22)
         left_col.setSpacing(12)
 
         self._start_label = QLabel("Start")
@@ -165,43 +218,43 @@ class WelcomePage(QWidget):
         self._start_label.setObjectName("workspace_section_title")
         left_col.addWidget(self._start_label)
 
+        self._start_hint_label = QLabel("Open the main editor through a clean, single-path launch surface.")
+        self._start_hint_label.setObjectName("workspace_section_subtitle")
+        self._start_hint_label.setWordWrap(True)
+        left_col.addWidget(self._start_hint_label)
+
         self._new_project_btn = PrimaryPushButton("New Project...")
-        self._new_project_btn.setFixedWidth(220)
         self._new_project_btn.setIcon(make_icon("toolbar.new"))
         self._new_project_btn.clicked.connect(self.new_project.emit)
         left_col.addWidget(self._new_project_btn)
 
         self._open_project_btn = PushButton("Open Project File...")
-        self._open_project_btn.setFixedWidth(220)
         self._open_project_btn.setIcon(make_icon("toolbar.open"))
         self._open_project_btn.clicked.connect(self.open_project.emit)
         left_col.addWidget(self._open_project_btn)
 
         self._open_app_btn = PushButton("Open SDK Example...")
-        self._open_app_btn.setFixedWidth(220)
         self._open_app_btn.setIcon(make_icon("nav.page"))
         self._open_app_btn.clicked.connect(self.open_app.emit)
         left_col.addWidget(self._open_app_btn)
 
         self._set_sdk_root_btn = PushButton("Set SDK Root...")
-        self._set_sdk_root_btn.setFixedWidth(220)
         self._set_sdk_root_btn.setIcon(make_icon("toolbar.settings.project"))
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
 
         self._download_sdk_btn = PushButton("Download SDK...")
-        self._download_sdk_btn.setFixedWidth(220)
         self._download_sdk_btn.setIcon(make_icon("toolbar.compile"))
         self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
         self._download_sdk_btn.setToolTip(describe_auto_download_plan())
         self._download_sdk_btn.setStatusTip(self._download_sdk_btn.toolTip())
         left_col.addWidget(self._download_sdk_btn)
 
-        self._sdk_card = QWidget()
-        self._sdk_card.setObjectName("workspace_panel_header")
+        self._sdk_card = QFrame()
+        self._sdk_card.setObjectName("welcome_sdk_panel")
         sdk_layout = QVBoxLayout(self._sdk_card)
-        sdk_layout.setContentsMargins(16, 14, 16, 14)
-        sdk_layout.setSpacing(6)
+        sdk_layout.setContentsMargins(18, 16, 18, 16)
+        sdk_layout.setSpacing(8)
 
         self._sdk_title_label = QLabel("SDK Status")
         self._sdk_title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
@@ -223,13 +276,15 @@ class WelcomePage(QWidget):
         self._sdk_hint_label.setObjectName("workspace_section_subtitle")
         sdk_layout.addWidget(self._sdk_hint_label)
 
-        left_col.addSpacing(12)
+        left_col.addSpacing(10)
         left_col.addWidget(self._sdk_card)
-
         left_col.addStretch()
-        content_layout.addLayout(left_col)
+        content_layout.addWidget(left_card, 3)
 
-        right_col = QVBoxLayout()
+        right_card = QFrame()
+        right_card.setObjectName("welcome_recent_panel")
+        right_col = QVBoxLayout(right_card)
+        right_col.setContentsMargins(22, 22, 22, 22)
         right_col.setSpacing(12)
 
         self._recent_label = QLabel("Recent Projects")
@@ -237,11 +292,16 @@ class WelcomePage(QWidget):
         self._recent_label.setObjectName("workspace_section_title")
         right_col.addWidget(self._recent_label)
 
+        self._recent_hint_label = QLabel("Return to active projects quickly with path and SDK health visible at a glance.")
+        self._recent_hint_label.setObjectName("workspace_section_subtitle")
+        self._recent_hint_label.setWordWrap(True)
+        right_col.addWidget(self._recent_hint_label)
+
         self._recent_list = QVBoxLayout()
         self._recent_list.setSpacing(8)
         right_col.addLayout(self._recent_list)
         right_col.addStretch()
-        content_layout.addLayout(right_col, 1)
+        content_layout.addWidget(right_card, 4)
 
         center_layout.addLayout(content_layout, 1)
 
@@ -250,8 +310,9 @@ class WelcomePage(QWidget):
         self._footer_label.setAlignment(Qt.AlignCenter)
         center_layout.addWidget(self._footer_label)
 
+        shell_layout.addWidget(center_widget, 0, Qt.AlignCenter)
         main_layout.addStretch()
-        main_layout.addWidget(center_widget)
+        main_layout.addWidget(shell, 1)
         main_layout.addStretch()
         self._new_project_btn.setAccessibleName("Create new project action")
         self._open_project_btn.setAccessibleName("Open project file action")
@@ -273,6 +334,25 @@ class WelcomePage(QWidget):
 
         self._refresh_sdk_status()
         self._refresh_recent_list()
+
+    def _create_overview_metric(self, layout, label_text):
+        card = QFrame()
+        card.setObjectName("welcome_metric_card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        label = QLabel(label_text)
+        label.setObjectName("welcome_metric_label")
+        card_layout.addWidget(label)
+
+        value = QLabel("")
+        value.setObjectName("welcome_metric_value")
+        value.setWordWrap(True)
+        card_layout.addWidget(value)
+
+        layout.addWidget(card)
+        return value
 
     def _set_sdk_chip_tone(self, tone):
         self._sdk_status_label.setProperty("chipTone", tone)
@@ -318,6 +398,9 @@ class WelcomePage(QWidget):
             )
 
         self._sdk_path_label.setText(sdk_root or "No SDK root configured")
+        preview_summary = "Compile-backed preview ready" if sdk_status == "ready" else "Python preview fallback"
+        self._overview_sdk_value.setText(self._sdk_status_label.text())
+        self._overview_preview_value.setText(preview_summary)
         self._update_accessibility_summary()
 
     def _resolve_display_sdk_root(self, sdk_root=""):
@@ -330,12 +413,16 @@ class WelcomePage(QWidget):
     def _refresh_recent_list(self):
         while self._recent_list.count():
             item = self._recent_list.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            widget = item.widget()
+            if widget is not None:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
 
         recent = list(self._config.recent_projects or [])
         visible_recent = recent[:8]
         self._recent_project_count = len(visible_recent)
+        self._overview_recent_value.setText(self._recent_projects_summary())
         if not visible_recent:
             empty = QWidget()
             empty.setObjectName("welcome_recent_empty")
@@ -344,7 +431,7 @@ class WelcomePage(QWidget):
             el.setSpacing(6)
             no_recent = QLabel("No recent projects")
             no_recent.setObjectName("workspace_section_title")
-            sub = QLabel("Open a .egui file or create a project — it will appear here.")
+            sub = QLabel("Open a .egui file or create a project - it will appear here.")
             sub.setObjectName("workspace_section_subtitle")
             sub.setWordWrap(True)
             el.addWidget(no_recent)
@@ -386,7 +473,10 @@ class WelcomePage(QWidget):
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=self._title_label.text())
         _set_widget_metadata(self._subtitle_label, tooltip=self._subtitle_label.text(), accessible_name=self._subtitle_label.text())
+        _set_widget_metadata(self._hero_hint_label, tooltip=self._hero_hint_label.text(), accessible_name=self._hero_hint_label.text())
+        _set_widget_metadata(self._eyebrow_label, tooltip=self._eyebrow_label.text(), accessible_name=self._eyebrow_label.text())
         _set_widget_metadata(self._start_label, tooltip=self._start_label.text(), accessible_name=self._start_label.text())
+        _set_widget_metadata(self._start_hint_label, tooltip=self._start_hint_label.text(), accessible_name=self._start_hint_label.text())
         _set_widget_metadata(self._sdk_card, tooltip=sdk_status, accessible_name=f"SDK card: {sdk_status}")
         _set_widget_metadata(self._sdk_title_label, tooltip=self._sdk_title_label.text(), accessible_name=self._sdk_title_label.text())
         _set_widget_metadata(
@@ -434,5 +524,25 @@ class WelcomePage(QWidget):
             self._recent_label,
             tooltip=recent_label_summary,
             accessible_name=recent_label_summary,
+        )
+        _set_widget_metadata(
+            self._recent_hint_label,
+            tooltip=self._recent_hint_label.text(),
+            accessible_name=self._recent_hint_label.text(),
+        )
+        _set_widget_metadata(
+            self._overview_sdk_value,
+            tooltip=self._overview_sdk_value.text(),
+            accessible_name=f"Welcome metric: SDK binding. {self._overview_sdk_value.text()}",
+        )
+        _set_widget_metadata(
+            self._overview_preview_value,
+            tooltip=self._overview_preview_value.text(),
+            accessible_name=f"Welcome metric: Preview mode. {self._overview_preview_value.text()}",
+        )
+        _set_widget_metadata(
+            self._overview_recent_value,
+            tooltip=self._overview_recent_value.text(),
+            accessible_name=f"Welcome metric: Recent work. {self._overview_recent_value.text()}",
         )
         _set_widget_metadata(self._footer_label, tooltip=self._footer_label.text(), accessible_name=self._footer_label.text())
