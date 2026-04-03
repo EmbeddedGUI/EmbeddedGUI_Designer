@@ -1200,6 +1200,7 @@ class ReleaseHistoryDialog(QDialog):
         filter_row.addWidget(self._copy_filtered_button)
 
         self._copy_filtered_json_button = QPushButton("Copy Filtered JSON")
+        self._copy_filtered_json_button.setIcon(make_icon("toolbar.copy"))
         self._copy_filtered_json_button.clicked.connect(self._copy_filtered_json)
         filter_row.addWidget(self._copy_filtered_json_button)
 
@@ -1209,22 +1210,27 @@ class ReleaseHistoryDialog(QDialog):
         filter_row.addWidget(self._export_filtered_button)
 
         self._copy_history_file_button = QPushButton("Copy History Path")
+        self._copy_history_file_button.setIcon(make_icon("toolbar.copy"))
         self._copy_history_file_button.clicked.connect(self._copy_history_file_path)
         filter_row.addWidget(self._copy_history_file_button)
 
         self._copy_history_json_button = QPushButton("Copy History JSON")
+        self._copy_history_json_button.setIcon(make_icon("toolbar.copy"))
         self._copy_history_json_button.clicked.connect(self._copy_history_file_json)
         filter_row.addWidget(self._copy_history_json_button)
 
         self._export_history_json_button = QPushButton("Export History JSON...")
+        self._export_history_json_button.setIcon(make_icon("toolbar.export"))
         self._export_history_json_button.clicked.connect(self._export_history_file_json)
         filter_row.addWidget(self._export_history_json_button)
 
         self._open_history_file_button = QPushButton("Open History File")
+        self._open_history_file_button.setIcon(make_icon("toolbar.open"))
         self._open_history_file_button.clicked.connect(self._open_history_file)
         filter_row.addWidget(self._open_history_file_button)
 
         self._refresh_button = QPushButton("Refresh")
+        self._refresh_button.setIcon(make_icon("state.info"))
         self._refresh_button.setEnabled(self._refresh_history_callback is not None)
         self._refresh_button.clicked.connect(self._reload_history_entries)
         filter_row.addWidget(self._refresh_button)

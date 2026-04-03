@@ -6,6 +6,11 @@ from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QFont, QFontDatabase, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PyQt5.QtWidgets import QApplication
 
+try:
+    from qfluentwidgets import FluentIcon as FIF
+except Exception:  # optional runtime dependency path
+    FIF = None
+
 
 _WIDGET_ICON_KEYS = {
     "activity_ring": "display",
@@ -74,27 +79,27 @@ _WIDGET_ICON_KEYS = {
 # Canonical semantic IDs (toolbar/nav/layout/state) are mapped to Material glyphs.
 _ICON_DEFINITIONS = {
     # Toolbar P0
-    "toolbar.new": {"glyph": "add", "size": 20, "token": "default"},
+    "toolbar.new": {"glyph": "add_circle", "size": 20, "token": "default"},
     "toolbar.open": {"glyph": "folder_open", "size": 20, "token": "default"},
     "toolbar.save": {"glyph": "save", "size": 20, "token": "default"},
     "toolbar.undo": {"glyph": "undo", "size": 20, "token": "default"},
     "toolbar.redo": {"glyph": "redo", "size": 20, "token": "default"},
     "toolbar.copy": {"glyph": "content_copy", "size": 20, "token": "default"},
     "toolbar.paste": {"glyph": "content_paste", "size": 20, "token": "default"},
-    "toolbar.delete": {"glyph": "delete", "size": 20, "token": "default"},
-    "toolbar.preview": {"glyph": "preview", "size": 20, "token": "default"},
-    "toolbar.compile": {"glyph": "play_arrow", "size": 20, "token": "default"},
+    "toolbar.delete": {"glyph": "delete_outline", "size": 20, "token": "default"},
+    "toolbar.preview": {"glyph": "visibility", "size": 20, "token": "default"},
+    "toolbar.compile": {"glyph": "play_circle", "size": 20, "token": "default"},
     "toolbar.stop": {"glyph": "stop", "size": 20, "token": "default"},
-    "toolbar.export": {"glyph": "file_export", "size": 20, "token": "default"},
+    "toolbar.export": {"glyph": "upload", "size": 20, "token": "default"},
     "toolbar.settings.project": {"glyph": "settings", "size": 20, "token": "default"},
     "toolbar.settings.global": {"glyph": "tune", "size": 20, "token": "default"},
 
     # Navigation P0
-    "nav.page": {"glyph": "article", "size": 20, "token": "default"},
+    "nav.page": {"glyph": "description", "size": 20, "token": "default"},
     "nav.page_group": {"glyph": "folder", "size": 20, "token": "default"},
-    "nav.template": {"glyph": "dashboard_customize", "size": 20, "token": "default"},
+    "nav.template": {"glyph": "dashboard", "size": 20, "token": "default"},
     "nav.component_library": {"glyph": "widgets", "size": 20, "token": "default"},
-    "nav.resource": {"glyph": "inventory_2", "size": 20, "token": "default"},
+    "nav.resource": {"glyph": "perm_media", "size": 20, "token": "default"},
     "nav.expand": {"glyph": "chevron_right", "size": 20, "token": "muted"},
     "nav.collapse": {"glyph": "expand_more", "size": 20, "token": "muted"},
 
@@ -105,8 +110,8 @@ _ICON_DEFINITIONS = {
     "layout.align.top": {"glyph": "vertical_align_top", "size": 18, "token": "default"},
     "layout.align.middle": {"glyph": "vertical_align_center", "size": 18, "token": "default"},
     "layout.align.bottom": {"glyph": "vertical_align_bottom", "size": 18, "token": "default"},
-    "layout.distribute.h": {"glyph": "align_horizontal_left", "size": 18, "token": "default"},
-    "layout.distribute.v": {"glyph": "vertical_align_center", "size": 18, "token": "default"},
+    "layout.distribute.h": {"glyph": "view_week", "size": 18, "token": "default"},
+    "layout.distribute.v": {"glyph": "view_stream", "size": 18, "token": "default"},
     "edit.visible": {"glyph": "visibility", "size": 18, "token": "default"},
     "edit.hidden": {"glyph": "visibility_off", "size": 18, "token": "muted"},
     "edit.lock": {"glyph": "lock", "size": 18, "token": "default"},
@@ -114,25 +119,25 @@ _ICON_DEFINITIONS = {
 
     # State/status
     "state.success": {"glyph": "check_circle", "size": 16, "token": "success"},
-    "state.warn": {"glyph": "warning", "size": 16, "token": "warn"},
+    "state.warn": {"glyph": "warning_amber", "size": 16, "token": "warn"},
     "state.error": {"glyph": "error", "size": 16, "token": "error"},
     "state.info": {"glyph": "info", "size": 16, "token": "info"},
-    "state.progress": {"glyph": "hourglass_top", "size": 16, "token": "info"},
+    "state.progress": {"glyph": "hourglass_empty", "size": 16, "token": "info"},
 
     # Canvas operations P1
-    "canvas.select": {"glyph": "gesture_select", "size": 18, "token": "default"},
+    "canvas.select": {"glyph": "ads_click", "size": 18, "token": "default"},
     "canvas.drag": {"glyph": "pan_tool", "size": 18, "token": "default"},
     "canvas.zoom_in": {"glyph": "zoom_in", "size": 18, "token": "default"},
     "canvas.zoom_out": {"glyph": "zoom_out", "size": 18, "token": "default"},
     "canvas.rotate": {"glyph": "rotate_right", "size": 18, "token": "default"},
     "canvas.layer.up": {"glyph": "vertical_align_top", "size": 18, "token": "default"},
     "canvas.layer.down": {"glyph": "vertical_align_bottom", "size": 18, "token": "default"},
-    "canvas.layer.top": {"glyph": "flip_to_front", "size": 18, "token": "default"},
-    "canvas.layer.bottom": {"glyph": "flip_to_back", "size": 18, "token": "default"},
+    "canvas.layer.top": {"glyph": "vertical_align_top", "size": 18, "token": "default"},
+    "canvas.layer.bottom": {"glyph": "vertical_align_bottom", "size": 18, "token": "default"},
     "canvas.grid": {"glyph": "grid_view", "size": 18, "token": "muted"},
     "canvas.snap": {"glyph": "my_location", "size": 18, "token": "muted"},
     "canvas.ruler": {"glyph": "straighten", "size": 18, "token": "muted"},
-    "canvas.guides": {"glyph": "space_dashboard", "size": 18, "token": "muted"},
+    "canvas.guides": {"glyph": "grid_view", "size": 18, "token": "muted"},
 }
 
 # Legacy key compatibility: all old callsites still route to canonical semantics.
@@ -194,6 +199,42 @@ _ICON_ALIASES = {
 }
 
 ICON_SEMANTIC_MAP = {k: v["glyph"] for k, v in _ICON_DEFINITIONS.items()}
+
+_FLUENT_ICON_MAP = {
+    "toolbar.new": "ADD",
+    "toolbar.open": "FOLDER",
+    "toolbar.save": "SAVE",
+    "toolbar.undo": "SYNC",
+    "toolbar.redo": "SYNC",
+    "toolbar.copy": "COPY",
+    "toolbar.paste": "PASTE",
+    "toolbar.delete": "DELETE",
+    "toolbar.preview": "VIEW",
+    "toolbar.compile": "PLAY",
+    "toolbar.stop": "STOP",
+    "toolbar.export": "SHARE",
+    "toolbar.settings.project": "SETTING",
+    "toolbar.settings.global": "SETTING",
+
+    "nav.page": "DOCUMENT",
+    "nav.page_group": "FOLDER",
+    "nav.template": "ALBUM",
+    "nav.component_library": "APPLICATION",
+    "nav.resource": "IMAGE_EXPORT",
+
+    "state.success": "COMPLETED",
+    "state.warn": "IMPORTANT",
+    "state.error": "CLOSE",
+    "state.info": "INFO",
+    "state.progress": "HISTORY",
+
+    "canvas.zoom_in": "ZOOM_IN",
+    "canvas.zoom_out": "ZOOM_OUT",
+    "canvas.rotate": "SYNC",
+    "canvas.grid": "GRID",
+    "canvas.snap": "TARGET",
+    "canvas.ruler": "RULER",
+}
 
 _MATERIAL_FONT_FAMILY = "Material Symbols Rounded"
 _MATERIAL_FONT_FALLBACKS = (
@@ -274,6 +315,64 @@ def _material_glyph_for_icon(icon_key: str) -> str | None:
     return str(spec.get("glyph") or "").strip() or None
 
 
+def _fallback_paint_key(icon_key: str) -> str:
+    """Map semantic icon keys back to legacy painter keys for no-font fallback."""
+    key = str(icon_key or "").strip()
+    canonical = _ICON_ALIASES.get(key, key)
+    semantic_to_legacy = {
+        "toolbar.new": "button",
+        "toolbar.open": "project",
+        "toolbar.save": "save",
+        "toolbar.undo": "undo",
+        "toolbar.redo": "redo",
+        "toolbar.copy": "page",
+        "toolbar.paste": "page",
+        "toolbar.delete": "stop",
+        "toolbar.preview": "animation",
+        "toolbar.compile": "compile",
+        "toolbar.stop": "stop",
+        "toolbar.export": "save",
+        "toolbar.settings.project": "properties",
+        "toolbar.settings.global": "properties",
+        "nav.page": "page",
+        "nav.page_group": "project",
+        "nav.template": "layout",
+        "nav.component_library": "widgets",
+        "nav.resource": "assets",
+        "layout.align.left": "layout",
+        "layout.align.center": "layout",
+        "layout.align.right": "layout",
+        "layout.align.top": "layout",
+        "layout.align.middle": "layout",
+        "layout.align.bottom": "layout",
+        "layout.distribute.h": "grid",
+        "layout.distribute.v": "grid",
+        "edit.visible": "status",
+        "edit.hidden": "status",
+        "edit.lock": "security",
+        "edit.unlock": "security",
+        "state.success": "status",
+        "state.warn": "diagnostics",
+        "state.error": "diagnostics",
+        "state.info": "info",
+        "state.progress": "time",
+        "canvas.select": "navigation",
+        "canvas.drag": "navigation",
+        "canvas.zoom_in": "navigation",
+        "canvas.zoom_out": "navigation",
+        "canvas.rotate": "navigation",
+        "canvas.layer.up": "layout",
+        "canvas.layer.down": "layout",
+        "canvas.layer.top": "layout",
+        "canvas.layer.bottom": "layout",
+        "canvas.grid": "grid",
+        "canvas.snap": "grid",
+        "canvas.ruler": "divider",
+        "canvas.guides": "grid",
+    }
+    return semantic_to_legacy.get(canonical, key or "widget")
+
+
 def _icon_token_for_key(icon_key: str) -> str:
     spec = _resolve_icon_spec(icon_key)
     if spec is None:
@@ -300,7 +399,30 @@ def widget_icon_key(type_name: str) -> str:
     return _WIDGET_ICON_KEYS.get(str(type_name or "").strip(), "widget")
 
 
+def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
+    if FIF is None:
+        return None
+    spec = _resolve_icon_spec(icon_key)
+    key = str(icon_key or "").strip()
+    canonical = _ICON_ALIASES.get(key, key)
+    if spec is None:
+        return None
+    fluent_name = _FLUENT_ICON_MAP.get(canonical)
+    if not fluent_name:
+        return None
+    fluent_icon = getattr(FIF, fluent_name, None)
+    if fluent_icon is None:
+        return None
+    try:
+        return fluent_icon.icon()
+    except Exception:
+        return None
+
+
 def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
+    fluent_icon = _fluent_icon_for_key(icon_key)
+    if fluent_icon is not None:
+        return fluent_icon
     pixmap = make_pixmap(icon_key, size=size, mode=mode)
     return QIcon(pixmap)
 
@@ -324,7 +446,7 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
         painter.setPen(QPen(icon_color))
         painter.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, glyph_name)
     else:
-        _paint_icon(painter, icon_key, QRectF(1, 1, size - 2, size - 2), palette)
+        _paint_icon(painter, _fallback_paint_key(icon_key), QRectF(1, 1, size - 2, size - 2), palette)
 
     painter.end()
     return pixmap
