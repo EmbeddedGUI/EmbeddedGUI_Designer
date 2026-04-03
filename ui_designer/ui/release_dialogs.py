@@ -15,7 +15,9 @@ from PyQt5.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
+    QFrame,
     QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -588,12 +590,74 @@ class ReleaseBuildDialog(QDialog):
     def __init__(self, release_config: ReleaseConfig, sdk_label: str, output_root: str, warning_count: int, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Release Build")
-        self.resize(560, 260)
+        self.setMinimumSize(860, 560)
+        self.resize(920, 600)
         self._release_config = release_config
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("release_build_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Release Pipeline")
+        self._eyebrow_label.setObjectName("release_build_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Prepare Release Build")
+        self._title_label.setObjectName("release_build_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Confirm the profile, verify SDK binding and output location, then decide how strict packaging should be for this release run."
+        )
+        self._subtitle_label.setObjectName("release_build_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._profile_metric_value = self._create_metric_card(metrics_layout, "Profile")
+        self._diagnostics_metric_value = self._create_metric_card(metrics_layout, "Diagnostics")
+        self._package_metric_value = self._create_metric_card(metrics_layout, "Packaging")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
+
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(16)
+
+        context_card = QFrame()
+        context_card.setObjectName("release_build_card")
+        context_layout = QVBoxLayout(context_card)
+        context_layout.setContentsMargins(22, 22, 22, 22)
+        context_layout.setSpacing(12)
+
+        context_title = QLabel("Build Context")
+        context_title.setObjectName("workspace_section_title")
+        context_layout.addWidget(context_title)
+
+        context_hint = QLabel("The selected profile drives target settings, while the SDK and output path define the actual packaging workspace.")
+        context_hint.setObjectName("workspace_section_subtitle")
+        context_hint.setWordWrap(True)
+        context_layout.addWidget(context_hint)
 
         form = QFormLayout()
+        form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        form.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        form.setFormAlignment(Qt.AlignTop)
+        form.setHorizontalSpacing(16)
+        form.setVerticalSpacing(12)
         self._profile_combo = QComboBox()
         for profile in release_config.profiles:
             self._profile_combo.addItem(f"{profile.name} ({profile.id})", profile.id)
@@ -615,16 +679,43 @@ class ReleaseBuildDialog(QDialog):
         warnings_text = f"{warning_count} warning(s)" if warning_count else "No warnings"
         self._warnings_label = QLabel(warnings_text)
         form.addRow("Diagnostics", self._warnings_label)
-        layout.addLayout(form)
+        context_layout.addLayout(form)
+        context_layout.addStretch(1)
+        content_layout.addWidget(context_card, 3)
+
+        options_card = QFrame()
+        options_card.setObjectName("release_build_card")
+        options_layout = QVBoxLayout(options_card)
+        options_layout.setContentsMargins(22, 22, 22, 22)
+        options_layout.setSpacing(12)
+
+        options_title = QLabel("Build Options")
+        options_title.setObjectName("workspace_section_title")
+        options_layout.addWidget(options_title)
+
+        options_hint = QLabel("Choose whether warnings should block the build and whether the output should also be packaged as a zip artifact.")
+        options_hint.setObjectName("workspace_section_subtitle")
+        options_hint.setWordWrap(True)
+        options_layout.addWidget(options_hint)
 
         self._warnings_as_errors = QCheckBox("Treat warnings as errors")
         self._warnings_as_errors.toggled.connect(self._update_accessibility_summary)
-        layout.addWidget(self._warnings_as_errors)
+        options_layout.addWidget(self._warnings_as_errors)
 
         self._package_release = QCheckBox("Create zip package")
         self._package_release.setChecked(True)
         self._package_release.toggled.connect(self._update_accessibility_summary)
-        layout.addWidget(self._package_release)
+        options_layout.addWidget(self._package_release)
+
+        self._release_note_label = QLabel(
+            "Release build runs against the current project state. Review warnings before enabling stricter failure rules."
+        )
+        self._release_note_label.setObjectName("workspace_section_subtitle")
+        self._release_note_label.setWordWrap(True)
+        options_layout.addWidget(self._release_note_label)
+        options_layout.addStretch(1)
+        content_layout.addWidget(options_card, 2)
+        layout.addLayout(content_layout, 1)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self._ok_button = button_box.button(QDialogButtonBox.Ok)
@@ -634,11 +725,35 @@ class ReleaseBuildDialog(QDialog):
         layout.addWidget(button_box)
         self._update_accessibility_summary()
 
+    def _create_metric_card(self, layout: QVBoxLayout, label_text: str) -> QLabel:
+        card = QFrame()
+        card.setObjectName("release_build_metric_card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        label = QLabel(label_text)
+        label.setObjectName("release_build_metric_label")
+        card_layout.addWidget(label)
+
+        value = QLabel("")
+        value.setObjectName("release_build_metric_value")
+        value.setWordWrap(True)
+        card_layout.addWidget(value)
+
+        layout.addWidget(card)
+        return value
+
     def _update_accessibility_summary(self) -> None:
         profile_text = self._profile_combo.currentText() or "none"
         output_root = self._output_label.text() or "none"
         diagnostics_text = self._warnings_label.text()
         release_context = f"Current profile: {profile_text}. Output root: {output_root}. Diagnostics: {diagnostics_text}."
+        self._profile_metric_value.setText(profile_text)
+        self._diagnostics_metric_value.setText(diagnostics_text)
+        self._package_metric_value.setText(
+            "Zip + directory" if self._package_release.isChecked() else "Directory only"
+        )
         summary = (
             f"Release build: profile {profile_text}. "
             f"{self._sdk_label.text() or 'SDK: unknown'}. "
@@ -703,6 +818,21 @@ class ReleaseBuildDialog(QDialog):
                 tooltip=f"Cancel the release build. {release_context}",
                 accessible_name="Cancel release build",
             )
+        _set_widget_metadata(
+            self._profile_metric_value,
+            tooltip=self._profile_metric_value.text(),
+            accessible_name=f"Release build metric: Profile. {self._profile_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._diagnostics_metric_value,
+            tooltip=self._diagnostics_metric_value.text(),
+            accessible_name=f"Release build metric: Diagnostics. {self._diagnostics_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._package_metric_value,
+            tooltip=self._package_metric_value.text(),
+            accessible_name=f"Release build metric: Packaging. {self._package_metric_value.text()}",
+        )
 
     @property
     def selected_profile_id(self) -> str:
@@ -723,21 +853,78 @@ class ReleaseProfilesDialog(QDialog):
     def __init__(self, release_config: ReleaseConfig, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Release Profiles")
-        self.resize(760, 420)
+        self.setMinimumSize(980, 680)
+        self.resize(1040, 720)
         self._release_config = ReleaseConfig.from_dict(release_config.to_dict())
 
         root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(24, 24, 24, 24)
+        root_layout.setSpacing(16)
+
+        header = QFrame()
+        header.setObjectName("release_profiles_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(24, 22, 24, 22)
+        header_layout.setSpacing(24)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(6)
+
+        self._eyebrow_label = QLabel("Release Configuration")
+        self._eyebrow_label.setObjectName("release_profiles_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Manage Release Profiles")
+        self._title_label.setObjectName("release_profiles_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Define packaging targets, ports, and output behavior per release profile, then mark the one that should be used by default."
+        )
+        self._subtitle_label.setObjectName("release_profiles_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        hero_copy.addStretch(1)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._profile_count_metric_value = self._create_metric_card(metrics_layout, "Profiles")
+        self._default_metric_value = self._create_metric_card(metrics_layout, "Default")
+        self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
+        header_layout.addLayout(metrics_layout, 2)
+        root_layout.addWidget(header)
+
         content_layout = QHBoxLayout()
+        content_layout.setSpacing(16)
         root_layout.addLayout(content_layout, 1)
 
-        left_panel = QVBoxLayout()
-        content_layout.addLayout(left_panel, 1)
+        left_card = QFrame()
+        left_card.setObjectName("release_profiles_card")
+        left_panel = QVBoxLayout(left_card)
+        left_panel.setContentsMargins(22, 22, 22, 22)
+        left_panel.setSpacing(12)
+
+        left_title = QLabel("Profiles")
+        left_title.setObjectName("workspace_section_title")
+        left_panel.addWidget(left_title)
+
+        left_hint = QLabel("Use this list as the single source of release targets. Default state is shown directly in the item label.")
+        left_hint.setObjectName("workspace_section_subtitle")
+        left_hint.setWordWrap(True)
+        left_panel.addWidget(left_hint)
 
         self._profile_list = QListWidget()
+        self._profile_list.setObjectName("release_profiles_list")
+        self._profile_list.setSpacing(8)
         self._profile_list.currentRowChanged.connect(self._load_profile_into_form)
         left_panel.addWidget(self._profile_list, 1)
 
-        left_actions = QHBoxLayout()
+        left_actions = QGridLayout()
+        left_actions.setHorizontalSpacing(10)
+        left_actions.setVerticalSpacing(10)
         self._add_btn = QPushButton("Add")
         self._add_btn.setIcon(make_icon("toolbar.new"))
         self._copy_btn = QPushButton("Copy")
@@ -750,13 +937,38 @@ class ReleaseProfilesDialog(QDialog):
         self._copy_btn.clicked.connect(self._copy_profile)
         self._delete_btn.clicked.connect(self._delete_profile)
         self._set_default_btn.clicked.connect(self._set_default_profile)
-        for button in (self._add_btn, self._copy_btn, self._delete_btn, self._set_default_btn):
-            left_actions.addWidget(button)
+        left_actions.addWidget(self._add_btn, 0, 0)
+        left_actions.addWidget(self._copy_btn, 0, 1)
+        left_actions.addWidget(self._delete_btn, 1, 0)
+        left_actions.addWidget(self._set_default_btn, 1, 1)
         left_panel.addLayout(left_actions)
+        content_layout.addWidget(left_card, 3)
 
-        form_container = QWidget()
-        form_layout = QFormLayout(form_container)
-        content_layout.addWidget(form_container, 2)
+        right_column = QVBoxLayout()
+        right_column.setContentsMargins(0, 0, 0, 0)
+        right_column.setSpacing(16)
+
+        form_container = QFrame()
+        form_container.setObjectName("release_profiles_card")
+        form_shell = QVBoxLayout(form_container)
+        form_shell.setContentsMargins(22, 22, 22, 22)
+        form_shell.setSpacing(12)
+
+        form_title = QLabel("Profile Details")
+        form_title.setObjectName("workspace_section_title")
+        form_shell.addWidget(form_title)
+
+        form_hint = QLabel("Edit the selected profile fields below. Changes are applied to the in-memory release configuration immediately.")
+        form_hint.setObjectName("workspace_section_subtitle")
+        form_hint.setWordWrap(True)
+        form_shell.addWidget(form_hint)
+
+        form_layout = QFormLayout()
+        form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        form_layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        form_layout.setFormAlignment(Qt.AlignTop)
+        form_layout.setHorizontalSpacing(16)
+        form_layout.setVerticalSpacing(12)
 
         self._id_edit = QLineEdit()
         self._name_edit = QLineEdit()
@@ -783,10 +995,30 @@ class ReleaseProfilesDialog(QDialog):
         form_layout.addRow("Package", self._package_format_combo)
         form_layout.addRow("Extra Make Args", self._extra_args_edit)
         form_layout.addRow("", self._copy_resource_check)
+        form_shell.addLayout(form_layout)
+        right_column.addWidget(form_container, 3)
+
+        summary_card = QFrame()
+        summary_card.setObjectName("release_profiles_card")
+        summary_layout = QVBoxLayout(summary_card)
+        summary_layout.setContentsMargins(22, 22, 22, 22)
+        summary_layout.setSpacing(10)
+
+        summary_title = QLabel("Profile Summary")
+        summary_title.setObjectName("workspace_section_title")
+        summary_layout.addWidget(summary_title)
+
+        summary_hint = QLabel("Keep track of the default profile and the current selection before saving the release configuration.")
+        summary_hint.setObjectName("workspace_section_subtitle")
+        summary_hint.setWordWrap(True)
+        summary_layout.addWidget(summary_hint)
 
         self._default_label = QLabel()
+        self._default_label.setObjectName("release_profiles_summary_value")
         self._default_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        root_layout.addWidget(self._default_label)
+        summary_layout.addWidget(self._default_label)
+        right_column.addWidget(summary_card, 1)
+        content_layout.addLayout(right_column, 5)
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self._ok_button = button_box.button(QDialogButtonBox.Ok)
@@ -799,6 +1031,25 @@ class ReleaseProfilesDialog(QDialog):
         if self._profile_list.count():
             self._profile_list.setCurrentRow(0)
         self._update_accessibility_summary()
+
+    def _create_metric_card(self, layout: QVBoxLayout, label_text: str) -> QLabel:
+        card = QFrame()
+        card.setObjectName("release_profiles_metric_card")
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setSpacing(4)
+
+        label = QLabel(label_text)
+        label.setObjectName("release_profiles_metric_label")
+        card_layout.addWidget(label)
+
+        value = QLabel("")
+        value.setObjectName("release_profiles_metric_value")
+        value.setWordWrap(True)
+        card_layout.addWidget(value)
+
+        layout.addWidget(card)
+        return value
 
     @property
     def release_config(self) -> ReleaseConfig:
@@ -904,6 +1155,9 @@ class ReleaseProfilesDialog(QDialog):
     def _update_accessibility_summary(self) -> None:
         current_profile_label = self._current_profile_label()
         current_profile = self._current_profile()
+        self._profile_count_metric_value.setText(_count_label(len(self._release_config.profiles), "profile"))
+        self._default_metric_value.setText(self._release_config.default_profile or "none")
+        self._selection_metric_value.setText(current_profile_label)
         can_copy_profile = current_profile is not None
         can_delete_profile = current_profile is not None and len(self._release_config.profiles) > 1
         can_set_default_profile = (
@@ -1005,6 +1259,21 @@ class ReleaseProfilesDialog(QDialog):
                 tooltip=f"Discard the release profile changes. {summary}",
                 accessible_name="Cancel release profile changes",
             )
+        _set_widget_metadata(
+            self._profile_count_metric_value,
+            tooltip=self._profile_count_metric_value.text(),
+            accessible_name=f"Release profiles metric: Profiles. {self._profile_count_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._default_metric_value,
+            tooltip=self._default_metric_value.text(),
+            accessible_name=f"Release profiles metric: Default. {self._default_metric_value.text()}",
+        )
+        _set_widget_metadata(
+            self._selection_metric_value,
+            tooltip=self._selection_metric_value.text(),
+            accessible_name=f"Release profiles metric: Selection. {self._selection_metric_value.text()}",
+        )
 
     def _add_profile(self) -> None:
         base = "windows-pc"

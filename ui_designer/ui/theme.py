@@ -1105,6 +1105,74 @@ QTextEdit#repo_health_details {{
     border-radius: {t['r_md']}px;
 }}
 
+#release_build_header,
+#release_profiles_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_2xl']}px;
+}}
+
+#release_build_eyebrow,
+#release_profiles_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#release_build_title,
+#release_profiles_title {{
+    color: {t['text']};
+    font-size: {t['fs_display'] + 6}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#release_build_subtitle,
+#release_profiles_subtitle {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#release_build_card,
+#release_profiles_card {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#release_build_metric_card,
+#release_profiles_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#release_build_metric_label,
+#release_profiles_metric_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#release_build_metric_value,
+#release_profiles_metric_value,
+#release_profiles_summary_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+QListWidget#release_profiles_list {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #new_project_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
