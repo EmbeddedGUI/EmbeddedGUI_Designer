@@ -221,6 +221,22 @@ _FLUENT_ICON_MAP = {
     "nav.template": "ALBUM",
     "nav.component_library": "APPLICATION",
     "nav.resource": "IMAGE_EXPORT",
+    "nav.expand": "APPLICATION",
+    "nav.collapse": "APPLICATION",
+
+    "layout.align.left": "APPLICATION",
+    "layout.align.center": "APPLICATION",
+    "layout.align.right": "APPLICATION",
+    "layout.align.top": "APPLICATION",
+    "layout.align.middle": "APPLICATION",
+    "layout.align.bottom": "APPLICATION",
+    "layout.distribute.h": "GRID",
+    "layout.distribute.v": "GRID",
+
+    "edit.visible": "VIEW",
+    "edit.hidden": "CLOSE",
+    "edit.lock": "IMPORTANT",
+    "edit.unlock": "COMPLETED",
 
     "state.success": "COMPLETED",
     "state.warn": "IMPORTANT",
@@ -228,12 +244,19 @@ _FLUENT_ICON_MAP = {
     "state.info": "INFO",
     "state.progress": "HISTORY",
 
+    "canvas.select": "TARGET",
+    "canvas.drag": "TARGET",
     "canvas.zoom_in": "ZOOM_IN",
     "canvas.zoom_out": "ZOOM_OUT",
     "canvas.rotate": "SYNC",
+    "canvas.layer.up": "GRID",
+    "canvas.layer.down": "GRID",
+    "canvas.layer.top": "GRID",
+    "canvas.layer.bottom": "GRID",
     "canvas.grid": "GRID",
     "canvas.snap": "TARGET",
     "canvas.ruler": "RULER",
+    "canvas.guides": "GRID",
 }
 
 _MATERIAL_FONT_FAMILY = "Material Symbols Rounded"
@@ -407,10 +430,15 @@ def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
     canonical = _ICON_ALIASES.get(key, key)
     if spec is None:
         return None
+
     fluent_name = _FLUENT_ICON_MAP.get(canonical)
     if not fluent_name:
-        return None
+        # Full modern replacement policy: semantic keys always use Fluent fallback.
+        fluent_name = "APPLICATION"
+
     fluent_icon = getattr(FIF, fluent_name, None)
+    if fluent_icon is None:
+        fluent_icon = getattr(FIF, "APPLICATION", None)
     if fluent_icon is None:
         return None
     try:
@@ -420,9 +448,17 @@ def _fluent_icon_for_key(icon_key: str) -> QIcon | None:
 
 
 def make_icon(icon_key: str, size: int = 20, mode: str | None = None) -> QIcon:
-    fluent_icon = _fluent_icon_for_key(icon_key)
-    if fluent_icon is not None:
-        return fluent_icon
+    spec = _resolve_icon_spec(icon_key)
+    if spec is not None:
+        # Full modern replacement: semantic keys do NOT fall back to legacy painter path.
+        fluent_icon = _fluent_icon_for_key(icon_key)
+        if fluent_icon is not None:
+            return fluent_icon
+        # If Fluent is unavailable at runtime, use Material as a modern second choice.
+        pixmap = make_pixmap(icon_key, size=size, mode=mode)
+        return QIcon(pixmap)
+
+    # Non-semantic or custom keys keep compatibility behavior.
     pixmap = make_pixmap(icon_key, size=size, mode=mode)
     return QIcon(pixmap)
 
@@ -446,7 +482,15 @@ def make_pixmap(icon_key: str, size: int = 20, mode: str | None = None) -> QPixm
         painter.setPen(QPen(icon_color))
         painter.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, glyph_name)
     else:
-        _paint_icon(painter, _fallback_paint_key(icon_key), QRectF(1, 1, size - 2, size - 2), palette)
+        # Legacy painter fallback is intentionally removed for semantic keys.
+        # Keep only a neutral modern placeholder for unresolved rendering cases.
+        rect = QRectF(2, 2, size - 4, size - 4)
+        pen = QPen(icon_color, 1.8)
+        pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(rect, 5, 5)
 
     painter.end()
     return pixmap
