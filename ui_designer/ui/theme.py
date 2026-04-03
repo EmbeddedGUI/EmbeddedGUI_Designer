@@ -920,6 +920,64 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     border-radius: {t['r_md']}px;
 }}
 
+#new_project_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.7 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_2xl']}px;
+}}
+
+#new_project_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#new_project_title {{
+    color: {t['text']};
+    font-size: {t['fs_display'] + 6}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#new_project_subtitle {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#new_project_form_card,
+#new_project_summary_card {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#new_project_metric_card,
+#new_project_dimension_card {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#new_project_metric_label,
+#new_project_summary_caption,
+#new_project_field_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#new_project_metric_value,
+#new_project_summary_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
 #welcome_shell,
 #welcome_center {{
     background-color: transparent;

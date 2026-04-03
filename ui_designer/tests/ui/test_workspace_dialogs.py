@@ -492,6 +492,20 @@ class TestNewProjectDialog:
         )
         dialog.deleteLater()
 
+    def test_create_button_reports_invalid_sdk_root_before_submit(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        dialog = NewProjectDialog(sdk_root=str(tmp_path / "invalid_sdk"), default_parent_dir=str(tmp_path))
+        dialog._app_name_edit.setText("DemoApp")
+
+        assert dialog._create_btn.toolTip() == (
+            "Select a valid EmbeddedGUI SDK root or clear it before creating the project."
+        )
+        assert dialog._create_btn.accessibleName() == (
+            "Create project unavailable. Select a valid EmbeddedGUI SDK root or clear it before creating the project."
+        )
+        dialog.deleteLater()
+
     def test_accept_requires_parent_directory(self, qapp, isolated_config):
         from ui_designer.ui.new_project_dialog import NewProjectDialog
 
