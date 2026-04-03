@@ -526,7 +526,7 @@ class TestPropertyPanelFileFlow:
         text_editor = panel._editors["prop_text"]
 
         assert "1 mixed field" in _group_label_texts(summary_header)
-        assert "Text (Mixed):" in _form_labels(common_group)
+        assert "Text:" in _form_labels(common_group)
         assert text_editor.text() == ""
         assert text_editor.placeholderText() == "Mixed values"
         assert "different values" in text_editor.toolTip()
@@ -550,7 +550,7 @@ class TestPropertyPanelFileFlow:
         common_group = _find_group(panel, "Common Properties")
         editor = panel._editors["prop_is_checked"]
 
-        assert "Is Checked (Mixed):" in _form_labels(common_group)
+        assert "Is Checked:" in _form_labels(common_group)
         assert editor.isTristate() is True
         assert editor.checkState() == Qt.PartiallyChecked
         assert "different values" in editor.toolTip()
@@ -573,7 +573,7 @@ class TestPropertyPanelFileFlow:
         common_group = _find_group(panel, "Common Properties")
         editor = panel._editors["prop_font_file"]
 
-        assert "Font File (Mixed):" in _form_labels(common_group)
+        assert "Font File:" in _form_labels(common_group)
         assert editor.currentIndex() == -1
         assert editor.placeholderText() == "Mixed values"
         assert "different values" in editor.toolTip()
@@ -596,7 +596,7 @@ class TestPropertyPanelFileFlow:
         editor = panel._editors["multi_width"]
 
         assert "1 mixed field" in _group_label_texts(summary_header)
-        assert "Width (Mixed):" in _form_labels(geometry_group)
+        assert "Width:" in _form_labels(geometry_group)
         assert "different values" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Batch Width: mixed values"
@@ -871,7 +871,7 @@ class TestPropertyPanelFileFlow:
         value_editor = panel._editors["callback_onValueChanged"]
 
         assert "1 mixed field" in _group_label_texts(summary_header)
-        assert "Click (Mixed):" in _form_labels(callbacks_group)
+        assert "Click:" in _form_labels(callbacks_group)
         assert "Value Changed:" in _form_labels(callbacks_group)
         assert click_editor.text() == ""
         assert click_editor.placeholderText() == "Mixed values"

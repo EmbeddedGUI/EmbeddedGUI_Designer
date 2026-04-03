@@ -26,6 +26,32 @@ def qapp():
     app.processEvents()
 
 
+def _dispose_widget(widget):
+    if widget is None:
+        return
+    stop_rendering = getattr(widget, "stop_rendering", None)
+    if callable(stop_rendering):
+        try:
+            stop_rendering()
+        except Exception:
+            pass
+    try:
+        widget.close()
+    except Exception:
+        pass
+    try:
+        widget.deleteLater()
+    except Exception:
+        pass
+    app = QApplication.instance()
+    if app is not None:
+        try:
+            app.sendPostedEvents()
+        except Exception:
+            pass
+        app.processEvents()
+
+
 def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton, modifiers=Qt.NoModifier):
     return QMouseEvent(event_type, QPointF(pos), button, buttons, modifiers)
 
@@ -52,7 +78,7 @@ class TestPreviewPanelFallback:
         assert panel._btn_zoom_in.toolTip() == "Zoom in preview (Ctrl+=). Current zoom: 100% (8px)."
         assert panel._btn_zoom_out.accessibleName() == "Zoom out preview: current zoom 100% (8px)"
         assert panel._btn_zoom_in.accessibleName() == "Zoom in preview: current zoom 100% (8px)"
-        panel.deleteLater()
+        _dispose_widget(panel)
 
     def test_show_python_preview_sets_pixmap_and_status(self, qapp):
         from ui_designer.model.page import Page
@@ -71,7 +97,7 @@ class TestPreviewPanelFallback:
         assert panel.is_python_preview_active() is True
         assert panel._preview_label.pixmap() is not None
         assert "Python fallback" in panel.status_label.text()
-        panel.deleteLater()
+        _dispose_widget(panel)
 
     def test_preview_summary_metadata_refreshes_with_pointer_and_grid_updates(self, qapp):
         from ui_designer.model.page import Page
@@ -103,7 +129,7 @@ class TestPreviewPanelFallback:
             "Preview panel: Preview - Python fallback (fallback). Mode: Horizontal split. "
             "Zoom: 100% (12px). Grid: on. Pointer: (12, 18)  |  label: label  [10, 10, 100×20]."
         )
-        panel.deleteLater()
+        _dispose_widget(panel)
 
     def test_runtime_failed_emits_after_repeated_frame_failures(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
@@ -131,7 +157,7 @@ class TestPreviewPanelFallback:
 
         assert reasons == ["bridge lost"]
         assert panel.is_embedded is False
-        panel.deleteLater()
+        _dispose_widget(panel)
 
     def test_grid_size_uses_configured_value(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
@@ -144,7 +170,7 @@ class TestPreviewPanelFallback:
 
         panel.overlay.set_zoom(2.0)
         assert panel.overlay._effective_grid_size() == 12
-        panel.deleteLater()
+        _dispose_widget(panel)
 
     def test_zoom_buttons_reflect_zoom_limits_in_accessibility_metadata(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
@@ -174,7 +200,7 @@ class TestPreviewPanelFallback:
         assert panel._btn_zoom_in.statusTip() == panel._btn_zoom_in.toolTip()
         assert panel._btn_zoom_in.accessibleName() == "Zoom in preview unavailable: current zoom 400% (8px)"
         assert panel._btn_zoom_out.isEnabled() is True
-        panel.deleteLater()
+        _dispose_widget(panel)
 
 
 @_skip_no_qt
@@ -198,7 +224,7 @@ class TestMainWindowBuildAvailability:
         assert window._compile_action.isEnabled() is False
         assert window.auto_compile_action.isEnabled() is False
         assert window._stop_action.isEnabled() is False
-        window.deleteLater()
+        _dispose_widget(window)
 
 
 @_skip_no_qt
@@ -232,7 +258,7 @@ class TestWidgetOverlaySelection:
         assert overlay.selected_widgets() == [second]
         assert captured[0][0] is second
         assert captured[0][1] == QPoint(320, 420)
-        overlay.deleteLater()
+        _dispose_widget(overlay)
 
     def test_rubber_band_replace_excludes_root_widget(self, qapp):
         overlay, root, first, second, third = self._make_overlay()
@@ -244,7 +270,7 @@ class TestWidgetOverlaySelection:
 
         assert overlay.selected_widgets() == [first, second, third]
         assert root not in overlay.selected_widgets()
-        overlay.deleteLater()
+        _dispose_widget(overlay)
 
     def test_rubber_band_shift_adds_to_selection(self, qapp):
         overlay, _root, first, second, _third = self._make_overlay()
@@ -256,7 +282,7 @@ class TestWidgetOverlaySelection:
         qapp.processEvents()
 
         assert overlay.selected_widgets() == [first, second]
-        overlay.deleteLater()
+        _dispose_widget(overlay)
 
     def test_rubber_band_ctrl_toggles_matching_widgets(self, qapp):
         overlay, _root, first, second, _third = self._make_overlay()
@@ -268,4 +294,4 @@ class TestWidgetOverlaySelection:
         qapp.processEvents()
 
         assert overlay.selected_widgets() == [first]
-        overlay.deleteLater()
+        _dispose_widget(overlay)

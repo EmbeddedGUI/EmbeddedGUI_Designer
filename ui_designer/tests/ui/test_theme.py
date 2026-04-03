@@ -52,4 +52,11 @@ def test_tokens_include_xxs_spacing_for_all_themes():
 
 def test_icon_semantic_dictionary_contains_core_workspace_keys():
     keys = set(semantic_icon_keys())
-    assert {"project", "structure", "widgets", "assets", "diagnostics", "debug"}.issubset(keys)
+    assert {
+        "nav.page_group",
+        "nav.component_library",
+        "nav.resource",
+        "state.error",
+        "state.warn",
+        "state.info",
+    }.issubset(keys)

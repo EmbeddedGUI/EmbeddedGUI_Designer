@@ -16,6 +16,7 @@ class _FakeConfig:
         self.last_project_path = ""
         self.recent_projects = []
         self.theme = "dark"
+        self.ui_density = "standard"
         self.font_size_px = 0
         self.save_calls = 0
 
@@ -126,7 +127,11 @@ def _patch_main_dependencies(monkeypatch, config, sdk_root, main_module, open_er
         "instance",
         classmethod(lambda cls: registry_calls.append("instance") or object()),
     )
-    monkeypatch.setattr(theme_module, "apply_theme", lambda app, theme: theme_calls.append(theme))
+    monkeypatch.setattr(
+        theme_module,
+        "apply_theme",
+        lambda app, theme, density="standard": theme_calls.append((theme, density)),
+    )
     monkeypatch.setattr(main_window_module, "MainWindow", WindowFactory)
     monkeypatch.setattr(qtcore.QTimer, "singleShot", staticmethod(lambda _msec, callback: callback()))
     monkeypatch.setattr(qtwidgets, "QApplication", _FakeApp)
@@ -155,7 +160,7 @@ def test_main_opens_cli_project_with_resolved_sdk_root(monkeypatch, tmp_path, ma
     assert config.sdk_root == sdk_root
     assert config.egui_root == sdk_root
     assert config.save_calls == 1
-    assert theme_calls == ["dark"]
+    assert theme_calls == [("dark", "standard")]
     assert registry_calls == ["instance"]
     assert window.sdk_root == sdk_root
     assert window.app_name == "DemoApp"
@@ -244,7 +249,7 @@ def test_main_starts_without_sdk_root_and_keeps_window_usable(monkeypatch, main_
     assert config.sdk_root == ""
     assert config.egui_root == ""
     assert config.save_calls == 0
-    assert theme_calls == ["dark"]
+    assert theme_calls == [("dark", "standard")]
     assert registry_calls == ["instance"]
     assert window.sdk_root == ""
     assert window.open_calls == []

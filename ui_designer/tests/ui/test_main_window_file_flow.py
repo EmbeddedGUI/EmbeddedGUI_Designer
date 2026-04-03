@@ -2911,7 +2911,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
-        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme, density="standard": None)
 
         window = MainWindow("")
         file_menu = next(action.menu() for action in window.menuBar().actions() if action.text() == "File")
@@ -2946,6 +2946,8 @@ class TestMainWindowFileFlow:
         assert file_actions["Recent Projects"].statusTip() == file_actions["Recent Projects"].toolTip()
         assert view_actions["Theme"].toolTip() == "Choose the Designer theme. Current theme: Dark."
         assert view_actions["Theme"].statusTip() == view_actions["Theme"].toolTip()
+        assert view_actions["UI Density"].toolTip() == "Choose standard or roomy UI density."
+        assert view_actions["UI Density"].statusTip() == view_actions["UI Density"].toolTip()
         assert view_actions["Workspace"].toolTip() == "Choose a workspace panel to show. Current panel: Project."
         assert view_actions["Workspace"].statusTip() == view_actions["Workspace"].toolTip()
         assert view_actions["Inspector"].toolTip() == "Choose an inspector section to show. Current section: Properties."
@@ -2969,6 +2971,7 @@ class TestMainWindowFileFlow:
         window._set_background_opacity(0.7)
 
         assert view_actions["Theme"].toolTip() == "Choose the Designer theme. Current theme: Light."
+        assert view_actions["UI Density"].toolTip() == "Choose standard or roomy UI density."
         assert view_actions["Grid Size"].toolTip() == "Choose the grid snap size. Current snap: 12px. Grid hidden."
         assert view_actions["Background Mockup"].toolTip() == (
             "Manage the preview background mockup image. Current mockup: hidden. Opacity: 70%."
@@ -3736,7 +3739,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
         from ui_designer.ui.preview_panel import MODE_HIDDEN, MODE_VERTICAL
 
-        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme, density="standard": None)
 
         window = MainWindow("")
         actions = {
@@ -4128,7 +4131,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
-        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme: None)
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme, density="standard": None)
 
         window = MainWindow("")
         actions = {action.text(): action for action in window.menuBar().actions() if action.text()}
@@ -4162,7 +4165,7 @@ class TestMainWindowFileFlow:
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (
             "Change workspace layout, themes, preview modes, and mockup options. "
-            "Theme: Dark. Font size: app default. Layout: Horizontal, overlay first. Grid: visible. Snap: 8px. Mockup: none loaded."
+            "Theme: Dark. Density: Standard. Font size: app default. Layout: Horizontal, overlay first. Grid: visible. Snap: 8px. Mockup: none loaded."
         )
         assert actions["View"].statusTip() == actions["View"].toolTip()
 
@@ -4174,7 +4177,7 @@ class TestMainWindowFileFlow:
 
         assert actions["View"].toolTip() == (
             "Change workspace layout, themes, preview modes, and mockup options. "
-            "Theme: Light. Font size: 11pt. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
+            "Theme: Light. Density: Standard. Font size: 11pt. Layout: Overlay Only. Grid: hidden. Snap: 8px. Mockup: none loaded."
         )
         _close_window(window)
 

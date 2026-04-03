@@ -2546,10 +2546,22 @@ class MainWindow(QMainWindow):
     def _has_valid_sdk_root(self):
         return is_valid_sdk_root(self.project_root)
 
+    def _cleanup_compiler(self, *, stop_exe=False):
+        """Release compiler resources without assuming optional hooks exist."""
+        compiler = self.compiler
+        if compiler is None:
+            return
+        if stop_exe:
+            stop = getattr(compiler, "stop_exe", None)
+            if callable(stop):
+                stop()
+        cleanup = getattr(compiler, "cleanup", None)
+        if callable(cleanup):
+            cleanup()
+        self.compiler = None
+
     def _recreate_compiler(self):
-        if self.compiler is not None:
-            self.compiler.cleanup()
-            self.compiler = None
+        self._cleanup_compiler()
 
         if not self._has_valid_sdk_root() or not self._project_dir or not self.app_name:
             return
@@ -5235,10 +5247,7 @@ class MainWindow(QMainWindow):
 
         self._bump_async_generation()
         self._shutdown_async_activity()
-        if self.compiler is not None:
-            self.compiler.stop_exe()
-            self.compiler.cleanup()
-            self.compiler = None
+        self._cleanup_compiler(stop_exe=True)
 
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
@@ -8050,9 +8059,7 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity(wait_ms=500)
         self.widget_tree.shutdown()
-        if self.compiler is not None:
-            self.compiler.cleanup()
-            self.compiler = None
+        self._cleanup_compiler()
         event.accept()
 
 

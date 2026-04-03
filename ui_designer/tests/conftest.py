@@ -1,5 +1,6 @@
 ﻿"""Shared fixtures for ui_designer tests."""
 
+import gc
 import os
 import sys
 import pytest
@@ -12,6 +13,64 @@ if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
 TEST_DATA_DIR = os.path.join(_TESTS_DIR, "test_data")
+
+
+def _drain_qt_events(app):
+    if app is None:
+        return
+    try:
+        app.sendPostedEvents()
+    except Exception:
+        pass
+    try:
+        app.processEvents()
+    except Exception:
+        pass
+
+
+def _cleanup_qt_state():
+    try:
+        from PyQt5.QtGui import QPixmapCache
+        from PyQt5.QtWidgets import QApplication
+    except ImportError:
+        return
+
+    app = QApplication.instance()
+    if app is None:
+        return
+
+    try:
+        app.setQuitOnLastWindowClosed(False)
+    except Exception:
+        pass
+
+    _drain_qt_events(app)
+    for widget in list(QApplication.topLevelWidgets()):
+        try:
+            undo_manager = getattr(widget, "_undo_manager", None)
+            if undo_manager is not None:
+                undo_manager.mark_all_saved()
+        except Exception:
+            pass
+        try:
+            widget.hide()
+        except Exception:
+            pass
+        try:
+            widget.close()
+        except Exception:
+            pass
+        try:
+            widget.deleteLater()
+        except Exception:
+            pass
+    _drain_qt_events(app)
+    try:
+        QPixmapCache.clear()
+    except Exception:
+        pass
+    gc.collect()
+    _drain_qt_events(app)
 
 
 @pytest.fixture
@@ -27,6 +86,14 @@ def reset_widget_counter():
     WidgetModel.reset_counter()
     yield
     WidgetModel.reset_counter()
+
+
+@pytest.fixture(autouse=True)
+def cleanup_qt_widgets():
+    """Keep the shared QApplication free of leaked top-level widgets across tests."""
+    _cleanup_qt_state()
+    yield
+    _cleanup_qt_state()
 
 
 @pytest.fixture

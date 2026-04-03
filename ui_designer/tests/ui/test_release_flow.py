@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -2451,10 +2452,13 @@ def test_release_history_action_allows_empty_history(qapp, isolated_config, tmp_
 def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config):
     from ui_designer.ui.release_dialogs import ReleaseHistoryDialog
 
+    latest_build = (datetime.now(timezone.utc) - timedelta(minutes=1)).strftime("%Y%m%dT%H%M%SZ")
+    previous_build = (datetime.now(timezone.utc) - timedelta(minutes=2)).strftime("%Y%m%dT%H%M%SZ")
+
     dialog = ReleaseHistoryDialog(
         [
             {
-                "build_id": "20260325T235900Z",
+                "build_id": previous_build,
                 "status": "success",
                 "profile_id": "esp32",
                 "message": "Build recovered",
@@ -2464,7 +2468,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "manifest_path": "/tmp/release-manifest.json",
             },
             {
-                "build_id": "20260326T000000Z",
+                "build_id": latest_build,
                 "status": "failed",
                 "profile_id": "esp32",
                 "message": "Build failed",
@@ -2490,7 +2494,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     restored = ReleaseHistoryDialog(
         [
             {
-                "build_id": "20260325T235900Z",
+                "build_id": previous_build,
                 "status": "success",
                 "profile_id": "esp32",
                 "message": "Build recovered",
@@ -2500,7 +2504,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
                 "manifest_path": "/tmp/release-manifest.json",
             },
             {
-                "build_id": "20260326T000000Z",
+                "build_id": latest_build,
                 "status": "failed",
                 "profile_id": "esp32",
                 "message": "Build failed",
@@ -2520,7 +2524,7 @@ def test_release_history_dialog_restores_saved_view_state(qapp, isolated_config)
     assert restored._diagnostics_filter_combo.currentData() == "errors"
     assert restored._sort_combo.currentData() == "status"
     assert restored._search_edit.text() == "sdk-fail"
-    assert restored._current_entry()["build_id"] == "20260326T000000Z"
+    assert restored._current_entry()["build_id"] == latest_build
     assert restored._preview_label.text() == "Log Preview"
     assert "File not found:" in restored._preview_edit.toPlainText()
 

@@ -93,7 +93,7 @@ class TestStatusCenterPanel:
             "Start with the first error in Diagnostics. 2 errors active."
         )
         assert panel._health_chip.toolTip() == "Open Errors. 2 errors active."
-        assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._health_chip.property("iconKey") == "state.error"
         assert panel._health_chip.accessibleName() == (
             "Diagnostic status: Critical (2). Open Errors. 2 errors active."
         )
@@ -147,7 +147,7 @@ class TestStatusCenterPanel:
         )
         assert panel._health_chip_action == "open_warning_diagnostics"
         assert panel._health_chip.toolTip() == "Open Warnings. 3 warnings active."
-        assert panel._health_chip.property("iconKey") == "history"
+        assert panel._health_chip.property("iconKey") == "state.warn"
         assert panel._health_title.text() == "Diagnostic Mix (4 total)"
         assert panel._health_summary_label.isHidden() is False
         assert panel._health_summary_label.text() == "Summary: 3 warnings, 1 info item need review. Warnings lead at 75%."
@@ -217,7 +217,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_info_diagnostics"
         assert panel._health_chip.toolTip() == "Open Info. 2 info items active."
-        assert panel._health_chip.property("iconKey") == "debug"
+        assert panel._health_chip.property("iconKey") == "state.info"
         assert panel._health_title.text() == "Diagnostic Mix (2 total)"
         assert panel._health_summary_label.isHidden() is False
         assert panel._health_summary_label.text() == "Summary: 2 info items available. Info lead at 100%."
@@ -280,7 +280,7 @@ class TestStatusCenterPanel:
         assert panel._workspace_chip.property("iconKey") == "project"
         assert panel._health_chip_action == "open_diagnostics"
         assert panel._health_chip.toolTip() == "Open Diagnostics. No active diagnostics."
-        assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._health_chip.property("iconKey") == "state.error"
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_summary_label.isHidden() is True
         assert panel._health_summary_label.text() == "Summary: Diagnostics are clear."
@@ -584,7 +584,7 @@ class TestStatusCenterPanel:
         assert panel._health_chip.accessibleName() == (
             "Diagnostic status: Stable. Open Diagnostics. No active diagnostics."
         )
-        assert panel._health_chip.property("iconKey") == "diagnostics"
+        assert panel._health_chip.property("iconKey") == "state.error"
         assert panel._runtime_label.toolTip() == "No runtime errors."
         assert panel._runtime_label.accessibleName() == "Runtime details: No runtime errors."
         assert panel._runtime_chip.isHidden() is True
@@ -888,7 +888,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == (
             "Repeat action: Assets. 4 recent actions tracked. Older actions are available in the menu."
         )
-        assert panel._repeat_action_button.property("iconKey") == "assets"
+        assert panel._repeat_action_button.property("iconKey") == "nav.resource"
         assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Widgets, Structure, +1 more."
         assert panel._recent_actions_label.toolTip() == "4 recent actions: Assets, Widgets, Structure, Project"
         assert panel._recent_actions_label.accessibleName() == (
@@ -1063,7 +1063,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == (
             "Repeat action: Fields. 2 recent actions tracked. Older actions are available in the menu."
         )
-        assert panel._repeat_action_button.property("iconKey") == "page"
+        assert panel._repeat_action_button.property("iconKey") == "nav.page"
         assert panel._recent_actions_label.text() == "Recent actions (2): Fields, Debug Output."
         assert panel._recent_actions_label.toolTip() == "2 recent actions: Fields, Debug Output"
         assert panel._recent_actions_label.accessibleName() == (
@@ -1980,7 +1980,7 @@ class TestStatusCenterPanel:
         assert panel._repeat_action_button.accessibleName() == (
             "Repeat action: Widgets. 1 recent action tracked."
         )
-        assert panel._repeat_action_button.property("iconKey") == "widgets"
+        assert panel._repeat_action_button.property("iconKey") == "nav.component_library"
         assert _menu_labels(panel._repeat_action_menu) == ["Widgets", "Clear Recent Actions (1)"]
         panel.deleteLater()
 
