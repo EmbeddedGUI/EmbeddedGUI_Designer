@@ -55,18 +55,59 @@ class PageTimersPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+
+        self._header_frame = QWidget()
+        self._header_frame.setObjectName("page_editor_header")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(12, 12, 12, 12)
+        header_layout.setSpacing(8)
+
+        self._eyebrow_label = QLabel("Page Timers")
+        self._eyebrow_label.setObjectName("page_editor_eyebrow")
+        header_layout.addWidget(self._eyebrow_label)
 
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
+        header_layout.addWidget(self._summary_label)
+
+        self._header_meta_label = QLabel(
+            "Timers generate egui_timer_t members plus callback entry points for page-level scheduling."
+        )
+        self._header_meta_label.setObjectName("page_editor_meta")
+        self._header_meta_label.setWordWrap(True)
+        header_layout.addWidget(self._header_meta_label)
+
+        self._header_chip_row = QHBoxLayout()
+        self._header_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._header_chip_row.setSpacing(6)
+        self._count_chip = self._make_status_chip("0 timers", "accent")
+        self._selection_chip = self._make_status_chip("No selection", "warning")
+        self._header_chip_row.addWidget(self._count_chip)
+        self._header_chip_row.addWidget(self._selection_chip)
+        self._header_chip_row.addStretch(1)
+        header_layout.addLayout(self._header_chip_row)
+        layout.addWidget(self._header_frame)
+
+        self._table_frame = QWidget()
+        self._table_frame.setObjectName("page_editor_table_shell")
+        table_layout = QVBoxLayout(self._table_frame)
+        table_layout.setContentsMargins(10, 10, 10, 10)
+        table_layout.setSpacing(8)
+        self._table_label = QLabel("Timer Definitions")
+        self._table_label.setObjectName("page_editor_section_label")
+        table_layout.addWidget(self._table_label)
+
         self._hint_label = QLabel(
             "Page timers generate egui_timer_t members plus helper functions. Delay and period are raw C expressions in milliseconds."
         )
         self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
+        table_layout.addWidget(self._hint_label)
 
         self._table = QTableWidget(0, 5, self)
+        self._table.setObjectName("page_editor_table")
         self._table.setHorizontalHeaderLabels(["Name", "Callback", "Delay", "Period", "Auto Start"])
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -79,7 +120,16 @@ class PageTimersPanel(QWidget):
         self._table.itemChanged.connect(self._on_item_changed)
         self._table.itemSelectionChanged.connect(self._update_actions)
         self._table.setAccessibleName("Page timers table")
+        table_layout.addWidget(self._table, 1)
 
+        self._actions_frame = QWidget()
+        self._actions_frame.setObjectName("page_editor_actions")
+        actions_layout = QVBoxLayout(self._actions_frame)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(8)
+        self._actions_label = QLabel("Timer Actions")
+        self._actions_label.setObjectName("page_editor_section_label")
+        actions_layout.addWidget(self._actions_label)
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
@@ -96,12 +146,39 @@ class PageTimersPanel(QWidget):
         buttons.addWidget(self._remove_button)
         buttons.addWidget(self._open_code_button)
         buttons.addStretch(1)
+        actions_layout.addLayout(buttons)
+        table_layout.addWidget(self._actions_frame)
 
-        layout.addWidget(self._summary_label)
-        layout.addWidget(self._hint_label)
-        layout.addWidget(self._table, 1)
-        layout.addLayout(buttons)
+        layout.addWidget(self._table_frame, 1)
         self._update_actions()
+
+    def _make_status_chip(self, text, tone=None):
+        chip = QLabel(text)
+        chip.setObjectName("workspace_status_chip")
+        if tone:
+            chip.setProperty("chipTone", tone)
+        return chip
+
+    def _set_status_chip_state(self, chip, text, tone=None):
+        chip.setText(text)
+        chip.setProperty("chipTone", tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
+    def _update_header_state(self):
+        count = len(self._timers)
+        selected_timer = self._selected_timer()
+        selected_name = str(selected_timer.get("name", "") or "").strip()
+        self._set_status_chip_state(self._count_chip, f"{count} {'timer' if count == 1 else 'timers'}", "accent" if self._page is not None else "warning")
+        self._set_status_chip_state(self._selection_chip, selected_name or "No selection", "accent" if selected_name else "warning")
+        if self._page is None:
+            meta = "Open a page to configure timer scheduling and callback entry points."
+        elif selected_name:
+            meta = f"Editing timer scheduling for {self._page.name}. Selected timer: {selected_name}."
+        else:
+            meta = f"Editing timer scheduling for {self._page.name}. Select a timer to inspect or open its callback."
+        self._header_meta_label.setText(meta)
 
     def _update_accessibility_summary(self, summary_text):
         selection_summary = self._selection_accessibility_summary()
@@ -177,12 +254,14 @@ class PageTimersPanel(QWidget):
         if self._page is None:
             summary_text = "Page Timers: no active page"
             self._summary_label.setText(summary_text)
+            self._update_header_state()
             self._update_accessibility_summary(summary_text)
             return
         count = len(self._timers)
         noun = "timer" if count == 1 else "timers"
         summary_text = f"Page Timers: {count} {noun} on {self._page.name}"
         self._summary_label.setText(summary_text)
+        self._update_header_state()
         self._update_accessibility_summary(summary_text)
 
     def _update_actions(self):
@@ -229,6 +308,7 @@ class PageTimersPanel(QWidget):
                 else "Open timer user code unavailable"
             ),
         )
+        self._update_header_state()
         summary_text = self._summary_label.text().strip()
         if summary_text:
             self._update_accessibility_summary(summary_text)

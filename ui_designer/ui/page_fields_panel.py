@@ -50,11 +50,51 @@ class PageFieldsPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+
+        self._header_frame = QWidget()
+        self._header_frame.setObjectName("page_editor_header")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(12, 12, 12, 12)
+        header_layout.setSpacing(8)
+
+        self._eyebrow_label = QLabel("Page Data")
+        self._eyebrow_label.setObjectName("page_editor_eyebrow")
+        header_layout.addWidget(self._eyebrow_label)
 
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
+        header_layout.addWidget(self._summary_label)
+
+        self._header_meta_label = QLabel(
+            "Page fields become generated struct members and raw C defaults applied during page setup."
+        )
+        self._header_meta_label.setObjectName("page_editor_meta")
+        self._header_meta_label.setWordWrap(True)
+        header_layout.addWidget(self._header_meta_label)
+
+        self._header_chip_row = QHBoxLayout()
+        self._header_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._header_chip_row.setSpacing(6)
+        self._count_chip = self._make_status_chip("0 fields", "accent")
+        self._selection_chip = self._make_status_chip("No selection", "warning")
+        self._header_chip_row.addWidget(self._count_chip)
+        self._header_chip_row.addWidget(self._selection_chip)
+        self._header_chip_row.addStretch(1)
+        header_layout.addLayout(self._header_chip_row)
+
+        layout.addWidget(self._header_frame)
+
+        self._code_frame = QWidget()
+        self._code_frame.setObjectName("page_editor_section")
+        code_frame_layout = QVBoxLayout(self._code_frame)
+        code_frame_layout.setContentsMargins(10, 10, 10, 10)
+        code_frame_layout.setSpacing(8)
+        self._code_label = QLabel("Lifecycle Hooks")
+        self._code_label.setObjectName("page_editor_section_label")
+        code_frame_layout.addWidget(self._code_label)
+
         self._hint_label = QLabel(
             "Page fields become generated struct members. Default is treated as a raw C expression and is applied on page open."
         )
@@ -69,6 +109,7 @@ class PageFieldsPanel(QWidget):
             tooltip=self._code_hint_label.text(),
             accessible_name=self._code_hint_label.text(),
         )
+        code_frame_layout.addWidget(self._code_hint_label)
 
         code_buttons = QHBoxLayout()
         code_buttons.setContentsMargins(0, 0, 0, 0)
@@ -86,8 +127,21 @@ class PageFieldsPanel(QWidget):
         code_buttons.addWidget(self._open_on_close_button)
         code_buttons.addWidget(self._open_init_button)
         code_buttons.addStretch(1)
+        code_frame_layout.addLayout(code_buttons)
+        layout.addWidget(self._code_frame)
+
+        self._table_frame = QWidget()
+        self._table_frame.setObjectName("page_editor_table_shell")
+        table_layout = QVBoxLayout(self._table_frame)
+        table_layout.setContentsMargins(10, 10, 10, 10)
+        table_layout.setSpacing(8)
+        self._table_label = QLabel("Field Definitions")
+        self._table_label.setObjectName("page_editor_section_label")
+        table_layout.addWidget(self._table_label)
+        table_layout.addWidget(self._hint_label)
 
         self._table = QTableWidget(0, 3, self)
+        self._table.setObjectName("page_editor_table")
         self._table.setHorizontalHeaderLabels(["Name", "Type", "Default"])
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -98,7 +152,16 @@ class PageFieldsPanel(QWidget):
         self._table.itemChanged.connect(self._on_item_changed)
         self._table.itemSelectionChanged.connect(self._update_actions)
         self._table.setAccessibleName("Page fields table")
+        table_layout.addWidget(self._table, 1)
 
+        self._actions_frame = QWidget()
+        self._actions_frame.setObjectName("page_editor_actions")
+        actions_layout = QVBoxLayout(self._actions_frame)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        actions_layout.setSpacing(8)
+        self._actions_label = QLabel("Field Actions")
+        self._actions_label.setObjectName("page_editor_section_label")
+        actions_layout.addWidget(self._actions_label)
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
@@ -111,14 +174,38 @@ class PageFieldsPanel(QWidget):
         buttons.addWidget(self._add_button)
         buttons.addWidget(self._remove_button)
         buttons.addStretch(1)
+        actions_layout.addLayout(buttons)
+        table_layout.addWidget(self._actions_frame)
 
-        layout.addWidget(self._summary_label)
-        layout.addWidget(self._hint_label)
-        layout.addWidget(self._code_hint_label)
-        layout.addLayout(code_buttons)
-        layout.addWidget(self._table, 1)
-        layout.addLayout(buttons)
+        layout.addWidget(self._table_frame, 1)
         self._update_actions()
+
+    def _make_status_chip(self, text, tone=None):
+        chip = QLabel(text)
+        chip.setObjectName("workspace_status_chip")
+        if tone:
+            chip.setProperty("chipTone", tone)
+        return chip
+
+    def _set_status_chip_state(self, chip, text, tone=None):
+        chip.setText(text)
+        chip.setProperty("chipTone", tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
+    def _update_header_state(self):
+        count = len(self._fields)
+        selected_name = self._selected_field_name()
+        self._set_status_chip_state(self._count_chip, f"{count} {'field' if count == 1 else 'fields'}", "accent" if self._page is not None else "warning")
+        self._set_status_chip_state(self._selection_chip, selected_name or "No selection", "accent" if selected_name else "warning")
+        if self._page is None:
+            meta = "Open a page to define generated members and page lifecycle code."
+        elif selected_name:
+            meta = f"Editing generated members for {self._page.name}. Selected field: {selected_name}."
+        else:
+            meta = f"Editing generated members for {self._page.name}. Select a field to inspect or remove it."
+        self._header_meta_label.setText(meta)
 
     def _update_accessibility_summary(self, summary_text):
         selection_summary = self._selection_accessibility_summary()
@@ -194,12 +281,14 @@ class PageFieldsPanel(QWidget):
         if self._page is None:
             summary_text = "Page Fields: no active page"
             self._summary_label.setText(summary_text)
+            self._update_header_state()
             self._update_accessibility_summary(summary_text)
             return
         count = len(self._fields)
         noun = "field" if count == 1 else "fields"
         summary_text = f"Page Fields: {count} {noun} on {self._page.name}"
         self._summary_label.setText(summary_text)
+        self._update_header_state()
         self._update_accessibility_summary(summary_text)
 
     def _update_actions(self):
@@ -255,6 +344,7 @@ class PageFieldsPanel(QWidget):
             init_hint,
             f"Open init user code for {page_name}" if has_page else "Open init user code unavailable",
         )
+        self._update_header_state()
         summary_text = self._summary_label.text().strip()
         if summary_text:
             self._update_accessibility_summary(summary_text)

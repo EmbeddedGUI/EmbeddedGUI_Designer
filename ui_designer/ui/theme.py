@@ -1255,6 +1255,74 @@ QTreeWidget#widget_tree_panel_tree {{
     padding: {t['space_xxs']}px;
 }}
 
+#page_editor_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#page_editor_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#page_editor_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#page_editor_section,
+#page_editor_actions,
+#page_editor_table_shell {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#page_editor_section_label {{
+    color: {t['text']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#page_editor_table {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#page_editor_actions QPushButton,
+#page_editor_section QPushButton,
+#page_editor_table_shell QPushButton {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 34px;
+}}
+
+#page_editor_actions QPushButton:hover,
+#page_editor_section QPushButton:hover,
+#page_editor_table_shell QPushButton:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+#page_editor_actions QPushButton:disabled,
+#page_editor_section QPushButton:disabled,
+#page_editor_table_shell QPushButton:disabled {{
+    color: {t['text_soft']};
+    border-color: {t['border']};
+}}
+
 #app_selector_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
