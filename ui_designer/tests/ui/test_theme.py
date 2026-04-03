@@ -44,7 +44,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "QTabBar::tab:selected" in css
         assert t["panel"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
         nav = css.split("#workspace_nav_rail", 1)[1].split("}}", 1)[0]
-        assert str(t["space_sm"]) in nav and str(t["space_xs"]) in nav
+        assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
         chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         assert str(t["space_xs"]) in chip and str(t["space_sm"]) in chip
 
@@ -83,11 +83,11 @@ def test_engineering_theme_radii_remove_pill_shapes():
         assert "999px" not in css
 
         chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
-        browser_tag = css.split("QToolButton#widget_browser_tag {", 1)[1].split("}", 1)[0]
+        browser_card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
 
         assert f"border-radius: {tokens['r_md']}px;" in chip
-        assert f"border-radius: {tokens['r_md']}px;" in browser_tag
+        assert f"border-radius: {tokens['r_md']}px;" in browser_card
         assert f"border-radius: {tokens['r_md']}px;" in metric_card
 
 

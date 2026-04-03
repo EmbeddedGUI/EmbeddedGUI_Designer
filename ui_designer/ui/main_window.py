@@ -135,7 +135,7 @@ from ..renderer.manager import RendererManager
 from ..renderer.v1_python_renderer import V1PythonRenderer
 
 
-WORKSPACE_LAYOUT_VERSION = 2
+WORKSPACE_LAYOUT_VERSION = 3
 
 # UI-D-002: usable on 1280-wide laptops; clamp to primary screen on startup / restore.
 MAIN_WINDOW_MIN_WIDTH = 960
@@ -145,9 +145,9 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-LEFT_PANEL_DEFAULT_WIDTH = 320
-CENTER_PANEL_DEFAULT_WIDTH = 980
-INSPECTOR_PANEL_DEFAULT_WIDTH = 320
+LEFT_PANEL_DEFAULT_WIDTH = 280
+CENTER_PANEL_DEFAULT_WIDTH = 1100
+INSPECTOR_PANEL_DEFAULT_WIDTH = 300
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
@@ -346,14 +346,14 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(_SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS, _SPACE_MD + _SPACE_XXS)
-        editor_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
+        editor_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS)
+        editor_layout.setSpacing(_SPACE_SM)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM, _SPACE_SM + _SPACE_XXS, _SPACE_SM)
-        self._toolbar_host_layout.setSpacing(_SPACE_SM)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
+        self._toolbar_host_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -432,7 +432,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame = QFrame()
         self._workspace_nav_frame.setObjectName("workspace_nav_rail")
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(_SPACE_SM, _SPACE_SM + _SPACE_XXS, _SPACE_SM, _SPACE_SM + _SPACE_XXS)
+        nav_layout.setContentsMargins(_SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS)
         nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         for key, label, icon_key in (
             ("project", "Project", "project"),
@@ -5716,6 +5716,17 @@ class MainWindow(QMainWindow):
         self._update_resource_usage_panel()
         self._on_model_changed(source=f"{res_type} resource drop")
 
+    def _current_screen_size(self):
+        """Return the active logical screen size for preview-bound operations."""
+        if self.project is not None:
+            width = int(getattr(self.project, "screen_width", 0) or 0)
+            height = int(getattr(self.project, "screen_height", 0) or 0)
+            if width > 0 and height > 0:
+                return width, height
+        width = int(getattr(getattr(self, "preview_panel", None), "screen_width", 0) or 240)
+        height = int(getattr(getattr(self, "preview_panel", None), "screen_height", 0) or 320)
+        return max(width, 1), max(height, 1)
+
     def _on_widget_type_dropped(self, widget_type, x, y, target_widget):
         """Widget type dropped from library onto preview overlay."""
         widget_type = str(widget_type or "").strip()
@@ -5731,8 +5742,9 @@ class MainWindow(QMainWindow):
             return
 
         if target_parent is None:
-            inserted.x = max(0, min(int(x or 0), max(self._current_page.screen_width - inserted.width, 0)))
-            inserted.y = max(0, min(int(y or 0), max(self._current_page.screen_height - inserted.height, 0)))
+            screen_width, screen_height = self._current_screen_size()
+            inserted.x = max(0, min(int(x or 0), max(screen_width - inserted.width, 0)))
+            inserted.y = max(0, min(int(y or 0), max(screen_height - inserted.height, 0)))
             inserted.display_x = inserted.x
             inserted.display_y = inserted.y
 

@@ -1,16 +1,13 @@
-"""Widget browser with categories, search, favorites, recents, and preview cards."""
+"""Simplified widget browser with search, type categories, favorites, and recents."""
 
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QMimeData, QSignalBlocker, QTimer
+from PyQt5.QtCore import QMimeData, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QDrag
 from PyQt5.QtWidgets import (
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMenu,
     QPushButton,
     QScrollArea,
@@ -20,28 +17,23 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from qfluentwidgets import SearchLineEdit
+from qfluentwidgets import ComboBox, SearchLineEdit
 
 from ..model.config import get_config
-from ..model.widget_registry import WidgetRegistry
 from ..services.component_catalog import ComponentCatalog
-from ..services.search_service import SearchService, SearchQuery
-from ..services.recent_service import RecentService
 from ..services.favorite_service import FavoriteService
+from ..services.recent_service import RecentService
+from ..services.search_service import SearchQuery, SearchService
 from .iconography import make_icon, widget_icon_key
 from .theme import theme_tokens
 
-_ITEM_METADATA_SNAPSHOT_ROLE = Qt.UserRole + 1024
 _DEFAULT_UI_TOKENS = theme_tokens("dark")
 _SPACE_XXS = int(_DEFAULT_UI_TOKENS.get("space_xxs", 2))
 _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
-_SPACE_XL = int(_DEFAULT_UI_TOKENS.get("space_xl", 20))
-_ICON_SM = int(_DEFAULT_UI_TOKENS.get("icon_sm", 16))
 _ICON_MD = int(_DEFAULT_UI_TOKENS.get("icon_md", 18))
-_ICON_LG = int(_DEFAULT_UI_TOKENS.get("icon_lg", 20))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -69,17 +61,6 @@ def _set_widget_visible(widget, visible):
     widget.setProperty("_widget_browser_visible_snapshot", value)
 
 
-def _set_item_metadata(item, tooltip):
-    hint = str(tooltip or "").strip()
-    current_hint = item.data(_ITEM_METADATA_SNAPSHOT_ROLE)
-    if current_hint is not None and str(current_hint) == hint:
-        return
-    item.setToolTip(hint)
-    item.setStatusTip(hint)
-    item.setData(Qt.AccessibleTextRole, hint)
-    item.setData(_ITEM_METADATA_SNAPSHOT_ROLE, hint)
-
-
 def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
@@ -87,7 +68,7 @@ def _count_label(count, singular, plural=None):
 
 
 class WidgetBrowserCard(QFrame):
-    """Single widget entry card used by the browser grid."""
+    """Single simplified widget row."""
 
     clicked = pyqtSignal(str)
     insert_requested = pyqtSignal(str)
@@ -116,12 +97,6 @@ class WidgetBrowserCard(QFrame):
         layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
         layout.setSpacing(_SPACE_SM - _SPACE_XXS)
 
-        self._icon_label = QLabel()
-        self._icon_label.setPixmap(
-            make_icon(self._item.get("icon_key") or widget_icon_key(self.type_name), size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD)
-        )
-        layout.addWidget(self._icon_label, 0, Qt.AlignVCenter)
-
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
         text_layout.setSpacing(1)
@@ -130,16 +105,10 @@ class WidgetBrowserCard(QFrame):
         self._title_label.setObjectName("widget_browser_card_title")
         text_layout.addWidget(self._title_label)
 
-        scenario = str(self._item.get("scenario", "") or "").strip()
-        meta_parts = []
-        if scenario:
-            meta_parts.append(self._shorten_scenario_label(scenario))
-        if bool(self._item.get("is_container")):
-            meta_parts.append("Container")
-        self._has_meta = bool(meta_parts)
-        self._meta_label = QLabel(" · ".join(meta_parts))
+        meta_text = "Container" if bool(self._item.get("is_container")) else ""
+        self._meta_label = QLabel(meta_text)
         self._meta_label.setObjectName("widget_browser_card_meta")
-        self._meta_label.setVisible(False)
+        self._meta_label.setVisible(bool(meta_text))
         text_layout.addWidget(self._meta_label)
 
         layout.addLayout(text_layout, 1)
@@ -158,34 +127,17 @@ class WidgetBrowserCard(QFrame):
 
         self._update_accessibility_summary()
 
-    @staticmethod
-    def _shorten_scenario_label(scenario: str) -> str:
-        """Shorten scenario pill text for card visual simplicity."""
-        s = (scenario or "").strip()
-        mapping = {
-            "Feedback & Status": "Status",
-            "Data & Visualization": "Data",
-            "Media & Content": "Media",
-            "Navigation & Flow": "Navigation",
-            "Input & Forms": "Input",
-            "Layout & Containers": "Layout",
-            "Decoration": "Decor",
-        }
-        return mapping.get(s, s.split("&", 1)[0].strip() or s)
-
     def _display_name(self):
         return str(self._item.get("display_name", self.type_name) or self.type_name)
 
     def _card_summary(self):
         category = str(self._item.get("category", "") or "Uncategorized").strip() or "Uncategorized"
-        scenario = str(self._item.get("scenario", "") or "General").strip() or "General"
-        complexity = str(self._item.get("complexity", "") or "unknown").strip().title() or "Unknown"
         container_text = "yes" if bool(self._item.get("is_container")) else "no"
         favorite_text = "yes" if self._favorite_btn.isChecked() else "no"
         selected_text = "yes" if self._selected else "no"
         return (
-            f"Widget card: {self._display_name()}. Category {category}. Scenario {scenario}. "
-            f"Complexity {complexity}. Container {container_text}. Favorite {favorite_text}. Selected {selected_text}."
+            f"Widget row: {self._display_name()}. Category {category}. "
+            f"Container {container_text}. Favorite {favorite_text}. Selected {selected_text}."
         )
 
     def _update_accessibility_summary(self):
@@ -196,11 +148,14 @@ class WidgetBrowserCard(QFrame):
             if self._favorite_btn.isChecked()
             else f"Add {display_name} to favorites."
         )
-        _set_widget_visible(self._meta_label, self._selected and self._has_meta)
         _set_widget_visible(self._insert_btn, self._selected)
         _set_widget_visible(self._favorite_btn, self._selected or self._favorite_btn.isChecked())
-        _set_widget_visible(self._icon_label, self._selected)
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=f"Widget name: {display_name}")
+        _set_widget_metadata(
+            self._meta_label,
+            tooltip=self._meta_label.text(),
+            accessible_name=f"Widget hint: {self._meta_label.text()}" if self._meta_label.text() else "Widget hint: none",
+        )
         _set_widget_metadata(
             self._favorite_btn,
             tooltip=favorite_hint,
@@ -258,59 +213,44 @@ class WidgetBrowserCard(QFrame):
 
 
 class WidgetBrowserPanel(QWidget):
-    """Panel that organizes widgets with search, favorites, and recents."""
+    """Compact widget picker with category filter and search."""
 
     insert_requested = pyqtSignal(str)
     reveal_requested = pyqtSignal(str)
 
     WIDGET_DRAG_MIME = "application/x-egui-widget-type"
     _SEARCH_REFRESH_DEBOUNCE_MS = 90
-
-    _SPECIAL_CATEGORIES = (
-        ("all", "All Widgets"),
+    _CATEGORY_OPTIONS = (
+        ("all", "All"),
         ("favorites", "Favorites"),
         ("recent", "Recent"),
         ("containers", "Containers"),
-    )
-    _SORT_MODES = (
-        ("relevance", "Recommended"),
-        ("name", "A-Z"),
-        ("complexity", "Complexity"),
-    )
-    _COMPLEXITY_LEVELS = (
-        ("all", "All"),
-        ("basic", "Basic"),
-        ("intermediate", "Intermediate"),
-        ("advanced", "Advanced"),
+        ("basics", "Basics"),
+        ("layout", "Layout"),
+        ("input", "Input"),
+        ("navigation", "Navigation"),
+        ("display & data", "Display & Data"),
+        ("media", "Media"),
+        ("decoration", "Decoration"),
+        ("custom", "Custom"),
     )
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._config = get_config()
-        self._registry = WidgetRegistry.instance()
-        self._catalog = ComponentCatalog(self._registry)
+        self._catalog = ComponentCatalog()
         self._search_service = SearchService()
         self._recent_service = RecentService(self._config)
         self._favorite_service = FavoriteService(self._config)
         self._selected_type = ""
         self._insert_target_label = "Current page root"
         self._cards = {}
-        self._tag_buttons = {}
-        self._lane_buttons = {}
-        self._sort_buttons = {}
-        self._complexity_buttons = {}
-        self._sort_mode = self._normalize_sort_mode(getattr(self._config, "widget_browser_sort_mode", "relevance"))
-        self._complexity_filter = self._normalize_complexity_filter(
-            getattr(self._config, "widget_browser_complexity_filter", "all")
-        )
-        self._suspend_filter_persist = False
+        self._category_ids = []
         self._search_refresh_timer = QTimer(self)
         self._search_refresh_timer.setSingleShot(True)
         self._search_refresh_timer.timeout.connect(self.refresh)
         self._init_ui()
         self._populate_categories()
-        self._populate_quick_lanes()
-        self._populate_tags()
         self.refresh()
 
     def _init_ui(self):
@@ -321,15 +261,14 @@ class WidgetBrowserPanel(QWidget):
         header = QFrame()
         header.setObjectName("widget_browser_header")
         header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
         header_layout.setSpacing(_SPACE_XS)
 
         self._title_label = QLabel("Widgets")
         self._title_label.setObjectName("workspace_section_title")
         header_layout.addWidget(self._title_label)
 
-        # UIX-006: task-oriented, low-noise subtitle.
-        self._subtitle_label = QLabel("Search, filter, and insert widgets quickly.")
+        self._subtitle_label = QLabel("Browse by type and insert quickly.")
         self._subtitle_label.setObjectName("workspace_section_subtitle")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
@@ -338,388 +277,96 @@ class WidgetBrowserPanel(QWidget):
         self._insert_target.setObjectName("workspace_status_chip")
         self._insert_target.setWordWrap(True)
         header_layout.addWidget(self._insert_target)
-
-        self._stats_summary_label = QLabel("Visible 0/0")
-        self._stats_summary_label.setVisible(False)
-        self._stats_summary_label.setObjectName("widget_browser_stats")
-        self._stats_summary_label.setWordWrap(True)
-        header_layout.addWidget(self._stats_summary_label)
         layout.addWidget(header)
 
-        search_row = QHBoxLayout()
-        search_row.setContentsMargins(0, 0, 0, 0)
-        search_row.setSpacing(_SPACE_SM)
+        self._filter_bar = QFrame()
+        self._filter_bar.setObjectName("widget_browser_filter_bar")
+        filter_layout = QHBoxLayout(self._filter_bar)
+        filter_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        filter_layout.setSpacing(_SPACE_SM)
 
         self._search = SearchLineEdit()
         self._search.setPlaceholderText("Search widgets")
         self._search.textChanged.connect(self._schedule_search_refresh)
-        search_row.addWidget(self._search, 1)
-        layout.addLayout(search_row)
+        filter_layout.addWidget(self._search, 1)
 
-        lanes_frame = QFrame()
-        lanes_frame.setObjectName("widget_browser_lanes")
-        lanes_layout = QVBoxLayout(lanes_frame)
-        lanes_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS)
-        lanes_layout.setSpacing(_SPACE_SM)
-        self._lanes_title = QLabel("Quick Lanes")
-        self._lanes_title.setObjectName("workspace_section_subtitle")
-        lanes_layout.addWidget(self._lanes_title)
-        self._lanes_grid_host = QWidget()
-        self._lanes_grid = QGridLayout(self._lanes_grid_host)
-        self._lanes_grid.setContentsMargins(0, 0, 0, 0)
-        self._lanes_grid.setHorizontalSpacing(8)
-        self._lanes_grid.setVerticalSpacing(8)
-        lanes_layout.addWidget(self._lanes_grid_host)
-        layout.addWidget(lanes_frame)
-
-        organize_frame = QFrame()
-        organize_frame.setObjectName("widget_browser_organize")
-        organize_layout = QVBoxLayout(organize_frame)
-        organize_layout.setContentsMargins(_SPACE_SM - _SPACE_XXS, _SPACE_XS, _SPACE_SM - _SPACE_XXS, _SPACE_XS)
-        organize_layout.setSpacing(_SPACE_XS)
-
-        sort_row = QHBoxLayout()
-        sort_row.setContentsMargins(0, 0, 0, 0)
-        sort_row.setSpacing(_SPACE_SM - _SPACE_XXS)
-        self._sort_title = QLabel("Sort")
-        self._sort_title.setObjectName("workspace_section_subtitle")
-        sort_row.addWidget(self._sort_title)
-        self._sort_host = QWidget()
-        self._sort_layout = QHBoxLayout(self._sort_host)
-        self._sort_layout.setContentsMargins(0, 0, 0, 0)
-        self._sort_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
-        sort_row.addWidget(self._sort_host, 1)
-        organize_layout.addLayout(sort_row)
-
-        complexity_row = QHBoxLayout()
-        complexity_row.setContentsMargins(0, 0, 0, 0)
-        complexity_row.setSpacing(_SPACE_SM - _SPACE_XXS)
-        self._complexity_title = QLabel("Complexity")
-        self._complexity_title.setObjectName("workspace_section_subtitle")
-        complexity_row.addWidget(self._complexity_title)
-        self._complexity_host = QWidget()
-        self._complexity_layout = QHBoxLayout(self._complexity_host)
-        self._complexity_layout.setContentsMargins(0, 0, 0, 0)
-        self._complexity_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
-        complexity_row.addWidget(self._complexity_host, 1)
-        organize_layout.addLayout(complexity_row)
-        layout.addWidget(organize_frame)
-
-        body = QHBoxLayout()
-        body.setContentsMargins(0, 0, 0, 0)
-        body.setSpacing(_SPACE_MD)
-
-        self._category_list = QListWidget()
-        self._category_list.setObjectName("widget_browser_categories")
-        self._category_list.setFixedWidth(168)
-        self._category_list.currentRowChanged.connect(self._on_category_changed)
-        body.addWidget(self._category_list, 0)
+        self._category_combo = ComboBox()
+        self._category_combo.setObjectName("widget_browser_category_combo")
+        self._category_combo.setMinimumWidth(184)
+        self._category_combo.currentIndexChanged.connect(self._on_category_changed)
+        filter_layout.addWidget(self._category_combo, 0)
+        layout.addWidget(self._filter_bar)
 
         self._scroll = QScrollArea()
+        self._scroll.setObjectName("widget_browser_results")
         self._scroll.setWidgetResizable(True)
         self._scroll.setFrameShape(QFrame.NoFrame)
-        body.addWidget(self._scroll, 1)
+        layout.addWidget(self._scroll, 1)
 
         self._cards_container = QWidget()
-        self._cards_layout = QGridLayout(self._cards_container)
+        self._cards_container.setObjectName("widget_browser_results_host")
+        self._cards_layout = QVBoxLayout(self._cards_container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setHorizontalSpacing(0)
-        self._cards_layout.setVerticalSpacing(6)
+        self._cards_layout.setSpacing(6)
         self._scroll.setWidget(self._cards_container)
 
-        layout.addLayout(body, 1)
-
-        tags_frame = QFrame()
-        tags_frame.setObjectName("widget_browser_tags")
-        tags_layout = QHBoxLayout(tags_frame)
-        tags_layout.setContentsMargins(_SPACE_SM - _SPACE_XXS, _SPACE_XS, _SPACE_SM - _SPACE_XXS, _SPACE_XS)
-        tags_layout.setSpacing(_SPACE_XS)
-        self._tags_title = QLabel("Tags")
-        self._tags_title.setObjectName("workspace_section_subtitle")
-        tags_layout.addWidget(self._tags_title)
-        self._tags_host = QWidget()
-        self._tags_layout = QHBoxLayout(self._tags_host)
-        self._tags_layout.setContentsMargins(0, 0, 0, 0)
-        self._tags_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
-        tags_layout.addWidget(self._tags_host, 1)
-        self._clear_tags_btn = QToolButton()
-        self._clear_tags_btn.setText("Clear")
-        self._clear_tags_btn.clicked.connect(self._clear_active_tags)
-        tags_layout.addWidget(self._clear_tags_btn, 0)
-        layout.addWidget(tags_frame)
-
-        self._category_list.setAccessibleName("Widget categories")
+        self._search.setAccessibleName("Widget browser search")
+        self._category_combo.setAccessibleName("Widget category picker")
         self._scroll.setAccessibleName("Widget browser results")
         self._cards_container.setAccessibleName("Widget browser cards")
-        self._search.setAccessibleName("Widget browser search")
-        self._clear_tags_btn.setAccessibleName("Clear widget tags")
         self._update_insert_target()
-        self._populate_organizers()
 
-    def _populate_categories(self):
-        self._suspend_filter_persist = True
-        self._category_list.clear()
-        for category_id, label in self._SPECIAL_CATEGORIES:
-            item = QListWidgetItem(label)
-            item.setData(Qt.UserRole, category_id)
-            _set_item_metadata(item, f"Show {label} in the widget browser.")
-            self._category_list.addItem(item)
-        for label in self._catalog.browser_scenarios():
-            item = QListWidgetItem(label)
-            item.setData(Qt.UserRole, f"scenario:{label}")
-            _set_item_metadata(item, f"Show widgets for the {label} scenario.")
-            self._category_list.addItem(item)
-        default_id = str(getattr(self._config, "widget_browser_active_scenario", "all") or "all")
-        selected_row = 0
-        for row in range(self._category_list.count()):
-            row_item = self._category_list.item(row)
-            if row_item is None:
-                continue
-            if str(row_item.data(Qt.UserRole) or "").strip().lower() == default_id.strip().lower():
-                selected_row = row
-                break
-        self._category_list.setCurrentRow(selected_row)
-        self._suspend_filter_persist = False
-
-    @staticmethod
-    def _scenario_icon_key(label):
-        return {
-            "Layout & Containers": "layout",
-            "Input & Forms": "input",
-            "Navigation & Flow": "navigation",
-            "Data & Visualization": "chart",
-            "Feedback & Status": "status",
-            "Media & Content": "media",
-            "Decoration": "assets",
-        }.get(label, "widgets")
-
-    @staticmethod
-    def _scenario_short_label(label):
-        text = str(label or "").strip()
-        if not text:
-            return "Scenario"
-        return text.split("&", 1)[0].strip().split(" ", 1)[0]
-
-    def _lane_definitions(self):
-        lanes = [
-            ("all", "All", "widgets"),
-            ("favorites", "Favorites", "tag"),
-            ("recent", "Recent", "history"),
-            ("containers", "Containers", "layout"),
-        ]
-        for scenario in self._catalog.browser_scenarios():
-            lane_id = f"scenario:{scenario}"
-            lanes.append((lane_id, self._scenario_short_label(scenario), self._scenario_icon_key(scenario)))
-        return lanes[:8]
-
-    def _populate_quick_lanes(self):
-        while self._lanes_grid.count():
-            item = self._lanes_grid.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        self._lane_buttons = {}
-        columns = 4
-        for index, (lane_id, label, icon_key) in enumerate(self._lane_definitions()):
-            button = QToolButton()
-            button.setObjectName("widget_browser_lane")
-            button.setCheckable(True)
-            button.setToolButtonStyle(Qt.ToolButtonTextOnly)
-            button.setText(str(label))
-            button.clicked.connect(lambda checked=False, value=lane_id: self._set_category_by_id(value))
-            row = index // columns
-            column = index % columns
-            self._lanes_grid.addWidget(button, row, column)
-            self._lane_buttons[lane_id.lower()] = button
-        for col in range(columns):
-            self._lanes_grid.setColumnStretch(col, 1)
-
-    def _populate_organizers(self):
-        while self._sort_layout.count():
-            item = self._sort_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        self._sort_buttons = {}
-        for mode, label in self._SORT_MODES:
-            button = QToolButton()
-            button.setObjectName("widget_browser_sort_button")
-            button.setText(label)
-            button.setCheckable(True)
-            button.clicked.connect(lambda checked=False, value=mode: self._set_sort_mode(value))
-            self._sort_layout.addWidget(button)
-            self._sort_buttons[mode] = button
-        self._sort_layout.addStretch()
-
-        while self._complexity_layout.count():
-            item = self._complexity_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        self._complexity_buttons = {}
-        for level, label in self._COMPLEXITY_LEVELS:
-            button = QToolButton()
-            button.setObjectName("widget_browser_complexity_button")
-            button.setText(label)
-            button.setProperty("level", level)
-            button.setCheckable(True)
-            button.clicked.connect(lambda checked=False, value=level: self._set_complexity_filter(value))
-            self._complexity_layout.addWidget(button)
-            self._complexity_buttons[level] = button
-        self._complexity_layout.addStretch()
-        self._sync_organizers()
-
-    def _sync_organizers(self):
-        for mode, button in self._sort_buttons.items():
-            button.blockSignals(True)
-            button.setChecked(mode == self._sort_mode)
-            button.blockSignals(False)
-            is_current = mode == self._sort_mode
-            tooltip = f"Sort visible widgets by {button.text()}."
-            if is_current:
-                tooltip += " Current sort mode."
-            accessible_name = f"Sort mode: {button.text()}. {'Current.' if is_current else 'Available.'}"
-            _set_widget_metadata(
-                button,
-                tooltip=tooltip,
-                accessible_name=accessible_name,
-            )
-        for level, button in self._complexity_buttons.items():
-            button.blockSignals(True)
-            button.setChecked(level == self._complexity_filter)
-            button.blockSignals(False)
-            is_current = level == self._complexity_filter
-            tooltip = f"Filter visible widgets by {button.text()} complexity."
-            if is_current:
-                tooltip += " Current complexity filter."
-            accessible_name = f"Complexity filter: {button.text()}. {'Current.' if is_current else 'Available.'}"
-            _set_widget_metadata(
-                button,
-                tooltip=tooltip,
-                accessible_name=accessible_name,
-            )
-
-    def _normalize_sort_mode(self, mode):
-        value = str(mode or "").strip().lower()
-        valid = {key for key, _label in self._SORT_MODES}
-        return value if value in valid else "relevance"
-
-    def _normalize_complexity_filter(self, level):
-        value = str(level or "").strip().lower()
-        valid = {key for key, _label in self._COMPLEXITY_LEVELS}
+    def _normalize_category(self, category):
+        value = str(category or "").strip().lower()
+        valid = {category_id for category_id, _label in self._CATEGORY_OPTIONS}
         return value if value in valid else "all"
 
-    def _set_sort_mode(self, mode, refresh=True, persist=True):
-        normalized = self._normalize_sort_mode(mode)
-        changed = normalized != self._sort_mode
-        self._sort_mode = normalized
-        self._sync_organizers()
-        if not changed:
-            return
-        if changed and persist:
-            self._config.set_widget_browser_organizers(sort_mode=self._sort_mode)
-        if refresh:
-            self.refresh()
+    def _populate_categories(self):
+        blocker = QSignalBlocker(self._category_combo)
+        self._category_combo.clear()
+        self._category_ids = []
+        for category_id, label in self._CATEGORY_OPTIONS:
+            self._category_combo.addItem(label)
+            self._category_ids.append(category_id)
+        self._set_category_by_id(getattr(self._config, "widget_browser_active_category", "all"))
+        del blocker
 
-    def _set_complexity_filter(self, level, refresh=True, persist=True):
-        normalized = self._normalize_complexity_filter(level)
-        changed = normalized != self._complexity_filter
-        self._complexity_filter = normalized
-        self._sync_organizers()
-        if not changed:
-            return
-        if changed and persist:
-            self._config.set_widget_browser_organizers(complexity=self._complexity_filter)
-        if refresh:
-            self.refresh()
+    def _selected_category(self):
+        index = self._category_combo.currentIndex()
+        if 0 <= index < len(self._category_ids):
+            return self._normalize_category(self._category_ids[index])
+        return "all"
 
-    def _reset_organizers(self):
-        changed = False
-        if self._sort_mode != "relevance":
-            self._set_sort_mode("relevance", refresh=False, persist=False)
-            changed = True
-        if self._complexity_filter != "all":
-            self._set_complexity_filter("all", refresh=False, persist=False)
-            changed = True
-        if changed:
-            self._config.set_widget_browser_organizers(sort_mode=self._sort_mode, complexity=self._complexity_filter)
-            self.refresh()
+    def _selected_category_label(self):
+        label = str(self._category_combo.currentText() or "").strip()
+        return label or "All"
 
-    def _populate_tags(self):
-        while self._tags_layout.count():
-            item = self._tags_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-        self._tag_buttons = {}
-        for tag in self._available_tags():
-            button = QToolButton()
-            button.setObjectName("widget_browser_tag")
-            button.setText(tag)
-            button.setCheckable(True)
-            button.toggled.connect(lambda checked, value=tag: self._on_tag_toggled(value, checked))
-            self._tags_layout.addWidget(button)
-            self._tag_buttons[tag.lower()] = button
-        self._tags_layout.addStretch()
-        self._sync_tags_from_config()
-
-    def _available_tags(self):
-        return self._catalog.top_tags(addable_only=True, limit=18)
-
-    def _active_tag_values(self):
-        return [str(tag or "").strip().lower() for tag in getattr(self._config, "widget_browser_active_tags", []) if str(tag or "").strip()]
-
-    def _sync_tags_from_config(self):
-        active = set(self._active_tag_values())
-        for tag, button in self._tag_buttons.items():
-            button.blockSignals(True)
-            button.setChecked(tag in active)
-            button.blockSignals(False)
-            tooltip = f"Filter widgets by tag {button.text()}."
-            tooltip += " Tag is active." if tag in active else " Tag is inactive."
-            accessible_name = f"Widget tag: {button.text()}. {'Active.' if tag in active else 'Inactive.'}"
-            _set_widget_metadata(
-                button,
-                tooltip=tooltip,
-                accessible_name=accessible_name,
-            )
-        self._clear_tags_btn.setEnabled(bool(active))
-        _set_widget_visible(self._clear_tags_btn, bool(active))
-        clear_hint = "Clear active widget tags." if active else "No active widget tags to clear."
-        _set_widget_metadata(
-            self._clear_tags_btn,
-            tooltip=clear_hint,
-            accessible_name="Clear widget tags" if active else "Clear widget tags unavailable",
-        )
-
-    def _on_tag_toggled(self, tag, checked):
-        current = self._active_tag_values()
-        tag_key = str(tag or "").strip().lower()
-        if not tag_key:
-            return
-        if checked and tag_key not in current:
-            current.append(tag_key)
-        elif not checked and tag_key in current:
-            current = [item for item in current if item != tag_key]
-        self._config.set_widget_browser_filters(tags=current)
-        self.refresh()
-
-    def _clear_active_tags(self):
-        self._config.set_widget_browser_filters(tags=[])
-        self.refresh()
-
-    def set_insert_target_label(self, label):
-        self._insert_target_label = (label or "").strip() or "Current page root"
-        self._update_insert_target()
+    def _set_category_by_id(self, category_id):
+        target = self._normalize_category(category_id)
+        for index, value in enumerate(self._category_ids):
+            value = self._normalize_category(value)
+            if value == target:
+                self._category_combo.setCurrentIndex(index)
+                return
 
     def _schedule_search_refresh(self):
         if self._search_refresh_timer.isActive():
             self._search_refresh_timer.stop()
         self._search_refresh_timer.start(self._SEARCH_REFRESH_DEBOUNCE_MS)
 
+    def _on_category_changed(self, _index):
+        category = self._selected_category()
+        if category != getattr(self._config, "widget_browser_active_category", "all"):
+            self._config.set_widget_browser_active_category(category)
+        self.refresh()
+
     def focus_search(self):
         self._search.setFocus()
         self._search.selectAll()
+
+    def set_insert_target_label(self, label):
+        self._insert_target_label = (label or "").strip() or "Current page root"
+        self._update_insert_target()
 
     def select_widget_type(self, widget_type):
         widget_type = str(widget_type or "").strip()
@@ -742,123 +389,32 @@ class WidgetBrowserPanel(QWidget):
     def refresh(self):
         if self._search_refresh_timer.isActive():
             self._search_refresh_timer.stop()
-        self._sync_organizers()
-        self._sync_tags_from_config()
         items = self._filtered_items()
         self._rebuild_cards(items)
-        self._update_browser_stats(len(items))
-        self._update_quick_lanes()
         self._update_accessibility_summary(len(items))
 
     def _update_insert_target(self):
         _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
 
-    def _update_browser_stats(self, visible_count):
-        total = len(self._registry.browser_items(addable_only=True))
-        favorites = len(self._config.widget_browser_favorites)
-        recent = len(self._config.widget_browser_recent)
-        active_filters = (
-            bool((self._search.text() or "").strip())
-            or bool(self._active_tag_values())
-            or self._selected_category() != "all"
-            or self._complexity_filter != "all"
-        )
-        summary_parts = [f"Visible {visible_count}/{total}"]
-        if favorites:
-            summary_parts.append(f"Favorites {favorites}")
-        if recent:
-            summary_parts.append(f"Recent {recent}")
-        summary = " | ".join(summary_parts)
-        # UIX-006: stats are useful context but not always visible to reduce header noise.
-        self._stats_summary_label.setVisible(active_filters or visible_count <= 8)
-        tooltip = (
-            f"Widget browser stats. Visible widgets: {visible_count} of {total}. "
-            f"Favorite widget types: {favorites}. Recently inserted widget types: {recent}."
-        )
-        accessible_name = f"Widget browser stats: {summary}."
-        if active_filters:
-            tooltip += " Filters active."
-            accessible_name += " Filters active."
-        self._stats_summary_label.setText(summary)
-        _set_widget_metadata(
-            self._stats_summary_label,
-            tooltip=tooltip,
-            accessible_name=accessible_name,
-        )
-
-    def _lane_counts(self):
-        return self._catalog.lane_counts(
-            addable_only=True,
-            favorite_types=set(self._config.widget_browser_favorites),
-            recent_types=list(self._config.widget_browser_recent),
-        )
-
-    def _update_quick_lanes(self):
-        if not self._lane_buttons:
-            return
-        selected = str(self._selected_category() or "all").strip().lower()
-        counts = self._lane_counts()
-        for lane_id, button in self._lane_buttons.items():
-            base_label = button.text().split("\n", 1)[0]
-            count = int(counts.get(lane_id, 0) or 0)
-            button.setText(f"{base_label}\n{count}" if count > 0 else base_label)
-            button.blockSignals(True)
-            button.setChecked(lane_id == selected)
-            button.blockSignals(False)
-            button.setProperty("emptyLane", count == 0)
-            button.style().unpolish(button)
-            button.style().polish(button)
-            button.update()
-            count_text = _count_label(count, "widget")
-            tooltip = f"Quick lane {base_label}: {count_text}."
-            if lane_id == selected:
-                tooltip += " Current lane."
-            elif count == 0:
-                tooltip += " No widgets available."
-            accessible_name = (
-                f"Quick lane: {base_label}. {count_text}. Current lane."
-                if lane_id == selected
-                else f"Quick lane: {base_label}. {count_text}. {'No widgets available.' if count == 0 else 'Available.'}"
-            )
-            _set_widget_metadata(
-                button,
-                tooltip=tooltip,
-                accessible_name=accessible_name,
-            )
-
-    def _sort_label(self):
-        return {key: label for key, label in self._SORT_MODES}.get(self._sort_mode, "Recommended")
-
-    def _complexity_label(self):
-        return {key: label for key, label in self._COMPLEXITY_LEVELS}.get(self._complexity_filter, "All")
-
-    def _selected_category_label(self):
-        item = self._category_list.currentItem()
-        return str(item.text() or "All Widgets") if item is not None else "All Widgets"
-
-    def _selected_tag_labels(self):
-        return sorted(button.text() for button in self._tag_buttons.values() if button.isChecked())
-
-    def _selected_card_label(self):
-        for card in self._cards.values():
-            if card.type_name == self._selected_type:
-                return str(card._item.get("display_name", card.type_name) or card.type_name)
-        return ""
-
     def _update_accessibility_summary(self, visible_count=None):
         visible = len(self._cards) if visible_count is None else max(int(visible_count or 0), 0)
         category_label = self._selected_category_label()
         search_text = str(self._search.text() or "").strip() or "none"
-        tags_text = ", ".join(self._selected_tag_labels()) or "none"
-        selected_text = self._selected_card_label() or "none"
+        selected_text = next(
+            (
+                str(card._item.get("display_name", card.type_name) or card.type_name)
+                for card in self._cards.values()
+                if card.type_name == self._selected_type
+            ),
+            "none",
+        )
         visible_text = _count_label(visible, "visible widget", "visible widgets")
         summary = (
             f"Widget Browser: {visible_text}. Category: {category_label}. Search: {search_text}. "
-            f"Sort: {self._sort_label()}. Complexity: {self._complexity_label()}. "
-            f"Tags: {tags_text}. Insert target: {self._insert_target_label}. Selected: {selected_text}."
+            f"Insert target: {self._insert_target_label}. Selected: {selected_text}."
         )
-        results_summary = f"Widget browser results: {_count_label(visible, 'card')} visible."
+        results_summary = f"Widget browser results: {_count_label(visible, 'row')} visible."
         if selected_text != "none":
             results_summary += f" Selected widget: {selected_text}."
 
@@ -880,99 +436,45 @@ class WidgetBrowserPanel(QWidget):
             accessible_name=f"Widget browser search: {search_text}.",
         )
         _set_widget_metadata(
-            self._category_list,
+            self._category_combo,
             tooltip=f"Widget categories. Current category: {category_label}.",
             accessible_name=f"Widget categories: {category_label}",
         )
         _set_widget_metadata(self._scroll, tooltip=results_summary, accessible_name=results_summary)
         _set_widget_metadata(self._cards_container, tooltip=results_summary, accessible_name=results_summary)
-        _set_widget_metadata(
-            self._lanes_title,
-            tooltip="Quick lanes switch the main widget browser category.",
-            accessible_name=f"Quick Lanes: current category {category_label}.",
-        )
-        _set_widget_metadata(
-            self._sort_title,
-            tooltip=f"Current sort mode: {self._sort_label()}",
-            accessible_name=f"Sort: {self._sort_label()}",
-        )
-        _set_widget_metadata(
-            self._complexity_title,
-            tooltip=f"Current complexity filter: {self._complexity_label()}",
-            accessible_name=f"Complexity: {self._complexity_label()}",
-        )
-        _set_widget_metadata(
-            self._tags_title,
-            tooltip=f"Active widget tags: {tags_text}.",
-            accessible_name=f"Tags: {tags_text}.",
-        )
 
-    def _on_category_changed(self, _row):
-        if self._suspend_filter_persist:
-            return
+    def _filtered_component_metas(self):
         category = self._selected_category()
-        self._config.set_widget_browser_filters(scenario=category)
-        self.refresh()
-
-    def _selected_category(self):
-        item = self._category_list.currentItem()
-        if item is None:
-            return "all"
-        return item.data(Qt.UserRole) or "all"
-
-    def _filtered_items(self):
-        search = (self._search.text() or "").strip()
-        category = str(self._selected_category() or "all").strip().lower()
+        search = str(self._search.text() or "").strip()
         favorite_types = set(self._favorite_service.list_favorites())
         recent_types = list(self._recent_service.list_recent_types())
         recent_lookup = set(recent_types)
         metas = self._catalog.list_components(addable_only=True)
 
-        scenario_filter = "all"
-        category_filter = "all"
         if category == "favorites":
-            metas = [item for item in metas if item.type_name in favorite_types]
+            filtered = [item for item in metas if item.type_name in favorite_types]
         elif category == "recent":
-            order = {name: index for index, name in enumerate(recent_types)}
-            metas = [item for item in metas if item.type_name in recent_lookup]
-            metas.sort(key=lambda item: order.get(item.type_name, 999))
+            recent_order = {name: index for index, name in enumerate(recent_types)}
+            filtered = [item for item in metas if item.type_name in recent_lookup]
+            filtered.sort(key=lambda item: recent_order.get(item.type_name, 999))
         elif category == "containers":
-            category_filter = "containers"
-        elif category.startswith("scenario:"):
-            scenario_filter = category
-        elif category != "all":
-            category_filter = category
-
-        query = SearchQuery(
-            text=search,
-            category=category_filter,
-            scenario=scenario_filter,
-            complexity=self._complexity_filter,
-            tags=tuple(self._active_tag_values()),
-            sort_mode=self._sort_mode,
-        )
-        if category != "recent":
-            metas = self._search_service.filter_and_sort(
-                metas,
-                query,
-                favorite_types=favorite_types,
-                recent_types=recent_types,
-            )
+            filtered = [item for item in metas if item.is_container]
+        elif category == "all":
+            filtered = metas
         else:
-            metas = self._search_service.filter_and_sort(
-                metas,
-                SearchQuery(
-                    text=search,
-                    category="all",
-                    scenario="all",
-                    complexity=self._complexity_filter,
-                    tags=tuple(self._active_tag_values()),
-                    sort_mode="relevance",
-                ),
-                favorite_types=favorite_types,
-                recent_types=recent_types,
-            )
+            filtered = [item for item in metas if item.category.lower() == category]
 
+        if not search:
+            return filtered
+
+        return self._search_service.filter_and_sort(
+            filtered,
+            SearchQuery(text=search, category="all", scenario="all", complexity="all", tags=(), sort_mode="relevance"),
+            favorite_types=favorite_types,
+            recent_types=recent_types,
+        )
+
+    def _filtered_items(self):
         return [
             {
                 "type_name": item.type_name,
@@ -987,7 +489,7 @@ class WidgetBrowserPanel(QWidget):
                 "browse_priority": item.browse_priority,
                 "is_container": item.is_container,
             }
-            for item in metas
+            for item in self._filtered_component_metas()
         ]
 
     def _clear_cards(self):
@@ -998,65 +500,35 @@ class WidgetBrowserPanel(QWidget):
                 widget.deleteLater()
         self._cards = {}
 
-    def _build_group_header(self, scenario, item_count):
-        frame = QFrame()
-        frame.setObjectName("widget_browser_group_header")
-        layout = QHBoxLayout(frame)
-        layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM - _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM - _SPACE_XXS)
-        layout.setSpacing(_SPACE_SM)
-        icon_label = QLabel()
-        icon_label.setPixmap(make_icon(self._scenario_icon_key(scenario), size=_ICON_SM).pixmap(_ICON_SM, _ICON_SM))
-        layout.addWidget(icon_label, 0, Qt.AlignVCenter)
-        title = QLabel(str(scenario or "Other"))
-        title.setObjectName("widget_browser_group_title")
-        layout.addWidget(title, 0, Qt.AlignVCenter)
-        count_chip = QLabel(str(max(int(item_count or 0), 0)))
-        count_chip.setObjectName("workspace_status_chip")
-        count_chip.setProperty("chipTone", "accent")
-        layout.addWidget(count_chip, 0, Qt.AlignVCenter)
-        layout.addStretch()
-        group_summary = f"Scenario group: {scenario or 'Other'}. {_count_label(item_count, 'widget')}."
-        _set_widget_metadata(frame, tooltip=group_summary, accessible_name=group_summary)
-        _set_widget_metadata(title, tooltip=group_summary, accessible_name=f"Scenario group: {title.text()}")
-        _set_widget_metadata(
-            count_chip,
-            tooltip=group_summary,
-            accessible_name=f"Scenario group count: {count_chip.text()}",
-        )
-        return frame
-
-    def _should_group_by_scenario(self):
-        return (
-            self._selected_category() == "all"
-            and not bool((self._search.text() or "").strip())
-            and not bool(self._active_tag_values())
-            and self._complexity_filter == "all"
-            and self._sort_mode == "relevance"
-        )
-
     def _empty_state_hint_text(self):
         search_active = bool((self._search.text() or "").strip())
-        tags_active = bool(self._active_tag_values())
-        organizers_active = self._sort_mode != "relevance" or self._complexity_filter != "all"
-        category_active = str(self._selected_category() or "all").strip().lower() != "all"
-
-        active_states = [search_active, tags_active, organizers_active, category_active]
-        if sum(1 for state in active_states if state) > 1:
-            return "Reset the active filters to show more widgets."
+        category_active = self._selected_category() != "all"
+        if search_active and category_active:
+            return "Clear search or switch back to All to show more widgets."
         if search_active:
             return "Clear search to show matching widgets."
-        if tags_active:
-            return "Clear tag filters to show more widgets."
-        if organizers_active:
-            return "Reset organize filters to show more widgets."
         if category_active:
-            return "Show all widgets to leave the current category."
-        return "Adjust search or filters to show more widgets."
+            return "Switch back to All to browse the full widget catalog."
+        return "No widgets are available right now."
+
+    def _reset_search_only(self):
+        if self._search.text():
+            blocker = QSignalBlocker(self._search)
+            self._search.setText("")
+            del blocker
+            self.refresh()
+
+    def _reset_to_all_categories(self):
+        blocker = QSignalBlocker(self._category_combo)
+        self._set_category_by_id("all")
+        del blocker
+        if getattr(self._config, "widget_browser_active_category", "all") != "all":
+            self._config.set_widget_browser_active_category("all")
+        self.refresh()
 
     def _rebuild_cards(self, items):
         self._clear_cards()
         favorites = set(self._config.widget_browser_favorites)
-        columns = 1
         if not items:
             self._selected_type = ""
             empty = QFrame()
@@ -1065,67 +537,59 @@ class WidgetBrowserPanel(QWidget):
             empty_layout.setContentsMargins(_SPACE_LG, _SPACE_LG, _SPACE_LG, _SPACE_LG)
             empty_layout.setSpacing(_SPACE_SM)
 
-            summary = QLabel(
-                "<b>No matching widgets.</b><br>%s" % self._empty_state_hint_text()
-            )
+            summary = QLabel(f"<b>No matching widgets.</b><br>{self._empty_state_hint_text()}")
             summary.setObjectName("workspace_section_subtitle")
             summary.setWordWrap(True)
             summary.setAlignment(Qt.AlignCenter)
             summary.setTextFormat(Qt.RichText)
             empty_layout.addWidget(summary)
 
-            primary = QPushButton("Show All Widgets")
-            primary.clicked.connect(self._reset_all_filters)
-            _set_widget_metadata(
-                primary,
-                tooltip="Reset filters and show the full catalog.",
-                accessible_name="Show all widgets",
-            )
-            empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
+            if self._search.text():
+                primary = QPushButton("Clear Search")
+                primary.clicked.connect(self._reset_search_only)
+                _set_widget_metadata(
+                    primary,
+                    tooltip="Clear the widget browser search.",
+                    accessible_name="Clear widget search",
+                )
+                empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
+            elif self._selected_category() != "all":
+                primary = QPushButton("Show All Widgets")
+                primary.clicked.connect(self._reset_to_all_categories)
+                _set_widget_metadata(
+                    primary,
+                    tooltip="Switch back to All and show the full catalog.",
+                    accessible_name="Show all widgets",
+                )
+                empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
+
             _set_widget_metadata(
                 empty,
                 tooltip="No widgets match the current widget browser filters.",
                 accessible_name="No widgets match the current filters.",
             )
             _set_widget_metadata(summary, tooltip=summary.text(), accessible_name="Widget browser empty state.")
-            self._cards_layout.addWidget(empty, 0, 0, 1, columns)
+            self._cards_layout.addWidget(empty)
+            self._cards_layout.addStretch(1)
             return
 
         visible_types = [item.get("type_name", "") for item in items]
         if self._selected_type not in visible_types:
             self._selected_type = visible_types[0]
 
-        grouped = self._catalog.group_by_scenario(items) if self._should_group_by_scenario() else [("", items)]
-        row = 0
-        column = 0
-        card_index = 0
-        for scenario, group_items in grouped:
-            if scenario:
-                header = self._build_group_header(scenario, len(group_items))
-                self._cards_layout.addWidget(header, row, 0, 1, columns)
-                row += 1
-                column = 0
-            for item in group_items:
-                card = WidgetBrowserCard(item)
-                card.set_favorite(item.get("type_name") in favorites)
-                card.clicked.connect(self._select_card)
-                card.insert_requested.connect(self.insert_requested.emit)
-                card.favorite_toggled.connect(self._toggle_favorite)
-                card.menu_requested.connect(self._show_card_menu)
-                card.drag_requested.connect(self._start_widget_drag)
-                self._cards_layout.addWidget(card, row, column)
-                self._cards[card_index] = card
-                card.set_selected(card.type_name == self._selected_type)
-                card_index += 1
-                column += 1
-                if column >= columns:
-                    column = 0
-                    row += 1
-            if column != 0:
-                row += 1
-                column = 0
+        for index, item in enumerate(items):
+            card = WidgetBrowserCard(item)
+            card.set_favorite(item.get("type_name") in favorites)
+            card.clicked.connect(self._select_card)
+            card.insert_requested.connect(self.insert_requested.emit)
+            card.favorite_toggled.connect(self._toggle_favorite)
+            card.menu_requested.connect(self._show_card_menu)
+            card.drag_requested.connect(self._start_widget_drag)
+            self._cards_layout.addWidget(card)
+            self._cards[index] = card
+            card.set_selected(card.type_name == self._selected_type)
 
-        self._cards_layout.setColumnStretch(0, 1)
+        self._cards_layout.addStretch(1)
 
     def _select_card(self, widget_type):
         self._selected_type = widget_type
@@ -1166,39 +630,9 @@ class WidgetBrowserPanel(QWidget):
         drag.setMimeData(mime)
         item = self._catalog.by_type(widget_type)
         if item is not None:
-            drag.setPixmap(make_icon(item.icon_key or widget_icon_key(widget_type), size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
+            icon_key = item.icon_key or widget_icon_key(widget_type)
+            drag.setPixmap(make_icon(icon_key, size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
             drag.setHotSpot(QPoint(9, 9))
         if global_pos is not None:
-            self.statusTip()  # keep QObject state touched for accessibility update rhythm
+            self.statusTip()
         drag.exec_(Qt.CopyAction)
-
-    def _set_category_by_id(self, category_id):
-        target = str(category_id or "").strip().lower()
-        for row in range(self._category_list.count()):
-            item = self._category_list.item(row)
-            value = str(item.data(Qt.UserRole) or "").strip().lower() if item is not None else ""
-            if value == target:
-                self._category_list.setCurrentRow(row)
-                return
-
-    def _reset_search_only(self):
-        if self._search.text():
-            blocker = QSignalBlocker(self._search)
-            self._search.setText("")
-            del blocker
-            self.refresh()
-
-    def _reset_all_filters(self):
-        self._suspend_filter_persist = True
-        self._config.set_widget_browser_filters(scenario="all", tags=[])
-        self._suspend_filter_persist = False
-        self._set_sort_mode("relevance", refresh=False, persist=False)
-        self._set_complexity_filter("all", refresh=False, persist=False)
-        self._config.set_widget_browser_organizers(sort_mode=self._sort_mode, complexity=self._complexity_filter)
-        search_blocker = QSignalBlocker(self._search)
-        category_blocker = QSignalBlocker(self._category_list)
-        self._search.setText("")
-        self._set_category_by_id("all")
-        del category_blocker
-        del search_blocker
-        self.refresh()

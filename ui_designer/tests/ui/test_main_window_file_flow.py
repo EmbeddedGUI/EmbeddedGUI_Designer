@@ -8037,7 +8037,7 @@ class TestMainWindowFileFlow:
         }
         _close_window(window)
 
-        isolated_config.workspace_layout_version = 2
+        isolated_config.workspace_layout_version = 3
         isolated_config.workspace_state = {
             "inspector_group_expanded": {"button\tStyle": False},
         }
@@ -8070,7 +8070,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         isolated_config.workspace_state = {"focus_canvas_enabled": True}
-        isolated_config.workspace_layout_version = 2
+        isolated_config.workspace_layout_version = 3
 
         window = MainWindow("")
 
@@ -8078,6 +8078,31 @@ class TestMainWindowFileFlow:
         assert window._focus_canvas_action.isChecked() is True
         assert window._left_shell.isHidden() is True
         assert window._inspector_tabs.isHidden() is True
+        _close_window(window)
+
+    def test_workspace_layout_version_bump_ignores_old_splitter_state_and_keeps_center_primary(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        seed = MainWindow("")
+        seed._top_splitter.setSizes([520, 400, 500])
+        saved_top_splitter = bytes(seed._top_splitter.saveState().toBase64()).decode("ascii")
+        _close_window(seed)
+
+        isolated_config.window_state = ""
+        isolated_config.workspace_state = {"top_splitter": saved_top_splitter}
+        isolated_config.workspace_layout_version = 2
+
+        window = MainWindow("")
+        window._central_stack.setCurrentWidget(window._editor_container)
+        window.resize(1400, 900)
+        window.show()
+        qapp.processEvents()
+
+        sizes = window._top_splitter.sizes()
+
+        assert sizes[1] > sizes[0]
+        assert sizes[1] > sizes[2]
+        assert sizes[0] < sizes[2]
         _close_window(window)
 
     def test_bottom_panel_toggle_preserves_user_splitter_sizes(self, qapp, isolated_config):
@@ -9296,6 +9321,32 @@ class TestMainWindowFileFlow:
         window._set_selection([label], primary=label, sync_tree=True, sync_preview=True)
 
         assert window.widget_browser._selected_type == "label"
+        _close_window(window)
+
+    def test_widget_type_drop_clamps_to_project_screen_bounds(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "WidgetDropClampDemo"
+        project = _create_project(project_dir, "WidgetDropClampDemo", sdk_root)
+        project.screen_width = 240
+        project.screen_height = 320
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        before_count = len(window._current_page.root_widget.children)
+        window._on_widget_type_dropped("button", 9999, 9999, None)
+
+        assert len(window._current_page.root_widget.children) == before_count + 1
+        inserted = window._current_page.root_widget.children[-1]
+        assert inserted.widget_type == "button"
+        assert inserted.x == max(project.screen_width - inserted.width, 0)
+        assert inserted.y == max(project.screen_height - inserted.height, 0)
         _close_window(window)
 
     @pytest.mark.parametrize(

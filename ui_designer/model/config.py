@@ -91,6 +91,7 @@ class DesignerConfig:
         self.workspace_state = {}
         self.widget_browser_recent = []
         self.widget_browser_favorites = []
+        self.widget_browser_active_category = "all"
         self.widget_browser_active_scenario = "all"
         self.widget_browser_active_tags = []
         self.widget_browser_sort_mode = "relevance"
@@ -249,6 +250,8 @@ class DesignerConfig:
             favorites = data.get("widget_browser_favorites", [])
             self.widget_browser_recent = [str(item).strip() for item in recent if str(item).strip()][:24]
             self.widget_browser_favorites = [str(item).strip() for item in favorites if str(item).strip()][:64]
+            active_category = str(data.get("widget_browser_active_category", "all") or "all").strip().lower()
+            self.widget_browser_active_category = active_category or "all"
             active_scenario = str(data.get("widget_browser_active_scenario", "all") or "all").strip().lower()
             self.widget_browser_active_scenario = active_scenario or "all"
             active_tags = data.get("widget_browser_active_tags", [])
@@ -299,10 +302,7 @@ class DesignerConfig:
                 "workspace_state": self.workspace_state,
                 "widget_browser_recent": self.widget_browser_recent,
                 "widget_browser_favorites": self.widget_browser_favorites,
-                "widget_browser_active_scenario": self.widget_browser_active_scenario,
-                "widget_browser_active_tags": self.widget_browser_active_tags,
-                "widget_browser_sort_mode": self.widget_browser_sort_mode,
-                "widget_browser_complexity_filter": self.widget_browser_complexity_filter,
+                "widget_browser_active_category": self.widget_browser_active_category,
                 "workspace_status_panel_state": self.workspace_status_panel_state,
                 "sdk_setup_prompted": self.sdk_setup_prompted,
                 "release_history_view": self.release_history_view,
@@ -393,11 +393,34 @@ class DesignerConfig:
         self.save()
         return enabled
 
+    def set_widget_browser_active_category(self, category):
+        """Persist the simplified widget browser category selection."""
+        normalized = str(category or "all").strip().lower()
+        self.widget_browser_active_category = normalized or "all"
+        self.save()
+
     def set_widget_browser_filters(self, scenario=None, tags=None):
-        """Persist widget browser scenario and active tag filters."""
+        """Compatibility wrapper for legacy widget browser filters."""
         if scenario is not None:
             normalized = str(scenario or "all").strip().lower()
             self.widget_browser_active_scenario = normalized or "all"
+            # Only carry forward categories supported by the simplified browser.
+            supported_categories = {
+                "all",
+                "favorites",
+                "recent",
+                "containers",
+                "basics",
+                "layout",
+                "input",
+                "navigation",
+                "display & data",
+                "media",
+                "decoration",
+                "custom",
+            }
+            if self.widget_browser_active_scenario in supported_categories:
+                self.widget_browser_active_category = self.widget_browser_active_scenario
         if tags is not None:
             unique_tags = []
             seen = set()

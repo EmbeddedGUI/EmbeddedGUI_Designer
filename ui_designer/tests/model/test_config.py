@@ -72,6 +72,7 @@ class TestDefaults:
         assert config.show_all_examples is False
         assert config.window_geometry == ""
         assert config.window_state == ""
+        assert config.widget_browser_active_category == "all"
         assert config.widget_browser_active_scenario == "all"
         assert config.widget_browser_active_tags == []
         assert config.widget_browser_sort_mode == "relevance"
@@ -94,10 +95,7 @@ class TestSaveLoad:
         config.show_grid = False
         config.grid_size = 12
         config.font_size_px = 14
-        config.widget_browser_active_scenario = "scenario:layout & containers"
-        config.widget_browser_active_tags = ["layout", "container"]
-        config.widget_browser_sort_mode = "name"
-        config.widget_browser_complexity_filter = "intermediate"
+        config.widget_browser_active_category = "layout"
         config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
         config.sdk_setup_prompted = True
         config.release_history_view = {
@@ -140,10 +138,11 @@ class TestSaveLoad:
         assert loaded.show_grid is False
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
-        assert loaded.widget_browser_active_scenario == "scenario:layout & containers"
-        assert loaded.widget_browser_active_tags == ["layout", "container"]
-        assert loaded.widget_browser_sort_mode == "name"
-        assert loaded.widget_browser_complexity_filter == "intermediate"
+        assert loaded.widget_browser_active_category == "layout"
+        assert loaded.widget_browser_active_scenario == "all"
+        assert loaded.widget_browser_active_tags == []
+        assert loaded.widget_browser_sort_mode == "relevance"
+        assert loaded.widget_browser_complexity_filter == "all"
         assert loaded.workspace_status_panel_state == {"last_action": "open_diagnostics"}
         assert loaded.sdk_setup_prompted is True
         assert loaded.release_history_view == {
@@ -183,6 +182,27 @@ class TestSaveLoad:
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             config.load()  # should not raise
         assert config.last_app == "HelloDesigner"
+
+    def test_load_legacy_widget_browser_filters_falls_back_to_all_category(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(
+            json.dumps(
+                {
+                    "widget_browser_active_scenario": "scenario:layout & containers",
+                    "widget_browser_active_tags": ["layout"],
+                    "widget_browser_sort_mode": "name",
+                    "widget_browser_complexity_filter": "advanced",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            config.load()
+
+        assert config.widget_browser_active_category == "all"
+        assert config.widget_browser_active_scenario == "scenario:layout & containers"
+        assert config.widget_browser_active_tags == ["layout"]
 
     def test_save_creates_directory(self, config, tmp_path):
         nested = tmp_path / "sub" / "dir"
@@ -256,12 +276,22 @@ class TestRecentApps:
         assert removed is True
         assert config.last_project_path == ""
 
-    def test_set_widget_browser_filters_normalizes_and_deduplicates(self, config, tmp_path):
+    def test_set_widget_browser_active_category_normalizes_value(self, config, tmp_path):
         config_path = tmp_path / "config.json"
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
+                config.set_widget_browser_active_category("LAYOUT")
+
+        assert config.widget_browser_active_category == "layout"
+
+    def test_legacy_widget_browser_filters_keep_old_fields_without_overriding_new_category(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config.widget_browser_active_category = "favorites"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
                 config.set_widget_browser_filters("SCENARIO:LAYOUT & CONTAINERS", ["Layout", "layout", "", "Container"])
 
+        assert config.widget_browser_active_category == "favorites"
         assert config.widget_browser_active_scenario == "scenario:layout & containers"
         assert config.widget_browser_active_tags == ["Layout", "Container"]
 

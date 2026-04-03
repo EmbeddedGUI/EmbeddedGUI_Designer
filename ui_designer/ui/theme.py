@@ -643,6 +643,7 @@ QGroupBox#inspector_collapsible_group::title {{
 #workspace_panel_header,
 #workspace_hint_strip,
 #widget_browser_header,
+#widget_browser_filter_bar,
 #workspace_bottom_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
@@ -650,11 +651,16 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_command_bar {{
-    background-color: {t['panel']};
-    border-color: {t['border_strong']};
+    background-color: {t['panel_alt']};
+    border-color: {t['border']};
 }}
 
 #workspace_hint_strip {{
+    background-color: {t['panel_alt']};
+    border-color: transparent;
+}}
+
+#widget_browser_filter_bar {{
     background-color: {t['panel_alt']};
 }}
 
@@ -695,7 +701,7 @@ QPushButton#project_workspace_view_button:checked {{
     background-color: transparent;
     border: none;
     border-right: 1px solid {t['border']};
-    padding: {t['space_xs']}px {t['space_xs']}px;
+    padding: {t['space_xxs']}px {t['space_xs']}px;
 }}
 
 #page_inspector_scroll {{
@@ -718,8 +724,8 @@ QToolButton[workspaceNav="true"] {{
     border: none;
     border-radius: {t['r_md']}px;
     font-size: {t['fs_body_sm']}px;
-    padding: 8px 8px;
-    min-height: 32px;
+    padding: 6px 6px;
+    min-height: 28px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
@@ -732,9 +738,9 @@ QToolButton[workspaceNav="true"]:pressed {{
 }}
 
 QToolButton[workspaceNav="true"]:checked {{
-    background-color: {t['accent_soft']};
-    color: {t['accent_hover']};
-    border: 1px solid {t['accent']};
+    background-color: {t['selection_soft']};
+    color: {t['text']};
+    border: 1px solid {t['accent_soft']};
 }}
 
 #workspace_status_chip {{
@@ -821,157 +827,16 @@ QToolButton#workspace_status_chip:focus {{
     padding: 4px 0 0 0;
 }}
 
-#widget_browser_categories {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
-}}
-
-#widget_browser_tags {{
+#widget_browser_results,
+#widget_browser_results_host {{
     background-color: transparent;
     border: none;
-    border-radius: 0;
-}}
-
-#widget_browser_organize {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-}}
-
-#widget_browser_lanes {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-}}
-
-QToolButton#widget_browser_lane {{
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
-    color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
-    padding: 7px 9px;
-    min-height: 32px;
-    text-align: left;
-}}
-
-QToolButton#widget_browser_lane:hover {{
-    background-color: {t['surface_hover']};
-    border-color: {t['border']};
-    color: {t['text']};
-}}
-
-QToolButton#widget_browser_lane:checked {{
-    background-color: {t['accent_soft']};
-    border-color: {t['accent']};
-    color: {t['accent_hover']};
-}}
-
-QToolButton#widget_browser_lane[emptyLane="true"] {{
-    color: {t['text_soft']};
-}}
-
-QToolButton#widget_browser_sort_button {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
-    color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
-    padding: 4px 9px;
-}}
-
-QToolButton#widget_browser_sort_button:hover {{
-    background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
-    color: {t['text']};
-}}
-
-QToolButton#widget_browser_sort_button:checked {{
-    background-color: {t['accent_soft']};
-    border-color: {t['accent']};
-    color: {t['accent_hover']};
-}}
-
-QToolButton#widget_browser_complexity_button {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
-    color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
-    padding: 4px 9px;
-    min-height: 26px;
-}}
-
-QToolButton#widget_browser_complexity_button:hover {{
-    background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
-    color: {t['text']};
-}}
-
-QToolButton#widget_browser_complexity_button:checked {{
-    background-color: {t['accent_soft']};
-    border-color: {t['accent']};
-    color: {t['accent_hover']};
-}}
-
-QToolButton#widget_browser_complexity_button[level="basic"]:checked {{
-    border-color: {t['success']};
-    color: {t['success']};
-}}
-
-QToolButton#widget_browser_complexity_button[level="intermediate"]:checked {{
-    border-color: {t['warning']};
-    color: {t['warning']};
-}}
-
-QToolButton#widget_browser_complexity_button[level="advanced"]:checked {{
-    border-color: {t['danger']};
-    color: {t['danger']};
-}}
-
-QToolButton#widget_browser_tag {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    color: {t['text_muted']};
-    border-radius: {t['r_md']}px;
-    font-size: {t['fs_body_sm']}px;
-    padding: 4px 9px;
-    min-height: 26px;
-}}
-
-QToolButton#widget_browser_tag:hover {{
-    background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
-}}
-
-QToolButton#widget_browser_tag:checked {{
-    background-color: {t['accent_soft']};
-    color: {t['accent_hover']};
-    border-color: {t['accent']};
 }}
 
 #widget_browser_card {{
-    background-color: transparent;
+    background-color: {t['panel']};
     border: 1px solid transparent;
     border-radius: {t['r_md']}px;
-}}
-
-#widget_browser_group_header {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-}}
-
-#widget_browser_group_title {{
-    color: {t['text_muted']};
-    font-size: {t['fs_caption']}px;
-    font-weight: 600;
-}}
-
-#widget_browser_stats {{
-    color: {t['text_soft']};
-    font-size: {t['fs_caption']}px;
 }}
 
 #widget_browser_card:hover {{
@@ -980,8 +845,8 @@ QToolButton#widget_browser_tag:checked {{
 }}
 
 #widget_browser_card[selected="true"] {{
-    border: 1px solid {t['accent']};
-    background-color: {t['accent_soft']};
+    border: 1px solid {t['accent_soft']};
+    background-color: {t['selection_soft']};
 }}
 
 #widget_browser_card_title {{
@@ -995,8 +860,14 @@ QToolButton#widget_browser_tag:checked {{
     font-size: {t['fs_caption']}px;
 }}
 
-QPushButton#widget_browser_insert_button {{
+#widget_browser_empty_state {{
     background-color: {t['panel_alt']};
+    border: 1px dashed {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+QPushButton#widget_browser_insert_button {{
+    background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
