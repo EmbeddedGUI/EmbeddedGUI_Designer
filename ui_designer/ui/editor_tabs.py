@@ -161,7 +161,7 @@ class EditorTabs(QWidget):
                 btn.setCheckable(True)
                 btn.setMinimumWidth(70)
                 btn.setStyleSheet("""
-                    QPushButton { padding: 4px 12px; border: 1px solid #555; border-radius: 3px; }
+                    QPushButton { padding: 4px 12px; border: 1px solid #555; border-radius: 1px; }
                     QPushButton:checked { background-color: #0078D4; color: white; border-color: #0078D4; }
                 """)
                 if mode == MODE_DESIGN:

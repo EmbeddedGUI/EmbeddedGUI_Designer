@@ -1,5 +1,27 @@
+import pytest
+from PyQt5.QtWidgets import QApplication
+
 from ui_designer.ui.iconography import semantic_icon_keys
-from ui_designer.ui.theme import _build_stylesheet, theme_tokens
+from ui_designer.ui.theme import (
+    _build_stylesheet,
+    _ensure_fluent_engineering_style_manager,
+    apply_theme,
+    theme_tokens,
+)
+
+try:
+    from qfluentwidgets import ComboBox, PushButton, SearchLineEdit, SpinBox
+
+    HAS_FLUENT = True
+except ImportError:
+    HAS_FLUENT = False
+
+
+def _app():
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    return app
 
 
 def test_build_stylesheet_uses_surface_hover_tokens_for_light_theme():
@@ -48,6 +70,80 @@ def test_tokens_include_xxs_spacing_for_all_themes():
         tokens = theme_tokens(mode)
         assert "space_xxs" in tokens
         assert int(tokens["space_xxs"]) == 2
+
+
+def test_engineering_theme_radii_remove_pill_shapes():
+    for mode in ("light", "dark"):
+        tokens = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        assert int(tokens["r_sm"]) == 1
+        assert int(tokens["r_md"]) == 2
+        assert int(tokens["r_xl"]) == 2
+        assert "999px" not in css
+
+        chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
+        browser_tag = css.split("QToolButton#widget_browser_tag {", 1)[1].split("}", 1)[0]
+        metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
+
+        assert f"border-radius: {tokens['r_md']}px;" in chip
+        assert f"border-radius: {tokens['r_md']}px;" in browser_tag
+        assert f"border-radius: {tokens['r_md']}px;" in metric_card
+
+
+@pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
+def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
+    app = _app()
+    widgets = [
+        ("button", PushButton("Test")),
+        ("line_edit", SearchLineEdit()),
+        ("combo_box", ComboBox()),
+        ("spin_box", SpinBox()),
+    ]
+
+    try:
+        apply_theme(app, "dark")
+        app.processEvents()
+
+        for expected_kind, widget in widgets:
+            assert widget.property("_designer_fluent_engineering_style") == expected_kind
+
+        assert "border-radius: 2px;" in widgets[0][1].styleSheet()
+        assert "border-radius: 2px;" in widgets[1][1].styleSheet()
+        assert "#lineEditButton" in widgets[1][1].styleSheet()
+        assert "border-radius: 2px;" in widgets[2][1].styleSheet()
+        assert "SpinButton" in widgets[3][1].styleSheet()
+        assert "border-radius: 1px;" in widgets[3][1].styleSheet()
+    finally:
+        for _, widget in widgets:
+            widget.close()
+            widget.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
+def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
+    app = _app()
+    manager = _ensure_fluent_engineering_style_manager(app)
+    assert manager is not None
+
+    button = PushButton("Later")
+    search = SearchLineEdit()
+    try:
+        button.show()
+        search.show()
+        app.processEvents()
+
+        assert button.property("_designer_fluent_engineering_style") == "button"
+        assert search.property("_designer_fluent_engineering_style") == "line_edit"
+        assert "border-radius: 2px;" in button.styleSheet()
+        assert "border-radius: 2px;" in search.styleSheet()
+    finally:
+        button.close()
+        button.deleteLater()
+        search.close()
+        search.deleteLater()
+        app.processEvents()
 
 
 def test_icon_semantic_dictionary_contains_core_workspace_keys():

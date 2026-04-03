@@ -10,14 +10,106 @@ Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
 
 from __future__ import annotations
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QEvent, QObject
+from PyQt5.QtWidgets import QApplication, QWidget
 
 try:
-    from qfluentwidgets import Theme, setTheme
+    from qfluentwidgets import (
+        Theme,
+        setTheme,
+        ComboBox as FluentComboBox,
+        LineEdit as FluentLineEdit,
+        PushButton as FluentPushButton,
+        SpinBox as FluentSpinBox,
+        ToolButton as FluentToolButton,
+    )
+    from qfluentwidgets.common.style_sheet import setCustomStyleSheet as set_fluent_custom_stylesheet
 
     HAS_FLUENT = True
 except ImportError:
     HAS_FLUENT = False
+    Theme = None
+    setTheme = None
+    FluentComboBox = None
+    FluentLineEdit = None
+    FluentPushButton = None
+    FluentSpinBox = None
+    FluentToolButton = None
+    set_fluent_custom_stylesheet = None
+
+
+_ENGINEERING_RADIUS_SM = 1
+_ENGINEERING_RADIUS_MD = 2
+_FLUENT_STYLE_MARKER = "_designer_fluent_engineering_style"
+
+_FLUENT_BUTTON_RADIUS_QSS = f"""
+PushButton,
+ToolButton,
+ToggleButton,
+ToggleToolButton,
+PrimaryPushButton,
+PrimaryToolButton,
+DropDownToolButton,
+PrimaryDropDownToolButton,
+DropDownPushButton,
+PrimaryDropDownPushButton,
+TransparentPushButton,
+TransparentToolButton,
+TransparentToggleButton,
+TransparentToggleToolButton {{
+    border-radius: {_ENGINEERING_RADIUS_MD}px;
+}}
+"""
+
+_FLUENT_LINE_EDIT_RADIUS_QSS = f"""
+LineEdit,
+TextEdit,
+PlainTextEdit,
+TextBrowser {{
+    border-radius: {_ENGINEERING_RADIUS_MD}px;
+}}
+
+#lineEditButton {{
+    border-radius: {_ENGINEERING_RADIUS_SM}px;
+}}
+"""
+
+_FLUENT_COMBO_BOX_RADIUS_QSS = f"""
+ComboBox,
+ModelComboBox {{
+    border-radius: {_ENGINEERING_RADIUS_MD}px;
+}}
+"""
+
+_FLUENT_SPIN_BOX_RADIUS_QSS = f"""
+SpinBox,
+DoubleSpinBox,
+DateEdit,
+DateTimeEdit,
+TimeEdit,
+CompactSpinBox,
+CompactDoubleSpinBox,
+CompactDateEdit,
+CompactDateTimeEdit,
+CompactTimeEdit {{
+    border-radius: {_ENGINEERING_RADIUS_MD}px;
+}}
+
+SpinButton {{
+    border-radius: {_ENGINEERING_RADIUS_SM}px;
+}}
+"""
+
+if HAS_FLUENT:
+    _FLUENT_BUTTON_TYPES = (FluentPushButton, FluentToolButton)
+    _FLUENT_LINE_EDIT_TYPES = (FluentLineEdit,)
+    _FLUENT_COMBO_BOX_TYPES = (FluentComboBox,)
+    _FLUENT_SPIN_BOX_TYPES = (FluentSpinBox,)
+else:
+    _FLUENT_BUTTON_TYPES = ()
+    _FLUENT_LINE_EDIT_TYPES = ()
+    _FLUENT_COMBO_BOX_TYPES = ()
+    _FLUENT_SPIN_BOX_TYPES = ()
 
 
 _TOKENS = {
@@ -42,12 +134,12 @@ _TOKENS = {
         "warning": "#FFD60A",
         "selection": "#2E5EA7",
         "selection_soft": "#2A4262",
-        "r_sm": 6,
-        "r_md": 8,
-        "r_lg": 8,
-        "r_xl": 12,
-        "r_2xl": 14,
-        "r_3xl": 16,
+        "r_sm": 1,
+        "r_md": 2,
+        "r_lg": 2,
+        "r_xl": 2,
+        "r_2xl": 2,
+        "r_3xl": 2,
         "space_xxs": 2,
         "space_xs": 4,
         "space_sm": 8,
@@ -98,12 +190,12 @@ _TOKENS = {
         "warning": "#A56B00",
         "selection": "#D6E7FF",
         "selection_soft": "#EEF5FF",
-        "r_sm": 6,
-        "r_md": 8,
-        "r_lg": 8,
-        "r_xl": 12,
-        "r_2xl": 14,
-        "r_3xl": 16,
+        "r_sm": 1,
+        "r_md": 2,
+        "r_lg": 2,
+        "r_xl": 2,
+        "r_2xl": 2,
+        "r_3xl": 2,
         "space_xxs": 2,
         "space_xs": 4,
         "space_sm": 8,
@@ -204,6 +296,61 @@ def resolve_semantic_token(mode: str, semantic_name: str, tokens: dict | None = 
         return None
     t = tokens if isinstance(tokens, dict) else theme_tokens(mode)
     return t.get(key)
+
+
+def _apply_fluent_engineering_style(widget):
+    """Reduce Fluent widget radii so embedded controls match the shell theme."""
+    if not HAS_FLUENT or widget is None or not isinstance(widget, QWidget):
+        return False
+
+    style_kind = None
+    custom_qss = ""
+    if isinstance(widget, _FLUENT_BUTTON_TYPES):
+        style_kind = "button"
+        custom_qss = _FLUENT_BUTTON_RADIUS_QSS
+    elif isinstance(widget, _FLUENT_LINE_EDIT_TYPES):
+        style_kind = "line_edit"
+        custom_qss = _FLUENT_LINE_EDIT_RADIUS_QSS
+    elif isinstance(widget, _FLUENT_COMBO_BOX_TYPES):
+        style_kind = "combo_box"
+        custom_qss = _FLUENT_COMBO_BOX_RADIUS_QSS
+    elif isinstance(widget, _FLUENT_SPIN_BOX_TYPES):
+        style_kind = "spin_box"
+        custom_qss = _FLUENT_SPIN_BOX_RADIUS_QSS
+
+    if not style_kind:
+        return False
+    if widget.property(_FLUENT_STYLE_MARKER) == style_kind:
+        return False
+
+    set_fluent_custom_stylesheet(widget, custom_qss, custom_qss)
+    widget.setProperty(_FLUENT_STYLE_MARKER, style_kind)
+    return True
+
+
+class _FluentEngineeringStyleManager(QObject):
+    def refresh_all(self):
+        if not HAS_FLUENT:
+            return
+        for widget in QApplication.allWidgets():
+            _apply_fluent_engineering_style(widget)
+
+    def eventFilter(self, obj, event):
+        if HAS_FLUENT and isinstance(obj, QWidget) and event.type() in (QEvent.Polish, QEvent.Show):
+            _apply_fluent_engineering_style(obj)
+        return False
+
+
+def _ensure_fluent_engineering_style_manager(app):
+    if not HAS_FLUENT or app is None:
+        return None
+
+    manager = getattr(app, "_designer_fluent_engineering_style_manager", None)
+    if manager is None:
+        manager = _FluentEngineeringStyleManager(app)
+        app._designer_fluent_engineering_style_manager = manager
+        app.installEventFilter(manager)
+    return manager
 
 
 def _build_stylesheet(mode="dark", density="standard"):
@@ -593,7 +740,7 @@ QToolButton[workspaceNav="true"]:checked {{
 #workspace_status_chip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
-    border-radius: 999px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
 }}
@@ -601,7 +748,7 @@ QToolButton[workspaceNav="true"]:checked {{
 QToolButton#workspace_status_chip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
-    border-radius: 999px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: {t['space_xs']}px {t['space_sm']}px;
@@ -677,7 +824,7 @@ QToolButton#workspace_status_chip:focus {{
 #widget_browser_categories {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: 14px;
+    border-radius: {t['r_xl']}px;
 }}
 
 #widget_browser_tags {{
@@ -701,7 +848,7 @@ QToolButton#workspace_status_chip:focus {{
 QToolButton#widget_browser_lane {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: 7px 9px;
@@ -728,7 +875,7 @@ QToolButton#widget_browser_lane[emptyLane="true"] {{
 QToolButton#widget_browser_sort_button {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 8px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: 4px 9px;
@@ -749,7 +896,7 @@ QToolButton#widget_browser_sort_button:checked {{
 QToolButton#widget_browser_complexity_button {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
-    border-radius: 999px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: 4px 9px;
@@ -787,7 +934,7 @@ QToolButton#widget_browser_tag {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
     color: {t['text_muted']};
-    border-radius: 999px;
+    border-radius: {t['r_md']}px;
     font-size: {t['fs_body_sm']}px;
     padding: 4px 9px;
     min-height: 26px;
@@ -807,7 +954,7 @@ QToolButton#widget_browser_tag:checked {{
 #widget_browser_card {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: {t['r_md']}px;
 }}
 
 #widget_browser_group_header {{
@@ -851,7 +998,7 @@ QToolButton#widget_browser_tag:checked {{
 QPushButton#widget_browser_insert_button {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 8px;
+    border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: 4px 9px;
@@ -896,7 +1043,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_metric_card {{
     background-color: {t['panel_alt']};
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: {t['r_md']}px;
 }}
 
 #status_center_metric_card:hover {{
@@ -918,7 +1065,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_health_row {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: {t['r_md']}px;
 }}
 
 #status_center_health_row:hover {{
@@ -942,24 +1089,24 @@ QProgressBar#status_center_health_warning_bar,
 QProgressBar#status_center_health_info_bar {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: 5px;
+    border-radius: {t['r_sm']}px;
     min-height: 10px;
     max-height: 10px;
 }}
 
 QProgressBar#status_center_health_error_bar::chunk {{
     background-color: {t['danger']};
-    border-radius: 4px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QProgressBar#status_center_health_warning_bar::chunk {{
     background-color: {t['warning']};
-    border-radius: 4px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QProgressBar#status_center_health_info_bar::chunk {{
     background-color: {t['accent']};
-    border-radius: 4px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #status_center_runtime:hover {{
@@ -983,3 +1130,6 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
     app.setProperty("designer_theme_mode", mode)
     app.setProperty("designer_ui_density", density)
     app.setStyleSheet(_build_stylesheet(mode, density=density))
+    manager = _ensure_fluent_engineering_style_manager(app)
+    if manager is not None:
+        manager.refresh_all()

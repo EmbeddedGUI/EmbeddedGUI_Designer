@@ -3962,7 +3962,7 @@ class MainWindow(QMainWindow):
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
         tb.setStyleSheet(
             "QToolBar { spacing: 6px; background: transparent; border: none; }"
-            "QToolButton { padding: 6px 10px; border-radius: 8px; }"
+            "QToolButton { padding: 6px 10px; border-radius: 2px; }"
         )
         self._toolbar_host_layout.addWidget(tb, 1)
 

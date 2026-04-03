@@ -1147,7 +1147,7 @@ class PreviewPanel(QWidget):
         # Zoom controls on the right
         _zbtn_style = (
             "QPushButton { background:#3c3c3c; color:#ccc; border:1px solid #555;"
-            "  border-radius:3px; font-size:16px; font-weight:bold; }"
+            "  border-radius:1px; font-size:16px; font-weight:bold; }"
             "QPushButton:hover { background:#505050; }"
             "QPushButton:pressed { background:#606060; }"
         )
