@@ -920,6 +920,130 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     border-radius: {t['r_md']}px;
 }}
 
+#app_selector_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_2xl']}px;
+}}
+
+#app_selector_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#app_selector_title {{
+    color: {t['text']};
+    font-size: {t['fs_display'] + 6}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#app_selector_subtitle {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#app_selector_root_card,
+#app_selector_options_card,
+#app_selector_browser_card,
+#app_selector_selection_card {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#app_selector_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#app_selector_metric_label,
+#app_selector_field_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#app_selector_metric_value,
+#app_selector_status_value,
+#app_selector_selection_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+QListWidget#app_selector_list {{
+    background-color: transparent;
+    border: none;
+    outline: none;
+}}
+
+QListWidget#app_selector_list::item {{
+    padding: 0;
+    margin: 0;
+    border: none;
+}}
+
+QListWidget#app_selector_list::item:selected,
+QListWidget#app_selector_list::item:hover {{
+    background-color: transparent;
+}}
+
+#app_selector_item_card {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#app_selector_item_card[selected="true"] {{
+    background-color: {t['selection_soft']};
+    border-color: {t['accent']};
+}}
+
+#app_selector_item_icon_shell {{
+    background-color: {t['accent_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#app_selector_item_title {{
+    color: {t['text']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#app_selector_item_meta {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+}}
+
+#app_selector_item_kind {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    font-size: {t['fs_micro']}px;
+    font-weight: {t['fw_semibold']};
+    padding: {t['space_xxs']}px {t['space_sm']}px;
+}}
+
+#app_selector_item_kind[entryKind="project"] {{
+    color: {t['success']};
+    border-color: {t['success']};
+}}
+
+#app_selector_item_kind[entryKind="legacy"] {{
+    color: {t['warning']};
+    border-color: {t['warning']};
+}}
+
 #new_project_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,
