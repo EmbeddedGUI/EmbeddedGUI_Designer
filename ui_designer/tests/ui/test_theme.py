@@ -109,6 +109,22 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert f"border: 1px dashed {t['border']};" in empty
 
 
+def test_editor_tabs_styles_use_engineering_shell_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("#editor_tabs_header {", 1)[1].split("}", 1)[0]
+        mode_strip = css.split("#editor_tabs_mode_strip {", 1)[1].split("}", 1)[0]
+        editor = css.split("QPlainTextEdit#editor_tabs_xml_editor {", 1)[1].split("}", 1)[0]
+
+        assert f"border-radius: {t['r_xl']}px;" in header
+        assert t["selection_soft"] in header
+        assert f"background-color: {t['panel_soft']};" in mode_strip
+        assert f"background-color: {t['canvas_stage']};" in editor
+        assert f"border-radius: {t['r_md']}px;" in editor
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()

@@ -799,6 +799,56 @@ QPushButton#workspace_mode_button:checked {{
     color: {t['accent_hover']};
 }}
 
+#editor_tabs_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#editor_tabs_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#editor_tabs_meta,
+#editor_tabs_summary {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#editor_tabs_mode_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#editor_tabs_shell,
+#editor_tabs_surface,
+#editor_tabs_preview_surface {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+QPlainTextEdit#editor_tabs_xml_editor {{
+    background-color: {t['canvas_stage']};
+    color: {t['text']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    selection-background-color: {t['selection']};
+}}
+
+QSplitter#editor_tabs_splitter::handle {{
+    background-color: {t['border']};
+    margin: {t['space_xs']}px;
+}}
+
 #page_inspector_scroll {{
     background-color: transparent;
     border: none;
