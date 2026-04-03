@@ -998,6 +998,85 @@ QTableWidget#resource_panel_table QHeaderView::section {{
     border-radius: {t['r_md']}px;
 }}
 
+#project_dock_shell {{
+    background-color: transparent;
+}}
+
+#project_dock_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#project_dock_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#project_dock_title {{
+    color: {t['text']};
+    font-size: {t['fs_h1'] + 4}px;
+    font-weight: {t['fw_regular']};
+}}
+
+#project_dock_subtitle,
+#project_dock_status {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#project_dock_pages_card,
+QGroupBox#project_dock_settings_group {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+QGroupBox#project_dock_settings_group {{
+    margin-top: 12px;
+    padding-top: 12px;
+}}
+
+QGroupBox#project_dock_settings_group::title {{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 14px;
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#project_dock_metric_card {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#project_dock_metric_label,
+#project_dock_field_label {{
+    color: {t['text_soft']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#project_dock_metric_value {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+QTreeWidget#project_dock_tree {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #structure_selection_strip {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};

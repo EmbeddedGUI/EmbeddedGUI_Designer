@@ -16,10 +16,10 @@ import os
 from PyQt5.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
     QMenu, QAction, QInputDialog, QMessageBox, QLabel, QHBoxLayout,
-    QPushButton, QComboBox, QGroupBox,
+    QPushButton, QComboBox, QGroupBox, QFrame,
 )
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon
 from .iconography import make_icon
 
 # Page names that collide with egui internal module names.
@@ -47,6 +47,26 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
 def _set_action_metadata(action, tooltip):
     action.setToolTip(tooltip)
     action.setStatusTip(tooltip)
+
+
+def _create_metric_card(layout, label_text):
+    card = QFrame()
+    card.setObjectName("project_dock_metric_card")
+    card_layout = QVBoxLayout(card)
+    card_layout.setContentsMargins(12, 10, 12, 10)
+    card_layout.setSpacing(4)
+
+    label = QLabel(label_text)
+    label.setObjectName("project_dock_metric_label")
+    card_layout.addWidget(label)
+
+    value = QLabel("")
+    value.setObjectName("project_dock_metric_value")
+    value.setWordWrap(True)
+    card_layout.addWidget(value)
+
+    layout.addWidget(card)
+    return value
 
 
 class ProjectExplorerDock(QDockWidget):
@@ -82,25 +102,69 @@ class ProjectExplorerDock(QDockWidget):
 
     def _init_ui(self):
         container = QWidget()
+        container.setObjectName("project_dock_shell")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+
+        header = QFrame()
+        header.setObjectName("project_dock_header")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(18, 16, 18, 16)
+        header_layout.setSpacing(18)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(4)
+
+        self._eyebrow_label = QLabel("Project Topology")
+        self._eyebrow_label.setObjectName("project_dock_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Explorer")
+        self._title_label.setObjectName("project_dock_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Track page structure, startup routing, and generation mode from a compact project map."
+        )
+        self._subtitle_label.setObjectName("project_dock_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+
+        self._status_label = QLabel("")
+        self._status_label.setObjectName("project_dock_status")
+        self._status_label.setWordWrap(True)
+        hero_copy.addWidget(self._status_label)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(6)
+        self._page_count_metric = _create_metric_card(metrics_layout, "Pages")
+        self._startup_metric = _create_metric_card(metrics_layout, "Startup")
+        self._dirty_metric = _create_metric_card(metrics_layout, "Dirty")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(header)
 
         # Project settings group
         self._settings_group = QGroupBox("Project")
+        self._settings_group.setObjectName("project_dock_settings_group")
         self._settings_group.setAccessibleName("Project settings")
-        # settings_group.setStyleSheet(_GROUPBOX_STYLE)
         settings_layout = QVBoxLayout(self._settings_group)
-        settings_layout.setContentsMargins(4, 4, 4, 4)
+        settings_layout.setContentsMargins(14, 16, 14, 14)
+        settings_layout.setSpacing(10)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
-        self._mode_label = QLabel("Mode:")
+        mode_layout.setSpacing(8)
+        self._mode_label = QLabel("Mode")
         _set_widget_metadata(
             self._mode_label,
             tooltip="Project page generation mode.",
             accessible_name="Page mode label",
         )
+        self._mode_label.setObjectName("project_dock_field_label")
         mode_layout.addWidget(self._mode_label)
         self._mode_combo = QComboBox()
         self._mode_combo.addItems(["easy_page", "activity"])
@@ -109,24 +173,36 @@ class ProjectExplorerDock(QDockWidget):
         settings_layout.addLayout(mode_layout)
         layout.addWidget(self._settings_group)
 
+        pages_card = QFrame()
+        pages_card.setObjectName("project_dock_pages_card")
+        pages_layout = QVBoxLayout(pages_card)
+        pages_layout.setContentsMargins(14, 16, 14, 14)
+        pages_layout.setSpacing(10)
+
         # Page tree
         self._pages_label = QLabel("Pages")
-        self._pages_label.setFont(QFont("", -1, QFont.Bold))
         self._pages_label.setObjectName("workspace_section_title")
-        layout.addWidget(self._pages_label)
+        pages_layout.addWidget(self._pages_label)
+
+        self._pages_hint = QLabel("Use the tree as the single source of page navigation, duplication, rename, startup selection, and deletion.")
+        self._pages_hint.setObjectName("workspace_section_subtitle")
+        self._pages_hint.setWordWrap(True)
+        pages_layout.addWidget(self._pages_hint)
 
         self._page_tree = QTreeWidget()
+        self._page_tree.setObjectName("project_dock_tree")
         self._page_tree.setHeaderHidden(True)
         self._page_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._page_tree.customContextMenuRequested.connect(self._on_page_context_menu)
         self._page_tree.currentItemChanged.connect(self._on_page_item_changed)
-        layout.addWidget(self._page_tree)
+        pages_layout.addWidget(self._page_tree, 1)
 
         # Add page button
         self._add_page_button = QPushButton("+ New Page")
         self._add_page_button.setIcon(make_icon("toolbar.new"))
         self._add_page_button.clicked.connect(self._on_add_page)
-        layout.addWidget(self._add_page_button)
+        pages_layout.addWidget(self._add_page_button)
+        layout.addWidget(pages_card, 1)
 
         layout.addStretch()
 
@@ -147,6 +223,10 @@ class ProjectExplorerDock(QDockWidget):
         settings_summary = f"Project settings: {page_label}. Current mode: {mode}."
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
         add_page_hint = self._new_page_action_hint()
+        self._status_label.setText(f"Mode {mode} | Current {current_page}")
+        self._page_count_metric.setText(page_label)
+        self._startup_metric.setText(startup_page)
+        self._dirty_metric.setText(dirty_label)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._settings_group,
@@ -177,6 +257,26 @@ class ProjectExplorerDock(QDockWidget):
             self._add_page_button,
             tooltip=add_page_hint,
             accessible_name=f"New page action: {mode} mode. {add_page_hint}",
+        )
+        _set_widget_metadata(
+            self._status_label,
+            tooltip=f"Project explorer status: mode {mode}. Current page: {current_page}.",
+            accessible_name=f"Project explorer status: mode {mode}. Current page: {current_page}",
+        )
+        _set_widget_metadata(
+            self._page_count_metric,
+            tooltip=page_label,
+            accessible_name=f"Project explorer metric: Pages. {page_label}",
+        )
+        _set_widget_metadata(
+            self._startup_metric,
+            tooltip=startup_page,
+            accessible_name=f"Project explorer metric: Startup. {startup_page}",
+        )
+        _set_widget_metadata(
+            self._dirty_metric,
+            tooltip=dirty_label,
+            accessible_name=f"Project explorer metric: Dirty. {dirty_label}",
         )
 
     def _apply_page_item_metadata(self, item, page_name):
