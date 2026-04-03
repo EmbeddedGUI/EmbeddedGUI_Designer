@@ -188,14 +188,19 @@ class WidgetTreePanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("workspace_panel_header")
+        self._header_frame.setProperty("panelTone", "structure")
         header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(8)
+
+        self._header_eyebrow = QLabel("Widget Map")
+        self._header_eyebrow.setObjectName("structure_header_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
@@ -209,6 +214,25 @@ class WidgetTreePanel(QWidget):
         self._selection_summary_chip.setProperty("chipTone", "accent")
         title_row.addWidget(self._selection_summary_chip)
         header_layout.addLayout(title_row)
+
+        self._header_meta_label = QLabel(
+            "Plan hierarchy, inspect selection state, and execute grouping or reorder operations without leaving the tree."
+        )
+        self._header_meta_label.setObjectName("structure_header_meta")
+        self._header_meta_label.setWordWrap(True)
+        header_layout.addWidget(self._header_meta_label)
+
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("structure_metrics_strip")
+        metrics_layout = QHBoxLayout(self._metrics_frame)
+        metrics_layout.setContentsMargins(10, 8, 10, 8)
+        metrics_layout.setSpacing(6)
+        self._tree_count_chip = self._make_status_chip("0 widgets", "accent")
+        self._filter_summary_chip = self._make_status_chip("All widgets")
+        metrics_layout.addWidget(self._tree_count_chip)
+        metrics_layout.addWidget(self._filter_summary_chip)
+        metrics_layout.addStretch()
+        header_layout.addWidget(self._metrics_frame)
 
         self.add_btn = QPushButton("Insert")
         self.add_btn.setIcon(make_icon("widgets"))
@@ -240,7 +264,16 @@ class WidgetTreePanel(QWidget):
         self.structure_hint_label = QLabel(self._structure_base_hint_text)
         self.structure_hint_label.setWordWrap(True)
         self.structure_hint_label.setObjectName("workspace_section_subtitle")
-        header_layout.addWidget(self.structure_hint_label)
+
+        self._primary_actions_frame = QFrame()
+        self._primary_actions_frame.setObjectName("structure_primary_strip")
+        primary_actions_layout = QVBoxLayout(self._primary_actions_frame)
+        primary_actions_layout.setContentsMargins(10, 10, 10, 10)
+        primary_actions_layout.setSpacing(8)
+        self._primary_actions_label = QLabel("Selection and Structure")
+        self._primary_actions_label.setObjectName("structure_panel_label")
+        primary_actions_layout.addWidget(self._primary_actions_label)
+        primary_actions_layout.addWidget(self.structure_hint_label)
 
         primary_row = QHBoxLayout()
         primary_row.setContentsMargins(0, 0, 0, 0)
@@ -248,7 +281,8 @@ class WidgetTreePanel(QWidget):
         primary_row.addWidget(self.add_btn)
         primary_row.addWidget(self.structure_actions_btn)
         primary_row.addStretch()
-        header_layout.addLayout(primary_row)
+        primary_actions_layout.addLayout(primary_row)
+        header_layout.addWidget(self._primary_actions_frame)
 
         self.group_btn = QPushButton("Group")
         self.group_btn.setIcon(make_icon("layout"))
@@ -313,9 +347,15 @@ class WidgetTreePanel(QWidget):
 
         self._selection_toolbar = QFrame()
         self._selection_toolbar.setObjectName("structure_selection_strip")
-        selection_layout = QHBoxLayout(self._selection_toolbar)
-        selection_layout.setContentsMargins(10, 8, 10, 8)
-        selection_layout.setSpacing(6)
+        selection_layout = QVBoxLayout(self._selection_toolbar)
+        selection_layout.setContentsMargins(10, 10, 10, 10)
+        selection_layout.setSpacing(8)
+        self._selection_toolbar_label = QLabel("Quick Edit")
+        self._selection_toolbar_label.setObjectName("structure_panel_label")
+        selection_layout.addWidget(self._selection_toolbar_label)
+        selection_row = QHBoxLayout()
+        selection_row.setContentsMargins(0, 0, 0, 0)
+        selection_row.setSpacing(6)
         for button in (
             self.rename_btn,
             self.del_btn,
@@ -326,8 +366,9 @@ class WidgetTreePanel(QWidget):
             self.up_btn,
             self.down_btn,
         ):
-            selection_layout.addWidget(button)
-        selection_layout.addStretch()
+            selection_row.addWidget(button)
+        selection_row.addStretch()
+        selection_layout.addLayout(selection_row)
         self._selection_toolbar.hide()
         header_layout.addWidget(self._selection_toolbar)
 
@@ -336,12 +377,40 @@ class WidgetTreePanel(QWidget):
         self._set_drag_target_label(self._default_drag_target_text(), tone="default")
         self.drag_target_label.hide()
 
+        self._drag_hint_frame = QFrame()
+        self._drag_hint_frame.setObjectName("structure_drag_hint_strip")
+        drag_hint_layout = QVBoxLayout(self._drag_hint_frame)
+        drag_hint_layout.setContentsMargins(10, 10, 10, 10)
+        drag_hint_layout.setSpacing(6)
+        self._drag_hint_label = QLabel("Drag Preview")
+        self._drag_hint_label.setObjectName("structure_panel_label")
+        drag_hint_layout.addWidget(self._drag_hint_label)
+        drag_hint_layout.addWidget(self.drag_target_label)
+        self._drag_hint_frame.hide()
+        header_layout.addWidget(self._drag_hint_frame)
+
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("Filter widgets by name or type")
         self.filter_edit.setClearButtonEnabled(True)
         self.filter_edit.textChanged.connect(self._on_filter_text_changed)
         self.filter_edit.installEventFilter(self)
+
+        self._filter_frame = QFrame()
+        self._filter_frame.setObjectName("structure_filter_bar")
+        filter_frame_layout = QVBoxLayout(self._filter_frame)
+        filter_frame_layout.setContentsMargins(10, 10, 10, 10)
+        filter_frame_layout.setSpacing(8)
+        self._filter_label = QLabel("Find Widgets")
+        self._filter_label.setObjectName("structure_panel_label")
+        filter_frame_layout.addWidget(self._filter_label)
+        self._filter_hint_label = QLabel("Filter by widget name or type, then jump between matches or select them in one pass.")
+        self._filter_hint_label.setObjectName("structure_panel_hint")
+        self._filter_hint_label.setWordWrap(True)
+        filter_frame_layout.addWidget(self._filter_hint_label)
+
         filter_layout = QHBoxLayout()
+        filter_layout.setContentsMargins(0, 0, 0, 0)
+        filter_layout.setSpacing(6)
         filter_layout.addWidget(self.filter_edit, 1)
         self.filter_prev_btn = QPushButton("Prev")
         self.filter_prev_btn.clicked.connect(self._select_previous_filter_match)
@@ -356,11 +425,13 @@ class WidgetTreePanel(QWidget):
         filter_layout.addWidget(self.filter_prev_btn)
         filter_layout.addWidget(self.filter_next_btn)
         filter_layout.addWidget(self.filter_select_btn)
-        self.filter_position_label = QLabel("")
+        self.filter_position_label = self._make_status_chip("", "accent")
+        self.filter_position_label.hide()
         filter_layout.addWidget(self.filter_position_label)
-        self.filter_status_label = QLabel("All widgets")
+        self.filter_status_label = self._make_status_chip("All widgets")
         filter_layout.addWidget(self.filter_status_label)
-        header_layout.addLayout(filter_layout)
+        filter_frame_layout.addLayout(filter_layout)
+        header_layout.addWidget(self._filter_frame)
         layout.addWidget(self._header_frame)
 
         # Tree
@@ -372,6 +443,7 @@ class WidgetTreePanel(QWidget):
             clear_drag_hover_handler=self._clear_tree_drag_hover,
             parent=self,
         )
+        self.tree.setObjectName("widget_tree_panel_tree")
         self.tree.setColumnCount(1)
         self.tree.setHeaderLabels(["Structure"])
         self.tree.header().setStretchLastSection(True)
@@ -574,6 +646,74 @@ class WidgetTreePanel(QWidget):
         if widget is None:
             return ""
         return getattr(widget, "name", "") or getattr(widget, "widget_type", "widget")
+
+    def _make_status_chip(self, text, tone=None):
+        chip = QLabel(text)
+        chip.setObjectName("workspace_status_chip")
+        if tone:
+            chip.setProperty("chipTone", tone)
+        return chip
+
+    def _set_status_chip_state(self, chip, text, tone=None):
+        if chip is None:
+            return
+        chip.setText(text)
+        chip.setProperty("chipTone", tone)
+        chip.style().unpolish(chip)
+        chip.style().polish(chip)
+        chip.update()
+
+    def _update_header_context(self):
+        if not hasattr(self, "_tree_count_chip"):
+            return
+
+        widget_total = len(self._item_map)
+        selected_total = len(self.selected_widgets()) if hasattr(self, "tree") else 0
+        filter_query = self.filter_edit.text().strip() if hasattr(self, "filter_edit") else ""
+        filter_status = self.filter_status_label.text().strip() if hasattr(self, "filter_status_label") else "All widgets"
+        filter_position = self.filter_position_label.text().strip() if hasattr(self, "filter_position_label") else ""
+
+        self._set_status_chip_state(
+            self._tree_count_chip,
+            _count_label(widget_total, "widget"),
+            "accent" if widget_total else "warning",
+        )
+
+        if not filter_query:
+            filter_summary = "All widgets"
+            filter_tone = None
+        elif filter_status == "No matches":
+            filter_summary = "No matches"
+            filter_tone = "warning"
+        else:
+            filter_summary = filter_status
+            filter_tone = "success"
+        self._set_status_chip_state(self._filter_summary_chip, filter_summary, filter_tone)
+        self._set_status_chip_state(self.filter_status_label, filter_status or "All widgets", filter_tone)
+
+        if filter_position:
+            self._set_status_chip_state(self.filter_position_label, filter_position, "accent")
+            self.filter_position_label.show()
+        else:
+            self.filter_position_label.hide()
+
+        if hasattr(self, "_header_meta_label"):
+            if self.project is None:
+                meta = "Open a page to inspect hierarchy, selection state, and structure actions."
+            elif selected_total > 1:
+                meta = (
+                    f"Working with {_count_label(widget_total, 'widget')} and "
+                    f"{_count_label(selected_total, 'selected widget')} in the current tree."
+                )
+            elif selected_total == 1:
+                current_widget = self._widget_label(self._get_selected_widget()) or "widget"
+                meta = (
+                    f"Working with {_count_label(widget_total, 'widget')}. "
+                    f"Focused widget: {current_widget}."
+                )
+            else:
+                meta = f"Working with {_count_label(widget_total, 'widget')} in the current tree."
+            self._header_meta_label.setText(meta)
 
     def _apply_programmatic_selection(self, widgets, primary=None, feedback_message=""):
         widgets = [widget for widget in (widgets or []) if widget is not None]
@@ -2218,24 +2358,23 @@ class WidgetTreePanel(QWidget):
             self._selection_toolbar.setVisible(selected_count > 0)
         if hasattr(self, "_selection_summary_chip"):
             if selected_count <= 0:
-                self._selection_summary_chip.setText("No selection")
-                self._selection_summary_chip.setProperty("chipTone", "warning")
+                chip_text = "No selection"
+                chip_tone = "warning"
             elif selected_count == 1:
                 widget = state.widgets[0]
-                self._selection_summary_chip.setText(f"1 selected · {self._widget_label(widget)}")
-                self._selection_summary_chip.setProperty("chipTone", "accent")
+                chip_text = f"1 selected - {self._widget_label(widget)}"
+                chip_tone = "accent"
             else:
-                self._selection_summary_chip.setText(f"{selected_count} selected")
-                self._selection_summary_chip.setProperty("chipTone", "accent")
-            self._selection_summary_chip.style().unpolish(self._selection_summary_chip)
-            self._selection_summary_chip.style().polish(self._selection_summary_chip)
-            self._selection_summary_chip.update()
+                chip_text = f"{selected_count} selected"
+                chip_tone = "accent"
+            self._set_status_chip_state(self._selection_summary_chip, chip_text, chip_tone)
         self._refresh_into_button_menu(state)
         self._structure_base_hint_text = self._structure_hint_text(state)
         self._apply_structure_status_summary()
         self._refresh_structure_actions_menu(state)
         self._update_structure_actions_button_metadata(state)
         self._update_primary_action_metadata()
+        self._update_header_context()
         self._update_accessibility_summary()
 
     def _apply_structure_status_summary(self):
@@ -2490,6 +2629,9 @@ class WidgetTreePanel(QWidget):
         self._drag_target_tone = tone
         self.drag_target_label.setText(text)
         self.drag_target_label.setStyleSheet(self._DRAG_TARGET_LABEL_STYLES.get(tone, self._DRAG_TARGET_LABEL_STYLES["default"]))
+        if hasattr(self, "_drag_hint_frame"):
+            default_text = self._default_drag_target_text()
+            self._drag_hint_frame.setVisible(bool(text.strip()) and text.strip() != default_text)
         self._apply_structure_status_summary()
         self._update_accessibility_summary()
 
@@ -3395,18 +3537,21 @@ class WidgetTreePanel(QWidget):
         if not query:
             self.filter_status_label.setText("All widgets")
             self.filter_position_label.setText("")
+            self._update_header_context()
             self._update_filter_accessibility()
             self._update_accessibility_summary()
             return
         if match_count == 0:
             self.filter_status_label.setText("No matches")
             self.filter_position_label.setText("")
+            self._update_header_context()
             self._update_filter_accessibility()
             self._update_accessibility_summary()
             return
         noun = "match" if match_count == 1 else "matches"
         self.filter_status_label.setText(f"{match_count} {noun}")
         self._update_filter_position_label()
+        self._update_header_context()
         self._update_filter_accessibility()
         self._update_accessibility_summary()
 
@@ -3418,6 +3563,7 @@ class WidgetTreePanel(QWidget):
         matches = self._current_filter_matches()
         if not query or not matches:
             self.filter_position_label.setText("")
+            self._update_header_context()
             self._update_filter_accessibility()
             self._update_accessibility_summary()
             return
@@ -3428,6 +3574,7 @@ class WidgetTreePanel(QWidget):
         else:
             position = 0
         self.filter_position_label.setText(f"{position}/{len(matches)}")
+        self._update_header_context()
         self._update_filter_accessibility()
         self._update_accessibility_summary()
 

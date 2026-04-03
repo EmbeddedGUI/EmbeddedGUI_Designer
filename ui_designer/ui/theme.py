@@ -1173,10 +1173,86 @@ QTreeWidget#project_dock_tree {{
     border-radius: {t['r_md']}px;
 }}
 
+#workspace_panel_header[panelTone="structure"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.7 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#structure_header_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#structure_header_meta,
+#structure_panel_hint {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#structure_panel_label {{
+    color: {t['text']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#structure_metrics_strip,
+#structure_primary_strip,
+#structure_filter_bar,
 #structure_selection_strip {{
-    background-color: {t['panel_alt']};
+    background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
+}}
+
+#structure_drag_hint_strip {{
+    background-color: {t['accent_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#structure_primary_strip QPushButton,
+#structure_primary_strip QToolButton,
+#structure_selection_strip QPushButton,
+#structure_selection_strip QToolButton,
+#structure_filter_bar QPushButton {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 34px;
+}}
+
+#structure_primary_strip QPushButton:hover,
+#structure_primary_strip QToolButton:hover,
+#structure_selection_strip QPushButton:hover,
+#structure_selection_strip QToolButton:hover,
+#structure_filter_bar QPushButton:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+#structure_primary_strip QPushButton:disabled,
+#structure_primary_strip QToolButton:disabled,
+#structure_selection_strip QPushButton:disabled,
+#structure_selection_strip QToolButton:disabled,
+#structure_filter_bar QPushButton:disabled {{
+    color: {t['text_soft']};
+    border-color: {t['border']};
+}}
+
+QTreeWidget#widget_tree_panel_tree {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+    padding: {t['space_xxs']}px;
 }}
 
 #app_selector_header {{
