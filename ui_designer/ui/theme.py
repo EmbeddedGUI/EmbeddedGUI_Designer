@@ -1323,6 +1323,116 @@ QTreeWidget#widget_tree_panel_tree {{
     border-color: {t['border']};
 }}
 
+#page_navigator_header {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#page_navigator_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#page_navigator_meta,
+#page_navigator_page_meta,
+#page_navigator_guidance_text {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#page_navigator_guidance {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#page_navigator_scroll_shell {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+QScrollArea#page_navigator_scroll,
+#page_navigator_list {{
+    background-color: transparent;
+    border: none;
+}}
+
+#page_navigator_empty_state {{
+    background-color: transparent;
+    border: 1px dashed {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_soft']};
+    padding: 18px;
+}}
+
+#page_navigator_thumbnail {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#page_navigator_thumbnail:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+}}
+
+#page_navigator_thumbnail[startup="true"] {{
+    border-color: {t['success']};
+}}
+
+#page_navigator_thumbnail[selected="true"] {{
+    background-color: {t['selection_soft']};
+    border-color: {t['accent']};
+}}
+
+QFrame#page_navigator_thumb_surface {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+QFrame#page_navigator_thumb_surface[startup="true"] {{
+    border-color: {t['success']};
+}}
+
+QFrame#page_navigator_thumb_surface[selected="true"] {{
+    background-color: {t['selection_soft']};
+    border-color: {t['accent']};
+}}
+
+QLabel#page_navigator_thumb_label {{
+    background-color: {t['canvas_stage']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_sm']}px;
+    padding: 4px;
+}}
+
+QLabel#page_navigator_thumb_label[startup="true"] {{
+    border-color: {t['success']};
+}}
+
+QLabel#page_navigator_thumb_label[selected="true"] {{
+    border-color: {t['accent']};
+}}
+
+#page_navigator_page_name {{
+    color: {t['text']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#page_navigator_page_name[dirty="true"] {{
+    color: {t['warning']};
+}}
+
 #app_selector_header {{
     background-color: qlineargradient(
         x1: 0, y1: 0, x2: 1, y2: 1,

@@ -91,6 +91,24 @@ def test_engineering_theme_radii_remove_pill_shapes():
         assert f"border-radius: {tokens['r_md']}px;" in metric_card
 
 
+def test_page_navigator_styles_use_token_driven_cards():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("#page_navigator_header {", 1)[1].split("}", 1)[0]
+        thumb = css.split("#page_navigator_thumbnail {", 1)[1].split("}", 1)[0]
+        selected = css.split('#page_navigator_thumbnail[selected="true"] {', 1)[1].split("}", 1)[0]
+        empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
+
+        assert t["accent_soft"] in header or t["selection_soft"] in header
+        assert f"border-radius: {t['r_xl']}px;" in header
+        assert f"background-color: {t['panel_alt']};" in thumb
+        assert f"border-radius: {t['r_xl']}px;" in thumb
+        assert f"border-color: {t['accent']};" in selected
+        assert f"border: 1px dashed {t['border']};" in empty
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()
