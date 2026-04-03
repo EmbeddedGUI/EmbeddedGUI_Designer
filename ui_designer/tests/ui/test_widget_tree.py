@@ -2423,7 +2423,7 @@ class TestWidgetTreePanel:
         assert rename_action.shortcut().toString() == "F2"
         assert rename_action.toolTip() == "Batch rename 2 selected widgets (F2)."
         assert rename_action.statusTip() == rename_action.toolTip()
-        assert insert_action.toolTip() == "Open the Widgets panel to insert a component into root_group (group)."
+        assert insert_action.toolTip() == "Open the Components panel to insert a component into root_group (group)."
         assert insert_action.statusTip() == insert_action.toolTip()
         assert delete_action.shortcut().toString() == "Del"
         assert delete_action.toolTip() == "Delete first (Del)."
@@ -2445,7 +2445,7 @@ class TestWidgetTreePanel:
             "Filter: none. Status: All widgets. Position: none. "
             "Structure: select widgets to group, move, or reorder."
         )
-        assert panel.add_btn.toolTip() == "Open the Widgets panel to insert a component into root_group (group)."
+        assert panel.add_btn.toolTip() == "Open the Components panel to insert a component into root_group (group)."
         assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
         assert panel.add_btn.accessibleName() == "Insert component target: root_group (group)"
         assert panel.rename_btn.toolTip() == "Rename the current selection (F2)\nUnavailable: select at least 1 widget."

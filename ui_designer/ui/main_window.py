@@ -1531,7 +1531,7 @@ class MainWindow(QMainWindow):
             accessible_name = "Insert component unavailable."
         else:
             target = self._insert_target_summary(parent)
-            tooltip = f"Open the Widgets panel and insert a component into {target}."
+            tooltip = f"Open the Components panel and insert a component into {target}."
             accessible_name = f"Insert component target: {target}."
         self._set_metadata_summary(self._insert_widget_button, tooltip, accessible_name)
 
@@ -2034,47 +2034,6 @@ class MainWindow(QMainWindow):
                 accessible_name = f"Editor mode button: {label}."
             self._set_metadata_summary(button, tooltip, accessible_name)
 
-    def _set_chip(self, chip, text, tone=None, accessible_name=None, tool_tip=None):
-        if chip is None:
-            return
-        chip.setText(text)
-        chip.setAccessibleName(accessible_name or text)
-        if tool_tip is not None:
-            chip.setToolTip(tool_tip)
-            chip.setStatusTip(tool_tip)
-        if tone is not None:
-            chip.setProperty("chipTone", tone)
-        chip.style().unpolish(chip)
-        chip.style().polish(chip)
-        chip.update()
-
-    def _set_workspace_chip_state(self, chip, *, visible, text, tone=None, accessible_name=None, tool_tip=None):
-        if chip is None:
-            return False
-        resolved_text = str(text or "")
-        resolved_accessible_name = str(accessible_name or resolved_text)
-        resolved_tool_tip = chip.toolTip() if tool_tip is None else str(tool_tip or "")
-        resolved_tone = str(chip.property("chipTone") or "") if tone is None else str(tone or "")
-        snapshot = (
-            bool(visible),
-            resolved_text,
-            resolved_tone,
-            resolved_accessible_name,
-            resolved_tool_tip,
-        )
-        if getattr(chip, "_workspace_chip_snapshot", None) == snapshot:
-            return False
-        chip.setVisible(bool(visible))
-        self._set_chip(
-            chip,
-            resolved_text,
-            tone=tone,
-            accessible_name=resolved_accessible_name,
-            tool_tip=resolved_tool_tip,
-        )
-        chip._workspace_chip_snapshot = snapshot
-        return True
-
     def _set_summary_indicator_state(self, chip, *, text, tone="", accessible_name=None, tool_tip=None):
         if chip is None:
             return False
@@ -2163,32 +2122,6 @@ class MainWindow(QMainWindow):
         error_count = int(diagnostics_counts.get("error", 0) or 0)
         warning_count = int(diagnostics_counts.get("warning", 0) or 0)
 
-        if hasattr(self, "_sdk_chip"):
-            sdk_text = "SDK ready" if sdk_ready else "SDK missing"
-            self._set_workspace_chip_state(
-                self._sdk_chip,
-                visible=not sdk_ready,
-                text=sdk_text,
-                tone="accent" if sdk_ready else "warning",
-                accessible_name=f"Workspace status: {sdk_text}.",
-                tool_tip=(
-                    "Open the left Status panel (SDK, compile readiness, and workspace summary). "
-                    "Design-time issues open from the bottom Diagnostics tab or the diagnostics chip."
-                ),
-            )
-        if hasattr(self, "_dirty_chip"):
-            dirty_text = f"Dirty {dirty_count}" if dirty_pages else "Clean"
-            dirty_summary = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
-            if not dirty_pages:
-                dirty_summary = "no dirty pages"
-            self._set_workspace_chip_state(
-                self._dirty_chip,
-                visible=bool(dirty_pages),
-                text=dirty_text,
-                tone="warning" if dirty_pages else "success",
-                accessible_name=f"Workspace status: {dirty_summary}.",
-                tool_tip="Open History to review unsaved changes.",
-            )
         page_count = len(getattr(self.project, "pages", [])) if getattr(self, "project", None) is not None else 0
         active_page_name = str(getattr(getattr(self, "_current_page", None), "name", "") or "")
         startup_page_name = ""

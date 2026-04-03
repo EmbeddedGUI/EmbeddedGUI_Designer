@@ -613,9 +613,9 @@ class TestStatusCenterPanel:
         assert panel._dirty_card.toolTip() == "Open History. No dirty pages."
         assert panel._selection_card.toolTip() == "Open Structure. No widgets selected."
         assert panel._runtime_panel.accessibleName() == "Runtime section: Clear. No runtime errors."
-        assert panel._components_btn.toolTip() == "Open Widgets."
-        assert panel._components_btn.statusTip() == "Open Widgets."
-        assert panel._components_btn.accessibleName() == "Widgets action: Widgets. Open Widgets."
+        assert panel._components_btn.toolTip() == "Open Components."
+        assert panel._components_btn.statusTip() == "Open Components."
+        assert panel._components_btn.accessibleName() == "Components action: Components. Open Components."
         assert panel._diag_btn.accessibleName() == (
             "Diagnostics action: Diagnostics. Open Diagnostics. No active diagnostics."
         )
@@ -889,10 +889,10 @@ class TestStatusCenterPanel:
             "Repeat action: Assets. 4 recent actions tracked. Older actions are available in the menu."
         )
         assert panel._repeat_action_button.property("iconKey") == "nav.resource"
-        assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Widgets, Structure, +1 more."
-        assert panel._recent_actions_label.toolTip() == "4 recent actions: Assets, Widgets, Structure, Project"
+        assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Components, Structure, +1 more."
+        assert panel._recent_actions_label.toolTip() == "4 recent actions: Assets, Components, Structure, Project"
         assert panel._recent_actions_label.accessibleName() == (
-            "Recent actions summary: 4 recent actions tracked. Assets, Widgets, Structure, Project."
+            "Recent actions summary: 4 recent actions tracked. Assets, Components, Structure, Project."
         )
         assert panel._recent_actions_label.isHidden() is False
         assert panel._repeat_action_button.toolTip() == (
@@ -900,7 +900,7 @@ class TestStatusCenterPanel:
         )
         assert _menu_labels(panel._repeat_action_menu) == [
             "Assets",
-            "Widgets",
+            "Components",
             "Structure",
             "Project",
             "Clear Recent Actions (4)",
@@ -1971,17 +1971,17 @@ class TestStatusCenterPanel:
         panel._repeat_action_button.click()
 
         assert emitted == ["open_components_panel"]
-        assert panel._last_action_label.text() == "Last action: Widgets"
-        assert panel._repeat_action_button.text() == "Repeat Widgets"
+        assert panel._last_action_label.text() == "Last action: Components"
+        assert panel._repeat_action_button.text() == "Repeat Components"
         assert panel._actions_title.text() == "Quick Actions"
         assert panel._actions_title.toolTip() == "Quick actions with the current action ready to repeat."
         assert panel._actions_title.accessibleName() == "Quick actions section: Current action ready to repeat."
         assert panel._recent_actions_label.isHidden() is True
         assert panel._repeat_action_button.accessibleName() == (
-            "Repeat action: Widgets. 1 recent action tracked."
+            "Repeat action: Components. 1 recent action tracked."
         )
         assert panel._repeat_action_button.property("iconKey") == "nav.component_library"
-        assert _menu_labels(panel._repeat_action_menu) == ["Widgets", "Clear Recent Actions (1)"]
+        assert _menu_labels(panel._repeat_action_menu) == ["Components", "Clear Recent Actions (1)"]
         panel.deleteLater()
 
     def test_repeat_action_menu_replays_selected_recent_action(self, qapp):

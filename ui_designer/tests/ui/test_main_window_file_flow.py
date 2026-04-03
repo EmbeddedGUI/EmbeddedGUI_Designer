@@ -8439,7 +8439,7 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.toolTip() == str(sdk_root)
         assert window._sdk_status_label.statusTip() == window._sdk_status_label.toolTip()
         assert window._insert_widget_button.toolTip() == (
-            "Open the Widgets panel and insert a component into root_group."
+            "Open the Components panel and insert a component into root_group."
         )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
@@ -8673,7 +8673,7 @@ class TestMainWindowFileFlow:
         root_group = _FakeWidget("root_group")
         window._update_insert_widget_button_metadata(root_group)
         assert tooltip_calls == 1
-        assert window._insert_widget_button.toolTip() == "Open the Widgets panel and insert a component into root_group."
+        assert window._insert_widget_button.toolTip() == "Open the Components panel and insert a component into root_group."
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         _close_window(window)
 

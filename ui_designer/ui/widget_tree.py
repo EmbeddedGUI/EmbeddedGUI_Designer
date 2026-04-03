@@ -1996,7 +1996,7 @@ class WidgetTreePanel(QWidget):
         insert_target = self._current_move_target_label(insert_parent, "page root") or "page root"
         can_insert = self.project is not None
         if can_insert:
-            add_tooltip = f"Open the Widgets panel to insert a component into {insert_target}."
+            add_tooltip = f"Open the Components panel to insert a component into {insert_target}."
             add_accessible_name = f"Insert component target: {insert_target}"
         else:
             add_tooltip = "Open or create a project page to insert a component."
@@ -2071,7 +2071,7 @@ class WidgetTreePanel(QWidget):
 
     def _context_insert_tooltip(self, preferred_parent):
         insert_target = self._context_insert_target_label(preferred_parent)
-        return f"Open the Widgets panel to insert a component into {insert_target}."
+        return f"Open the Components panel to insert a component into {insert_target}."
 
     def _context_insert_target_label(self, preferred_parent):
         insert_target = self._current_move_target_label(preferred_parent, "page root") or "page root"
