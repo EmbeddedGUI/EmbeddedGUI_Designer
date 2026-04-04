@@ -356,9 +356,65 @@ class MainWindow(QMainWindow):
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
-        self._toolbar_host_layout = QHBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
-        self._toolbar_host_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
+        self._toolbar_host_layout = QVBoxLayout(self._toolbar_host)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        self._toolbar_host_layout.setSpacing(_SPACE_SM)
+
+        self._toolbar_header = QWidget()
+        self._toolbar_header.setObjectName("workspace_command_header")
+        toolbar_header_layout = QHBoxLayout(self._toolbar_header)
+        toolbar_header_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_header_layout.setSpacing(_SPACE_MD)
+
+        toolbar_heading = QWidget()
+        toolbar_heading.setObjectName("workspace_command_heading")
+        toolbar_heading_layout = QVBoxLayout(toolbar_heading)
+        toolbar_heading_layout.setContentsMargins(0, 0, 0, 0)
+        toolbar_heading_layout.setSpacing(_SPACE_XS)
+
+        self._toolbar_eyebrow_label = QLabel("Engineering Workspace")
+        self._toolbar_eyebrow_label.setObjectName("workspace_command_eyebrow")
+        toolbar_heading_layout.addWidget(self._toolbar_eyebrow_label)
+
+        self._toolbar_title_label = QLabel("Design Command Center")
+        self._toolbar_title_label.setObjectName("workspace_command_title")
+        toolbar_heading_layout.addWidget(self._toolbar_title_label)
+
+        self._toolbar_meta_label = QLabel(
+            "Open a project to activate insert, save, preview, and editor mode controls from a unified workspace rail."
+        )
+        self._toolbar_meta_label.setObjectName("workspace_command_meta")
+        self._toolbar_meta_label.setWordWrap(True)
+        toolbar_heading_layout.addWidget(self._toolbar_meta_label)
+
+        toolbar_header_layout.addWidget(toolbar_heading, 1)
+
+        self._workspace_context_card = QFrame()
+        self._workspace_context_card.setObjectName("workspace_context_card")
+        self._workspace_context_card.setMinimumWidth(240)
+        context_card_layout = QVBoxLayout(self._workspace_context_card)
+        context_card_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        context_card_layout.setSpacing(_SPACE_XS - _SPACE_XXS)
+
+        self._workspace_context_eyebrow = QLabel("Current Context")
+        self._workspace_context_eyebrow.setObjectName("workspace_command_context_eyebrow")
+        context_card_layout.addWidget(self._workspace_context_eyebrow)
+
+        self._workspace_context_label = QLabel("No project open")
+        self._workspace_context_label.setObjectName("workspace_command_context_value")
+        self._workspace_context_label.setMinimumWidth(180)
+        self._workspace_context_label.setWordWrap(True)
+        context_card_layout.addWidget(self._workspace_context_label)
+
+        toolbar_header_layout.addWidget(self._workspace_context_card, 0)
+        self._toolbar_host_layout.addWidget(self._toolbar_header)
+
+        self._toolbar_command_row = QWidget()
+        self._toolbar_command_row.setObjectName("workspace_command_body")
+        self._toolbar_command_row_layout = QHBoxLayout(self._toolbar_command_row)
+        self._toolbar_command_row_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        self._toolbar_command_row_layout.setSpacing(_SPACE_SM)
+        self._toolbar_host_layout.addWidget(self._toolbar_command_row)
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -1645,9 +1701,25 @@ class MainWindow(QMainWindow):
         command_bar_summary = "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         if hasattr(self, "_toolbar_host"):
             self._set_metadata_summary(self._toolbar_host, command_bar_summary)
+        if hasattr(self, "_toolbar_header"):
+            self._set_metadata_summary(
+                self._toolbar_header,
+                "Workspace command header. Engineering summary, current context, and command posture.",
+            )
         toolbar_summary = "Main toolbar: insert, save, edit, and preview commands."
         if hasattr(self, "_toolbar"):
             self._set_metadata_summary(self._toolbar, toolbar_summary)
+        if hasattr(self, "_toolbar_eyebrow_label"):
+            self._set_metadata_summary(
+                self._toolbar_eyebrow_label,
+                "Engineering workspace command surface.",
+            )
+        if hasattr(self, "_toolbar_title_label"):
+            self._set_metadata_summary(
+                self._toolbar_title_label,
+                "Design command center for insert, save, preview, and mode controls.",
+            )
+        self._update_workspace_command_surface_metadata()
         if hasattr(self, "_workspace_context_label"):
             current_text = str(self._workspace_context_label.text() or "No project open")
             self._set_metadata_summary(
@@ -1966,6 +2038,7 @@ class MainWindow(QMainWindow):
                 f"Current page: {current_page}."
             )
             self._set_metadata_summary(self._bottom_shell, bottom_shell_summary)
+        self._update_workspace_command_surface_metadata()
 
     def _update_page_tab_bar_metadata(self):
         if not hasattr(self, "page_tab_bar"):
@@ -2083,6 +2156,40 @@ class MainWindow(QMainWindow):
             tooltip = f"Current workspace context: {project_label}. Current page: {current_page}. Project contains {page_label}."
         self._workspace_context_label.setText(text)
         self._set_metadata_summary(self._workspace_context_label, tooltip, f"Workspace context: {text}.")
+        if hasattr(self, "_workspace_context_card"):
+            self._set_metadata_summary(self._workspace_context_card, tooltip, f"Workspace context card: {text}.")
+
+    def _update_workspace_command_surface_metadata(self):
+        current_panel = self._workspace_panel_label(getattr(self, "_current_left_panel", "project"))
+        current_mode = self._editor_mode_label(getattr(getattr(self, "editor_tabs", None), "mode", MODE_DESIGN))
+        current_page = self._current_page_accessibility_text()
+        if getattr(self, "project", None) is None:
+            summary = (
+                "Open a project to activate insert, save, preview, and editor mode controls "
+                "from a unified workspace rail."
+            )
+        else:
+            summary = (
+                f"{current_mode} mode active. {current_panel} panel visible. Current page: {current_page}. "
+                "Use the command rail to insert components, save edits, build, and inspect runtime health."
+            )
+        if hasattr(self, "_toolbar_meta_label"):
+            if self._toolbar_meta_label.text() != summary:
+                self._toolbar_meta_label.setText(summary)
+            self._set_metadata_summary(self._toolbar_meta_label, summary)
+        if hasattr(self, "_workspace_context_eyebrow"):
+            self._set_metadata_summary(
+                self._workspace_context_eyebrow,
+                "Current workspace context card.",
+            )
+        if hasattr(self, "_workspace_context_card") and hasattr(self, "_workspace_context_label"):
+            context_text = str(self._workspace_context_label.text() or "No project open")
+            context_tip = str(self._workspace_context_label.toolTip() or summary)
+            self._set_metadata_summary(
+                self._workspace_context_card,
+                context_tip,
+                f"Workspace context card: {context_text}.",
+            )
 
     def _open_workspace_health_surface(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
@@ -4042,23 +4149,14 @@ class MainWindow(QMainWindow):
         toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_lg", 20))
         tb.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        tb.setStyleSheet(
-            "QToolBar { spacing: 6px; background: transparent; border: none; }"
-            "QToolButton { padding: 6px 10px; border-radius: 8px; }"
-        )
-        self._toolbar_host_layout.addWidget(tb, 1)
+        self._toolbar_command_row_layout.addWidget(tb, 1)
 
         toolbar_rail_sep = QFrame()
         toolbar_rail_sep.setObjectName("toolbar_host_separator")
         toolbar_rail_sep.setFrameShape(QFrame.VLine)
         toolbar_rail_sep.setFrameShadow(QFrame.Plain)
         toolbar_rail_sep.setFixedHeight(26)
-        self._toolbar_host_layout.addWidget(toolbar_rail_sep, 0)
-
-        self._workspace_context_label = QLabel("No project open")
-        self._workspace_context_label.setObjectName("workspace_section_subtitle")
-        self._workspace_context_label.setMinimumWidth(180)
-        self._toolbar_host_layout.addWidget(self._workspace_context_label, 0)
+        self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
         for action, icon_key in (
             (self._save_action, "toolbar.save"),
@@ -4121,7 +4219,7 @@ class MainWindow(QMainWindow):
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)
-        self._toolbar_host_layout.addWidget(mode_host, 0)
+        self._toolbar_command_row_layout.addWidget(mode_host, 0)
         self._update_editor_mode_button_metadata(self.editor_tabs.mode)
 
         chips_host = QWidget()
@@ -4139,7 +4237,7 @@ class MainWindow(QMainWindow):
         self._runtime_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
         for chip in (self._workspace_health_chip, self._runtime_chip):
             chips_layout.addWidget(chip)
-        self._toolbar_host_layout.addWidget(chips_host, 0)
+        self._toolbar_command_row_layout.addWidget(chips_host, 0)
 
         self._toolbar = tb
         self._update_compile_availability()

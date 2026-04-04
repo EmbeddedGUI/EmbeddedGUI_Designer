@@ -141,6 +141,28 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in overlay
 
 
+def test_workspace_command_bar_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        command_bar = css.split("#workspace_command_bar {", 1)[1].split("}", 1)[0]
+        context = css.split("#workspace_context_card {", 1)[1].split("}", 1)[0]
+        toolbar = css.split("QToolBar#main_toolbar {", 1)[1].split("}", 1)[0]
+        toolbar_button = css.split("QToolBar#main_toolbar QToolButton {", 1)[1].split("}", 1)[0]
+        toolbar_button_hover = css.split("QToolBar#main_toolbar QToolButton:hover {", 1)[1].split("}", 1)[0]
+        mode_strip = css.split("#workspace_mode_switch {", 1)[1].split("}", 1)[0]
+
+        assert t["accent_soft"] in command_bar
+        assert f"border-radius: {t['r_xl']}px;" in command_bar
+        assert f"background-color: {t['surface_hover']};" in context
+        assert f"border-radius: {t['r_md']}px;" in context
+        assert f"spacing: {t['space_xs']}px;" in toolbar
+        assert f"background-color: {t['panel_raised']};" in toolbar_button
+        assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
+        assert f"background-color: {t['panel_raised']};" in mode_strip
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()

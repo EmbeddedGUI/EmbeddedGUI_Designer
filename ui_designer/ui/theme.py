@@ -693,7 +693,6 @@ QGroupBox#inspector_collapsible_group::title {{
     color: {t['text_muted']};
 }}
 
-#workspace_command_bar,
 #workspace_panel_header,
 #workspace_hint_strip,
 #widget_browser_header,
@@ -705,7 +704,62 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_command_bar {{
-    background-color: {t['panel_raised']};
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border: 1px solid {t['border_strong']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#workspace_command_header,
+#workspace_command_heading,
+#workspace_command_body,
+#workspace_command_context_value,
+#workspace_command_meta,
+#workspace_command_title,
+#workspace_command_eyebrow,
+#workspace_command_context_eyebrow {{
+    background-color: transparent;
+    border: none;
+}}
+
+#workspace_command_eyebrow,
+#workspace_command_context_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#workspace_command_title {{
+    color: {t['text']};
+    font-size: {t['fs_h2']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#workspace_command_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#workspace_context_card {{
+    background-color: {t['surface_hover']};
+    border: 1px solid {t['border_strong']};
+    border-radius: {t['r_md']}px;
+}}
+
+#workspace_command_body {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#workspace_command_context_value {{
+    color: {t['text']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_medium']};
 }}
 
 #workspace_hint_strip {{
@@ -773,10 +827,57 @@ QPushButton#project_workspace_view_button:checked {{
     padding: {t['space_xxs']}px {t['space_xs']}px;
 }}
 
-#workspace_mode_switch,
+#workspace_mode_switch {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border_strong']};
+    border-radius: {t['r_md']}px;
+}}
+
 #workspace_indicator_strip {{
     background-color: transparent;
     border: none;
+}}
+
+QToolBar#main_toolbar {{
+    spacing: {t['space_xs']}px;
+    background: transparent;
+    border: none;
+}}
+
+QToolBar#main_toolbar::separator {{
+    background-color: {t['border']};
+    width: 1px;
+    margin: {t['space_xs']}px {t['space_xs']}px;
+}}
+
+QToolBar#main_toolbar QToolButton {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-width: 34px;
+    min-height: 34px;
+}}
+
+QToolBar#main_toolbar QToolButton:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QToolBar#main_toolbar QToolButton:pressed {{
+    background-color: {t['surface_pressed']};
+    border-color: {t['border_strong']};
+}}
+
+QToolBar#main_toolbar QToolButton:focus {{
+    background-color: {t['surface_hover']};
+    border-color: {t['focus_ring']};
+}}
+
+QToolBar#main_toolbar QToolButton:disabled {{
+    color: {t['text_soft']};
 }}
 
 QPushButton#workspace_mode_button {{
