@@ -190,3 +190,55 @@ class TestProjectExplorerDock:
         assert dirty_actions["Delete"].statusTip() == dirty_actions["Delete"].toolTip()
         dirty_menu.deleteLater()
         dock.deleteLater()
+
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+        dock._header_frame.setProperty("_project_dock_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = dock._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(dock._header_frame, "setToolTip", counted_set_tooltip)
+
+        dock._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dock._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dock.set_project(_build_project())
+        assert hint_calls == 2
+        dock.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+        dock._header_frame.setProperty("_project_dock_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = dock._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(dock._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        dock._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dock._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dock.set_project(_build_project())
+        assert accessible_calls == 2
+        dock.deleteLater()
