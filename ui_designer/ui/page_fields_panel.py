@@ -54,13 +54,14 @@ class PageFieldsPanel(QWidget):
         layout.setSpacing(10)
 
         self._header_frame = QWidget()
-        self._header_frame.setObjectName("page_editor_header")
+        self._header_frame.setObjectName("page_fields_header")
+        self._header_frame.setProperty("panelTone", "fields")
         header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(8)
 
-        self._eyebrow_label = QLabel("Page Data")
-        self._eyebrow_label.setObjectName("page_editor_eyebrow")
+        self._eyebrow_label = QLabel("Generated Members")
+        self._eyebrow_label.setObjectName("page_fields_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
 
         self._summary_label = QLabel("")
@@ -70,19 +71,21 @@ class PageFieldsPanel(QWidget):
         self._header_meta_label = QLabel(
             "Page fields become generated struct members and raw C defaults applied during page setup."
         )
-        self._header_meta_label.setObjectName("page_editor_meta")
+        self._header_meta_label.setObjectName("page_fields_meta")
         self._header_meta_label.setWordWrap(True)
         header_layout.addWidget(self._header_meta_label)
 
-        self._header_chip_row = QHBoxLayout()
-        self._header_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._metrics_frame = QWidget()
+        self._metrics_frame.setObjectName("page_fields_metrics_strip")
+        self._header_chip_row = QHBoxLayout(self._metrics_frame)
+        self._header_chip_row.setContentsMargins(10, 8, 10, 8)
         self._header_chip_row.setSpacing(6)
         self._count_chip = self._make_status_chip("0 fields", "accent")
         self._selection_chip = self._make_status_chip("No selection", "warning")
         self._header_chip_row.addWidget(self._count_chip)
         self._header_chip_row.addWidget(self._selection_chip)
         self._header_chip_row.addStretch(1)
-        header_layout.addLayout(self._header_chip_row)
+        header_layout.addWidget(self._metrics_frame)
 
         layout.addWidget(self._header_frame)
 
@@ -197,8 +200,10 @@ class PageFieldsPanel(QWidget):
     def _update_header_state(self):
         count = len(self._fields)
         selected_name = self._selected_field_name()
+        count_text = f"{count} {'field' if count == 1 else 'fields'}"
+        selection_text = selected_name or "No selection"
         self._set_status_chip_state(self._count_chip, f"{count} {'field' if count == 1 else 'fields'}", "accent" if self._page is not None else "warning")
-        self._set_status_chip_state(self._selection_chip, selected_name or "No selection", "accent" if selected_name else "warning")
+        self._set_status_chip_state(self._selection_chip, selection_text, "accent" if selected_name else "warning")
         if self._page is None:
             meta = "Open a page to define generated members and page lifecycle code."
         elif selected_name:
@@ -206,6 +211,27 @@ class PageFieldsPanel(QWidget):
         else:
             meta = f"Editing generated members for {self._page.name}. Select a field to inspect or remove it."
         self._header_meta_label.setText(meta)
+        selection_summary = f"Selected field: {selected_name}." if selected_name else "No field selected."
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Page fields engineering surface.",
+            accessible_name="Page fields engineering surface.",
+        )
+        _set_widget_metadata(
+            self._count_chip,
+            tooltip=f"Field count: {count_text}.",
+            accessible_name=f"Field count: {count_text}.",
+        )
+        _set_widget_metadata(
+            self._selection_chip,
+            tooltip=f"Field selection: {selection_summary}",
+            accessible_name=f"Field selection: {selection_summary}",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Page fields metrics: {count_text}. {selection_summary}",
+            accessible_name=f"Page fields metrics: {count_text}. {selection_summary}",
+        )
 
     def _update_accessibility_summary(self, summary_text):
         selection_summary = self._selection_accessibility_summary()

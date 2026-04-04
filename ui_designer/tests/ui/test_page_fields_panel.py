@@ -56,6 +56,13 @@ class TestPageFieldsPanel:
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
+        assert panel._eyebrow_label.text() == "Generated Members"
+        assert panel._eyebrow_label.accessibleName() == "Page fields engineering surface."
+        assert panel._count_chip.text() == "2 fields"
+        assert panel._count_chip.accessibleName() == "Field count: 2 fields."
+        assert panel._selection_chip.text() == "No selection"
+        assert panel._selection_chip.accessibleName() == "Field selection: No field selected."
+        assert panel._metrics_frame.accessibleName() == "Page fields metrics: 2 fields. No field selected."
         assert panel._hint_label.toolTip() == panel._hint_label.text()
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
         assert panel._hint_label.accessibleName() == panel._hint_label.text()
@@ -106,6 +113,9 @@ class TestPageFieldsPanel:
         assert panel._open_on_close_button.accessibleName() == "Open on_close user code unavailable"
         assert panel._open_init_button.toolTip() == "Open a page to edit the init section."
         assert panel._open_init_button.accessibleName() == "Open init user code unavailable"
+        assert panel._count_chip.text() == "0 fields"
+        assert panel._selection_chip.text() == "No selection"
+        assert panel._metrics_frame.accessibleName() == "Page fields metrics: 0 fields. No field selected."
 
     def test_panel_add_and_remove_field_emits_changes(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
@@ -125,6 +135,10 @@ class TestPageFieldsPanel:
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 1 field on main_page. Selected field: field."
         assert panel._remove_button.toolTip() == "Remove the selected page field: field."
         assert panel._remove_button.accessibleName() == "Remove page field: field"
+        assert panel._count_chip.text() == "1 field"
+        assert panel._selection_chip.text() == "field"
+        assert panel._selection_chip.accessibleName() == "Field selection: Selected field: field."
+        assert panel._metrics_frame.accessibleName() == "Page fields metrics: 1 field. Selected field: field."
         assert captured[-1] == [{"name": "field", "type": "int", "default": "0"}]
 
         panel._table.selectRow(0)

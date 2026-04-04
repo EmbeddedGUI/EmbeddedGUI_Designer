@@ -125,6 +125,22 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert f"border: 1px dashed {t['border']};" in empty
 
 
+def test_page_fields_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#page_fields_header[panelTone="fields"] {', 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#page_fields_eyebrow {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#page_fields_metrics_strip {", 1)[1].split("}", 1)[0]
+
+        assert t["accent_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['accent_hover']};" in eyebrow
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
+
+
 def test_editor_tabs_styles_use_engineering_shell_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
