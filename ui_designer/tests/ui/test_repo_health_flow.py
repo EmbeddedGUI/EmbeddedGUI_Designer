@@ -220,6 +220,82 @@ def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, 
 
 
 @_skip_no_qt
+def test_repository_health_header_hint_skips_no_op_rewrites(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._header_frame.setProperty("_repo_health_hint_snapshot", None)
+
+    hint_calls = 0
+    original_set_tooltip = dialog._header_frame.setToolTip
+
+    def counted_set_tooltip(text):
+        nonlocal hint_calls
+        hint_calls += 1
+        return original_set_tooltip(text)
+
+    monkeypatch.setattr(dialog._header_frame, "setToolTip", counted_set_tooltip)
+
+    dialog._update_accessibility_summary()
+    assert hint_calls == 1
+
+    dialog._update_accessibility_summary()
+    assert hint_calls == 1
+
+    dialog._critical_only_check.setChecked(True)
+    assert hint_calls == 2
+
+
+@_skip_no_qt
+def test_repository_health_header_accessible_name_skips_no_op_rewrites(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+    dialog._header_frame.setProperty("_repo_health_accessible_snapshot", None)
+
+    accessible_calls = 0
+    original_set_accessible_name = dialog._header_frame.setAccessibleName
+
+    def counted_set_accessible_name(text):
+        nonlocal accessible_calls
+        accessible_calls += 1
+        return original_set_accessible_name(text)
+
+    monkeypatch.setattr(dialog._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+    dialog._update_accessibility_summary()
+    assert accessible_calls == 1
+
+    dialog._update_accessibility_summary()
+    assert accessible_calls == 1
+
+    dialog._critical_only_check.setChecked(True)
+    assert accessible_calls == 2
+
+
+@_skip_no_qt
 def test_repository_health_dialog_can_open_first_stale_dir(qapp, monkeypatch, tmp_path):
     from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
 
