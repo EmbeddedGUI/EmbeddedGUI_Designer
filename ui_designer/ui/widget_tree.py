@@ -691,6 +691,42 @@ class WidgetTreePanel(QWidget):
         self._set_status_chip_state(self._filter_summary_chip, filter_summary, filter_tone)
         self._set_status_chip_state(self.filter_status_label, filter_status or "All widgets", filter_tone)
 
+        selection_chip_text = self._selection_summary_chip.text().strip() if hasattr(self, "_selection_summary_chip") else "No selection"
+        selection_summary = (
+            "Selection summary: no selection."
+            if selection_chip_text == "No selection"
+            else f"Selection summary: {selection_chip_text}."
+        )
+        metrics_summary = f"Structure metrics: {_count_label(widget_total, 'widget')}. Filter status: {filter_summary}."
+        if filter_position:
+            metrics_summary = f"{metrics_summary} Match position: {filter_position}."
+
+        _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Structure navigation workspace surface.",
+            accessible_name="Structure navigation workspace surface.",
+        )
+        _set_widget_metadata(
+            self._selection_summary_chip,
+            tooltip=selection_summary,
+            accessible_name=selection_summary,
+        )
+        _set_widget_metadata(
+            self._tree_count_chip,
+            tooltip=f"Widget count: {_count_label(widget_total, 'widget')}.",
+            accessible_name=f"Widget count: {_count_label(widget_total, 'widget')}.",
+        )
+        _set_widget_metadata(
+            self._filter_summary_chip,
+            tooltip=f"Filter summary: {filter_summary}.",
+            accessible_name=f"Filter summary: {filter_summary}.",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=metrics_summary,
+            accessible_name=metrics_summary,
+        )
+
         if filter_position:
             self._set_status_chip_state(self.filter_position_label, filter_position, "accent")
             self.filter_position_label.show()

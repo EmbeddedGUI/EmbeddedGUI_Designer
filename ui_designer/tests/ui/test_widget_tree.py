@@ -91,6 +91,39 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_header_metadata_tracks_selection_and_filter_context(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        leaf = WidgetModel("label", name="leaf")
+        root.add_child(leaf)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        assert panel._header_eyebrow.accessibleName() == "Structure navigation workspace surface."
+        assert panel._tree_count_chip.text() == "2 widgets"
+        assert panel._tree_count_chip.accessibleName() == "Widget count: 2 widgets."
+        assert panel._selection_summary_chip.text() == "No selection"
+        assert panel._selection_summary_chip.accessibleName() == "Selection summary: no selection."
+        assert panel._filter_summary_chip.text() == "All widgets"
+        assert panel._filter_summary_chip.accessibleName() == "Filter summary: All widgets."
+        assert panel._metrics_frame.accessibleName() == "Structure metrics: 2 widgets. Filter status: All widgets."
+
+        panel.set_selected_widgets([leaf], primary=leaf)
+        panel.filter_edit.setText("leaf")
+        qapp.processEvents()
+
+        assert panel._selection_summary_chip.text() == "1 selected - leaf"
+        assert panel._selection_summary_chip.accessibleName() == "Selection summary: 1 selected - leaf."
+        assert panel._filter_summary_chip.text() == "1 match"
+        assert panel._filter_summary_chip.accessibleName() == "Filter summary: 1 match."
+        assert panel._metrics_frame.accessibleName() == (
+            "Structure metrics: 2 widgets. Filter status: 1 match. Match position: 1/1."
+        )
+        panel.deleteLater()
+
     def test_context_menu_top_level_actions_appear_in_expected_order(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

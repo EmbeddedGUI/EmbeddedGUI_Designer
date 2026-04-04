@@ -229,6 +229,22 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert f"border-radius: {t['r_md']}px;" in filter_bar
 
 
+def test_widget_tree_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#workspace_panel_header[panelTone="structure"] {', 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#structure_header_eyebrow {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#structure_metrics_strip,", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['accent_hover']};" in eyebrow
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
+
+
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
