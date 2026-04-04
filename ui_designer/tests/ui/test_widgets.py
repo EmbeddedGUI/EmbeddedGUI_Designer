@@ -193,3 +193,55 @@ class TestEguiColorPicker:
         assert picker.accessibleName() == "Color picker: NOT_A_COLOR. Preview unavailable."
         assert picker._swatch.accessibleName() == "Color swatch: NOT_A_COLOR. Preview unavailable."
         picker.deleteLater()
+
+    def test_picker_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.color_picker import EguiColorPicker
+
+        picker = EguiColorPicker()
+        picker.setProperty("_color_picker_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = picker.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(picker, "setToolTip", counted_set_tooltip)
+
+        picker._update_accessibility_metadata("EGUI_COLOR_RED")
+        assert hint_calls == 1
+
+        picker._update_accessibility_metadata("EGUI_COLOR_RED")
+        assert hint_calls == 1
+
+        picker.set_value("EGUI_COLOR_BLUE")
+        assert hint_calls == 2
+        picker.deleteLater()
+
+    def test_picker_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.color_picker import EguiColorPicker
+
+        picker = EguiColorPicker()
+        picker.setProperty("_color_picker_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = picker.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(picker, "setAccessibleName", counted_set_accessible_name)
+
+        picker._update_accessibility_metadata("EGUI_COLOR_RED")
+        assert accessible_calls == 1
+
+        picker._update_accessibility_metadata("EGUI_COLOR_RED")
+        assert accessible_calls == 1
+
+        picker.set_value("EGUI_COLOR_BLUE")
+        assert accessible_calls == 2
+        picker.deleteLater()

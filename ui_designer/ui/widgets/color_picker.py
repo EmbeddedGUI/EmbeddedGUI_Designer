@@ -15,10 +15,16 @@ _HEX_RE = re.compile(r'^EGUI_COLOR_HEX\(\s*0x([0-9A-Fa-f]{6})\s*\)$')
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        hint = str(tooltip or "")
+        if str(widget.property("_color_picker_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_color_picker_hint_snapshot", hint)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        name = str(accessible_name or "")
+        if str(widget.property("_color_picker_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_color_picker_accessible_snapshot", name)
 
 
 def egui_color_to_qcolor(value):
