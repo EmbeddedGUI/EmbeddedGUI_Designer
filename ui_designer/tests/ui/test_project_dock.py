@@ -46,6 +46,37 @@ def _build_project():
 
 @_skip_no_qt
 class TestProjectExplorerDock:
+    def test_header_exposes_project_overview_and_metric_metadata(self, qapp):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+
+        assert dock._header_frame.accessibleName() == (
+            "Project explorer header. Project Explorer: 0 pages. Current page: none. Startup page: none. No dirty pages."
+        )
+        assert dock._eyebrow_label.accessibleName() == "Project topology workspace."
+        assert dock._title_label.accessibleName() == "Project explorer title: Explorer."
+        assert dock._subtitle_label.accessibleName() == dock._subtitle_label.text()
+        assert dock._status_label.accessibleName() == "Project explorer status: mode easy_page. Current page: none"
+        assert dock._page_count_metric.accessibleName() == "Project explorer metric: Pages. 0 pages."
+        assert dock._page_count_metric.toolTip() == "Pages: 0 pages."
+        assert dock._page_count_metric._project_dock_metric_label.accessibleName() == "Pages metric label."
+        assert dock._page_count_metric._project_dock_metric_card.accessibleName() == "Pages metric: 0 pages."
+        assert dock._startup_metric.accessibleName() == "Project explorer metric: Startup. none."
+        assert dock._dirty_metric.accessibleName() == "Project explorer metric: Dirty. No dirty pages."
+
+        dock.set_project(_build_project())
+        dock.set_current_page("main_page")
+        dock.set_dirty_pages({"detail_page"})
+
+        assert dock._header_frame.accessibleName() == (
+            "Project explorer header. Project Explorer: 2 pages. Current page: main_page. Startup page: main_page. 1 dirty page."
+        )
+        assert dock._page_count_metric.accessibleName() == "Project explorer metric: Pages. 2 pages."
+        assert dock._startup_metric._project_dock_metric_card.accessibleName() == "Startup metric: main_page."
+        assert dock._dirty_metric._project_dock_metric_card.accessibleName() == "Dirty metric: 1 dirty page."
+        dock.deleteLater()
+
     def test_accessibility_summary_tracks_project_current_and_dirty_pages(self, qapp):
         from ui_designer.ui.project_dock import ProjectExplorerDock
 

@@ -65,8 +65,44 @@ def _create_metric_card(layout, label_text):
     value.setWordWrap(True)
     card_layout.addWidget(value)
 
+    value._project_dock_metric_name = label_text
+    value._project_dock_metric_label = label
+    value._project_dock_metric_card = card
+    _set_widget_metadata(
+        label,
+        tooltip=f"{label_text} metric label.",
+        accessible_name=f"{label_text} metric label.",
+    )
     layout.addWidget(card)
     return value
+
+
+def _update_metric_card_metadata(metric_value):
+    metric_name = getattr(metric_value, "_project_dock_metric_name", "Project")
+    metric_text = (metric_value.text() or "none").strip() or "none"
+    summary = f"{metric_name}: {metric_text}."
+
+    _set_widget_metadata(
+        metric_value,
+        tooltip=summary,
+        accessible_name=f"Project explorer metric: {metric_name}. {metric_text}.",
+    )
+
+    label = getattr(metric_value, "_project_dock_metric_label", None)
+    if label is not None:
+        _set_widget_metadata(
+            label,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric label.",
+        )
+
+    card = getattr(metric_value, "_project_dock_metric_card", None)
+    if card is not None:
+        _set_widget_metadata(
+            card,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric: {metric_text}.",
+        )
 
 
 class ProjectExplorerDock(QDockWidget):
@@ -107,9 +143,9 @@ class ProjectExplorerDock(QDockWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        header = QFrame()
-        header.setObjectName("project_dock_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("project_dock_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(18, 16, 18, 16)
         header_layout.setSpacing(18)
 
@@ -119,10 +155,20 @@ class ProjectExplorerDock(QDockWidget):
 
         self._eyebrow_label = QLabel("Project Topology")
         self._eyebrow_label.setObjectName("project_dock_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Project topology workspace.",
+            accessible_name="Project topology workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Explorer")
         self._title_label.setObjectName("project_dock_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Project explorer title: Explorer.",
+            accessible_name="Project explorer title: Explorer.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -130,6 +176,11 @@ class ProjectExplorerDock(QDockWidget):
         )
         self._subtitle_label.setObjectName("project_dock_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
 
         self._status_label = QLabel("")
@@ -145,7 +196,7 @@ class ProjectExplorerDock(QDockWidget):
         self._startup_metric = _create_metric_card(metrics_layout, "Startup")
         self._dirty_metric = _create_metric_card(metrics_layout, "Dirty")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         # Project settings group
         self._settings_group = QGroupBox("Project")
@@ -229,6 +280,11 @@ class ProjectExplorerDock(QDockWidget):
         self._dirty_metric.setText(dirty_label)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Project explorer header. {summary}",
+            accessible_name=f"Project explorer header. {summary}",
+        )
+        _set_widget_metadata(
             self._settings_group,
             tooltip=settings_summary,
             accessible_name=settings_summary,
@@ -263,21 +319,9 @@ class ProjectExplorerDock(QDockWidget):
             tooltip=f"Project explorer status: mode {mode}. Current page: {current_page}.",
             accessible_name=f"Project explorer status: mode {mode}. Current page: {current_page}",
         )
-        _set_widget_metadata(
-            self._page_count_metric,
-            tooltip=page_label,
-            accessible_name=f"Project explorer metric: Pages. {page_label}",
-        )
-        _set_widget_metadata(
-            self._startup_metric,
-            tooltip=startup_page,
-            accessible_name=f"Project explorer metric: Startup. {startup_page}",
-        )
-        _set_widget_metadata(
-            self._dirty_metric,
-            tooltip=dirty_label,
-            accessible_name=f"Project explorer metric: Dirty. {dirty_label}",
-        )
+        _update_metric_card_metadata(self._page_count_metric)
+        _update_metric_card_metadata(self._startup_metric)
+        _update_metric_card_metadata(self._dirty_metric)
 
     def _apply_page_item_metadata(self, item, page_name):
         item.setText(0, self._page_item_text(page_name))
