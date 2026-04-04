@@ -2611,6 +2611,12 @@ QPushButton#widget_browser_insert_button:pressed {{
     font-size: {t['fs_body_sm']}px;
 }}
 
+#preview_metrics_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #preview_title {{
     color: {t['text']};
     font-size: {t['fs_h2']}px;

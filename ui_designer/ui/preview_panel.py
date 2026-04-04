@@ -1127,15 +1127,17 @@ class PreviewPanel(QWidget):
         self._header_meta_label.setWordWrap(True)
         header_layout.addWidget(self._header_meta_label)
 
-        chip_row = QHBoxLayout()
-        chip_row.setContentsMargins(0, 0, 0, 0)
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("preview_metrics_strip")
+        chip_row = QHBoxLayout(self._metrics_frame)
+        chip_row.setContentsMargins(_SPACE_SM + 2, _SPACE_XS, _SPACE_SM + 2, _SPACE_XS)
         chip_row.setSpacing(_SPACE_XS)
         self._grid_chip = self._make_status_chip("Grid on", tone="success")
         self._pointer_chip = self._make_status_chip("Pointer idle")
         chip_row.addWidget(self._grid_chip)
         chip_row.addWidget(self._pointer_chip)
         chip_row.addStretch(1)
-        header_layout.addLayout(chip_row)
+        header_layout.addWidget(self._metrics_frame)
         self._main_layout.addWidget(self._header_frame)
 
         self._content = QFrame()
@@ -1430,8 +1432,14 @@ class PreviewPanel(QWidget):
         self._header_meta_label.setText(
             f"Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}. Use the overlay surface to inspect selection and positioning feedback."
         )
+        metrics_summary = f"Preview metrics: {mode_text}. Grid {grid_text}. Pointer status: {pointer_text}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(self._header_frame, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Preview engineering workspace surface.",
+            accessible_name="Preview engineering workspace surface.",
+        )
         _set_widget_metadata(
             self.status_label,
             tooltip=status_text,
@@ -1456,6 +1464,11 @@ class PreviewPanel(QWidget):
             self._pointer_chip,
             tooltip=f"Preview pointer summary: {pointer_text}",
             accessible_name=f"Preview pointer summary: {pointer_text}",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=metrics_summary,
+            accessible_name=metrics_summary,
         )
         _set_widget_metadata(
             self.preview_frame,

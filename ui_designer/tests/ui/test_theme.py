@@ -179,10 +179,13 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         css = _build_stylesheet(mode)
 
         header = css.split("#preview_header {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
         content = css.split("#preview_content {", 1)[1].split("}", 1)[0]
         overlay = css.split('QWidget#preview_overlay_surface[solidBackground="true"] {', 1)[1].split("}", 1)[0]
 
         assert t["selection_soft"] in header
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
         assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['canvas_bg']};" in content
         assert f"background-color: {t['canvas_stage']};" in overlay

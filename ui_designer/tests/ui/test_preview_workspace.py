@@ -68,6 +68,13 @@ class TestPreviewPanelFallback:
             "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
             "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
         )
+        assert panel._eyebrow_label.accessibleName() == "Preview engineering workspace surface."
+        assert panel._metrics_frame.accessibleName() == (
+            "Preview metrics: Horizontal split. Grid on. Pointer status: Pointer idle."
+        )
+        assert panel._mode_chip.accessibleName() == "Preview mode: Horizontal split"
+        assert panel._grid_chip.accessibleName() == "Preview grid: on"
+        assert panel._pointer_chip.accessibleName() == "Preview pointer summary: Pointer idle"
         assert panel.status_label.accessibleName() == "Preview status: Preview - waiting for exe..."
         assert panel.preview_frame.accessibleName() == "Preview frame: Preview - waiting for exe.... Mode: Horizontal split."
         assert panel._preview_label.accessibleName() == "Rendered preview surface: Preview - waiting for exe..."
@@ -113,9 +120,13 @@ class TestPreviewPanelFallback:
         panel.set_grid_size(12)
         panel.show_python_preview(page, "fallback")
         panel._update_status_label(12, 18, label)
+        pointer_summary = panel._status_label.accessibleName().replace("Preview pointer status: ", "", 1)
 
         assert panel._zoom_label.text() == "100% (12px)"
         assert panel.status_label.accessibleName() == "Preview status: Preview - Python fallback (fallback)"
+        assert panel._metrics_frame.accessibleName() == f"Preview metrics: Horizontal split. Grid on. Pointer status: {pointer_summary}."
+        assert panel._pointer_chip.text() == "Pointer active"
+        assert panel._pointer_chip.accessibleName() == f"Preview pointer summary: {pointer_summary}"
         assert panel.preview_frame.accessibleName() == (
             "Preview frame: Preview - Python fallback (fallback). Mode: Horizontal split."
         )
