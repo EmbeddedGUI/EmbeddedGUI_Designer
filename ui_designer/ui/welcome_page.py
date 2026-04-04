@@ -173,17 +173,32 @@ class WelcomePage(QWidget):
 
         self._eyebrow_label = QLabel("Workspace Launcher")
         self._eyebrow_label.setObjectName("welcome_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Workspace launch surface.",
+            accessible_name="Workspace launch surface.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("EmbeddedGUI Designer")
         self._title_label.setFont(QFont("Segoe UI", 28, QFont.Light))
         self._title_label.setObjectName("welcome_hero_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Welcome page title: EmbeddedGUI Designer.",
+            accessible_name="Welcome page title: EmbeddedGUI Designer.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel("Visual UI design, compile-backed preview, and SDK workspace control in one shell")
         self._subtitle_label.setFont(QFont("Segoe UI", 12))
         self._subtitle_label.setObjectName("welcome_hero_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
 
         self._hero_hint_label = QLabel(
@@ -351,8 +366,43 @@ class WelcomePage(QWidget):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._welcome_metric_name = label_text
+        value._welcome_metric_label = label
+        value._welcome_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_overview_metric_metadata(self, metric_value):
+        metric_name = getattr(metric_value, "_welcome_metric_name", "Welcome")
+        metric_text = (metric_value.text() or "none").strip() or "none"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"Welcome metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_welcome_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_welcome_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     def _set_sdk_chip_tone(self, tone):
         self._sdk_status_label.setProperty("chipTone", tone)
@@ -471,10 +521,23 @@ class WelcomePage(QWidget):
         sdk_path = self._sdk_path_label.text().strip() or "No SDK root configured"
         summary = f"Welcome page: {sdk_status}. SDK path: {sdk_path}. {recent_text}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
-        _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=self._title_label.text())
+        _set_widget_metadata(
+            self._hero,
+            tooltip=f"Welcome hero. {summary}",
+            accessible_name=f"Welcome hero. {summary}",
+        )
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Welcome page title: EmbeddedGUI Designer.",
+            accessible_name="Welcome page title: EmbeddedGUI Designer.",
+        )
         _set_widget_metadata(self._subtitle_label, tooltip=self._subtitle_label.text(), accessible_name=self._subtitle_label.text())
         _set_widget_metadata(self._hero_hint_label, tooltip=self._hero_hint_label.text(), accessible_name=self._hero_hint_label.text())
-        _set_widget_metadata(self._eyebrow_label, tooltip=self._eyebrow_label.text(), accessible_name=self._eyebrow_label.text())
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Workspace launch surface.",
+            accessible_name="Workspace launch surface.",
+        )
         _set_widget_metadata(self._start_label, tooltip=self._start_label.text(), accessible_name=self._start_label.text())
         _set_widget_metadata(self._start_hint_label, tooltip=self._start_hint_label.text(), accessible_name=self._start_hint_label.text())
         _set_widget_metadata(self._sdk_card, tooltip=sdk_status, accessible_name=f"SDK card: {sdk_status}")
@@ -530,19 +593,7 @@ class WelcomePage(QWidget):
             tooltip=self._recent_hint_label.text(),
             accessible_name=self._recent_hint_label.text(),
         )
-        _set_widget_metadata(
-            self._overview_sdk_value,
-            tooltip=self._overview_sdk_value.text(),
-            accessible_name=f"Welcome metric: SDK binding. {self._overview_sdk_value.text()}",
-        )
-        _set_widget_metadata(
-            self._overview_preview_value,
-            tooltip=self._overview_preview_value.text(),
-            accessible_name=f"Welcome metric: Preview mode. {self._overview_preview_value.text()}",
-        )
-        _set_widget_metadata(
-            self._overview_recent_value,
-            tooltip=self._overview_recent_value.text(),
-            accessible_name=f"Welcome metric: Recent work. {self._overview_recent_value.text()}",
-        )
+        self._update_overview_metric_metadata(self._overview_sdk_value)
+        self._update_overview_metric_metadata(self._overview_preview_value)
+        self._update_overview_metric_metadata(self._overview_recent_value)
         _set_widget_metadata(self._footer_label, tooltip=self._footer_label.text(), accessible_name=self._footer_label.text())

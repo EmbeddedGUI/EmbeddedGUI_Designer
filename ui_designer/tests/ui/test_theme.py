@@ -282,6 +282,27 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in table
 
 
+def test_welcome_page_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        hero = css.split("#welcome_hero {", 1)[1].split("}", 1)[0]
+        card = css.split("#welcome_action_panel,", 1)[1].split("}", 1)[0]
+        sdk = css.split("#welcome_sdk_panel {", 1)[1].split("}", 1)[0]
+        metric_card = css.split("#welcome_metric_card {", 1)[1].split("}", 1)[0]
+
+        assert t["panel_raised"] in hero
+        assert t["accent_soft"] in hero
+        assert f"border-radius: {t['r_2xl']}px;" in hero
+        assert f"background-color: {t['panel_raised']};" in card
+        assert f"border-radius: {t['r_xl']}px;" in card
+        assert f"background-color: {t['panel_alt']};" in sdk
+        assert f"border-radius: {t['r_md']}px;" in sdk
+        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert f"border-radius: {t['r_md']}px;" in metric_card
+
+
 def test_project_dock_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

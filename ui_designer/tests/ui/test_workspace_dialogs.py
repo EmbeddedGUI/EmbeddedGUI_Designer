@@ -730,9 +730,27 @@ class TestWelcomePage:
         assert page.accessibleName() == (
             f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
+        assert page._hero.accessibleName() == (
+            f"Welcome hero. Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
+        )
+        assert page._eyebrow_label.accessibleName() == "Workspace launch surface."
+        assert page._title_label.accessibleName() == "Welcome page title: EmbeddedGUI Designer."
+        assert page._subtitle_label.accessibleName() == page._subtitle_label.text()
         assert page._sdk_status_label.accessibleName() == "SDK status: Ready: using selected SDK root"
         assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
+        assert page._overview_sdk_value.accessibleName() == "Welcome metric: SDK Binding. Ready: using selected SDK root."
+        assert page._overview_sdk_value._welcome_metric_label.accessibleName() == "SDK Binding metric label."
+        assert page._overview_sdk_value._welcome_metric_card.accessibleName() == "SDK Binding metric: Ready: using selected SDK root."
+        assert page._overview_preview_value.accessibleName() == "Welcome metric: Preview Mode. Compile-backed preview ready."
+        assert page._overview_preview_value._welcome_metric_label.accessibleName() == "Preview Mode metric label."
+        assert page._overview_preview_value._welcome_metric_card.accessibleName() == (
+            "Preview Mode metric: Compile-backed preview ready."
+        )
+        assert page._overview_recent_value.accessibleName() == "Welcome metric: Recent Work. No recent projects."
+        assert page._overview_recent_value._welcome_metric_label.accessibleName() == "Recent Work metric label."
+        assert page._overview_recent_value._welcome_metric_card.accessibleName() == "Recent Work metric: No recent projects."
+        assert len(page.findChildren(QFrame, "welcome_metric_card")) == 3
         assert page._new_project_btn.toolTip() == "Create a new EmbeddedGUI Designer project."
         assert page._new_project_btn.accessibleName() == (
             "Create new project action. Create a new EmbeddedGUI Designer project."
@@ -779,10 +797,15 @@ class TestWelcomePage:
         assert widget.accessibleName() == (
             f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."
         )
+        assert page._hero.accessibleName() == (
+            f"Welcome hero. Welcome page: Missing: editing only, Python preview fallback. SDK path: No SDK root configured. 1 recent item."
+        )
         assert widget._status_label.accessibleName() == (
             "Recent project status: Project: ready  |  SDK: ready (selected SDK root)"
         )
         assert page._recent_label.accessibleName() == "Recent Projects: 1 recent item."
+        assert page._overview_recent_value.accessibleName() == "Welcome metric: Recent Work. 1 recent item."
+        assert page._overview_recent_value._welcome_metric_card.accessibleName() == "Recent Work metric: 1 recent item."
         assert "1 recent item." in page.accessibleName()
         page.deleteLater()
 
