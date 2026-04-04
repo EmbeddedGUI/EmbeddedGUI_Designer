@@ -170,6 +170,58 @@ class TestEguiFontSelector:
         )
         selector.deleteLater()
 
+    def test_selector_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
+        selector.setProperty("_font_selector_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = selector.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(selector, "setToolTip", counted_set_tooltip)
+
+        selector._update_accessibility_metadata("&egui_res_font_montserrat_14_4")
+        assert hint_calls == 1
+
+        selector._update_accessibility_metadata("&egui_res_font_montserrat_14_4")
+        assert hint_calls == 1
+
+        selector.set_value("custom_font_expr")
+        assert hint_calls == 2
+        selector.deleteLater()
+
+    def test_selector_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
+        selector.setProperty("_font_selector_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = selector.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(selector, "setAccessibleName", counted_set_accessible_name)
+
+        selector._update_accessibility_metadata("&egui_res_font_montserrat_14_4")
+        assert accessible_calls == 1
+
+        selector._update_accessibility_metadata("&egui_res_font_montserrat_14_4")
+        assert accessible_calls == 1
+
+        selector.set_value("custom_font_expr")
+        assert accessible_calls == 2
+        selector.deleteLater()
+
 
 @_skip_no_qt
 class TestEguiColorPicker:
