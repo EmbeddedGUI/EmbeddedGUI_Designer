@@ -696,7 +696,6 @@ QGroupBox#inspector_collapsible_group::title {{
 #workspace_panel_header,
 #workspace_hint_strip,
 #widget_browser_header,
-#widget_browser_filter_bar,
 #workspace_bottom_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
@@ -782,9 +781,37 @@ QGroupBox#inspector_collapsible_group::title {{
     border-color: {t['border']};
 }}
 
+#widget_browser_header[panelTone="components"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.76 {t['selection_soft']},
+        stop: 1 {t['accent_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#widget_browser_header_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#widget_browser_header_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#widget_browser_metrics_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #widget_browser_filter_bar {{
-    background-color: transparent;
-    border: none;
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
 }}
 
 QPushButton#project_workspace_view_button {{

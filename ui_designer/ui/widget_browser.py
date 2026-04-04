@@ -258,11 +258,16 @@ class WidgetBrowserPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(_SPACE_XS)
 
-        header = QFrame()
-        header.setObjectName("widget_browser_header")
-        header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("widget_browser_header")
+        self._header_frame.setProperty("panelTone", "components")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_XS)
+
+        self._header_eyebrow = QLabel("Component Catalog")
+        self._header_eyebrow.setObjectName("widget_browser_header_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
@@ -274,20 +279,38 @@ class WidgetBrowserPanel(QWidget):
 
         self._insert_target = QLabel("")
         self._insert_target.setObjectName("workspace_status_chip")
+        self._insert_target.setProperty("chipTone", "accent")
         self._insert_target.setWordWrap(True)
         title_row.addStretch()
         title_row.addWidget(self._insert_target, 0, Qt.AlignVCenter)
         header_layout.addLayout(title_row)
 
-        self._subtitle_label = QLabel("Search, filter, and insert components.")
-        self._subtitle_label.setObjectName("workspace_section_subtitle")
+        self._subtitle_label = QLabel("Browse the catalog, narrow by category, and insert components into the current target.")
+        self._subtitle_label.setObjectName("widget_browser_header_meta")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
+
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("widget_browser_metrics_strip")
+        metrics_layout = QHBoxLayout(self._metrics_frame)
+        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
+        metrics_layout.setSpacing(_SPACE_XS)
+
+        self._visible_count_chip = QLabel("0 visible")
+        self._visible_count_chip.setObjectName("workspace_status_chip")
+        self._visible_count_chip.setProperty("chipTone", "accent")
+        metrics_layout.addWidget(self._visible_count_chip)
+
+        self._category_summary_chip = QLabel("All Components")
+        self._category_summary_chip.setObjectName("workspace_status_chip")
+        metrics_layout.addWidget(self._category_summary_chip)
+        metrics_layout.addStretch()
+        header_layout.addWidget(self._metrics_frame)
 
         self._filter_bar = QFrame()
         self._filter_bar.setObjectName("widget_browser_filter_bar")
         filter_layout = QHBoxLayout(self._filter_bar)
-        filter_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        filter_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
         filter_layout.setSpacing(_SPACE_XS)
 
         self._search = SearchLineEdit()
@@ -301,7 +324,7 @@ class WidgetBrowserPanel(QWidget):
         self._category_combo.currentIndexChanged.connect(self._on_category_changed)
         filter_layout.addWidget(self._category_combo, 0)
         header_layout.addWidget(self._filter_bar)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         self._scroll = QScrollArea()
         self._scroll.setObjectName("widget_browser_results")
@@ -373,6 +396,7 @@ class WidgetBrowserPanel(QWidget):
     def set_insert_target_label(self, label):
         self._insert_target_label = (label or "").strip() or "Current page root"
         self._update_insert_target()
+        self._update_accessibility_summary(len(self._cards))
 
     def select_widget_type(self, widget_type):
         widget_type = str(widget_type or "").strip()
@@ -403,11 +427,8 @@ class WidgetBrowserPanel(QWidget):
         _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
         self._insert_target.setText(f"Insert target: {self._insert_target_label}")
 
-    def _update_accessibility_summary(self, visible_count=None):
-        visible = len(self._cards) if visible_count is None else max(int(visible_count or 0), 0)
-        category_label = self._selected_category_label()
-        search_text = str(self._search.text() or "").strip() or "none"
-        selected_text = next(
+    def _selected_display_name(self):
+        return next(
             (
                 str(card._item.get("display_name", card.type_name) or card.type_name)
                 for card in self._cards.values()
@@ -415,6 +436,68 @@ class WidgetBrowserPanel(QWidget):
             ),
             "none",
         )
+
+    def _category_scope_text(self, category_label, search_text):
+        scope = "All Components" if category_label == "All" else category_label
+        if search_text != "none":
+            return f"{scope} + Search"
+        return scope
+
+    def _header_meta_text(self, visible, category_label, search_text, selected_text):
+        visible_text = _count_label(visible, "component", "components")
+        if visible == 0:
+            summary = f"No components match the current filters. Insert target: {self._insert_target_label}."
+        else:
+            summary = f"Showing {visible_text} in {category_label}. Insert target: {self._insert_target_label}."
+        if search_text != "none":
+            summary += f" Search: {search_text}."
+        if selected_text != "none":
+            summary += f" Selected: {selected_text}."
+        return summary
+
+    def _update_header_context(self, visible, category_label, search_text, selected_text):
+        visible_text = _count_label(visible, "component", "components")
+        scope_text = self._category_scope_text(category_label, search_text)
+        header_meta = self._header_meta_text(visible, category_label, search_text, selected_text)
+
+        if self._subtitle_label.text() != header_meta:
+            self._subtitle_label.setText(header_meta)
+        if self._visible_count_chip.text() != f"{visible} visible":
+            self._visible_count_chip.setText(f"{visible} visible")
+        if self._category_summary_chip.text() != scope_text:
+            self._category_summary_chip.setText(scope_text)
+
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=header_meta,
+            accessible_name=f"Components header. {header_meta}",
+        )
+        _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Component catalog workspace surface.",
+            accessible_name="Component catalog workspace surface.",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Visible components: {visible_text}. Scope: {scope_text}.",
+            accessible_name=f"Component browser metrics: {visible_text}. Scope: {scope_text}.",
+        )
+        _set_widget_metadata(
+            self._visible_count_chip,
+            tooltip=f"Visible components: {visible_text}.",
+            accessible_name=f"Visible components: {visible_text}.",
+        )
+        _set_widget_metadata(
+            self._category_summary_chip,
+            tooltip=f"Active component scope: {scope_text}.",
+            accessible_name=f"Component scope: {scope_text}.",
+        )
+
+    def _update_accessibility_summary(self, visible_count=None):
+        visible = len(self._cards) if visible_count is None else max(int(visible_count or 0), 0)
+        category_label = self._selected_category_label()
+        search_text = str(self._search.text() or "").strip() or "none"
+        selected_text = self._selected_display_name()
         visible_text = _count_label(visible, "visible widget", "visible widgets")
         summary = (
             f"Widget Browser: {visible_text}. Category: {category_label}. Search: {search_text}. "
@@ -424,6 +507,7 @@ class WidgetBrowserPanel(QWidget):
         if selected_text != "none":
             results_summary += f" Selected widget: {selected_text}."
 
+        self._update_header_context(visible, category_label, search_text, selected_text)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(self._title_label, tooltip=summary, accessible_name=self._title_label.text())
         _set_widget_metadata(

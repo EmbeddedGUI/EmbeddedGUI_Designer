@@ -163,6 +163,24 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel_raised']};" in mode_strip
 
 
+def test_widget_browser_styles_use_engineering_panel_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#widget_browser_header[panelTone="components"] {', 1)[1].split("}", 1)[0]
+        meta = css.split("#widget_browser_header_meta {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#widget_browser_metrics_strip {", 1)[1].split("}", 1)[0]
+        filter_bar = css.split("#widget_browser_filter_bar {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['text_muted']};" in meta
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"background-color: {t['panel_alt']};" in filter_bar
+        assert f"border-radius: {t['r_md']}px;" in filter_bar
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()

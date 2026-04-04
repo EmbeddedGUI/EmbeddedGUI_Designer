@@ -276,6 +276,61 @@ class TestWidgetBrowserPanel:
         assert panel._scroll.toolTip().startswith("Widget browser results: ")
         panel.deleteLater()
 
+    def test_browser_header_context_tracks_scope_search_and_insert_target(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        isolated_config.widget_browser_favorites = ["button"]
+        panel = WidgetBrowserPanel()
+
+        selected_label = next(
+            (
+                str(card._item.get("display_name", card.type_name) or card.type_name)
+                for card in panel._cards.values()
+                if card.type_name == panel._selected_type
+            ),
+            "none",
+        )
+        visible_label = f"{len(panel._cards)} component" if len(panel._cards) == 1 else f"{len(panel._cards)} components"
+        initial_meta = f"Showing {visible_label} in All. Insert target: Current page root. Selected: {selected_label}."
+
+        assert panel._header_eyebrow.accessibleName() == "Component catalog workspace surface."
+        assert panel._subtitle_label.text() == initial_meta
+        assert panel._header_frame.accessibleName() == f"Components header. {initial_meta}"
+        assert panel._visible_count_chip.text() == f"{len(panel._cards)} visible"
+        assert panel._category_summary_chip.text() == "All Components"
+        assert panel._metrics_frame.accessibleName() == (
+            f"Component browser metrics: {visible_label}. Scope: All Components."
+        )
+
+        panel.set_insert_target_label("root_group / content")
+        _select_category(panel, "favorites")
+        panel._search.setText("button")
+        panel.refresh()
+
+        selected_label = next(
+            (
+                str(card._item.get("display_name", card.type_name) or card.type_name)
+                for card in panel._cards.values()
+                if card.type_name == panel._selected_type
+            ),
+            "none",
+        )
+        scoped_meta = (
+            f"Showing 1 component in Favorites. Insert target: root_group / content. "
+            f"Search: button. Selected: {selected_label}."
+        )
+
+        assert panel._subtitle_label.text() == scoped_meta
+        assert panel._subtitle_label.toolTip() == scoped_meta
+        assert panel._header_frame.accessibleName() == f"Components header. {scoped_meta}"
+        assert panel._insert_target.toolTip() == "Current insert target: root_group / content"
+        assert panel._visible_count_chip.text() == "1 visible"
+        assert panel._category_summary_chip.text() == "Favorites + Search"
+        assert panel._metrics_frame.accessibleName() == (
+            "Component browser metrics: 1 component. Scope: Favorites + Search."
+        )
+        panel.deleteLater()
+
     def test_browser_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
