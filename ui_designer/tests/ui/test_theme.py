@@ -169,12 +169,17 @@ def test_editor_tabs_styles_use_engineering_shell_tokens():
         css = _build_stylesheet(mode)
 
         header = css.split("#editor_tabs_header {", 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#editor_tabs_eyebrow {", 1)[1].split("}", 1)[0]
         mode_strip = css.split("#editor_tabs_mode_strip {", 1)[1].split("}", 1)[0]
+        shell = css.split("#editor_tabs_shell,", 1)[1].split("}", 1)[0]
         editor = css.split("QPlainTextEdit#editor_tabs_xml_editor {", 1)[1].split("}", 1)[0]
 
         assert f"border-radius: {t['r_xl']}px;" in header
         assert t["selection_soft"] in header
+        assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in mode_strip
+        assert f"background-color: {t['panel_raised']};" in shell
+        assert f"border-radius: {t['r_xl']}px;" in shell
         assert f"background-color: {t['canvas_stage']};" in editor
         assert f"border-radius: {t['r_md']}px;" in editor
 

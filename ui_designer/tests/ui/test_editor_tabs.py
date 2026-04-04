@@ -27,6 +27,30 @@ def qapp():
 
 @_skip_no_qt
 class TestEditorTabsAccessibility:
+    def test_header_exposes_editor_workspace_metadata(self, qapp):
+        from ui_designer.ui.editor_tabs import EditorTabs, MODE_CODE
+
+        preview = QWidget()
+        tabs = EditorTabs(preview, show_mode_switch=True)
+
+        assert tabs._header_frame.accessibleName() == (
+            "Editor tabs header. Editor tabs: Design mode. XML source is empty. Mode switch visible."
+        )
+        assert tabs._eyebrow_label.accessibleName() == "Editor engineering workspace surface."
+        assert tabs._meta_label.accessibleName() == (
+            "Switch between visual layout, split inspection, and raw XML editing without losing page context."
+        )
+        assert tabs._mode_chip.accessibleName() == "Current editor mode: Design"
+
+        tabs.set_xml_text("<page />")
+        tabs.set_mode(MODE_CODE)
+
+        assert tabs._header_frame.accessibleName() == (
+            "Editor tabs header. Editor tabs: Code mode. XML source: 8 characters across 1 line. Mode switch visible."
+        )
+        assert tabs._mode_chip.accessibleName() == "Current editor mode: Code"
+        tabs.deleteLater()
+
     def test_mode_switch_toolbar_exposes_accessible_mode_summary(self, qapp):
         from ui_designer.ui.editor_tabs import EditorTabs, MODE_CODE, MODE_DESIGN, MODE_SPLIT
 

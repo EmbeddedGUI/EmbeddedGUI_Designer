@@ -93,6 +93,11 @@ class EditorTabs(QWidget):
 
         self._eyebrow_label = QLabel("Editor Surface")
         self._eyebrow_label.setObjectName("editor_tabs_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Editor engineering workspace surface.",
+            accessible_name="Editor engineering workspace surface.",
+        )
         header_layout.addWidget(self._eyebrow_label)
 
         title_row = QHBoxLayout()
@@ -252,7 +257,11 @@ class EditorTabs(QWidget):
         self._update_mode_chip()
 
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
-        _set_widget_metadata(self._header_frame, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Editor tabs header. {summary}",
+            accessible_name=f"Editor tabs header. {summary}",
+        )
         _set_widget_metadata(
             self._stack,
             tooltip=f"Editor view stack. Current mode: {mode_label}.",
