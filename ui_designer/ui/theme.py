@@ -1177,6 +1177,28 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     font-weight: {t['fw_medium']};
 }}
 
+#workspace_panel_header[panelTone="project"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#project_workspace_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#project_workspace_metrics_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #project_workspace_meta {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;

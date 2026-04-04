@@ -68,9 +68,14 @@ class ProjectWorkspacePanel(QWidget):
 
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
+        self._header.setProperty("panelTone", "project")
         header_layout = QVBoxLayout(self._header)
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_SM)
+
+        self._header_eyebrow = QLabel("Page Navigation")
+        self._header_eyebrow.setObjectName("project_workspace_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
@@ -92,6 +97,24 @@ class ProjectWorkspacePanel(QWidget):
         self._subtitle_label.setObjectName("workspace_section_subtitle")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
+
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("project_workspace_metrics_strip")
+        metrics_layout = QHBoxLayout(self._metrics_frame)
+        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + 2, _SPACE_SM, _SPACE_XS + 2)
+        metrics_layout.setSpacing(_SPACE_XS)
+
+        self._page_count_chip = QLabel("0 pages")
+        self._page_count_chip.setObjectName("workspace_status_chip")
+        self._page_count_chip.setProperty("chipTone", "accent")
+        metrics_layout.addWidget(self._page_count_chip)
+
+        self._dirty_chip = QLabel("Clean")
+        self._dirty_chip.setObjectName("workspace_status_chip")
+        self._dirty_chip.setProperty("chipTone", "success")
+        metrics_layout.addWidget(self._dirty_chip)
+        metrics_layout.addStretch(1)
+        header_layout.addWidget(self._metrics_frame)
 
         self._summary_label = QLabel("No pages loaded. Choose list or thumbnails to navigate.")
         self._summary_label.setObjectName("project_workspace_summary")
@@ -169,6 +192,11 @@ class ProjectWorkspacePanel(QWidget):
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(self._header, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Project navigation workspace surface.",
+            accessible_name="Project navigation workspace surface.",
+        )
+        _set_widget_metadata(
             self._title_label,
             tooltip=summary,
             accessible_name=f"Project Workspace. {view_label}.",
@@ -177,6 +205,21 @@ class ProjectWorkspacePanel(QWidget):
             self._subtitle_label,
             tooltip=self._subtitle_label.text(),
             accessible_name=self._subtitle_label.text(),
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Project workspace metrics: {page_label}. {dirty_text}.",
+            accessible_name=f"Project workspace metrics: {page_label}. {dirty_text}.",
+        )
+        _set_widget_metadata(
+            self._page_count_chip,
+            tooltip=f"Page count: {page_label}.",
+            accessible_name=f"Page count: {page_label}.",
+        )
+        _set_widget_metadata(
+            self._dirty_chip,
+            tooltip=f"Dirty state: {dirty_text}.",
+            accessible_name=f"Dirty state: {dirty_text}.",
         )
 
     def _update_view_button_metadata(self, current_view):
@@ -256,6 +299,7 @@ class ProjectWorkspacePanel(QWidget):
         page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
         active_label = f"Active: {active}" if active != "None" else "Active: none"
         dirty_label = "Clean" if dirty == 0 else (f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages")
+        dirty_accessible = "No dirty pages" if dirty == 0 else dirty_label
         self._summary_label.setText(f"{page_label}. {active_label}. {dirty_label}.")
         _set_widget_metadata(
             self._summary_label,
@@ -268,6 +312,13 @@ class ProjectWorkspacePanel(QWidget):
             self._meta_label,
             tooltip=startup_label,
             accessible_name=f"Pages startup summary: {startup_label}",
+        )
+        self._set_chip(self._page_count_chip, page_label, "accent", accessible_name=f"Page count: {page_label}.")
+        self._set_chip(
+            self._dirty_chip,
+            dirty_label,
+            "success" if dirty == 0 else "warning",
+            accessible_name=f"Dirty state: {dirty_accessible}.",
         )
         self._workspace_snapshot_initialized = True
         self._update_panel_metadata()

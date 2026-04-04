@@ -253,6 +253,22 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_xl']}px;" in detail
 
 
+def test_project_workspace_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#workspace_panel_header[panelTone="project"] {', 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#project_workspace_eyebrow {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#project_workspace_metrics_strip {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['accent_hover']};" in eyebrow
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()
