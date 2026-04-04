@@ -131,6 +131,68 @@ class TestAppSelectorDialog:
         )
         dialog.deleteLater()
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        isolated_config.sdk_root = ""
+        isolated_config.egui_root = ""
+        dialog = AppSelectorDialog(egui_root="")
+        dialog._header_frame.setProperty("_app_selector_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = dialog._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setToolTip", counted_set_tooltip)
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._search_edit.blockSignals(True)
+        dialog._search_edit.setText("show")
+        dialog._search_edit.blockSignals(False)
+        dialog._update_accessibility_summary()
+        assert hint_calls == 2
+        dialog.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        isolated_config.sdk_root = ""
+        isolated_config.egui_root = ""
+        dialog = AppSelectorDialog(egui_root="")
+        dialog._header_frame.setProperty("_app_selector_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = dialog._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._search_edit.blockSignals(True)
+        dialog._search_edit.setText("show")
+        dialog._search_edit.blockSignals(False)
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 2
+        dialog.deleteLater()
+
     def test_filters_legacy_examples_by_default(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.app_selector import AppSelectorDialog
 
