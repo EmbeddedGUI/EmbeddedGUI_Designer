@@ -8894,6 +8894,63 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_workspace_command_surface_metadata_tracks_context_and_mode(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.editor_tabs import MODE_CODE
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CommandSurfaceDemo"
+        project = _create_project(project_dir, "CommandSurfaceDemo", sdk_root)
+
+        window = MainWindow("")
+
+        default_summary = (
+            "Open a project to activate insert, save, preview, and editor mode controls "
+            "from a unified workspace rail."
+        )
+        assert window._toolbar_header.accessibleName() == (
+            "Workspace command header. Engineering summary, current context, and command posture."
+        )
+        assert window._toolbar_eyebrow_label.accessibleName() == "Engineering workspace command surface."
+        assert window._toolbar_title_label.accessibleName() == (
+            "Design command center for insert, save, preview, and mode controls."
+        )
+        assert window._toolbar_meta_label.text() == default_summary
+        assert window._toolbar_meta_label.toolTip() == default_summary
+        assert window._toolbar_meta_label.accessibleName() == default_summary
+        assert window._workspace_context_eyebrow.accessibleName() == "Current workspace context card."
+        assert window._workspace_context_card.toolTip() == "Open or create a project to start editing."
+        assert window._workspace_context_card.accessibleName() == "Workspace context card: No project open."
+
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        design_summary = (
+            "Design mode active. Project panel visible. Current page: main_page. "
+            "Use the command rail to insert components, save edits, build, and inspect runtime health."
+        )
+        assert window._toolbar_meta_label.text() == design_summary
+        assert window._toolbar_meta_label.statusTip() == design_summary
+        assert window._workspace_context_card.toolTip() == (
+            "Current workspace context: CommandSurfaceDemo. Current page: main_page. Project contains 1 page."
+        )
+        assert window._workspace_context_card.accessibleName() == "Workspace context card: CommandSurfaceDemo / main_page."
+
+        window._select_left_panel("widgets")
+        window.editor_tabs.set_mode(MODE_CODE)
+
+        code_summary = (
+            "Code mode active. Components panel visible. Current page: main_page. "
+            "Use the command rail to insert components, save edits, build, and inspect runtime health."
+        )
+        assert window._toolbar_meta_label.text() == code_summary
+        assert window._toolbar_meta_label.toolTip() == code_summary
+        assert window._toolbar_meta_label.accessibleName() == code_summary
+        assert window._workspace_context_card.accessibleName() == "Workspace context card: CommandSurfaceDemo / main_page."
+        _close_window(window)
+
     def test_workspace_layout_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
