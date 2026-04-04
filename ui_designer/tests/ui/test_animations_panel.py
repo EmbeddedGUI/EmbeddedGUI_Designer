@@ -164,6 +164,60 @@ class TestAnimationsPanel:
         assert panel._table.rowCount() == 1
         assert len(captured[-1]) == 1
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        widget = _make_widget()
+        panel = AnimationsPanel()
+        panel._header_frame.setProperty("_animations_panel_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel._update_summary()
+        assert hint_calls == 1
+
+        panel._update_summary()
+        assert hint_calls == 1
+
+        panel.set_selection([widget], primary=widget)
+        assert hint_calls == 2
+        panel.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.animations_panel import AnimationsPanel
+
+        widget = _make_widget()
+        panel = AnimationsPanel()
+        panel._header_frame.setProperty("_animations_panel_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel._update_summary()
+        assert accessible_calls == 1
+
+        panel._update_summary()
+        assert accessible_calls == 1
+
+        panel.set_selection([widget], primary=widget)
+        assert accessible_calls == 2
+        panel.deleteLater()
+
     def test_panel_type_change_rebuilds_detail_params(self, qapp):
         from ui_designer.ui.animations_panel import AnimationsPanel
 

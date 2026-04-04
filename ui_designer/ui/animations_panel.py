@@ -45,10 +45,16 @@ _ICON_SM = int(_TOKENS.get("icon_sm", 16))
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        hint = str(tooltip or "")
+        if str(widget.property("_animations_panel_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_animations_panel_hint_snapshot", hint)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        name = str(accessible_name or "")
+        if str(widget.property("_animations_panel_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_animations_panel_accessible_snapshot", name)
 
 
 def _set_item_metadata(item, tooltip):
