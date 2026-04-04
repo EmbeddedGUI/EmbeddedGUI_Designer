@@ -57,6 +57,10 @@ class TestPageTimersPanel:
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
         assert panel._eyebrow_label.text() == "Scheduled Callbacks"
         assert panel._eyebrow_label.accessibleName() == "Page timers engineering surface."
+        assert panel._header_frame.accessibleName() == (
+            "Page timers header. Page Timers: 1 timer on main_page. Selected timer: none."
+        )
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._count_chip.text() == "1 timer"
         assert panel._count_chip.accessibleName() == "Timer count: 1 timer."
         assert panel._selection_chip.text() == "No selection"
@@ -93,6 +97,8 @@ class TestPageTimersPanel:
 
         assert panel.accessibleName() == "Page Timers: no active page"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._header_frame.accessibleName() == "Page timers header. Page Timers: no active page"
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._table.toolTip() == "Page Timers: no active page"
         assert panel._table.accessibleName() == "Page timers table: Page Timers: no active page"
         assert panel._add_button.toolTip() == "Open a page to manage timers."
@@ -121,6 +127,9 @@ class TestPageTimersPanel:
 
         assert panel._table.rowCount() == 1
         assert panel.accessibleName() == "Page Timers: 1 timer on main_page. Selected timer: timer."
+        assert panel._header_frame.accessibleName() == (
+            "Page timers header. Page Timers: 1 timer on main_page. Selected timer: timer."
+        )
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: timer."
         assert panel._remove_button.toolTip() == "Remove the selected page timer: timer."
         assert panel._remove_button.accessibleName() == "Remove page timer: timer"
@@ -141,6 +150,9 @@ class TestPageTimersPanel:
 
         assert panel._table.rowCount() == 0
         assert panel.accessibleName() == "Page Timers: 0 timers on main_page. Selected timer: none."
+        assert panel._header_frame.accessibleName() == (
+            "Page timers header. Page Timers: 0 timers on main_page. Selected timer: none."
+        )
         assert captured[-1] == []
 
     def test_panel_open_user_code_emits_selected_timer_callback(self, qapp):

@@ -210,7 +210,17 @@ class PageTimersPanel(QWidget):
         selection_summary = self._selection_accessibility_summary()
         panel_summary = summary_text if not selection_summary else f"{summary_text}. {selection_summary}"
         _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Page timers header. {panel_summary}",
+            accessible_name=f"Page timers header. {panel_summary}",
+        )
         _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
+        _set_widget_metadata(
+            self._header_meta_label,
+            tooltip=self._header_meta_label.text(),
+            accessible_name=self._header_meta_label.text(),
+        )
         _set_widget_metadata(
             self._hint_label,
             tooltip=self._hint_label.text(),
