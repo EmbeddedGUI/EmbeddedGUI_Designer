@@ -58,6 +58,10 @@ class TestPageFieldsPanel:
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
         assert panel._eyebrow_label.text() == "Generated Members"
         assert panel._eyebrow_label.accessibleName() == "Page fields engineering surface."
+        assert panel._header_frame.accessibleName() == (
+            "Page fields header. Page Fields: 2 fields on main_page. Selected field: none."
+        )
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._count_chip.text() == "2 fields"
         assert panel._count_chip.accessibleName() == "Field count: 2 fields."
         assert panel._selection_chip.text() == "No selection"
@@ -101,6 +105,8 @@ class TestPageFieldsPanel:
 
         assert panel.accessibleName() == "Page Fields: no active page"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._header_frame.accessibleName() == "Page fields header. Page Fields: no active page"
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._table.toolTip() == "Page Fields: no active page"
         assert panel._table.accessibleName() == "Page fields table: Page Fields: no active page"
         assert panel._add_button.toolTip() == "Open a page to manage fields."
@@ -132,6 +138,9 @@ class TestPageFieldsPanel:
 
         assert panel._table.rowCount() == 1
         assert panel.accessibleName() == "Page Fields: 1 field on main_page. Selected field: field."
+        assert panel._header_frame.accessibleName() == (
+            "Page fields header. Page Fields: 1 field on main_page. Selected field: field."
+        )
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 1 field on main_page. Selected field: field."
         assert panel._remove_button.toolTip() == "Remove the selected page field: field."
         assert panel._remove_button.accessibleName() == "Remove page field: field"
@@ -148,6 +157,9 @@ class TestPageFieldsPanel:
 
         assert panel._table.rowCount() == 0
         assert panel.accessibleName() == "Page Fields: 0 fields on main_page. Selected field: none."
+        assert panel._header_frame.accessibleName() == (
+            "Page fields header. Page Fields: 0 fields on main_page. Selected field: none."
+        )
         assert captured[-1] == []
 
     def test_panel_rejects_conflicting_field_name(self, qapp):
