@@ -22,6 +22,20 @@ def _menu_labels(menu):
     return [action.text() for action in menu.actions() if not action.isSeparator()]
 
 
+def _header_frame_summary(panel):
+    parts = []
+    for value in (
+        panel._header_title.text(),
+        panel._header_subtitle.text(),
+        panel._header_metrics_frame.accessibleName(),
+        panel._workspace_summary_label.text(),
+    ):
+        text = str(value or "").strip()
+        if text:
+            parts.append(text.rstrip("."))
+    return f"Status center header. {'. '.join(parts)}."
+
+
 @pytest.fixture
 def qapp():
     app = QApplication.instance()
@@ -504,6 +518,8 @@ class TestStatusCenterPanel:
         assert panel._header_metrics_frame.accessibleName() == (
             "Status center header metrics: Focus: Workspace. 0 recent actions."
         )
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
+        assert panel._header_frame.toolTip() == panel._header_frame.accessibleName()
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
         assert panel._runtime_title.text() == "Runtime"
@@ -671,6 +687,7 @@ class TestStatusCenterPanel:
         assert panel._header_subtitle.text() == "Action needed now. Focus on Fix First Error (1)."
         assert panel._header_focus_chip.text() == "Focus: Diagnostics"
         assert panel._header_focus_chip.property("chipTone") == "danger"
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_label.isHidden() is True
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
@@ -690,6 +707,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_warnings=2)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Review First Warning (2)."
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Review First Warning (2)"
         assert panel._suggested_action_button.property("iconKey") == "diagnostics"
@@ -701,6 +719,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, runtime_error="Bridge lost")
         assert panel._header_title.text() == "Status Center (Runtime)"
         assert panel._header_subtitle.text() == "Action needed now. Focus on Inspect Debug Output."
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Runtime):"
         assert panel._suggested_action_button.text() == "Inspect Debug Output"
         assert panel._suggested_action_button.accessibleName() == (
@@ -717,6 +736,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=False)
         assert panel._header_title.text() == "Status Center (Build)"
         assert panel._header_subtitle.text() == "Workspace checks are pending. Focus on Inspect Compile Output."
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Build):"
         assert panel._suggested_action_button.text() == "Inspect Compile Output"
         assert panel._debug_btn.text() == "Debug Output (Build)"
@@ -731,6 +751,7 @@ class TestStatusCenterPanel:
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Review History (2)."
         assert panel._header_focus_chip.text() == "Focus: History"
         assert panel._header_focus_chip.property("chipTone") == "warning"
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (History):"
         assert panel._suggested_action_button.text() == "Review History (2)"
         assert panel._history_btn.text() == "History (2 dirty)"
@@ -743,6 +764,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, selection_count=3)
         assert panel._header_title.text() == "Status Center (Selection)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Inspect Selection (3)."
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Selection):"
         assert panel._suggested_action_button.text() == "Inspect Selection (3)"
         assert panel._structure_btn.text() == "Structure (3 selected)"
@@ -755,6 +777,7 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_infos=2)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Inspect Info (2)."
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_button.text() == "Inspect Info (2)"
         assert panel._diag_btn.text() == "Diagnostics (2 active)"
@@ -770,6 +793,7 @@ class TestStatusCenterPanel:
             panel._header_subtitle.text()
             == "Open Diagnostics - use the metrics below when you need details."
         )
+        assert panel._header_frame.accessibleName() == _header_frame_summary(panel)
         assert panel._workspace_chip.isHidden() is True
         assert panel._workspace_summary_label.isHidden() is True
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"

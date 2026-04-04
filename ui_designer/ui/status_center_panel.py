@@ -1027,6 +1027,21 @@ class StatusCenterPanel(QWidget):
             f"{self._recent_actions_chip_text()}."
         )
 
+    def _header_frame_accessible_name(self, workspace_summary):
+        segments = []
+        for value in (
+            self._header_title.text(),
+            self._header_subtitle.text(),
+            self._header_metrics_frame.accessibleName(),
+            workspace_summary,
+        ):
+            text = str(value or "").strip()
+            if text:
+                segments.append(text.rstrip("."))
+        if not segments:
+            return "Status center header."
+        return f"Status center header. {'. '.join(segments)}."
+
     def _header_focus_chip_tone_for_rank(self, focus_rank):
         rank = max(int(focus_rank or 0), 0)
         if rank >= 4:
@@ -1634,6 +1649,9 @@ class StatusCenterPanel(QWidget):
             self._workspace_summary_label,
             self._summary_accessible_name("Workspace summary", workspace_summary)
         )
+        header_summary = self._header_frame_accessible_name(workspace_summary)
+        self._set_hint(self._header_frame, header_summary)
+        self._set_accessible_name(self._header_frame, header_summary)
         is_workspace_fully_ready = (
             sdk_ready
             and can_compile
