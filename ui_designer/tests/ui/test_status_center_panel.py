@@ -1656,6 +1656,60 @@ class TestStatusCenterPanel:
 
         panel.deleteLater()
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._header_frame.setProperty("_status_center_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel.set_status(sdk_ready=True, can_compile=False, dirty_pages=-1, selection_count=-2)
+        assert hint_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=False)
+        assert hint_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=True)
+        assert hint_calls == 2
+
+        panel.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+        panel._header_frame.setProperty("_status_center_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel.set_status(sdk_ready=True, can_compile=False, dirty_pages=-1, selection_count=-2)
+        assert accessible_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=False)
+        assert accessible_calls == 1
+
+        panel.set_status(sdk_ready=True, can_compile=True)
+        assert accessible_calls == 2
+
+        panel.deleteLater()
+
     def test_health_summary_text_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 
