@@ -525,6 +525,10 @@ class PropertyPanel(QWidget):
 
         layout.addWidget(caption)
         layout.addWidget(metric_value)
+        summary = f"{label}: {value}"
+        _set_widget_metadata(caption, tooltip=summary, accessible_name=f"{label} metric label")
+        _set_widget_metadata(metric_value, tooltip=summary, accessible_name=f"{label} metric value: {value}")
+        _set_widget_metadata(card, tooltip=summary, accessible_name=f"{label} metric: {value}")
         return card
 
     def _build_metric_grid(self, metrics):
@@ -773,6 +777,31 @@ class PropertyPanel(QWidget):
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)
+        _set_widget_metadata(
+            eyebrow,
+            tooltip="Property inspection surface.",
+            accessible_name="Property inspection surface.",
+        )
+        _set_widget_metadata(
+            title,
+            tooltip=f"Selected widget: {widget.name}.",
+            accessible_name=f"Selected widget: {widget.name}.",
+        )
+        _set_widget_metadata(
+            subtitle,
+            tooltip=f"Widget type: {subtitle.text()}.",
+            accessible_name=f"Widget type: {subtitle.text()}.",
+        )
+        _set_widget_metadata(
+            header_meta,
+            tooltip=header_meta.text(),
+            accessible_name=header_meta.text(),
+        )
+        _set_widget_metadata(
+            header,
+            tooltip=f"Property header: {widget.name}. {subtitle.text()}.",
+            accessible_name=f"Property header: {widget.name}. {subtitle.text()}.",
+        )
 
         layout_parent = self._layout_parent_name(widget)
         bound_assets = self._resource_binding_count(widget)
@@ -789,13 +818,28 @@ class PropertyPanel(QWidget):
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(6)
         self._header_size_chip = self._make_status_chip(f"{widget.width}×{widget.height}", "accent")
+        _set_widget_metadata(
+            self._header_size_chip,
+            tooltip=f"Widget size: {widget.width} by {widget.height}.",
+            accessible_name=f"Widget size: {widget.width} by {widget.height}.",
+        )
         chips_row.addWidget(self._header_size_chip)
         if getattr(widget, "designer_locked", False):
-            chips_row.addWidget(self._make_status_chip("Locked", "warning"))
+            locked_chip = self._make_status_chip("Locked", "warning")
+            _set_widget_metadata(locked_chip, tooltip="Designer state: Locked.", accessible_name="Designer state: Locked.")
+            chips_row.addWidget(locked_chip)
         if getattr(widget, "designer_hidden", False):
-            chips_row.addWidget(self._make_status_chip("Hidden", "danger"))
+            hidden_chip = self._make_status_chip("Hidden", "danger")
+            _set_widget_metadata(hidden_chip, tooltip="Designer state: Hidden.", accessible_name="Designer state: Hidden.")
+            chips_row.addWidget(hidden_chip)
         if layout_parent:
-            chips_row.addWidget(self._make_status_chip(f"Managed by {layout_parent}", "warning"))
+            layout_chip = self._make_status_chip(f"Managed by {layout_parent}", "warning")
+            _set_widget_metadata(
+                layout_chip,
+                tooltip=f"Placement state: Managed by {layout_parent}.",
+                accessible_name=f"Placement state: Managed by {layout_parent}.",
+            )
+            chips_row.addWidget(layout_chip)
         chips_row.addStretch()
         layout.addLayout(chips_row)
 
@@ -832,6 +876,39 @@ class PropertyPanel(QWidget):
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)
+        _set_widget_metadata(
+            eyebrow,
+            tooltip="Batch property inspection surface.",
+            accessible_name="Batch property inspection surface.",
+        )
+        _set_widget_metadata(
+            title,
+            tooltip=f"Batch selection: {title.text()}.",
+            accessible_name=f"Batch selection: {title.text()}.",
+        )
+        _set_widget_metadata(
+            subtitle,
+            tooltip=subtitle.text(),
+            accessible_name=subtitle.text(),
+        )
+        _set_widget_metadata(
+            header_meta,
+            tooltip=header_meta.text(),
+            accessible_name=header_meta.text(),
+        )
+        _set_widget_metadata(
+            header,
+            tooltip=(
+                f"Property batch header: {len(self._selection)} widgets selected. "
+                f"Primary: {self._primary_widget.name if self._primary_widget else 'none'}. "
+                f"{_count_label(len(widget_types), 'type')}."
+            ),
+            accessible_name=(
+                f"Property batch header: {len(self._selection)} widgets selected. "
+                f"Primary: {self._primary_widget.name if self._primary_widget else 'none'}. "
+                f"{_count_label(len(widget_types), 'type')}."
+            ),
+        )
 
         mixed_total = self._selection_mixed_field_count(callback_entries, common_props)
         metrics = [
@@ -845,9 +922,27 @@ class PropertyPanel(QWidget):
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(6)
-        chips_row.addWidget(self._make_status_chip(_count_label(len(widget_types), "type"), "accent"))
-        chips_row.addWidget(self._make_status_chip(_count_label(mixed_total, "mixed field"), "warning"))
-        chips_row.addWidget(self._make_status_chip("Batch edit", "success"))
+        types_chip = self._make_status_chip(_count_label(len(widget_types), "type"), "accent")
+        _set_widget_metadata(
+            types_chip,
+            tooltip=f"Batch types: {_count_label(len(widget_types), 'type')}.",
+            accessible_name=f"Batch types: {_count_label(len(widget_types), 'type')}.",
+        )
+        chips_row.addWidget(types_chip)
+        mixed_chip = self._make_status_chip(_count_label(mixed_total, "mixed field"), "warning")
+        _set_widget_metadata(
+            mixed_chip,
+            tooltip=f"Batch mixed state: {_count_label(mixed_total, 'mixed field')}.",
+            accessible_name=f"Batch mixed state: {_count_label(mixed_total, 'mixed field')}.",
+        )
+        chips_row.addWidget(mixed_chip)
+        batch_chip = self._make_status_chip("Batch edit", "success")
+        _set_widget_metadata(
+            batch_chip,
+            tooltip="Batch edit state: Batch edit.",
+            accessible_name="Batch edit state: Batch edit.",
+        )
+        chips_row.addWidget(batch_chip)
         chips_row.addStretch()
         layout.addLayout(chips_row)
 
@@ -875,12 +970,25 @@ class PropertyPanel(QWidget):
         eyebrow = QLabel("Interaction Notes")
         eyebrow.setObjectName("property_panel_header_eyebrow")
         layout.addWidget(eyebrow)
+        _set_widget_metadata(
+            eyebrow,
+            tooltip="Property interaction notes surface.",
+            accessible_name="Property interaction notes surface.",
+        )
 
         for message in messages:
             label = QLabel(message)
             label.setObjectName("workspace_section_subtitle")
             label.setWordWrap(True)
+            _set_widget_metadata(label, tooltip=message, accessible_name=message)
             layout.addWidget(label)
+
+        notes_summary = " ".join(message.strip() for message in messages if str(message).strip())
+        _set_widget_metadata(
+            frame,
+            tooltip=f"Property interaction notes: {notes_summary}",
+            accessible_name=f"Property interaction notes: {notes_summary}",
+        )
 
         return frame
 

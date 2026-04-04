@@ -89,6 +89,39 @@ class TestPropertyPanelFileFlow:
         assert panel.toolTip() == "Property panel: no widget selected. Search: font."
         panel.deleteLater()
 
+    def test_single_selection_header_exposes_engineering_metadata(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        header = panel._layout.itemAt(0).widget()
+        eyebrow = header.findChild(QLabel, "property_panel_header_eyebrow")
+        meta = header.findChild(QLabel, "property_panel_header_meta")
+        title = next(
+            label
+            for label in header.findChildren(QLabel)
+            if label.objectName() == "workspace_section_title" and label.text() == "title"
+        )
+        subtitle = next(
+            label
+            for label in header.findChildren(QLabel)
+            if label.objectName() == "workspace_section_subtitle"
+        )
+        chips = [label for label in header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
+
+        assert header.objectName() == "workspace_panel_header"
+        assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
+        assert eyebrow.accessibleName() == "Property inspection surface."
+        assert title.accessibleName() == "Selected widget: title."
+        assert subtitle.accessibleName() == f"Widget type: {subtitle.text()}."
+        assert meta.accessibleName() == meta.text()
+        assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
@@ -488,6 +521,48 @@ class TestPropertyPanelFileFlow:
         assert second.designer_locked is True
         assert first.designer_hidden is True
         assert second.designer_hidden is True
+        panel.deleteLater()
+
+    def test_multi_selection_header_and_feedback_strip_expose_metadata(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+        first.designer_locked = True
+        second.designer_hidden = True
+
+        panel = PropertyPanel()
+        panel.set_selection([first, second], primary=second)
+
+        summary_header = panel._layout.itemAt(0).widget()
+        eyebrow = summary_header.findChild(QLabel, "property_panel_header_eyebrow")
+        title = next(
+            label
+            for label in summary_header.findChildren(QLabel)
+            if label.objectName() == "workspace_section_title"
+        )
+        subtitle = next(
+            label
+            for label in summary_header.findChildren(QLabel)
+            if label.objectName() == "workspace_section_subtitle"
+        )
+        chips = [label for label in summary_header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
+        hint_strip = _find_hint_strip(panel)
+        hint_eyebrow = next(label for label in hint_strip.findChildren(QLabel) if label.text() == "Interaction Notes")
+
+        assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
+        assert eyebrow.accessibleName() == "Batch property inspection surface."
+        assert title.accessibleName() == "Batch selection: Selected 2 widgets."
+        assert subtitle.accessibleName() == subtitle.text()
+        assert any(chip.accessibleName() == "Batch types: 2 types." for chip in chips)
+        assert any(chip.accessibleName().startswith("Batch mixed state: ") for chip in chips)
+        assert any(chip.accessibleName() == "Batch edit state: Batch edit." for chip in chips)
+        assert hint_strip.accessibleName() == (
+            "Property interaction notes: Locked: 1 selected widget cannot be moved or resized from the canvas. "
+            "Hidden: 1 selected widget is skipped by canvas hit testing."
+        )
+        assert hint_eyebrow.accessibleName() == "Property interaction notes surface."
         panel.deleteLater()
 
     def test_multi_selection_common_geometry_and_text_update_all_widgets(self, qapp):

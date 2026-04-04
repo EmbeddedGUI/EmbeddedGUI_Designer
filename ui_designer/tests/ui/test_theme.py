@@ -214,6 +214,22 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel_raised']};" in mode_strip
 
 
+def test_property_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#workspace_panel_header[panelTone="property"] {', 1)[1].split("}", 1)[0]
+        hint_strip = css.split('#workspace_hint_strip[panelTone="property"] {', 1)[1].split("}", 1)[0]
+        metric_card = css.split("QFrame#property_panel_metric_card {", 1)[1].split("}", 1)[0]
+
+        assert t["accent_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"background-color: {t['panel_soft']};" in hint_strip
+        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert f"border-radius: {t['r_md']}px;" in metric_card
+
+
 def test_widget_browser_styles_use_engineering_panel_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
