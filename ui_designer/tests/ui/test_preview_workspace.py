@@ -69,6 +69,8 @@ class TestPreviewPanelFallback:
             "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
         )
         assert panel._eyebrow_label.accessibleName() == "Preview engineering workspace surface."
+        assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._metrics_frame.accessibleName() == (
             "Preview metrics: Horizontal split. Grid on. Pointer status: Pointer idle."
         )
@@ -124,6 +126,8 @@ class TestPreviewPanelFallback:
 
         assert panel._zoom_label.text() == "100% (12px)"
         assert panel.status_label.accessibleName() == "Preview status: Preview - Python fallback (fallback)"
+        assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._metrics_frame.accessibleName() == f"Preview metrics: Horizontal split. Grid on. Pointer status: {pointer_summary}."
         assert panel._pointer_chip.text() == "Pointer active"
         assert panel._pointer_chip.accessibleName() == f"Preview pointer summary: {pointer_summary}"

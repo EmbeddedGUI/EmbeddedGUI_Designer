@@ -1434,7 +1434,11 @@ class PreviewPanel(QWidget):
         )
         metrics_summary = f"Preview metrics: {mode_text}. Grid {grid_text}. Pointer status: {pointer_text}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
-        _set_widget_metadata(self._header_frame, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Preview header. {summary}",
+            accessible_name=f"Preview header. {summary}",
+        )
         _set_widget_metadata(
             self._eyebrow_label,
             tooltip="Preview engineering workspace surface.",
