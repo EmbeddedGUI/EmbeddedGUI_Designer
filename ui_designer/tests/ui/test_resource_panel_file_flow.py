@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QTimer, Qt
-    from PyQt5.QtWidgets import QApplication, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QMessageBox
 
     _has_pyqt5 = True
 except ImportError:
@@ -28,6 +28,48 @@ def qapp():
 
 @_skip_no_qt
 class TestResourcePanelFileFlow:
+    def test_header_exposes_workspace_and_metric_metadata(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "present.png").write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("present.png")
+        catalog.add_image("missing.png")
+        catalog.add_font("demo.ttf")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        header = panel.findChild(QFrame, "resource_panel_header")
+        eyebrow = header.findChild(QLabel, "resource_panel_eyebrow")
+        title = header.findChild(QLabel, "resource_panel_title")
+        subtitle = header.findChild(QLabel, "resource_panel_subtitle")
+        status = header.findChild(QLabel, "resource_panel_status")
+
+        assert panel.accessibleName() == (
+            "Resource panel: Workspace configured. Active tab: Images. "
+            "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
+        )
+        assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
+        assert eyebrow.accessibleName() == "Resource pipeline workspace."
+        assert title.accessibleName() == "Resource panel title: Project Resources."
+        assert subtitle.accessibleName() == subtitle.text()
+        assert status.accessibleName() == "Resource workspace state: configured. Active tab: Images"
+        assert panel._catalog_metric_value.accessibleName() == "Resource panel metric: Catalog. 3 assets."
+        assert panel._catalog_metric_value.toolTip() == "Catalog: 3 assets."
+        assert panel._catalog_metric_value._resource_panel_metric_label.accessibleName() == "Catalog metric label."
+        assert panel._catalog_metric_value._resource_panel_metric_card.accessibleName() == "Catalog metric: 3 assets."
+        assert panel._missing_metric_value.accessibleName() == "Resource panel metric: Missing. 2 missing files."
+        assert panel._selection_metric_value.accessibleName() == "Resource panel metric: Selection. Images: none."
+        assert len(header.findChildren(QFrame, "resource_panel_metric_card")) == 3
+        panel.deleteLater()
+
     def test_import_image_warns_before_opening_dialog_when_resource_dir_missing(self, qapp, monkeypatch):
         from ui_designer.ui.resource_panel import ResourcePanel
 

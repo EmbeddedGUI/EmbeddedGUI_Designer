@@ -136,8 +136,44 @@ def _create_resource_panel_metric_card(layout, label_text):
     value.setWordWrap(True)
     card_layout.addWidget(value)
 
+    value._resource_panel_metric_name = label_text
+    value._resource_panel_metric_label = label
+    value._resource_panel_metric_card = card
+    _set_widget_metadata(
+        label,
+        tooltip=f"{label_text} metric label.",
+        accessible_name=f"{label_text} metric label.",
+    )
     layout.addWidget(card)
     return value
+
+
+def _update_resource_panel_metric_metadata(metric_value):
+    metric_name = getattr(metric_value, "_resource_panel_metric_name", "Resource")
+    metric_text = (metric_value.text() or "none").strip() or "none"
+    summary = f"{metric_name}: {metric_text}."
+
+    _set_widget_metadata(
+        metric_value,
+        tooltip=summary,
+        accessible_name=f"Resource panel metric: {metric_name}. {metric_text}.",
+    )
+
+    label = getattr(metric_value, "_resource_panel_metric_label", None)
+    if label is not None:
+        _set_widget_metadata(
+            label,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric label.",
+        )
+
+    card = getattr(metric_value, "_resource_panel_metric_card", None)
+    if card is not None:
+        _set_widget_metadata(
+            card,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric: {metric_text}.",
+        )
 
 
 def _prepare_resource_panel_table(table):
@@ -1264,9 +1300,9 @@ class ResourcePanel(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        header = QFrame()
-        header.setObjectName("resource_panel_header")
-        header_layout = QHBoxLayout(header)
+        self._panel_header = QFrame()
+        self._panel_header.setObjectName("resource_panel_header")
+        header_layout = QHBoxLayout(self._panel_header)
         header_layout.setContentsMargins(18, 16, 18, 16)
         header_layout.setSpacing(18)
 
@@ -1276,10 +1312,20 @@ class ResourcePanel(QWidget):
 
         self._panel_eyebrow = QLabel("Asset Pipeline")
         self._panel_eyebrow.setObjectName("resource_panel_eyebrow")
+        _set_widget_metadata(
+            self._panel_eyebrow,
+            tooltip="Resource pipeline workspace.",
+            accessible_name="Resource pipeline workspace.",
+        )
         hero_copy.addWidget(self._panel_eyebrow, 0, Qt.AlignLeft)
 
         self._panel_title = QLabel("Project Resources")
         self._panel_title.setObjectName("resource_panel_title")
+        _set_widget_metadata(
+            self._panel_title,
+            tooltip="Resource panel title: Project Resources.",
+            accessible_name="Resource panel title: Project Resources.",
+        )
         hero_copy.addWidget(self._panel_title)
 
         self._panel_subtitle = QLabel(
@@ -1287,6 +1333,11 @@ class ResourcePanel(QWidget):
         )
         self._panel_subtitle.setObjectName("resource_panel_subtitle")
         self._panel_subtitle.setWordWrap(True)
+        _set_widget_metadata(
+            self._panel_subtitle,
+            tooltip=self._panel_subtitle.text(),
+            accessible_name=self._panel_subtitle.text(),
+        )
         hero_copy.addWidget(self._panel_subtitle)
 
         self._panel_status = QLabel("")
@@ -1302,7 +1353,7 @@ class ResourcePanel(QWidget):
         self._missing_metric_value = _create_resource_panel_metric_card(metrics_layout, "Missing")
         self._selection_metric_value = _create_resource_panel_metric_card(metrics_layout, "Selection")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._panel_header)
 
         splitter = QSplitter(Qt.Vertical)
         splitter.setObjectName("resource_panel_splitter")
@@ -1737,26 +1788,27 @@ class ResourcePanel(QWidget):
         self._missing_metric_value.setText(_count_label(total_missing, "missing file"))
         self._selection_metric_value.setText(f"{active_tab}: {selection_label}")
 
+        panel_summary = (
+            f"Resource panel: Workspace {workspace_state}. Active tab: {active_tab}. "
+            f"Catalog: {self._catalog_metric_value.text()}. "
+            f"Missing: {self._missing_metric_value.text()}. "
+            f"Selection: {self._selection_metric_value.text()}."
+        )
+        _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
+        _set_widget_metadata(
+            self._panel_header,
+            tooltip=f"Resource header: Project Resources. Workspace {workspace_state}. Active tab: {active_tab}.",
+            accessible_name=f"Resource header: Project Resources. Workspace {workspace_state}. Active tab: {active_tab}.",
+        )
+
         _set_widget_metadata(
             self._panel_status,
             tooltip=f"Resource workspace state: {workspace_state}. Active tab: {active_tab}.",
             accessible_name=f"Resource workspace state: {workspace_state}. Active tab: {active_tab}",
         )
-        _set_widget_metadata(
-            self._catalog_metric_value,
-            tooltip=self._catalog_metric_value.text(),
-            accessible_name=f"Resource panel metric: Catalog. {self._catalog_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._missing_metric_value,
-            tooltip=self._missing_metric_value.text(),
-            accessible_name=f"Resource panel metric: Missing. {self._missing_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._selection_metric_value,
-            tooltip=self._selection_metric_value.text(),
-            accessible_name=f"Resource panel metric: Selection. {self._selection_metric_value.text()}",
-        )
+        _update_resource_panel_metric_metadata(self._catalog_metric_value)
+        _update_resource_panel_metric_metadata(self._missing_metric_value)
+        _update_resource_panel_metric_metadata(self._selection_metric_value)
 
     def _on_panel_tab_changed(self, _index):
         self._refresh_usage_view()
