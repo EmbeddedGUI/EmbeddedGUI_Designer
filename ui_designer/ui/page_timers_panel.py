@@ -59,13 +59,14 @@ class PageTimersPanel(QWidget):
         layout.setSpacing(10)
 
         self._header_frame = QWidget()
-        self._header_frame.setObjectName("page_editor_header")
+        self._header_frame.setObjectName("page_timers_header")
+        self._header_frame.setProperty("panelTone", "timers")
         header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(8)
 
-        self._eyebrow_label = QLabel("Page Timers")
-        self._eyebrow_label.setObjectName("page_editor_eyebrow")
+        self._eyebrow_label = QLabel("Scheduled Callbacks")
+        self._eyebrow_label.setObjectName("page_timers_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
 
         self._summary_label = QLabel("")
@@ -75,19 +76,21 @@ class PageTimersPanel(QWidget):
         self._header_meta_label = QLabel(
             "Timers generate egui_timer_t members plus callback entry points for page-level scheduling."
         )
-        self._header_meta_label.setObjectName("page_editor_meta")
+        self._header_meta_label.setObjectName("page_timers_meta")
         self._header_meta_label.setWordWrap(True)
         header_layout.addWidget(self._header_meta_label)
 
-        self._header_chip_row = QHBoxLayout()
-        self._header_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._metrics_frame = QWidget()
+        self._metrics_frame.setObjectName("page_timers_metrics_strip")
+        self._header_chip_row = QHBoxLayout(self._metrics_frame)
+        self._header_chip_row.setContentsMargins(10, 8, 10, 8)
         self._header_chip_row.setSpacing(6)
         self._count_chip = self._make_status_chip("0 timers", "accent")
         self._selection_chip = self._make_status_chip("No selection", "warning")
         self._header_chip_row.addWidget(self._count_chip)
         self._header_chip_row.addWidget(self._selection_chip)
         self._header_chip_row.addStretch(1)
-        header_layout.addLayout(self._header_chip_row)
+        header_layout.addWidget(self._metrics_frame)
         layout.addWidget(self._header_frame)
 
         self._table_frame = QWidget()
@@ -170,8 +173,10 @@ class PageTimersPanel(QWidget):
         count = len(self._timers)
         selected_timer = self._selected_timer()
         selected_name = str(selected_timer.get("name", "") or "").strip()
+        count_text = f"{count} {'timer' if count == 1 else 'timers'}"
+        selection_text = selected_name or "No selection"
         self._set_status_chip_state(self._count_chip, f"{count} {'timer' if count == 1 else 'timers'}", "accent" if self._page is not None else "warning")
-        self._set_status_chip_state(self._selection_chip, selected_name or "No selection", "accent" if selected_name else "warning")
+        self._set_status_chip_state(self._selection_chip, selection_text, "accent" if selected_name else "warning")
         if self._page is None:
             meta = "Open a page to configure timer scheduling and callback entry points."
         elif selected_name:
@@ -179,6 +184,27 @@ class PageTimersPanel(QWidget):
         else:
             meta = f"Editing timer scheduling for {self._page.name}. Select a timer to inspect or open its callback."
         self._header_meta_label.setText(meta)
+        selection_summary = f"Selected timer: {selected_name}." if selected_name else "No timer selected."
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Page timers engineering surface.",
+            accessible_name="Page timers engineering surface.",
+        )
+        _set_widget_metadata(
+            self._count_chip,
+            tooltip=f"Timer count: {count_text}.",
+            accessible_name=f"Timer count: {count_text}.",
+        )
+        _set_widget_metadata(
+            self._selection_chip,
+            tooltip=f"Timer selection: {selection_summary}",
+            accessible_name=f"Timer selection: {selection_summary}",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Page timers metrics: {count_text}. {selection_summary}",
+            accessible_name=f"Page timers metrics: {count_text}. {selection_summary}",
+        )
 
     def _update_accessibility_summary(self, summary_text):
         selection_summary = self._selection_accessibility_summary()

@@ -55,6 +55,13 @@ class TestPageTimersPanel:
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
+        assert panel._eyebrow_label.text() == "Scheduled Callbacks"
+        assert panel._eyebrow_label.accessibleName() == "Page timers engineering surface."
+        assert panel._count_chip.text() == "1 timer"
+        assert panel._count_chip.accessibleName() == "Timer count: 1 timer."
+        assert panel._selection_chip.text() == "No selection"
+        assert panel._selection_chip.accessibleName() == "Timer selection: No timer selected."
+        assert panel._metrics_frame.accessibleName() == "Page timers metrics: 1 timer. No timer selected."
         assert panel._hint_label.toolTip() == panel._hint_label.text()
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
         assert panel._hint_label.accessibleName() == panel._hint_label.text()
@@ -94,6 +101,9 @@ class TestPageTimersPanel:
         assert panel._remove_button.accessibleName() == "Remove page timer unavailable"
         assert panel._open_code_button.toolTip() == "Open a page to access timer user code."
         assert panel._open_code_button.accessibleName() == "Open timer user code unavailable"
+        assert panel._count_chip.text() == "0 timers"
+        assert panel._selection_chip.text() == "No selection"
+        assert panel._metrics_frame.accessibleName() == "Page timers metrics: 0 timers. No timer selected."
 
     def test_panel_add_and_remove_timer_emit_changes(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
@@ -116,6 +126,10 @@ class TestPageTimersPanel:
         assert panel._remove_button.accessibleName() == "Remove page timer: timer"
         assert panel._open_code_button.toolTip() == "Open user code for timer callback: egui_main_page_timer_callback."
         assert panel._open_code_button.accessibleName() == "Open timer user code: egui_main_page_timer_callback"
+        assert panel._count_chip.text() == "1 timer"
+        assert panel._selection_chip.text() == "timer"
+        assert panel._selection_chip.accessibleName() == "Timer selection: Selected timer: timer."
+        assert panel._metrics_frame.accessibleName() == "Page timers metrics: 1 timer. Selected timer: timer."
         assert captured[-1][0]["name"] == "timer"
         assert captured[-1][0]["callback"] == "egui_main_page_timer_callback"
 

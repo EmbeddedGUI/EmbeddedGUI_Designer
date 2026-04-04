@@ -1721,6 +1721,35 @@ QTreeWidget#widget_tree_panel_tree {{
     border-radius: {t['r_md']}px;
 }}
 
+#page_timers_header[panelTone="timers"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid transparent;
+    border-color: {t['border_strong']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#page_timers_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#page_timers_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#page_timers_metrics_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #page_editor_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;

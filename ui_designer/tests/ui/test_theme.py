@@ -141,6 +141,22 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in metrics
 
 
+def test_page_timers_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#page_timers_header[panelTone="timers"] {', 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#page_timers_eyebrow {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#page_timers_metrics_strip {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['accent_hover']};" in eyebrow
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
+
+
 def test_editor_tabs_styles_use_engineering_shell_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
