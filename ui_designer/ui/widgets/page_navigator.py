@@ -283,6 +283,11 @@ class PageNavigator(QWidget):
 
         self._eyebrow_label = QLabel("Page Flow")
         self._eyebrow_label.setObjectName("page_navigator_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Page flow workspace surface.",
+            accessible_name="Page flow workspace surface.",
+        )
         header_layout.addWidget(self._eyebrow_label)
 
         title_row = QHBoxLayout()
@@ -388,11 +393,35 @@ class PageNavigator(QWidget):
             f"Current page: {current_page}. Startup page: {startup_page}. Use the rail to scan visual state and jump between pages."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
-        _set_widget_metadata(self._header_frame, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Page navigator header. {summary}",
+            accessible_name=f"Page navigator header. {summary}",
+        )
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,
             accessible_name=f"Pages: {page_label}. Current page: {current_page}. Startup page: {startup_page}.",
+        )
+        _set_widget_metadata(
+            self._header_meta_label,
+            tooltip=self._header_meta_label.text(),
+            accessible_name=self._header_meta_label.text(),
+        )
+        _set_widget_metadata(
+            self._count_chip,
+            tooltip=f"Page count: {page_label}.",
+            accessible_name=f"Page count: {page_label}.",
+        )
+        _set_widget_metadata(
+            self._startup_chip,
+            tooltip=f"Startup page: {startup_page}.",
+            accessible_name=f"Startup page: {startup_page}.",
+        )
+        _set_widget_metadata(
+            self._dirty_chip,
+            tooltip=f"Dirty pages: {dirty_label}.",
+            accessible_name=f"Dirty pages: {dirty_label}.",
         )
         _set_widget_metadata(
             self._scroll_area,
@@ -403,6 +432,11 @@ class PageNavigator(QWidget):
             self._container,
             tooltip=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
             accessible_name=f"Page thumbnail list: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}.",
+        )
+        _set_widget_metadata(
+            self._guidance_frame,
+            tooltip=f"Page navigator guidance. {self._guidance_label.text()}",
+            accessible_name=f"Page navigator guidance. {self._guidance_label.text()}",
         )
         _set_widget_metadata(
             self._guidance_label,

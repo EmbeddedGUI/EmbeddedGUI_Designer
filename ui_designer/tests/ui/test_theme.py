@@ -113,12 +113,18 @@ def test_page_navigator_styles_use_token_driven_cards():
         css = _build_stylesheet(mode)
 
         header = css.split("#page_navigator_header {", 1)[1].split("}", 1)[0]
+        guidance = css.split("#page_navigator_guidance {", 1)[1].split("}", 1)[0]
+        scroll_shell = css.split("#page_navigator_scroll_shell {", 1)[1].split("}", 1)[0]
         thumb = css.split("#page_navigator_thumbnail {", 1)[1].split("}", 1)[0]
         selected = css.split('#page_navigator_thumbnail[selected="true"] {', 1)[1].split("}", 1)[0]
         empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
 
         assert t["accent_soft"] in header or t["selection_soft"] in header
         assert f"border-radius: {t['r_xl']}px;" in header
+        assert f"background-color: {t['panel_soft']};" in guidance
+        assert f"border-radius: {t['r_md']}px;" in guidance
+        assert f"background-color: {t['panel_raised']};" in scroll_shell
+        assert f"border-radius: {t['r_xl']}px;" in scroll_shell
         assert f"background-color: {t['panel_alt']};" in thumb
         assert f"border-radius: {t['r_xl']}px;" in thumb
         assert f"border-color: {t['accent']};" in selected

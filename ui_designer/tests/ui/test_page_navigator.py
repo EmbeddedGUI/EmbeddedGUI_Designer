@@ -92,6 +92,44 @@ class TestPageNavigator:
         assert navigator._container.accessibleName() == "Page thumbnail list: 2 pages. Current page: detail_page. Startup page: main_page. 1 dirty page."
         navigator.deleteLater()
 
+    def test_page_navigator_header_exposes_engineering_metadata(self, qapp):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+
+        assert navigator._header_frame.accessibleName() == (
+            "Page navigator header. Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
+        )
+        assert navigator._eyebrow_label.accessibleName() == "Page flow workspace surface."
+        assert navigator._header_meta_label.accessibleName() == (
+            "Current page: none. Startup page: none. Use the rail to scan visual state and jump between pages."
+        )
+        assert navigator._count_chip.accessibleName() == "Page count: 0 pages."
+        assert navigator._startup_chip.accessibleName() == "Startup page: none."
+        assert navigator._dirty_chip.accessibleName() == "Dirty pages: No dirty pages."
+        assert navigator._guidance_frame.accessibleName() == (
+            "Page navigator guidance. Left click opens a page. Right click duplicates, deletes, or inserts a template after the selected page."
+        )
+        assert navigator._guidance_label.accessibleName() == (
+            "Left click opens a page. Right click duplicates, deletes, or inserts a template after the selected page."
+        )
+
+        navigator.set_pages({"main_page": object(), "detail_page": object()})
+        navigator.set_startup_page("main_page")
+        navigator.set_current_page("detail_page")
+        navigator.set_dirty_pages({"main_page"})
+
+        assert navigator._header_frame.accessibleName() == (
+            "Page navigator header. Page navigator: 2 pages. Current page: detail_page. Startup page: main_page. 1 dirty page."
+        )
+        assert navigator._header_meta_label.accessibleName() == (
+            "Current page: detail_page. Startup page: main_page. Use the rail to scan visual state and jump between pages."
+        )
+        assert navigator._count_chip.accessibleName() == "Page count: 2 pages."
+        assert navigator._startup_chip.accessibleName() == "Startup page: main_page."
+        assert navigator._dirty_chip.accessibleName() == "Dirty pages: 1 dirty page."
+        navigator.deleteLater()
+
     def test_page_thumbnail_context_menu_actions_expose_dynamic_hints(self, qapp):
         from ui_designer.ui.widgets.page_navigator import PageNavigator
 
