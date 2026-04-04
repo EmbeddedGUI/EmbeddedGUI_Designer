@@ -63,9 +63,9 @@ class RepositoryHealthDialog(QDialog):
         root_layout.setContentsMargins(24, 24, 24, 24)
         root_layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("repo_health_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("repo_health_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -75,11 +75,21 @@ class RepositoryHealthDialog(QDialog):
 
         self._eyebrow_label = QLabel("Workspace Diagnostics")
         self._eyebrow_label.setObjectName("repo_health_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Repository diagnostics workspace.",
+            accessible_name="Repository diagnostics workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Repository Health")
         self._title_label.setFont(QFont("Segoe UI", 26, QFont.Light))
         self._title_label.setObjectName("repo_health_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Repository health title: Repository Health.",
+            accessible_name="Repository health title: Repository Health.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -87,6 +97,11 @@ class RepositoryHealthDialog(QDialog):
         )
         self._subtitle_label.setObjectName("repo_health_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
 
         self._summary_label = QLabel()
@@ -110,7 +125,7 @@ class RepositoryHealthDialog(QDialog):
         self._stale_metric_value = self._create_metric_card(metrics_layout, 1, 0, "Stale Dirs")
         self._blocked_metric_value = self._create_metric_card(metrics_layout, 1, 1, "Blocked")
         header_layout.addLayout(metrics_layout, 2)
-        root_layout.addWidget(header)
+        root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
@@ -352,8 +367,43 @@ class RepositoryHealthDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._repo_health_metric_name = label_text
+        value._repo_health_metric_label = label
+        value._repo_health_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card, row, column)
         return value
+
+    def _update_metric_card_metadata(self, metric_value: QLabel) -> None:
+        metric_name = getattr(metric_value, "_repo_health_metric_name", "Repository")
+        metric_text = (metric_value.text() or "0").strip() or "0"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"Repository health metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_repo_health_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_repo_health_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
         value = max(int(count or 0), 0)
@@ -459,6 +509,11 @@ class RepositoryHealthDialog(QDialog):
         report_mode = self._view_mode_label()
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Repository health header. {dialog_summary}",
+            accessible_name=f"Repository health header. {dialog_summary}",
+        )
         _set_widget_metadata(
             self._summary_label,
             tooltip=summary_text,
@@ -567,26 +622,10 @@ class RepositoryHealthDialog(QDialog):
             tooltip=stale_summary,
             accessible_name=f"Stale temp directories: {stale_summary.removesuffix('.')}.",
         )
-        _set_widget_metadata(
-            self._critical_metric_value,
-            tooltip=self._critical_metric_value.text(),
-            accessible_name=f"Repository health metric: Critical. {self._critical_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._suggestions_metric_value,
-            tooltip=self._suggestions_metric_value.text(),
-            accessible_name=f"Repository health metric: Suggestions. {self._suggestions_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._stale_metric_value,
-            tooltip=self._stale_metric_value.text(),
-            accessible_name=f"Repository health metric: Stale directories. {self._stale_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._blocked_metric_value,
-            tooltip=self._blocked_metric_value.text(),
-            accessible_name=f"Repository health metric: Blocked stale directories. {self._blocked_metric_value.text()}",
-        )
+        self._update_metric_card_metadata(self._critical_metric_value)
+        self._update_metric_card_metadata(self._suggestions_metric_value)
+        self._update_metric_card_metadata(self._stale_metric_value)
+        self._update_metric_card_metadata(self._blocked_metric_value)
         _set_widget_metadata(
             self._copy_stale_path_button,
             tooltip=self._copy_stale_path_hint(),

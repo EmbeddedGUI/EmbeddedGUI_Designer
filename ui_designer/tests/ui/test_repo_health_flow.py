@@ -10,7 +10,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QDialog
+    from PyQt5.QtWidgets import QApplication, QDialog, QFrame
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -187,6 +187,36 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
     )
     assert dialog._copy_stale_path_button.accessibleName() == "Copy selected stale temp directory path"
     assert dialog._open_stale_button.accessibleName() == "Open selected stale temp directory unavailable"
+
+
+@_skip_no_qt
+def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, tmp_path):
+    from ui_designer.ui.repo_health_dialog import RepositoryHealthDialog
+
+    payload = {
+        "repo_root": str(tmp_path),
+        "sdk_submodule": {"path": str(tmp_path / "sdk" / "EmbeddedGUI"), "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
+        "release_smoke_project": {"path": str(tmp_path / "samples" / "release_smoke" / "ReleaseSmokeApp"), "present": False},
+        "stale_temp_dirs": [{"path": str(tmp_path / ".pytest-tmp-codex"), "accessible": False, "issue": "permission_denied"}],
+        "git_status_show_untracked": "no",
+        "suggestions": ["Run: git submodule update --init --recursive"],
+    }
+
+    monkeypatch.setattr("ui_designer.ui.repo_health_dialog.collect_repo_health", lambda repo_root: payload)
+
+    dialog = RepositoryHealthDialog(str(tmp_path))
+
+    assert dialog._header_frame.accessibleName().startswith("Repository health header. Repository health: ")
+    assert dialog._eyebrow_label.accessibleName() == "Repository diagnostics workspace."
+    assert dialog._title_label.accessibleName() == "Repository health title: Repository Health."
+    assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert dialog._critical_metric_value.accessibleName() == "Repository health metric: Critical. 2."
+    assert dialog._critical_metric_value._repo_health_metric_label.accessibleName() == "Critical metric label."
+    assert dialog._critical_metric_value._repo_health_metric_card.accessibleName() == "Critical metric: 2."
+    assert dialog._suggestions_metric_value.accessibleName() == "Repository health metric: Suggestions. 1."
+    assert dialog._stale_metric_value.accessibleName() == "Repository health metric: Stale Dirs. 1."
+    assert dialog._blocked_metric_value.accessibleName() == "Repository health metric: Blocked. 1."
+    assert len(dialog.findChildren(QFrame, "repo_health_metric_card")) == 4
 
 
 @_skip_no_qt
