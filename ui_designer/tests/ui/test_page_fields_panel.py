@@ -123,6 +123,66 @@ class TestPageFieldsPanel:
         assert panel._selection_chip.text() == "No selection"
         assert panel._metrics_frame.accessibleName() == "Page fields metrics: 0 fields. No field selected."
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.page_fields_panel import PageFieldsPanel
+
+        page = _make_page()
+        page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+
+        panel = PageFieldsPanel()
+        panel.set_page(page)
+        panel._header_frame.setProperty("_page_fields_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel._update_summary()
+        assert hint_calls == 1
+
+        panel._update_actions()
+        assert hint_calls == 1
+
+        panel._table.selectRow(0)
+        qapp.processEvents()
+        assert hint_calls == 2
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.page_fields_panel import PageFieldsPanel
+
+        page = _make_page()
+        page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+
+        panel = PageFieldsPanel()
+        panel.set_page(page)
+        panel._header_frame.setProperty("_page_fields_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel._update_summary()
+        assert accessible_calls == 1
+
+        panel._update_actions()
+        assert accessible_calls == 1
+
+        panel._table.selectRow(0)
+        qapp.processEvents()
+        assert accessible_calls == 2
+
     def test_panel_add_and_remove_field_emits_changes(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
