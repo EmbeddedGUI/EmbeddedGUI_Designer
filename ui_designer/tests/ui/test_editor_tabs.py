@@ -109,3 +109,55 @@ class TestEditorTabsAccessibility:
         assert tabs.accessibleName() == "Editor tabs: Code mode. XML source is empty. Mode switch hidden."
         assert tabs._stack.accessibleName() == "Editor view stack: Code mode."
         tabs.deleteLater()
+
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.editor_tabs import EditorTabs
+
+        tabs = EditorTabs(QWidget(), show_mode_switch=True)
+        tabs._header_frame.setProperty("_editor_tabs_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = tabs._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(tabs._header_frame, "setToolTip", counted_set_tooltip)
+
+        tabs._update_accessibility_metadata()
+        assert hint_calls == 1
+
+        tabs._update_accessibility_metadata()
+        assert hint_calls == 1
+
+        tabs.set_xml_text("<page />")
+        assert hint_calls == 2
+        tabs.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.editor_tabs import EditorTabs
+
+        tabs = EditorTabs(QWidget(), show_mode_switch=True)
+        tabs._header_frame.setProperty("_editor_tabs_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = tabs._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(tabs._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        tabs._update_accessibility_metadata()
+        assert accessible_calls == 1
+
+        tabs._update_accessibility_metadata()
+        assert accessible_calls == 1
+
+        tabs.set_xml_text("<page />")
+        assert accessible_calls == 2
+        tabs.deleteLater()

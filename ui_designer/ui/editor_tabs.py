@@ -32,10 +32,16 @@ _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        hint = str(tooltip or "")
+        if str(widget.property("_editor_tabs_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_editor_tabs_hint_snapshot", hint)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        name = str(accessible_name or "")
+        if str(widget.property("_editor_tabs_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_editor_tabs_accessible_snapshot", name)
 
 
 class XmlEditor(QPlainTextEdit):
