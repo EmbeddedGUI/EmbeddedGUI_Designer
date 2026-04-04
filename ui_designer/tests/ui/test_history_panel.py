@@ -37,6 +37,10 @@ class TestHistoryPanel:
         )
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel._header_eyebrow.accessibleName() == "Undo timeline workspace surface."
+        assert panel._header_frame.accessibleName() == (
+            "History header. History panel: Page -. 0 entries. Current entry none. Undo no. Redo no. Dirty no. Source Saved state."
+        )
         assert panel._page_value.toolTip() == "History page: -"
         assert panel._page_value.statusTip() == panel._page_value.toolTip()
         assert panel._stack_value.accessibleName() == "History summary: 0 entries. Undo no. Redo no."
@@ -71,6 +75,9 @@ class TestHistoryPanel:
             "History panel: Page main_page. 2 entries. Current entry xml edit. Undo yes. Redo no. Dirty yes. Source xml edit."
         )
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._header_frame.accessibleName() == (
+            "History header. History panel: Page main_page. 2 entries. Current entry xml edit. Undo yes. Redo no. Dirty yes. Source xml edit."
+        )
         assert panel._stack_value.toolTip() == "History entries: 2. Undo: Yes. Redo: No."
         assert panel._history_list.accessibleName() == "History entries for main_page: 2 items. Current entry: xml edit"
         assert panel._history_list.toolTip() == "History entries: 2 items for page main_page. Current entry: xml edit."

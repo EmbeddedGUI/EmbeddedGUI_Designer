@@ -1,14 +1,16 @@
 """History dock widget for undo/redo visualization."""
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QFrame, QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
 
 from .iconography import make_icon
 from .theme import theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ICON_SM = int(_TOKENS.get("icon_sm", 16))
 _ICON_LG = int(_TOKENS.get("icon_lg", 20))
 
@@ -23,36 +25,54 @@ class HistoryPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        layout.setSpacing(_SPACE_SM - 2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(_SPACE_XS)
+
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("history_panel_header")
+        self._header_frame.setProperty("panelTone", "history")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout.setSpacing(_SPACE_SM)
+
+        self._header_eyebrow = QLabel("Undo Timeline")
+        self._header_eyebrow.setObjectName("history_panel_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
         top_row.setSpacing(_SPACE_SM)
 
-        page_icon = QLabel()
-        page_icon.setPixmap(make_icon("state.info", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
-        top_row.addWidget(page_icon, 0, Qt.AlignTop)
+        self._page_icon = QLabel()
+        self._page_icon.setPixmap(make_icon("state.info", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
+        top_row.addWidget(self._page_icon, 0, Qt.AlignTop)
 
         self._page_value = QLabel("")
         self._page_value.setObjectName("workspace_section_title")
         top_row.addWidget(self._page_value, 1)
-        layout.addLayout(top_row)
 
         self._stack_value = QLabel("")
         self._stack_value.setObjectName("workspace_status_chip")
+        self._stack_value.setProperty("chipTone", "accent")
+        top_row.addWidget(self._stack_value, 0, Qt.AlignVCenter)
+
         self._dirty_value = QLabel("")
         self._dirty_value.setObjectName("workspace_status_chip")
+        top_row.addWidget(self._dirty_value, 0, Qt.AlignVCenter)
+        header_layout.addLayout(top_row)
+
         self._source_value = QLabel("")
-        self._source_value.setObjectName("workspace_section_subtitle")
+        self._source_value.setObjectName("history_panel_meta")
+        self._source_value.setWordWrap(True)
+
         self._history_list = QListWidget()
+        self._history_list.setObjectName("history_panel_list")
         self._history_list.setSelectionMode(QListWidget.NoSelection)
         self._history_list.setFocusPolicy(Qt.NoFocus)
         self._history_list.setAccessibleName("History entries")
 
-        layout.addWidget(self._stack_value)
-        layout.addWidget(self._dirty_value)
-        layout.addWidget(self._source_value)
+        header_layout.addWidget(self._source_value)
+        layout.addWidget(self._header_frame)
         layout.addWidget(self._history_list, 1)
 
     def _set_label_metadata(self, widget, *, tooltip, accessible_name):
@@ -88,6 +108,16 @@ class HistoryPanel(QWidget):
             accessible_name=summary,
         )
         self._set_label_metadata(
+            self._header_frame,
+            tooltip=summary,
+            accessible_name=f"History header. {summary}",
+        )
+        self._set_label_metadata(
+            self._header_eyebrow,
+            tooltip="Undo timeline workspace surface.",
+            accessible_name="Undo timeline workspace surface.",
+        )
+        self._set_label_metadata(
             self._page_value,
             tooltip=f"History page: {page_name}",
             accessible_name=f"History page: {page_name}",
@@ -119,7 +149,10 @@ class HistoryPanel(QWidget):
         self._stack_value.setText("History: 0 entries")
         self._dirty_value.setText("Dirty: No")
         self._source_value.setText("Source: Saved state")
+        self._stack_value.setProperty("chipTone", "accent")
         self._dirty_value.setProperty("chipTone", "success")
+        self._stack_value.style().unpolish(self._stack_value)
+        self._stack_value.style().polish(self._stack_value)
         self._history_list.clear()
         self._update_accessibility_summary(
             page_name="-",
@@ -138,8 +171,11 @@ class HistoryPanel(QWidget):
         self._stack_value.setText(
             f"History: {len(entries)} entries | Undo: {'Yes' if can_undo else 'No'} | Redo: {'Yes' if can_redo else 'No'}"
         )
+        self._stack_value.setProperty("chipTone", "accent" if entries else "success")
         self._dirty_value.setText(f"Dirty: {'Yes' if dirty else 'No'}")
         self._source_value.setText(f"Source: {dirty_source or 'Saved state'}")
+        self._stack_value.style().unpolish(self._stack_value)
+        self._stack_value.style().polish(self._stack_value)
         self._dirty_value.setProperty("chipTone", "warning" if dirty else "success")
         self._dirty_value.style().unpolish(self._dirty_value)
         self._dirty_value.style().polish(self._dirty_value)

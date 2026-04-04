@@ -1550,6 +1550,40 @@ QPlainTextEdit#debug_output_surface {{
     padding: {t['space_xxs']}px;
 }}
 
+#history_panel_header {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#history_panel_header[panelTone="history"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.74 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#history_panel_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#history_panel_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+QListWidget#history_panel_list {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+    padding: {t['space_xxs']}px;
+}}
+
 QTreeWidget#widget_tree_panel_tree {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
