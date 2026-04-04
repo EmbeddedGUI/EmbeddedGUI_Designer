@@ -1034,6 +1034,78 @@ class TestResourcePanelFileFlow:
         assert dialog._ok_button.accessibleName() == "Confirm replacement files unavailable"
         dialog.deleteLater()
 
+    def test_replace_dialog_header_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from PyQt5.QtWidgets import QLabel
+        from ui_designer.ui.resource_panel import _MissingResourceReplaceDialog
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel.CaptionLabel", QLabel)
+
+        source_a = os.path.join("C:\\temp", "missing.png")
+        source_b = os.path.join("C:\\temp", "hero.png")
+
+        dialog = _MissingResourceReplaceDialog(
+            ["missing.png", "icon.png"],
+            [source_a, source_b],
+        )
+        dialog._header_frame.setProperty("_resource_panel_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = dialog._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setToolTip", counted_set_tooltip)
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._combos[1][1].setCurrentIndex(1)
+        qapp.processEvents()
+        assert hint_calls == 2
+        dialog.deleteLater()
+
+    def test_replace_dialog_header_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from PyQt5.QtWidgets import QLabel
+        from ui_designer.ui.resource_panel import _MissingResourceReplaceDialog
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel.CaptionLabel", QLabel)
+
+        source_a = os.path.join("C:\\temp", "missing.png")
+        source_b = os.path.join("C:\\temp", "hero.png")
+
+        dialog = _MissingResourceReplaceDialog(
+            ["missing.png", "icon.png"],
+            [source_a, source_b],
+        )
+        dialog._header_frame.setProperty("_resource_panel_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = dialog._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._combos[1][1].setCurrentIndex(1)
+        qapp.processEvents()
+        assert accessible_calls == 2
+        dialog.deleteLater()
+
     def test_reference_impact_dialog_exposes_accessibility_metadata(self, qapp):
         from ui_designer.model.resource_usage import ResourceUsageEntry
         from ui_designer.ui.resource_panel import _ReferenceImpactDialog
