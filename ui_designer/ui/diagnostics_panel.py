@@ -1,12 +1,13 @@
 """Diagnostics dock widget for lightweight editor feedback."""
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QComboBox, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 from .iconography import make_icon
 from .theme import theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ICON_SM = int(_TOKENS.get("icon_sm", 16))
@@ -92,11 +93,37 @@ class DiagnosticsPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        layout.setSpacing(_SPACE_SM - 2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(_SPACE_XS)
 
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("diagnostics_header")
+        self._header_frame.setProperty("panelTone", "diagnostics")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout.setSpacing(_SPACE_SM)
+
+        self._header_eyebrow = QLabel("Workspace Diagnostics")
+        self._header_eyebrow.setObjectName("diagnostics_header_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(_SPACE_SM)
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
+        title_row.addWidget(self._summary_label, 1)
+
+        self._visible_count_chip = QLabel("0 visible")
+        self._visible_count_chip.setObjectName("workspace_status_chip")
+        self._visible_count_chip.setProperty("chipTone", "accent")
+        title_row.addWidget(self._visible_count_chip, 0, Qt.AlignVCenter)
+
+        self._filter_chip = QLabel("Any Severity")
+        self._filter_chip.setObjectName("workspace_status_chip")
+        title_row.addWidget(self._filter_chip, 0, Qt.AlignVCenter)
+        header_layout.addLayout(title_row)
+
         self._severity_filter_combo = QComboBox()
         self._severity_filter_combo.addItem("Any", "")
         self._severity_filter_combo.addItem("Errors", "error")
@@ -128,29 +155,42 @@ class DiagnosticsPanel(QWidget):
         self._export_json_button.setIcon(make_icon("toolbar.export", size=_ICON_SM))
         self._export_json_button.clicked.connect(self.export_json_requested.emit)
         self._hint_label = QLabel(_DEFAULT_HINT_TEXT)
-        self._hint_label.setObjectName("workspace_section_subtitle")
+        self._hint_label.setObjectName("diagnostics_header_meta")
         self._hint_label.setWordWrap(True)
+        header_layout.addWidget(self._hint_label)
 
         self._list = QListWidget()
+        self._list.setObjectName("diagnostics_list")
         self._list.setFocusPolicy(Qt.NoFocus)
         self._list.itemDoubleClicked.connect(self._on_item_activated)
         self._list.itemSelectionChanged.connect(self._update_selection_actions)
 
-        header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.addWidget(self._summary_label, 1)
-        header_layout.addWidget(self._severity_filter_combo)
-        header_layout.addWidget(self._reset_view_button)
-        header_layout.addWidget(self._open_selected_button)
-        header_layout.addWidget(self._open_first_error_button)
-        header_layout.addWidget(self._open_first_warning_button)
-        header_layout.addWidget(self._copy_button)
-        header_layout.addWidget(self._copy_json_button)
-        header_layout.addWidget(self._export_button)
-        header_layout.addWidget(self._export_json_button)
+        self._controls_primary_strip = QFrame()
+        self._controls_primary_strip.setObjectName("diagnostics_controls_strip")
+        primary_layout = QHBoxLayout(self._controls_primary_strip)
+        primary_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XS, _SPACE_SM, _SPACE_SM - _SPACE_XS)
+        primary_layout.setSpacing(_SPACE_XS)
+        primary_layout.addWidget(self._severity_filter_combo)
+        primary_layout.addWidget(self._reset_view_button)
+        primary_layout.addWidget(self._open_selected_button)
+        primary_layout.addWidget(self._open_first_error_button)
+        primary_layout.addWidget(self._open_first_warning_button)
+        primary_layout.addStretch(1)
+        header_layout.addWidget(self._controls_primary_strip)
 
-        layout.addLayout(header_layout)
-        layout.addWidget(self._hint_label)
+        self._controls_secondary_strip = QFrame()
+        self._controls_secondary_strip.setObjectName("diagnostics_export_strip")
+        secondary_layout = QHBoxLayout(self._controls_secondary_strip)
+        secondary_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XS, _SPACE_SM, _SPACE_SM - _SPACE_XS)
+        secondary_layout.setSpacing(_SPACE_XS)
+        secondary_layout.addWidget(self._copy_button)
+        secondary_layout.addWidget(self._copy_json_button)
+        secondary_layout.addWidget(self._export_button)
+        secondary_layout.addWidget(self._export_json_button)
+        secondary_layout.addStretch(1)
+        header_layout.addWidget(self._controls_secondary_strip)
+
+        layout.addWidget(self._header_frame)
         layout.addWidget(self._list, 1)
 
         self._reset_view_button.setAccessibleName("Reset diagnostics view")
@@ -312,6 +352,8 @@ class DiagnosticsPanel(QWidget):
         visible_summary = self._count_label(len(self._visible_entries), "visible item", "visible items")
         panel_summary = f"{summary_text}. Severity filter: {filter_label}. {visible_summary}."
         list_summary = f"Diagnostics list: {visible_summary}. Severity filter: {filter_label}."
+        filter_chip_text = "Any Severity" if filter_label == "Any" else f"{filter_label} Only"
+        visible_chip_text = f"{len(self._visible_entries)} visible"
         if self._visible_entries:
             list_summary += " Double-click a diagnostic to open its target when available."
         current_item = self._list.currentItem()
@@ -326,12 +368,35 @@ class DiagnosticsPanel(QWidget):
         selected_location = _entry_location_label(current_entry) if can_open_selected else ""
         visible_accessible_label = self._visible_items_accessible_label()
 
+        self._visible_count_chip.setText(visible_chip_text)
+        self._filter_chip.setText(filter_chip_text)
+
         self._set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
+        self._set_widget_metadata(
+            self._header_frame,
+            tooltip=f"{summary_text}. {hint_text}",
+            accessible_name=f"Diagnostics header. {panel_summary}",
+        )
+        self._set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Workspace diagnostics surface.",
+            accessible_name="Workspace diagnostics surface.",
+        )
         self._set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         self._set_widget_metadata(
             self._hint_label,
             tooltip=hint_text,
             accessible_name=f"Diagnostics hint: {hint_text}",
+        )
+        self._set_widget_metadata(
+            self._visible_count_chip,
+            tooltip=f"Visible diagnostics: {visible_summary}.",
+            accessible_name=f"Visible diagnostics: {visible_summary}.",
+        )
+        self._set_widget_metadata(
+            self._filter_chip,
+            tooltip=f"Current severity scope: {filter_chip_text}.",
+            accessible_name=f"Severity scope: {filter_chip_text}.",
         )
         self._set_widget_metadata(
             self._severity_filter_combo,
@@ -417,6 +482,16 @@ class DiagnosticsPanel(QWidget):
                 if has_visible_entries
                 else "Export diagnostics JSON unavailable"
             ),
+        )
+        self._set_widget_metadata(
+            self._controls_primary_strip,
+            tooltip=f"Diagnostics actions: filter, reset, and open diagnostics. Current filter: {filter_label}.",
+            accessible_name=f"Diagnostics primary actions. Current filter: {filter_label}.",
+        )
+        self._set_widget_metadata(
+            self._controls_secondary_strip,
+            tooltip=f"Diagnostics export actions. {visible_summary}.",
+            accessible_name=f"Diagnostics export actions. {visible_summary}.",
         )
         self._set_widget_metadata(self._list, tooltip=list_summary, accessible_name=list_summary)
 

@@ -66,11 +66,21 @@ class TestDiagnosticsPanel:
         assert panel.accessibleName() == "Diagnostics: no active issues. Severity filter: Any. 0 visible items."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel._header_eyebrow.accessibleName() == "Workspace diagnostics surface."
+        assert panel._header_frame.accessibleName() == (
+            "Diagnostics header. Diagnostics: no active issues. Severity filter: Any. 0 visible items."
+        )
         assert panel._summary_label.toolTip() == "Diagnostics: no active issues"
+        assert panel._visible_count_chip.text() == "0 visible"
+        assert panel._visible_count_chip.accessibleName() == "Visible diagnostics: 0 visible items."
+        assert panel._filter_chip.text() == "Any Severity"
+        assert panel._filter_chip.accessibleName() == "Severity scope: Any Severity."
         assert panel._hint_label.accessibleName() == (
             "Diagnostics hint: Double-click a diagnostic to switch page or focus the widget."
         )
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Any"
+        assert panel._controls_primary_strip.accessibleName() == "Diagnostics primary actions. Current filter: Any."
+        assert panel._controls_secondary_strip.accessibleName() == "Diagnostics export actions. 0 visible items."
         assert panel._reset_view_button.toolTip() == "Diagnostics already show every severity."
         assert panel._reset_view_button.accessibleName() == "Reset diagnostics view unavailable"
         assert panel._open_selected_button.toolTip() == "Select a diagnostic to open its target."
@@ -94,6 +104,11 @@ class TestDiagnosticsPanel:
 
         assert panel.accessibleName() == "Diagnostics: 1 error(s), 1 warning(s), 1 info item(s). Severity filter: Any. 3 visible items."
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._header_frame.accessibleName() == (
+            "Diagnostics header. Diagnostics: 1 error(s), 1 warning(s), 1 info item(s). Severity filter: Any. 3 visible items."
+        )
+        assert panel._visible_count_chip.text() == "3 visible"
+        assert panel._filter_chip.text() == "Any Severity"
         assert panel._open_first_error_button.toolTip() == "Open the first navigable error diagnostic."
         assert panel._open_first_warning_button.toolTip() == "Open the first navigable warning diagnostic."
         assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic: main_page/title"
@@ -142,6 +157,8 @@ class TestDiagnosticsPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel._hint_label.text() == "No diagnostics match the current severity filter."
         assert panel._hint_label.toolTip() == "No diagnostics match the current severity filter."
+        assert panel._visible_count_chip.text() == "0 visible"
+        assert panel._filter_chip.text() == "Info Only"
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"
         assert panel._reset_view_button.isEnabled() is True
         assert panel._reset_view_button.toolTip() == "Reset the diagnostics filter and show every severity."

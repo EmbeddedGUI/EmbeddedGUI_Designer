@@ -181,6 +181,24 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert f"border-radius: {t['r_md']}px;" in filter_bar
 
 
+def test_diagnostics_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#diagnostics_header[panelTone="diagnostics"] {', 1)[1].split("}", 1)[0]
+        meta = css.split("#diagnostics_header_meta {", 1)[1].split("}", 1)[0]
+        controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
+        list_block = css.split("QListWidget#diagnostics_list {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['text_muted']};" in meta
+        assert f"background-color: {t['panel_soft']};" in controls
+        assert f"background-color: {t['panel_alt']};" in list_block
+        assert f"border-radius: {t['r_xl']}px;" in list_block
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()
