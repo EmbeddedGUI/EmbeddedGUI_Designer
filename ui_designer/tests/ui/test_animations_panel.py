@@ -58,12 +58,20 @@ class TestAnimationsPanel:
         assert panel._summary_label.text() == "Animations: 1 animation on label title"
         assert panel.accessibleName() == "Animations: 1 animation on label title"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._header_eyebrow.accessibleName() == "Motion timeline workspace surface."
+        assert panel._header_frame.accessibleName() == (
+            "Animations header. Animations: 1 animation on label title"
+        )
+        assert panel._selection_chip.text() == "1 animation"
+        assert panel._selection_chip.accessibleName() == "Animation selection status: 1 animation."
+        assert panel._hint_label.text() == "Showing 1 animation on label title. Select a row to inspect details."
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
         assert panel._table.toolTip() == panel._summary_label.text()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Animations table: Animations: 1 animation on label title"
+        assert panel._actions_strip.accessibleName() == "Animation actions: add, duplicate, or remove the selected animation."
         assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._add_button.accessibleName() == "Add animation to label title"
@@ -233,6 +241,9 @@ class TestAnimationsPanel:
         assert "select a single widget" in panel._summary_label.text().lower()
         assert panel.accessibleName() == "Animations: select a single widget (2 selected)"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._selection_chip.text() == "2 Selected"
+        assert panel._selection_chip.accessibleName() == "Animation selection status: 2 Selected."
+        assert panel._hint_label.text() == "Animation editing is available for a single selected widget only."
         assert panel._table.toolTip() == "Animations: select a single widget (2 selected)"
         assert panel._table.accessibleName() == (
             "Animations table: Animations: select a single widget (2 selected)"
@@ -247,4 +258,7 @@ class TestAnimationsPanel:
         assert panel._detail_group.accessibleName() == (
             "Selected animation details unavailable. "
             "Animation editing is available for a single selected widget only."
+        )
+        assert panel._actions_strip.accessibleName() == (
+            "Animation actions unavailable. Select a single widget to edit animations."
         )

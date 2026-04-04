@@ -233,6 +233,26 @@ def test_history_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_xl']}px;" in list_block
 
 
+def test_animations_panel_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#animations_panel_header[panelTone="animations"] {', 1)[1].split("}", 1)[0]
+        meta = css.split("#animations_panel_meta {", 1)[1].split("}", 1)[0]
+        actions = css.split("#animations_panel_actions_strip {", 1)[1].split("}", 1)[0]
+        table = css.split("QTableWidget#animations_panel_table {", 1)[1].split("}", 1)[0]
+        detail = css.split("QGroupBox#animations_panel_detail_group {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['text_muted']};" in meta
+        assert f"background-color: {t['panel_soft']};" in actions
+        assert f"background-color: {t['panel_alt']};" in table
+        assert f"background-color: {t['panel_soft']};" in detail
+        assert f"border-radius: {t['r_xl']}px;" in detail
+
+
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
 def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
     app = _app()

@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHeaderView,
     QHBoxLayout,
@@ -36,7 +37,9 @@ from .theme import theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
+_SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ICON_SM = int(_TOKENS.get("icon_sm", 16))
 
 
@@ -70,23 +73,47 @@ class AnimationsPanel(QWidget):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        layout.setSpacing(_SPACE_SM - 2)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(_SPACE_XS)
 
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("animations_panel_header")
+        self._header_frame.setProperty("panelTone", "animations")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout.setSpacing(_SPACE_SM)
+
+        self._header_eyebrow = QLabel("Motion Timeline")
+        self._header_eyebrow.setObjectName("animations_panel_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(_SPACE_SM)
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
+        title_row.addWidget(self._summary_label, 1)
+
+        self._selection_chip = QLabel("No Selection")
+        self._selection_chip.setObjectName("workspace_status_chip")
+        self._selection_chip.setProperty("chipTone", "warning")
+        title_row.addWidget(self._selection_chip, 0, Qt.AlignVCenter)
+        header_layout.addLayout(title_row)
+
         self._hint_label = QLabel(
             "Animations are stored on the selected widget and compiled into the generated layout source."
         )
-        self._hint_label.setObjectName("workspace_section_subtitle")
+        self._hint_label.setObjectName("animations_panel_meta")
         self._hint_label.setWordWrap(True)
         _set_widget_metadata(
             self._hint_label,
             tooltip=self._hint_label.text(),
             accessible_name=self._hint_label.text(),
         )
+        header_layout.addWidget(self._hint_label)
 
         self._table = QTableWidget(0, 4, self)
+        self._table.setObjectName("animations_panel_table")
         self._table.setHorizontalHeaderLabels(["Type", "Duration", "Interpolator", "Auto Start"])
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -99,8 +126,10 @@ class AnimationsPanel(QWidget):
         self._table.itemSelectionChanged.connect(self._on_row_selected)
         self._table.setAccessibleName("Animations table")
 
-        buttons = QHBoxLayout()
-        buttons.setContentsMargins(0, 0, 0, 0)
+        self._actions_strip = QFrame()
+        self._actions_strip.setObjectName("animations_panel_actions_strip")
+        buttons = QHBoxLayout(self._actions_strip)
+        buttons.setContentsMargins(_SPACE_SM, _SPACE_SM - 2, _SPACE_SM, _SPACE_SM - 2)
         buttons.setSpacing(_SPACE_SM - 2)
         self._add_button = QPushButton("Add Animation")
         self._add_button.setIcon(make_icon("toolbar.new", size=_ICON_SM))
@@ -117,19 +146,29 @@ class AnimationsPanel(QWidget):
         buttons.addStretch(1)
 
         self._detail_group = QGroupBox("Selected Animation")
+        self._detail_group.setObjectName("animations_panel_detail_group")
         self._detail_form = QFormLayout()
         self._detail_group.setLayout(self._detail_form)
 
-        layout.addWidget(self._summary_label)
-        layout.addWidget(self._hint_label)
+        layout.addWidget(self._header_frame)
         layout.addWidget(self._table, 1)
-        layout.addLayout(buttons)
+        layout.addWidget(self._actions_strip)
         layout.addWidget(self._detail_group)
         self._update_actions()
         self._update_detail_group_metadata("Selected animation details unavailable. Select a widget to edit animations.")
 
     def _update_accessibility_summary(self, summary_text):
         _set_widget_metadata(self, tooltip=summary_text, accessible_name=summary_text)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=summary_text,
+            accessible_name=f"Animations header. {summary_text}",
+        )
+        _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Motion timeline workspace surface.",
+            accessible_name="Motion timeline workspace surface.",
+        )
         _set_widget_metadata(self._summary_label, tooltip=summary_text, accessible_name=summary_text)
         _set_widget_metadata(
             self._table,
@@ -146,6 +185,45 @@ class AnimationsPanel(QWidget):
             self._detail_group,
             tooltip=summary_text,
             accessible_name=summary_text,
+        )
+
+    def _update_header_context(self, summary_text):
+        selection_count = len(self._selection)
+        if not self._selection:
+            hint_text = "Select a widget to inspect and edit animations."
+            chip_text = "No Selection"
+            chip_tone = "warning"
+        elif selection_count > 1 or self._primary_widget is None:
+            hint_text = "Animation editing is available for a single selected widget only."
+            chip_text = f"{selection_count} Selected"
+            chip_tone = "warning"
+        elif not self._animations:
+            widget_label = f"{self._primary_widget.widget_type} {self._primary_widget.name}"
+            hint_text = f"No animations on {widget_label}. Add one to configure runtime motion."
+            chip_text = "No Animations"
+            chip_tone = "accent"
+        else:
+            widget_label = f"{self._primary_widget.widget_type} {self._primary_widget.name}"
+            count = len(self._animations)
+            noun = "animation" if count == 1 else "animations"
+            hint_text = f"Showing {count} {noun} on {widget_label}. Select a row to inspect details."
+            chip_text = f"{count} {noun}"
+            chip_tone = "success"
+
+        self._hint_label.setText(hint_text)
+        self._selection_chip.setText(chip_text)
+        self._selection_chip.setProperty("chipTone", chip_tone)
+        self._selection_chip.style().unpolish(self._selection_chip)
+        self._selection_chip.style().polish(self._selection_chip)
+        _set_widget_metadata(
+            self._hint_label,
+            tooltip=hint_text,
+            accessible_name=hint_text,
+        )
+        _set_widget_metadata(
+            self._selection_chip,
+            tooltip=f"Animation selection status: {chip_text}.",
+            accessible_name=f"Animation selection status: {chip_text}.",
         )
 
     def _detail_widget_label(self):
@@ -295,11 +373,13 @@ class AnimationsPanel(QWidget):
         if not self._selection:
             summary_text = "Animations: no widget selected"
             self._summary_label.setText(summary_text)
+            self._update_header_context(summary_text)
             self._update_accessibility_summary(summary_text)
             return
         if len(self._selection) > 1 or self._primary_widget is None:
             summary_text = f"Animations: select a single widget ({len(self._selection)} selected)"
             self._summary_label.setText(summary_text)
+            self._update_header_context(summary_text)
             self._update_accessibility_summary(summary_text)
             return
 
@@ -307,6 +387,7 @@ class AnimationsPanel(QWidget):
         noun = "animation" if count == 1 else "animations"
         summary_text = f"Animations: {count} {noun} on {self._primary_widget.widget_type} {self._primary_widget.name}"
         self._summary_label.setText(summary_text)
+        self._update_header_context(summary_text)
         self._update_accessibility_summary(summary_text)
 
     def _update_actions(self):
@@ -350,6 +431,16 @@ class AnimationsPanel(QWidget):
             f"Remove animation: {selected_animation}" if has_widget and has_selection else "Remove animation",
             remove_hint,
             has_widget and has_selection,
+        )
+        actions_summary = (
+            "Animation actions: add, duplicate, or remove the selected animation."
+            if has_widget
+            else "Animation actions unavailable. Select a single widget to edit animations."
+        )
+        _set_widget_metadata(
+            self._actions_strip,
+            tooltip=actions_summary,
+            accessible_name=actions_summary,
         )
 
     def _rebuild_detail_form(self):
