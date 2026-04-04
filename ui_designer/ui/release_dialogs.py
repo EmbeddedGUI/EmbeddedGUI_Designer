@@ -1463,9 +1463,9 @@ class ReleaseHistoryDialog(QDialog):
         root_layout.setContentsMargins(24, 24, 24, 24)
         root_layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("release_history_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("release_history_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -1475,10 +1475,20 @@ class ReleaseHistoryDialog(QDialog):
 
         self._eyebrow_label = QLabel("Release Intelligence")
         self._eyebrow_label.setObjectName("release_history_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Release history workspace.",
+            accessible_name="Release history workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Inspect Release History")
         self._title_label.setObjectName("release_history_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Release history title: Inspect Release History.",
+            accessible_name="Release history title: Inspect Release History.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -1486,6 +1496,11 @@ class ReleaseHistoryDialog(QDialog):
         )
         self._subtitle_label.setObjectName("release_history_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -1497,7 +1512,7 @@ class ReleaseHistoryDialog(QDialog):
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
         self._preview_metric_value = self._create_metric_card(metrics_layout, "Preview")
         header_layout.addLayout(metrics_layout, 2)
-        root_layout.addWidget(header)
+        root_layout.addWidget(self._header_frame)
 
         controls_layout = QHBoxLayout()
         controls_layout.setSpacing(16)
@@ -2018,8 +2033,43 @@ class ReleaseHistoryDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._release_history_metric_name = label_text
+        value._release_history_metric_label = label
+        value._release_history_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_metric_card_metadata(self, metric_value: QLabel) -> None:
+        metric_name = getattr(metric_value, "_release_history_metric_name", "Release")
+        metric_text = (metric_value.text() or "none").strip() or "none"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"Release history metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_release_history_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_release_history_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     def _count_label(self, count: int, singular: str, plural: str | None = None) -> str:
         value = max(int(count or 0), 0)
@@ -2173,20 +2223,13 @@ class ReleaseHistoryDialog(QDialog):
 
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
         _set_widget_metadata(
-            self._result_metric_value,
-            tooltip=result_summary,
-            accessible_name=f"Release history metric: Visible entries. {self._result_metric_value.text()}",
+            self._header_frame,
+            tooltip=f"Release history header. {dialog_summary}",
+            accessible_name=f"Release history header. {dialog_summary}",
         )
-        _set_widget_metadata(
-            self._selection_metric_value,
-            tooltip=selection_label,
-            accessible_name=f"Release history metric: Selection. {selection_label}",
-        )
-        _set_widget_metadata(
-            self._preview_metric_value,
-            tooltip=f"Preview mode {self._preview_mode}. Current preview: {preview_label_text}.",
-            accessible_name=f"Release history metric: Preview. {self._preview_metric_value.text()}",
-        )
+        self._update_metric_card_metadata(self._result_metric_value)
+        self._update_metric_card_metadata(self._selection_metric_value)
+        self._update_metric_card_metadata(self._preview_metric_value)
         _set_widget_metadata(
             self._history_file_value_label,
             tooltip=f"Release history file state: {history_state}. Current path: {self._history_path or 'none'}.",

@@ -829,6 +829,28 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
 
     assert "Release history: 1 of 1 entries." in dialog.accessibleName()
     assert "Preview mode: auto." in dialog.accessibleName()
+    assert dialog._header_frame.accessibleName() == (
+        "Release history header. Release history: 1 of 1 entries. Filters: range Any, status All, profile All, "
+        "artifact Any, diagnostics Any, sort Newest First, search none. Preview mode: auto. "
+        "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
+    assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
+    assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert dialog._result_metric_value.accessibleName() == "Release history metric: Visible. 1 / 1."
+    assert dialog._result_metric_value._release_history_metric_label.accessibleName() == "Visible metric label."
+    assert dialog._result_metric_value._release_history_metric_card.accessibleName() == "Visible metric: 1 / 1."
+    assert dialog._selection_metric_value.accessibleName() == (
+        "Release history metric: Selection. 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._selection_metric_value._release_history_metric_label.accessibleName() == "Selection metric label."
+    assert dialog._selection_metric_value._release_history_metric_card.accessibleName() == (
+        "Selection metric: 20260326T000000Z [windows-pc] success sdk sdk-good."
+    )
+    assert dialog._preview_metric_value.accessibleName() == "Release history metric: Preview. Auto | Manifest."
+    assert dialog._preview_metric_value._release_history_metric_label.accessibleName() == "Preview metric label."
+    assert dialog._preview_metric_value._release_history_metric_card.accessibleName() == "Preview metric: Auto | Manifest."
+    assert len(dialog.findChildren(QFrame, "release_history_metric_card")) == 3
     assert dialog._search_edit.toolTip() == (
         "Filter release history by build ID, message, SDK revision, or artifact path. Current search: none."
     )
@@ -912,6 +934,21 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     dialog._search_edit.setText("sdk-fail")
     qapp.processEvents()
 
+    assert dialog._header_frame.accessibleName() == (
+        "Release history header. Release history: 1 of 1 entries. Filters: range Any, status All, profile All, "
+        "artifact Any, diagnostics Any, sort Newest First, search sdk-fail. Preview mode: auto. "
+        "Current selection: 20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1."
+    )
+    assert dialog._result_metric_value.accessibleName() == "Release history metric: Visible. 1 / 1."
+    assert dialog._result_metric_value._release_history_metric_card.accessibleName() == "Visible metric: 1 / 1."
+    assert dialog._selection_metric_value.accessibleName() == (
+        "Release history metric: Selection. 20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1."
+    )
+    assert dialog._selection_metric_value._release_history_metric_card.accessibleName() == (
+        "Selection metric: 20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1."
+    )
+    assert dialog._preview_metric_value.accessibleName() == "Release history metric: Preview. Auto | Log."
+    assert dialog._preview_metric_value._release_history_metric_card.accessibleName() == "Preview metric: Auto | Log."
     assert dialog._result_count_label.toolTip() == (
         "Release history results: 1 of 1 entries. "
         "Current filters: range Any, status All, profile All, artifact Any, diagnostics Any, sort Newest First. "
