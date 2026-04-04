@@ -598,9 +598,9 @@ class ReleaseBuildDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("release_build_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("release_build_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -610,10 +610,20 @@ class ReleaseBuildDialog(QDialog):
 
         self._eyebrow_label = QLabel("Release Pipeline")
         self._eyebrow_label.setObjectName("release_build_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Release pipeline workspace.",
+            accessible_name="Release pipeline workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Prepare Release Build")
         self._title_label.setObjectName("release_build_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Release build title: Prepare Release Build.",
+            accessible_name="Release build title: Prepare Release Build.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -621,6 +631,11 @@ class ReleaseBuildDialog(QDialog):
         )
         self._subtitle_label.setObjectName("release_build_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -632,7 +647,7 @@ class ReleaseBuildDialog(QDialog):
         self._diagnostics_metric_value = self._create_metric_card(metrics_layout, "Diagnostics")
         self._package_metric_value = self._create_metric_card(metrics_layout, "Packaging")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
@@ -741,8 +756,43 @@ class ReleaseBuildDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._release_build_metric_name = label_text
+        value._release_build_metric_label = label
+        value._release_build_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_metric_card_metadata(self, metric_value: QLabel) -> None:
+        metric_name = getattr(metric_value, "_release_build_metric_name", "Release")
+        metric_text = (metric_value.text() or "none").strip() or "none"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"Release build metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_release_build_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_release_build_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     def _update_accessibility_summary(self) -> None:
         profile_text = self._profile_combo.currentText() or "none"
@@ -763,6 +813,11 @@ class ReleaseBuildDialog(QDialog):
             f"Create zip package {'on' if self._package_release.isChecked() else 'off'}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Release build header. {summary}",
+            accessible_name=f"Release build header. {summary}",
+        )
         _set_widget_metadata(
             self._profile_combo,
             tooltip=f"Choose the release profile. {release_context}",
@@ -818,21 +873,9 @@ class ReleaseBuildDialog(QDialog):
                 tooltip=f"Cancel the release build. {release_context}",
                 accessible_name="Cancel release build",
             )
-        _set_widget_metadata(
-            self._profile_metric_value,
-            tooltip=self._profile_metric_value.text(),
-            accessible_name=f"Release build metric: Profile. {self._profile_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._diagnostics_metric_value,
-            tooltip=self._diagnostics_metric_value.text(),
-            accessible_name=f"Release build metric: Diagnostics. {self._diagnostics_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._package_metric_value,
-            tooltip=self._package_metric_value.text(),
-            accessible_name=f"Release build metric: Packaging. {self._package_metric_value.text()}",
-        )
+        self._update_metric_card_metadata(self._profile_metric_value)
+        self._update_metric_card_metadata(self._diagnostics_metric_value)
+        self._update_metric_card_metadata(self._package_metric_value)
 
     @property
     def selected_profile_id(self) -> str:

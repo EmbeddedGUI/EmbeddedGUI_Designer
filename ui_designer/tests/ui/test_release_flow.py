@@ -12,7 +12,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QDialog
+    from PyQt5.QtWidgets import QApplication, QDialog, QFrame
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -576,6 +576,38 @@ def test_release_build_dialog_exposes_accessibility_metadata(qapp):
         "Diagnostics: 2 warning(s). Warnings as errors on. Create zip package off."
     )
     assert dialog._ok_button.accessibleName() == "Start release build: ESP32 (esp32)"
+
+
+@_skip_no_qt
+def test_release_build_header_exposes_pipeline_metadata(qapp):
+    from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+    from ui_designer.ui.release_dialogs import ReleaseBuildDialog
+
+    release_config = ReleaseConfig(
+        default_profile="windows-pc",
+        profiles=[
+            ReleaseProfile(id="windows-pc", name="Windows PC"),
+            ReleaseProfile(id="esp32", name="ESP32", port="esp32", make_target="release"),
+        ],
+    )
+
+    dialog = ReleaseBuildDialog(
+        release_config,
+        "SDK: ready",
+        "D:/workspace/output/ui_designer_release",
+        2,
+    )
+
+    assert dialog._header_frame.accessibleName().startswith("Release build header. Release build: profile Windows PC (windows-pc).")
+    assert dialog._eyebrow_label.accessibleName() == "Release pipeline workspace."
+    assert dialog._title_label.accessibleName() == "Release build title: Prepare Release Build."
+    assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert dialog._profile_metric_value.accessibleName() == "Release build metric: Profile. Windows PC (windows-pc)."
+    assert dialog._profile_metric_value._release_build_metric_label.accessibleName() == "Profile metric label."
+    assert dialog._profile_metric_value._release_build_metric_card.accessibleName() == "Profile metric: Windows PC (windows-pc)."
+    assert dialog._diagnostics_metric_value.accessibleName() == "Release build metric: Diagnostics. 2 warning(s)."
+    assert dialog._package_metric_value.accessibleName() == "Release build metric: Packaging. Zip + directory."
+    assert len(dialog.findChildren(QFrame, "release_build_metric_card")) == 3
 
 
 @_skip_no_qt
