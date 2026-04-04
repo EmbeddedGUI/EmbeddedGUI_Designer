@@ -611,6 +611,90 @@ def test_release_build_header_exposes_pipeline_metadata(qapp):
 
 
 @_skip_no_qt
+def test_release_build_header_hint_skips_no_op_rewrites(qapp, monkeypatch):
+    from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+    from ui_designer.ui.release_dialogs import ReleaseBuildDialog
+
+    release_config = ReleaseConfig(
+        default_profile="windows-pc",
+        profiles=[
+            ReleaseProfile(id="windows-pc", name="Windows PC"),
+            ReleaseProfile(id="esp32", name="ESP32", port="esp32", make_target="release"),
+        ],
+    )
+
+    dialog = ReleaseBuildDialog(
+        release_config,
+        "SDK: ready",
+        "D:/workspace/output/ui_designer_release",
+        2,
+    )
+    dialog._header_frame.setProperty("_release_dialog_hint_snapshot", None)
+
+    hint_calls = 0
+    original_set_tooltip = dialog._header_frame.setToolTip
+
+    def counted_set_tooltip(text):
+        nonlocal hint_calls
+        hint_calls += 1
+        return original_set_tooltip(text)
+
+    monkeypatch.setattr(dialog._header_frame, "setToolTip", counted_set_tooltip)
+
+    dialog._update_accessibility_summary()
+    assert hint_calls == 1
+
+    dialog._update_accessibility_summary()
+    assert hint_calls == 1
+
+    dialog._warnings_as_errors.setChecked(True)
+    assert hint_calls == 2
+    dialog.deleteLater()
+
+
+@_skip_no_qt
+def test_release_build_header_accessible_name_skips_no_op_rewrites(qapp, monkeypatch):
+    from ui_designer.model.release import ReleaseConfig, ReleaseProfile
+    from ui_designer.ui.release_dialogs import ReleaseBuildDialog
+
+    release_config = ReleaseConfig(
+        default_profile="windows-pc",
+        profiles=[
+            ReleaseProfile(id="windows-pc", name="Windows PC"),
+            ReleaseProfile(id="esp32", name="ESP32", port="esp32", make_target="release"),
+        ],
+    )
+
+    dialog = ReleaseBuildDialog(
+        release_config,
+        "SDK: ready",
+        "D:/workspace/output/ui_designer_release",
+        2,
+    )
+    dialog._header_frame.setProperty("_release_dialog_accessible_snapshot", None)
+
+    accessible_calls = 0
+    original_set_accessible_name = dialog._header_frame.setAccessibleName
+
+    def counted_set_accessible_name(text):
+        nonlocal accessible_calls
+        accessible_calls += 1
+        return original_set_accessible_name(text)
+
+    monkeypatch.setattr(dialog._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+    dialog._update_accessibility_summary()
+    assert accessible_calls == 1
+
+    dialog._update_accessibility_summary()
+    assert accessible_calls == 1
+
+    dialog._warnings_as_errors.setChecked(True)
+    assert accessible_calls == 2
+    dialog.deleteLater()
+
+
+@_skip_no_qt
 def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     from ui_designer.model.release import ReleaseConfig, ReleaseProfile
     from ui_designer.ui.release_dialogs import ReleaseProfilesDialog
