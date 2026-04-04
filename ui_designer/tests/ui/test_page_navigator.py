@@ -130,6 +130,58 @@ class TestPageNavigator:
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: 1 dirty page."
         navigator.deleteLater()
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+        navigator._header_frame.setProperty("_page_navigator_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = navigator._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(navigator._header_frame, "setToolTip", counted_set_tooltip)
+
+        navigator._update_accessibility_summary()
+        assert hint_calls == 1
+
+        navigator._update_accessibility_summary()
+        assert hint_calls == 1
+
+        navigator.set_pages({"main_page": object()})
+        assert hint_calls == 2
+        navigator.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+        navigator._header_frame.setProperty("_page_navigator_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = navigator._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(navigator._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        navigator._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        navigator._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        navigator.set_pages({"main_page": object()})
+        assert accessible_calls == 2
+        navigator.deleteLater()
+
     def test_page_thumbnail_context_menu_actions_expose_dynamic_hints(self, qapp):
         from ui_designer.ui.widgets.page_navigator import PageNavigator
 
