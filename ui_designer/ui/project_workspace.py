@@ -190,7 +190,11 @@ class ProjectWorkspacePanel(QWidget):
             f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
-        _set_widget_metadata(self._header, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header,
+            tooltip=f"Project workspace header. {summary}",
+            accessible_name=f"Project workspace header. {summary}",
+        )
         _set_widget_metadata(
             self._header_eyebrow,
             tooltip="Project navigation workspace surface.",

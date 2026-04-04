@@ -57,7 +57,7 @@ class TestProjectWorkspacePanel:
         assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Available."
         assert panel._stack.accessibleName() == "Project workspace view stack: List view visible."
         assert panel._stack.toolTip() == panel._stack.accessibleName()
-        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._header.accessibleName() == f"Project workspace header. {panel.accessibleName()}"
         assert panel._header.statusTip() == panel._header.toolTip()
         assert panel._title_label.toolTip() == panel.accessibleName()
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
@@ -81,7 +81,7 @@ class TestProjectWorkspacePanel:
         assert panel._thumb_btn.toolTip() == "Currently showing page thumbnails for a visual scan."
         assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Current view."
         assert panel._stack.accessibleName() == "Project workspace view stack: Thumbnails visible."
-        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._header.accessibleName() == f"Project workspace header. {panel.accessibleName()}"
         assert panel._title_label.accessibleName() == "Project Workspace. Thumbnails."
         assert panel.accessibleName() == (
             "Project workspace: Thumbnails. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
@@ -128,7 +128,7 @@ class TestProjectWorkspacePanel:
         assert panel._page_count_chip.text() == "3 pages"
         assert panel._dirty_chip.text() == "2 dirty pages"
         assert panel._metrics_frame.accessibleName() == "Project workspace metrics: 3 pages. 2 dirty pages."
-        assert panel._header.accessibleName() == panel.accessibleName()
+        assert panel._header.accessibleName() == f"Project workspace header. {panel.accessibleName()}"
         assert panel._title_label.accessibleName() == "Project Workspace. List view."
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 3 pages. Active page: main_page. Startup page: detail_page. Dirty state: 2 dirty pages."
@@ -199,7 +199,7 @@ class TestProjectWorkspacePanel:
 
         panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="main_page", dirty_pages=1)
         assert tooltip_calls == 1
-        assert panel._header.toolTip() == panel.accessibleName()
+        assert panel._header.toolTip() == f"Project workspace header. {panel.accessibleName()}"
         assert panel._header.statusTip() == panel._header.toolTip()
         panel.deleteLater()
 
