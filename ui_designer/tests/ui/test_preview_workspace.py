@@ -146,6 +146,58 @@ class TestPreviewPanelFallback:
         )
         _dispose_widget(panel)
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        panel._header_frame.setProperty("_preview_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel._update_accessibility_summary()
+        assert hint_calls == 1
+
+        panel._update_accessibility_summary()
+        assert hint_calls == 1
+
+        panel._update_status_label(12, 18, None)
+        assert hint_calls == 2
+        _dispose_widget(panel)
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        panel._header_frame.setProperty("_preview_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        panel._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        panel._update_status_label(12, 18, None)
+        assert accessible_calls == 2
+        _dispose_widget(panel)
+
     def test_runtime_failed_emits_after_repeated_frame_failures(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
 

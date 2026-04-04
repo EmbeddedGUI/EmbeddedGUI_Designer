@@ -60,10 +60,16 @@ def _snap_to_grid(value, grid_size):
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        hint = str(tooltip or "")
+        if str(widget.property("_preview_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_preview_hint_snapshot", hint)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        name = str(accessible_name or "")
+        if str(widget.property("_preview_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_preview_accessible_snapshot", name)
 
 
 _DEFAULT_UI_TOKENS = theme_tokens("dark")
