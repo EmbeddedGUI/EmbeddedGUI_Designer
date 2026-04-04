@@ -35,6 +35,17 @@ class TestDebugPanel:
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel._header_eyebrow.accessibleName() == "Runtime console workspace surface."
+        assert panel._header_frame.accessibleName() == "Debug output header. Debug output: 0 lines. Last message: No output yet."
+        assert panel._meta_label.text() == "No output yet. Compile, preview, and bridge logs will appear here."
+        assert panel._meta_label.accessibleName() == (
+            "Debug output summary: No output yet. Compile, preview, and bridge logs will appear here."
+        )
+        assert panel._line_count_chip.text() == "0 lines"
+        assert panel._line_count_chip.accessibleName() == "Debug output lines: 0 lines."
+        assert panel._stream_state_chip.text() == "Idle"
+        assert panel._stream_state_chip.accessibleName() == "Debug output state: Idle."
+        assert panel._controls_strip.accessibleName() == "Debug output actions. 0 lines."
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
         assert panel._clear_btn.statusTip() == panel._clear_btn.toolTip()
         assert panel._clear_btn.accessibleName() == "Clear debug output unavailable"
@@ -54,6 +65,9 @@ class TestDebugPanel:
         panel.append_text("Build started", "action")
         assert panel.accessibleName() == "Debug output: 1 line. Last message: Build started"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._meta_label.text() == "Showing 1 line. Last message: Build started."
+        assert panel._line_count_chip.text() == "1 line"
+        assert panel._stream_state_chip.text() == "Captured Output"
         assert panel._clear_btn.toolTip() == "Clear 1 line of debug output."
         assert panel._clear_btn.accessibleName() == "Clear debug output: 1 line"
         assert panel._output.toolTip() == "Debug output: 1 line. Last message: Build started"
@@ -61,9 +75,12 @@ class TestDebugPanel:
 
         panel.append_text("", "info")
         assert panel.accessibleName() == "Debug output: 2 lines. Last message: blank line"
+        assert panel._meta_label.text() == "Showing 2 lines. Last message: blank line."
+        assert panel._line_count_chip.text() == "2 lines"
         assert panel._clear_btn.toolTip() == "Clear 2 lines of debug output."
 
         panel.clear()
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
+        assert panel._stream_state_chip.text() == "Idle"
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
         panel.deleteLater()

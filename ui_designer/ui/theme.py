@@ -1490,6 +1490,66 @@ QListWidget#diagnostics_list {{
     padding: {t['space_xxs']}px;
 }}
 
+#debug_panel_header {{
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#debug_panel_header[panelTone="runtime"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.72 {t['panel_alt']},
+        stop: 1 {t['accent_soft']}
+    );
+    border-color: {t['border_strong']};
+}}
+
+#debug_panel_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#debug_panel_header_meta {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+#debug_panel_controls_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
+#debug_panel_controls_strip QPushButton {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+    color: {t['text_muted']};
+    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 34px;
+}}
+
+#debug_panel_controls_strip QPushButton:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+#debug_panel_controls_strip QPushButton:disabled {{
+    color: {t['text_soft']};
+    border-color: {t['border']};
+}}
+
+QPlainTextEdit#debug_output_surface {{
+    background-color: {t['canvas_stage']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_xl']}px;
+    padding: {t['space_xxs']}px;
+}}
+
 QTreeWidget#widget_tree_panel_tree {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};

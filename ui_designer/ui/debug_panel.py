@@ -4,6 +4,7 @@ import datetime
 
 from PyQt5.QtWidgets import (
     QWidget,
+    QFrame,
     QVBoxLayout,
     QHBoxLayout,
     QPlainTextEdit,
@@ -20,6 +21,7 @@ from .theme import theme_tokens
 _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
+_SPACE_MD = int(_TOKENS.get("space_md", 12))
 _ICON_SM = int(_TOKENS.get("icon_sm", 16))
 _ICON_MD = int(_TOKENS.get("icon_md", 18))
 
@@ -43,36 +45,69 @@ class DebugPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(_SPACE_XS)
 
-        # Toolbar
-        toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(_SPACE_XS, max(_SPACE_XS - 2, 0), _SPACE_XS, max(_SPACE_XS - 2, 0))
-        toolbar.setSpacing(_SPACE_XS)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("debug_panel_header")
+        self._header_frame.setProperty("panelTone", "runtime")
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout.setSpacing(_SPACE_SM)
 
-        title_icon = QLabel()
-        title_icon.setPixmap(make_icon("state.warn", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
-        toolbar.addWidget(title_icon)
+        self._header_eyebrow = QLabel("Runtime Console")
+        self._header_eyebrow.setObjectName("debug_panel_eyebrow")
+        header_layout.addWidget(self._header_eyebrow)
+
+        title_row = QHBoxLayout()
+        title_row.setContentsMargins(0, 0, 0, 0)
+        title_row.setSpacing(_SPACE_SM)
+
+        self._title_icon = QLabel()
+        self._title_icon.setPixmap(make_icon("state.warn", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
+        title_row.addWidget(self._title_icon)
 
         self._title_label = QLabel("Debug Output")
         self._title_label.setObjectName("workspace_section_title")
         self._title_label.setAccessibleName("Debug Output")
-        toolbar.addWidget(self._title_label)
+        title_row.addWidget(self._title_label)
+
+        title_row.addStretch(1)
+
+        self._line_count_chip = QLabel("0 lines")
+        self._line_count_chip.setObjectName("workspace_status_chip")
+        self._line_count_chip.setProperty("chipTone", "accent")
+        title_row.addWidget(self._line_count_chip, 0, Qt.AlignVCenter)
+
+        self._stream_state_chip = QLabel("Idle")
+        self._stream_state_chip.setObjectName("workspace_status_chip")
+        self._stream_state_chip.setProperty("chipTone", "success")
+        title_row.addWidget(self._stream_state_chip, 0, Qt.AlignVCenter)
+        header_layout.addLayout(title_row)
+
+        self._meta_label = QLabel("No output yet. Compile, preview, and bridge logs will appear here.")
+        self._meta_label.setObjectName("debug_panel_header_meta")
+        self._meta_label.setWordWrap(True)
+        header_layout.addWidget(self._meta_label)
+
+        self._controls_strip = QFrame()
+        self._controls_strip.setObjectName("debug_panel_controls_strip")
+        controls_layout = QHBoxLayout(self._controls_strip)
+        controls_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - 2, _SPACE_SM, _SPACE_SM - 2)
+        controls_layout.setSpacing(_SPACE_XS)
 
         self._clear_btn = QPushButton("Clear")
         self._clear_btn.setIcon(make_icon("toolbar.delete", size=_ICON_SM))
         self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
-        toolbar.addWidget(self._clear_btn)
+        controls_layout.addWidget(self._clear_btn)
+        controls_layout.addStretch(1)
+        header_layout.addWidget(self._controls_strip)
 
-        toolbar.addStretch()
-
-        toolbar_widget = QWidget()
-        toolbar_widget.setLayout(toolbar)
-        layout.addWidget(toolbar_widget)
+        layout.addWidget(self._header_frame)
 
         # Output text area
         self._output = QPlainTextEdit()
+        self._output.setObjectName("debug_output_surface")
         self._output.setReadOnly(True)
         self._output.setFont(QFont("Consolas", 9))
         self._output.setLineWrapMode(QPlainTextEdit.NoWrap)
@@ -101,11 +136,49 @@ class DebugPanel(QWidget):
         line_label = f"{line_count} line" if line_count == 1 else f"{line_count} lines"
         last_summary = str(last_message or "").strip() or "blank line"
         summary = f"Debug output: {line_label}. Last message: {last_summary}"
+        meta_text = (
+            "No output yet. Compile, preview, and bridge logs will appear here."
+            if line_count == 0
+            else f"Showing {line_label}. Last message: {last_summary}."
+        )
+        stream_state = "Idle" if line_count == 0 else "Captured Output"
+        self._line_count_chip.setText(line_label)
+        self._stream_state_chip.setText(stream_state)
+        self._stream_state_chip.setProperty("chipTone", "success" if line_count == 0 else "warning")
+        self._stream_state_chip.style().unpolish(self._stream_state_chip)
+        self._stream_state_chip.style().polish(self._stream_state_chip)
+        if self._meta_label.text() != meta_text:
+            self._meta_label.setText(meta_text)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=summary,
+            accessible_name=f"Debug output header. {summary}",
+        )
+        _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Runtime console workspace surface.",
+            accessible_name="Runtime console workspace surface.",
+        )
         _set_widget_metadata(
             self._title_label,
             tooltip=summary,
             accessible_name=f"Debug output title: {line_label}",
+        )
+        _set_widget_metadata(
+            self._meta_label,
+            tooltip=meta_text,
+            accessible_name=f"Debug output summary: {meta_text}",
+        )
+        _set_widget_metadata(
+            self._line_count_chip,
+            tooltip=f"Debug output lines: {line_label}.",
+            accessible_name=f"Debug output lines: {line_label}.",
+        )
+        _set_widget_metadata(
+            self._stream_state_chip,
+            tooltip=f"Debug output state: {stream_state}.",
+            accessible_name=f"Debug output state: {stream_state}.",
         )
         _set_widget_metadata(
             self._output,
@@ -122,6 +195,11 @@ class DebugPanel(QWidget):
             self._clear_btn,
             tooltip=clear_tooltip,
             accessible_name=clear_accessible_name,
+        )
+        _set_widget_metadata(
+            self._controls_strip,
+            tooltip=f"Debug output actions. {line_label}.",
+            accessible_name=f"Debug output actions. {line_label}.",
         )
 
     def _timestamp(self):
