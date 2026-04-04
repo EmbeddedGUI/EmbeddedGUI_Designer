@@ -76,9 +76,15 @@ class HistoryPanel(QWidget):
         layout.addWidget(self._history_list, 1)
 
     def _set_label_metadata(self, widget, *, tooltip, accessible_name):
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
-        widget.setAccessibleName(accessible_name)
+        hint = str(tooltip or "")
+        if str(widget.property("_history_panel_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_history_panel_hint_snapshot", hint)
+        name = str(accessible_name or "")
+        if str(widget.property("_history_panel_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_history_panel_accessible_snapshot", name)
 
     def _current_entry_label(self, entries):
         for entry in entries or []:

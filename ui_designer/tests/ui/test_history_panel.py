@@ -87,3 +87,79 @@ class TestHistoryPanel:
         assert panel._history_list.item(0).data(Qt.AccessibleTextRole) == "History entry 2. Current. xml edit"
         assert panel._history_list.item(1).data(Qt.AccessibleTextRole) == "History entry 1. Saved. Saved state"
         panel.deleteLater()
+
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.history_panel import HistoryPanel
+
+        panel = HistoryPanel()
+        panel._header_frame.setProperty("_history_panel_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel._update_accessibility_summary(
+            page_name="-",
+            entry_count=0,
+            dirty=False,
+            dirty_source="Saved state",
+            current_entry="none",
+        )
+        assert hint_calls == 1
+
+        panel._update_accessibility_summary(
+            page_name="-",
+            entry_count=0,
+            dirty=False,
+            dirty_source="Saved state",
+            current_entry="none",
+        )
+        assert hint_calls == 1
+
+        panel.set_history("main_page", [{"index": 0, "label": "xml edit", "is_current": True}], dirty=True, dirty_source="xml edit", can_undo=True)
+        assert hint_calls == 2
+        panel.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.history_panel import HistoryPanel
+
+        panel = HistoryPanel()
+        panel._header_frame.setProperty("_history_panel_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel._update_accessibility_summary(
+            page_name="-",
+            entry_count=0,
+            dirty=False,
+            dirty_source="Saved state",
+            current_entry="none",
+        )
+        assert accessible_calls == 1
+
+        panel._update_accessibility_summary(
+            page_name="-",
+            entry_count=0,
+            dirty=False,
+            dirty_source="Saved state",
+            current_entry="none",
+        )
+        assert accessible_calls == 1
+
+        panel.set_history("main_page", [{"index": 0, "label": "xml edit", "is_current": True}], dirty=True, dirty_source="xml edit", can_undo=True)
+        assert accessible_calls == 2
+        panel.deleteLater()
