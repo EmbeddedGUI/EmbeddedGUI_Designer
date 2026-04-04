@@ -103,6 +103,13 @@ class TestWidgetTreePanel:
         panel.set_project(project)
 
         assert panel._header_eyebrow.accessibleName() == "Structure navigation workspace surface."
+        assert panel._header_frame.accessibleName() == (
+            "Widget tree header. Widget tree: 2 widgets. 0 selected widgets. Current widget: none. "
+            "Filter: none. Status: All widgets. Position: none. "
+            f"{panel.structure_hint_label.text()}"
+        )
+        assert panel._title_label.accessibleName() == "Widget tree title: Structure."
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._tree_count_chip.text() == "2 widgets"
         assert panel._tree_count_chip.accessibleName() == "Widget count: 2 widgets."
         assert panel._selection_summary_chip.text() == "No selection"
@@ -115,6 +122,12 @@ class TestWidgetTreePanel:
         panel.filter_edit.setText("leaf")
         qapp.processEvents()
 
+        assert panel._header_frame.accessibleName() == (
+            "Widget tree header. Widget tree: 2 widgets. 1 selected widget. Current widget: leaf. "
+            "Filter: leaf. Status: 1 match. Position: 1/1. "
+            f"{panel.structure_hint_label.text()}"
+        )
+        assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._selection_summary_chip.text() == "1 selected - leaf"
         assert panel._selection_summary_chip.accessibleName() == "Selection summary: 1 selected - leaf."
         assert panel._filter_summary_chip.text() == "1 match"

@@ -2761,6 +2761,22 @@ class WidgetTreePanel(QWidget):
         tree_summary = f"Widget tree: {widget_count}. {selected_count}. Current widget: {current_widget}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Widget tree header. {summary}",
+            accessible_name=f"Widget tree header. {summary}",
+        )
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Widget tree title: Structure.",
+            accessible_name="Widget tree title: Structure.",
+        )
+        if hasattr(self, "_header_meta_label"):
+            _set_widget_metadata(
+                self._header_meta_label,
+                tooltip=self._header_meta_label.text(),
+                accessible_name=self._header_meta_label.text(),
+            )
+        _set_widget_metadata(
             self.structure_hint_label,
             tooltip=structure_hint,
             accessible_name=structure_hint,
