@@ -492,6 +492,18 @@ class TestStatusCenterPanel:
             "Status Center summary: Workspace checks are pending. Focus on Configure SDK. "
             "Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
+        assert panel._header_eyebrow.text() == "Workspace Signals"
+        assert panel._header_eyebrow.toolTip() == "Workspace health command surface."
+        assert panel._header_eyebrow.accessibleName() == "Workspace health command surface."
+        assert panel._header_focus_chip.text() == "Focus: Workspace"
+        assert panel._header_focus_chip.property("chipTone") == "warning"
+        assert panel._header_focus_chip.accessibleName() == "Status center focus: Workspace."
+        assert panel._recent_actions_chip.text() == "0 recent actions"
+        assert panel._recent_actions_chip.property("chipTone") == "success"
+        assert panel._recent_actions_chip.accessibleName() == "Recent actions tracked: 0 recent actions."
+        assert panel._header_metrics_frame.accessibleName() == (
+            "Status center header metrics: Focus: Workspace. 0 recent actions."
+        )
         assert panel._health_title.text() == "Diagnostic Mix"
         assert panel._health_title.accessibleName() == "Diagnostic mix title: No active diagnostics."
         assert panel._runtime_title.text() == "Runtime"
@@ -657,6 +669,8 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, diagnostics_errors=1)
         assert panel._header_title.text() == "Status Center (Diagnostics)"
         assert panel._header_subtitle.text() == "Action needed now. Focus on Fix First Error (1)."
+        assert panel._header_focus_chip.text() == "Focus: Diagnostics"
+        assert panel._header_focus_chip.property("chipTone") == "danger"
         assert panel._suggested_action_label.text() == "Suggested next step (Diagnostics):"
         assert panel._suggested_action_label.isHidden() is True
         assert panel._suggested_action_button.text() == "Fix First Error (1)"
@@ -715,6 +729,8 @@ class TestStatusCenterPanel:
         panel.set_status(sdk_ready=True, can_compile=True, dirty_pages=2)
         assert panel._header_title.text() == "Status Center (History)"
         assert panel._header_subtitle.text() == "Work is in progress. Focus on Review History (2)."
+        assert panel._header_focus_chip.text() == "Focus: History"
+        assert panel._header_focus_chip.property("chipTone") == "warning"
         assert panel._suggested_action_label.text() == "Suggested next step (History):"
         assert panel._suggested_action_button.text() == "Review History (2)"
         assert panel._history_btn.text() == "History (2 dirty)"
@@ -807,6 +823,9 @@ class TestStatusCenterPanel:
             "open_history",
         ]
         assert panel._repeat_action_button.text() == "Repeat History"
+        assert panel._recent_actions_chip.text() == "3 recent actions"
+        assert panel._recent_actions_chip.property("chipTone") == "accent"
+        assert panel._recent_actions_chip.accessibleName() == "Recent actions tracked: 3 recent actions."
         panel.deleteLater()
 
     def test_health_chip_emits_contextual_diagnostic_actions(self, qapp):

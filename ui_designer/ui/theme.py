@@ -2472,7 +2472,30 @@ QPushButton#widget_browser_insert_button:pressed {{
     color: {t['warning']};
 }}
 
-#status_center_header,
+#status_center_header[panelTone="status"] {{
+    background-color: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 {t['panel_raised']},
+        stop: 0.7 {t['panel_alt']},
+        stop: 1 {t['selection_soft']}
+    );
+    border: 1px solid transparent;
+    border-color: {t['border_strong']};
+    border-radius: {t['r_xl']}px;
+}}
+
+#status_center_eyebrow {{
+    color: {t['accent_hover']};
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
+#status_center_header_metrics_strip {{
+    background-color: {t['panel_soft']};
+    border: 1px solid {t['border']};
+    border-radius: {t['r_md']}px;
+}}
+
 #status_center_health,
 #status_center_runtime {{
     background-color: {t['panel_alt']};

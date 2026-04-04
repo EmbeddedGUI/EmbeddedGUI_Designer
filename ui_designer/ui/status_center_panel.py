@@ -91,6 +91,8 @@ class StatusCenterPanel(QWidget):
         self._suggested_action_key = "open_diagnostics"
         self._status_snapshot = None
         self._status_snapshot_initialized = False
+        self._header_focus_context = "Workspace"
+        self._header_focus_chip_tone = "warning"
         self._init_ui()
         self._set_last_action("", [])
         self.set_status()
@@ -100,11 +102,18 @@ class StatusCenterPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(_SPACE_SM)
 
-        header = QFrame()
-        header.setObjectName("status_center_header")
-        header_layout = QVBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("status_center_header")
+        self._header_frame.setProperty("panelTone", "status")
+        header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(6)
+
+        self._header_eyebrow = QLabel("Workspace Signals")
+        self._header_eyebrow.setObjectName("status_center_eyebrow")
+        self._set_hint(self._header_eyebrow, "Workspace health command surface.")
+        self._set_accessible_name(self._header_eyebrow, "Workspace health command surface.")
+        header_layout.addWidget(self._header_eyebrow)
 
         header_title_row = QHBoxLayout()
         header_title_row.setContentsMargins(0, 0, 0, 0)
@@ -129,6 +138,21 @@ class StatusCenterPanel(QWidget):
         self._header_subtitle.setWordWrap(True)
         self._header_subtitle.setAccessibleName("Status Center summary")
         header_layout.addWidget(self._header_subtitle)
+        self._header_metrics_frame = QFrame()
+        self._header_metrics_frame.setObjectName("status_center_header_metrics_strip")
+        header_metrics_layout = QHBoxLayout(self._header_metrics_frame)
+        header_metrics_layout.setContentsMargins(8, _SPACE_XS, 8, _SPACE_XS)
+        header_metrics_layout.setSpacing(_SPACE_XS)
+        self._header_focus_chip = QLabel("Focus: Workspace")
+        self._header_focus_chip.setObjectName("workspace_status_chip")
+        self._header_focus_chip.setProperty("chipTone", "warning")
+        header_metrics_layout.addWidget(self._header_focus_chip)
+        self._recent_actions_chip = QLabel("0 recent actions")
+        self._recent_actions_chip.setObjectName("workspace_status_chip")
+        self._recent_actions_chip.setProperty("chipTone", "success")
+        header_metrics_layout.addWidget(self._recent_actions_chip)
+        header_metrics_layout.addStretch(1)
+        header_layout.addWidget(self._header_metrics_frame)
         self._workspace_summary_label = QLabel(
             "Workspace: SDK missing, compile unavailable, Preview idle, no dirty pages, no widgets selected."
         )
@@ -136,7 +160,7 @@ class StatusCenterPanel(QWidget):
         self._workspace_summary_label.setWordWrap(True)
         self._workspace_summary_label.setAccessibleName("Workspace summary")
         header_layout.addWidget(self._workspace_summary_label)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         metrics = QFrame()
         metrics.setObjectName("status_center_metrics")
@@ -981,6 +1005,60 @@ class StatusCenterPanel(QWidget):
         status = str(workspace_chip_label or "").strip() or "Ready"
         return f"Status Center title: {context}. Current status: {status}."
 
+    def _header_focus_text(self, suggested_context):
+        context = str(suggested_context or "").strip() or "Workspace"
+        return f"Focus: {context}"
+
+    def _header_focus_accessible_name(self, suggested_context):
+        context = str(suggested_context or "").strip() or "Workspace"
+        return f"Status center focus: {context}."
+
+    def _recent_actions_chip_text(self):
+        count = len(self._recent_actions)
+        noun = "recent action" if count == 1 else "recent actions"
+        return f"{count} {noun}"
+
+    def _recent_actions_chip_accessible_name(self):
+        return f"Recent actions tracked: {self._recent_actions_chip_text()}."
+
+    def _header_metrics_accessible_name(self, suggested_context):
+        return (
+            f"Status center header metrics: {self._header_focus_text(suggested_context)}. "
+            f"{self._recent_actions_chip_text()}."
+        )
+
+    def _header_focus_chip_tone_for_rank(self, focus_rank):
+        rank = max(int(focus_rank or 0), 0)
+        if rank >= 4:
+            return "danger"
+        if rank >= 2:
+            return "warning"
+        return "accent"
+
+    def _update_header_metrics_state(self, suggested_context=None, focus_rank=None):
+        if suggested_context is not None:
+            context = str(suggested_context or "").strip() or "Workspace"
+            self._header_focus_context = context
+        else:
+            context = self._header_focus_context
+        if focus_rank is not None:
+            self._header_focus_chip_tone = self._header_focus_chip_tone_for_rank(focus_rank)
+
+        focus_text = self._header_focus_text(context)
+        self._set_chip_text(self._header_focus_chip, focus_text, self._header_focus_chip_tone)
+        self._set_hint(self._header_focus_chip, self._header_focus_accessible_name(context))
+        self._set_accessible_name(self._header_focus_chip, self._header_focus_accessible_name(context))
+
+        recent_actions_text = self._recent_actions_chip_text()
+        recent_actions_tone = "accent" if self._recent_actions else "success"
+        self._set_chip_text(self._recent_actions_chip, recent_actions_text, recent_actions_tone)
+        self._set_hint(self._recent_actions_chip, self._recent_actions_chip_accessible_name())
+        self._set_accessible_name(self._recent_actions_chip, self._recent_actions_chip_accessible_name())
+
+        metrics_summary = self._header_metrics_accessible_name(context)
+        self._set_hint(self._header_metrics_frame, metrics_summary)
+        self._set_accessible_name(self._header_metrics_frame, metrics_summary)
+
     def _workspace_chip_accessible_name(self, workspace_chip_label, suggested_label, suggested_hint):
         status = str(workspace_chip_label or "").strip() or "Ready"
         label = str(suggested_label or "").strip() or "Open Diagnostics"
@@ -1207,6 +1285,7 @@ class StatusCenterPanel(QWidget):
         )
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
         self._set_accessible_name(self._repeat_action_button, self._repeat_action_accessible_name(action_label))
+        self._update_header_metrics_state()
         self._refresh_repeat_action_menu()
 
     def _repeat_last_action(self):
@@ -1533,6 +1612,7 @@ class StatusCenterPanel(QWidget):
         )
         self._set_hint(self._workspace_chip, f"{workspace_chip_label}. {suggested_hint}")
         self._set_widget_visible(self._workspace_chip, workspace_chip_label != "Ready")
+        self._update_header_metrics_state(suggested_context, focus_rank)
 
         # UIX-007: default hide non-critical sections to reduce status center noise.
         is_anomaly_state = focus_rank >= 4

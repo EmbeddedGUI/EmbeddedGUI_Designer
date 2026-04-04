@@ -65,6 +65,22 @@ def test_status_center_styles_reduce_resting_container_weight():
         assert "border: 1px solid transparent;" in metric_card
 
 
+def test_status_center_header_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split('#status_center_header[panelTone="status"] {', 1)[1].split("}", 1)[0]
+        eyebrow = css.split("#status_center_eyebrow {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#status_center_header_metrics_strip {", 1)[1].split("}", 1)[0]
+
+        assert t["selection_soft"] in header
+        assert f"border-color: {t['border_strong']};" in header
+        assert f"color: {t['accent_hover']};" in eyebrow
+        assert f"background-color: {t['panel_soft']};" in metrics
+        assert f"border-radius: {t['r_md']}px;" in metrics
+
+
 def test_tokens_include_xxs_spacing_for_all_themes():
     for mode in ("light", "dark"):
         tokens = theme_tokens(mode)
