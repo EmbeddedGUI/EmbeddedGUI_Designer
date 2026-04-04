@@ -1828,9 +1828,11 @@ class ResourcePanel(QWidget):
             action.triggered.connect(lambda checked=False, source_button=buttons[key]: source_button.click())
             actions[key] = action
         button.setMenu(menu)
-        button.setToolTip(f"Open more {resource_type} actions.")
-        button.setStatusTip(button.toolTip())
-        button.setAccessibleName(f"More {resource_type} actions")
+        _set_widget_metadata(
+            button,
+            tooltip=f"Open more {resource_type} actions.",
+            accessible_name=f"More {resource_type} actions",
+        )
         self._resource_more_menus[resource_type] = {"button": button, "actions": actions}
         return button
 
@@ -1855,11 +1857,11 @@ class ResourcePanel(QWidget):
         button.setEnabled(enabled_count > 0 or bool(self._resource_dir))
         if button.isEnabled():
             tooltip = f"Open more {resource_type} actions."
+            accessible_name = f"More {resource_type} actions"
         else:
             tooltip = f"Save or open a project first to manage {resource_type} resources."
-        button.setToolTip(tooltip)
-        button.setStatusTip(tooltip)
-        button.setAccessibleName(f"More {resource_type} actions")
+            accessible_name = f"More {resource_type} actions unavailable"
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
     def _active_panel_tab_label(self):
         if not hasattr(self, "_tabs"):

@@ -70,6 +70,72 @@ class TestResourcePanelFileFlow:
         assert len(header.findChildren(QFrame, "resource_panel_metric_card")) == 3
         panel.deleteLater()
 
+    def test_more_button_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+        button = panel._resource_more_menus["image"]["button"]
+        source_buttons = panel._resource_action_buttons["image"]
+        for key in ("restore", "replace", "next_missing"):
+            source_buttons[key].setEnabled(False)
+        button.setProperty("_resource_panel_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = button.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(button, "setToolTip", counted_set_tooltip)
+
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 1
+        assert button.toolTip() == "Save or open a project first to manage image resources."
+
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 1
+
+        source_buttons["restore"].setEnabled(True)
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 2
+        assert button.toolTip() == "Open more image actions."
+        panel.deleteLater()
+
+    def test_more_button_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+        button = panel._resource_more_menus["image"]["button"]
+        source_buttons = panel._resource_action_buttons["image"]
+        for key in ("restore", "replace", "next_missing"):
+            source_buttons[key].setEnabled(False)
+        button.setProperty("_resource_panel_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = button.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(button, "setAccessibleName", counted_set_accessible_name)
+
+        panel._sync_resource_more_menu("image")
+        assert accessible_calls == 1
+        assert button.accessibleName() == "More image actions unavailable"
+
+        panel._sync_resource_more_menu("image")
+        assert accessible_calls == 1
+
+        source_buttons["restore"].setEnabled(True)
+        panel._sync_resource_more_menu("image")
+        assert accessible_calls == 2
+        assert button.accessibleName() == "More image actions"
+        panel.deleteLater()
+
     def test_import_image_warns_before_opening_dialog_when_resource_dir_missing(self, qapp, monkeypatch):
         from ui_designer.ui.resource_panel import ResourcePanel
 
