@@ -166,9 +166,9 @@ class AppSelectorDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("app_selector_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("app_selector_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -178,11 +178,21 @@ class AppSelectorDialog(QDialog):
 
         self._eyebrow_label = QLabel("Example Browser")
         self._eyebrow_label.setObjectName("app_selector_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="SDK example browser workspace.",
+            accessible_name="SDK example browser workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Open EmbeddedGUI SDK Example")
         self._title_label.setFont(QFont("Segoe UI", 26, QFont.Light))
         self._title_label.setObjectName("app_selector_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="SDK example browser title: Open EmbeddedGUI SDK Example.",
+            accessible_name="SDK example browser title: Open EmbeddedGUI SDK Example.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -190,6 +200,11 @@ class AppSelectorDialog(QDialog):
         )
         self._subtitle_label.setObjectName("app_selector_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -201,7 +216,7 @@ class AppSelectorDialog(QDialog):
         self._results_metric_value = self._create_header_metric(metrics_layout, "Visible Examples")
         self._selection_metric_value = self._create_header_metric(metrics_layout, "Action")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
@@ -391,8 +406,43 @@ class AppSelectorDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._app_selector_metric_name = label_text
+        value._app_selector_metric_label = label
+        value._app_selector_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_header_metric_metadata(self, metric_value):
+        metric_name = getattr(metric_value, "_app_selector_metric_name", "SDK")
+        metric_text = (metric_value.text() or "none").strip() or "none"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"App selector metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_app_selector_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_app_selector_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     def _create_entry_row(self, entry, label):
         path_text = entry["project_path"] if entry["has_project"] else entry["app_dir"]
@@ -655,6 +705,11 @@ class AppSelectorDialog(QDialog):
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"SDK example header. {summary}",
+            accessible_name=f"SDK example header. {summary}",
+        )
+        _set_widget_metadata(
             self._root_edit,
             tooltip=f"EmbeddedGUI SDK root: {root_value}",
             accessible_name=f"EmbeddedGUI SDK root: {root_value}",
@@ -679,21 +734,9 @@ class AppSelectorDialog(QDialog):
             tooltip=self._selection_hint_label.text(),
             accessible_name=f"Selection hint: {self._selection_hint_label.text()}",
         )
-        _set_widget_metadata(
-            self._root_metric_value,
-            tooltip=self._root_metric_value.text(),
-            accessible_name=f"App selector metric: SDK status. {self._root_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._results_metric_value,
-            tooltip=self._results_metric_value.text(),
-            accessible_name=f"App selector metric: Visible examples. {self._results_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._selection_metric_value,
-            tooltip=self._selection_metric_value.text(),
-            accessible_name=f"App selector metric: Action. {self._selection_metric_value.text()}",
-        )
+        self._update_header_metric_metadata(self._root_metric_value)
+        self._update_header_metric_metadata(self._results_metric_value)
+        self._update_header_metric_metadata(self._selection_metric_value)
         legacy_hint = (
             "Showing legacy SDK examples that do not yet have Designer project files."
             if self._show_legacy.isChecked()

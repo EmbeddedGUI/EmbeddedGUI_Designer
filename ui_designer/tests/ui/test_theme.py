@@ -282,6 +282,24 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in tree
 
 
+def test_app_selector_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("#app_selector_header {", 1)[1].split("}", 1)[0]
+        card = css.split("#app_selector_root_card,", 1)[1].split("}", 1)[0]
+        metric_card = css.split("#app_selector_metric_card {", 1)[1].split("}", 1)[0]
+
+        assert t["panel_raised"] in header
+        assert t["accent_soft"] in header
+        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"background-color: {t['panel_raised']};" in card
+        assert f"border-radius: {t['r_xl']}px;" in card
+        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert f"border-radius: {t['r_md']}px;" in metric_card
+
+
 def test_widget_browser_styles_use_engineering_panel_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QLabel, QWidget
+    from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -68,6 +68,37 @@ def _mark_bundled_sdk(root):
 
 @_skip_no_qt
 class TestAppSelectorDialog:
+    def test_header_exposes_sdk_example_workspace_metadata(self, qapp, isolated_config):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        isolated_config.sdk_root = ""
+        isolated_config.egui_root = ""
+        dialog = AppSelectorDialog(egui_root="")
+
+        assert dialog._header_frame.accessibleName() == (
+            "SDK example header. Open SDK Example dialog: SDK root none. Search none. "
+            "Legacy examples off. Examples list: 1 entry. Selection: none."
+        )
+        assert dialog._eyebrow_label.accessibleName() == "SDK example browser workspace."
+        assert dialog._title_label.accessibleName() == "SDK example browser title: Open EmbeddedGUI SDK Example."
+        assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._root_metric_value.accessibleName() == (
+            f"App selector metric: SDK Status. {dialog._root_metric_value.text()}."
+        )
+        assert dialog._root_metric_value.toolTip() == f"SDK Status: {dialog._root_metric_value.text()}."
+        assert dialog._root_metric_value._app_selector_metric_label.accessibleName() == "SDK Status metric label."
+        assert dialog._root_metric_value._app_selector_metric_card.accessibleName() == (
+            f"SDK Status metric: {dialog._root_metric_value.text()}."
+        )
+        assert dialog._results_metric_value.accessibleName() == (
+            f"App selector metric: Visible Examples. {dialog._results_metric_value.text()}."
+        )
+        assert dialog._selection_metric_value.accessibleName() == (
+            f"App selector metric: Action. {dialog._selection_metric_value.text()}."
+        )
+        assert len(dialog.findChildren(QFrame, "app_selector_metric_card")) == 3
+        dialog.deleteLater()
+
     def test_exposes_accessibility_metadata_when_sdk_root_is_missing(self, qapp, isolated_config):
         from ui_designer.ui.app_selector import AppSelectorDialog
 
