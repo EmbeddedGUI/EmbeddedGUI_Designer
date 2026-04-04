@@ -590,6 +590,62 @@ class TestNewProjectDialog:
         )
         dialog.deleteLater()
 
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
+            dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
+        dialog._header_frame.setProperty("_new_project_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = dialog._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setToolTip", counted_set_tooltip)
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert hint_calls == 1
+
+        dialog._app_name_edit.setText("DemoApp")
+        assert hint_calls == 2
+        dialog.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
+            dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
+        dialog._header_frame.setProperty("_new_project_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = dialog._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(dialog._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        dialog._app_name_edit.setText("DemoApp")
+        assert accessible_calls == 2
+        dialog.deleteLater()
+
     def test_create_button_reports_missing_fields_and_invalid_name(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.new_project_dialog import NewProjectDialog
 

@@ -27,10 +27,16 @@ from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_configu
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
-        widget.setToolTip(tooltip)
-        widget.setStatusTip(tooltip)
+        hint = str(tooltip or "")
+        if str(widget.property("_new_project_hint_snapshot") or "") != hint:
+            widget.setToolTip(hint)
+            widget.setStatusTip(hint)
+            widget.setProperty("_new_project_hint_snapshot", hint)
     if accessible_name is not None:
-        widget.setAccessibleName(accessible_name)
+        name = str(accessible_name or "")
+        if str(widget.property("_new_project_accessible_snapshot") or "") != name:
+            widget.setAccessibleName(name)
+            widget.setProperty("_new_project_accessible_snapshot", name)
 
 
 def _set_label_hint_tone(widget, tone):
