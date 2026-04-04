@@ -261,6 +261,27 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in preview
 
 
+def test_resource_dialog_styles_use_engineering_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        header = css.split("#resource_dialog_header {", 1)[1].split("}", 1)[0]
+        card = css.split("#resource_dialog_card {", 1)[1].split("}", 1)[0]
+        metric_card = css.split("#resource_dialog_metric_card {", 1)[1].split("}", 1)[0]
+        table = css.split("QTableWidget#resource_dialog_table {", 1)[1].split("}", 1)[0]
+
+        assert t["panel_raised"] in header
+        assert t["accent_soft"] in header
+        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"background-color: {t['panel_raised']};" in card
+        assert f"border-radius: {t['r_xl']}px;" in card
+        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert f"border-radius: {t['r_md']}px;" in metric_card
+        assert f"background-color: {t['panel_alt']};" in table
+        assert f"border-radius: {t['r_md']}px;" in table
+
+
 def test_project_dock_styles_use_engineering_surface_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)

@@ -111,8 +111,44 @@ def _create_dialog_metric_card(layout, label_text):
     value.setWordWrap(True)
     card_layout.addWidget(value)
 
+    value._resource_dialog_metric_name = label_text
+    value._resource_dialog_metric_label = label
+    value._resource_dialog_metric_card = card
+    _set_widget_metadata(
+        label,
+        tooltip=f"{label_text} metric label.",
+        accessible_name=f"{label_text} metric label.",
+    )
     layout.addWidget(card)
     return value
+
+
+def _update_dialog_metric_metadata(metric_value):
+    metric_name = getattr(metric_value, "_resource_dialog_metric_name", "Resource")
+    metric_text = (metric_value.text() or "none").strip() or "none"
+    summary = f"{metric_name}: {metric_text}."
+
+    _set_widget_metadata(
+        metric_value,
+        tooltip=summary,
+        accessible_name=f"Resource dialog metric: {metric_name}. {metric_text}.",
+    )
+
+    label = getattr(metric_value, "_resource_dialog_metric_label", None)
+    if label is not None:
+        _set_widget_metadata(
+            label,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric label.",
+        )
+
+    card = getattr(metric_value, "_resource_dialog_metric_card", None)
+    if card is not None:
+        _set_widget_metadata(
+            card,
+            tooltip=summary,
+            accessible_name=f"{metric_name} metric: {metric_text}.",
+        )
 
 
 def _prepare_dialog_table(table):
@@ -480,9 +516,9 @@ class _MissingResourceReplaceDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("resource_dialog_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -492,10 +528,20 @@ class _MissingResourceReplaceDialog(QDialog):
 
         self._eyebrow_label = QLabel("Resource Recovery")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Resource recovery workspace.",
+            accessible_name="Resource recovery workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Replace Missing Resources")
         self._title_label.setObjectName("resource_dialog_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Resource replacement title: Replace Missing Resources.",
+            accessible_name="Resource replacement title: Replace Missing Resources.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -503,6 +549,11 @@ class _MissingResourceReplaceDialog(QDialog):
         )
         self._subtitle_label.setObjectName("resource_dialog_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -514,7 +565,7 @@ class _MissingResourceReplaceDialog(QDialog):
         self._candidate_metric_value = _create_dialog_metric_card(metrics_layout, "Candidates")
         self._selected_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         content_card = QFrame()
         content_card.setObjectName("resource_dialog_card")
@@ -606,6 +657,14 @@ class _MissingResourceReplaceDialog(QDialog):
         )
 
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Resource dialog header. {summary}",
+            accessible_name=f"Resource dialog header. {summary}",
+        )
+        _update_dialog_metric_metadata(self._missing_metric_value)
+        _update_dialog_metric_metadata(self._candidate_metric_value)
+        _update_dialog_metric_metadata(self._selected_metric_value)
         _set_widget_metadata(
             self._caption,
             tooltip=self._caption.text(),
@@ -703,9 +762,9 @@ class _ReferenceImpactDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("resource_dialog_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -715,10 +774,20 @@ class _ReferenceImpactDialog(QDialog):
 
         self._eyebrow_label = QLabel("Impact Review")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Resource impact workspace.",
+            accessible_name="Resource impact workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel(title or "Review Reference Impact")
         self._title_label.setObjectName("resource_dialog_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=f"Reference impact title: {self._title_label.text()}.",
+            accessible_name=f"Reference impact title: {self._title_label.text()}.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -726,6 +795,11 @@ class _ReferenceImpactDialog(QDialog):
         )
         self._subtitle_label.setObjectName("resource_dialog_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -737,7 +811,7 @@ class _ReferenceImpactDialog(QDialog):
         self._selection_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
         self._action_metric_value = _create_dialog_metric_card(metrics_layout, "Action")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         content_card = QFrame()
         content_card.setObjectName("resource_dialog_card")
@@ -821,6 +895,14 @@ class _ReferenceImpactDialog(QDialog):
         self._action_metric_value.setText(self._ok_button.text() if self._ok_button is not None else "Continue")
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Resource dialog header. {summary}",
+            accessible_name=f"Resource dialog header. {summary}",
+        )
+        _update_dialog_metric_metadata(self._usage_metric_value)
+        _update_dialog_metric_metadata(self._selection_metric_value)
+        _update_dialog_metric_metadata(self._action_metric_value)
+        _set_widget_metadata(
             self._summary_label,
             tooltip=self._summary_label.text(),
             accessible_name=f"Reference impact summary: {self._summary_label.text()}",
@@ -874,9 +956,9 @@ class _BatchReplaceImpactDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("resource_dialog_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -886,10 +968,20 @@ class _BatchReplaceImpactDialog(QDialog):
 
         self._eyebrow_label = QLabel("Batch Rename Impact")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Batch rename impact workspace.",
+            accessible_name="Batch rename impact workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel(title or "Review Batch Replace Impact")
         self._title_label.setObjectName("resource_dialog_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=f"Batch replace impact title: {self._title_label.text()}.",
+            accessible_name=f"Batch replace impact title: {self._title_label.text()}.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -897,6 +989,11 @@ class _BatchReplaceImpactDialog(QDialog):
         )
         self._subtitle_label.setObjectName("resource_dialog_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -908,7 +1005,7 @@ class _BatchReplaceImpactDialog(QDialog):
         self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Usages")
         self._filter_metric_value = _create_dialog_metric_card(metrics_layout, "Page Filter")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         summary_card = QFrame()
         summary_card.setObjectName("resource_dialog_card")
@@ -1043,6 +1140,14 @@ class _BatchReplaceImpactDialog(QDialog):
         self._usage_metric_value.setText(_count_label(total_usage_count, "usage"))
         self._filter_metric_value.setText("Current page only" if self._filter_to_current_page() else "All pages")
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Resource dialog header. {dialog_summary}",
+            accessible_name=f"Resource dialog header. {dialog_summary}",
+        )
+        _update_dialog_metric_metadata(self._rename_metric_value)
+        _update_dialog_metric_metadata(self._usage_metric_value)
+        _update_dialog_metric_metadata(self._filter_metric_value)
         _set_widget_metadata(
             self._summary_label,
             tooltip=self._summary_label.text(),

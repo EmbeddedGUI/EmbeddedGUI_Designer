@@ -993,6 +993,23 @@ class TestResourcePanelFileFlow:
         assert "2 missing resources." in dialog.accessibleName()
         assert "2 candidate files available." in dialog.accessibleName()
         assert "1 replacement selected." in dialog.accessibleName()
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Replace missing resources: 2 missing resources. "
+            "2 candidate files available. 1 replacement selected."
+        )
+        assert dialog._eyebrow_label.accessibleName() == "Resource recovery workspace."
+        assert dialog._title_label.accessibleName() == "Resource replacement title: Replace Missing Resources."
+        assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._missing_metric_value.accessibleName() == "Resource dialog metric: Missing. 2 resources."
+        assert dialog._missing_metric_value._resource_dialog_metric_label.accessibleName() == "Missing metric label."
+        assert dialog._missing_metric_value._resource_dialog_metric_card.accessibleName() == "Missing metric: 2 resources."
+        assert dialog._candidate_metric_value.accessibleName() == "Resource dialog metric: Candidates. 2 files."
+        assert dialog._candidate_metric_value._resource_dialog_metric_label.accessibleName() == "Candidates metric label."
+        assert dialog._candidate_metric_value._resource_dialog_metric_card.accessibleName() == "Candidates metric: 2 files."
+        assert dialog._selected_metric_value.accessibleName() == "Resource dialog metric: Selection. 1 replacement."
+        assert dialog._selected_metric_value._resource_dialog_metric_label.accessibleName() == "Selection metric label."
+        assert dialog._selected_metric_value._resource_dialog_metric_card.accessibleName() == "Selection metric: 1 replacement."
+        assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
         assert dialog._table.accessibleName() == "Missing resource replacement table: 2 rows. 1 replacement selected."
         assert first_combo.toolTip() == "Choose replacement file for missing.png. Current selection: missing.png."
         assert second_combo.toolTip() == "Choose replacement file for icon.png. Current selection: (Skip)."
@@ -1003,6 +1020,16 @@ class TestResourcePanelFileFlow:
         qapp.processEvents()
 
         assert "1 duplicate replacement file selected." in dialog.accessibleName()
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Replace missing resources: 2 missing resources. "
+            "2 candidate files available. 2 replacements selected. 1 duplicate replacement file selected."
+        )
+        assert dialog._selected_metric_value.accessibleName() == (
+            "Resource dialog metric: Selection. 2 replacements | 1 duplicate."
+        )
+        assert dialog._selected_metric_value._resource_dialog_metric_card.accessibleName() == (
+            "Selection metric: 2 replacements | 1 duplicate."
+        )
         assert dialog._ok_button.toolTip() == "Resolve duplicate replacement files before continuing."
         assert dialog._ok_button.accessibleName() == "Confirm replacement files unavailable"
         dialog.deleteLater()
@@ -1025,6 +1052,24 @@ class TestResourcePanelFileFlow:
         )
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
+        )
+        assert dialog._eyebrow_label.accessibleName() == "Resource impact workspace."
+        assert dialog._title_label.accessibleName() == "Reference impact title: Delete Resource."
+        assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._usage_metric_value.accessibleName() == "Resource dialog metric: Affected Usages. 2 usages."
+        assert dialog._usage_metric_value._resource_dialog_metric_label.accessibleName() == "Affected Usages metric label."
+        assert dialog._usage_metric_value._resource_dialog_metric_card.accessibleName() == "Affected Usages metric: 2 usages."
+        assert dialog._selection_metric_value.accessibleName() == (
+            "Resource dialog metric: Selection. main_page/hero (image)."
+        )
+        assert dialog._selection_metric_value._resource_dialog_metric_card.accessibleName() == (
+            "Selection metric: main_page/hero (image)."
+        )
+        assert dialog._action_metric_value.accessibleName() == "Resource dialog metric: Action. Delete."
+        assert dialog._action_metric_value._resource_dialog_metric_card.accessibleName() == "Action metric: Delete."
+        assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
         assert dialog._summary_label.accessibleName() == (
             "Reference impact summary: This action updates 2 widget references."
         )
@@ -1044,6 +1089,12 @@ class TestResourcePanelFileFlow:
         qapp.processEvents()
 
         assert dialog.accessibleName() == "Delete Resource: 2 affected usages. Current selection: detail_page/title (label)."
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Delete Resource: 2 affected usages. Current selection: detail_page/title (label)."
+        )
+        assert dialog._selection_metric_value.accessibleName() == (
+            "Resource dialog metric: Selection. detail_page/title (label)."
+        )
         dialog.deleteLater()
 
     def test_batch_replace_impact_dialog_exposes_accessibility_metadata(self, qapp):
@@ -1083,6 +1134,22 @@ class TestResourcePanelFileFlow:
 
         assert "2 visible rename impacts." in dialog.accessibleName()
         assert "Current rename: missing_a.png -> renamed_a.png." in dialog.accessibleName()
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Replace Missing Resources: 2 visible rename impacts. 2 visible usages shown. "
+            "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
+            "Current usage: main_page/hero_main (image) [image_file]."
+        )
+        assert dialog._eyebrow_label.accessibleName() == "Batch rename impact workspace."
+        assert dialog._title_label.accessibleName() == "Batch replace impact title: Replace Missing Resources."
+        assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._rename_metric_value.accessibleName() == "Resource dialog metric: Visible Renames. 2 renames."
+        assert dialog._rename_metric_value._resource_dialog_metric_label.accessibleName() == "Visible Renames metric label."
+        assert dialog._rename_metric_value._resource_dialog_metric_card.accessibleName() == "Visible Renames metric: 2 renames."
+        assert dialog._usage_metric_value.accessibleName() == "Resource dialog metric: Visible Usages. 2 usages."
+        assert dialog._usage_metric_value._resource_dialog_metric_card.accessibleName() == "Visible Usages metric: 2 usages."
+        assert dialog._filter_metric_value.accessibleName() == "Resource dialog metric: Page Filter. All pages."
+        assert dialog._filter_metric_value._resource_dialog_metric_card.accessibleName() == "Page Filter metric: All pages."
+        assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
         assert dialog._current_page_only.toolTip() == "Filter impacts to the current page: detail_page."
         assert dialog._impact_table.accessibleName() == (
             "Rename impact table: 2 rows. Current selection: missing_a.png -> renamed_a.png."
@@ -1105,11 +1172,20 @@ class TestResourcePanelFileFlow:
         qapp.processEvents()
 
         assert dialog._current_page_only.toolTip() == "Showing only impacts on the current page: detail_page."
+        assert dialog._header_frame.accessibleName() == (
+            "Resource dialog header. Replace Missing Resources: 1 visible rename impact. 1 visible usage shown. "
+            "Current page only: on. Current rename: missing_b.png -> renamed_b.png. "
+            "Current usage: detail_page/hero_detail (image) [image_file]."
+        )
         assert dialog._impact_table.accessibleName() == (
             "Rename impact table: 1 row. Current selection: missing_b.png -> renamed_b.png."
         )
         assert dialog._usage_table.accessibleName() == (
             "Affected usages table: 1 row. Current selection: detail_page/hero_detail (image) [image_file]."
+        )
+        assert dialog._filter_metric_value.accessibleName() == "Resource dialog metric: Page Filter. Current page only."
+        assert dialog._filter_metric_value._resource_dialog_metric_card.accessibleName() == (
+            "Page Filter metric: Current page only."
         )
         dialog.deleteLater()
 
