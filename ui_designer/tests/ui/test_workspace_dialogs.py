@@ -892,6 +892,86 @@ class TestWelcomePage:
         )
         page.deleteLater()
 
+    def test_hero_hint_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
+
+        page = WelcomePage()
+        page._hero.setProperty("_welcome_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = page._hero.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(page._hero, "setToolTip", counted_set_tooltip)
+
+        page._update_accessibility_summary()
+        assert hint_calls == 1
+
+        page._update_accessibility_summary()
+        assert hint_calls == 1
+
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir()
+        project_path.write_text("")
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": str(sdk_root),
+                "display_name": "DemoApp",
+            }
+        ]
+        page._refresh_recent_list()
+        assert hint_calls == 2
+        page.deleteLater()
+
+    def test_hero_accessible_name_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.welcome_page import WelcomePage
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
+
+        page = WelcomePage()
+        page._hero.setProperty("_welcome_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = page._hero.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(page._hero, "setAccessibleName", counted_set_accessible_name)
+
+        page._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        page._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        project_path = tmp_path / "DemoApp" / "DemoApp.egui"
+        project_path.parent.mkdir()
+        project_path.write_text("")
+        isolated_config.recent_projects = [
+            {
+                "project_path": str(project_path),
+                "sdk_root": str(sdk_root),
+                "display_name": "DemoApp",
+            }
+        ]
+        page._refresh_recent_list()
+        assert accessible_calls == 2
+        page.deleteLater()
+
     def test_recent_project_item_exposes_accessibility_summary(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.welcome_page import WelcomePage
 
