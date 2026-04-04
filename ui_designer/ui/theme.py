@@ -141,9 +141,9 @@ _TOKENS = {
         "selection": "#2B5F98",
         "selection_soft": "#1B2E46",
         "r_sm": 4,
-        "r_md": 8,
+        "r_md": 6,
         "r_lg": 8,
-        "r_xl": 10,
+        "r_xl": 8,
         "r_2xl": 12,
         "r_3xl": 14,
         "space_xxs": 4,
@@ -153,17 +153,17 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 8,
-        "pad_btn_h": 12,
-        "pad_input_v": 8,
-        "pad_input_h": 12,
-        "h_tab_min": 30,
+        "pad_btn_v": 6,
+        "pad_btn_h": 10,
+        "pad_input_v": 6,
+        "pad_input_h": 10,
+        "h_tab_min": 28,
         "fs_display": 24,
-        "fs_h1": 18,
-        "fs_h2": 16,
-        "fs_panel_title": 14,
-        "fs_body": 14,
-        "fs_body_sm": 13,
+        "fs_h1": 17,
+        "fs_h2": 15,
+        "fs_panel_title": 13,
+        "fs_body": 13,
+        "fs_body_sm": 12,
         "fs_caption": 12,
         "fs_micro": 11,
         "fw_regular": 400,
@@ -203,9 +203,9 @@ _TOKENS = {
         "selection": "#D8E7F9",
         "selection_soft": "#EDF4FD",
         "r_sm": 4,
-        "r_md": 8,
+        "r_md": 6,
         "r_lg": 8,
-        "r_xl": 10,
+        "r_xl": 8,
         "r_2xl": 12,
         "r_3xl": 14,
         "space_xxs": 4,
@@ -215,17 +215,17 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 8,
-        "pad_btn_h": 12,
-        "pad_input_v": 8,
-        "pad_input_h": 12,
-        "h_tab_min": 30,
+        "pad_btn_v": 6,
+        "pad_btn_h": 10,
+        "pad_input_v": 6,
+        "pad_input_h": 10,
+        "h_tab_min": 28,
         "fs_display": 24,
-        "fs_h1": 18,
-        "fs_h2": 16,
-        "fs_panel_title": 14,
-        "fs_body": 14,
-        "fs_body_sm": 13,
+        "fs_h1": 17,
+        "fs_h2": 15,
+        "fs_panel_title": 13,
+        "fs_body": 13,
+        "fs_body_sm": 12,
         "fs_caption": 12,
         "fs_micro": 11,
         "fw_regular": 400,
@@ -629,12 +629,7 @@ QWidget#property_panel_root {{
 }}
 
 QFrame#property_panel_overview {{
-    background-color: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {t['panel_raised']},
-        stop: 0.74 {t['panel_alt']},
-        stop: 1 {t['selection_soft']}
-    );
+    background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
@@ -703,13 +698,8 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_command_bar {{
-    background-color: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {t['panel_raised']},
-        stop: 0.72 {t['panel_alt']},
-        stop: 1 {t['accent_soft']}
-    );
-    border: 1px solid {t['border_strong']};
+    background-color: {t['panel_raised']};
+    border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
 
@@ -1215,12 +1205,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #resource_panel_header {{
-    background-color: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {t['panel_raised']},
-        stop: 0.72 {t['panel_alt']},
-        stop: 1 {t['accent_soft']}
-    );
+    background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}
@@ -1299,12 +1284,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 }}
 
 #project_dock_header {{
-    background-color: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 1,
-        stop: 0 {t['panel_raised']},
-        stop: 0.72 {t['panel_alt']},
-        stop: 1 {t['accent_soft']}
-    );
+    background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
     border-radius: {t['r_xl']}px;
 }}

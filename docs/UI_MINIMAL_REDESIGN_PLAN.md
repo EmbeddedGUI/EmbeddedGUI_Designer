@@ -12,7 +12,7 @@
 
 ## 当前阶段（Phase 1）
 
-### 已完成（本次提交）
+### 已完成（Phase 1 + Phase 2 首批）
 
 1. `project_dock.py`
    - 移除 `New Page` 按钮图标，仅保留文字。
@@ -27,6 +27,12 @@
 3. `typography.py`
    - 补充注释，明确“IDE 风格紧凑层级”的目标。
    - 新增 `status` 角色，为状态文本提供统一入口。
+
+4. `theme.py`（Phase 2 首批）
+   - 收紧全局 token：按钮/输入 padding 下调，Tab 最小高度下调。
+   - 收敛字体层级：`h1/h2/panel_title/body/body_sm` 统一下调 1px。
+   - 收敛圆角：`r_md/r_xl` 从偏展示型改为工具型尺度。
+   - 去除 `project/resource/property/workspace command` 等关键区块渐变，改为纯色面板。
 
 ---
 
