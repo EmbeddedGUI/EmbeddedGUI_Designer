@@ -904,9 +904,9 @@ class ReleaseProfilesDialog(QDialog):
         root_layout.setContentsMargins(24, 24, 24, 24)
         root_layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("release_profiles_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("release_profiles_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -916,10 +916,20 @@ class ReleaseProfilesDialog(QDialog):
 
         self._eyebrow_label = QLabel("Release Configuration")
         self._eyebrow_label.setObjectName("release_profiles_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Release configuration workspace.",
+            accessible_name="Release configuration workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Manage Release Profiles")
         self._title_label.setObjectName("release_profiles_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Release profiles title: Manage Release Profiles.",
+            accessible_name="Release profiles title: Manage Release Profiles.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -927,6 +937,11 @@ class ReleaseProfilesDialog(QDialog):
         )
         self._subtitle_label.setObjectName("release_profiles_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -938,7 +953,7 @@ class ReleaseProfilesDialog(QDialog):
         self._default_metric_value = self._create_metric_card(metrics_layout, "Default")
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
         header_layout.addLayout(metrics_layout, 2)
-        root_layout.addWidget(header)
+        root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
@@ -1091,8 +1106,43 @@ class ReleaseProfilesDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._release_profiles_metric_name = label_text
+        value._release_profiles_metric_label = label
+        value._release_profiles_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_metric_card_metadata(self, metric_value: QLabel) -> None:
+        metric_name = getattr(metric_value, "_release_profiles_metric_name", "Release")
+        metric_text = (metric_value.text() or "none").strip() or "none"
+        summary = f"{metric_name}: {metric_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=summary,
+            accessible_name=f"Release profiles metric: {metric_name}. {metric_text}.",
+        )
+
+        label = getattr(metric_value, "_release_profiles_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_release_profiles_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {metric_text}.",
+            )
 
     @property
     def release_config(self) -> ReleaseConfig:
@@ -1214,6 +1264,11 @@ class ReleaseProfilesDialog(QDialog):
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"Release profiles header. {summary}",
+            accessible_name=f"Release profiles header. {summary}",
+        )
+        _set_widget_metadata(
             self._profile_list,
             tooltip=f"Release profile list: {_count_label(self._profile_list.count(), 'entry', 'entries')}. Current profile: {current_profile_label}.",
             accessible_name=f"Release profile list: {_count_label(self._profile_list.count(), 'entry', 'entries')}. Current profile: {current_profile_label}.",
@@ -1302,21 +1357,9 @@ class ReleaseProfilesDialog(QDialog):
                 tooltip=f"Discard the release profile changes. {summary}",
                 accessible_name="Cancel release profile changes",
             )
-        _set_widget_metadata(
-            self._profile_count_metric_value,
-            tooltip=self._profile_count_metric_value.text(),
-            accessible_name=f"Release profiles metric: Profiles. {self._profile_count_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._default_metric_value,
-            tooltip=self._default_metric_value.text(),
-            accessible_name=f"Release profiles metric: Default. {self._default_metric_value.text()}",
-        )
-        _set_widget_metadata(
-            self._selection_metric_value,
-            tooltip=self._selection_metric_value.text(),
-            accessible_name=f"Release profiles metric: Selection. {self._selection_metric_value.text()}",
-        )
+        self._update_metric_card_metadata(self._profile_count_metric_value)
+        self._update_metric_card_metadata(self._default_metric_value)
+        self._update_metric_card_metadata(self._selection_metric_value)
 
     def _add_profile(self) -> None:
         base = "windows-pc"

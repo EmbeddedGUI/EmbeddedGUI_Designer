@@ -628,6 +628,27 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog.accessibleName() == (
         "Release profiles: 2 profiles. Default profile: windows-pc. Current profile: Windows PC [windows-pc] default."
     )
+    assert dialog._header_frame.accessibleName() == (
+        "Release profiles header. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: Windows PC [windows-pc] default."
+    )
+    assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
+    assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
+    assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert dialog._profile_count_metric_value.accessibleName() == "Release profiles metric: Profiles. 2 profiles."
+    assert dialog._profile_count_metric_value._release_profiles_metric_label.accessibleName() == "Profiles metric label."
+    assert dialog._profile_count_metric_value._release_profiles_metric_card.accessibleName() == "Profiles metric: 2 profiles."
+    assert dialog._default_metric_value.accessibleName() == "Release profiles metric: Default. windows-pc."
+    assert dialog._default_metric_value._release_profiles_metric_label.accessibleName() == "Default metric label."
+    assert dialog._default_metric_value._release_profiles_metric_card.accessibleName() == "Default metric: windows-pc."
+    assert dialog._selection_metric_value.accessibleName() == (
+        "Release profiles metric: Selection. Windows PC [windows-pc] default."
+    )
+    assert dialog._selection_metric_value._release_profiles_metric_label.accessibleName() == "Selection metric label."
+    assert dialog._selection_metric_value._release_profiles_metric_card.accessibleName() == (
+        "Selection metric: Windows PC [windows-pc] default."
+    )
+    assert len(dialog.findChildren(QFrame, "release_profiles_metric_card")) == 3
     assert dialog._profile_list.accessibleName() == (
         "Release profile list: 2 entries. Current profile: Windows PC [windows-pc] default."
     )
@@ -670,6 +691,10 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
         "Save the release profile changes. Release profiles: 2 profiles. Default profile: windows-pc. "
         "Current profile: ESP32 [esp32]."
     )
+    assert dialog._header_frame.accessibleName() == (
+        "Release profiles header. Release profiles: 2 profiles. Default profile: windows-pc. "
+        "Current profile: ESP32 [esp32]."
+    )
     assert dialog._name_edit.toolTip() == "Release profile name: ESP32. Current profile: ESP32 [esp32]."
     assert dialog._package_format_combo.toolTip() == "Release package format: Directory + Zip. Current profile: ESP32 [esp32]."
     assert dialog._set_default_btn.toolTip() == (
@@ -678,6 +703,8 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog._set_default_btn.accessibleName() == "Set default release profile"
     assert dialog._name_edit.accessibleName() == "Release profile name: ESP32"
     assert dialog._package_format_combo.accessibleName() == "Release package format: Directory + Zip"
+    assert dialog._selection_metric_value.accessibleName() == "Release profiles metric: Selection. ESP32 [esp32]."
+    assert dialog._selection_metric_value._release_profiles_metric_card.accessibleName() == "Selection metric: ESP32 [esp32]."
 
 
 @_skip_no_qt
