@@ -101,6 +101,14 @@ def _set_item_metadata(item, tooltip):
     item.setData(Qt.AccessibleTextRole, hint)
 
 
+def _set_action_metadata(action, tooltip):
+    hint = str(tooltip or "").strip()
+    if str(action.property("_resource_panel_hint_snapshot") or "") != hint:
+        action.setToolTip(hint)
+        action.setStatusTip(hint)
+        action.setProperty("_resource_panel_hint_snapshot", hint)
+
+
 def _create_dialog_metric_card(layout, label_text):
     card = QFrame()
     card.setObjectName("resource_dialog_metric_card")
@@ -1849,8 +1857,7 @@ class ResourcePanel(QWidget):
                 continue
             action.setEnabled(source_button.isEnabled())
             tooltip = source_button.toolTip() or source_button.statusTip() or ""
-            action.setToolTip(tooltip)
-            action.setStatusTip(tooltip)
+            _set_action_metadata(action, tooltip)
             if source_button.isEnabled():
                 enabled_count += 1
         button = spec["button"]

@@ -136,6 +136,37 @@ class TestResourcePanelFileFlow:
         assert button.accessibleName() == "More image actions"
         panel.deleteLater()
 
+    def test_more_menu_action_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+        action = panel._resource_more_menus["image"]["actions"]["restore"]
+        source_button = panel._resource_action_buttons["image"]["restore"]
+        action.setProperty("_resource_panel_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = action.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(action, "setToolTip", counted_set_tooltip)
+
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 1
+
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 1
+
+        source_button.setToolTip("Restore missing image resources. 1 missing image resource.")
+        source_button.setStatusTip(source_button.toolTip())
+        panel._sync_resource_more_menu("image")
+        assert hint_calls == 2
+        assert action.toolTip() == "Restore missing image resources. 1 missing image resource."
+        panel.deleteLater()
+
     def test_import_image_warns_before_opening_dialog_when_resource_dir_missing(self, qapp, monkeypatch):
         from ui_designer.ui.resource_panel import ResourcePanel
 
