@@ -274,10 +274,16 @@ class DiagnosticsPanel(QWidget):
 
     def _set_widget_metadata(self, widget, *, tooltip=None, accessible_name=None):
         if tooltip is not None:
-            widget.setToolTip(tooltip)
-            widget.setStatusTip(tooltip)
+            hint = str(tooltip or "")
+            if str(widget.property("_diagnostics_hint_snapshot") or "") != hint:
+                widget.setToolTip(hint)
+                widget.setStatusTip(hint)
+                widget.setProperty("_diagnostics_hint_snapshot", hint)
         if accessible_name is not None:
-            widget.setAccessibleName(accessible_name)
+            name = str(accessible_name or "")
+            if str(widget.property("_diagnostics_accessible_snapshot") or "") != name:
+                widget.setAccessibleName(name)
+                widget.setProperty("_diagnostics_accessible_snapshot", name)
 
     def _count_label(self, count, singular, plural=None):
         value = max(int(count or 0), 0)

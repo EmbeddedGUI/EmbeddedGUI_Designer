@@ -172,3 +172,55 @@ class TestDiagnosticsPanel:
         assert panel._export_json_button.accessibleName() == "Export diagnostics JSON unavailable"
         assert panel._list.toolTip() == "Diagnostics list: 0 visible items. Severity filter: Info."
         panel.deleteLater()
+
+    def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.diagnostics_panel import DiagnosticsPanel
+
+        panel = DiagnosticsPanel()
+        panel._header_frame.setProperty("_diagnostics_hint_snapshot", None)
+
+        hint_calls = 0
+        original_set_tooltip = panel._header_frame.setToolTip
+
+        def counted_set_tooltip(text):
+            nonlocal hint_calls
+            hint_calls += 1
+            return original_set_tooltip(text)
+
+        monkeypatch.setattr(panel._header_frame, "setToolTip", counted_set_tooltip)
+
+        panel._update_accessibility_summary()
+        assert hint_calls == 1
+
+        panel._update_accessibility_summary()
+        assert hint_calls == 1
+
+        panel.set_entries(_sample_entries())
+        assert hint_calls == 2
+        panel.deleteLater()
+
+    def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
+        from ui_designer.ui.diagnostics_panel import DiagnosticsPanel
+
+        panel = DiagnosticsPanel()
+        panel._header_frame.setProperty("_diagnostics_accessible_snapshot", None)
+
+        accessible_calls = 0
+        original_set_accessible_name = panel._header_frame.setAccessibleName
+
+        def counted_set_accessible_name(text):
+            nonlocal accessible_calls
+            accessible_calls += 1
+            return original_set_accessible_name(text)
+
+        monkeypatch.setattr(panel._header_frame, "setAccessibleName", counted_set_accessible_name)
+
+        panel._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        panel._update_accessibility_summary()
+        assert accessible_calls == 1
+
+        panel.set_entries(_sample_entries())
+        assert accessible_calls == 2
+        panel.deleteLater()
