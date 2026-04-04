@@ -75,9 +75,9 @@ class NewProjectDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        header = QFrame()
-        header.setObjectName("new_project_header")
-        header_layout = QHBoxLayout(header)
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("new_project_header")
+        header_layout = QHBoxLayout(self._header_frame)
         header_layout.setContentsMargins(24, 22, 24, 22)
         header_layout.setSpacing(24)
 
@@ -87,11 +87,21 @@ class NewProjectDialog(QDialog):
 
         self._eyebrow_label = QLabel("Project Scaffold")
         self._eyebrow_label.setObjectName("new_project_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="New project scaffold workspace.",
+            accessible_name="New project scaffold workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Create EmbeddedGUI App")
         self._title_label.setFont(QFont("Segoe UI", 26, QFont.Light))
         self._title_label.setObjectName("new_project_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="New project dialog title: Create EmbeddedGUI App.",
+            accessible_name="New project dialog title: Create EmbeddedGUI App.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -99,6 +109,11 @@ class NewProjectDialog(QDialog):
         )
         self._subtitle_label.setObjectName("new_project_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
@@ -110,7 +125,7 @@ class NewProjectDialog(QDialog):
         self._location_metric_value = self._create_header_metric(metrics_layout, "Parent Directory")
         self._canvas_metric_value = self._create_header_metric(metrics_layout, "Canvas")
         header_layout.addLayout(metrics_layout, 2)
-        layout.addWidget(header)
+        layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
         content_layout.setSpacing(16)
@@ -311,8 +326,43 @@ class NewProjectDialog(QDialog):
         value.setWordWrap(True)
         card_layout.addWidget(value)
 
+        value._new_project_metric_name = label_text
+        value._new_project_metric_label = label
+        value._new_project_metric_card = card
+        _set_widget_metadata(
+            label,
+            tooltip=f"{label_text} metric label.",
+            accessible_name=f"{label_text} metric label.",
+        )
         layout.addWidget(card)
         return value
+
+    def _update_header_metric_metadata(self, metric_value, metric_text, *, tooltip_text=None):
+        metric_name = getattr(metric_value, "_new_project_metric_name", "Project")
+        normalized_text = str(metric_text or "none").strip() or "none"
+        summary = f"{metric_name}: {normalized_text}."
+
+        _set_widget_metadata(
+            metric_value,
+            tooltip=tooltip_text or summary,
+            accessible_name=f"New project metric: {metric_name}. {normalized_text}.",
+        )
+
+        label = getattr(metric_value, "_new_project_metric_label", None)
+        if label is not None:
+            _set_widget_metadata(
+                label,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric label.",
+            )
+
+        card = getattr(metric_value, "_new_project_metric_card", None)
+        if card is not None:
+            _set_widget_metadata(
+                card,
+                tooltip=summary,
+                accessible_name=f"{metric_name} metric: {normalized_text}.",
+            )
 
     def _create_dimension_editor(self, label_text, spin_box):
         card = QFrame()
@@ -478,6 +528,11 @@ class NewProjectDialog(QDialog):
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
+            self._header_frame,
+            tooltip=f"New project header. {summary}",
+            accessible_name=f"New project header. {summary}",
+        )
+        _set_widget_metadata(
             self._sdk_edit,
             tooltip=f"SDK root: {sdk_root}",
             accessible_name=f"SDK root: {sdk_root}",
@@ -507,21 +562,13 @@ class NewProjectDialog(QDialog):
             tooltip=f"Project height: {self.screen_height}",
             accessible_name=f"Project height: {self.screen_height}",
         )
-        _set_widget_metadata(
-            self._sdk_metric_value,
-            tooltip=self._sdk_metric_value.text(),
-            accessible_name=f"New project metric: Preview mode. {self._sdk_metric_value.text()}",
-        )
-        _set_widget_metadata(
+        self._update_header_metric_metadata(self._sdk_metric_value, mode_text)
+        self._update_header_metric_metadata(
             self._location_metric_value,
-            tooltip=self._parent_dir or "No parent directory selected.",
-            accessible_name=f"New project metric: Parent directory. {parent_dir}",
+            parent_dir,
+            tooltip_text=self._parent_dir or "No parent directory selected.",
         )
-        _set_widget_metadata(
-            self._canvas_metric_value,
-            tooltip=self._canvas_metric_value.text(),
-            accessible_name=f"New project metric: Canvas. {self._canvas_metric_value.text()}",
-        )
+        self._update_header_metric_metadata(self._canvas_metric_value, canvas_text)
         _set_widget_metadata(
             self._target_value_label,
             tooltip=target_path,

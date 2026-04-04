@@ -456,6 +456,37 @@ class TestAppSelectorDialog:
 
 @_skip_no_qt
 class TestNewProjectDialog:
+    def test_header_exposes_new_project_workspace_metadata(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.new_project_dialog import NewProjectDialog
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
+            dialog = NewProjectDialog(sdk_root="", default_parent_dir=str(tmp_path))
+
+        normalized_parent = os.path.normpath(os.path.abspath(tmp_path))
+        assert dialog._header_frame.accessibleName() == (
+            f"New project header. New Project dialog: SDK root none. Parent directory {normalized_parent}. "
+            "App name none. Size 240 by 320."
+        )
+        assert dialog._eyebrow_label.accessibleName() == "New project scaffold workspace."
+        assert dialog._title_label.accessibleName() == "New project dialog title: Create EmbeddedGUI App."
+        assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._sdk_metric_value.accessibleName() == (
+            f"New project metric: Preview Mode. {dialog._sdk_metric_value.text()}."
+        )
+        assert dialog._sdk_metric_value._new_project_metric_label.accessibleName() == "Preview Mode metric label."
+        assert dialog._sdk_metric_value._new_project_metric_card.accessibleName() == (
+            f"Preview Mode metric: {dialog._sdk_metric_value.text()}."
+        )
+        assert dialog._location_metric_value.accessibleName() == (
+            f"New project metric: Parent Directory. {normalized_parent}."
+        )
+        assert dialog._canvas_metric_value.accessibleName() == (
+            f"New project metric: Canvas. {dialog._canvas_metric_value.text()}."
+        )
+        assert len(dialog.findChildren(QFrame, "new_project_metric_card")) == 3
+        dialog.deleteLater()
+
     def test_exposes_accessibility_metadata_and_updates_with_form_values(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.new_project_dialog import NewProjectDialog
 
