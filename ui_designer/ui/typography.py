@@ -12,6 +12,7 @@ from .theme import theme_tokens
 
 # Role → (fs_key, fw_key) into theme_tokens()
 _TYPO_ROLES = {
+    # Keep hierarchy compact and IDE-like: fewer strong levels, more readable defaults.
     "display": ("fs_display", "fw_semibold"),
     "heading": ("fs_h1", "fw_semibold"),
     "section": ("fs_h2", "fw_medium"),
@@ -19,6 +20,7 @@ _TYPO_ROLES = {
     "body": ("fs_body", "fw_regular"),
     "meta": ("fs_body_sm", "fw_regular"),
     "caption": ("fs_caption", "fw_regular"),
+    "status": ("fs_body_sm", "fw_regular"),
 }
 
 # Control baseline map (UIX-002): make common control text rhythm explicit.

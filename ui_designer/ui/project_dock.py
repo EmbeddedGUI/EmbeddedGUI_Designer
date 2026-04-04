@@ -19,8 +19,6 @@ from PyQt5.QtWidgets import (
     QPushButton, QComboBox, QGroupBox, QFrame,
 )
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon
-from .iconography import make_icon
 
 # Page names that collide with egui internal module names.
 # A page named "test" generates egui_test_init() which conflicts with
@@ -159,16 +157,7 @@ class ProjectExplorerDock(QDockWidget):
         hero_copy.setContentsMargins(0, 0, 0, 0)
         hero_copy.setSpacing(4)
 
-        self._eyebrow_label = QLabel("Project Topology")
-        self._eyebrow_label.setObjectName("project_dock_eyebrow")
-        _set_widget_metadata(
-            self._eyebrow_label,
-            tooltip="Project topology workspace.",
-            accessible_name="Project topology workspace.",
-        )
-        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
-
-        self._title_label = QLabel("Explorer")
+        self._title_label = QLabel("Project Explorer")
         self._title_label.setObjectName("project_dock_title")
         _set_widget_metadata(
             self._title_label,
@@ -178,7 +167,7 @@ class ProjectExplorerDock(QDockWidget):
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
-            "Track page structure, startup routing, and generation mode from a compact project map."
+            "Manage pages, startup routing, and generation mode in one place."
         )
         self._subtitle_label.setObjectName("project_dock_subtitle")
         self._subtitle_label.setWordWrap(True)
@@ -255,8 +244,7 @@ class ProjectExplorerDock(QDockWidget):
         pages_layout.addWidget(self._page_tree, 1)
 
         # Add page button
-        self._add_page_button = QPushButton("+ New Page")
-        self._add_page_button.setIcon(make_icon("toolbar.new"))
+        self._add_page_button = QPushButton("New Page")
         self._add_page_button.clicked.connect(self._on_add_page)
         pages_layout.addWidget(self._add_page_button)
         layout.addWidget(pages_card, 1)
@@ -418,7 +406,6 @@ class ProjectExplorerDock(QDockWidget):
             name = page.name
             item = QTreeWidgetItem([self._page_item_text(name)])
             item.setData(0, Qt.UserRole, name)
-            item.setIcon(0, make_icon("nav.page", size=16))
             if name == self._current_page_name:
                 font = item.font(0)
                 font.setBold(True)

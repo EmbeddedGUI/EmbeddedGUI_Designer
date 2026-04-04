@@ -44,7 +44,6 @@ from qfluentwidgets import (
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
-from .iconography import make_icon
 
 
 # -- Constants ----------------------------------------------------------
@@ -1520,19 +1519,15 @@ class ResourcePanel(QWidget):
         img_btn_layout = QHBoxLayout()
         img_btn_layout.setSpacing(8)
         import_img_btn = PushButton("Import Image...")
-        import_img_btn.setIcon(make_icon("nav.resource"))
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
         restore_img_btn = PushButton("Restore Missing...")
-        restore_img_btn.setIcon(make_icon("state.info"))
         restore_img_btn.clicked.connect(lambda: self._restore_missing_resources("image"))
         img_btn_layout.addWidget(restore_img_btn)
         replace_img_btn = PushButton("Replace Missing...")
-        replace_img_btn.setIcon(make_icon("toolbar.edit"))
         replace_img_btn.clicked.connect(lambda: self._replace_missing_resources("image"))
         img_btn_layout.addWidget(replace_img_btn)
         next_missing_img_btn = PushButton("Next Missing")
-        next_missing_img_btn.setIcon(make_icon("nav.page"))
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
         image_more_btn = self._create_resource_more_button(
@@ -1556,7 +1551,6 @@ class ResourcePanel(QWidget):
             "next_missing": next_missing_img_btn,
         }
         self._tabs.addTab(img_tab, "Images")
-        self._tabs.setTabIcon(0, make_icon("image"))
 
         # Fonts tab
         font_tab = QWidget()
@@ -1577,19 +1571,15 @@ class ResourcePanel(QWidget):
         font_btn_layout = QHBoxLayout()
         font_btn_layout.setSpacing(8)
         import_font_btn = PushButton("Import Font...")
-        import_font_btn.setIcon(make_icon("nav.page"))
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
         restore_font_btn = PushButton("Restore Missing...")
-        restore_font_btn.setIcon(make_icon("history"))
         restore_font_btn.clicked.connect(lambda: self._restore_missing_resources("font"))
         font_btn_layout.addWidget(restore_font_btn)
         replace_font_btn = PushButton("Replace Missing...")
-        replace_font_btn.setIcon(make_icon("properties"))
         replace_font_btn.clicked.connect(lambda: self._replace_missing_resources("font"))
         font_btn_layout.addWidget(replace_font_btn)
         next_missing_font_btn = PushButton("Next Missing")
-        next_missing_font_btn.setIcon(make_icon("navigation"))
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
         font_more_btn = self._create_resource_more_button(
@@ -1613,7 +1603,6 @@ class ResourcePanel(QWidget):
             "next_missing": next_missing_font_btn,
         }
         self._tabs.addTab(font_tab, "Fonts")
-        self._tabs.setTabIcon(1, make_icon("text"))
 
         # Text tab
         text_tab = QWidget()
@@ -1634,19 +1623,15 @@ class ResourcePanel(QWidget):
         text_btn_layout = QHBoxLayout()
         text_btn_layout.setSpacing(8)
         import_text_btn = PushButton("Import Text...")
-        import_text_btn.setIcon(make_icon("text"))
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
         restore_text_btn = PushButton("Restore Missing...")
-        restore_text_btn.setIcon(make_icon("history"))
         restore_text_btn.clicked.connect(lambda: self._restore_missing_resources("text"))
         text_btn_layout.addWidget(restore_text_btn)
         replace_text_btn = PushButton("Replace Missing...")
-        replace_text_btn.setIcon(make_icon("properties"))
         replace_text_btn.clicked.connect(lambda: self._replace_missing_resources("text"))
         text_btn_layout.addWidget(replace_text_btn)
         next_missing_text_btn = PushButton("Next Missing")
-        next_missing_text_btn.setIcon(make_icon("navigation"))
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
         text_more_btn = self._create_resource_more_button(
@@ -1670,7 +1655,6 @@ class ResourcePanel(QWidget):
             "next_missing": next_missing_text_btn,
         }
         self._tabs.addTab(text_tab, "Text")
-        self._tabs.setTabIcon(2, make_icon("text"))
 
         # Strings (i18n) tab
         strings_tab = QWidget()
@@ -1689,11 +1673,9 @@ class ResourcePanel(QWidget):
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
         self._add_locale_btn = PushButton("Add Locale...")
-        self._add_locale_btn.setIcon(make_icon("toolbar.new"))
         self._add_locale_btn.clicked.connect(self._on_add_locale)
         locale_row.addWidget(self._add_locale_btn)
         self._remove_locale_btn = PushButton("Remove Locale")
-        self._remove_locale_btn.setIcon(make_icon("toolbar.delete"))
         self._remove_locale_btn.clicked.connect(self._on_remove_locale)
         locale_row.addWidget(self._remove_locale_btn)
         locale_row.addStretch()
@@ -1719,22 +1701,18 @@ class ResourcePanel(QWidget):
         str_btn_layout = QHBoxLayout()
         str_btn_layout.setSpacing(8)
         self._add_key_btn = PushButton("Add Key...")
-        self._add_key_btn.setIcon(make_icon("toolbar.new"))
         self._add_key_btn.clicked.connect(self._on_add_string_key)
         str_btn_layout.addWidget(self._add_key_btn)
         self._rename_key_btn = PushButton("Rename Key...")
-        self._rename_key_btn.setIcon(make_icon("properties"))
         self._rename_key_btn.clicked.connect(self._on_rename_string_key)
         str_btn_layout.addWidget(self._rename_key_btn)
         self._remove_key_btn = PushButton("Remove Key")
-        self._remove_key_btn.setIcon(make_icon("toolbar.delete"))
         self._remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(self._remove_key_btn)
         str_btn_layout.addStretch()
         strings_tab_layout.addLayout(str_btn_layout)
 
         self._tabs.addTab(strings_tab, "Strings")
-        self._tabs.setTabIcon(3, make_icon("nav.resource"))
 
         top_layout.addWidget(self._tabs, 1)
         splitter.addWidget(top_widget)
