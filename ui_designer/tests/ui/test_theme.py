@@ -627,7 +627,8 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#debug_panel_header[panelTone="runtime"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#debug_panel_header {", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#debug_panel_header[panelTone="runtime"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#debug_panel_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#debug_panel_controls_strip {", 1)[1].split("}", 1)[0]
         button = css.split("#debug_panel_controls_strip QPushButton {", 1)[1].split("}", 1)[0]
@@ -635,6 +636,9 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
         assert "background-color: transparent;" in controls
         assert "border: none;" in controls
@@ -642,7 +646,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_sm']}px;" in button
         assert "min-height: 30px;" in button
         assert f"background-color: {t['canvas_stage']};" in surface
-        assert f"border-radius: {t['r_md']}px;" in surface
+        assert "border-radius: 0px;" in surface
 
 
 def test_history_panel_styles_use_engineering_surface_tokens():

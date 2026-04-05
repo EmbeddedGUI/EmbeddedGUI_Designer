@@ -1509,13 +1509,13 @@ QListWidget#diagnostics_list {{
 }}
 
 #debug_panel_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #debug_panel_header[panelTone="runtime"] {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border-color: {t['border']};
 }}
 
@@ -1559,7 +1559,7 @@ QListWidget#diagnostics_list {{
 QPlainTextEdit#debug_output_surface {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     padding: {t['space_xxs']}px;
 }}
 
