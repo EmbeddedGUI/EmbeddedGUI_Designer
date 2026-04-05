@@ -732,8 +732,9 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")

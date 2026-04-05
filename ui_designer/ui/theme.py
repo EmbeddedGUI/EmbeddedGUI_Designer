@@ -1170,9 +1170,9 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #project_workspace_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #project_workspace_meta {{
