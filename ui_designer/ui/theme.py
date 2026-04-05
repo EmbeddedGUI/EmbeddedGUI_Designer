@@ -2620,7 +2620,7 @@ QPushButton#preview_status_button:hover {{
 #status_center_health_row {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 #status_center_health_row:hover {{
@@ -2644,24 +2644,24 @@ QProgressBar#status_center_health_warning_bar,
 QProgressBar#status_center_health_info_bar {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     min-height: 8px;
     max-height: 8px;
 }}
 
 QProgressBar#status_center_health_error_bar::chunk {{
     background-color: {t['danger']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 QProgressBar#status_center_health_warning_bar::chunk {{
     background-color: {t['warning']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 QProgressBar#status_center_health_info_bar::chunk {{
     background-color: {t['accent']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 #status_center_runtime:hover {{

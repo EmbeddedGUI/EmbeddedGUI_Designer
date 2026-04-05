@@ -71,6 +71,9 @@ def test_status_center_styles_reduce_resting_container_weight():
         actions = css.split("#status_center_actions", 1)[1].split("}", 1)[0]
         sections = css.split("#status_center_health,", 1)[1].split("}", 1)[0]
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
+        health_row = css.split("#status_center_health_row {", 1)[1].split("}", 1)[0]
+        health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
+        health_chunk = css.split("QProgressBar#status_center_health_error_bar::chunk {", 1)[1].split("}", 1)[0]
 
         assert "background-color: transparent;" in metrics
         assert "border: none;" in metrics
@@ -82,6 +85,12 @@ def test_status_center_styles_reduce_resting_container_weight():
         assert "background-color: transparent;" in metric_card
         assert "border: 1px solid transparent;" in metric_card
         assert "border-radius: 0px;" in metric_card
+        assert "background-color: transparent;" in health_row
+        assert "border: 1px solid transparent;" in health_row
+        assert "border-radius: 0px;" in health_row
+        assert f"background-color: {t['panel_alt']};" in health_bar
+        assert "border-radius: 0px;" in health_bar
+        assert "border-radius: 0px;" in health_chunk
 
 
 def test_status_center_header_styles_use_engineering_surface_tokens():
@@ -122,10 +131,14 @@ def test_engineering_theme_radii_remove_pill_shapes():
         chip = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         browser_card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
+        health_row = css.split("#status_center_health_row {", 1)[1].split("}", 1)[0]
+        health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
 
         assert f"border-radius: {tokens['r_md']}px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in metric_card
+        assert "border-radius: 0px;" in health_row
+        assert "border-radius: 0px;" in health_bar
 
 
 def test_page_navigator_styles_use_token_driven_cards():
