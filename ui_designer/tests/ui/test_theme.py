@@ -402,7 +402,8 @@ def test_project_dock_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         assert "border-radius: 0px;" in header
-        assert f"background-color: {t['panel']};" in card
+        assert "background-color: transparent;" in card
+        assert "border: none;" in card
         assert "border-radius: 0px;" in card
         assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card

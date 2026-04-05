@@ -95,13 +95,13 @@ class ProjectExplorerDock(QDockWidget):
         container = QWidget()
         container.setObjectName("project_dock_shell")
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("project_dock_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(14, 12, 14, 12)
+        header_layout.setContentsMargins(10, 10, 10, 10)
         header_layout.setSpacing(4)
 
         self._title_label = QLabel("Project")
@@ -131,15 +131,16 @@ class ProjectExplorerDock(QDockWidget):
         layout.addWidget(self._header_frame)
 
         # Project settings group
-        self._settings_group = QGroupBox("Project")
+        self._settings_group = QGroupBox("")
         self._settings_group.setObjectName("project_dock_settings_group")
         self._settings_group.setAccessibleName("Project settings")
         settings_layout = QVBoxLayout(self._settings_group)
-        settings_layout.setContentsMargins(14, 16, 14, 14)
-        settings_layout.setSpacing(10)
+        settings_layout.setContentsMargins(0, 0, 0, 0)
+        settings_layout.setSpacing(8)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
+        mode_layout.setContentsMargins(0, 0, 0, 0)
         mode_layout.setSpacing(8)
         self._mode_label = QLabel("Mode")
         _set_widget_metadata(
@@ -159,8 +160,8 @@ class ProjectExplorerDock(QDockWidget):
         pages_card = QFrame()
         pages_card.setObjectName("project_dock_pages_card")
         pages_layout = QVBoxLayout(pages_card)
-        pages_layout.setContentsMargins(12, 12, 12, 12)
-        pages_layout.setSpacing(8)
+        pages_layout.setContentsMargins(0, 0, 0, 0)
+        pages_layout.setSpacing(6)
 
         # Page tree
         self._pages_label = QLabel("Pages")

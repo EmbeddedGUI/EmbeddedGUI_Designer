@@ -1329,23 +1329,24 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 
 #project_dock_pages_card,
 QGroupBox#project_dock_settings_group {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
+    background-color: transparent;
+    border: none;
     border-radius: 0px;
 }}
 
 QGroupBox#project_dock_settings_group {{
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 0px;
+    padding-top: 0px;
 }}
 
 QGroupBox#project_dock_settings_group::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 14px;
+    left: 0px;
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_semibold']};
+    padding: 0;
 }}
 
 #project_dock_metric_card {{
