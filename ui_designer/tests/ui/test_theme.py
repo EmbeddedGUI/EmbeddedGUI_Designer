@@ -654,15 +654,19 @@ def test_history_panel_styles_use_engineering_surface_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#history_panel_header[panelTone="history"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#history_panel_header {", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#history_panel_header[panelTone="history"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#history_panel_meta {", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#history_panel_list {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_alt']};" in list_block
-        assert f"border-radius: {t['r_md']}px;" in list_block
+        assert "border-radius: 0px;" in list_block
 
 
 def test_animations_panel_styles_use_engineering_surface_tokens():

@@ -1564,13 +1564,13 @@ QPlainTextEdit#debug_output_surface {{
 }}
 
 #history_panel_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #history_panel_header[panelTone="history"] {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border-color: {t['border']};
 }}
 
@@ -1588,7 +1588,7 @@ QPlainTextEdit#debug_output_surface {{
 QListWidget#history_panel_list {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     padding: {t['space_xxs']}px;
 }}
 
