@@ -921,6 +921,7 @@ class PropertyPanel(QWidget):
             tooltip=subtitle.text(),
             accessible_name=subtitle.text(),
         )
+        subtitle.hide()
         _set_widget_metadata(
             header_meta,
             tooltip=header_meta.text(),

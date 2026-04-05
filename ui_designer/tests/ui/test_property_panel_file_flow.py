@@ -569,6 +569,7 @@ class TestPropertyPanelFileFlow:
         assert eyebrow.isHidden() is True
         assert title.accessibleName() == "Batch selection: Selected 2 widgets."
         assert subtitle.accessibleName() == subtitle.text()
+        assert subtitle.isHidden() is True
         assert meta.isHidden() is True
         assert any(chip.accessibleName() == "Batch types: 2 types." for chip in chips)
         assert any(chip.accessibleName().startswith("Batch mixed state: ") for chip in chips)
