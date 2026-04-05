@@ -266,12 +266,20 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert f"border-radius: {t['r_sm']}px;" in status_chip
         assert "border-radius: 0px;" in search_shell
         assert "border-radius: 0px;" in empty_state
+        assert "background-color: transparent;" in resource_tabs_pane
+        assert "border: none;" in resource_tabs_pane
         assert "border-radius: 0px;" in resource_tabs_pane
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
+        assert "min-height: 28px;" in resource_tabs_tab
+        assert "padding: 6px 10px;" in resource_tabs_tab
+        assert "background-color: transparent;" in resource_details_pane
+        assert "border: none;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_tab
         assert "margin-right: 0px;" in resource_details_tab
+        assert "min-height: 28px;" in resource_details_tab
+        assert "padding: 6px 10px;" in resource_details_tab
         assert f"border-radius: {t['r_sm']}px;" in thumb_surface
         assert "border-radius: 0px;" in thumb_label
 
@@ -298,12 +306,16 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         css = _build_stylesheet(mode)
 
         header = css.split("#resource_panel_header {", 1)[1].split("}", 1)[0]
+        card = css.split("#resource_panel_card {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#resource_panel_metric_card {", 1)[1].split("}", 1)[0]
         list_surface = css.split("QListWidget#resource_panel_list,", 1)[1].split("}", 1)[0]
         preview = css.split("#resource_panel_preview {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         assert "border-radius: 0px;" in header
+        assert "background-color: transparent;" in card
+        assert "border: none;" in card
+        assert "border-radius: 0px;" in card
         assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in list_surface

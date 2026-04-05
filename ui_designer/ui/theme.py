@@ -1216,8 +1216,8 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #resource_panel_card {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
+    background-color: transparent;
+    border: none;
     border-radius: 0px;
 }}
 
@@ -1256,21 +1256,31 @@ QTreeWidget#project_dock_tree::item {{
 }}
 
 QTabWidget#resource_panel_tabs::pane {{
+    background-color: transparent;
+    border: none;
     border-radius: 0px;
+    padding: 0px;
 }}
 
 QTabWidget#resource_panel_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
+    min-height: 28px;
+    padding: 6px 10px;
 }}
 
 QTabWidget#resource_panel_details_tabs::pane {{
+    background-color: transparent;
+    border: none;
     border-radius: 0px;
+    padding: 0px;
 }}
 
 QTabWidget#resource_panel_details_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
+    min-height: 28px;
+    padding: 6px 10px;
 }}
 
 QTableWidget#resource_panel_table QHeaderView::section {{

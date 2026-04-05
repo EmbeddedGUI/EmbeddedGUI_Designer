@@ -1433,8 +1433,8 @@ class ResourcePanel(QWidget):
         self.setObjectName("resource_panel_shell")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
 
         self._panel_header = QFrame(self)
         self._panel_header.setObjectName("resource_panel_header")
@@ -1502,8 +1502,8 @@ class ResourcePanel(QWidget):
         top_widget = QFrame()
         top_widget.setObjectName("resource_panel_card")
         top_layout = QVBoxLayout(top_widget)
-        top_layout.setContentsMargins(18, 18, 18, 18)
-        top_layout.setSpacing(12)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(8)
 
         catalog_title = QLabel("Resource Catalog")
         catalog_title.setObjectName("workspace_section_title")
@@ -1524,8 +1524,8 @@ class ResourcePanel(QWidget):
         # Images tab
         img_tab = QWidget()
         img_tab_layout = QVBoxLayout(img_tab)
-        img_tab_layout.setContentsMargins(8, 8, 8, 8)
-        img_tab_layout.setSpacing(10)
+        img_tab_layout.setContentsMargins(0, 0, 0, 0)
+        img_tab_layout.setSpacing(8)
 
         self._image_list = _LazyImageList()
         _prepare_resource_panel_list(self._image_list, "resource_panel_image_list")
@@ -1576,8 +1576,8 @@ class ResourcePanel(QWidget):
         # Fonts tab
         font_tab = QWidget()
         font_tab_layout = QVBoxLayout(font_tab)
-        font_tab_layout.setContentsMargins(8, 8, 8, 8)
-        font_tab_layout.setSpacing(10)
+        font_tab_layout.setContentsMargins(0, 0, 0, 0)
+        font_tab_layout.setSpacing(8)
 
         self._font_list = _DragResourceList("font")
         _prepare_resource_panel_list(self._font_list)
@@ -1628,8 +1628,8 @@ class ResourcePanel(QWidget):
         # Text tab
         text_tab = QWidget()
         text_tab_layout = QVBoxLayout(text_tab)
-        text_tab_layout.setContentsMargins(8, 8, 8, 8)
-        text_tab_layout.setSpacing(10)
+        text_tab_layout.setContentsMargins(0, 0, 0, 0)
+        text_tab_layout.setSpacing(8)
 
         self._text_list = _DragResourceList("text")
         _prepare_resource_panel_list(self._text_list)
@@ -1680,8 +1680,8 @@ class ResourcePanel(QWidget):
         # Strings (i18n) tab
         strings_tab = QWidget()
         strings_tab_layout = QVBoxLayout(strings_tab)
-        strings_tab_layout.setContentsMargins(8, 8, 8, 8)
-        strings_tab_layout.setSpacing(10)
+        strings_tab_layout.setContentsMargins(0, 0, 0, 0)
+        strings_tab_layout.setSpacing(8)
 
         # Locale selector
         locale_row = QHBoxLayout()
@@ -1750,8 +1750,8 @@ class ResourcePanel(QWidget):
 
         preview_tab = QWidget()
         preview_tab_layout = QVBoxLayout(preview_tab)
-        preview_tab_layout.setContentsMargins(12, 12, 12, 12)
-        preview_tab_layout.setSpacing(8)
+        preview_tab_layout.setContentsMargins(8, 8, 8, 8)
+        preview_tab_layout.setSpacing(6)
 
         self._preview_hint = QLabel("Preview the selected asset.")
         self._preview_hint.setObjectName("workspace_section_subtitle")
@@ -1766,8 +1766,8 @@ class ResourcePanel(QWidget):
 
         usage_tab = QWidget()
         usage_layout = QVBoxLayout(usage_tab)
-        usage_layout.setContentsMargins(12, 12, 12, 12)
-        usage_layout.setSpacing(8)
+        usage_layout.setContentsMargins(8, 8, 8, 8)
+        usage_layout.setSpacing(6)
 
         self._usage_hint = QLabel("Review where the selected asset is used.")
         self._usage_hint.setObjectName("workspace_section_subtitle")
@@ -1775,7 +1775,7 @@ class ResourcePanel(QWidget):
         usage_layout.addWidget(self._usage_hint)
 
         usage_filter_row = QHBoxLayout()
-        usage_filter_row.setSpacing(8)
+        usage_filter_row.setSpacing(6)
         self._usage_current_page_only = QCheckBox("Current Page Only")
         self._usage_current_page_only.toggled.connect(self._refresh_usage_view)
         self._usage_current_page_only.toggled.connect(self._update_usage_accessibility_metadata)
