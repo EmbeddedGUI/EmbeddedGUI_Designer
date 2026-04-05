@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
-from .iconography import make_icon
 from .theme import theme_tokens
 
 
@@ -22,8 +21,7 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
-_ICON_SM = int(_TOKENS.get("icon_sm", 16))
-_ICON_MD = int(_TOKENS.get("icon_md", 18))
+
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -60,17 +58,13 @@ class DebugPanel(QWidget):
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_SM)
 
-        self._header_eyebrow = QLabel("Runtime Console")
+        self._header_eyebrow = QLabel("Runtime")
         self._header_eyebrow.setObjectName("debug_panel_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
         title_row.setSpacing(_SPACE_SM)
-
-        self._title_icon = QLabel()
-        self._title_icon.setPixmap(make_icon("state.warn", size=_ICON_MD).pixmap(_ICON_MD, _ICON_MD))
-        title_row.addWidget(self._title_icon)
 
         self._title_label = QLabel("Debug Output")
         self._title_label.setObjectName("workspace_section_title")
@@ -90,7 +84,7 @@ class DebugPanel(QWidget):
         title_row.addWidget(self._stream_state_chip, 0, Qt.AlignVCenter)
         header_layout.addLayout(title_row)
 
-        self._meta_label = QLabel("No output yet. Compile, preview, and bridge logs will appear here.")
+        self._meta_label = QLabel("No output yet.")
         self._meta_label.setObjectName("debug_panel_header_meta")
         self._meta_label.setWordWrap(True)
         header_layout.addWidget(self._meta_label)
