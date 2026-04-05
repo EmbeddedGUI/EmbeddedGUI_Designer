@@ -132,8 +132,26 @@ class AppEntryRowWidget(QWidget):
         self._kind_label.setObjectName("app_selector_item_kind")
         self._kind_label.setProperty("entryKind", kind_key)
         text_layout.addWidget(self._kind_label, 0, Qt.AlignLeft)
+        self._kind_label.hide()
 
         layout.addLayout(text_layout, 1)
+        summary = f"SDK example row: {title}. {kind_text}. Path: {path_text}."
+        _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._title_label,
+            tooltip=summary,
+            accessible_name=f"SDK example title: {title}",
+        )
+        _set_widget_metadata(
+            self._path_label,
+            tooltip=f"SDK example path: {path_text}",
+            accessible_name=f"SDK example path: {path_text}",
+        )
+        _set_widget_metadata(
+            self._kind_label,
+            tooltip=kind_text,
+            accessible_name=f"SDK example kind: {kind_text}",
+        )
 
     def set_selected(self, selected):
         self.setProperty("selected", "true" if selected else "false")

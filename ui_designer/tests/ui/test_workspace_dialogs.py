@@ -243,6 +243,10 @@ class TestAppSelectorDialog:
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "ModernApp"
         assert dialog._app_list.currentItem().text() == "ModernApp"
+        modern_widget = dialog._app_list.itemWidget(dialog._app_list.item(0))
+        modern_kind_label = modern_widget.findChild(QLabel, "app_selector_item_kind")
+        assert modern_kind_label.isHidden()
+        assert modern_kind_label.accessibleName() == "SDK example kind: Designer Project"
         dialog.deleteLater()
 
     def test_shows_placeholder_when_sdk_root_missing(self, qapp, isolated_config):
@@ -313,6 +317,10 @@ class TestAppSelectorDialog:
             f"SDK example: LegacyApp [Legacy]. Legacy example path: {legacy}. "
             "Opening it will initialize a Designer project."
         )
+        legacy_widget = dialog._app_list.itemWidget(legacy_item)
+        legacy_kind_label = legacy_widget.findChild(QLabel, "app_selector_item_kind")
+        assert legacy_kind_label.isHidden()
+        assert legacy_kind_label.accessibleName() == "SDK example kind: Legacy Import"
         dialog.deleteLater()
 
     def test_selection_updates_selected_entry_and_enables_open(self, qapp, isolated_config, tmp_path):
