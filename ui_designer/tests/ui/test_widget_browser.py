@@ -455,7 +455,7 @@ class TestWidgetBrowserPanel:
         )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
-        assert hint.text() == "<b>No matching widgets.</b><br>Clear search to show matching widgets."
+        assert hint.text() == "No matching widgets. Clear search to show matching widgets."
         assert sorted(buttons) == ["Clear Search"]
         assert buttons["Clear Search"].toolTip() == "Clear the widget browser search."
         panel.deleteLater()
@@ -473,7 +473,7 @@ class TestWidgetBrowserPanel:
         )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
-        assert hint.text() == "<b>No matching widgets.</b><br>Switch back to All to browse the full widget catalog."
+        assert hint.text() == "No matching widgets. Switch back to All to browse the full widget catalog."
         assert sorted(buttons) == ["Show All Components"]
 
         buttons["Show All Components"].click()

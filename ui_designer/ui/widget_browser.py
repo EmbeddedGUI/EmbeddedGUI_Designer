@@ -629,11 +629,10 @@ class WidgetBrowserPanel(QWidget):
             empty_layout.setContentsMargins(_SPACE_LG, _SPACE_LG, _SPACE_LG, _SPACE_LG)
             empty_layout.setSpacing(_SPACE_SM)
 
-            summary = QLabel(f"<b>No matching widgets.</b><br>{self._empty_state_hint_text()}")
+            summary = QLabel(f"No matching widgets. {self._empty_state_hint_text()}")
             summary.setObjectName("workspace_section_subtitle")
             summary.setWordWrap(True)
             summary.setAlignment(Qt.AlignCenter)
-            summary.setTextFormat(Qt.RichText)
             empty_layout.addWidget(summary)
 
             if self._search.text():
