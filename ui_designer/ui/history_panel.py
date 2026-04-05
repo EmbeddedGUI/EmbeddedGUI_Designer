@@ -59,6 +59,7 @@ class HistoryPanel(QWidget):
         self._source_value = QLabel("")
         self._source_value.setObjectName("history_panel_meta")
         self._source_value.setWordWrap(True)
+        self._source_value.hide()
 
         self._history_list = QListWidget()
         self._history_list.setObjectName("history_panel_list")
