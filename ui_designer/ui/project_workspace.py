@@ -109,8 +109,9 @@ class ProjectWorkspacePanel(QWidget):
         self._meta_label.hide()
 
         toggle_row = QHBoxLayout()
+        self._view_toggle_row = toggle_row
         toggle_row.setContentsMargins(0, 0, 0, 0)
-        toggle_row.setSpacing(_SPACE_XS)
+        toggle_row.setSpacing(2)
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)

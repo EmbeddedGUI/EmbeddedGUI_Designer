@@ -804,12 +804,12 @@ QGroupBox#inspector_collapsible_group::title {{
 QPushButton#project_workspace_view_button {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 4px 10px;
+    padding: 3px 8px;
     text-align: left;
-    min-height: 28px;
+    min-height: 26px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{

@@ -43,6 +43,7 @@ class TestProjectWorkspacePanel:
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 6, 8, 6)
         assert (metrics_margins.left(), metrics_margins.top(), metrics_margins.right(), metrics_margins.bottom()) == (0, 0, 0, 0)
         assert panel._metrics_frame.layout().spacing() == 6
+        assert panel._view_toggle_row.spacing() == 2
         assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."

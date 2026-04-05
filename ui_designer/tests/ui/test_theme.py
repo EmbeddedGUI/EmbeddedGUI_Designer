@@ -755,6 +755,7 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         header = css.split('#workspace_panel_header[panelTone="project"] {', 1)[1].split("}", 1)[0]
         eyebrow = css.split("#project_workspace_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#project_workspace_metrics_strip {", 1)[1].split("}", 1)[0]
+        buttons = css.split("QPushButton#project_workspace_view_button {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -762,6 +763,9 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in metrics
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
+        assert "border-radius: 0px;" in buttons
+        assert "padding: 3px 8px;" in buttons
+        assert "min-height: 26px;" in buttons
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
