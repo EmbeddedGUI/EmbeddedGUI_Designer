@@ -36,9 +36,6 @@ from ..model.workspace import (
     resolve_configured_sdk_root,
     resolve_sdk_root_candidate,
 )
-from .iconography import make_icon
-
-
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
     if tooltip is not None:
         hint = str(tooltip or "")
@@ -98,26 +95,12 @@ class AppEntryRowWidget(QWidget):
         self.setProperty("selected", "false")
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 14, 16, 14)
-        layout.setSpacing(12)
-
-        icon_shell = QFrame()
-        icon_shell.setObjectName("app_selector_item_icon_shell")
-        icon_shell.setFixedSize(42, 42)
-        icon_layout = QVBoxLayout(icon_shell)
-        icon_layout.setContentsMargins(0, 0, 0, 0)
-
-        icon_label = QLabel()
-        icon_label.setAlignment(Qt.AlignCenter)
-        icon_name = "nav.page" if kind_key == "legacy" else "nav.page_group"
-        icon_label.setPixmap(make_icon(icon_name, size=24).pixmap(24, 24))
-        icon_layout.addWidget(icon_label)
-        layout.addWidget(icon_shell, 0, Qt.AlignTop)
-        icon_shell.hide()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
 
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
-        text_layout.setSpacing(5)
+        text_layout.setSpacing(4)
 
         self._title_label = QLabel(title)
         self._title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
@@ -189,18 +172,18 @@ class AppSelectorDialog(QDialog):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("app_selector_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Example Browser")
         self._eyebrow_label.setObjectName("app_selector_eyebrow")
@@ -241,7 +224,7 @@ class AppSelectorDialog(QDialog):
         self._metrics_frame.setObjectName("app_selector_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._root_metric_value = self._create_header_metric(metrics_layout, "SDK Status")
         self._results_metric_value = self._create_header_metric(metrics_layout, "Visible Examples")
         self._selection_metric_value = self._create_header_metric(metrics_layout, "Action")
@@ -249,17 +232,17 @@ class AppSelectorDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
 
         left_column = QVBoxLayout()
         left_column.setContentsMargins(0, 0, 0, 0)
-        left_column.setSpacing(16)
+        left_column.setSpacing(12)
 
         root_card = QFrame()
         root_card.setObjectName("app_selector_root_card")
         root_layout = QVBoxLayout(root_card)
-        root_layout.setContentsMargins(22, 22, 22, 22)
-        root_layout.setSpacing(12)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(10)
 
         root_title = QLabel("SDK Binding")
         root_title.setObjectName("workspace_section_title")
@@ -281,7 +264,7 @@ class AppSelectorDialog(QDialog):
         root_layout.addWidget(self._root_edit)
 
         actions_row = QHBoxLayout()
-        actions_row.setSpacing(10)
+        actions_row.setSpacing(8)
 
         self._browse_btn = PushButton("Browse...")
         self._browse_btn.clicked.connect(self._browse_root)
@@ -311,8 +294,8 @@ class AppSelectorDialog(QDialog):
         options_card = QFrame()
         options_card.setObjectName("app_selector_options_card")
         options_layout = QVBoxLayout(options_card)
-        options_layout.setContentsMargins(22, 22, 22, 22)
-        options_layout.setSpacing(12)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.setSpacing(10)
 
         options_title = QLabel("Catalog Filters")
         options_title.setObjectName("workspace_section_title")
@@ -340,13 +323,13 @@ class AppSelectorDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(16)
+        right_column.setSpacing(12)
 
         browser_card = QFrame()
         browser_card.setObjectName("app_selector_browser_card")
         browser_layout = QVBoxLayout(browser_card)
-        browser_layout.setContentsMargins(22, 22, 22, 22)
-        browser_layout.setSpacing(12)
+        browser_layout.setContentsMargins(0, 0, 0, 0)
+        browser_layout.setSpacing(10)
 
         browser_title = QLabel("SDK Examples")
         browser_title.setObjectName("workspace_section_title")
@@ -376,8 +359,8 @@ class AppSelectorDialog(QDialog):
         selection_card = QFrame()
         selection_card.setObjectName("app_selector_selection_card")
         selection_layout = QVBoxLayout(selection_card)
-        selection_layout.setContentsMargins(22, 22, 22, 22)
-        selection_layout.setSpacing(10)
+        selection_layout.setContentsMargins(0, 0, 0, 0)
+        selection_layout.setSpacing(8)
 
         selection_title = QLabel("Selection")
         selection_title.setObjectName("workspace_section_title")
@@ -427,7 +410,7 @@ class AppSelectorDialog(QDialog):
         card = QFrame()
         card.setObjectName("app_selector_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)

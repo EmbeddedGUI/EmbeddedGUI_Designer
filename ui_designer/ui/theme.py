@@ -1878,9 +1878,9 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 }}
 
 #app_selector_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #app_selector_eyebrow {{
@@ -1905,15 +1905,15 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 #app_selector_options_card,
 #app_selector_browser_card,
 #app_selector_selection_card {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #app_selector_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #app_selector_metric_label,
@@ -1949,20 +1949,14 @@ QListWidget#app_selector_list::item:hover {{
 }}
 
 #app_selector_item_card {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0px;
 }}
 
 #app_selector_item_card[selected="true"] {{
     background-color: {t['selection_soft']};
     border-color: {t['accent']};
-}}
-
-#app_selector_item_icon_shell {{
-    background-color: {t['accent_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
 }}
 
 #app_selector_item_title {{
