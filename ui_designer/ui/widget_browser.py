@@ -265,7 +265,7 @@ class WidgetBrowserPanel(QWidget):
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_XS)
 
-        self._header_eyebrow = QLabel("Component Catalog")
+        self._header_eyebrow = QLabel("Components")
         self._header_eyebrow.setObjectName("widget_browser_header_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
 
@@ -285,7 +285,7 @@ class WidgetBrowserPanel(QWidget):
         title_row.addWidget(self._insert_target, 0, Qt.AlignVCenter)
         header_layout.addLayout(title_row)
 
-        self._subtitle_label = QLabel("Browse the catalog, narrow by category, and insert components into the current target.")
+        self._subtitle_label = QLabel("Browse by category and insert into the current target.")
         self._subtitle_label.setObjectName("widget_browser_header_meta")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
