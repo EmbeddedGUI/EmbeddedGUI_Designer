@@ -4182,16 +4182,16 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFixedHeight(26)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
-        for action, icon_key in (
-            (self._save_action, "toolbar.save"),
-            (self._undo_action, "toolbar.undo"),
-            (self._redo_action, "toolbar.redo"),
-            (self._compile_action, "toolbar.compile"),
-            (self._stop_action, "toolbar.stop"),
+        for action in (
+            self._save_action,
+            self._undo_action,
+            self._redo_action,
+            self._copy_action,
+            self._paste_action,
+            self._compile_action,
+            self._stop_action,
         ):
-            action.setIcon(make_icon(icon_key, size=toolbar_icon_size))
-        self._copy_action.setIcon(make_icon("toolbar.copy", size=toolbar_icon_size))
-        self._paste_action.setIcon(make_icon("toolbar.paste", size=toolbar_icon_size))
+            action.setIcon(QIcon())
 
         self._insert_widget_button = PrimaryPushButton("Insert")
         self._insert_widget_button.setIcon(QIcon())

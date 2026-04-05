@@ -44,6 +44,7 @@
 - `main_window.py`
   - 顶部只保留一条命令条。
   - 删除可见的 command header、workspace context card、toolbar indicator strip。
+  - `Save / Undo / Redo / Copy / Paste / Build / Stop` 等文字命令统一采用纯文字，不再附带图标。
   - workspace context、health、runtime 仍保留隐藏的 metadata 代理，用于状态同步和测试稳定性。
   - 底部状态栏继续承担当前页、选择状态、警告数量和下一步提示。
 

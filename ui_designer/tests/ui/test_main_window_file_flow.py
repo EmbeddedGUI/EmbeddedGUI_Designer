@@ -8693,6 +8693,18 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_health_chip.text() == "Open Project"
         assert window._runtime_chip.text() == "Preview Idle"
+        assert all(
+            action.icon().isNull()
+            for action in (
+                window._save_action,
+                window._undo_action,
+                window._redo_action,
+                window._copy_action,
+                window._paste_action,
+                window._compile_action,
+                window._stop_action,
+            )
+        )
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
