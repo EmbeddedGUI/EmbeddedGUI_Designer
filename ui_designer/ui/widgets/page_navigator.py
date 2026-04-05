@@ -349,6 +349,7 @@ class PageNavigator(QWidget):
         chip_row.addStretch(1)
         header_layout.addLayout(chip_row)
         self._startup_chip.hide()
+        self._dirty_chip.hide()
 
         self._guidance_frame = QFrame()
         self._guidance_frame.setObjectName("page_navigator_guidance")
