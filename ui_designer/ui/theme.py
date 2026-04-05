@@ -1386,19 +1386,24 @@ QTreeWidget#project_dock_tree {{
     font-weight: {t['fw_medium']};
 }}
 
-#structure_metrics_strip,
-#structure_primary_strip,
-#structure_filter_bar,
-#structure_selection_strip {{
+#structure_metrics_strip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
 
+#structure_primary_strip,
+#structure_filter_bar,
+#structure_selection_strip {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}}
+
 #structure_drag_hint_strip {{
     background-color: {t['accent_soft']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #structure_primary_strip QPushButton,
@@ -1408,10 +1413,10 @@ QTreeWidget#project_dock_tree {{
 #structure_filter_bar QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 34px;
+    min-height: 30px;
 }}
 
 #structure_primary_strip QPushButton:hover,

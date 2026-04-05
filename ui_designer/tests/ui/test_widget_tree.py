@@ -2593,6 +2593,11 @@ class TestWidgetTreePanel:
         assert panel.structure_actions_btn.statusTip() == panel.structure_actions_btn.toolTip()
         assert panel.structure_actions_btn.accessibleName() == "Open structure actions"
         assert panel.structure_actions_btn.icon().isNull()
+        assert panel.structure_hint_label.isHidden() is True
+        assert panel._primary_actions_label.isHidden() is True
+        assert panel._selection_toolbar_label.isHidden() is True
+        assert panel._drag_hint_label.isHidden() is True
+        assert panel._filter_label.isHidden() is True
         assert panel.tree.columnCount() == 1
         assert panel.tree.headerItem().text(0) == "Structure"
         assert [action.text() for action in panel.structure_actions_btn.menu().actions() if action.text()] == [

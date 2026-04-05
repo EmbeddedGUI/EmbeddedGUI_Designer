@@ -509,13 +509,20 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
 
         header = css.split('#workspace_panel_header[panelTone="structure"] {', 1)[1].split("}", 1)[0]
         eyebrow = css.split("#structure_header_eyebrow {", 1)[1].split("}", 1)[0]
-        metrics = css.split("#structure_metrics_strip,", 1)[1].split("}", 1)[0]
+        metrics = css.split("#structure_metrics_strip {", 1)[1].split("}", 1)[0]
+        strips = css.split("#structure_primary_strip,", 1)[1].split("}", 1)[0]
+        buttons = css.split("#structure_primary_strip QPushButton,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in strips
+        assert "border: none;" in strips
+        assert "border-radius: 0px;" in strips
+        assert f"border-radius: {t['r_sm']}px;" in buttons
+        assert "min-height: 30px;" in buttons
 
 
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():
