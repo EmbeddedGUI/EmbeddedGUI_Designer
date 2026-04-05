@@ -1191,8 +1191,8 @@ QToolButton#workspace_summary_indicator {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 4px {t['space_sm']}px;
-    min-height: 28px;
+    padding: 2px {t['space_sm']}px;
+    min-height: 26px;
 }}
 
 QToolButton#workspace_summary_indicator:hover {{

@@ -135,6 +135,8 @@ def test_engineering_theme_radii_remove_pill_shapes():
         health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in chip
+        assert "padding: 2px 8px;" in chip
+        assert "min-height: 26px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in metric_card
         assert "border-radius: 0px;" in health_row

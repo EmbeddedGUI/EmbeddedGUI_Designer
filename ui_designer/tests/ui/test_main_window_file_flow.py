@@ -8448,10 +8448,12 @@ class TestMainWindowFileFlow:
             "Current workspace context: WorkspaceChipDemo. Current page: main_page. Project contains 1 page."
         )
         assert window._workspace_health_chip.text() == "Workspace Stable"
+        assert window._workspace_health_chip.height() == 26
         assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: Workspace Stable."
         assert window._workspace_health_chip.toolTip() == "Pages, inspector, and diagnostics are clear."
         assert window._workspace_health_chip.statusTip() == window._workspace_health_chip.toolTip()
         assert window._runtime_chip.text() == "Build Unavailable"
+        assert window._runtime_chip.height() == 26
         assert window._runtime_chip.accessibleName() == "Preview runtime indicator: Build Unavailable."
         assert window._runtime_chip.toolTip() == "Open Debug Output. preview disabled for test."
         assert window._runtime_chip.statusTip() == window._runtime_chip.toolTip()
@@ -8727,6 +8729,8 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_health_chip.text() == "Open Project"
         assert window._runtime_chip.text() == "Preview Idle"
+        assert window._workspace_health_chip.height() == 26
+        assert window._runtime_chip.height() == 26
         assert all(
             action.icon().isNull()
             for action in (

@@ -385,9 +385,11 @@ class MainWindow(QMainWindow):
 
         self._workspace_health_chip = QToolButton(self)
         self._workspace_health_chip.setObjectName("workspace_summary_indicator")
+        self._workspace_health_chip.setFixedHeight(26)
         self._workspace_health_chip.hide()
         self._runtime_chip = QToolButton(self)
         self._runtime_chip.setObjectName("workspace_summary_indicator")
+        self._runtime_chip.setFixedHeight(26)
         self._runtime_chip.hide()
 
         self._toolbar_command_row = QWidget()
