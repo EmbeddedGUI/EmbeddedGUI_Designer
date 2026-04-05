@@ -764,7 +764,7 @@ class PropertyPanel(QWidget):
         title_col.addWidget(subtitle)
         layout.addLayout(title_col)
 
-        header_meta = QLabel("Tune geometry, behavior, resources, and callback wiring for this widget.")
+        header_meta = QLabel("Edit layout, behavior, resources, and callbacks.")
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)
@@ -863,7 +863,7 @@ class PropertyPanel(QWidget):
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        header_meta = QLabel("Common fields and callbacks apply to every selected widget in this batch.")
+        header_meta = QLabel("Changes here apply to all selected widgets.")
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)

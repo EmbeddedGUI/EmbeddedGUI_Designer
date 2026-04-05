@@ -1490,7 +1490,7 @@ class ResourcePanel(QWidget):
         top_layout.addWidget(catalog_title)
 
         catalog_hint = QLabel(
-            "Switch between binary assets and string resources, then use the per-tab action rail to import, restore, replace, or navigate missing entries."
+            "Choose a tab, then import, restore missing files, or replace missing files."
         )
         catalog_hint.setObjectName("workspace_section_subtitle")
         catalog_hint.setWordWrap(True)
@@ -1733,7 +1733,7 @@ class ResourcePanel(QWidget):
         preview_caption.setObjectName("workspace_section_title")
         preview_layout.addWidget(preview_caption)
 
-        preview_hint = QLabel("Inspect the selected asset before editing references or replacing missing files.")
+        preview_hint = QLabel("Preview the selected file before changing references.")
         preview_hint.setObjectName("workspace_section_subtitle")
         preview_hint.setWordWrap(True)
         preview_layout.addWidget(preview_hint)
@@ -1754,7 +1754,7 @@ class ResourcePanel(QWidget):
         usage_caption.setObjectName("workspace_section_title")
         usage_layout.addWidget(usage_caption)
 
-        usage_hint = QLabel("Trace every widget that consumes the selected resource and optionally focus the current page only.")
+        usage_hint = QLabel("List widgets that use the selected resource.")
         usage_hint.setObjectName("workspace_section_subtitle")
         usage_hint.setWordWrap(True)
         usage_layout.addWidget(usage_hint)

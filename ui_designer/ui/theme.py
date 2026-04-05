@@ -1055,8 +1055,8 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 QFrame#property_panel_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid transparent;
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
 
@@ -1217,7 +1217,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #resource_panel_metric_card {{
-    background-color: {t['panel_soft']};
+    background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
@@ -1310,7 +1310,7 @@ QGroupBox#project_dock_settings_group::title {{
 }}
 
 #project_dock_metric_card {{
-    background-color: {t['panel_soft']};
+    background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
