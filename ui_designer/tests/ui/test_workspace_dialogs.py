@@ -851,6 +851,11 @@ class TestWelcomePage:
         assert page._hero.accessibleName() == (
             f"Welcome hero. Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
+        assert page._eyebrow_label.isHidden()
+        assert page._hero_hint_label.isHidden()
+        assert page._start_hint_label.isHidden()
+        assert page._recent_hint_label.isHidden()
+        assert page._footer_label.isHidden()
         assert page._eyebrow_label.accessibleName() == "Workspace launch surface."
         assert page._title_label.accessibleName() == "Welcome page title: EmbeddedGUI Designer."
         assert page._subtitle_label.accessibleName() == page._subtitle_label.text()
