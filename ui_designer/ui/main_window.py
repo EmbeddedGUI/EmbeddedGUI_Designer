@@ -4285,6 +4285,7 @@ class MainWindow(QMainWindow):
         self._runtime_chip.setAutoRaise(True)
         self._runtime_chip.setObjectName("workspace_summary_indicator")
         self._runtime_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
+        self._runtime_chip.hide()
         for chip in (self._workspace_health_chip, self._runtime_chip):
             chips_layout.addWidget(chip)
         self._toolbar_command_row_layout.addWidget(chips_host, 0)
