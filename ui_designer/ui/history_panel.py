@@ -30,8 +30,8 @@ class HistoryPanel(QWidget):
         self._header_frame.setObjectName("history_panel_header")
         self._header_frame.setProperty("panelTone", "history")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Undo Timeline")
         self._header_eyebrow.setObjectName("history_panel_eyebrow")
@@ -40,7 +40,7 @@ class HistoryPanel(QWidget):
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(_SPACE_SM)
+        top_row.setSpacing(_SPACE_XS)
 
         self._page_value = QLabel("")
         self._page_value.setObjectName("workspace_section_title")

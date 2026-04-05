@@ -533,14 +533,19 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         header = css.split('#diagnostics_header[panelTone="diagnostics"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#diagnostics_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
+        buttons = css.split("#diagnostics_controls_strip QPushButton,", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#diagnostics_list {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
-        assert f"background-color: {t['panel_soft']};" in controls
+        assert "background-color: transparent;" in controls
+        assert "border: none;" in controls
+        assert "border-radius: 0px;" in controls
+        assert f"border-radius: {t['r_sm']}px;" in buttons
+        assert "min-height: 30px;" in buttons
         assert f"background-color: {t['panel_alt']};" in list_block
-        assert f"border-radius: {t['r_xl']}px;" in list_block
+        assert f"border-radius: {t['r_md']}px;" in list_block
 
 
 def test_debug_panel_styles_use_engineering_surface_tokens():
@@ -551,14 +556,19 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         header = css.split('#debug_panel_header[panelTone="runtime"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#debug_panel_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#debug_panel_controls_strip {", 1)[1].split("}", 1)[0]
+        button = css.split("#debug_panel_controls_strip QPushButton {", 1)[1].split("}", 1)[0]
         surface = css.split("QPlainTextEdit#debug_output_surface {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
-        assert f"background-color: {t['panel_soft']};" in controls
+        assert "background-color: transparent;" in controls
+        assert "border: none;" in controls
+        assert "border-radius: 0px;" in controls
+        assert f"border-radius: {t['r_sm']}px;" in button
+        assert "min-height: 30px;" in button
         assert f"background-color: {t['canvas_stage']};" in surface
-        assert f"border-radius: {t['r_xl']}px;" in surface
+        assert f"border-radius: {t['r_md']}px;" in surface
 
 
 def test_history_panel_styles_use_engineering_surface_tokens():
@@ -574,7 +584,7 @@ def test_history_panel_styles_use_engineering_surface_tokens():
         _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_alt']};" in list_block
-        assert f"border-radius: {t['r_xl']}px;" in list_block
+        assert f"border-radius: {t['r_md']}px;" in list_block
 
 
 def test_animations_panel_styles_use_engineering_surface_tokens():

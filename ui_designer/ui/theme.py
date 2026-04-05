@@ -1462,19 +1462,19 @@ QTreeWidget#project_dock_tree {{
 
 #diagnostics_controls_strip,
 #diagnostics_export_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #diagnostics_controls_strip QPushButton,
 #diagnostics_export_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 34px;
+    min-height: 30px;
 }}
 
 #diagnostics_controls_strip QPushButton:hover,
@@ -1493,7 +1493,7 @@ QTreeWidget#project_dock_tree {{
 QListWidget#diagnostics_list {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
     padding: {t['space_xxs']}px;
 }}
 
@@ -1520,18 +1520,18 @@ QListWidget#diagnostics_list {{
 }}
 
 #debug_panel_controls_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #debug_panel_controls_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 34px;
+    min-height: 30px;
 }}
 
 #debug_panel_controls_strip QPushButton:hover {{
@@ -1548,7 +1548,7 @@ QListWidget#diagnostics_list {{
 QPlainTextEdit#debug_output_surface {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
     padding: {t['space_xxs']}px;
 }}
 
@@ -1577,7 +1577,7 @@ QPlainTextEdit#debug_output_surface {{
 QListWidget#history_panel_list {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
     padding: {t['space_xxs']}px;
 }}
 

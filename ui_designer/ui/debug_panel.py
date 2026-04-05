@@ -55,8 +55,8 @@ class DebugPanel(QWidget):
         self._header_frame.setObjectName("debug_panel_header")
         self._header_frame.setProperty("panelTone", "runtime")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Runtime")
         self._header_eyebrow.setObjectName("debug_panel_eyebrow")
@@ -65,7 +65,7 @@ class DebugPanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
+        title_row.setSpacing(_SPACE_XS)
 
         self._title_label = QLabel("Debug Output")
         self._title_label.setObjectName("workspace_section_title")
@@ -96,11 +96,10 @@ class DebugPanel(QWidget):
         self._controls_strip = QFrame()
         self._controls_strip.setObjectName("debug_panel_controls_strip")
         controls_layout = QHBoxLayout(self._controls_strip)
-        controls_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - 2, _SPACE_SM, _SPACE_SM - 2)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(_SPACE_XS)
 
         self._clear_btn = QPushButton("Clear")
-        self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
         controls_layout.addWidget(self._clear_btn)
         controls_layout.addStretch(1)
