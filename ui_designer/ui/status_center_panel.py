@@ -189,6 +189,7 @@ class StatusCenterPanel(QWidget):
         self._health_chip.clicked.connect(self._open_health_chip_target)
         health_title_row.addStretch()
         health_title_row.addWidget(self._health_chip)
+        self._health_chip.hide()
         health_layout.addLayout(health_title_row)
 
         self._error_value, self._error_bar, self._error_row = self._create_health_row(
@@ -1695,7 +1696,7 @@ class StatusCenterPanel(QWidget):
         self._health_chip.setAccessibleName(
             self._health_chip_accessible_name(self._health_chip.text(), health_hint)
         )
-        self._set_widget_visible(self._health_chip, diag_total > 0)
+        self._set_widget_visible(self._health_chip, False)
         show_error_jump = error_count > 0
         show_warning_jump = warning_count > 0
         self._set_widget_visible(self._diagnostic_jump_host, show_error_jump or show_warning_jump)
