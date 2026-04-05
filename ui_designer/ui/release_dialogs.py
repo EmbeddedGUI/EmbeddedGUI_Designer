@@ -601,18 +601,18 @@ class ReleaseBuildDialog(QDialog):
         self._release_config = release_config
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("release_build_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Release Pipeline")
         self._eyebrow_label.setObjectName("release_build_eyebrow")
@@ -652,7 +652,7 @@ class ReleaseBuildDialog(QDialog):
         self._metrics_frame.setObjectName("release_build_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._profile_metric_value = self._create_metric_card(metrics_layout, "Profile")
         self._diagnostics_metric_value = self._create_metric_card(metrics_layout, "Diagnostics")
         self._package_metric_value = self._create_metric_card(metrics_layout, "Packaging")
@@ -660,13 +660,13 @@ class ReleaseBuildDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
 
         context_card = QFrame()
         context_card.setObjectName("release_build_card")
         context_layout = QVBoxLayout(context_card)
-        context_layout.setContentsMargins(22, 22, 22, 22)
-        context_layout.setSpacing(12)
+        context_layout.setContentsMargins(0, 0, 0, 0)
+        context_layout.setSpacing(10)
 
         context_title = QLabel("Build Context")
         context_title.setObjectName("workspace_section_title")
@@ -682,8 +682,8 @@ class ReleaseBuildDialog(QDialog):
         form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         form.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
         form.setFormAlignment(Qt.AlignTop)
-        form.setHorizontalSpacing(16)
-        form.setVerticalSpacing(12)
+        form.setHorizontalSpacing(12)
+        form.setVerticalSpacing(10)
         self._profile_combo = QComboBox()
         for profile in release_config.profiles:
             self._profile_combo.addItem(f"{profile.name} ({profile.id})", profile.id)
@@ -712,8 +712,8 @@ class ReleaseBuildDialog(QDialog):
         options_card = QFrame()
         options_card.setObjectName("release_build_card")
         options_layout = QVBoxLayout(options_card)
-        options_layout.setContentsMargins(22, 22, 22, 22)
-        options_layout.setSpacing(12)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.setSpacing(10)
 
         options_title = QLabel("Build Options")
         options_title.setObjectName("workspace_section_title")
@@ -758,7 +758,7 @@ class ReleaseBuildDialog(QDialog):
         card = QFrame()
         card.setObjectName("release_build_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)

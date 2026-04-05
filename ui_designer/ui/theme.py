@@ -2116,7 +2116,12 @@ QTextEdit#repo_health_details {{
     border-radius: {t['r_md']}px;
 }}
 
-#release_build_header,
+#release_build_header {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 0px;
+}}
+
 #release_profiles_header,
 #release_history_header {{
     background-color: {t['panel_raised']};
@@ -2148,7 +2153,12 @@ QTextEdit#repo_health_details {{
     font-weight: {t['fw_regular']};
 }}
 
-#release_build_card,
+#release_build_card {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}}
+
 #release_profiles_card,
 #release_history_card {{
     background-color: {t['panel_raised']};
@@ -2156,7 +2166,12 @@ QTextEdit#repo_health_details {{
     border-radius: {t['r_xl']}px;
 }}
 
-#release_build_metric_card,
+#release_build_metric_card {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}}
+
 #release_profiles_metric_card,
 #release_history_metric_card {{
     background-color: {t['panel_soft']};
