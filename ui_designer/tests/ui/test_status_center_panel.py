@@ -515,6 +515,7 @@ class TestStatusCenterPanel:
         assert panel._recent_actions_chip.text() == "0 recent actions"
         assert panel._recent_actions_chip.property("chipTone") == "success"
         assert panel._recent_actions_chip.accessibleName() == "Recent actions tracked: 0 recent actions."
+        assert panel._header_metrics_frame.isHidden() is True
         assert panel._header_metrics_frame.accessibleName() == (
             "Status center header metrics: Focus: Workspace. 0 recent actions."
         )

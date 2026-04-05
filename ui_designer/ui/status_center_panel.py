@@ -130,6 +130,7 @@ class StatusCenterPanel(QWidget):
         header_metrics_layout.addWidget(self._recent_actions_chip)
         header_metrics_layout.addStretch(1)
         header_layout.addWidget(self._header_metrics_frame)
+        self._header_metrics_frame.hide()
         self._workspace_summary_label = QLabel(
             "Workspace: SDK missing, compile unavailable, Preview idle, no dirty pages, no widgets selected."
         )
