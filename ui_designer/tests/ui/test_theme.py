@@ -614,6 +614,7 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         metrics = css.split("#widget_browser_metrics_strip {", 1)[1].split("}", 1)[0]
         filter_bar = css.split("#widget_browser_filter_bar {", 1)[1].split("}", 1)[0]
         card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
+        insert_button = css.split("QPushButton#widget_browser_insert_button {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
@@ -629,6 +630,8 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert "border-radius: 0px;" in filter_bar
         assert "background-color: transparent;" in card
         assert "border-radius: 0px;" in card
+        assert "border-radius: 0px;" in insert_button
+        assert "padding: 2px 4px;" in insert_button
 
 
 def test_widget_tree_styles_use_engineering_surface_tokens():

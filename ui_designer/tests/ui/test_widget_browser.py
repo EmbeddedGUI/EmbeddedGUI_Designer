@@ -72,6 +72,31 @@ def _find_empty_state(panel):
 
 @_skip_no_qt
 class TestWidgetBrowserPanel:
+    def test_browser_uses_compact_header_and_card_layouts(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
+        title_row = header_layout.itemAt(1).layout()
+        metrics_layout = panel._metrics_frame.layout()
+        filter_layout = panel._filter_bar.layout()
+        button_card = next(card for card in panel._cards.values() if card.type_name == "button")
+        card_layout = button_card.layout()
+        card_margins = card_layout.contentsMargins()
+
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header_layout.spacing() == 2
+        assert title_row.spacing() == 2
+        assert metrics_layout.spacing() == 2
+        assert filter_layout.spacing() == 2
+        assert panel._cards_layout.spacing() == 2
+        assert panel._category_combo.minimumWidth() == 160
+        assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (2, 2, 2, 2)
+        assert card_layout.spacing() == 2
+        panel.deleteLater()
+
     def test_category_combo_exposes_expected_simplified_options(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
@@ -453,11 +478,15 @@ class TestWidgetBrowserPanel:
         panel.refresh()
 
         empty_state = _find_empty_state(panel)
+        empty_layout = empty_state.layout()
+        empty_margins = empty_layout.contentsMargins()
         hint = next(
             label for label in empty_state.findChildren(QLabel) if label.objectName() == "workspace_section_subtitle"
         )
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
+        assert (empty_margins.left(), empty_margins.top(), empty_margins.right(), empty_margins.bottom()) == (12, 12, 12, 12)
+        assert empty_layout.spacing() == 4
         assert hint.text() == "No matching widgets. Clear search to show matching widgets."
         assert sorted(buttons) == ["Clear Search"]
         assert buttons["Clear Search"].toolTip() == "Clear the widget browser search."

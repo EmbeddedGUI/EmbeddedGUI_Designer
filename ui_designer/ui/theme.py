@@ -2470,10 +2470,10 @@ QTextEdit#release_history_preview {{
 QPushButton#widget_browser_insert_button {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 2px 6px;
+    padding: 2px 4px;
 }}
 
 QPushButton#widget_browser_insert_button:hover {{
