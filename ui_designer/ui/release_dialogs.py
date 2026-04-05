@@ -738,6 +738,7 @@ class ReleaseBuildDialog(QDialog):
         self._release_note_label.setObjectName("workspace_section_subtitle")
         self._release_note_label.setWordWrap(True)
         options_layout.addWidget(self._release_note_label)
+        self._release_note_label.hide()
         options_layout.addStretch(1)
         content_layout.addWidget(options_card, 2)
         layout.addLayout(content_layout, 1)
@@ -1928,6 +1929,7 @@ class ReleaseHistoryDialog(QDialog):
         preview_hint.setObjectName("workspace_section_subtitle")
         preview_hint.setWordWrap(True)
         preview_layout.addWidget(preview_hint)
+        preview_hint.hide()
 
         self._preview_label = QLabel("Preview")
         self._preview_label.setObjectName("release_history_preview_label")
