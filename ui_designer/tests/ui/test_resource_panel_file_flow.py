@@ -64,6 +64,7 @@ class TestResourcePanelFileFlow:
         assert subtitle.isHidden() is True
         assert status.accessibleName() == "Resource workspace state: configured. Active tab: Images"
         assert status.isHidden() is True
+        assert panel._panel_metrics_frame.isHidden() is True
         assert panel._catalog_hint.isHidden() is True
         assert panel._preview_hint.isHidden() is True
         assert panel._usage_hint.isHidden() is True
