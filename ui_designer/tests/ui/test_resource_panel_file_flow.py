@@ -1103,6 +1103,8 @@ class TestResourcePanelFileFlow:
             "Resource dialog header. Replace missing resources: 2 missing resources. "
             "2 candidate files available. 1 replacement selected."
         )
+        assert dialog._eyebrow_label.isHidden()
+        assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Resource recovery workspace."
         assert dialog._title_label.accessibleName() == "Resource replacement title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -1233,6 +1235,8 @@ class TestResourcePanelFileFlow:
         assert dialog._header_frame.accessibleName() == (
             "Resource dialog header. Delete Resource: 2 affected usages. Current selection: main_page/hero (image)."
         )
+        assert dialog._eyebrow_label.isHidden()
+        assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Resource impact workspace."
         assert dialog._title_label.accessibleName() == "Reference impact title: Delete Resource."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -1317,6 +1321,8 @@ class TestResourcePanelFileFlow:
             "Current page only: off. Current rename: missing_a.png -> renamed_a.png. "
             "Current usage: main_page/hero_main (image) [image_file]."
         )
+        assert dialog._eyebrow_label.isHidden()
+        assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Batch rename impact workspace."
         assert dialog._title_label.accessibleName() == "Batch replace impact title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
