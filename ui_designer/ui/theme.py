@@ -2122,7 +2122,12 @@ QTextEdit#repo_health_details {{
     border-radius: 0px;
 }}
 
-#release_profiles_header,
+#release_profiles_header {{
+    background-color: {t['panel']};
+    border: 1px solid {t['border']};
+    border-radius: 0px;
+}}
+
 #release_history_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
@@ -2159,7 +2164,12 @@ QTextEdit#repo_health_details {{
     border-radius: 0px;
 }}
 
-#release_profiles_card,
+#release_profiles_card {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}}
+
 #release_history_card {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
@@ -2172,7 +2182,12 @@ QTextEdit#repo_health_details {{
     border-radius: 0px;
 }}
 
-#release_profiles_metric_card,
+#release_profiles_metric_card {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+}}
+
 #release_history_metric_card {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};

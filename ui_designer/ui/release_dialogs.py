@@ -915,18 +915,18 @@ class ReleaseProfilesDialog(QDialog):
         self._release_config = ReleaseConfig.from_dict(release_config.to_dict())
 
         root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(24, 24, 24, 24)
-        root_layout.setSpacing(16)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("release_profiles_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Release Configuration")
         self._eyebrow_label.setObjectName("release_profiles_eyebrow")
@@ -966,7 +966,7 @@ class ReleaseProfilesDialog(QDialog):
         self._metrics_frame.setObjectName("release_profiles_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._profile_count_metric_value = self._create_metric_card(metrics_layout, "Profiles")
         self._default_metric_value = self._create_metric_card(metrics_layout, "Default")
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
@@ -974,14 +974,14 @@ class ReleaseProfilesDialog(QDialog):
         root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
         root_layout.addLayout(content_layout, 1)
 
         left_card = QFrame()
         left_card.setObjectName("release_profiles_card")
         left_panel = QVBoxLayout(left_card)
-        left_panel.setContentsMargins(22, 22, 22, 22)
-        left_panel.setSpacing(12)
+        left_panel.setContentsMargins(0, 0, 0, 0)
+        left_panel.setSpacing(10)
 
         left_title = QLabel("Profiles")
         left_title.setObjectName("workspace_section_title")
@@ -995,13 +995,13 @@ class ReleaseProfilesDialog(QDialog):
 
         self._profile_list = QListWidget()
         self._profile_list.setObjectName("release_profiles_list")
-        self._profile_list.setSpacing(8)
+        self._profile_list.setSpacing(6)
         self._profile_list.currentRowChanged.connect(self._load_profile_into_form)
         left_panel.addWidget(self._profile_list, 1)
 
         left_actions = QGridLayout()
-        left_actions.setHorizontalSpacing(10)
-        left_actions.setVerticalSpacing(10)
+        left_actions.setHorizontalSpacing(8)
+        left_actions.setVerticalSpacing(8)
         self._add_btn = QPushButton("Add")
         self._copy_btn = QPushButton("Copy")
         self._delete_btn = QPushButton("Delete")
@@ -1019,13 +1019,13 @@ class ReleaseProfilesDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(16)
+        right_column.setSpacing(12)
 
         form_container = QFrame()
         form_container.setObjectName("release_profiles_card")
         form_shell = QVBoxLayout(form_container)
-        form_shell.setContentsMargins(22, 22, 22, 22)
-        form_shell.setSpacing(12)
+        form_shell.setContentsMargins(0, 0, 0, 0)
+        form_shell.setSpacing(10)
 
         form_title = QLabel("Profile Details")
         form_title.setObjectName("workspace_section_title")
@@ -1041,8 +1041,8 @@ class ReleaseProfilesDialog(QDialog):
         form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         form_layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
         form_layout.setFormAlignment(Qt.AlignTop)
-        form_layout.setHorizontalSpacing(16)
-        form_layout.setVerticalSpacing(12)
+        form_layout.setHorizontalSpacing(12)
+        form_layout.setVerticalSpacing(10)
 
         self._id_edit = QLineEdit()
         self._name_edit = QLineEdit()
@@ -1075,8 +1075,8 @@ class ReleaseProfilesDialog(QDialog):
         summary_card = QFrame()
         summary_card.setObjectName("release_profiles_card")
         summary_layout = QVBoxLayout(summary_card)
-        summary_layout.setContentsMargins(22, 22, 22, 22)
-        summary_layout.setSpacing(10)
+        summary_layout.setContentsMargins(0, 0, 0, 0)
+        summary_layout.setSpacing(8)
 
         summary_title = QLabel("Profile Summary")
         summary_title.setObjectName("workspace_section_title")
@@ -1112,7 +1112,7 @@ class ReleaseProfilesDialog(QDialog):
         card = QFrame()
         card.setObjectName("release_profiles_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)
