@@ -140,15 +140,19 @@ def test_page_navigator_styles_use_token_driven_cards():
         empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
-        assert f"border-radius: {t['r_xl']}px;" in header
-        assert f"background-color: {t['panel_soft']};" in guidance
-        assert f"border-radius: {t['r_md']}px;" in guidance
-        assert f"background-color: {t['panel_raised']};" in scroll_shell
-        assert f"border-radius: {t['r_xl']}px;" in scroll_shell
-        assert f"background-color: {t['panel_alt']};" in thumb
-        assert f"border-radius: {t['r_sm']}px;" in thumb
+        assert "border-radius: 0px;" in header
+        assert "background-color: transparent;" in guidance
+        assert "border: none;" in guidance
+        assert "border-radius: 0px;" in guidance
+        assert "background-color: transparent;" in scroll_shell
+        assert "border: none;" in scroll_shell
+        assert "border-radius: 0px;" in scroll_shell
+        assert "background-color: transparent;" in thumb
+        assert "border: 1px solid transparent;" in thumb
+        assert "border-radius: 0px;" in thumb
         assert f"border-color: {t['accent']};" in selected
         assert f"border: 1px dashed {t['border']};" in empty
+        assert "border-radius: 0px;" in empty
 
 
 def test_page_fields_panel_styles_use_engineering_surface_tokens():
@@ -300,7 +304,9 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "margin-right: 0px;" in resource_details_tab
         assert "min-height: 28px;" in resource_details_tab
         assert "padding: 6px 10px;" in resource_details_tab
-        assert f"border-radius: {t['r_sm']}px;" in thumb_surface
+        assert "background-color: transparent;" in thumb_surface
+        assert "border: none;" in thumb_surface
+        assert "border-radius: 0px;" in thumb_surface
         assert "border-radius: 0px;" in thumb_label
 
 

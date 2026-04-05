@@ -66,8 +66,8 @@ class PageThumbnail(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        layout.setSpacing(_SPACE_SM)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
         self._preview_frame = QFrame()
         self._preview_frame.setObjectName("page_navigator_thumb_surface")
@@ -76,7 +76,7 @@ class PageThumbnail(QWidget):
         self._preview_frame.setProperty("startup", False)
         self._preview_frame.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         preview_layout = QVBoxLayout(self._preview_frame)
-        preview_layout.setContentsMargins(_SPACE_XS + 2, _SPACE_XS + 2, _SPACE_XS + 2, _SPACE_XS + 2)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
         preview_layout.setSpacing(0)
 
         self._thumb_label = QLabel()
@@ -92,7 +92,7 @@ class PageThumbnail(QWidget):
 
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(_SPACE_XS)
+        content_layout.setSpacing(2)
 
         self._name_label = QLabel(page_name)
         self._name_label.setObjectName("page_navigator_page_name")
@@ -302,13 +302,13 @@ class PageNavigator(QWidget):
     def _init_ui(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(_SPACE_SM)
+        outer.setSpacing(6)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("page_navigator_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setContentsMargins(10, 10, 10, 10)
+        header_layout.setSpacing(4)
 
         self._eyebrow_label = QLabel("Page Flow")
         self._eyebrow_label.setObjectName("page_navigator_eyebrow")
@@ -321,7 +321,7 @@ class PageNavigator(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
+        title_row.setSpacing(6)
         self._title_label = QLabel("Thumbnail Rail")
         self._title_label.setObjectName("workspace_section_title")
         self._title_label.setAccessibleName("Pages")
@@ -354,8 +354,8 @@ class PageNavigator(QWidget):
         self._guidance_frame = QFrame()
         self._guidance_frame.setObjectName("page_navigator_guidance")
         guidance_layout = QVBoxLayout(self._guidance_frame)
-        guidance_layout.setContentsMargins(_SPACE_SM + 2, _SPACE_SM + 2, _SPACE_SM + 2, _SPACE_SM + 2)
-        guidance_layout.setSpacing(_SPACE_XS)
+        guidance_layout.setContentsMargins(0, 0, 0, 0)
+        guidance_layout.setSpacing(0)
         self._guidance_label = QLabel(
             "Left click opens a page. Right click duplicates, deletes, or inserts a template after the selected page."
         )
@@ -371,7 +371,7 @@ class PageNavigator(QWidget):
         self._scroll_shell = QFrame()
         self._scroll_shell.setObjectName("page_navigator_scroll_shell")
         scroll_shell_layout = QVBoxLayout(self._scroll_shell)
-        scroll_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        scroll_shell_layout.setContentsMargins(0, 0, 0, 0)
         scroll_shell_layout.setSpacing(0)
 
         self._scroll_area = QScrollArea()
@@ -387,7 +387,7 @@ class PageNavigator(QWidget):
         self._container.setAccessibleName("Page thumbnail list")
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(_SPACE_SM)
+        self._layout.setSpacing(6)
         self._scroll_area.setWidget(self._container)
         self._update_accessibility_summary()
 

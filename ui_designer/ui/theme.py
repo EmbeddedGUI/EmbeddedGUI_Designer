@@ -1771,9 +1771,9 @@ QTreeWidget#widget_tree_panel_tree {{
 }}
 
 #page_navigator_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #page_navigator_eyebrow {{
@@ -1790,40 +1790,41 @@ QTreeWidget#widget_tree_panel_tree {{
 }}
 
 #page_navigator_guidance {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #page_navigator_scroll_shell {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 QScrollArea#page_navigator_scroll,
 #page_navigator_list {{
     background-color: transparent;
     border: none;
+    border-radius: 0px;
 }}
 
 #page_navigator_empty_state {{
     background-color: transparent;
     border: 1px dashed {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     color: {t['text_soft']};
     padding: 18px;
 }}
 
 #page_navigator_thumbnail {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0px;
 }}
 
 #page_navigator_thumbnail:hover {{
     background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
+    border-color: {t['border']};
 }}
 
 #page_navigator_thumbnail[startup="true"] {{
@@ -1836,9 +1837,9 @@ QScrollArea#page_navigator_scroll,
 }}
 
 QFrame#page_navigator_thumb_surface {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 QFrame#page_navigator_thumb_surface[startup="true"] {{
