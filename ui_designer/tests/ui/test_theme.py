@@ -81,6 +81,7 @@ def test_status_center_styles_reduce_resting_container_weight():
         assert "border-radius: 0px;" in sections
         assert "background-color: transparent;" in metric_card
         assert "border: 1px solid transparent;" in metric_card
+        assert "border-radius: 0px;" in metric_card
 
 
 def test_status_center_header_styles_use_engineering_surface_tokens():
@@ -124,7 +125,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
 
         assert f"border-radius: {tokens['r_md']}px;" in chip
         assert "border-radius: 0px;" in browser_card
-        assert f"border-radius: {tokens['r_sm']}px;" in metric_card
+        assert "border-radius: 0px;" in metric_card
 
 
 def test_page_navigator_styles_use_token_driven_cards():

@@ -47,6 +47,34 @@ def qapp():
 
 @_skip_no_qt
 class TestStatusCenterPanel:
+    def test_metric_and_status_sections_use_compact_flat_layouts(self, qapp):
+        from ui_designer.ui.status_center_panel import StatusCenterPanel
+
+        panel = StatusCenterPanel()
+
+        metrics_layout = panel._sdk_card.parentWidget().layout()
+        sdk_margins = panel._sdk_card.layout().contentsMargins()
+        health_margins = panel._health_section.layout().contentsMargins()
+        runtime_margins = panel._runtime_panel.layout().contentsMargins()
+
+        assert metrics_layout.horizontalSpacing() == 4
+        assert metrics_layout.verticalSpacing() == 4
+        assert sdk_margins.left() == 4
+        assert sdk_margins.top() == 4
+        assert sdk_margins.right() == 4
+        assert sdk_margins.bottom() == 4
+        assert panel._sdk_card.layout().spacing() == 4
+        assert health_margins.left() == 4
+        assert health_margins.top() == 4
+        assert health_margins.right() == 4
+        assert health_margins.bottom() == 4
+        assert runtime_margins.left() == 4
+        assert runtime_margins.top() == 4
+        assert runtime_margins.right() == 4
+        assert runtime_margins.bottom() == 4
+        assert panel._runtime_panel.layout().spacing() == 4
+        panel.deleteLater()
+
     def test_health_chip_and_bars_track_diagnostic_mix(self, qapp):
         from ui_designer.ui.status_center_panel import StatusCenterPanel
 

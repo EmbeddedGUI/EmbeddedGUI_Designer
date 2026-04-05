@@ -2507,7 +2507,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_metric_card {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 #status_center_metric_card:hover {{
