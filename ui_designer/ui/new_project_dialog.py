@@ -77,18 +77,18 @@ class NewProjectDialog(QDialog):
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("new_project_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Project Scaffold")
         self._eyebrow_label.setObjectName("new_project_eyebrow")
@@ -129,7 +129,7 @@ class NewProjectDialog(QDialog):
         self._metrics_frame.setObjectName("new_project_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._sdk_metric_value = self._create_header_metric(metrics_layout, "Preview Mode")
         self._location_metric_value = self._create_header_metric(metrics_layout, "Parent Directory")
         self._canvas_metric_value = self._create_header_metric(metrics_layout, "Canvas")
@@ -137,13 +137,13 @@ class NewProjectDialog(QDialog):
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
 
         workspace_card = QFrame()
         workspace_card.setObjectName("new_project_form_card")
         workspace_layout = QVBoxLayout(workspace_card)
-        workspace_layout.setContentsMargins(22, 22, 22, 22)
-        workspace_layout.setSpacing(12)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(10)
 
         workspace_title = QLabel("Workspace Binding")
         workspace_title.setObjectName("workspace_section_title")
@@ -163,6 +163,7 @@ class NewProjectDialog(QDialog):
         self._sdk_edit.setReadOnly(True)
         self._sdk_edit.setText(self._sdk_root)
         sdk_row = QHBoxLayout()
+        sdk_row.setSpacing(8)
         sdk_row.addWidget(self._sdk_edit, 1)
         self._sdk_browse_btn = PushButton("Browse...")
         self._sdk_browse_btn.clicked.connect(self._browse_sdk_root)
@@ -179,13 +180,14 @@ class NewProjectDialog(QDialog):
 
         parent_label = QLabel("Parent Directory")
         parent_label.setObjectName("new_project_field_label")
-        workspace_layout.addSpacing(8)
+        workspace_layout.addSpacing(6)
         workspace_layout.addWidget(parent_label)
 
         self._parent_edit = LineEdit()
         self._parent_edit.setReadOnly(True)
         self._parent_edit.setText(self._parent_dir)
         parent_row = QHBoxLayout()
+        parent_row.setSpacing(8)
         parent_row.addWidget(self._parent_edit, 1)
         self._parent_browse_btn = PushButton("Browse...")
         self._parent_browse_btn.clicked.connect(self._browse_parent_dir)
@@ -196,13 +198,13 @@ class NewProjectDialog(QDialog):
 
         right_column = QVBoxLayout()
         right_column.setContentsMargins(0, 0, 0, 0)
-        right_column.setSpacing(16)
+        right_column.setSpacing(12)
 
         project_card = QFrame()
         project_card.setObjectName("new_project_form_card")
         project_layout = QVBoxLayout(project_card)
-        project_layout.setContentsMargins(22, 22, 22, 22)
-        project_layout.setSpacing(12)
+        project_layout.setContentsMargins(0, 0, 0, 0)
+        project_layout.setSpacing(10)
 
         project_title = QLabel("Project Profile")
         project_title.setObjectName("workspace_section_title")
@@ -234,7 +236,7 @@ class NewProjectDialog(QDialog):
         self._height_spin.valueChanged.connect(self._update_accessibility_summary)
 
         dimensions_layout = QHBoxLayout()
-        dimensions_layout.setSpacing(12)
+        dimensions_layout.setSpacing(8)
         dimensions_layout.addWidget(self._create_dimension_editor("Width", self._width_spin))
         dimensions_layout.addWidget(self._create_dimension_editor("Height", self._height_spin))
         project_layout.addLayout(dimensions_layout)
@@ -243,8 +245,8 @@ class NewProjectDialog(QDialog):
         self._summary_card = QFrame()
         self._summary_card.setObjectName("new_project_summary_card")
         summary_layout = QVBoxLayout(self._summary_card)
-        summary_layout.setContentsMargins(22, 22, 22, 22)
-        summary_layout.setSpacing(10)
+        summary_layout.setContentsMargins(0, 0, 0, 0)
+        summary_layout.setSpacing(8)
 
         summary_title = QLabel("Create Target")
         summary_title.setObjectName("workspace_section_title")
@@ -323,7 +325,7 @@ class NewProjectDialog(QDialog):
         card = QFrame()
         card.setObjectName("new_project_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)
@@ -377,8 +379,8 @@ class NewProjectDialog(QDialog):
         card = QFrame()
         card.setObjectName("new_project_dimension_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(16, 14, 16, 14)
-        card_layout.setSpacing(8)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        card_layout.setSpacing(6)
 
         label = QLabel(label_text)
         label.setObjectName("new_project_field_label")

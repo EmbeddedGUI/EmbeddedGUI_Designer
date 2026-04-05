@@ -2201,9 +2201,9 @@ QTextEdit#release_history_preview {{
 }}
 
 #new_project_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #new_project_eyebrow {{
@@ -2226,16 +2226,16 @@ QTextEdit#release_history_preview {{
 
 #new_project_form_card,
 #new_project_summary_card {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #new_project_metric_card,
 #new_project_dimension_card {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #new_project_metric_label,
