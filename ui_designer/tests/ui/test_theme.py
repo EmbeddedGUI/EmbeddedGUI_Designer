@@ -237,10 +237,43 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_md']}px;" in context
         assert f"spacing: {t['space_xs']}px;" in toolbar
         assert "background-color: transparent;" in toolbar_button
+        assert "border-radius: 0px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
         assert "border-radius: 0px;" in mode_strip
+
+
+def test_workspace_chrome_corner_radii_stay_flat():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
+        nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
+        search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
+        empty_state = css.split("#property_panel_empty_state {", 1)[1].split("}", 1)[0]
+        resource_tabs_pane = css.split("QTabWidget#resource_panel_tabs::pane {", 1)[1].split("}", 1)[0]
+        resource_tabs_tab = css.split("QTabWidget#resource_panel_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        resource_details_pane = css.split("QTabWidget#resource_panel_details_tabs::pane {", 1)[1].split("}", 1)[0]
+        resource_details_tab = css.split("QTabWidget#resource_panel_details_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        thumb_surface = css.split("QFrame#page_navigator_thumb_surface {", 1)[1].split("}", 1)[0]
+        thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
+
+        assert "border-radius: 0px;" in mode_button
+        assert "border-radius: 0px;" in nav_button
+        assert f"border-radius: {t['r_sm']}px;" in status_chip
+        assert "border-radius: 0px;" in search_shell
+        assert "border-radius: 0px;" in empty_state
+        assert "border-radius: 0px;" in resource_tabs_pane
+        assert "border-radius: 0px;" in resource_tabs_tab
+        assert "margin-right: 0px;" in resource_tabs_tab
+        assert "border-radius: 0px;" in resource_details_pane
+        assert "border-radius: 0px;" in resource_details_tab
+        assert "margin-right: 0px;" in resource_details_tab
+        assert f"border-radius: {t['r_sm']}px;" in thumb_surface
+        assert "border-radius: 0px;" in thumb_label
 
 
 def test_property_panel_styles_use_engineering_surface_tokens():
