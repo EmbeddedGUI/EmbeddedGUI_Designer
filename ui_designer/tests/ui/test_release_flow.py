@@ -1014,35 +1014,44 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         f"Path state: available. Current path: {manifest_path}."
     )
     assert dialog._preview_auto_button.accessibleName() == "Auto preview"
+    assert dialog._preview_auto_button.icon().isNull()
     assert dialog._preview_manifest_button.toolTip() == (
         f"Preview the selected release manifest. Path state: available. Current path: {manifest_path}."
     )
     assert dialog._preview_manifest_button.accessibleName() == "Preview manifest"
+    assert dialog._preview_manifest_button.icon().isNull()
     assert dialog._copy_summary_button.toolTip() == (
         "Copy the selected release summary. "
         "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
+    assert dialog._copy_summary_button.icon().isNull()
     assert dialog._copy_preview_button.toolTip() == (
         "Copy the full manifest preview text. "
         "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
+    assert dialog._copy_preview_button.icon().isNull()
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
     assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
     assert dialog._copy_history_file_button.accessibleName() == "Copy release history file path unavailable"
+    assert dialog._copy_history_file_button.icon().isNull()
     assert dialog._copy_history_json_button.toolTip() == (
         "No readable release history JSON file is available to copy. Path state: unavailable. Current path: none."
     )
     assert dialog._copy_history_json_button.accessibleName() == "Copy release history JSON unavailable"
+    assert dialog._copy_history_json_button.icon().isNull()
     assert dialog._open_history_file_button.toolTip() == (
         "The release history JSON file is unavailable or cannot be opened here. Path state: unavailable. Current path: none."
     )
     assert dialog._open_history_file_button.accessibleName() == "Open release history file unavailable"
+    assert dialog._open_history_file_button.icon().isNull()
     assert dialog._refresh_button.toolTip() == (
         "Refresh unavailable because no history reload callback was provided. History file: none. Visible entries: 1 of 1."
     )
     assert dialog._refresh_button.accessibleName() == "Refresh release history unavailable"
+    assert dialog._refresh_button.icon().isNull()
     assert dialog._copy_preview_path_button.accessibleName() == "Copy current preview path"
     assert dialog._open_preview_button.accessibleName() == "Open current preview file unavailable"
+    assert dialog._open_preview_button.icon().isNull()
 
 
 @_skip_no_qt
@@ -1103,15 +1112,20 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_filtered_button.toolTip() == "Copy the filtered release history summary. Visible entries: 1 of 1."
     assert dialog._copy_filtered_json_button.toolTip() == "Copy the filtered release history as JSON. Visible entries: 1 of 1."
     assert dialog._export_filtered_button.toolTip() == "Export the filtered release history. Visible entries: 1 of 1."
+    assert dialog._copy_filtered_button.icon().isNull()
+    assert dialog._copy_filtered_json_button.icon().isNull()
+    assert dialog._export_filtered_button.icon().isNull()
     assert dialog._clear_filters_button.toolTip() == (
         "Clear the current release history filters and search text. Visible entries: 1 of 1. Current search: sdk-fail."
     )
     assert dialog._clear_filters_button.accessibleName() == "Clear release history filters"
+    assert dialog._clear_filters_button.icon().isNull()
     assert dialog._reset_view_button.toolTip() == (
         "Reset release history filters, preview mode, and selection. Visible entries: 1 of 1. Current search: sdk-fail. "
         "Preview mode: auto. Current selection: 20260326T000100Z [esp32] failed sdk sdk-fail warn 2 err 1."
     )
     assert dialog._reset_view_button.accessibleName() == "Reset release history view"
+    assert dialog._reset_view_button.icon().isNull()
     assert dialog._copy_history_json_button.toolTip() == (
         f"Copy the release history JSON file. Path state: available. Current path: {history_path}."
     )
@@ -1122,10 +1136,13 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_history_file_button.toolTip() == f"Copy the release history file path. Current path: {history_path}."
     assert dialog._open_history_file_button.toolTip() == f"Open the release history JSON file. Path state: available. Current path: {history_path}."
     assert dialog._open_history_file_button.accessibleName() == "Open release history file"
+    assert dialog._copy_history_file_button.icon().isNull()
+    assert dialog._open_history_file_button.icon().isNull()
     assert dialog._refresh_button.toolTip() == (
         f"Reload release history from disk. History file: {history_path}. Visible entries: 1 of 1."
     )
     assert dialog._refresh_button.accessibleName() == "Refresh release history"
+    assert dialog._refresh_button.icon().isNull()
 
     dialog._preview_log_button.click()
     qapp.processEvents()
@@ -1141,6 +1158,9 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     )
     assert dialog._open_preview_button.toolTip() == f"Open the current log preview file. Path state: available. Current path: {log_path}."
     assert dialog._open_preview_button.accessibleName() == "Open current preview file"
+    assert dialog._copy_preview_path_button.icon().isNull()
+    assert dialog._export_preview_button.icon().isNull()
+    assert dialog._open_preview_button.icon().isNull()
     assert dialog._preview_edit.accessibleName() == "Release preview: Log Preview."
 
     dialog._search_edit.setText("missing-entry")
