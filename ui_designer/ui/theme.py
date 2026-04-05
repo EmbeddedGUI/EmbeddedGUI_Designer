@@ -1070,8 +1070,8 @@ QTabWidget#workspace_inspector_tabs::pane {{
 QTabWidget#workspace_inspector_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: {t['h_tab_min']}px;
-    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 26px;
+    padding: 3px {t['space_sm']}px;
 }}
 
 QTabWidget#workspace_bottom_tabs::pane {{
@@ -1085,8 +1085,8 @@ QTabWidget#workspace_bottom_tabs::pane {{
 QTabWidget#workspace_bottom_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: {t['h_tab_min']}px;
-    padding: {t['space_xs']}px {t['space_sm']}px;
+    min-height: 26px;
+    padding: 3px {t['space_sm']}px;
 }}
 
 #workspace_status_chip {{

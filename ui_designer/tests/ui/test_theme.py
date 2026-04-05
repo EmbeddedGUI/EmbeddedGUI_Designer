@@ -380,8 +380,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in inspector_tabs_pane
         assert "border-radius: 0px;" in inspector_tabs_tab
         assert "margin-right: 0px;" in inspector_tabs_tab
-        assert "min-height: 28px;" in inspector_tabs_tab
-        assert "padding: 4px 8px;" in inspector_tabs_tab
+        assert "min-height: 26px;" in inspector_tabs_tab
+        assert "padding: 3px 8px;" in inspector_tabs_tab
         assert "background-color: transparent;" in bottom_tabs_pane
         assert "border: none;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_pane
@@ -389,8 +389,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_tab
         assert "margin-right: 0px;" in bottom_tabs_tab
-        assert "min-height: 28px;" in bottom_tabs_tab
-        assert "padding: 4px 8px;" in bottom_tabs_tab
+        assert "min-height: 26px;" in bottom_tabs_tab
+        assert "padding: 3px 8px;" in bottom_tabs_tab
         assert "background-color: transparent;" in thumb_surface
         assert "border: none;" in thumb_surface
         assert "border-radius: 0px;" in thumb_surface
