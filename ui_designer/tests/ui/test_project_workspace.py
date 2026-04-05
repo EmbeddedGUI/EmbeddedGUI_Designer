@@ -41,10 +41,10 @@ class TestProjectWorkspacePanel:
         metrics_margins = panel._metrics_frame.layout().contentsMargins()
 
         assert panel.layout().spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
-        assert header_layout.spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header_layout.spacing() == 2
         assert (metrics_margins.left(), metrics_margins.top(), metrics_margins.right(), metrics_margins.bottom()) == (0, 0, 0, 0)
-        assert panel._metrics_frame.layout().spacing() == 4
+        assert panel._metrics_frame.layout().spacing() == 2
         assert panel._view_toggle_row.spacing() == 2
         assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"

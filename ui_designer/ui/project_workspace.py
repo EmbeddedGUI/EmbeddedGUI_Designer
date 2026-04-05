@@ -63,8 +63,8 @@ class ProjectWorkspacePanel(QWidget):
         self._header.setObjectName("workspace_panel_header")
         self._header.setProperty("panelTone", "project")
         header_layout = QHBoxLayout(self._header)
-        header_layout.setContentsMargins(6, 6, 6, 6)
-        header_layout.setSpacing(4)
+        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Pages", self._header)
         self._header_eyebrow.setObjectName("project_workspace_eyebrow")
@@ -83,7 +83,7 @@ class ProjectWorkspacePanel(QWidget):
         self._metrics_frame.hide()
         metrics_layout = QHBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(4)
+        metrics_layout.setSpacing(2)
 
         self._view_chip = QLabel("List view", self._metrics_frame)
         self._view_chip.setObjectName("workspace_status_chip")
