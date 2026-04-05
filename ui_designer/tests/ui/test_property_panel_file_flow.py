@@ -561,6 +561,7 @@ class TestPropertyPanelFileFlow:
             if label.objectName() == "workspace_section_subtitle"
         )
         meta = summary_header.findChild(QLabel, "property_panel_header_meta")
+        chips_frame = summary_header.findChild(QFrame, "property_panel_batch_chips")
         chips = [label for label in summary_header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
         hint_strip = _find_hint_strip(panel)
         hint_eyebrow = next(label for label in hint_strip.findChildren(QLabel) if label.text() == "Interaction Notes")
@@ -572,6 +573,7 @@ class TestPropertyPanelFileFlow:
         assert subtitle.accessibleName() == subtitle.text()
         assert subtitle.isHidden() is True
         assert meta.isHidden() is True
+        assert chips_frame.isHidden() is True
         assert any(chip.accessibleName() == "Batch types: 2 types." for chip in chips)
         assert any(chip.accessibleName().startswith("Batch mixed state: ") for chip in chips)
         assert any(chip.accessibleName() == "Batch edit state: Batch edit." for chip in chips)

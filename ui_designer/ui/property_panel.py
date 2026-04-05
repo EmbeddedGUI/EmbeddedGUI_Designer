@@ -957,7 +957,10 @@ class PropertyPanel(QWidget):
         ]
         layout.addLayout(self._build_metric_grid(metrics))
 
-        chips_row = QHBoxLayout()
+        chips_frame = QFrame()
+        chips_frame.setObjectName("property_panel_batch_chips")
+        chips_frame.hide()
+        chips_row = QHBoxLayout(chips_frame)
         chips_row.setContentsMargins(0, 0, 0, 0)
         chips_row.setSpacing(6)
         types_chip = self._make_status_chip(_count_label(len(widget_types), "type"), "accent")
@@ -982,7 +985,7 @@ class PropertyPanel(QWidget):
         )
         chips_row.addWidget(batch_chip)
         chips_row.addStretch()
-        layout.addLayout(chips_row)
+        layout.addWidget(chips_frame)
 
         return header
 
