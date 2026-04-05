@@ -118,10 +118,12 @@ class DiagnosticsPanel(QWidget):
         self._visible_count_chip.setObjectName("workspace_status_chip")
         self._visible_count_chip.setProperty("chipTone", "accent")
         title_row.addWidget(self._visible_count_chip, 0, Qt.AlignVCenter)
+        self._visible_count_chip.hide()
 
         self._filter_chip = QLabel("Any Severity")
         self._filter_chip.setObjectName("workspace_status_chip")
         title_row.addWidget(self._filter_chip, 0, Qt.AlignVCenter)
+        self._filter_chip.hide()
         header_layout.addLayout(title_row)
 
         self._severity_filter_combo = QComboBox()

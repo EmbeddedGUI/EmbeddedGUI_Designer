@@ -73,8 +73,10 @@ class TestDiagnosticsPanel:
         )
         assert panel._summary_label.toolTip() == "Diagnostics: no active issues"
         assert panel._visible_count_chip.text() == "0 visible"
+        assert panel._visible_count_chip.isHidden() is True
         assert panel._visible_count_chip.accessibleName() == "Visible diagnostics: 0 visible items."
         assert panel._filter_chip.text() == "Any Severity"
+        assert panel._filter_chip.isHidden() is True
         assert panel._filter_chip.accessibleName() == "Severity scope: Any Severity."
         assert panel._hint_label.accessibleName() == (
             "Diagnostics hint: Double-click a diagnostic to switch page or focus the widget."
@@ -110,7 +112,9 @@ class TestDiagnosticsPanel:
             "Diagnostics header. Diagnostics: 1 error(s), 1 warning(s), 1 info item(s). Severity filter: Any. 3 visible items."
         )
         assert panel._visible_count_chip.text() == "3 visible"
+        assert panel._visible_count_chip.isHidden() is True
         assert panel._filter_chip.text() == "Any Severity"
+        assert panel._filter_chip.isHidden() is True
         assert panel._open_first_error_button.toolTip() == "Open the first navigable error diagnostic."
         assert panel._open_first_warning_button.toolTip() == "Open the first navigable warning diagnostic."
         assert panel._open_first_error_button.accessibleName() == "Open first error diagnostic: main_page/title"
@@ -161,7 +165,9 @@ class TestDiagnosticsPanel:
         assert panel._hint_label.toolTip() == "No diagnostics match the current severity filter."
         assert panel._hint_label.isHidden() is True
         assert panel._visible_count_chip.text() == "0 visible"
+        assert panel._visible_count_chip.isHidden() is True
         assert panel._filter_chip.text() == "Info Only"
+        assert panel._filter_chip.isHidden() is True
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"
         assert panel._reset_view_button.isEnabled() is True
         assert panel._reset_view_button.toolTip() == "Reset the diagnostics filter and show every severity."
