@@ -1484,16 +1484,18 @@ QTreeWidget#project_dock_tree {{
     border-radius: 0px;
 }}
 
+#diagnostics_controls_strip QComboBox,
 #diagnostics_controls_strip QPushButton,
 #diagnostics_export_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
-    min-height: 28px;
+    padding: 2px {t['space_sm']}px;
+    min-height: 26px;
 }}
 
+#diagnostics_controls_strip QComboBox:hover,
 #diagnostics_controls_strip QPushButton:hover,
 #diagnostics_export_strip QPushButton:hover {{
     background-color: {t['surface_hover']};
@@ -1501,6 +1503,7 @@ QTreeWidget#project_dock_tree {{
     color: {t['text']};
 }}
 
+#diagnostics_controls_strip QComboBox:disabled,
 #diagnostics_controls_strip QPushButton:disabled,
 #diagnostics_export_strip QPushButton:disabled {{
     color: {t['text_soft']};

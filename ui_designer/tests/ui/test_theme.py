@@ -678,7 +678,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         tone_header = css.split('#diagnostics_header[panelTone="diagnostics"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#diagnostics_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
-        buttons = css.split("#diagnostics_controls_strip QPushButton,", 1)[1].split("}", 1)[0]
+        buttons = css.split("#diagnostics_controls_strip QComboBox,", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#diagnostics_list {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -691,8 +691,8 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 28px;" in buttons
-        assert f"padding: 3px {t['space_sm']}px;" in buttons
+        assert "min-height: 26px;" in buttons
+        assert f"padding: 2px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 

@@ -62,10 +62,16 @@ class TestDiagnosticsPanel:
         from ui_designer.ui.diagnostics_panel import DiagnosticsPanel
 
         panel = DiagnosticsPanel()
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
+        title_row = header_layout.itemAt(1).layout()
 
         assert panel.accessibleName() == "Diagnostics: no active issues. Severity filter: Any. 0 visible items."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 4, 6, 4)
+        assert title_row.spacing() == 2
         assert panel._controls_primary_strip.layout().spacing() == 2
         assert panel._controls_secondary_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Workspace diagnostics surface."
