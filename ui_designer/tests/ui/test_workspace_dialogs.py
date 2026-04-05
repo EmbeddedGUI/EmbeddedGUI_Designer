@@ -909,10 +909,19 @@ class TestWelcomePage:
         isolated_config.sdk_root = str(sdk_root)
 
         page = WelcomePage()
+        shell_layout = page.layout().itemAt(1).widget().layout()
+        center_widget = shell_layout.itemAt(0).widget()
+        center_layout = center_widget.layout()
+        hero_layout = page._hero.layout()
 
         assert page.accessibleName() == (
             f"Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
+        assert (shell_layout.contentsMargins().left(), shell_layout.contentsMargins().top(), shell_layout.contentsMargins().right(), shell_layout.contentsMargins().bottom()) == (16, 16, 16, 16)
+        assert shell_layout.spacing() == 10
+        assert center_layout.spacing() == 10
+        assert (hero_layout.contentsMargins().left(), hero_layout.contentsMargins().top(), hero_layout.contentsMargins().right(), hero_layout.contentsMargins().bottom()) == (12, 10, 12, 10)
+        assert hero_layout.spacing() == 12
         assert page._hero.accessibleName() == (
             f"Welcome hero. Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )

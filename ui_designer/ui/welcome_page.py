@@ -144,8 +144,8 @@ class WelcomePage(QWidget):
         shell.setAttribute(Qt.WA_StyledBackground, True)
         shell.setObjectName("welcome_shell")
         shell_layout = QVBoxLayout(shell)
-        shell_layout.setContentsMargins(20, 20, 20, 20)
-        shell_layout.setSpacing(12)
+        shell_layout.setContentsMargins(16, 16, 16, 16)
+        shell_layout.setSpacing(10)
 
         center_widget = QWidget()
         center_widget.setAttribute(Qt.WA_StyledBackground, True)
@@ -153,17 +153,17 @@ class WelcomePage(QWidget):
         center_widget.setMaximumWidth(1180)
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(12)
+        center_layout.setSpacing(10)
 
         self._hero = QFrame()
         self._hero.setObjectName("welcome_hero")
         hero_layout = QHBoxLayout(self._hero)
-        hero_layout.setContentsMargins(16, 14, 16, 14)
-        hero_layout.setSpacing(16)
+        hero_layout.setContentsMargins(12, 10, 12, 10)
+        hero_layout.setSpacing(12)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Welcome")
         self._eyebrow_label.setObjectName("welcome_eyebrow")
@@ -219,13 +219,13 @@ class WelcomePage(QWidget):
         center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(12)
+        content_layout.setSpacing(10)
 
         left_card = QFrame()
         left_card.setObjectName("welcome_action_panel")
         left_col = QVBoxLayout(left_card)
         left_col.setContentsMargins(0, 0, 0, 0)
-        left_col.setSpacing(10)
+        left_col.setSpacing(8)
 
         self._start_label = QLabel("Start")
         self._start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
@@ -287,7 +287,7 @@ class WelcomePage(QWidget):
         sdk_layout.addWidget(self._sdk_hint_label)
         self._sdk_hint_label.hide()
 
-        left_col.addSpacing(6)
+        left_col.addSpacing(4)
         left_col.addWidget(self._sdk_card)
         left_col.addStretch()
         content_layout.addWidget(left_card, 3)
