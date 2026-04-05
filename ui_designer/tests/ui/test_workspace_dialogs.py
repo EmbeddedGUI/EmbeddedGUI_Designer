@@ -88,6 +88,7 @@ class TestAppSelectorDialog:
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
+        assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "SDK example browser workspace."
         assert dialog._title_label.accessibleName() == "SDK example browser title: Open EmbeddedGUI SDK Example."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()

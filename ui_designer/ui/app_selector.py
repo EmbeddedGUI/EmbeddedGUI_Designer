@@ -237,13 +237,15 @@ class AppSelectorDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("app_selector_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._root_metric_value = self._create_header_metric(metrics_layout, "SDK Status")
         self._results_metric_value = self._create_header_metric(metrics_layout, "Visible Examples")
         self._selection_metric_value = self._create_header_metric(metrics_layout, "Action")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
@@ -418,6 +420,7 @@ class AppSelectorDialog(QDialog):
         self._root_edit.setAccessibleName("EmbeddedGUI SDK root")
         self._root_status_label.setAccessibleName("SDK root status")
         self._selection_hint_label.setAccessibleName("SDK example selection hint")
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def _create_header_metric(self, layout, label_text):
