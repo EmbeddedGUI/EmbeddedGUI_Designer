@@ -40,15 +40,19 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._header_eyebrow.accessibleName() == "Project navigation workspace surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._page_count_chip.text() == "0 pages"
         assert panel._page_count_chip.accessibleName() == "Page count: 0 pages."
         assert panel._dirty_chip.text() == "Clean"
         assert panel._dirty_chip.accessibleName() == "Dirty state: No dirty pages."
         assert panel._metrics_frame.accessibleName() == "Project workspace metrics: 0 pages. No dirty pages."
+        assert panel._metrics_frame.isHidden() is True
         assert panel._summary_label.text() == "0 pages. Active: none. Clean."
         assert panel._summary_label.accessibleName() == "Pages summary: 0 pages. Active: none. Clean."
+        assert panel._summary_label.isHidden() is True
         assert panel._meta_label.text() == "Startup: none"
         assert panel._meta_label.accessibleName() == "Pages startup summary: Startup: none"
+        assert panel._meta_label.isHidden() is True
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."
         assert panel._list_btn.statusTip() == panel._list_btn.toolTip()
         assert panel._list_btn.accessibleName() == "Workspace view button: List. Structure first. Current view."
@@ -64,6 +68,7 @@ class TestProjectWorkspacePanel:
         assert panel._subtitle_label.accessibleName() == (
             "Page navigation, startup flow, and visual scan."
         )
+        assert panel._subtitle_label.isHidden() is True
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )

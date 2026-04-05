@@ -1489,12 +1489,12 @@ class ResourcePanel(QWidget):
         catalog_title.setObjectName("workspace_section_title")
         top_layout.addWidget(catalog_title)
 
-        catalog_hint = QLabel(
+        self._catalog_hint = QLabel(
             "Choose a tab, then import, restore missing files, or replace missing files."
         )
-        catalog_hint.setObjectName("workspace_section_subtitle")
-        catalog_hint.setWordWrap(True)
-        top_layout.addWidget(catalog_hint)
+        self._catalog_hint.setObjectName("workspace_section_subtitle")
+        self._catalog_hint.setWordWrap(True)
+        top_layout.addWidget(self._catalog_hint)
 
         self._tabs = TabWidget()
         self._tabs.setObjectName("resource_panel_tabs")
@@ -1733,10 +1733,10 @@ class ResourcePanel(QWidget):
         preview_caption.setObjectName("workspace_section_title")
         preview_layout.addWidget(preview_caption)
 
-        preview_hint = QLabel("Preview the selected file before changing references.")
-        preview_hint.setObjectName("workspace_section_subtitle")
-        preview_hint.setWordWrap(True)
-        preview_layout.addWidget(preview_hint)
+        self._preview_hint = QLabel("Preview the selected file before changing references.")
+        self._preview_hint.setObjectName("workspace_section_subtitle")
+        self._preview_hint.setWordWrap(True)
+        preview_layout.addWidget(self._preview_hint)
 
         self._preview = _PreviewWidget()
         self._preview.setObjectName("resource_panel_preview")
@@ -1754,10 +1754,10 @@ class ResourcePanel(QWidget):
         usage_caption.setObjectName("workspace_section_title")
         usage_layout.addWidget(usage_caption)
 
-        usage_hint = QLabel("List widgets that use the selected resource.")
-        usage_hint.setObjectName("workspace_section_subtitle")
-        usage_hint.setWordWrap(True)
-        usage_layout.addWidget(usage_hint)
+        self._usage_hint = QLabel("List widgets that use the selected resource.")
+        self._usage_hint.setObjectName("workspace_section_subtitle")
+        self._usage_hint.setWordWrap(True)
+        usage_layout.addWidget(self._usage_hint)
 
         usage_filter_row = QHBoxLayout()
         usage_filter_row.setSpacing(8)
@@ -1798,6 +1798,11 @@ class ResourcePanel(QWidget):
         self._update_usage_accessibility_metadata()
         self._update_panel_overview()
         self._panel_eyebrow.hide()
+        self._panel_subtitle.hide()
+        self._panel_status.hide()
+        self._catalog_hint.hide()
+        self._preview_hint.hide()
+        self._usage_hint.hide()
         for metric_value in (
             self._catalog_metric_value,
             self._missing_metric_value,

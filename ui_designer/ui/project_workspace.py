@@ -168,7 +168,10 @@ class ProjectWorkspacePanel(QWidget):
         layout.addWidget(self._header)
 
         self._header_eyebrow.hide()
+        self._subtitle_label.hide()
         self._metrics_frame.hide()
+        self._summary_label.hide()
+        self._meta_label.hide()
 
         self._stack = QStackedWidget()
         self._stack.addWidget(self._list_view)

@@ -58,15 +58,24 @@ class TestResourcePanelFileFlow:
         )
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."
+        assert eyebrow.isHidden() is True
         assert title.accessibleName() == "Resource panel title: Project Resources."
         assert subtitle.accessibleName() == subtitle.text()
+        assert subtitle.isHidden() is True
         assert status.accessibleName() == "Resource workspace state: configured. Active tab: Images"
+        assert status.isHidden() is True
+        assert panel._catalog_hint.isHidden() is True
+        assert panel._preview_hint.isHidden() is True
+        assert panel._usage_hint.isHidden() is True
         assert panel._catalog_metric_value.accessibleName() == "Resource panel metric: Catalog. 3 assets."
         assert panel._catalog_metric_value.toolTip() == "Catalog: 3 assets."
         assert panel._catalog_metric_value._resource_panel_metric_label.accessibleName() == "Catalog metric label."
         assert panel._catalog_metric_value._resource_panel_metric_card.accessibleName() == "Catalog metric: 3 assets."
+        assert panel._catalog_metric_value._resource_panel_metric_card.isHidden() is True
         assert panel._missing_metric_value.accessibleName() == "Resource panel metric: Missing. 2 missing files."
+        assert panel._missing_metric_value._resource_panel_metric_card.isHidden() is True
         assert panel._selection_metric_value.accessibleName() == "Resource panel metric: Selection. Images: none."
+        assert panel._selection_metric_value._resource_panel_metric_card.isHidden() is True
         assert len(header.findChildren(QFrame, "resource_panel_metric_card")) == 3
         panel.deleteLater()
 
