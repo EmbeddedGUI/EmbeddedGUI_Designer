@@ -506,9 +506,10 @@ class TestStatusCenterPanel:
             "Status Center summary: Workspace checks are pending. Focus on Configure SDK. "
             "Open Project to configure the SDK workspace. SDK root is missing or invalid."
         )
-        assert panel._header_eyebrow.text() == "Workspace Signals"
+        assert panel._header_eyebrow.text() == "Workspace"
         assert panel._header_eyebrow.toolTip() == "Workspace health command surface."
         assert panel._header_eyebrow.accessibleName() == "Workspace health command surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._header_focus_chip.text() == "Focus: Workspace"
         assert panel._header_focus_chip.property("chipTone") == "warning"
         assert panel._header_focus_chip.accessibleName() == "Status center focus: Workspace."

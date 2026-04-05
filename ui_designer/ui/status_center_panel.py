@@ -91,6 +91,7 @@ class StatusCenterPanel(QWidget):
         self._set_hint(self._header_eyebrow, "Workspace health command surface.")
         self._set_accessible_name(self._header_eyebrow, "Workspace health command surface.")
         header_layout.addWidget(self._header_eyebrow)
+        self._header_eyebrow.hide()
 
         header_title_row = QHBoxLayout()
         header_title_row.setContentsMargins(0, 0, 0, 0)
