@@ -207,13 +207,15 @@ class WelcomePage(QWidget):
         hero_copy.addStretch(1)
         hero_layout.addLayout(hero_copy, 3)
 
-        hero_metrics = QVBoxLayout()
+        self._overview_metrics_frame = QFrame()
+        self._overview_metrics_frame.setObjectName("welcome_metrics_frame")
+        hero_metrics = QVBoxLayout(self._overview_metrics_frame)
         hero_metrics.setContentsMargins(0, 0, 0, 0)
         hero_metrics.setSpacing(10)
         self._overview_sdk_value = self._create_overview_metric(hero_metrics, "SDK Binding")
         self._overview_preview_value = self._create_overview_metric(hero_metrics, "Preview Mode")
         self._overview_recent_value = self._create_overview_metric(hero_metrics, "Recent Work")
-        hero_layout.addLayout(hero_metrics, 2)
+        hero_layout.addWidget(self._overview_metrics_frame, 2)
         center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
@@ -343,6 +345,7 @@ class WelcomePage(QWidget):
         _set_widget_metadata(self._open_app_btn, tooltip="Open an SDK example project or legacy example.", accessible_name="Open SDK example")
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 
+        self._overview_metrics_frame.hide()
         self._refresh_sdk_status()
         self._refresh_recent_list()
 

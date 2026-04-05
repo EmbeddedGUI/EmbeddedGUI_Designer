@@ -921,6 +921,7 @@ class TestWelcomePage:
         assert page._eyebrow_label.isHidden()
         assert page._subtitle_label.isHidden()
         assert page._hero_hint_label.isHidden()
+        assert page._overview_metrics_frame.isHidden()
         assert page._start_hint_label.isHidden()
         assert page._recent_hint_label.isHidden()
         assert page._footer_label.isHidden()
