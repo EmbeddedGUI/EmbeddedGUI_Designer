@@ -24,7 +24,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 
-from .iconography import make_icon
 from ..model.config import get_config
 from ..model.repo_health import (
     collect_repo_health,
@@ -183,22 +182,15 @@ class RepositoryHealthDialog(QDialog):
         controls_hint.hide()
 
         self._refresh_button = QPushButton("Refresh")
-        self._refresh_button.setIcon(make_icon("state.info"))
         self._reset_view_button = QPushButton("Reset View")
-        self._reset_view_button.setIcon(make_icon("toolbar.undo"))
         self._critical_only_check = QCheckBox("Critical Only")
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
         self._copy_summary_button = QPushButton("Copy Summary")
-        self._copy_summary_button.setIcon(make_icon("toolbar.copy"))
         self._export_summary_button = QPushButton("Export Summary...")
-        self._export_summary_button.setIcon(make_icon("toolbar.export"))
         self._copy_report_button = QPushButton("Copy Report")
-        self._copy_report_button.setIcon(make_icon("toolbar.copy"))
         self._copy_json_button = QPushButton("Copy JSON")
-        self._copy_json_button.setIcon(make_icon("toolbar.copy"))
         self._export_report_button = QPushButton("Export Report...")
-        self._export_report_button.setIcon(make_icon("toolbar.export"))
         self._copy_repo_button = QPushButton("Copy Repo")
         self._open_repo_button = QPushButton("Open Repo")
         self._copy_sdk_button = QPushButton("Copy SDK")

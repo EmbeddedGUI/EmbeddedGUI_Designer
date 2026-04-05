@@ -157,11 +157,15 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
     assert dialog._details_edit.accessibleName() == "Repository health details: text view. Filters: critical off, blocked off."
     assert dialog._refresh_button.toolTip() == "Refresh repository health, runtime path checks, and stale temp directory scan."
     assert dialog._refresh_button.accessibleName() == "Refresh repository health: text view"
+    assert dialog._refresh_button.icon().isNull()
     assert dialog._reset_view_button.toolTip() == "Repository health already shows the full text report."
     assert dialog._reset_view_button.accessibleName() == "Reset repository health view unavailable"
+    assert dialog._reset_view_button.icon().isNull()
     assert dialog._critical_only_check.toolTip() == "Filter the report to critical repository health issues."
     assert dialog._blocked_only_check.toolTip() == "Filter the report to stale temp directories blocked by access errors."
     assert dialog._show_json_check.toolTip() == "Show the repository health report as JSON."
+    assert dialog._copy_summary_button.icon().isNull()
+    assert dialog._export_summary_button.icon().isNull()
     assert dialog._copy_report_button.toolTip() == "Copy the current repository health text report."
     assert dialog._copy_summary_button.accessibleName() == (
         "Copy repository health summary: 2 critical issues, 1 suggestion, 1 stale directory, 1 blocked stale directory"
@@ -173,6 +177,9 @@ def test_repository_health_dialog_exposes_accessibility_metadata(qapp, monkeypat
     assert dialog._copy_json_button.accessibleName() == (
         "Copy repository health JSON report: 2 critical issues, 1 suggestion, 1 stale directory, 1 blocked stale directory"
     )
+    assert dialog._copy_report_button.icon().isNull()
+    assert dialog._copy_json_button.icon().isNull()
+    assert dialog._export_report_button.icon().isNull()
     assert dialog._copy_repo_button.toolTip() == "Copy the repository root path."
     assert dialog._copy_repo_button.accessibleName() == "Copy repository root path"
     assert dialog._copy_sdk_button.accessibleName() == "Copy SDK folder path"
