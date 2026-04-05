@@ -117,6 +117,7 @@ class TestWidgetTreePanel:
         assert panel._tree_count_chip.text() == "2 widgets"
         assert panel._tree_count_chip.accessibleName() == "Widget count: 2 widgets."
         assert panel._selection_summary_chip.text() == "No selection"
+        assert panel._selection_summary_chip.isHidden() is True
         assert panel._selection_summary_chip.accessibleName() == "Selection summary: no selection."
         assert panel._filter_summary_chip.text() == "All widgets"
         assert panel._filter_summary_chip.accessibleName() == "Filter summary: All widgets."
@@ -133,6 +134,7 @@ class TestWidgetTreePanel:
         )
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._selection_summary_chip.text() == "1 selected - leaf"
+        assert panel._selection_summary_chip.isHidden() is True
         assert panel._selection_summary_chip.accessibleName() == "Selection summary: 1 selected - leaf."
         assert panel._filter_summary_chip.text() == "1 match"
         assert panel._filter_summary_chip.accessibleName() == "Filter summary: 1 match."

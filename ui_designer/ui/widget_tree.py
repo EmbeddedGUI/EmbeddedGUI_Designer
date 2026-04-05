@@ -220,6 +220,7 @@ class WidgetTreePanel(QWidget):
         self._selection_summary_chip.setObjectName("workspace_status_chip")
         self._selection_summary_chip.setProperty("chipTone", "accent")
         title_row.addWidget(self._selection_summary_chip)
+        self._selection_summary_chip.hide()
         header_layout.addLayout(title_row)
 
         self._header_meta_label = QLabel(
