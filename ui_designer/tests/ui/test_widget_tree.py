@@ -103,6 +103,7 @@ class TestWidgetTreePanel:
         panel.set_project(project)
 
         assert panel._header_eyebrow.accessibleName() == "Structure navigation workspace surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (
             "Widget tree header. Widget tree: 2 widgets. 0 selected widgets. Current widget: none. "
             "Filter: none. Status: All widgets. Position: none. "

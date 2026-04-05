@@ -61,6 +61,7 @@ class DebugPanel(QWidget):
         self._header_eyebrow = QLabel("Runtime")
         self._header_eyebrow.setObjectName("debug_panel_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
+        self._header_eyebrow.hide()
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)

@@ -37,6 +37,7 @@ class TestEditorTabsAccessibility:
             "Editor tabs header. Editor tabs: Design mode. XML source is empty. Mode switch visible."
         )
         assert tabs._eyebrow_label.accessibleName() == "Editor engineering workspace surface."
+        assert tabs._eyebrow_label.isHidden() is True
         assert tabs._meta_label.accessibleName() == (
             "Switch between visual layout, split inspection, and raw XML editing without losing page context."
         )

@@ -105,6 +105,7 @@ class EditorTabs(QWidget):
             accessible_name="Editor engineering workspace surface.",
         )
         header_layout.addWidget(self._eyebrow_label)
+        self._eyebrow_label.hide()
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)

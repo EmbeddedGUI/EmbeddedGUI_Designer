@@ -1113,6 +1113,7 @@ class PreviewPanel(QWidget):
         self._eyebrow_label = QLabel("Preview")
         self._eyebrow_label.setObjectName("preview_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
+        self._eyebrow_label.hide()
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)

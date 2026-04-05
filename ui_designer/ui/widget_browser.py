@@ -268,6 +268,7 @@ class WidgetBrowserPanel(QWidget):
         self._header_eyebrow = QLabel("Components")
         self._header_eyebrow.setObjectName("widget_browser_header_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
+        self._header_eyebrow.hide()
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)

@@ -68,7 +68,8 @@ class TestPreviewPanelFallback:
             "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
             "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
         )
-        assert panel._eyebrow_label.accessibleName() == "Preview engineering workspace surface."
+        assert panel._eyebrow_label.accessibleName() == "Preview workspace."
+        assert panel._eyebrow_label.isHidden() is True
         assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._metrics_frame.accessibleName() == (

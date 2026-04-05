@@ -294,6 +294,7 @@ class TestWidgetBrowserPanel:
         initial_meta = f"Showing {visible_label} in All. Insert target: Current page root. Selected: {selected_label}."
 
         assert panel._header_eyebrow.accessibleName() == "Component catalog workspace surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._subtitle_label.text() == initial_meta
         assert panel._header_frame.accessibleName() == f"Components header. {initial_meta}"
         assert panel._visible_count_chip.text() == f"{len(panel._cards)} visible"

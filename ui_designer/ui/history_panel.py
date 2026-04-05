@@ -36,6 +36,7 @@ class HistoryPanel(QWidget):
         self._header_eyebrow = QLabel("Undo Timeline")
         self._header_eyebrow.setObjectName("history_panel_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
+        self._header_eyebrow.hide()
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)

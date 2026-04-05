@@ -38,6 +38,7 @@ class TestHistoryPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
         assert panel._header_eyebrow.accessibleName() == "Undo timeline workspace surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (
             "History header. History panel: Page -. 0 entries. Current entry none. Undo no. Redo no. Dirty no. Source Saved state."
         )
