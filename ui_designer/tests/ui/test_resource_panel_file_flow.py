@@ -60,13 +60,14 @@ class TestResourcePanelFileFlow:
             "Resource panel: Workspace configured. Active tab: Images. "
             "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
         )
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
-        assert header.layout().spacing() == 8
-        assert top_card.layout().spacing() == 6
-        assert panel._tabs.widget(0).layout().spacing() == 6
-        assert panel._tabs.widget(1).layout().spacing() == 6
-        assert panel._tabs.widget(2).layout().spacing() == 6
-        assert panel._tabs.widget(3).layout().spacing() == 6
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert header.layout().spacing() == 6
+        assert top_card.layout().spacing() == 4
+        assert panel._tabs.widget(0).layout().spacing() == 4
+        assert panel._tabs.widget(1).layout().spacing() == 4
+        assert panel._tabs.widget(2).layout().spacing() == 4
+        assert panel._tabs.widget(3).layout().spacing() == 4
         assert metrics_layout.spacing() == 4
         assert (
             metric_margins.left(),
@@ -77,8 +78,10 @@ class TestResourcePanelFileFlow:
         preview_layout = panel._details_tabs.widget(0).layout()
         usage_layout = panel._details_tabs.widget(1).layout()
         usage_filter_layout = usage_layout.itemAt(1).layout()
-        assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (6, 6, 6, 6)
-        assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (6, 6, 6, 6)
+        assert preview_layout.spacing() == 4
+        assert usage_layout.spacing() == 4
+        assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (4, 4, 4, 4)
+        assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (4, 4, 4, 4)
         assert usage_filter_layout.spacing() == 4
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."

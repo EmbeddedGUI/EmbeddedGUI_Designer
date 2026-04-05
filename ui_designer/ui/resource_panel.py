@@ -1434,13 +1434,13 @@ class ResourcePanel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         self._panel_header = QFrame(self)
         self._panel_header.setObjectName("resource_panel_header")
         header_layout = QHBoxLayout(self._panel_header)
-        header_layout.setContentsMargins(8, 8, 8, 8)
-        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(6, 6, 6, 6)
+        header_layout.setSpacing(6)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
@@ -1503,7 +1503,7 @@ class ResourcePanel(QWidget):
         top_widget.setObjectName("resource_panel_card")
         top_layout = QVBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setSpacing(6)
+        top_layout.setSpacing(4)
 
         catalog_title = QLabel("Resource Catalog")
         catalog_title.setObjectName("workspace_section_title")
@@ -1525,7 +1525,7 @@ class ResourcePanel(QWidget):
         img_tab = QWidget()
         img_tab_layout = QVBoxLayout(img_tab)
         img_tab_layout.setContentsMargins(0, 0, 0, 0)
-        img_tab_layout.setSpacing(6)
+        img_tab_layout.setSpacing(4)
 
         self._image_list = _LazyImageList()
         _prepare_resource_panel_list(self._image_list, "resource_panel_image_list")
@@ -1538,7 +1538,7 @@ class ResourcePanel(QWidget):
         img_tab_layout.addWidget(self._image_list, 1)
 
         img_btn_layout = QHBoxLayout()
-        img_btn_layout.setSpacing(6)
+        img_btn_layout.setSpacing(4)
         import_img_btn = PushButton("Import Image...")
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
@@ -1577,7 +1577,7 @@ class ResourcePanel(QWidget):
         font_tab = QWidget()
         font_tab_layout = QVBoxLayout(font_tab)
         font_tab_layout.setContentsMargins(0, 0, 0, 0)
-        font_tab_layout.setSpacing(6)
+        font_tab_layout.setSpacing(4)
 
         self._font_list = _DragResourceList("font")
         _prepare_resource_panel_list(self._font_list)
@@ -1590,7 +1590,7 @@ class ResourcePanel(QWidget):
         font_tab_layout.addWidget(self._font_list, 1)
 
         font_btn_layout = QHBoxLayout()
-        font_btn_layout.setSpacing(6)
+        font_btn_layout.setSpacing(4)
         import_font_btn = PushButton("Import Font...")
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
@@ -1629,7 +1629,7 @@ class ResourcePanel(QWidget):
         text_tab = QWidget()
         text_tab_layout = QVBoxLayout(text_tab)
         text_tab_layout.setContentsMargins(0, 0, 0, 0)
-        text_tab_layout.setSpacing(6)
+        text_tab_layout.setSpacing(4)
 
         self._text_list = _DragResourceList("text")
         _prepare_resource_panel_list(self._text_list)
@@ -1642,7 +1642,7 @@ class ResourcePanel(QWidget):
         text_tab_layout.addWidget(self._text_list, 1)
 
         text_btn_layout = QHBoxLayout()
-        text_btn_layout.setSpacing(6)
+        text_btn_layout.setSpacing(4)
         import_text_btn = PushButton("Import Text...")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
@@ -1681,11 +1681,11 @@ class ResourcePanel(QWidget):
         strings_tab = QWidget()
         strings_tab_layout = QVBoxLayout(strings_tab)
         strings_tab_layout.setContentsMargins(0, 0, 0, 0)
-        strings_tab_layout.setSpacing(6)
+        strings_tab_layout.setSpacing(4)
 
         # Locale selector
         locale_row = QHBoxLayout()
-        locale_row.setSpacing(6)
+        locale_row.setSpacing(4)
         locale_label = QLabel("Locale")
         locale_label.setObjectName("resource_panel_field_label")
         locale_row.addWidget(locale_label)
@@ -1720,7 +1720,7 @@ class ResourcePanel(QWidget):
 
         # Buttons
         str_btn_layout = QHBoxLayout()
-        str_btn_layout.setSpacing(6)
+        str_btn_layout.setSpacing(4)
         self._add_key_btn = PushButton("Add Key...")
         self._add_key_btn.clicked.connect(self._on_add_string_key)
         str_btn_layout.addWidget(self._add_key_btn)
@@ -1750,8 +1750,8 @@ class ResourcePanel(QWidget):
 
         preview_tab = QWidget()
         preview_tab_layout = QVBoxLayout(preview_tab)
-        preview_tab_layout.setContentsMargins(6, 6, 6, 6)
-        preview_tab_layout.setSpacing(6)
+        preview_tab_layout.setContentsMargins(4, 4, 4, 4)
+        preview_tab_layout.setSpacing(4)
 
         self._preview_hint = QLabel("Preview the selected asset.")
         self._preview_hint.setObjectName("workspace_section_subtitle")
@@ -1766,8 +1766,8 @@ class ResourcePanel(QWidget):
 
         usage_tab = QWidget()
         usage_layout = QVBoxLayout(usage_tab)
-        usage_layout.setContentsMargins(6, 6, 6, 6)
-        usage_layout.setSpacing(6)
+        usage_layout.setContentsMargins(4, 4, 4, 4)
+        usage_layout.setSpacing(4)
 
         self._usage_hint = QLabel("Review where the selected asset is used.")
         self._usage_hint.setObjectName("workspace_section_subtitle")
