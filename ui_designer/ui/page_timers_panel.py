@@ -157,6 +157,7 @@ class PageTimersPanel(QWidget):
         layout.addWidget(self._table_frame, 1)
         self._eyebrow_label.hide()
         self._header_meta_label.hide()
+        self._metrics_frame.hide()
         self._hint_label.hide()
         self._update_actions()
 

@@ -67,6 +67,7 @@ class TestPageTimersPanel:
         assert panel._count_chip.accessibleName() == "Timer count: 1 timer."
         assert panel._selection_chip.text() == "No selection"
         assert panel._selection_chip.accessibleName() == "Timer selection: No timer selected."
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == "Page timers metrics: 1 timer. No timer selected."
         assert panel._hint_label.toolTip() == panel._hint_label.text()
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()

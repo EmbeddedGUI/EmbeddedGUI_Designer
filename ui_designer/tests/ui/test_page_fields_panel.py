@@ -68,6 +68,7 @@ class TestPageFieldsPanel:
         assert panel._count_chip.accessibleName() == "Field count: 2 fields."
         assert panel._selection_chip.text() == "No selection"
         assert panel._selection_chip.accessibleName() == "Field selection: No field selected."
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == "Page fields metrics: 2 fields. No field selected."
         assert panel._hint_label.toolTip() == panel._hint_label.text()
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
