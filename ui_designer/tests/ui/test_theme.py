@@ -674,7 +674,8 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#animations_panel_header[panelTone="animations"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#animations_panel_header {", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#animations_panel_header[panelTone="animations"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#animations_panel_meta {", 1)[1].split("}", 1)[0]
         actions = css.split("#animations_panel_actions_strip {", 1)[1].split("}", 1)[0]
         buttons = css.split("#animations_panel_actions_strip QPushButton {", 1)[1].split("}", 1)[0]
@@ -683,6 +684,9 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
         assert "background-color: transparent;" in actions
         assert "border: none;" in actions
@@ -690,7 +694,7 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_sm']}px;" in buttons
         assert "min-height: 30px;" in buttons
         assert f"background-color: {t['panel_alt']};" in table
-        assert f"border-radius: {t['r_md']}px;" in table
+        assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail
         assert "border: none;" in detail
         assert "border-radius: 0px;" in detail
