@@ -6178,6 +6178,24 @@ class TestMainWindowFileFlow:
         )
         assert window._workspace_health_chip.text() == "Workspace Stable"
         assert window._runtime_chip.text() == "Python Preview"
+        editor_layout = window._editor_container.layout()
+        editor_margins = editor_layout.contentsMargins()
+        toolbar_host_margins = window._toolbar_host_layout.contentsMargins()
+        nav_layout = window._workspace_nav_frame.layout()
+        nav_margins = nav_layout.contentsMargins()
+        bottom_header_layout = window._bottom_header.layout()
+        bottom_header_margins = bottom_header_layout.contentsMargins()
+        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (8, 8, 8, 8)
+        assert editor_layout.spacing() == 4
+        assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (4, 4, 4, 4)
+        assert window._toolbar_command_row_layout.spacing() == 4
+        assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (4, 4, 4, 4)
+        assert window._left_shell.layout().spacing() == 8
+        assert window._center_shell.layout().spacing() == 8
+        assert window._page_inspector_body.layout().spacing() == 8
+        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (8, 4, 8, 4)
+        assert bottom_header_layout.spacing() == 4
+        assert window._bottom_shell.layout().spacing() == 4
         assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page."

@@ -351,13 +351,13 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS, _SPACE_SM + _SPACE_XXS)
-        editor_layout.setSpacing(_SPACE_SM)
+        editor_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        editor_layout.setSpacing(_SPACE_XS)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QVBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         self._toolbar_host_layout.setSpacing(0)
 
         self._toolbar_header = QFrame(self)
@@ -394,7 +394,7 @@ class MainWindow(QMainWindow):
         self._toolbar_command_row.setObjectName("workspace_command_body")
         self._toolbar_command_row_layout = QHBoxLayout(self._toolbar_command_row)
         self._toolbar_command_row_layout.setContentsMargins(0, 0, 0, 0)
-        self._toolbar_command_row_layout.setSpacing(_SPACE_SM)
+        self._toolbar_command_row_layout.setSpacing(_SPACE_XS)
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
         editor_layout.addWidget(self._toolbar_host)
 
@@ -477,7 +477,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame.setFixedWidth(WORKSPACE_NAV_RAIL_WIDTH)
         self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(_SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS)
+        nav_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         for key, label, short_label in (
             ("project", "Project", "Pages"),
@@ -492,11 +492,11 @@ class MainWindow(QMainWindow):
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
-        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_SM + _SPACE_XXS)
+        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_SM)
         self._left_shell.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
-        left_shell_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
+        left_shell_layout.setSpacing(_SPACE_SM)
         left_shell_layout.addWidget(self._workspace_nav_frame, 0)
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         center_shell.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(_SPACE_SM + _SPACE_XXS)
+        center_layout.setSpacing(_SPACE_SM)
 
         self.page_tab_bar = self._create_page_tab_bar()
         center_layout.addWidget(self.page_tab_bar)
@@ -522,7 +522,7 @@ class MainWindow(QMainWindow):
         self._page_inspector_body.setObjectName("page_inspector_body")
         page_body_layout = QVBoxLayout(self._page_inspector_body)
         page_body_layout.setContentsMargins(0, 0, 0, 0)
-        page_body_layout.setSpacing(_SPACE_MD)
+        page_body_layout.setSpacing(_SPACE_SM)
         page_body_layout.addWidget(self.page_fields_panel)
         page_body_layout.addWidget(self.page_timers_panel)
 
@@ -560,8 +560,8 @@ class MainWindow(QMainWindow):
         self._bottom_header = QFrame()
         self._bottom_header.setObjectName("workspace_bottom_header")
         bottom_header_layout = QHBoxLayout(self._bottom_header)
-        bottom_header_layout.setContentsMargins(_SPACE_SM + _SPACE_XXS, _SPACE_SM - 1, _SPACE_SM + _SPACE_XXS, _SPACE_SM - 1)
-        bottom_header_layout.setSpacing(_SPACE_SM)
+        bottom_header_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        bottom_header_layout.setSpacing(_SPACE_XS)
         self._bottom_title = QLabel("Tools")
         self._bottom_title.setObjectName("workspace_section_title")
         bottom_header_layout.addWidget(self._bottom_title)
@@ -581,7 +581,7 @@ class MainWindow(QMainWindow):
         bottom_shell.setObjectName("workspace_bottom_shell")
         bottom_layout = QVBoxLayout(bottom_shell)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(_SPACE_SM)
+        bottom_layout.setSpacing(_SPACE_XS)
         bottom_layout.addWidget(self._bottom_header)
         bottom_layout.addWidget(self._bottom_tabs, 1)
 
