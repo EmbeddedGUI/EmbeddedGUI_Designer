@@ -1002,6 +1002,36 @@ QToolButton[workspaceNav="true"]:checked {{
     border: 1px solid {t['accent']};
 }}
 
+QTabWidget#workspace_inspector_tabs::pane {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    padding: 0px;
+    top: 0px;
+}}
+
+QTabWidget#workspace_inspector_tabs QTabBar::tab {{
+    border-radius: 0px;
+    margin-right: 0px;
+    min-height: {t['h_tab_min']}px;
+    padding: {t['space_xs']}px {t['space_sm']}px;
+}}
+
+QTabWidget#workspace_bottom_tabs::pane {{
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    padding: 0px;
+    top: 0px;
+}}
+
+QTabWidget#workspace_bottom_tabs QTabBar::tab {{
+    border-radius: 0px;
+    margin-right: 0px;
+    min-height: {t['h_tab_min']}px;
+    padding: {t['space_xs']}px {t['space_sm']}px;
+}}
+
 #workspace_status_chip {{
     background-color: transparent;
     border: 1px solid {t['border']};

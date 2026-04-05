@@ -323,6 +323,10 @@ def test_workspace_chrome_corner_radii_stay_flat():
         resource_tabs_tab = css.split("QTabWidget#resource_panel_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         resource_details_pane = css.split("QTabWidget#resource_panel_details_tabs::pane {", 1)[1].split("}", 1)[0]
         resource_details_tab = css.split("QTabWidget#resource_panel_details_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        inspector_tabs_pane = css.split("QTabWidget#workspace_inspector_tabs::pane {", 1)[1].split("}", 1)[0]
+        inspector_tabs_tab = css.split("QTabWidget#workspace_inspector_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        bottom_tabs_pane = css.split("QTabWidget#workspace_bottom_tabs::pane {", 1)[1].split("}", 1)[0]
+        bottom_tabs_tab = css.split("QTabWidget#workspace_bottom_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         thumb_surface = css.split("QFrame#page_navigator_thumb_surface {", 1)[1].split("}", 1)[0]
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
@@ -349,6 +353,24 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "margin-right: 0px;" in resource_details_tab
         assert "min-height: 28px;" in resource_details_tab
         assert "padding: 6px 10px;" in resource_details_tab
+        assert "background-color: transparent;" in inspector_tabs_pane
+        assert "border: none;" in inspector_tabs_pane
+        assert "border-radius: 0px;" in inspector_tabs_pane
+        assert "padding: 0px;" in inspector_tabs_pane
+        assert "top: 0px;" in inspector_tabs_pane
+        assert "border-radius: 0px;" in inspector_tabs_tab
+        assert "margin-right: 0px;" in inspector_tabs_tab
+        assert "min-height: 28px;" in inspector_tabs_tab
+        assert "padding: 4px 8px;" in inspector_tabs_tab
+        assert "background-color: transparent;" in bottom_tabs_pane
+        assert "border: none;" in bottom_tabs_pane
+        assert "border-radius: 0px;" in bottom_tabs_pane
+        assert "padding: 0px;" in bottom_tabs_pane
+        assert "top: 0px;" in bottom_tabs_pane
+        assert "border-radius: 0px;" in bottom_tabs_tab
+        assert "margin-right: 0px;" in bottom_tabs_tab
+        assert "min-height: 28px;" in bottom_tabs_tab
+        assert "padding: 4px 8px;" in bottom_tabs_tab
         assert "background-color: transparent;" in thumb_surface
         assert "border: none;" in thumb_surface
         assert "border-radius: 0px;" in thumb_surface

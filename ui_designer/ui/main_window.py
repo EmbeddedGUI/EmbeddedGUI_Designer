@@ -571,6 +571,7 @@ class MainWindow(QMainWindow):
         bottom_header_layout.addWidget(self._bottom_toggle_button)
 
         self._bottom_tabs = QTabWidget()
+        self._bottom_tabs.setObjectName("workspace_bottom_tabs")
         self._bottom_tabs.addTab(self.diagnostics_panel, "Diagnostics")
         self._bottom_tabs.addTab(self.history_panel, "History")
         self._bottom_tabs.addTab(self.debug_panel, "Debug Output")

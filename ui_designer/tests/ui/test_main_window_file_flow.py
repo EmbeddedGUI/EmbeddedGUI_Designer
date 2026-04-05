@@ -8477,6 +8477,8 @@ class TestMainWindowFileFlow:
             "Open Components panel. Current page: main_page. Insert target: root_group."
         )
         assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
+        assert window._inspector_tabs.objectName() == "workspace_inspector_tabs"
+        assert window._bottom_tabs.objectName() == "workspace_bottom_tabs"
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Properties selected. 3 tabs. Current page: main_page. Selection: none."
         )
