@@ -853,7 +853,7 @@ QPushButton#project_workspace_view_button:checked {{
 }}
 
 QToolBar#main_toolbar {{
-    spacing: 2px;
+    spacing: 1px;
     background: transparent;
     border: none;
 }}
@@ -869,8 +869,8 @@ QToolBar#main_toolbar QToolButton {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px 6px;
-    min-height: 24px;
+    padding: 1px 5px;
+    min-height: 22px;
 }}
 
 QToolBar#main_toolbar QToolButton:hover {{

@@ -8725,8 +8725,8 @@ class TestMainWindowFileFlow:
         assert mode_host.layout().spacing() == 1
         assert window._mode_buttons["design"].width() == 56
         assert window._mode_buttons["design"].height() == 26
-        assert separator.minimumHeight() == 24
-        assert separator.maximumHeight() == 24
+        assert separator.minimumHeight() == 22
+        assert separator.maximumHeight() == 22
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_health_chip.text() == "Open Project"
         assert window._runtime_chip.text() == "Preview Idle"

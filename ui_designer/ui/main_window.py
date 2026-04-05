@@ -4154,7 +4154,7 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setObjectName("toolbar_host_separator")
         toolbar_rail_sep.setFrameShape(QFrame.VLine)
         toolbar_rail_sep.setFrameShadow(QFrame.Plain)
-        toolbar_rail_sep.setFixedHeight(24)
+        toolbar_rail_sep.setFixedHeight(22)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
         self._insert_widget_button = PushButton("Insert")
