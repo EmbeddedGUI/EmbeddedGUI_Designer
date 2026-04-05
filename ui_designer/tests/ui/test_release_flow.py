@@ -1000,6 +1000,7 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     )
     assert dialog._history_list.item(0).statusTip() == dialog._history_list.item(0).toolTip()
     assert dialog._history_list.item(0).data(Qt.AccessibleTextRole) == dialog._history_list.item(0).toolTip()
+    assert dialog._summary_label.isHidden()
     assert dialog._summary_label.accessibleName() == (
         "Selected release summary: 20260326T000000Z [windows-pc] success sdk sdk-good"
     )
@@ -1154,6 +1155,7 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._export_filtered_button.toolTip() == "No filtered release entries are available to export. Visible entries: 0 of 1."
     assert dialog._copy_filtered_button.accessibleName() == "Copy filtered release history summary unavailable"
     assert dialog._copy_summary_button.toolTip() == "Select a release entry to copy its summary. Current selection: none."
+    assert dialog._summary_label.isHidden()
     assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: log. Path state: unavailable. Current path: none. "

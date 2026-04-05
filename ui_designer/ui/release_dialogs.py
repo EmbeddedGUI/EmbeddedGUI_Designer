@@ -1814,6 +1814,7 @@ class ReleaseHistoryDialog(QDialog):
         self._summary_label.setObjectName("release_history_summary")
         self._summary_label.setWordWrap(True)
         details_layout.addWidget(self._summary_label)
+        self._summary_label.hide()
 
         self._details_edit = QTextEdit()
         self._details_edit.setObjectName("release_history_details")
