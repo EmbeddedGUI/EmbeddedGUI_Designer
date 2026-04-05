@@ -48,15 +48,15 @@ class RecentProjectItem(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_Hover, True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(96)
+        self.setMinimumHeight(84)
         self.setObjectName("welcome_recent_item")
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(4)
+        text_layout.setSpacing(2)
 
         self._name_label = QLabel(display_name)
         self._name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
@@ -296,7 +296,7 @@ class WelcomePage(QWidget):
         right_card.setObjectName("welcome_recent_panel")
         right_col = QVBoxLayout(right_card)
         right_col.setContentsMargins(0, 0, 0, 0)
-        right_col.setSpacing(10)
+        right_col.setSpacing(8)
 
         self._recent_label = QLabel("Recent Projects")
         self._recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
@@ -310,7 +310,7 @@ class WelcomePage(QWidget):
         self._recent_hint_label.hide()
 
         self._recent_list = QVBoxLayout()
-        self._recent_list.setSpacing(6)
+        self._recent_list.setSpacing(4)
         right_col.addLayout(self._recent_list)
         right_col.addStretch()
         content_layout.addWidget(right_card, 4)

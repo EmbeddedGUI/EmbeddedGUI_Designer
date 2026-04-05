@@ -2374,12 +2374,12 @@ QTextEdit#release_history_preview {{
 
 #welcome_recent_status {{
     background-color: transparent;
-    border: 1px solid {t['border']};
+    border: none;
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
-    padding: {t['space_xxs']}px {t['space_sm']}px;
+    padding: 0px;
 }}
 
 #welcome_recent_status[chipTone="success"] {{

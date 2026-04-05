@@ -1065,6 +1065,11 @@ class TestWelcomePage:
         widget = page._recent_list.itemAt(0).widget()
 
         assert widget is not None
+        recent_margins = widget.layout().contentsMargins()
+        assert widget.minimumHeight() == 84
+        assert (recent_margins.left(), recent_margins.top(), recent_margins.right(), recent_margins.bottom()) == (0, 0, 0, 0)
+        assert widget.layout().spacing() == 8
+        assert page._recent_list.spacing() == 4
         assert widget.accessibleName() == (
             f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."
         )

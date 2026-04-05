@@ -386,6 +386,7 @@ def test_welcome_page_styles_use_engineering_surface_tokens():
         sdk = css.split("#welcome_sdk_panel {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#welcome_metric_card {", 1)[1].split("}", 1)[0]
         recent_item = css.split("#welcome_recent_item {", 1)[1].split("}", 1)[0]
+        recent_status = css.split("#welcome_recent_status {", 1)[1].split("}", 1)[0]
         empty = css.split("#welcome_recent_empty {", 1)[1].split("}", 1)[0]
 
         assert f"background-color: {t['panel']};" in hero
@@ -402,6 +403,10 @@ def test_welcome_page_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in recent_item
         assert "border: 1px solid transparent;" in recent_item
         assert "border-radius: 0px;" in recent_item
+        assert "background-color: transparent;" in recent_status
+        assert "border: none;" in recent_status
+        assert "border-radius: 0px;" in recent_status
+        assert "padding: 0px;" in recent_status
         assert f"border: 1px dashed {t['border']};" in empty
         assert "border-radius: 0px;" in empty
 
