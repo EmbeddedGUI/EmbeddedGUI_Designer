@@ -620,6 +620,9 @@ class TestNewProjectDialog:
             "App name none. Size 240 by 320."
         )
         assert dialog._sdk_browse_btn.toolTip() == "Browse to an EmbeddedGUI SDK root."
+        assert dialog._sdk_browse_btn.icon().isNull()
+        assert dialog._sdk_clear_btn.icon().isNull()
+        assert dialog._parent_browse_btn.icon().isNull()
         assert dialog._parent_edit.accessibleName() == f"Project parent directory: {normalized_parent}"
 
         dialog._app_name_edit.setText("DemoApp")
@@ -646,6 +649,7 @@ class TestNewProjectDialog:
         assert dialog._create_btn.accessibleName() == (
             f"Create project: DemoApp. Create project DemoApp in {normalized_parent} at 320 by 240."
         )
+        assert dialog._create_btn.icon().isNull()
         dialog.deleteLater()
 
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
