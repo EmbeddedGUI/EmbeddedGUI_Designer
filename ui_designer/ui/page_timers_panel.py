@@ -21,7 +21,6 @@ from ..model.page_timers import (
     suggest_page_timer_name,
     validate_page_timers,
 )
-from .iconography import make_icon
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -71,7 +70,7 @@ class PageTimersPanel(QWidget):
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(8)
 
-        self._eyebrow_label = QLabel("Scheduled Callbacks")
+        self._eyebrow_label = QLabel("Timers")
         self._eyebrow_label.setObjectName("page_timers_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
 
@@ -80,7 +79,7 @@ class PageTimersPanel(QWidget):
         header_layout.addWidget(self._summary_label)
 
         self._header_meta_label = QLabel(
-            "Timers generate egui_timer_t members plus callback entry points for page-level scheduling."
+            "Edit timer scheduling for the current page."
         )
         self._header_meta_label.setObjectName("page_timers_meta")
         self._header_meta_label.setWordWrap(True)
@@ -109,7 +108,7 @@ class PageTimersPanel(QWidget):
         table_layout.addWidget(self._table_label)
 
         self._hint_label = QLabel(
-            "Page timers generate egui_timer_t members plus helper functions. Delay and period are raw C expressions in milliseconds."
+            "Delay and period are raw C expressions in milliseconds."
         )
         self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
@@ -143,11 +142,8 @@ class PageTimersPanel(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Timer")
-        self._add_button.setIcon(make_icon("toolbar.new"))
         self._remove_button = QPushButton("Remove Timer")
-        self._remove_button.setIcon(make_icon("toolbar.delete"))
         self._open_code_button = QPushButton("Open User Code")
-        self._open_code_button.setIcon(make_icon("nav.page"))
         self._add_button.clicked.connect(self._on_add_timer)
         self._remove_button.clicked.connect(self._on_remove_timer)
         self._open_code_button.clicked.connect(self._on_open_user_code)
