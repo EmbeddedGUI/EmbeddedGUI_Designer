@@ -3399,7 +3399,7 @@ class MainWindow(QMainWindow):
         page_tab_bar.setScrollable(True)
         page_tab_bar.setAddButtonVisible(False)
         page_tab_bar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ON_HOVER)
-        page_tab_bar.setTabMaximumWidth(180)
+        page_tab_bar.setTabMaximumWidth(168)
         page_tab_bar.setTabShadowEnabled(False)
         page_tab_bar.setFixedHeight(36)
         page_tab_bar.tabCloseRequested.connect(self._on_page_tab_closed)
