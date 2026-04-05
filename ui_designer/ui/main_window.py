@@ -372,11 +372,11 @@ class MainWindow(QMainWindow):
         toolbar_heading_layout.setContentsMargins(0, 0, 0, 0)
         toolbar_heading_layout.setSpacing(_SPACE_XS)
 
-        self._toolbar_eyebrow_label = QLabel("Engineering Workspace")
+        self._toolbar_eyebrow_label = QLabel("Workspace")
         self._toolbar_eyebrow_label.setObjectName("workspace_command_eyebrow")
         toolbar_heading_layout.addWidget(self._toolbar_eyebrow_label)
 
-        self._toolbar_title_label = QLabel("Design Command Center")
+        self._toolbar_title_label = QLabel("Commands")
         self._toolbar_title_label.setObjectName("workspace_command_title")
         toolbar_heading_layout.addWidget(self._toolbar_title_label)
 
