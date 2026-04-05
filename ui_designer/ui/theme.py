@@ -1396,9 +1396,9 @@ QTreeWidget#project_dock_tree {{
 }}
 
 #structure_drag_hint_strip {{
-    background-color: {t['accent_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #structure_primary_strip QPushButton,
@@ -1408,10 +1408,10 @@ QTreeWidget#project_dock_tree {{
 #structure_filter_bar QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 #structure_primary_strip QPushButton:hover,

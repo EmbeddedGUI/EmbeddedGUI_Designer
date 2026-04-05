@@ -633,6 +633,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#structure_header_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#structure_metrics_strip {", 1)[1].split("}", 1)[0]
         strips = css.split("#structure_primary_strip,", 1)[1].split("}", 1)[0]
+        drag_hint = css.split("#structure_drag_hint_strip {", 1)[1].split("}", 1)[0]
         buttons = css.split("#structure_primary_strip QPushButton,", 1)[1].split("}", 1)[0]
         tree = css.split("QTreeWidget#widget_tree_panel_tree {", 1)[1].split("}", 1)[0]
 
@@ -648,8 +649,12 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in strips
         assert "border: none;" in strips
         assert "border-radius: 0px;" in strips
-        assert f"border-radius: {t['r_sm']}px;" in buttons
-        assert "min-height: 30px;" in buttons
+        assert "background-color: transparent;" in drag_hint
+        assert "border: none;" in drag_hint
+        assert "border-radius: 0px;" in drag_hint
+        assert "border-radius: 0px;" in buttons
+        assert "min-height: 28px;" in buttons
+        assert f"padding: 3px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in tree
         _assert_default_border(tree, t)
         assert "border-radius: 0px;" in tree
