@@ -103,6 +103,7 @@ class AnimationsPanel(QWidget):
         self._selection_chip.setObjectName("workspace_status_chip")
         self._selection_chip.setProperty("chipTone", "warning")
         title_row.addWidget(self._selection_chip, 0, Qt.AlignVCenter)
+        self._selection_chip.hide()
         header_layout.addLayout(title_row)
 
         self._hint_label = QLabel(

@@ -64,6 +64,7 @@ class TestAnimationsPanel:
             "Animations header. Animations: 1 animation on label title"
         )
         assert panel._selection_chip.text() == "1 animation"
+        assert panel._selection_chip.isHidden() is True
         assert panel._selection_chip.accessibleName() == "Animation selection status: 1 animation."
         assert panel._hint_label.text() == "Showing 1 animation on label title. Select a row to inspect details."
         assert panel._hint_label.isHidden() is True
@@ -298,6 +299,7 @@ class TestAnimationsPanel:
         assert panel.accessibleName() == "Animations: select a single widget (2 selected)"
         assert panel.toolTip() == panel.accessibleName()
         assert panel._selection_chip.text() == "2 Selected"
+        assert panel._selection_chip.isHidden() is True
         assert panel._selection_chip.accessibleName() == "Animation selection status: 2 Selected."
         assert panel._hint_label.text() == "Animation editing is available for a single selected widget only."
         assert panel._table.toolTip() == "Animations: select a single widget (2 selected)"
