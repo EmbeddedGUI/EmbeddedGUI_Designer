@@ -10,7 +10,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QDialog, QFrame
+    from PyQt5.QtWidgets import QApplication, QDialog, QFrame, QLabel
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -33,6 +33,13 @@ def qapp():
         except Exception:
             pass
     app.processEvents()
+
+
+def _find_label_by_text(root, text):
+    for label in root.findChildren(QLabel):
+        if label.text() == text:
+            return label
+    raise AssertionError(f"Label not found: {text}")
 
 
 @pytest.fixture
@@ -212,6 +219,26 @@ def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, 
     assert dialog._eyebrow_label.accessibleName() == "Repository diagnostics workspace."
     assert dialog._title_label.accessibleName() == "Repository health title: Repository Health."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(
+        dialog,
+        "Use text view for a compact operator report, or switch to JSON when you need the raw diagnostic payload.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Refresh diagnostics, reset filtered state, and switch between focused views without leaving this surface.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Copy or export either the summary line or the full diagnostic report in text or JSON form.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Jump directly to repository, SDK, and smoke-sample locations without leaving the diagnostics context.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Inspect directories left behind by prior checks and open or copy the currently selected stale path.",
+    ).isHidden()
     assert dialog._critical_metric_value.accessibleName() == "Repository health metric: Critical. 2."
     assert dialog._critical_metric_value._repo_health_metric_label.accessibleName() == "Critical metric label."
     assert dialog._critical_metric_value._repo_health_metric_card.accessibleName() == "Critical metric: 2."

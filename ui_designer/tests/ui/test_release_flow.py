@@ -12,7 +12,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QDialog, QFrame
+    from PyQt5.QtWidgets import QApplication, QDialog, QFrame, QLabel
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -35,6 +35,13 @@ def qapp():
         except Exception:
             pass
     app.processEvents()
+
+
+def _find_label_by_text(root, text):
+    for label in root.findChildren(QLabel):
+        if label.text() == text:
+            return label
+    raise AssertionError(f"Label not found: {text}")
 
 
 @pytest.fixture
@@ -604,6 +611,14 @@ def test_release_build_header_exposes_pipeline_metadata(qapp):
     assert dialog._eyebrow_label.accessibleName() == "Release pipeline workspace."
     assert dialog._title_label.accessibleName() == "Release build title: Prepare Release Build."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(
+        dialog,
+        "The selected profile drives target settings, while the SDK and output path define the actual packaging workspace.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Choose whether warnings should block the build and whether the output should also be packaged as a zip artifact.",
+    ).isHidden()
     assert dialog._profile_metric_value.accessibleName() == "Release build metric: Profile. Windows PC (windows-pc)."
     assert dialog._profile_metric_value._release_build_metric_label.accessibleName() == "Profile metric label."
     assert dialog._profile_metric_value._release_build_metric_card.accessibleName() == "Profile metric: Windows PC (windows-pc)."
@@ -723,6 +738,18 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
     assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(
+        dialog,
+        "Use this list as the single source of release targets. Default state is shown directly in the item label.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Edit the selected profile fields below. Changes are applied to the in-memory release configuration immediately.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Keep track of the default profile and the current selection before saving the release configuration.",
+    ).isHidden()
     assert dialog._profile_count_metric_value.accessibleName() == "Release profiles metric: Profiles. 2 profiles."
     assert dialog._profile_count_metric_value._release_profiles_metric_label.accessibleName() == "Profiles metric label."
     assert dialog._profile_count_metric_value._release_profiles_metric_card.accessibleName() == "Profiles metric: 2 profiles."
@@ -927,6 +954,22 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
     assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(
+        dialog,
+        "Use time range, release state, artifact presence, diagnostics, and text search together to narrow the list before drilling into a single run.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Track filtered volume, artifact coverage, and history file availability before copying or exporting a batch.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "Entries stay sorted by the active rule, with each row surfacing profile, SDK revision, and the first diagnostic signal.",
+    ).isHidden()
+    assert _find_label_by_text(
+        dialog,
+        "The selected release row expands into a structured summary and raw metadata so build context remains visible while exporting.",
+    ).isHidden()
     assert dialog._result_metric_value.accessibleName() == "Release history metric: Visible. 1 / 1."
     assert dialog._result_metric_value._release_history_metric_label.accessibleName() == "Visible metric label."
     assert dialog._result_metric_value._release_history_metric_card.accessibleName() == "Visible metric: 1 / 1."

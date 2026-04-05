@@ -152,6 +152,7 @@ class NewProjectDialog(QDialog):
         workspace_hint.setObjectName("workspace_section_subtitle")
         workspace_hint.setWordWrap(True)
         workspace_layout.addWidget(workspace_hint)
+        workspace_hint.hide()
 
         sdk_label = QLabel("SDK Root")
         sdk_label.setObjectName("new_project_field_label")
@@ -213,6 +214,7 @@ class NewProjectDialog(QDialog):
         project_hint.setObjectName("workspace_section_subtitle")
         project_hint.setWordWrap(True)
         project_layout.addWidget(project_hint)
+        project_hint.hide()
 
         app_name_label = QLabel("App Name")
         app_name_label.setObjectName("new_project_field_label")
@@ -254,6 +256,7 @@ class NewProjectDialog(QDialog):
         summary_hint.setObjectName("workspace_section_subtitle")
         summary_hint.setWordWrap(True)
         summary_layout.addWidget(summary_hint)
+        summary_hint.hide()
 
         target_caption = QLabel("Project Path")
         target_caption.setObjectName("new_project_summary_caption")

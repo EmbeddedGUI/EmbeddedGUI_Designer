@@ -247,6 +247,7 @@ class AppSelectorDialog(QDialog):
         root_hint.setObjectName("workspace_section_subtitle")
         root_hint.setWordWrap(True)
         root_layout.addWidget(root_hint)
+        root_hint.hide()
 
         root_label = QLabel("SDK Root")
         root_label.setObjectName("app_selector_field_label")
@@ -301,6 +302,7 @@ class AppSelectorDialog(QDialog):
         options_hint.setObjectName("workspace_section_subtitle")
         options_hint.setWordWrap(True)
         options_layout.addWidget(options_hint)
+        options_hint.hide()
 
         self._show_legacy = QCheckBox("Show legacy examples without .egui")
         self._show_legacy.setChecked(self._config.show_all_examples)
@@ -334,6 +336,7 @@ class AppSelectorDialog(QDialog):
         browser_hint.setObjectName("workspace_section_subtitle")
         browser_hint.setWordWrap(True)
         browser_layout.addWidget(browser_hint)
+        browser_hint.hide()
 
         self._search_edit = LineEdit()
         self._search_edit.setPlaceholderText("Filter examples by name...")
@@ -364,6 +367,7 @@ class AppSelectorDialog(QDialog):
         selection_hint.setObjectName("workspace_section_subtitle")
         selection_hint.setWordWrap(True)
         selection_layout.addWidget(selection_hint)
+        selection_hint.hide()
 
         self._selection_hint_label = QLabel("")
         self._selection_hint_label.setObjectName("app_selector_selection_value")

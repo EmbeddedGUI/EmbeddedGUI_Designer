@@ -674,6 +674,7 @@ class ReleaseBuildDialog(QDialog):
         context_hint.setObjectName("workspace_section_subtitle")
         context_hint.setWordWrap(True)
         context_layout.addWidget(context_hint)
+        context_hint.hide()
 
         form = QFormLayout()
         form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
@@ -720,6 +721,7 @@ class ReleaseBuildDialog(QDialog):
         options_hint.setObjectName("workspace_section_subtitle")
         options_hint.setWordWrap(True)
         options_layout.addWidget(options_hint)
+        options_hint.hide()
 
         self._warnings_as_errors = QCheckBox("Treat warnings as errors")
         self._warnings_as_errors.toggled.connect(self._update_accessibility_summary)
@@ -983,6 +985,7 @@ class ReleaseProfilesDialog(QDialog):
         left_hint.setObjectName("workspace_section_subtitle")
         left_hint.setWordWrap(True)
         left_panel.addWidget(left_hint)
+        left_hint.hide()
 
         self._profile_list = QListWidget()
         self._profile_list.setObjectName("release_profiles_list")
@@ -1030,6 +1033,7 @@ class ReleaseProfilesDialog(QDialog):
         form_hint.setObjectName("workspace_section_subtitle")
         form_hint.setWordWrap(True)
         form_shell.addWidget(form_hint)
+        form_hint.hide()
 
         form_layout = QFormLayout()
         form_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
@@ -1080,6 +1084,7 @@ class ReleaseProfilesDialog(QDialog):
         summary_hint.setObjectName("workspace_section_subtitle")
         summary_hint.setWordWrap(True)
         summary_layout.addWidget(summary_hint)
+        summary_hint.hide()
 
         self._default_label = QLabel()
         self._default_label.setObjectName("release_profiles_summary_value")
@@ -1546,6 +1551,7 @@ class ReleaseHistoryDialog(QDialog):
         filters_hint.setObjectName("workspace_section_subtitle")
         filters_hint.setWordWrap(True)
         filters_layout.addWidget(filters_hint)
+        filters_hint.hide()
 
         filters_grid = QGridLayout()
         filters_grid.setHorizontalSpacing(12)
@@ -1651,6 +1657,7 @@ class ReleaseHistoryDialog(QDialog):
         overview_hint.setObjectName("workspace_section_subtitle")
         overview_hint.setWordWrap(True)
         overview_layout.addWidget(overview_hint)
+        overview_hint.hide()
 
         stats_grid = QGridLayout()
         stats_grid.setHorizontalSpacing(12)
@@ -1770,6 +1777,7 @@ class ReleaseHistoryDialog(QDialog):
         history_hint.setObjectName("workspace_section_subtitle")
         history_hint.setWordWrap(True)
         history_layout.addWidget(history_hint)
+        history_hint.hide()
 
         self._history_list = QListWidget()
         self._history_list.setObjectName("release_history_list")
@@ -1799,6 +1807,7 @@ class ReleaseHistoryDialog(QDialog):
         details_hint.setObjectName("workspace_section_subtitle")
         details_hint.setWordWrap(True)
         details_layout.addWidget(details_hint)
+        details_hint.hide()
 
         self._summary_label = QLabel("Select a release entry to inspect its metadata.")
         self._summary_label.setObjectName("release_history_summary")

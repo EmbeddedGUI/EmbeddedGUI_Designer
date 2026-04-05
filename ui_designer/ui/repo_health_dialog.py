@@ -152,6 +152,7 @@ class RepositoryHealthDialog(QDialog):
         details_hint.setObjectName("workspace_section_subtitle")
         details_hint.setWordWrap(True)
         details_layout.addWidget(details_hint)
+        details_hint.hide()
 
         self._details_edit = QTextEdit()
         self._details_edit.setObjectName("repo_health_details")
@@ -177,6 +178,7 @@ class RepositoryHealthDialog(QDialog):
         controls_hint.setObjectName("workspace_section_subtitle")
         controls_hint.setWordWrap(True)
         controls_layout.addWidget(controls_hint)
+        controls_hint.hide()
 
         self._refresh_button = QPushButton("Refresh")
         self._refresh_button.setIcon(make_icon("state.info"))
@@ -255,6 +257,7 @@ class RepositoryHealthDialog(QDialog):
         reports_hint.setObjectName("workspace_section_subtitle")
         reports_hint.setWordWrap(True)
         reports_layout.addWidget(reports_hint)
+        reports_hint.hide()
 
         reports_grid = QGridLayout()
         reports_grid.setHorizontalSpacing(10)
@@ -281,6 +284,7 @@ class RepositoryHealthDialog(QDialog):
         paths_hint.setObjectName("workspace_section_subtitle")
         paths_hint.setWordWrap(True)
         paths_layout.addWidget(paths_hint)
+        paths_hint.hide()
 
         paths_grid = QGridLayout()
         paths_grid.setHorizontalSpacing(10)
@@ -308,6 +312,7 @@ class RepositoryHealthDialog(QDialog):
         stale_hint.setObjectName("workspace_section_subtitle")
         stale_hint.setWordWrap(True)
         stale_layout.addWidget(stale_hint)
+        stale_hint.hide()
 
         stale_layout.addWidget(self._stale_dir_combo)
         stale_row = QHBoxLayout()

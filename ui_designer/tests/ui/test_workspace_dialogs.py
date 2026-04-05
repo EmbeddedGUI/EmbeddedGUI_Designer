@@ -66,6 +66,13 @@ def _mark_bundled_sdk(root):
     (root / ".designer_sdk_bundle.json").write_text('{"source_root": "D:/sdk/EmbeddedGUI"}\n', encoding="utf-8")
 
 
+def _find_label_by_text(root, text):
+    for label in root.findChildren(QLabel):
+        if label.text() == text:
+            return label
+    raise AssertionError(f"Label not found: {text}")
+
+
 @_skip_no_qt
 class TestAppSelectorDialog:
     def test_header_exposes_sdk_example_workspace_metadata(self, qapp, isolated_config):
@@ -98,6 +105,22 @@ class TestAppSelectorDialog:
         assert dialog._selection_metric_value.accessibleName() == (
             f"App selector metric: Action. {dialog._selection_metric_value.text()}."
         )
+        assert _find_label_by_text(
+            dialog,
+            "Examples come from the current SDK workspace. Switch roots here when you need a different application catalog.",
+        ).isHidden()
+        assert _find_label_by_text(
+            dialog,
+            "Keep the browser focused on Designer-ready projects, or widen the list to include legacy apps that still need import.",
+        ).isHidden()
+        assert _find_label_by_text(
+            dialog,
+            "Search by app name and use the list below as the single entry point into existing SDK projects.",
+        ).isHidden()
+        assert _find_label_by_text(
+            dialog,
+            "Review the selected example path and import mode before opening it in the workspace.",
+        ).isHidden()
         assert len(dialog.findChildren(QFrame, "app_selector_metric_card")) == 3
         dialog.deleteLater()
 
@@ -550,6 +573,18 @@ class TestNewProjectDialog:
         assert dialog._canvas_metric_value.accessibleName() == (
             f"New project metric: Canvas. {dialog._canvas_metric_value.text()}."
         )
+        assert _find_label_by_text(
+            dialog,
+            "Attach an SDK if you want compile-backed preview from the first project open.",
+        ).isHidden()
+        assert _find_label_by_text(
+            dialog,
+            "Start with an explicit app name and target canvas size.",
+        ).isHidden()
+        assert _find_label_by_text(
+            dialog,
+            "Review where the project lands and whether the current configuration is ready.",
+        ).isHidden()
         assert len(dialog.findChildren(QFrame, "new_project_metric_card")) == 3
         dialog.deleteLater()
 
