@@ -6325,6 +6325,7 @@ class TestMainWindowFileFlow:
         assert window.page_tab_bar.accessibleName() == (
             "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. No dirty pages."
         )
+        assert window.page_tab_bar.height() == 36
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
 
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")
@@ -9095,6 +9096,9 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["widgets"].text() == "Insert"
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
         assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextOnly
+        assert window._workspace_nav_frame.layout().spacing() == 4
+        assert window._workspace_nav_buttons["project"].width() == 60
+        assert window._workspace_nav_buttons["project"].height() == 26
 
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: none. Startup page: none."

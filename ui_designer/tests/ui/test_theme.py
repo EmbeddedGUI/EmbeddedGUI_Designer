@@ -328,6 +328,10 @@ def test_workspace_chrome_corner_radii_stay_flat():
 
         assert "border-radius: 0px;" in mode_button
         assert "border-radius: 0px;" in nav_button
+        assert "min-width: 60px;" in nav_button
+        assert "max-width: 60px;" in nav_button
+        assert "min-height: 26px;" in nav_button
+        assert "max-height: 26px;" in nav_button
         assert "border-radius: 0px;" in status_chip
         assert "border-radius: 0px;" in search_shell
         assert "border-radius: 0px;" in empty_state

@@ -980,10 +980,10 @@ QToolButton[workspaceNav="true"] {{
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
     padding: 2px 0;
-    min-width: 64px;
-    max-width: 64px;
-    min-height: 28px;
-    max-height: 28px;
+    min-width: 60px;
+    max-width: 60px;
+    min-height: 26px;
+    max-height: 26px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{

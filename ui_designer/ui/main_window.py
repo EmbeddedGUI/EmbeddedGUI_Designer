@@ -478,7 +478,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
         nav_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
-        nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
+        nav_layout.setSpacing(_SPACE_XS)
         for key, label, short_label in (
             ("project", "Project", "Pages"),
             ("structure", "Structure", "Tree"),
@@ -727,7 +727,7 @@ class MainWindow(QMainWindow):
         button.setCheckable(True)
         button.setToolButtonStyle(Qt.ToolButtonTextOnly)
         button.setText(str(short_label or label or ""))
-        button.setFixedSize(64, 30)
+        button.setFixedSize(60, 26)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
@@ -3396,7 +3396,7 @@ class MainWindow(QMainWindow):
         page_tab_bar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ON_HOVER)
         page_tab_bar.setTabMaximumWidth(180)
         page_tab_bar.setTabShadowEnabled(False)
-        page_tab_bar.setFixedHeight(40)
+        page_tab_bar.setFixedHeight(36)
         page_tab_bar.tabCloseRequested.connect(self._on_page_tab_closed)
         page_tab_bar.currentChanged.connect(self._on_page_tab_changed)
         page_tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
