@@ -96,7 +96,7 @@ class ProjectExplorerDock(QDockWidget):
         container.setObjectName("project_dock_shell")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
+        layout.setSpacing(4)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("project_dock_header")
@@ -135,12 +135,12 @@ class ProjectExplorerDock(QDockWidget):
         self._settings_group.setAccessibleName("Project settings")
         settings_layout = QVBoxLayout(self._settings_group)
         settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.setSpacing(6)
+        settings_layout.setSpacing(4)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(6)
+        mode_layout.setSpacing(4)
         self._mode_label = QLabel("Mode")
         _set_widget_metadata(
             self._mode_label,
@@ -150,6 +150,7 @@ class ProjectExplorerDock(QDockWidget):
         self._mode_label.setObjectName("project_dock_field_label")
         mode_layout.addWidget(self._mode_label)
         self._mode_combo = QComboBox()
+        self._mode_combo.setObjectName("project_dock_mode_combo")
         self._mode_combo.addItems(["easy_page", "activity"])
         self._mode_combo.currentTextChanged.connect(self._on_mode_changed)
         mode_layout.addWidget(self._mode_combo)
@@ -176,6 +177,7 @@ class ProjectExplorerDock(QDockWidget):
 
         # Add page button
         self._add_page_button = QPushButton("New Page")
+        self._add_page_button.setObjectName("project_dock_add_page_button")
         self._add_page_button.clicked.connect(self._on_add_page)
         layout.addWidget(self._add_page_button)
 

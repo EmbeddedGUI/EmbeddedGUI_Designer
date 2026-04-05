@@ -457,6 +457,7 @@ def test_project_dock_styles_use_engineering_surface_tokens():
 
         header = css.split("#project_dock_header {", 1)[1].split("}", 1)[0]
         settings = css.split("#project_dock_settings_group {", 1)[1].split("}", 1)[0]
+        controls = css.split("QComboBox#project_dock_mode_combo,", 1)[1].split("}", 1)[0]
         metric_card = css.split("#project_dock_metric_card {", 1)[1].split("}", 1)[0]
         tree = css.split("QTreeWidget#project_dock_tree {", 1)[1].split("}", 1)[0]
 
@@ -465,6 +466,9 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in settings
         assert "border: none;" in settings
         assert "border-radius: 0px;" in settings
+        assert "border-radius: 0px;" in controls
+        assert f"padding: 3px {t['space_sm']}px;" in controls
+        assert "min-height: 28px;" in controls
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
         assert "border-radius: 0px;" in metric_card

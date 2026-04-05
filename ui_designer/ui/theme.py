@@ -1333,6 +1333,28 @@ QTableWidget#resource_panel_table QHeaderView::section {{
     border-radius: 0px;
 }}
 
+QComboBox#project_dock_mode_combo,
+QPushButton#project_dock_add_page_button {{
+    background-color: transparent;
+    border: 1px solid {t['border']};
+    border-radius: 0px;
+    color: {t['text_muted']};
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
+}}
+
+QComboBox#project_dock_mode_combo:hover,
+QPushButton#project_dock_add_page_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QPushButton#project_dock_add_page_button:disabled {{
+    color: {t['text_soft']};
+    border-color: {t['border']};
+}}
+
 #project_dock_metric_card {{
     background-color: transparent;
     border: none;

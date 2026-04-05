@@ -52,10 +52,14 @@ class TestProjectExplorerDock:
         dock = ProjectExplorerDock()
         root_layout = dock.widget().layout()
         header_margins = dock._header_frame.layout().contentsMargins()
+        mode_layout = dock._settings_group.layout().itemAt(0).layout()
 
-        assert root_layout.spacing() == 6
+        assert root_layout.spacing() == 4
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
-        assert dock._settings_group.layout().spacing() == 6
+        assert dock._settings_group.layout().spacing() == 4
+        assert mode_layout.spacing() == 4
+        assert dock._mode_combo.objectName() == "project_dock_mode_combo"
+        assert dock._add_page_button.objectName() == "project_dock_add_page_button"
         assert dock._header_frame.accessibleName() == (
             "Project explorer header. Project Explorer: 0 pages. Current page: none. Startup page: none. No dirty pages."
         )
