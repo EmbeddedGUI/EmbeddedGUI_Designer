@@ -1466,10 +1466,10 @@ QTreeWidget#project_dock_tree {{
 #diagnostics_export_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 #diagnostics_controls_strip QPushButton:hover,
@@ -1523,10 +1523,10 @@ QListWidget#diagnostics_list {{
 #debug_panel_controls_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 #debug_panel_controls_strip QPushButton:hover {{
@@ -1607,10 +1607,10 @@ QListWidget#history_panel_list {{
 #animations_panel_actions_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 #animations_panel_actions_strip QPushButton:hover {{

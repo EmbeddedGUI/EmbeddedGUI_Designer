@@ -97,7 +97,7 @@ class DebugPanel(QWidget):
         self._controls_strip.setObjectName("debug_panel_controls_strip")
         controls_layout = QHBoxLayout(self._controls_strip)
         controls_layout.setContentsMargins(0, 0, 0, 0)
-        controls_layout.setSpacing(_SPACE_XS)
+        controls_layout.setSpacing(2)
 
         self._clear_btn = QPushButton("Clear")
         self._clear_btn.clicked.connect(self.clear)

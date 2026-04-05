@@ -66,6 +66,8 @@ class TestDiagnosticsPanel:
         assert panel.accessibleName() == "Diagnostics: no active issues. Severity filter: Any. 0 visible items."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel._controls_primary_strip.layout().spacing() == 2
+        assert panel._controls_secondary_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Workspace diagnostics surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (

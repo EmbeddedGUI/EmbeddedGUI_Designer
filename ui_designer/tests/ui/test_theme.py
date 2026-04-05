@@ -665,8 +665,9 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in controls
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
-        assert f"border-radius: {t['r_sm']}px;" in buttons
-        assert "min-height: 30px;" in buttons
+        assert "border-radius: 0px;" in buttons
+        assert "min-height: 28px;" in buttons
+        assert f"padding: 3px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 
@@ -692,8 +693,9 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in controls
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
-        assert f"border-radius: {t['r_sm']}px;" in button
-        assert "min-height: 30px;" in button
+        assert "border-radius: 0px;" in button
+        assert "min-height: 28px;" in button
+        assert f"padding: 3px {t['space_sm']}px;" in button
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface
 
@@ -740,8 +742,9 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in actions
         assert "border: none;" in actions
         assert "border-radius: 0px;" in actions
-        assert f"border-radius: {t['r_sm']}px;" in buttons
-        assert "min-height: 30px;" in buttons
+        assert "border-radius: 0px;" in buttons
+        assert "min-height: 28px;" in buttons
+        assert f"padding: 3px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail

@@ -35,6 +35,7 @@ class TestDebugPanel:
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel._controls_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Runtime console workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == "Debug output header. Debug output: 0 lines. Last message: No output yet."

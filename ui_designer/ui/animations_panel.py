@@ -138,7 +138,7 @@ class AnimationsPanel(QWidget):
         self._actions_strip.setObjectName("animations_panel_actions_strip")
         buttons = QHBoxLayout(self._actions_strip)
         buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(_SPACE_XS)
+        buttons.setSpacing(2)
         self._add_button = QPushButton("Add Animation")
         self._duplicate_button = QPushButton("Duplicate")
         self._remove_button = QPushButton("Remove")
