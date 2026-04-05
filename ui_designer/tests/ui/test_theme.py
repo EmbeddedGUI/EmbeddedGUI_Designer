@@ -253,8 +253,9 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in header
         assert f"background-color: {t['canvas_bg']};" in content
         assert f"background-color: {t['canvas_stage']};" in overlay

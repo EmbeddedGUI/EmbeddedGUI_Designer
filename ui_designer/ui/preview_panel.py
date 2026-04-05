@@ -1128,7 +1128,7 @@ class PreviewPanel(QWidget):
         self._metrics_frame.setObjectName("preview_metrics_strip")
         self._metrics_frame.hide()
         metrics_layout = QHBoxLayout(self._metrics_frame)
-        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        metrics_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         metrics_layout.setSpacing(_SPACE_XS)
 
         self._mode_chip = QLabel("Horizontal split")

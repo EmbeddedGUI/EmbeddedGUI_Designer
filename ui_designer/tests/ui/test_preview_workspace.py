@@ -58,6 +58,20 @@ def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton
 
 @_skip_no_qt
 class TestPreviewPanelFallback:
+    def test_preview_metrics_strip_uses_flat_compact_layout(self, qapp):
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+
+        margins = panel._metrics_frame.layout().contentsMargins()
+
+        assert margins.left() == 4
+        assert margins.top() == 4
+        assert margins.right() == 4
+        assert margins.bottom() == 4
+        assert panel._metrics_frame.layout().spacing() == 4
+        _dispose_widget(panel)
+
     def test_preview_status_bar_uses_compact_flat_controls(self, qapp):
         from ui_designer.ui.preview_panel import PreviewPanel
 

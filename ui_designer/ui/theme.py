@@ -2544,9 +2544,9 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #preview_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #preview_title {{
