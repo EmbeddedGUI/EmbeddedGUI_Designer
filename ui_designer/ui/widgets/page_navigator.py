@@ -317,6 +317,7 @@ class PageNavigator(QWidget):
         title_row.addStretch(1)
         self._count_chip = self._make_status_chip("0 pages", tone="warning")
         title_row.addWidget(self._count_chip)
+        self._count_chip.hide()
         header_layout.addLayout(title_row)
 
         self._header_meta_label = QLabel(
