@@ -601,17 +601,23 @@ QToolTip {{
 }}
 
 QStatusBar {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     color: {t['text_muted']};
     border-top: 1px solid {t['border']};
+    padding: 0 {t['space_sm']}px;
+}}
+
+QStatusBar QLabel {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QGroupBox {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
-    margin-top: {t['space_lg']}px;
-    padding-top: {t['space_md']}px;
+    border-radius: {t['r_md']}px;
+    margin-top: {t['space_md']}px;
+    padding-top: {t['space_sm']}px;
 }}
 
 QGroupBox::title {{
@@ -630,13 +636,13 @@ QWidget#property_panel_root {{
 }}
 
 QFrame#property_panel_overview {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 QFrame#property_panel_search_shell {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
@@ -693,15 +699,15 @@ QGroupBox#inspector_collapsible_group::title {{
 #workspace_hint_strip,
 #widget_browser_header,
 #workspace_bottom_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #workspace_command_bar {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #workspace_command_header,
@@ -735,15 +741,15 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_context_card {{
-    background-color: {t['surface_hover']};
-    border: 1px solid {t['border_strong']};
+    background-color: transparent;
+    border: none;
     border-radius: {t['r_md']}px;
 }}
 
 #workspace_command_body {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #workspace_command_context_value {{
@@ -801,9 +807,9 @@ QPushButton#project_workspace_view_button {{
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 6px 10px;
+    padding: 4px 10px;
     text-align: left;
-    min-height: 34px;
+    min-height: 28px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -825,7 +831,7 @@ QPushButton#project_workspace_view_button:checked {{
 #workspace_left_shell {{
     background-color: {t['sidebar_bg']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #workspace_nav_rail {{
@@ -836,8 +842,8 @@ QPushButton#project_workspace_view_button:checked {{
 }}
 
 #workspace_mode_switch {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border_strong']};
+    background-color: transparent;
+    border: none;
     border-radius: {t['r_md']}px;
 }}
 
@@ -859,13 +865,12 @@ QToolBar#main_toolbar::separator {{
 }}
 
 QToolBar#main_toolbar QToolButton {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
+    background-color: transparent;
+    border: 1px solid transparent;
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-width: 34px;
-    min-height: 34px;
+    padding: 4px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 QToolBar#main_toolbar QToolButton:hover {{
@@ -890,11 +895,11 @@ QToolBar#main_toolbar QToolButton:disabled {{
 
 QPushButton#workspace_mode_button {{
     background-color: transparent;
-    border: 1px solid {t['border']};
+    border: 1px solid transparent;
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-width: 78px;
+    padding: 4px {t['space_sm']}px;
+    min-width: 64px;
 }}
 
 QPushButton#workspace_mode_button:hover {{
@@ -972,13 +977,13 @@ QToolButton[workspaceNav="true"] {{
     color: {t['text_muted']};
     border: 1px solid transparent;
     border-radius: {t['r_md']}px;
-    font-size: {t['fs_micro']}px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: {t['space_xxs']}px 0 {t['space_xs']}px 0;
-    min-width: 60px;
-    max-width: 60px;
-    min-height: 56px;
-    max-height: 56px;
+    padding: 2px 0;
+    min-width: 64px;
+    max-width: 64px;
+    min-height: 28px;
+    max-height: 28px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
@@ -1055,7 +1060,7 @@ QToolButton#workspace_status_chip:focus {{
 }}
 
 QFrame#property_panel_metric_card {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
@@ -1093,14 +1098,14 @@ QFrame#property_panel_metric_card[metricTone="danger"] {{
 }}
 
 QToolButton#workspace_summary_indicator {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 4px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 QToolButton#workspace_summary_indicator:hover {{
@@ -1154,7 +1159,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #workspace_panel_header[panelTone="project"] {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border-color: {t['border']};
 }}
 
@@ -1186,9 +1191,9 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #resource_panel_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #resource_panel_eyebrow {{
@@ -1211,13 +1216,13 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #resource_panel_card {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #resource_panel_metric_card {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}
@@ -1244,6 +1249,12 @@ QTableWidget#resource_panel_table {{
     gridline-color: {t['border']};
 }}
 
+QListWidget#resource_panel_list::item,
+QListWidget#resource_panel_image_list::item,
+QTreeWidget#project_dock_tree::item {{
+    min-height: 28px;
+}}
+
 QTableWidget#resource_panel_table QHeaderView::section {{
     background-color: {t['panel_soft']};
     color: {t['text_muted']};
@@ -1265,9 +1276,9 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 }}
 
 #project_dock_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 #project_dock_eyebrow {{
@@ -1290,9 +1301,9 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 
 #project_dock_pages_card,
 QGroupBox#project_dock_settings_group {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
 }}
 
 QGroupBox#project_dock_settings_group {{
@@ -1310,7 +1321,7 @@ QGroupBox#project_dock_settings_group::title {{
 }}
 
 #project_dock_metric_card {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
 }}

@@ -140,6 +140,13 @@ class ProjectExplorerDock(QDockWidget):
         self._dirty_pages = set()
         self._init_ui()
 
+    def set_compact_mode(self, compact=True):
+        compact = bool(compact)
+        if hasattr(self, "_header_frame"):
+            self._header_frame.setVisible(not compact)
+        if hasattr(self, "_pages_hint"):
+            self._pages_hint.setVisible(not compact)
+
     def _init_ui(self):
         container = QWidget()
         container.setObjectName("project_dock_shell")

@@ -6321,7 +6321,7 @@ class TestMainWindowFileFlow:
         for i in range(window.project_dock._page_tree.topLevelItemCount()):
             item = window.project_dock._page_tree.topLevelItem(i)
             texts_by_page[item.data(0, Qt.UserRole)] = item.text(0)
-        assert texts_by_page["main_page"].endswith("main_page*")
+        assert texts_by_page["main_page"] == "main_page (startup)*"
         assert texts_by_page["detail_page"].endswith("detail_page*")
         assert window.page_tab_bar.accessibleName() == (
             "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. 2 dirty pages."
@@ -8905,10 +8905,7 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
 
-        default_summary = (
-            "Open a project to activate insert, save, preview, and editor mode controls "
-            "from a unified workspace rail."
-        )
+        default_summary = "Open a project to enable insert, save, preview, and mode controls."
         assert window._toolbar_header.accessibleName() == (
             "Workspace command header. Engineering summary, current context, and command posture."
         )
@@ -8928,8 +8925,8 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
         design_summary = (
-            "Design mode active. Project panel visible. Current page: main_page. "
-            "Use the command rail to insert components, save edits, build, and inspect runtime health."
+            "Design mode. Project panel. Current page: main_page. "
+            "Use commands to insert, save, build, and check runtime."
         )
         assert window._toolbar_meta_label.text() == design_summary
         assert window._toolbar_meta_label.statusTip() == design_summary
@@ -8942,8 +8939,8 @@ class TestMainWindowFileFlow:
         window.editor_tabs.set_mode(MODE_CODE)
 
         code_summary = (
-            "Code mode active. Components panel visible. Current page: main_page. "
-            "Use the command rail to insert components, save edits, build, and inspect runtime health."
+            "Code mode. Components panel. Current page: main_page. "
+            "Use commands to insert, save, build, and check runtime."
         )
         assert window._toolbar_meta_label.text() == code_summary
         assert window._toolbar_meta_label.toolTip() == code_summary
@@ -9026,7 +9023,7 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["structure"].text() == "Tree"
         assert window._workspace_nav_buttons["widgets"].text() == "Insert"
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
-        assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextUnderIcon
+        assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextOnly
 
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: none. Startup page: none."

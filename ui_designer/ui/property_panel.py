@@ -36,9 +36,22 @@ from .widgets.font_selector import EguiFontSelector
 # UI group display names
 _UI_GROUP_LABELS = {
     "main": "Properties",
-    "font_config": "Font Config",
-    "image_config": "Image Config",
+    "font_config": "Text",
+    "image_config": "Appearance",
     "properties": "Properties",
+    "style": "Appearance",
+    "card_bg": "Appearance",
+    "card_border": "Appearance",
+}
+
+_INSPECTOR_GROUP_PRIORITY = {
+    "Layout": 0,
+    "Appearance": 1,
+    "Text": 2,
+    "Behavior": 3,
+    "Data": 4,
+    "Callbacks": 5,
+    "Designer": 6,
 }
 
 _CALLBACK_INVALID_MESSAGE = (
@@ -107,9 +120,11 @@ def _inspector_form():
     """Consistent label/field rhythm for inspector property forms (readable balanced density)."""
     form = QFormLayout()
     form.setContentsMargins(0, 0, 0, 0)
-    form.setSpacing(10)
-    form.setHorizontalSpacing(16)
-    form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+    form.setSpacing(8)
+    form.setHorizontalSpacing(0)
+    form.setRowWrapPolicy(QFormLayout.WrapAllRows)
+    form.setLabelAlignment(Qt.AlignLeft | Qt.AlignBottom)
+    form.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
     return form
 
 
@@ -990,6 +1005,7 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
 
         if self._primary_widget is None:
+            self._overview_frame.setVisible(True)
             self._search_shell.setVisible(False)
             self._search_edit.setVisible(False)
             self._no_selection_label = self._create_no_selection_label()
@@ -997,6 +1013,7 @@ class PropertyPanel(QWidget):
             self._update_panel_metadata()
             return
 
+        self._overview_frame.setVisible(False)
         self._search_shell.setVisible(True)
         self._search_edit.setVisible(True)
         if len(self._selection) > 1:
@@ -1006,20 +1023,6 @@ class PropertyPanel(QWidget):
 
         w = self._primary_widget
         self._layout.addWidget(self._build_single_selection_header(w))
-
-        # Basic group
-        basic_group = CollapsibleGroupBox("Basic")
-        basic_form = _inspector_form()
-        basic_group.setLayout(basic_form)
-        self._wire_inspector_collapsible_group(basic_group, "Basic")
-
-        name_edit = LineEdit()
-        name_edit.setText(w.name)
-        name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
-        basic_form.addRow("Name:", name_edit)
-        self._editors["name"] = name_edit
-        self._update_name_editor_metadata(name_edit)
-        self._layout.addWidget(basic_group)
 
         # Layout group
         layout_group = CollapsibleGroupBox("Layout")
@@ -1035,10 +1038,19 @@ class PropertyPanel(QWidget):
             self._editors[field] = spin
         self._layout.addWidget(layout_group)
 
-        self._layout.addWidget(self._build_designer_state_group())
-        feedback_group = self._build_selection_feedback_group()
-        if feedback_group is not None:
-            self._layout.addWidget(feedback_group)
+        # Basic group
+        basic_group = CollapsibleGroupBox("Basic")
+        basic_form = _inspector_form()
+        basic_group.setLayout(basic_form)
+        self._wire_inspector_collapsible_group(basic_group, "Basic")
+
+        name_edit = LineEdit()
+        name_edit.setText(w.name)
+        name_edit.editingFinished.connect(lambda editor=name_edit: self._on_name_editing_finished(editor))
+        basic_form.addRow("Name:", name_edit)
+        self._editors["name"] = name_edit
+        self._update_name_editor_metadata(name_edit)
+        self._layout.addWidget(basic_group)
 
         # Type-specific properties - grouped by data vs other
         type_info = WidgetRegistry.instance().get(w.widget_type)
@@ -1056,15 +1068,11 @@ class PropertyPanel(QWidget):
             if data_props:
                 self._build_data_group(w, data_props)
 
-        callbacks_group = self._build_callbacks_group(w)
-        if callbacks_group is not None:
-            self._layout.addWidget(callbacks_group)
-
         # Style properties
-        bg_group = CollapsibleGroupBox("Style")
+        bg_group = CollapsibleGroupBox("Appearance")
         bg_form = _inspector_form()
         bg_group.setLayout(bg_form)
-        self._wire_inspector_collapsible_group(bg_group, "Style")
+        self._wire_inspector_collapsible_group(bg_group, "Appearance")
 
         bg = w.background or BackgroundModel()
 
@@ -1139,6 +1147,15 @@ class PropertyPanel(QWidget):
                 bg_form.addRow("Pressed Color:", pressed_color)
 
         self._layout.addWidget(bg_group)
+
+        callbacks_group = self._build_callbacks_group(w)
+        if callbacks_group is not None:
+            self._layout.addWidget(callbacks_group)
+
+        self._layout.addWidget(self._build_designer_state_group())
+        feedback_group = self._build_selection_feedback_group()
+        if feedback_group is not None:
+            self._layout.addWidget(feedback_group)
         self._layout.addStretch()
         self._on_search_changed(self._search_edit.text())
 
@@ -1507,7 +1524,14 @@ class PropertyPanel(QWidget):
                 groups[group_key] = []
             groups[group_key].append((prop_name, prop_info))
 
-        for group_key, group_props in groups.items():
+        def _group_sort_key(item):
+            raw_label = _UI_GROUP_LABELS.get(item[0], item[0].replace("_", " ").title())
+            normalized_label = "Behavior" if raw_label in {"Properties", "Main"} else raw_label
+            return (_INSPECTOR_GROUP_PRIORITY.get(normalized_label, 99), item[0])
+
+        sorted_groups = sorted(groups.items(), key=_group_sort_key)
+
+        for group_key, group_props in sorted_groups:
             group_label = _UI_GROUP_LABELS.get(group_key, group_key.replace("_", " ").title())
             if group_label in {"Properties", "Main"}:
                 group_label = "Behavior"
@@ -2044,7 +2068,7 @@ class PropertyPanel(QWidget):
         h_layout.addWidget(combo, 1)
 
         browse_btn = ToolButton()
-        browse_btn.setText("...")
+        browse_btn.setText("Browse")
         _set_widget_metadata(
             browse_btn,
             tooltip=self._browse_button_tooltip(prop_name, file_filter),

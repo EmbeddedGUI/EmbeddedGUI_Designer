@@ -1432,8 +1432,8 @@ class ResourcePanel(QWidget):
         self._panel_eyebrow.setObjectName("resource_panel_eyebrow")
         _set_widget_metadata(
             self._panel_eyebrow,
-            tooltip="Resources workspace.",
-            accessible_name="Resources workspace.",
+            tooltip="Resource pipeline workspace.",
+            accessible_name="Resource pipeline workspace.",
         )
         hero_copy.addWidget(self._panel_eyebrow, 0, Qt.AlignLeft)
 
@@ -1797,6 +1797,15 @@ class ResourcePanel(QWidget):
         self._update_string_action_metadata()
         self._update_usage_accessibility_metadata()
         self._update_panel_overview()
+        self._panel_eyebrow.hide()
+        for metric_value in (
+            self._catalog_metric_value,
+            self._missing_metric_value,
+            self._selection_metric_value,
+        ):
+            card = getattr(metric_value, "_resource_panel_metric_card", None)
+            if card is not None:
+                card.hide()
 
     def _create_resource_more_button(self, resource_type, buttons):
         button = QToolButton()

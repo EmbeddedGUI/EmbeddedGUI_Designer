@@ -23,6 +23,20 @@ def _app():
     return app
 
 
+def _assert_panel_surface(block: str, tokens: dict):
+    assert (
+        f"background-color: {tokens['panel']};" in block
+        or f"background-color: {tokens['panel_raised']};" in block
+    )
+
+
+def _assert_default_border(block: str, tokens: dict):
+    assert (
+        f"border-color: {tokens['border']};" in block
+        or f"border: 1px solid {tokens['border']};" in block
+    )
+
+
 def test_build_stylesheet_uses_surface_hover_tokens_for_light_theme():
     tokens = theme_tokens("light")
 
@@ -74,8 +88,8 @@ def test_status_center_header_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#status_center_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#status_center_header_metrics_strip {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
@@ -94,8 +108,8 @@ def test_engineering_theme_radii_remove_pill_shapes():
         css = _build_stylesheet(mode)
 
         assert int(tokens["r_sm"]) == 4
-        assert int(tokens["r_md"]) == 8
-        assert int(tokens["r_xl"]) == 10
+        assert int(tokens["r_md"]) == 6
+        assert int(tokens["r_xl"]) == 8
         assert "999px" not in css
 
         chip = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
@@ -119,7 +133,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         selected = css.split('#page_navigator_thumbnail[selected="true"] {', 1)[1].split("}", 1)[0]
         empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
 
-        assert t["accent_soft"] in header or t["selection_soft"] in header
+        _assert_panel_surface(header, t)
         assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_soft']};" in guidance
         assert f"border-radius: {t['r_md']}px;" in guidance
@@ -140,8 +154,8 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#page_fields_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_fields_metrics_strip {", 1)[1].split("}", 1)[0]
 
-        assert t["accent_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
@@ -156,8 +170,8 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#page_timers_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_timers_metrics_strip {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
@@ -175,7 +189,7 @@ def test_editor_tabs_styles_use_engineering_shell_tokens():
         editor = css.split("QPlainTextEdit#editor_tabs_xml_editor {", 1)[1].split("}", 1)[0]
 
         assert f"border-radius: {t['r_xl']}px;" in header
-        assert t["selection_soft"] in header
+        assert f"background-color: {t['panel_raised']};" in header
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in mode_strip
         assert f"background-color: {t['panel_raised']};" in shell
@@ -194,7 +208,7 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         content = css.split("#preview_content {", 1)[1].split("}", 1)[0]
         overlay = css.split('QWidget#preview_overlay_surface[solidBackground="true"] {', 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
+        _assert_panel_surface(header, t)
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
         assert f"border-radius: {t['r_xl']}px;" in header
@@ -215,14 +229,16 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         toolbar_button_hover = css.split("QToolBar#main_toolbar QToolButton:hover {", 1)[1].split("}", 1)[0]
         mode_strip = css.split("#workspace_mode_switch {", 1)[1].split("}", 1)[0]
 
-        assert t["accent_soft"] in command_bar
-        assert f"border-radius: {t['r_xl']}px;" in command_bar
-        assert f"background-color: {t['surface_hover']};" in context
+        assert f"background-color: {t['panel']};" in command_bar
+        assert f"border-radius: {t['r_md']}px;" in command_bar
+        assert "background-color: transparent;" in context
+        assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
         assert f"spacing: {t['space_xs']}px;" in toolbar
-        assert f"background-color: {t['panel_raised']};" in toolbar_button
+        assert "background-color: transparent;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
-        assert f"background-color: {t['panel_raised']};" in mode_strip
+        assert "background-color: transparent;" in mode_strip
+        assert "border: none;" in mode_strip
 
 
 def test_property_panel_styles_use_engineering_surface_tokens():
@@ -234,10 +250,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         hint_strip = css.split('#workspace_hint_strip[panelTone="property"] {', 1)[1].split("}", 1)[0]
         metric_card = css.split("QFrame#property_panel_metric_card {", 1)[1].split("}", 1)[0]
 
-        assert t["accent_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"background-color: {t['panel_soft']};" in hint_strip
-        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
 
 
@@ -251,10 +267,9 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         list_surface = css.split("QListWidget#resource_panel_list,", 1)[1].split("}", 1)[0]
         preview = css.split("#resource_panel_preview {", 1)[1].split("}", 1)[0]
 
-        assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_xl']}px;" in header
-        assert f"background-color: {t['panel_soft']};" in metric_card
+        _assert_panel_surface(header, t)
+        assert f"border-radius: {t['r_md']}px;" in header
+        assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in list_surface
         assert f"background-color: {t['panel_alt']};" in preview
@@ -272,8 +287,7 @@ def test_resource_dialog_styles_use_engineering_surface_tokens():
         table = css.split("QTableWidget#resource_dialog_table {", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -293,8 +307,7 @@ def test_welcome_page_styles_use_engineering_surface_tokens():
         metric_card = css.split("#welcome_metric_card {", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in hero
-        assert t["accent_soft"] in hero
-        assert f"border-radius: {t['r_2xl']}px;" in hero
+        assert f"border-radius: {t['r_xl']}px;" in hero
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_alt']};" in sdk
@@ -313,12 +326,11 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         metric_card = css.split("#project_dock_metric_card {", 1)[1].split("}", 1)[0]
         tree = css.split("QTreeWidget#project_dock_tree {", 1)[1].split("}", 1)[0]
 
-        assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_xl']}px;" in header
-        assert f"background-color: {t['panel_raised']};" in card
-        assert f"border-radius: {t['r_xl']}px;" in card
-        assert f"background-color: {t['panel_soft']};" in metric_card
+        _assert_panel_surface(header, t)
+        assert f"border-radius: {t['r_md']}px;" in header
+        assert f"background-color: {t['panel']};" in card
+        assert f"border-radius: {t['r_md']}px;" in card
+        assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in tree
         assert f"border-radius: {t['r_md']}px;" in tree
@@ -334,8 +346,7 @@ def test_app_selector_styles_use_engineering_surface_tokens():
         metric_card = css.split("#app_selector_metric_card {", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -352,8 +363,7 @@ def test_new_project_dialog_styles_use_engineering_surface_tokens():
         metric_card = css.split("#new_project_metric_card,", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_alt']};" in metric_card
@@ -371,8 +381,7 @@ def test_repository_health_dialog_styles_use_engineering_surface_tokens():
         details = css.split("QTextEdit#repo_health_details {", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -391,8 +400,7 @@ def test_release_build_dialog_styles_use_engineering_surface_tokens():
         metric_card = css.split("#release_build_metric_card,", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -409,8 +417,7 @@ def test_release_profiles_dialog_styles_use_engineering_surface_tokens():
         metric_card = css.split("#release_profiles_metric_card,", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -428,8 +435,7 @@ def test_release_history_dialog_styles_use_engineering_surface_tokens():
         details = css.split("QTextEdit#release_history_details,", 1)[1].split("}", 1)[0]
 
         assert t["panel_raised"] in header
-        assert t["accent_soft"] in header
-        assert f"border-radius: {t['r_2xl']}px;" in header
+        assert f"border-radius: {t['r_xl']}px;" in header
         assert f"background-color: {t['panel_raised']};" in card
         assert f"border-radius: {t['r_xl']}px;" in card
         assert f"background-color: {t['panel_soft']};" in metric_card
@@ -448,8 +454,8 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         metrics = css.split("#widget_browser_metrics_strip {", 1)[1].split("}", 1)[0]
         filter_bar = css.split("#widget_browser_filter_bar {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"background-color: {t['panel_alt']};" in filter_bar
@@ -465,8 +471,8 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#structure_header_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#structure_metrics_strip,", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
@@ -482,8 +488,8 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#diagnostics_list {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_soft']};" in controls
         assert f"background-color: {t['panel_alt']};" in list_block
@@ -500,8 +506,8 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         controls = css.split("#debug_panel_controls_strip {", 1)[1].split("}", 1)[0]
         surface = css.split("QPlainTextEdit#debug_output_surface {", 1)[1].split("}", 1)[0]
 
-        assert t["accent_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_soft']};" in controls
         assert f"background-color: {t['canvas_stage']};" in surface
@@ -517,8 +523,8 @@ def test_history_panel_styles_use_engineering_surface_tokens():
         meta = css.split("#history_panel_meta {", 1)[1].split("}", 1)[0]
         list_block = css.split("QListWidget#history_panel_list {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_alt']};" in list_block
         assert f"border-radius: {t['r_xl']}px;" in list_block
@@ -535,8 +541,8 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         table = css.split("QTableWidget#animations_panel_table {", 1)[1].split("}", 1)[0]
         detail = css.split("QGroupBox#animations_panel_detail_group {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
         assert f"background-color: {t['panel_soft']};" in actions
         assert f"background-color: {t['panel_alt']};" in table
@@ -553,8 +559,8 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#project_workspace_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#project_workspace_metrics_strip {", 1)[1].split("}", 1)[0]
 
-        assert t["selection_soft"] in header
-        assert f"border-color: {t['border_strong']};" in header
+        _assert_panel_surface(header, t)
+        _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics

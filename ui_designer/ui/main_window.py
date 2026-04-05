@@ -357,8 +357,8 @@ class MainWindow(QMainWindow):
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QVBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        self._toolbar_host_layout.setSpacing(_SPACE_SM)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        self._toolbar_host_layout.setSpacing(_SPACE_XS)
 
         self._toolbar_header = QWidget()
         self._toolbar_header.setObjectName("workspace_command_header")
@@ -415,6 +415,7 @@ class MainWindow(QMainWindow):
         self._toolbar_command_row_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
         self._toolbar_command_row_layout.setSpacing(_SPACE_SM)
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
+        self._toolbar_header.hide()
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -559,6 +560,8 @@ class MainWindow(QMainWindow):
         self._inspector_tabs.addTab(self.props_dock, make_icon("toolbar.settings.global"), "Properties")
         self._inspector_tabs.addTab(self.animations_panel, make_icon("toolbar.preview"), "Animations")
         self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("nav.page"), "Page")
+        for index in range(self._inspector_tabs.count()):
+            self._inspector_tabs.setTabIcon(index, QIcon())
         self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._top_splitter = QSplitter(Qt.Horizontal)
@@ -592,6 +595,8 @@ class MainWindow(QMainWindow):
         self._bottom_tabs.addTab(self.diagnostics_panel, make_icon("state.error"), "Diagnostics")
         self._bottom_tabs.addTab(self.history_panel, make_icon("state.info"), "History")
         self._bottom_tabs.addTab(self.debug_panel, make_icon("state.warn"), "Debug Output")
+        for index in range(self._bottom_tabs.count()):
+            self._bottom_tabs.setTabIcon(index, QIcon())
         self._bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
         bottom_shell = QWidget()
@@ -626,9 +631,13 @@ class MainWindow(QMainWindow):
         self._pending_default_top_splitter_sizes = False
 
         # Status bar
+        self._workspace_status_label = QLabel("Page: none | Selection: none | Warnings: 0 | Ready")
+        self._workspace_status_label.setObjectName("workspace_status_bar_label")
+        self.statusBar().addPermanentWidget(self._workspace_status_label, 1)
         self._sdk_status_label = QLabel("SDK: missing")
         self.statusBar().addPermanentWidget(self._sdk_status_label)
         self._update_sdk_status_label()
+        self._update_status_bar_summary()
         self.statusBar().showMessage("Ready")
 
         # 鈹€鈹€ Connect signals 鈹€鈹€
@@ -739,13 +748,13 @@ class MainWindow(QMainWindow):
         button.setObjectName(f"workspace_nav_button_{panel_key}")
         button.setProperty("workspaceNav", True)
         button.setCheckable(True)
-        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        button.setToolButtonStyle(Qt.ToolButtonTextOnly)
         tokens = theme_tokens(getattr(self._config, "theme", "dark"))
         nav_icon_size = int(tokens.get("icon_md", 18))
         button.setIcon(make_icon(icon_key, size=nav_icon_size))
         button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         button.setText(str(short_label or label or ""))
-        button.setFixedSize(62, 60)
+        button.setFixedSize(64, 30)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
@@ -2158,6 +2167,54 @@ class MainWindow(QMainWindow):
         self._set_metadata_summary(self._workspace_context_label, tooltip, f"Workspace context: {text}.")
         if hasattr(self, "_workspace_context_card"):
             self._set_metadata_summary(self._workspace_context_card, tooltip, f"Workspace context card: {text}.")
+        self._update_status_bar_summary()
+
+    def _status_bar_hint_text(self, *, has_project, error_count, warning_count, selection_count):
+        if not has_project:
+            return "Open a project"
+        if error_count > 0:
+            return "Open Diagnostics"
+        if warning_count > 0:
+            return "Review warnings"
+        if selection_count > 0:
+            return "Edit selection"
+        return "Ready"
+
+    def _update_status_bar_summary(self):
+        if not hasattr(self, "_workspace_status_label"):
+            return
+        diagnostics_counts = (
+            self.diagnostics_panel.severity_counts()
+            if hasattr(self, "diagnostics_panel")
+            else {"error": 0, "warning": 0, "info": 0}
+        )
+        error_count = int(diagnostics_counts.get("error", 0) or 0)
+        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
+        has_project = getattr(self, "project", None) is not None
+        current_page = str(getattr(getattr(self, "_current_page", None), "name", "") or "none")
+        selection_count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
+        if selection_count <= 0:
+            selection_text = "none"
+        elif selection_count == 1:
+            primary = getattr(self._selection_state, "primary", None)
+            selection_text = str(
+                getattr(primary, "name", "") or getattr(primary, "widget_type", "") or "1 widget"
+            )
+        else:
+            selection_text = f"{selection_count} widgets"
+        hint = self._status_bar_hint_text(
+            has_project=has_project,
+            error_count=error_count,
+            warning_count=warning_count,
+            selection_count=selection_count,
+        )
+        summary = f"Page: {current_page} | Selection: {selection_text} | Warnings: {warning_count} | {hint}"
+        self._workspace_status_label.setText(summary)
+        self._set_metadata_summary(
+            self._workspace_status_label,
+            summary,
+            f"Workspace status bar summary: {summary}.",
+        )
 
     def _update_workspace_command_surface_metadata(self):
         current_panel = self._workspace_panel_label(getattr(self, "_current_left_panel", "project"))
@@ -2325,6 +2382,7 @@ class MainWindow(QMainWindow):
             preview_text=preview_text,
             diagnostics_counts=diagnostics_counts,
         )
+        self._update_status_bar_summary()
         self._update_workspace_tab_metadata()
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
         self._update_view_panel_navigation_action_metadata()
@@ -2335,23 +2393,17 @@ class MainWindow(QMainWindow):
         toolbar_icon_size = int(tokens.get("icon_lg", 20))
         mode_icon_size = int(tokens.get("icon_sm", 16))
         if hasattr(self, "_workspace_nav_buttons"):
-            icon_map = {
-                "project": "nav.project",
-                "structure": "nav.structure",
-                "widgets": "nav.component_library",
-                "assets": "nav.resource",
-            }
-            for key, button in self._workspace_nav_buttons.items():
-                button.setIcon(make_icon(icon_map.get(key, "widgets"), size=nav_icon_size))
+            for button in self._workspace_nav_buttons.values():
+                button.setIcon(QIcon())
                 button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         if hasattr(self, "_insert_widget_button"):
-            self._insert_widget_button.setIcon(make_icon("nav.component_library", size=toolbar_icon_size))
+            self._insert_widget_button.setIcon(QIcon())
         if hasattr(self, "_toolbar_more_button"):
-            self._toolbar_more_button.setIcon(make_icon("toolbar.settings.global", size=toolbar_icon_size))
+            self._toolbar_more_button.setIcon(QIcon())
             self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         if hasattr(self, "_mode_buttons"):
-            for mode, icon_key in ((MODE_DESIGN, "nav.component_library"), (MODE_SPLIT, "layout.align.left"), (MODE_CODE, "nav.page")):
-                self._mode_buttons[mode].setIcon(make_icon(icon_key, size=mode_icon_size))
+            for button in self._mode_buttons.values():
+                button.setIcon(QIcon())
 
     def _on_status_center_action_requested(self, action_key):
         action = str(action_key or "").strip().lower()
@@ -4145,7 +4197,7 @@ class MainWindow(QMainWindow):
         tb.setMovable(False)
         toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_lg", 20))
         tb.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
-        tb.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        tb.setToolButtonStyle(Qt.ToolButtonTextOnly)
         self._toolbar_command_row_layout.addWidget(tb, 1)
 
         toolbar_rail_sep = QFrame()
@@ -4166,7 +4218,7 @@ class MainWindow(QMainWindow):
         self._copy_action.setIcon(make_icon("toolbar.copy", size=toolbar_icon_size))
         self._paste_action.setIcon(make_icon("toolbar.paste", size=toolbar_icon_size))
 
-        self._insert_widget_button = PrimaryPushButton("Insert Component")
+        self._insert_widget_button = PrimaryPushButton("Insert")
         self._insert_widget_button.setIcon(make_icon("nav.component_library", size=toolbar_icon_size))
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
@@ -4190,7 +4242,8 @@ class MainWindow(QMainWindow):
         self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         self._toolbar_more_button.setPopupMode(QToolButton.InstantPopup)
         self._toolbar_more_button.setMenu(more_menu)
-        self._toolbar_more_button.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self._toolbar_more_button.setText("More")
+        self._toolbar_more_button.setToolButtonStyle(Qt.ToolButtonTextOnly)
         tb.addWidget(self._toolbar_more_button)
 
         tb.addSeparator()

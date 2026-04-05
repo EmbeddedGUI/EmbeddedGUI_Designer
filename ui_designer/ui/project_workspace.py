@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
 
 from .iconography import make_icon
@@ -62,6 +63,10 @@ class ProjectWorkspacePanel(QWidget):
         self._init_ui()
 
     def _init_ui(self):
+        for child in (self._list_view, self._thumbnail_view):
+            if hasattr(child, "set_compact_mode"):
+                child.set_compact_mode(True)
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(_SPACE_SM)
@@ -154,11 +159,16 @@ class ProjectWorkspacePanel(QWidget):
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
         self._thumb_btn.clicked.connect(lambda: self.set_view(self.VIEW_THUMBNAILS))
+        self._list_btn.setIcon(QIcon())
+        self._thumb_btn.setIcon(QIcon())
         toggle_row.addWidget(self._list_btn)
         toggle_row.addWidget(self._thumb_btn)
         toggle_row.addStretch()
         header_layout.addLayout(toggle_row)
         layout.addWidget(self._header)
+
+        self._header_eyebrow.hide()
+        self._metrics_frame.hide()
 
         self._stack = QStackedWidget()
         self._stack.addWidget(self._list_view)
