@@ -30,6 +30,15 @@ python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 python package_ui_designer.py --sdk-root sdk/EmbeddedGUI
 ```
 
+## GUI run policy (must follow)
+
+- Never run the GUI in blocking foreground mode when doing iterative checks.
+- Avoid waiting on `python ui_designer/main.py` to exit; it is a long-running process and will block the workflow.
+- Preferred approach for verification:
+  - Do a short startup check and return immediately (a few seconds max), or
+  - Launch in non-blocking/background mode and continue work.
+- Goal: confirm the app starts and renders, without stalling the session.
+
 ## Architecture
 
 This repo is the standalone distribution of the **EmbeddedGUI Visual UI Designer** — a PyQt5 desktop app that lets you design LVGL-style UIs visually and generate C code for embedded targets.
