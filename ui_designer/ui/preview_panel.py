@@ -1148,6 +1148,8 @@ class PreviewPanel(QWidget):
         chip_row.addStretch(1)
         header_layout.addWidget(self._metrics_frame)
         self._grid_chip.hide()
+        self._pointer_chip.hide()
+        self._metrics_frame.hide()
         self._main_layout.addWidget(self._header_frame)
 
         self._content = QFrame()

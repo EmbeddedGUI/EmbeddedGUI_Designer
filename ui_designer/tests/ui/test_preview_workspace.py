@@ -73,6 +73,7 @@ class TestPreviewPanelFallback:
         assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._header_meta_label.isHidden() is True
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == (
             "Preview metrics: Horizontal split. Grid on. Pointer status: Pointer idle."
         )
@@ -80,6 +81,7 @@ class TestPreviewPanelFallback:
         assert panel._mode_chip.accessibleName() == "Preview mode: Horizontal split"
         assert panel._grid_chip.isHidden() is True
         assert panel._grid_chip.accessibleName() == "Preview grid: on"
+        assert panel._pointer_chip.isHidden() is True
         assert panel._pointer_chip.accessibleName() == "Preview pointer summary: Pointer idle"
         assert panel.status_label.accessibleName() == "Preview status: Preview - waiting for exe..."
         assert panel.preview_frame.accessibleName() == "Preview frame: Preview - waiting for exe.... Mode: Horizontal split."
@@ -132,9 +134,11 @@ class TestPreviewPanelFallback:
         assert panel.status_label.accessibleName() == "Preview status: Preview - Python fallback (fallback)"
         assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == f"Preview metrics: Horizontal split. Grid on. Pointer status: {pointer_summary}."
         assert panel._mode_chip.isHidden() is True
         assert panel._grid_chip.isHidden() is True
+        assert panel._pointer_chip.isHidden() is True
         assert panel._pointer_chip.text() == "Pointer active"
         assert panel._pointer_chip.accessibleName() == f"Preview pointer summary: {pointer_summary}"
         assert panel.preview_frame.accessibleName() == (
