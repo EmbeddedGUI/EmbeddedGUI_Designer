@@ -54,11 +54,13 @@ class TestPageTimersPanel:
         action_buttons = panel._actions_frame.layout().itemAt(1).layout()
         table_layout = panel._table_frame.layout()
 
-        assert panel.layout().spacing() == 6
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert panel._header_frame.layout().spacing() == 2
         assert (chip_margins.left(), chip_margins.top(), chip_margins.right(), chip_margins.bottom()) == (0, 0, 0, 0)
-        assert panel._header_chip_row.spacing() == 6
-        assert table_layout.spacing() == 4
+        assert panel._header_chip_row.spacing() == 4
+        assert table_layout.spacing() == 2
+        assert panel._actions_frame.layout().spacing() == 4
         assert action_buttons.spacing() == 2
         assert panel._summary_label.text() == "Page Timers: 1 timer on main_page"
         assert panel.accessibleName() == "Page Timers: 1 timer on main_page. Selected timer: none."
