@@ -152,6 +152,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         thumb = css.split("#page_navigator_thumbnail {", 1)[1].split("}", 1)[0]
         selected = css.split('#page_navigator_thumbnail[selected="true"] {', 1)[1].split("}", 1)[0]
         empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
+        thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         assert "border-radius: 0px;" in header
@@ -165,8 +166,11 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert "border: 1px solid transparent;" in thumb
         assert "border-radius: 0px;" in thumb
         assert f"border-color: {t['accent']};" in selected
-        assert f"border: 1px dashed {t['border']};" in empty
+        assert f"border: 1px solid {t['border']};" in empty
         assert "border-radius: 0px;" in empty
+        assert "padding: 12px;" in empty
+        assert "border-radius: 0px;" in thumb_label
+        assert "padding: 2px;" in thumb_label
 
 
 def test_page_fields_panel_styles_use_engineering_surface_tokens():

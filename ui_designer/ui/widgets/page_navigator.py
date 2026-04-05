@@ -62,12 +62,12 @@ class PageThumbnail(QWidget):
         self.setProperty("dirty", False)
         self.setProperty("startup", False)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(THUMB_HEIGHT + 12)
+        self.setMinimumHeight(THUMB_HEIGHT + 8)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(2)
 
         self._preview_frame = QFrame()
         self._preview_frame.setObjectName("page_navigator_thumb_surface")
@@ -109,7 +109,7 @@ class PageThumbnail(QWidget):
 
         chip_row = QHBoxLayout()
         chip_row.setContentsMargins(0, 0, 0, 0)
-        chip_row.setSpacing(_SPACE_XS)
+        chip_row.setSpacing(2)
         self._state_chip = self._make_chip("Available")
         self._dirty_chip = self._make_chip("Saved")
         chip_row.addWidget(self._state_chip)
@@ -302,12 +302,12 @@ class PageNavigator(QWidget):
     def _init_ui(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(6)
+        outer.setSpacing(4)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("page_navigator_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(10, 10, 10, 10)
+        header_layout.setContentsMargins(8, 8, 8, 8)
         header_layout.setSpacing(4)
 
         self._eyebrow_label = QLabel("Page Flow")
@@ -321,7 +321,7 @@ class PageNavigator(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(6)
+        title_row.setSpacing(4)
         self._title_label = QLabel("Thumbnail Rail")
         self._title_label.setObjectName("workspace_section_title")
         self._title_label.setAccessibleName("Pages")

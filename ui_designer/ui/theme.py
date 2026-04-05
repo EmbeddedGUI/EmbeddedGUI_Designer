@@ -1795,10 +1795,10 @@ QScrollArea#page_navigator_scroll,
 
 #page_navigator_empty_state {{
     background-color: transparent;
-    border: 1px dashed {t['border']};
+    border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_soft']};
-    padding: 18px;
+    padding: 12px;
 }}
 
 #page_navigator_thumbnail {{
@@ -1840,7 +1840,7 @@ QLabel#page_navigator_thumb_label {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
     border-radius: 0px;
-    padding: 4px;
+    padding: 2px;
 }}
 
 QLabel#page_navigator_thumb_label[startup="true"] {{
