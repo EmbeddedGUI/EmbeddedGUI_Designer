@@ -428,7 +428,7 @@ class WidgetBrowserPanel(QWidget):
 
     def _update_insert_target(self):
         _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
-        self._insert_target.setText(f"Insert target: {self._insert_target_label}")
+        self._insert_target.setText(f"Target: {self._insert_target_label}")
 
     def _selected_display_name(self):
         return next(

@@ -407,11 +407,11 @@ class TestResourcePanelFileFlow:
 
         panel._select_resource_item("image", "star.png")
 
-        assert panel._usage_summary.text() == "'star.png' is used by 2 widgets across 2 pages."
+        assert panel._usage_summary.text() == "2 widgets across 2 pages | star.png"
         assert panel._usage_current_page_only.toolTip() == "Open or select a page to filter usages to the current page."
         assert panel._usage_current_page_only.accessibleName() == "Usage filter unavailable: Current Page Only"
         assert panel._usage_summary.accessibleName() == (
-            "Resource usage summary: 'star.png' is used by 2 widgets across 2 pages."
+            "Resource usage summary: 2 widgets across 2 pages | star.png"
         )
         assert panel._usage_table.rowCount() == 2
         assert panel._usage_table.accessibleName() == (
@@ -455,12 +455,11 @@ class TestResourcePanelFileFlow:
 
         panel._usage_current_page_only.setChecked(True)
 
-        assert panel._usage_summary.text() == "'star.png' is used by 1 widget on the current page (2 total across 2 pages)."
+        assert panel._usage_summary.text() == "1 widget on this page | 2 total across 2 pages | star.png"
         assert panel._usage_current_page_only.toolTip() == "Showing only usages on the current page: detail_page."
         assert panel._usage_current_page_only.accessibleName() == "Usage filter: current page only on for detail_page"
         assert panel._usage_summary.accessibleName() == (
-            "Resource usage summary: 'star.png' is used by 1 widget on the current page "
-            "(2 total across 2 pages)."
+            "Resource usage summary: 1 widget on this page | 2 total across 2 pages | star.png"
         )
         assert panel._usage_table.rowCount() == 1
         assert panel._usage_table.accessibleName() == (
@@ -524,7 +523,7 @@ class TestResourcePanelFileFlow:
         panel._select_resource_item("string", "greeting")
 
         assert panel._tabs.currentIndex() == 3
-        assert panel._usage_summary.text() == "'greeting' is used by 1 widget across 1 page."
+        assert panel._usage_summary.text() == "1 widget across 1 page | greeting"
         assert panel._usage_table.rowCount() == 1
         assert panel._usage_table.item(0, 1).text() == "title (label)"
         panel.deleteLater()

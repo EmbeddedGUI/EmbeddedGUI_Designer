@@ -143,7 +143,7 @@ class TestWidgetBrowserPanel:
         panel.refresh()
 
         assert panel._insert_target.isHidden() is False
-        assert "root_group / content" in panel._insert_target.text()
+        assert panel._insert_target.text() == "Target: root_group / content"
         assert "slider" in [card.type_name for card in panel._cards.values()]
 
         inserted = []

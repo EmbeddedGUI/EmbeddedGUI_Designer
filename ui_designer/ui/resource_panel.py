@@ -1783,7 +1783,7 @@ class ResourcePanel(QWidget):
         usage_filter_row.addStretch()
         usage_layout.addLayout(usage_filter_row)
 
-        self._usage_summary = QLabel("Select an image, font, text resource, or string key to inspect references.")
+        self._usage_summary = QLabel("Select a resource to inspect usages.")
         self._usage_summary.setObjectName("resource_panel_summary")
         self._usage_summary.setWordWrap(True)
         usage_layout.addWidget(self._usage_summary)
@@ -2395,12 +2395,11 @@ class ResourcePanel(QWidget):
             total_page_count = len({entry.page_name for entry in all_usages})
             total_page_noun = "page" if total_page_count == 1 else "pages"
             self._usage_summary.setText(
-                f"'{resource_name}' is used by {widget_count} {widget_noun} on the current page "
-                f"({total_widget_count} total across {total_page_count} {total_page_noun})."
+                f"{widget_count} {widget_noun} on this page | {total_widget_count} total across {total_page_count} {total_page_noun} | {resource_name}"
             )
         else:
             self._usage_summary.setText(
-                f"'{resource_name}' is used by {widget_count} {widget_noun} across {page_count} {page_noun}."
+                f"{widget_count} {widget_noun} across {page_count} {page_noun} | {resource_name}"
             )
         self._usage_table.setRowCount(len(usages))
         for row, entry in enumerate(usages):

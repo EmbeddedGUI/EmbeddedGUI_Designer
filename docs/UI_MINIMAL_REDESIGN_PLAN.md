@@ -90,6 +90,7 @@
   - 删除可见顶部 header 与 metrics 区。
   - 首屏改为 list-first：上方资源列表，下方详情区。
   - 详情区改为 `Preview / Usage` 切换，不再并排长期占用空间。
+  - 可见 usage 摘要收紧为更短的统计句式，详细描述交给 tooltip / accessibility metadata。
   - 多余的标题、提示、说明文字不再作为可见结构存在。
   - 原 header / metric / hint 仅保留隐藏 metadata 版本。
 
