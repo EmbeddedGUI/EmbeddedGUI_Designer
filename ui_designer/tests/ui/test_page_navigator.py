@@ -101,15 +101,18 @@ class TestPageNavigator:
             "Page navigator header. Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
         )
         assert navigator._eyebrow_label.accessibleName() == "Page flow workspace surface."
+        assert navigator._eyebrow_label.isHidden() is True
         assert navigator._header_meta_label.accessibleName() == (
             "Current page: none. Startup page: none. Use the rail to scan visual state and jump between pages."
         )
+        assert navigator._header_meta_label.isHidden() is True
         assert navigator._count_chip.accessibleName() == "Page count: 0 pages."
         assert navigator._startup_chip.accessibleName() == "Startup page: none."
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: No dirty pages."
         assert navigator._guidance_frame.accessibleName() == (
             "Page navigator guidance. Left click opens a page. Right click duplicates, deletes, or inserts a template after the selected page."
         )
+        assert navigator._guidance_frame.isHidden() is True
         assert navigator._guidance_label.accessibleName() == (
             "Left click opens a page. Right click duplicates, deletes, or inserts a template after the selected page."
         )

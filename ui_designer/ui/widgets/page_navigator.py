@@ -342,6 +342,9 @@ class PageNavigator(QWidget):
         self._guidance_label.setWordWrap(True)
         guidance_layout.addWidget(self._guidance_label)
         header_layout.addWidget(self._guidance_frame)
+        self._eyebrow_label.hide()
+        self._header_meta_label.hide()
+        self._guidance_frame.hide()
         outer.addWidget(self._header_frame)
 
         self._scroll_shell = QFrame()
