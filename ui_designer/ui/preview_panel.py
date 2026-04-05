@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF, QEvent
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage
 
-from .iconography import make_icon
+
 from .theme import theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
@@ -1110,7 +1110,7 @@ class PreviewPanel(QWidget):
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_SM)
 
-        self._eyebrow_label = QLabel("Live Preview")
+        self._eyebrow_label = QLabel("Preview")
         self._eyebrow_label.setObjectName("preview_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
 
@@ -1208,11 +1208,9 @@ class PreviewPanel(QWidget):
 
         sbl.addStretch()
 
-        self._btn_zoom_out = QPushButton()
+        self._btn_zoom_out = QPushButton("-")
         self._btn_zoom_out.setObjectName("preview_status_button")
         self._btn_zoom_out.setFixedSize(28, 28)
-        self._btn_zoom_out.setIcon(make_icon("canvas.zoom_out", size=18))
-        self._btn_zoom_out.setIconSize(self._btn_zoom_out.size())
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
@@ -1220,11 +1218,9 @@ class PreviewPanel(QWidget):
         self._zoom_label.setFixedWidth(90)
         self._zoom_label.setAlignment(Qt.AlignCenter)
 
-        self._btn_zoom_in = QPushButton()
+        self._btn_zoom_in = QPushButton("+")
         self._btn_zoom_in.setObjectName("preview_status_button")
         self._btn_zoom_in.setFixedSize(28, 28)
-        self._btn_zoom_in.setIcon(make_icon("canvas.zoom_in", size=18))
-        self._btn_zoom_in.setIconSize(self._btn_zoom_in.size())
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
 
         sbl.addWidget(self._btn_zoom_out)
@@ -1447,8 +1443,8 @@ class PreviewPanel(QWidget):
         )
         _set_widget_metadata(
             self._eyebrow_label,
-            tooltip="Preview engineering workspace surface.",
-            accessible_name="Preview engineering workspace surface.",
+            tooltip="Preview workspace.",
+            accessible_name="Preview workspace.",
         )
         _set_widget_metadata(
             self.status_label,
