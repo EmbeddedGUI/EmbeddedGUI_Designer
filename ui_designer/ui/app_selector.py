@@ -212,6 +212,8 @@ class AppSelectorDialog(QDialog):
             accessible_name=self._subtitle_label.text(),
         )
         hero_copy.addWidget(self._subtitle_label)
+        self._eyebrow_label.hide()
+        self._subtitle_label.hide()
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 

@@ -79,6 +79,8 @@ class TestAppSelectorDialog:
             "SDK example header. Open SDK Example dialog: SDK root none. Search none. "
             "Legacy examples off. Examples list: 1 entry. Selection: none."
         )
+        assert dialog._eyebrow_label.isHidden()
+        assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "SDK example browser workspace."
         assert dialog._title_label.accessibleName() == "SDK example browser title: Open EmbeddedGUI SDK Example."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -530,6 +532,8 @@ class TestNewProjectDialog:
             f"New project header. New Project dialog: SDK root none. Parent directory {normalized_parent}. "
             "App name none. Size 240 by 320."
         )
+        assert dialog._eyebrow_label.isHidden()
+        assert dialog._subtitle_label.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "New project scaffold workspace."
         assert dialog._title_label.accessibleName() == "New project dialog title: Create EmbeddedGUI App."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
