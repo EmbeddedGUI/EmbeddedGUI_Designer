@@ -89,14 +89,14 @@ class EditorTabs(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_SM)
+        layout.setSpacing(_SPACE_XS)
 
         self._header_frame = QFrame(self)
         self._header_frame.setObjectName("editor_tabs_header")
         self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_XS)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Editor")
         self._eyebrow_label.setObjectName("editor_tabs_eyebrow")
@@ -127,8 +127,8 @@ class EditorTabs(QWidget):
             self._mode_toolbar = QFrame()
             self._mode_toolbar.setObjectName("editor_tabs_mode_strip")
             toolbar_layout = QHBoxLayout(self._mode_toolbar)
-            toolbar_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-            toolbar_layout.setSpacing(_SPACE_XS)
+            toolbar_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+            toolbar_layout.setSpacing(2)
 
             self._btn_group = QButtonGroup(self)
             self._btn_group.setExclusive(True)
@@ -148,7 +148,7 @@ class EditorTabs(QWidget):
         self._stack_shell = QFrame()
         self._stack_shell.setObjectName("editor_tabs_shell")
         stack_shell_layout = QVBoxLayout(self._stack_shell)
-        stack_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        stack_shell_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         stack_shell_layout.setSpacing(0)
 
         self._stack = QStackedWidget()
