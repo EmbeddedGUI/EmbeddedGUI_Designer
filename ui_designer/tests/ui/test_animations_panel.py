@@ -84,6 +84,8 @@ class TestAnimationsPanel:
         assert panel._remove_button.toolTip() == "Remove the selected animation: alpha."
         assert panel._remove_button.statusTip() == panel._remove_button.toolTip()
         assert panel._remove_button.accessibleName() == "Remove animation: alpha"
+        assert panel._detail_group.title() == ""
+        assert panel._detail_group.isFlat() is True
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
         assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
         assert panel._table.rowCount() == 1
@@ -282,6 +284,8 @@ class TestAnimationsPanel:
         panel = AnimationsPanel()
         panel.set_selection([widget], primary=widget)
 
+        assert panel._detail_group.title() == ""
+        assert panel._detail_group.isFlat() is True
         assert panel._detail_group.toolTip() == (
             "Selected animation details unavailable. No animations on the selected widget."
         )

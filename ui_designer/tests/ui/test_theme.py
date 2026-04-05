@@ -621,16 +621,23 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         header = css.split('#animations_panel_header[panelTone="animations"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#animations_panel_meta {", 1)[1].split("}", 1)[0]
         actions = css.split("#animations_panel_actions_strip {", 1)[1].split("}", 1)[0]
+        buttons = css.split("#animations_panel_actions_strip QPushButton {", 1)[1].split("}", 1)[0]
         table = css.split("QTableWidget#animations_panel_table {", 1)[1].split("}", 1)[0]
         detail = css.split("QGroupBox#animations_panel_detail_group {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['text_muted']};" in meta
-        assert f"background-color: {t['panel_soft']};" in actions
+        assert "background-color: transparent;" in actions
+        assert "border: none;" in actions
+        assert "border-radius: 0px;" in actions
+        assert f"border-radius: {t['r_sm']}px;" in buttons
+        assert "min-height: 30px;" in buttons
         assert f"background-color: {t['panel_alt']};" in table
-        assert f"background-color: {t['panel_soft']};" in detail
-        assert f"border-radius: {t['r_xl']}px;" in detail
+        assert f"border-radius: {t['r_md']}px;" in table
+        assert "background-color: transparent;" in detail
+        assert "border: none;" in detail
+        assert "border-radius: 0px;" in detail
 
 
 def test_project_workspace_styles_use_engineering_surface_tokens():

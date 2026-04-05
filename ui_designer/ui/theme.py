@@ -1614,18 +1614,18 @@ QListWidget#history_panel_list {{
 }}
 
 #animations_panel_actions_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #animations_panel_actions_strip QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 34px;
+    min-height: 30px;
 }}
 
 #animations_panel_actions_strip QPushButton:hover {{
@@ -1642,16 +1642,16 @@ QListWidget#history_panel_list {{
 QTableWidget#animations_panel_table {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_md']}px;
     padding: {t['space_xxs']}px;
 }}
 
 QGroupBox#animations_panel_detail_group {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
-    margin-top: {t['space_xs']}px;
-    padding-top: {t['space_sm']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    margin-top: 0px;
+    padding-top: 0px;
 }}
 
 QTreeWidget#widget_tree_panel_tree {{

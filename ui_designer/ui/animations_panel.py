@@ -79,14 +79,14 @@ class AnimationsPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_XS)
+        layout.setSpacing(_SPACE_SM - 2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("animations_panel_header")
         self._header_frame.setProperty("panelTone", "animations")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Animations")
         self._header_eyebrow.setObjectName("animations_panel_eyebrow")
@@ -94,7 +94,7 @@ class AnimationsPanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
+        title_row.setSpacing(_SPACE_XS)
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
         title_row.addWidget(self._summary_label, 1)
@@ -137,8 +137,8 @@ class AnimationsPanel(QWidget):
         self._actions_strip = QFrame()
         self._actions_strip.setObjectName("animations_panel_actions_strip")
         buttons = QHBoxLayout(self._actions_strip)
-        buttons.setContentsMargins(_SPACE_SM, _SPACE_SM - 2, _SPACE_SM, _SPACE_SM - 2)
-        buttons.setSpacing(_SPACE_SM - 2)
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(_SPACE_XS)
         self._add_button = QPushButton("Add Animation")
         self._duplicate_button = QPushButton("Duplicate")
         self._remove_button = QPushButton("Remove")
@@ -150,9 +150,13 @@ class AnimationsPanel(QWidget):
         buttons.addWidget(self._remove_button)
         buttons.addStretch(1)
 
-        self._detail_group = QGroupBox("Selected Animation")
+        self._detail_group = QGroupBox("")
         self._detail_group.setObjectName("animations_panel_detail_group")
+        self._detail_group.setFlat(True)
         self._detail_form = QFormLayout()
+        self._detail_form.setContentsMargins(0, 0, 0, 0)
+        self._detail_form.setHorizontalSpacing(_SPACE_SM)
+        self._detail_form.setVerticalSpacing(_SPACE_XS)
         self._detail_group.setLayout(self._detail_form)
 
         layout.addWidget(self._header_frame)
