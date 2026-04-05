@@ -1004,6 +1004,8 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._summary_label.accessibleName() == (
         "Selected release summary: 20260326T000000Z [windows-pc] success sdk sdk-good"
     )
+    assert dialog._preview_label.isHidden()
+    assert dialog._preview_label.accessibleName() == "Release preview label: Manifest Preview"
     assert dialog._details_edit.accessibleName() == (
         "Release entry details: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
@@ -1157,6 +1159,8 @@ def test_release_history_dialog_updates_accessibility_metadata_for_filters_and_p
     assert dialog._copy_summary_button.toolTip() == "Select a release entry to copy its summary. Current selection: none."
     assert dialog._summary_label.isHidden()
     assert dialog._summary_label.accessibleName() == "Selected release summary: No release entries match the current filters."
+    assert dialog._preview_label.isHidden()
+    assert dialog._preview_label.accessibleName() == "Release preview label: Preview"
     assert dialog._preview_edit.toPlainText() == (
         "Preview mode: log. Path state: unavailable. Current path: none. "
         "No manifest, version file, or build log is available because the filtered result set is empty."

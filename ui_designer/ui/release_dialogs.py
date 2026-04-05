@@ -1935,6 +1935,7 @@ class ReleaseHistoryDialog(QDialog):
         self._preview_label = QLabel("Preview")
         self._preview_label.setObjectName("release_history_preview_label")
         preview_layout.addWidget(self._preview_label)
+        self._preview_label.hide()
 
         self._preview_edit = QTextEdit()
         self._preview_edit.setObjectName("release_history_preview")
