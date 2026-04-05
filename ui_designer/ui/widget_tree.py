@@ -228,6 +228,7 @@ class WidgetTreePanel(QWidget):
         self._header_meta_label.setObjectName("structure_header_meta")
         self._header_meta_label.setWordWrap(True)
         header_layout.addWidget(self._header_meta_label)
+        self._header_meta_label.hide()
 
         self._metrics_frame = QFrame()
         self._metrics_frame.setObjectName("structure_metrics_strip")

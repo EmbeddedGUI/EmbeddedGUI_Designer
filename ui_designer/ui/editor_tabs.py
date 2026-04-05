@@ -126,6 +126,7 @@ class EditorTabs(QWidget):
         self._meta_label.setObjectName("editor_tabs_meta")
         self._meta_label.setWordWrap(True)
         header_layout.addWidget(self._meta_label)
+        self._meta_label.hide()
 
         self._summary_label = QLabel("XML source is empty.")
         self._summary_label.setObjectName("editor_tabs_summary")

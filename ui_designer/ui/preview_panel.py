@@ -1133,6 +1133,7 @@ class PreviewPanel(QWidget):
         self._header_meta_label.setObjectName("preview_meta")
         self._header_meta_label.setWordWrap(True)
         header_layout.addWidget(self._header_meta_label)
+        self._header_meta_label.hide()
 
         self._metrics_frame = QFrame()
         self._metrics_frame.setObjectName("preview_metrics_strip")

@@ -41,6 +41,7 @@ class TestEditorTabsAccessibility:
         assert tabs._meta_label.accessibleName() == (
             "Switch between visual layout, split inspection, and raw XML editing without losing page context."
         )
+        assert tabs._meta_label.isHidden() is True
         assert tabs._mode_chip.accessibleName() == "Current editor mode: Design"
 
         tabs.set_xml_text("<page />")

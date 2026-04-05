@@ -72,6 +72,7 @@ class TestPreviewPanelFallback:
         assert panel._eyebrow_label.isHidden() is True
         assert panel._header_frame.accessibleName() == f"Preview header. {panel.accessibleName()}"
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
+        assert panel._header_meta_label.isHidden() is True
         assert panel._metrics_frame.accessibleName() == (
             "Preview metrics: Horizontal split. Grid on. Pointer status: Pointer idle."
         )
