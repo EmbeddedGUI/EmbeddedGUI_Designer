@@ -61,20 +61,20 @@ class TestResourcePanelFileFlow:
             "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
         )
         assert panel.layout().spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
-        assert header.layout().spacing() == 6
-        assert top_card.layout().spacing() == 4
-        assert panel._tabs.widget(0).layout().spacing() == 4
-        assert panel._tabs.widget(1).layout().spacing() == 4
-        assert panel._tabs.widget(2).layout().spacing() == 4
-        assert panel._tabs.widget(3).layout().spacing() == 4
-        assert metrics_layout.spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header.layout().spacing() == 4
+        assert top_card.layout().spacing() == 2
+        assert panel._tabs.widget(0).layout().spacing() == 2
+        assert panel._tabs.widget(1).layout().spacing() == 2
+        assert panel._tabs.widget(2).layout().spacing() == 2
+        assert panel._tabs.widget(3).layout().spacing() == 2
+        assert metrics_layout.spacing() == 2
         assert (
             metric_margins.left(),
             metric_margins.top(),
             metric_margins.right(),
             metric_margins.bottom(),
-        ) == (8, 6, 8, 6)
+        ) == (6, 4, 6, 4)
         preview_layout = panel._details_tabs.widget(0).layout()
         usage_layout = panel._details_tabs.widget(1).layout()
         usage_filter_layout = usage_layout.itemAt(1).layout()
