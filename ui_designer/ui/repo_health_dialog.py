@@ -121,6 +121,7 @@ class RepositoryHealthDialog(QDialog):
         self._overview_label.setObjectName("repo_health_overview_text")
         self._overview_label.setWordWrap(True)
         hero_copy.addWidget(self._overview_label)
+        self._overview_label.hide()
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
