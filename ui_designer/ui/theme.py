@@ -898,8 +898,11 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
-    min-width: 60px;
+    padding: 2px {t['space_sm']}px;
+    min-width: 56px;
+    max-width: 56px;
+    min-height: 26px;
+    max-height: 26px;
 }}
 
 QPushButton#workspace_mode_button:hover {{

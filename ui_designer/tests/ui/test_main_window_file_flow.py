@@ -8719,7 +8719,9 @@ class TestMainWindowFileFlow:
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
         assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
-        assert mode_host.layout().spacing() == 2
+        assert mode_host.layout().spacing() == 1
+        assert window._mode_buttons["design"].width() == 56
+        assert window._mode_buttons["design"].height() == 26
         assert separator.minimumHeight() == 24
         assert separator.maximumHeight() == 24
         assert window._workspace_context_label.text() == "No project open"
@@ -8926,6 +8928,8 @@ class TestMainWindowFileFlow:
         window = MainWindow("")
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
+        assert window._mode_buttons[MODE_DESIGN].width() == 56
+        assert window._mode_buttons[MODE_DESIGN].height() == 26
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()

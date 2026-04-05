@@ -4191,7 +4191,7 @@ class MainWindow(QMainWindow):
         mode_host.setObjectName("workspace_mode_switch")
         mode_layout = QHBoxLayout(mode_host)
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(2)
+        mode_layout.setSpacing(1)
         self._mode_buttons = {}
         for label, mode in (
             ("Design", MODE_DESIGN),
@@ -4201,6 +4201,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
+            button.setFixedSize(56, 26)
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)

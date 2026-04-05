@@ -342,6 +342,10 @@ def test_workspace_chrome_corner_radii_stay_flat():
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in mode_button
+        assert "min-width: 56px;" in mode_button
+        assert "max-width: 56px;" in mode_button
+        assert "min-height: 26px;" in mode_button
+        assert "max-height: 26px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
         assert "min-width: 52px;" in bottom_toggle_button
         assert "min-height: 26px;" in bottom_toggle_button
