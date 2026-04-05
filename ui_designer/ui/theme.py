@@ -807,9 +807,9 @@ QPushButton#project_workspace_view_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 3px 8px;
+    padding: 2px 8px;
     text-align: left;
-    min-height: 26px;
+    min-height: 24px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{

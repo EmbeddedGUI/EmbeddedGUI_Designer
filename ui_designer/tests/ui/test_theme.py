@@ -794,8 +794,8 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in buttons
-        assert "padding: 3px 8px;" in buttons
-        assert "min-height: 26px;" in buttons
+        assert "padding: 2px 8px;" in buttons
+        assert "min-height: 24px;" in buttons
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
