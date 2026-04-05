@@ -538,11 +538,9 @@ class MainWindow(QMainWindow):
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
         self._inspector_tabs.setMinimumWidth(INSPECTOR_SCROLL_MIN_WIDTH)
         self._inspector_tabs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-        self._inspector_tabs.addTab(self.props_dock, make_icon("toolbar.settings.global"), "Properties")
-        self._inspector_tabs.addTab(self.animations_panel, make_icon("toolbar.preview"), "Animations")
-        self._inspector_tabs.addTab(self._page_tools_scroll, make_icon("nav.page"), "Page")
-        for index in range(self._inspector_tabs.count()):
-            self._inspector_tabs.setTabIcon(index, QIcon())
+        self._inspector_tabs.addTab(self.props_dock, "Properties")
+        self._inspector_tabs.addTab(self.animations_panel, "Animations")
+        self._inspector_tabs.addTab(self._page_tools_scroll, "Page")
         self._inspector_tabs.currentChanged.connect(lambda _index: self._update_workspace_tab_metadata())
 
         self._top_splitter = QSplitter(Qt.Horizontal)
@@ -573,11 +571,9 @@ class MainWindow(QMainWindow):
         bottom_header_layout.addWidget(self._bottom_toggle_button)
 
         self._bottom_tabs = QTabWidget()
-        self._bottom_tabs.addTab(self.diagnostics_panel, make_icon("state.error"), "Diagnostics")
-        self._bottom_tabs.addTab(self.history_panel, make_icon("state.info"), "History")
-        self._bottom_tabs.addTab(self.debug_panel, make_icon("state.warn"), "Debug Output")
-        for index in range(self._bottom_tabs.count()):
-            self._bottom_tabs.setTabIcon(index, QIcon())
+        self._bottom_tabs.addTab(self.diagnostics_panel, "Diagnostics")
+        self._bottom_tabs.addTab(self.history_panel, "History")
+        self._bottom_tabs.addTab(self.debug_panel, "Debug Output")
         self._bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
         bottom_shell = QWidget()
