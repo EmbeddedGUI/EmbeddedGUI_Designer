@@ -1164,7 +1164,7 @@ class PreviewPanel(QWidget):
         self._preview_shell = QFrame()
         self._preview_shell.setObjectName("preview_stage_shell")
         preview_shell_layout = QVBoxLayout(self._preview_shell)
-        preview_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        preview_shell_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         preview_shell_layout.setSpacing(0)
         preview_shell_layout.addWidget(self.preview_frame, 0, Qt.AlignCenter)
 
@@ -1191,7 +1191,7 @@ class PreviewPanel(QWidget):
         self._overlay_shell = QFrame()
         self._overlay_shell.setObjectName("preview_overlay_shell")
         overlay_shell_layout = QVBoxLayout(self._overlay_shell)
-        overlay_shell_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        overlay_shell_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
         overlay_shell_layout.setSpacing(0)
         overlay_shell_layout.addWidget(self._overlay_scroll, 1)
 
@@ -1273,8 +1273,8 @@ class PreviewPanel(QWidget):
 
         if self._mode == MODE_VERTICAL:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-            layout.setSpacing(_SPACE_SM)
+            layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+            layout.setSpacing(_SPACE_XS)
             self._splitter = QSplitter(Qt.Vertical)
             self._splitter.setObjectName("preview_splitter")
             self.overlay.set_solid_background(True)
@@ -1297,8 +1297,8 @@ class PreviewPanel(QWidget):
 
         elif self._mode == MODE_HORIZONTAL:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-            layout.setSpacing(_SPACE_SM)
+            layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+            layout.setSpacing(_SPACE_XS)
             self._splitter = QSplitter(Qt.Horizontal)
             self._splitter.setObjectName("preview_splitter")
             self.overlay.set_solid_background(True)
@@ -1321,8 +1321,8 @@ class PreviewPanel(QWidget):
 
         elif self._mode == MODE_HIDDEN:
             layout = QVBoxLayout(self._content)
-            layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-            layout.setSpacing(_SPACE_SM)
+            layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+            layout.setSpacing(_SPACE_XS)
             self.overlay.set_solid_background(True)
             self._overlay_shell.setParent(self._content)
             layout.addWidget(self._overlay_shell, 1)

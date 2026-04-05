@@ -259,7 +259,7 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in header
         assert f"background-color: {t['canvas_bg']};" in content
         assert f"background-color: {t['canvas_stage']};" in overlay
-        assert f"border-radius: {t['r_sm']}px;" in overlay
+        assert "border-radius: 0px;" in overlay
         assert "border-radius: 0px;" in content
         assert f"background-color: {t['panel_raised']};" in status_shell
         assert "border-radius: 0px;" in status_shell

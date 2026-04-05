@@ -2576,7 +2576,7 @@ QScrollArea#preview_overlay_scroll {{
 QWidget#preview_overlay_surface[solidBackground="true"] {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 QWidget#preview_overlay_surface[solidBackground="false"] {{
