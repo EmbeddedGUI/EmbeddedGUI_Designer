@@ -1255,11 +1255,6 @@ class StatusCenterPanel(QWidget):
         )
         self._set_widget_enabled(self._repeat_action_button, has_action)
         self._set_widget_text(self._repeat_action_button, f"Repeat {action_label}" if has_action else "Repeat Action")
-        self._set_widget_icon(
-            self._repeat_action_button,
-            self._action_icon_key(self._last_action if has_action else "history"),
-            size=_ICON_LG,
-        )
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
         self._set_accessible_name(self._repeat_action_button, self._repeat_action_accessible_name(action_label))
         self._update_header_metrics_state()

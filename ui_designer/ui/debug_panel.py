@@ -96,7 +96,6 @@ class DebugPanel(QWidget):
         controls_layout.setSpacing(_SPACE_XS)
 
         self._clear_btn = QPushButton("Clear")
-        self._clear_btn.setIcon(make_icon("toolbar.delete", size=_ICON_SM))
         self._clear_btn.setFixedWidth(80)
         self._clear_btn.clicked.connect(self.clear)
         controls_layout.addWidget(self._clear_btn)

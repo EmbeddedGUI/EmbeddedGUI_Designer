@@ -232,27 +232,22 @@ class WelcomePage(QWidget):
         left_col.addWidget(self._start_hint_label)
 
         self._new_project_btn = PrimaryPushButton("New Project...")
-        self._new_project_btn.setIcon(make_icon("toolbar.new"))
         self._new_project_btn.clicked.connect(self.new_project.emit)
         left_col.addWidget(self._new_project_btn)
 
         self._open_project_btn = PushButton("Open Project File...")
-        self._open_project_btn.setIcon(make_icon("toolbar.open"))
         self._open_project_btn.clicked.connect(self.open_project.emit)
         left_col.addWidget(self._open_project_btn)
 
         self._open_app_btn = PushButton("Open SDK Example...")
-        self._open_app_btn.setIcon(make_icon("nav.page"))
         self._open_app_btn.clicked.connect(self.open_app.emit)
         left_col.addWidget(self._open_app_btn)
 
         self._set_sdk_root_btn = PushButton("Set SDK Root...")
-        self._set_sdk_root_btn.setIcon(make_icon("toolbar.settings.project"))
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
 
         self._download_sdk_btn = PushButton("Download SDK...")
-        self._download_sdk_btn.setIcon(make_icon("toolbar.compile"))
         self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
         self._download_sdk_btn.setToolTip(describe_auto_download_plan())
         self._download_sdk_btn.setStatusTip(self._download_sdk_btn.toolTip())
