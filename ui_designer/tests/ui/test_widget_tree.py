@@ -109,6 +109,7 @@ class TestWidgetTreePanel:
             "Filter: none. Status: All widgets. Position: none. "
             f"{panel.structure_hint_label.text()}"
         )
+        assert panel.tree.header().isHidden() is True
         assert panel._title_label.accessibleName() == "Widget tree title: Structure."
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._header_meta_label.isHidden() is True

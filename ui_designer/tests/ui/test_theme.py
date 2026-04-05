@@ -583,22 +583,32 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#workspace_panel_header[panelTone="structure"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#workspace_panel_header,", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#workspace_panel_header[panelTone="structure"] {', 1)[1].split("}", 1)[0]
         eyebrow = css.split("#structure_header_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#structure_metrics_strip {", 1)[1].split("}", 1)[0]
         strips = css.split("#structure_primary_strip,", 1)[1].split("}", 1)[0]
         buttons = css.split("#structure_primary_strip QPushButton,", 1)[1].split("}", 1)[0]
+        tree = css.split("QTreeWidget#widget_tree_panel_tree {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel_raised']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['accent_hover']};" in eyebrow
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
         assert "background-color: transparent;" in strips
         assert "border: none;" in strips
         assert "border-radius: 0px;" in strips
         assert f"border-radius: {t['r_sm']}px;" in buttons
         assert "min-height: 30px;" in buttons
+        assert f"background-color: {t['panel_alt']};" in tree
+        _assert_default_border(tree, t)
+        assert "border-radius: 0px;" in tree
+        assert "padding: 0px;" in tree
 
 
 def test_diagnostics_panel_styles_use_engineering_surface_tokens():

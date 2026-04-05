@@ -1398,9 +1398,9 @@ QTreeWidget#project_dock_tree {{
 }}
 
 #structure_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #structure_primary_strip,
@@ -1658,8 +1658,8 @@ QGroupBox#animations_panel_detail_group {{
 QTreeWidget#widget_tree_panel_tree {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
-    padding: {t['space_xxs']}px;
+    border-radius: 0px;
+    padding: 0px;
 }}
 
 #page_editor_header {{
