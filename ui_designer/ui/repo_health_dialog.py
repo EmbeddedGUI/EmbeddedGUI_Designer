@@ -125,7 +125,9 @@ class RepositoryHealthDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QGridLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("repo_health_metrics_frame")
+        metrics_layout = QGridLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setHorizontalSpacing(10)
         metrics_layout.setVerticalSpacing(10)
@@ -133,7 +135,7 @@ class RepositoryHealthDialog(QDialog):
         self._suggestions_metric_value = self._create_metric_card(metrics_layout, 0, 1, "Suggestions")
         self._stale_metric_value = self._create_metric_card(metrics_layout, 1, 0, "Stale Dirs")
         self._blocked_metric_value = self._create_metric_card(metrics_layout, 1, 1, "Blocked")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
@@ -351,6 +353,7 @@ class RepositoryHealthDialog(QDialog):
                 accessible_name="Close repository health dialog",
             )
 
+        self._metrics_frame.hide()
         self._restore_view_state()
         self.refresh()
 
