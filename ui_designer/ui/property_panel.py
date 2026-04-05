@@ -527,7 +527,7 @@ class PropertyPanel(QWidget):
         if tone:
             card.setProperty("metricTone", tone)
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(2)
 
         caption = QLabel(label)
@@ -547,8 +547,8 @@ class PropertyPanel(QWidget):
     def _build_metric_grid(self, metrics):
         grid = QGridLayout()
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.setHorizontalSpacing(8)
-        grid.setVerticalSpacing(8)
+        grid.setHorizontalSpacing(6)
+        grid.setVerticalSpacing(6)
         for index, (label, value, tone) in enumerate(metrics):
             grid.addWidget(self._make_metric_card(label, value, tone), index // 2, index % 2)
         return grid

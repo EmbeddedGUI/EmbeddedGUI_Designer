@@ -348,7 +348,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         _assert_default_border(header, t)
         assert f"background-color: {t['panel_soft']};" in hint_strip
         assert "background-color: transparent;" in metric_card
-        assert f"border-radius: {t['r_md']}px;" in metric_card
+        assert "border-radius: 0px;" in metric_card
 
 
 def test_resource_panel_styles_use_engineering_surface_tokens():

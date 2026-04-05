@@ -69,6 +69,29 @@ def _find_hint_strip(panel):
 
 @_skip_no_qt
 class TestPropertyPanelFileFlow:
+    def test_property_metric_cards_use_compact_flat_layout(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        header = panel._layout.itemAt(0).widget()
+        metric_grid = header.layout().itemAt(3).layout()
+        metric_cards = header.findChildren(QFrame, "property_panel_metric_card")
+
+        assert len(metric_cards) == 4
+        assert metric_grid.horizontalSpacing() == 6
+        assert metric_grid.verticalSpacing() == 6
+        margins = metric_cards[0].layout().contentsMargins()
+        assert margins.left() == 8
+        assert margins.top() == 6
+        assert margins.right() == 8
+        assert margins.bottom() == 6
+        panel.deleteLater()
+
     def test_empty_state_and_search_metadata(self, qapp):
         from ui_designer.ui.property_panel import PropertyPanel
 

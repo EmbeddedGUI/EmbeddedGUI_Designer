@@ -1062,7 +1062,7 @@ QToolButton#workspace_status_chip:focus {{
 QFrame#property_panel_metric_card {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 QFrame#property_panel_metric_card[metricTone="accent"] {{
