@@ -381,7 +381,7 @@ class MainWindow(QMainWindow):
         toolbar_heading_layout.addWidget(self._toolbar_title_label)
 
         self._toolbar_meta_label = QLabel(
-            "Open a project to activate insert, save, preview, and editor mode controls from a unified workspace rail."
+            "Open a project to enable insert, save, preview, and mode controls."
         )
         self._toolbar_meta_label.setObjectName("workspace_command_meta")
         self._toolbar_meta_label.setWordWrap(True)
