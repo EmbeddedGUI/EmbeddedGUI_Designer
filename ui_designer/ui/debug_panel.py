@@ -49,13 +49,13 @@ class DebugPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_XS)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("debug_panel_header")
         self._header_frame.setProperty("panelTone", "runtime")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        header_layout.setContentsMargins(6, _SPACE_XS, 6, _SPACE_XS)
         header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Runtime")
@@ -65,7 +65,7 @@ class DebugPanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_XS)
+        title_row.setSpacing(2)
 
         self._title_label = QLabel("Debug Output")
         self._title_label.setObjectName("workspace_section_title")

@@ -31,10 +31,16 @@ class TestDebugPanel:
         from ui_designer.ui.debug_panel import DebugPanel
 
         panel = DebugPanel()
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
+        title_row = header_layout.itemAt(1).layout()
 
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 4, 6, 4)
+        assert title_row.spacing() == 2
         assert panel._controls_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Runtime console workspace surface."
         assert panel._header_eyebrow.isHidden() is True

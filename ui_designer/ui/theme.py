@@ -1550,8 +1550,8 @@ QListWidget#diagnostics_list {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
-    min-height: 28px;
+    padding: 2px {t['space_sm']}px;
+    min-height: 26px;
 }}
 
 #debug_panel_controls_strip QPushButton:hover {{

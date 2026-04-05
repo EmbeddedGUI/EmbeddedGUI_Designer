@@ -719,8 +719,8 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in button
-        assert "min-height: 28px;" in button
-        assert f"padding: 3px {t['space_sm']}px;" in button
+        assert "min-height: 26px;" in button
+        assert f"padding: 2px {t['space_sm']}px;" in button
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface
 
