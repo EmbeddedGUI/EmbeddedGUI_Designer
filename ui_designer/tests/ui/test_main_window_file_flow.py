@@ -8852,6 +8852,7 @@ class TestMainWindowFileFlow:
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()
         assert window._mode_buttons[MODE_SPLIT].accessibleName() == "Editor mode button: Split."
+        assert window.editor_tabs._summary_label.isHidden() is True
         assert window._editor_container.accessibleName() == (
             "Editor workspace. Left panel: Project. Current page: none. Mode: Design. Bottom tools hidden."
         )

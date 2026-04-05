@@ -132,6 +132,7 @@ class EditorTabs(QWidget):
         self._summary_label.setObjectName("editor_tabs_summary")
         self._summary_label.setWordWrap(True)
         header_layout.addWidget(self._summary_label)
+        self._summary_label.hide()
 
         self._btn_group = None
         if self._show_mode_switch:
