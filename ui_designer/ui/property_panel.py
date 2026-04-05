@@ -496,6 +496,12 @@ class PropertyPanel(QWidget):
                 size_chip.setText(f"{widget.width}×{widget.height}")
             for field in ("x", "y", "width", "height"):
                 self._update_numeric_editor_value(field, getattr(widget, field))
+            if size_chip is not None:
+                _set_widget_metadata(
+                    size_chip,
+                    tooltip=f"Widget size: {widget.width} by {widget.height}.",
+                    accessible_name=f"Widget size: {widget.width} by {widget.height}.",
+                )
             return True
 
         primary_widget = self._primary_widget
@@ -852,6 +858,7 @@ class PropertyPanel(QWidget):
             accessible_name=f"Widget size: {widget.width} by {widget.height}.",
         )
         chips_row.addWidget(self._header_size_chip)
+        self._header_size_chip.hide()
         if getattr(widget, "designer_locked", False):
             locked_chip = self._make_status_chip("Locked", "warning")
             _set_widget_metadata(locked_chip, tooltip="Designer state: Locked.", accessible_name="Designer state: Locked.")

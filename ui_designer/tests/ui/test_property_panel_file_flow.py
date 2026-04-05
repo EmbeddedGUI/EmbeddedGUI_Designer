@@ -131,6 +131,7 @@ class TestPropertyPanelFileFlow:
         assert subtitle.isHidden() is True
         assert meta.accessibleName() == meta.text()
         assert meta.isHidden() is True
+        assert panel._header_size_chip.isHidden() is True
         assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
         panel.deleteLater()
 
@@ -717,6 +718,8 @@ class TestPropertyPanelFileFlow:
         assert panel._editors["width"].value() == 120
         assert panel._editors["height"].value() == 36
         assert panel._header_size_chip.text() == "120×36"
+        assert panel._header_size_chip.isHidden() is True
+        assert panel._header_size_chip.accessibleName() == "Widget size: 120 by 36."
         panel.deleteLater()
 
     def test_live_geometry_refresh_updates_multi_selection_primary_geometry_without_rebuild(self, qapp):
