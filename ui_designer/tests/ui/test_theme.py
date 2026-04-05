@@ -379,15 +379,25 @@ def test_welcome_page_styles_use_engineering_surface_tokens():
         card = css.split("#welcome_action_panel,", 1)[1].split("}", 1)[0]
         sdk = css.split("#welcome_sdk_panel {", 1)[1].split("}", 1)[0]
         metric_card = css.split("#welcome_metric_card {", 1)[1].split("}", 1)[0]
+        recent_item = css.split("#welcome_recent_item {", 1)[1].split("}", 1)[0]
+        empty = css.split("#welcome_recent_empty {", 1)[1].split("}", 1)[0]
 
-        assert t["panel_raised"] in hero
-        assert f"border-radius: {t['r_xl']}px;" in hero
-        assert f"background-color: {t['panel_raised']};" in card
-        assert f"border-radius: {t['r_xl']}px;" in card
-        assert f"background-color: {t['panel_alt']};" in sdk
-        assert f"border-radius: {t['r_md']}px;" in sdk
-        assert f"background-color: {t['panel_soft']};" in metric_card
-        assert f"border-radius: {t['r_md']}px;" in metric_card
+        assert f"background-color: {t['panel']};" in hero
+        assert "border-radius: 0px;" in hero
+        assert "background-color: transparent;" in card
+        assert "border: none;" in card
+        assert "border-radius: 0px;" in card
+        assert "background-color: transparent;" in sdk
+        assert "border: none;" in sdk
+        assert "border-radius: 0px;" in sdk
+        assert "background-color: transparent;" in metric_card
+        assert "border: none;" in metric_card
+        assert "border-radius: 0px;" in metric_card
+        assert "background-color: transparent;" in recent_item
+        assert "border: 1px solid transparent;" in recent_item
+        assert "border-radius: 0px;" in recent_item
+        assert f"border: 1px dashed {t['border']};" in empty
+        assert "border-radius: 0px;" in empty
 
 
 def test_project_dock_styles_use_engineering_surface_tokens():

@@ -52,11 +52,11 @@ class RecentProjectItem(QWidget):
         self.setObjectName("welcome_recent_item")
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(18, 16, 18, 16)
-        layout.setSpacing(14)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
 
         text_layout = QVBoxLayout()
-        text_layout.setSpacing(6)
+        text_layout.setSpacing(4)
 
         self._name_label = QLabel(display_name)
         self._name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
@@ -144,8 +144,8 @@ class WelcomePage(QWidget):
         shell.setAttribute(Qt.WA_StyledBackground, True)
         shell.setObjectName("welcome_shell")
         shell_layout = QVBoxLayout(shell)
-        shell_layout.setContentsMargins(28, 28, 28, 28)
-        shell_layout.setSpacing(18)
+        shell_layout.setContentsMargins(20, 20, 20, 20)
+        shell_layout.setSpacing(12)
 
         center_widget = QWidget()
         center_widget.setAttribute(Qt.WA_StyledBackground, True)
@@ -153,17 +153,17 @@ class WelcomePage(QWidget):
         center_widget.setMaximumWidth(1180)
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(18)
+        center_layout.setSpacing(12)
 
         self._hero = QFrame()
         self._hero.setObjectName("welcome_hero")
         hero_layout = QHBoxLayout(self._hero)
-        hero_layout.setContentsMargins(28, 26, 28, 26)
-        hero_layout.setSpacing(24)
+        hero_layout.setContentsMargins(16, 14, 16, 14)
+        hero_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(8)
+        hero_copy.setSpacing(6)
 
         self._eyebrow_label = QLabel("Welcome")
         self._eyebrow_label.setObjectName("welcome_eyebrow")
@@ -211,7 +211,7 @@ class WelcomePage(QWidget):
         self._overview_metrics_frame.setObjectName("welcome_metrics_frame")
         hero_metrics = QVBoxLayout(self._overview_metrics_frame)
         hero_metrics.setContentsMargins(0, 0, 0, 0)
-        hero_metrics.setSpacing(10)
+        hero_metrics.setSpacing(6)
         self._overview_sdk_value = self._create_overview_metric(hero_metrics, "SDK Binding")
         self._overview_preview_value = self._create_overview_metric(hero_metrics, "Preview Mode")
         self._overview_recent_value = self._create_overview_metric(hero_metrics, "Recent Work")
@@ -219,13 +219,13 @@ class WelcomePage(QWidget):
         center_layout.addWidget(self._hero)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(18)
+        content_layout.setSpacing(12)
 
         left_card = QFrame()
         left_card.setObjectName("welcome_action_panel")
         left_col = QVBoxLayout(left_card)
-        left_col.setContentsMargins(22, 22, 22, 22)
-        left_col.setSpacing(12)
+        left_col.setContentsMargins(0, 0, 0, 0)
+        left_col.setSpacing(10)
 
         self._start_label = QLabel("Start")
         self._start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
@@ -263,8 +263,8 @@ class WelcomePage(QWidget):
         self._sdk_card = QFrame()
         self._sdk_card.setObjectName("welcome_sdk_panel")
         sdk_layout = QVBoxLayout(self._sdk_card)
-        sdk_layout.setContentsMargins(18, 16, 18, 16)
-        sdk_layout.setSpacing(8)
+        sdk_layout.setContentsMargins(0, 0, 0, 0)
+        sdk_layout.setSpacing(6)
 
         self._sdk_title_label = QLabel("SDK Status")
         self._sdk_title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
@@ -287,7 +287,7 @@ class WelcomePage(QWidget):
         sdk_layout.addWidget(self._sdk_hint_label)
         self._sdk_hint_label.hide()
 
-        left_col.addSpacing(10)
+        left_col.addSpacing(6)
         left_col.addWidget(self._sdk_card)
         left_col.addStretch()
         content_layout.addWidget(left_card, 3)
@@ -295,8 +295,8 @@ class WelcomePage(QWidget):
         right_card = QFrame()
         right_card.setObjectName("welcome_recent_panel")
         right_col = QVBoxLayout(right_card)
-        right_col.setContentsMargins(22, 22, 22, 22)
-        right_col.setSpacing(12)
+        right_col.setContentsMargins(0, 0, 0, 0)
+        right_col.setSpacing(10)
 
         self._recent_label = QLabel("Recent Projects")
         self._recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
@@ -310,7 +310,7 @@ class WelcomePage(QWidget):
         self._recent_hint_label.hide()
 
         self._recent_list = QVBoxLayout()
-        self._recent_list.setSpacing(8)
+        self._recent_list.setSpacing(6)
         right_col.addLayout(self._recent_list)
         right_col.addStretch()
         content_layout.addWidget(right_card, 4)

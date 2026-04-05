@@ -2266,9 +2266,9 @@ QTextEdit#release_history_preview {{
 }}
 
 #welcome_hero {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #welcome_eyebrow {{
@@ -2297,21 +2297,21 @@ QTextEdit#release_history_preview {{
 
 #welcome_action_panel,
 #welcome_recent_panel {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #welcome_sdk_panel {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #welcome_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #welcome_metric_label {{
@@ -2327,14 +2327,14 @@ QTextEdit#release_history_preview {{
 }}
 
 #welcome_recent_item {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0px;
 }}
 
 #welcome_recent_item:hover {{
     background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
+    border-color: {t['border']};
 }}
 
 #welcome_recent_item:focus {{
@@ -2361,7 +2361,7 @@ QTextEdit#release_history_preview {{
 #welcome_recent_status {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
@@ -2386,7 +2386,7 @@ QTextEdit#release_history_preview {{
 #welcome_recent_empty {{
     background-color: transparent;
     border: 1px dashed {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     padding: 18px;
 }}
 
