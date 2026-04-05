@@ -282,7 +282,6 @@ class AppSelectorDialog(QDialog):
         actions_row.setSpacing(10)
 
         self._browse_btn = PushButton("Browse...")
-        self._browse_btn.setIcon(make_icon("toolbar.open"))
         self._browse_btn.clicked.connect(self._browse_root)
         _set_widget_metadata(
             self._browse_btn,
@@ -292,7 +291,6 @@ class AppSelectorDialog(QDialog):
         actions_row.addWidget(self._browse_btn)
 
         self._download_btn = PushButton("Download SDK...")
-        self._download_btn.setIcon(make_icon("toolbar.compile"))
         self._download_btn.clicked.connect(self._download_sdk)
         _set_widget_metadata(
             self._download_btn,

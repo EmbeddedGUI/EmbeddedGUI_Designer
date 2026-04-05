@@ -141,6 +141,7 @@ class TestAppSelectorDialog:
         assert dialog._open_btn.accessibleName() == (
             "Open action unavailable: Open. Select an SDK example to open it."
         )
+        assert dialog._browse_btn.icon().isNull()
         assert dialog._download_btn.toolTip() == (
             "Download SDK unavailable because this dialog was opened without an SDK download handler."
         )
@@ -149,6 +150,7 @@ class TestAppSelectorDialog:
             "Download SDK unavailable. "
             "Download SDK unavailable because this dialog was opened without an SDK download handler."
         )
+        assert dialog._download_btn.icon().isNull()
         assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
@@ -503,6 +505,7 @@ class TestAppSelectorDialog:
         assert "GitHub archive" in dialog._download_btn.toolTip()
         assert dialog._download_btn.statusTip() == dialog._download_btn.toolTip()
         assert dialog._download_btn.accessibleName() == f"Download SDK. {dialog._download_btn.toolTip()}"
+        assert dialog._download_btn.icon().isNull()
         dialog._download_btn.click()
 
         assert dialog.egui_root == os.path.normpath(os.path.abspath(sdk_root))
