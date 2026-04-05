@@ -796,9 +796,9 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #widget_browser_filter_bar {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 QPushButton#project_workspace_view_button {{
@@ -2380,14 +2380,13 @@ QTextEdit#release_history_preview {{
 }}
 
 #widget_browser_card {{
-    background-color: {t['panel_alt']};
+    background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #widget_browser_card:hover {{
-    border-color: {t['border']};
-    background-color: {t['surface_hover']};
+    background-color: {t['panel_soft']};
 }}
 
 #widget_browser_card[selected="true"] {{
@@ -2415,10 +2414,10 @@ QTextEdit#release_history_preview {{
 QPushButton#widget_browser_insert_button {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 3px 8px;
+    padding: 2px 6px;
 }}
 
 QPushButton#widget_browser_insert_button:hover {{

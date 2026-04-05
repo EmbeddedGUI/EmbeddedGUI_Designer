@@ -237,7 +237,7 @@ class TestWidgetBrowserPanel:
         assert panel._selected_type in {card.type_name for card in panel._cards.values()}
         panel.deleteLater()
 
-    def test_container_cards_expose_compact_meta_text(self, qapp, isolated_config):
+    def test_container_cards_keep_hidden_meta_metadata(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
         panel = WidgetBrowserPanel()
@@ -248,7 +248,9 @@ class TestWidgetBrowserPanel:
         )
 
         assert meta_label.text() == "Container"
-        assert meta_label.isHidden() is False
+        assert meta_label.isHidden() is True
+        assert meta_label.toolTip() == "Container"
+        assert meta_label.accessibleName() == "Widget hint: Container"
         panel.deleteLater()
 
     def test_browser_exposes_summary_and_filter_metadata(self, qapp, isolated_config):

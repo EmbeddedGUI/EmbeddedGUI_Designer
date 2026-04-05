@@ -94,12 +94,12 @@ class WidgetBrowserCard(QFrame):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
-        layout.setSpacing(_SPACE_SM - _SPACE_XXS)
+        layout.setContentsMargins(_SPACE_SM - _SPACE_XXS, _SPACE_XXS, _SPACE_SM - _SPACE_XXS, _SPACE_XXS)
+        layout.setSpacing(_SPACE_XS)
 
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
-        text_layout.setSpacing(1)
+        text_layout.setSpacing(0)
 
         self._title_label = QLabel(self._item.get("display_name", self.type_name))
         self._title_label.setObjectName("widget_browser_card_title")
@@ -108,7 +108,7 @@ class WidgetBrowserCard(QFrame):
         meta_text = "Container" if bool(self._item.get("is_container")) else ""
         self._meta_label = QLabel(meta_text)
         self._meta_label.setObjectName("widget_browser_card_meta")
-        self._meta_label.setVisible(bool(meta_text))
+        self._meta_label.hide()
         text_layout.addWidget(self._meta_label)
 
         layout.addLayout(text_layout, 1)
@@ -262,8 +262,8 @@ class WidgetBrowserPanel(QWidget):
         self._header_frame.setObjectName("widget_browser_header")
         self._header_frame.setProperty("panelTone", "components")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_XS)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(_SPACE_XXS)
 
         self._header_eyebrow = QLabel("Components")
         self._header_eyebrow.setObjectName("widget_browser_header_eyebrow")
@@ -272,7 +272,7 @@ class WidgetBrowserPanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
+        title_row.setSpacing(_SPACE_XS)
 
         self._title_label = QLabel("Components")
         self._title_label.setObjectName("workspace_section_title")
@@ -312,7 +312,7 @@ class WidgetBrowserPanel(QWidget):
         self._filter_bar = QFrame()
         self._filter_bar.setObjectName("widget_browser_filter_bar")
         filter_layout = QHBoxLayout(self._filter_bar)
-        filter_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        filter_layout.setContentsMargins(0, 0, 0, 0)
         filter_layout.setSpacing(_SPACE_XS)
 
         self._search = SearchLineEdit()
@@ -338,7 +338,7 @@ class WidgetBrowserPanel(QWidget):
         self._cards_container.setObjectName("widget_browser_results_host")
         self._cards_layout = QVBoxLayout(self._cards_container)
         self._cards_layout.setContentsMargins(0, 0, 0, 0)
-        self._cards_layout.setSpacing(6)
+        self._cards_layout.setSpacing(_SPACE_XXS)
         self._scroll.setWidget(self._cards_container)
 
         self._search.setAccessibleName("Widget browser search")
