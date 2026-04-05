@@ -106,13 +106,16 @@ class TestWidgetTreePanel:
         metrics_layout = panel._metrics_frame.layout()
         drag_hint_layout = panel._drag_hint_frame.layout()
         drag_margins = drag_hint_layout.contentsMargins()
+        header_margins = header_layout.contentsMargins()
 
         assert panel._header_eyebrow.accessibleName() == "Structure navigation workspace surface."
         assert panel._header_eyebrow.isHidden() is True
-        assert header_layout.spacing() == 4
-        assert title_row.spacing() == 6
-        assert metrics_layout.spacing() == 4
-        assert (drag_margins.left(), drag_margins.top(), drag_margins.right(), drag_margins.bottom()) == (6, 4, 6, 4)
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header_layout.spacing() == 2
+        assert title_row.spacing() == 4
+        assert metrics_layout.spacing() == 2
+        assert (drag_margins.left(), drag_margins.top(), drag_margins.right(), drag_margins.bottom()) == (4, 2, 4, 2)
         assert panel._header_frame.accessibleName() == (
             "Widget tree header. Widget tree: 2 widgets. 0 selected widgets. Current widget: none. "
             "Filter: none. Status: All widgets. Position: none. "
@@ -2576,16 +2579,19 @@ class TestWidgetTreePanel:
         metrics_layout = panel._metrics_frame.layout()
         drag_hint_layout = panel._drag_hint_frame.layout()
         drag_margins = drag_hint_layout.contentsMargins()
+        header_margins = header_layout.contentsMargins()
 
         assert panel.accessibleName() == (
             "Widget tree: 1 widget. 0 selected widgets. Current widget: none. "
             "Filter: none. Status: All widgets. Position: none. "
             "Structure: select widgets to group, move, or reorder."
         )
-        assert header_layout.spacing() == 4
-        assert title_row.spacing() == 6
-        assert metrics_layout.spacing() == 4
-        assert (drag_margins.left(), drag_margins.top(), drag_margins.right(), drag_margins.bottom()) == (6, 4, 6, 4)
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert header_layout.spacing() == 2
+        assert title_row.spacing() == 4
+        assert metrics_layout.spacing() == 2
+        assert (drag_margins.left(), drag_margins.top(), drag_margins.right(), drag_margins.bottom()) == (4, 2, 4, 2)
         assert panel.add_btn.toolTip() == "Open the Components panel to insert a component into root_group (group)."
         assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
         assert panel.add_btn.accessibleName() == "Insert component target: root_group (group)"
