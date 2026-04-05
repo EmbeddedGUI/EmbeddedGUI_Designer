@@ -44,6 +44,7 @@ class TestEditorTabsAccessibility:
         assert tabs._meta_label.isHidden() is True
         assert tabs._summary_label.accessibleName() == "XML source is empty."
         assert tabs._summary_label.isHidden() is True
+        assert tabs._mode_chip.isHidden() is True
         assert tabs._mode_chip.accessibleName() == "Current editor mode: Design"
 
         tabs.set_xml_text("<page />")
@@ -54,6 +55,7 @@ class TestEditorTabsAccessibility:
         )
         assert tabs._summary_label.accessibleName() == "XML source: 8 characters across 1 line."
         assert tabs._summary_label.isHidden() is True
+        assert tabs._mode_chip.isHidden() is True
         assert tabs._mode_chip.accessibleName() == "Current editor mode: Code"
         tabs.deleteLater()
 

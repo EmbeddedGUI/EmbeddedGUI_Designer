@@ -118,6 +118,7 @@ class EditorTabs(QWidget):
         self._mode_chip.setObjectName("workspace_status_chip")
         self._mode_chip.setProperty("chipTone", "accent")
         title_row.addWidget(self._mode_chip)
+        self._mode_chip.hide()
         header_layout.addLayout(title_row)
 
         self._meta_label = QLabel(
