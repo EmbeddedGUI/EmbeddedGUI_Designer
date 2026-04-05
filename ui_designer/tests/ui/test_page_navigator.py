@@ -31,10 +31,13 @@ class TestPageNavigator:
         from ui_designer.ui.widgets.page_navigator import PageThumbnail, THUMB_HEIGHT, THUMB_WIDTH
 
         thumb = PageThumbnail("main_page")
+        margins = thumb.layout().contentsMargins()
 
-        assert thumb.minimumHeight() == THUMB_HEIGHT + 16
+        assert thumb.minimumHeight() == THUMB_HEIGHT + 12
         assert thumb._thumb_label.width() == THUMB_WIDTH
         assert thumb._thumb_label.height() == THUMB_HEIGHT
+        assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (4, 4, 4, 4)
+        assert thumb.layout().spacing() == 4
         assert thumb.toolTip() == "Open page: main_page. Available. No unsaved changes."
         assert thumb.statusTip() == thumb.toolTip()
         assert thumb.accessibleName() == "Page thumbnail: main_page. Available. No unsaved changes."
@@ -76,6 +79,7 @@ class TestPageNavigator:
 
         navigator = PageNavigator()
 
+        assert navigator._layout.spacing() == 4
         assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
         assert navigator.toolTip() == navigator.accessibleName()
         assert navigator.statusTip() == navigator.toolTip()

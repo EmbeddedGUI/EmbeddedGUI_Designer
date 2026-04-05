@@ -10,8 +10,8 @@ from ..theme import theme_tokens
 
 
 # Thumbnail size (kept minimal; preview is secondary to page names)
-THUMB_WIDTH = 84
-THUMB_HEIGHT = 112
+THUMB_WIDTH = 76
+THUMB_HEIGHT = 100
 
 _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
@@ -62,12 +62,12 @@ class PageThumbnail(QWidget):
         self.setProperty("dirty", False)
         self.setProperty("startup", False)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(THUMB_HEIGHT + 16)
+        self.setMinimumHeight(THUMB_HEIGHT + 12)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(6)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
 
         self._preview_frame = QFrame()
         self._preview_frame.setObjectName("page_navigator_thumb_surface")
@@ -148,7 +148,7 @@ class PageThumbnail(QWidget):
         self._refresh_style(widget)
 
     def _set_placeholder_thumbnail(self):
-        placeholder = make_widget_preview("navigation", size=(THUMB_WIDTH - 12, THUMB_HEIGHT - 12))
+        placeholder = make_widget_preview("navigation", size=(THUMB_WIDTH - 8, THUMB_HEIGHT - 8))
         self._thumb_label.setPixmap(placeholder)
 
     def _state_chip_text_and_tone(self):
@@ -387,7 +387,7 @@ class PageNavigator(QWidget):
         self._container.setAccessibleName("Page thumbnail list")
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(6)
+        self._layout.setSpacing(4)
         self._scroll_area.setWidget(self._container)
         self._update_accessibility_summary()
 
