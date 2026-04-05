@@ -8464,6 +8464,9 @@ class TestMainWindowFileFlow:
         )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
+        assert window._insert_widget_button.objectName() == "workspace_insert_button"
+        assert window._insert_widget_button.width() == 56
+        assert window._insert_widget_button.height() == 26
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())

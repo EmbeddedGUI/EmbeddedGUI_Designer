@@ -35,7 +35,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QGuiApplication
 
-from qfluentwidgets import PrimaryPushButton, PushButton, TabBar, TabCloseButtonDisplayMode
+from qfluentwidgets import PushButton, TabBar, TabCloseButtonDisplayMode
 
 from .widget_tree import WidgetTreePanel
 from .property_panel import PropertyPanel
@@ -4155,7 +4155,9 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFixedHeight(24)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
-        self._insert_widget_button = PrimaryPushButton("Insert")
+        self._insert_widget_button = PushButton("Insert")
+        self._insert_widget_button.setObjectName("workspace_insert_button")
+        self._insert_widget_button.setFixedSize(56, 26)
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()

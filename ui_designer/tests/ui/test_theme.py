@@ -291,6 +291,8 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         toolbar = css.split("QToolBar#main_toolbar {", 1)[1].split("}", 1)[0]
         toolbar_button = css.split("QToolBar#main_toolbar QToolButton {", 1)[1].split("}", 1)[0]
         toolbar_button_hover = css.split("QToolBar#main_toolbar QToolButton:hover {", 1)[1].split("}", 1)[0]
+        insert_button = css.split("QPushButton#workspace_insert_button {", 1)[1].split("}", 1)[0]
+        insert_button_hover = css.split("QPushButton#workspace_insert_button:hover {", 1)[1].split("}", 1)[0]
         mode_strip = css.split("#workspace_mode_switch {", 1)[1].split("}", 1)[0]
 
         assert f"background-color: {t['panel']};" in command_bar
@@ -304,6 +306,14 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "padding: 2px 6px;" in toolbar_button
         assert "min-height: 24px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
+        assert "background-color: transparent;" in insert_button
+        assert "border-radius: 0px;" in insert_button
+        assert "padding: 2px 8px;" in insert_button
+        assert "min-width: 56px;" in insert_button
+        assert "max-width: 56px;" in insert_button
+        assert "min-height: 26px;" in insert_button
+        assert "max-height: 26px;" in insert_button
+        assert f"background-color: {t['surface_hover']};" in insert_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
         assert "border-radius: 0px;" in mode_strip

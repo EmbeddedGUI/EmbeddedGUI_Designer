@@ -939,6 +939,34 @@ QPushButton#workspace_bottom_toggle_button:focus {{
     border-color: {t['focus_ring']};
 }}
 
+QPushButton#workspace_insert_button {{
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0px;
+    color: {t['text_muted']};
+    padding: 2px {t['space_sm']}px;
+    min-width: 56px;
+    max-width: 56px;
+    min-height: 26px;
+    max-height: 26px;
+}}
+
+QPushButton#workspace_insert_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QPushButton#workspace_insert_button:pressed {{
+    background-color: {t['surface_pressed']};
+    border-color: {t['border_strong']};
+}}
+
+QPushButton#workspace_insert_button:focus {{
+    background-color: {t['surface_hover']};
+    border-color: {t['focus_ring']};
+}}
+
 #editor_tabs_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
