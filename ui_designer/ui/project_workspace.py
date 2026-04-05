@@ -168,6 +168,7 @@ class ProjectWorkspacePanel(QWidget):
         layout.addWidget(self._header)
 
         self._header_eyebrow.hide()
+        self._view_chip.hide()
         self._subtitle_label.hide()
         self._metrics_frame.hide()
         self._summary_label.hide()
@@ -282,7 +283,7 @@ class ProjectWorkspacePanel(QWidget):
             self._stack.setCurrentWidget(self._list_view)
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
         self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
-        _set_widget_visible(self._view_chip, True)
+        _set_widget_visible(self._view_chip, False)
         self._update_view_button_metadata(view_name)
         self._update_stack_metadata(view_label)
         self._update_panel_metadata()

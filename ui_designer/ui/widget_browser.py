@@ -345,6 +345,7 @@ class WidgetBrowserPanel(QWidget):
         self._category_combo.setAccessibleName("Widget category picker")
         self._scroll.setAccessibleName("Widget browser results")
         self._cards_container.setAccessibleName("Widget browser cards")
+        self._metrics_frame.hide()
         self._update_insert_target()
 
     def _normalize_category(self, category):

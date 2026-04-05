@@ -36,7 +36,7 @@ class TestProjectWorkspacePanel:
         emitted = []
         panel.view_changed.connect(emitted.append)
 
-        assert panel._view_chip.isHidden() is False
+        assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._header_eyebrow.accessibleName() == "Project navigation workspace surface."
@@ -77,7 +77,7 @@ class TestProjectWorkspacePanel:
 
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_THUMBNAILS
         assert panel._stack.currentWidget() is thumb_view
-        assert panel._view_chip.isHidden() is False
+        assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "Thumbnails"
         assert panel._view_chip.accessibleName() == "Workspace view: Thumbnails."
         assert panel._view_chip.statusTip() == panel._view_chip.toolTip()
@@ -103,7 +103,7 @@ class TestProjectWorkspacePanel:
 
         assert panel.current_view() == ProjectWorkspacePanel.VIEW_LIST
         assert panel._stack.currentWidget() is list_view
-        assert panel._view_chip.isHidden() is False
+        assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
         assert panel._list_btn.toolTip() == "Currently showing the page list for structure-first editing."

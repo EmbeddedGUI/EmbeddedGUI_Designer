@@ -300,6 +300,7 @@ class TestWidgetBrowserPanel:
         assert panel._header_frame.accessibleName() == f"Components header. {initial_meta}"
         assert panel._visible_count_chip.text() == f"{len(panel._cards)} visible"
         assert panel._category_summary_chip.text() == "All Components"
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == (
             f"Component browser metrics: {visible_label}. Scope: All Components."
         )
