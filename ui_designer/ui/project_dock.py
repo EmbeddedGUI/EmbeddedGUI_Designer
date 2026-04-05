@@ -149,26 +149,20 @@ class ProjectExplorerDock(QDockWidget):
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("project_dock_header")
-        header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(18, 16, 18, 16)
-        header_layout.setSpacing(18)
+        header_layout = QVBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(14, 12, 14, 12)
+        header_layout.setSpacing(4)
 
-        hero_copy = QVBoxLayout()
-        hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(4)
-
-        self._title_label = QLabel("Project Explorer")
+        self._title_label = QLabel("Project")
         self._title_label.setObjectName("project_dock_title")
         _set_widget_metadata(
             self._title_label,
-            tooltip="Project explorer title: Explorer.",
-            accessible_name="Project explorer title: Explorer.",
+            tooltip="Project panel title.",
+            accessible_name="Project panel title.",
         )
-        hero_copy.addWidget(self._title_label)
+        header_layout.addWidget(self._title_label)
 
-        self._subtitle_label = QLabel(
-            "Manage pages, startup routing, and generation mode in one place."
-        )
+        self._subtitle_label = QLabel("Pages and startup settings")
         self._subtitle_label.setObjectName("project_dock_subtitle")
         self._subtitle_label.setWordWrap(True)
         _set_widget_metadata(
@@ -176,21 +170,17 @@ class ProjectExplorerDock(QDockWidget):
             tooltip=self._subtitle_label.text(),
             accessible_name=self._subtitle_label.text(),
         )
-        hero_copy.addWidget(self._subtitle_label)
+        header_layout.addWidget(self._subtitle_label)
 
         self._status_label = QLabel("")
         self._status_label.setObjectName("project_dock_status")
         self._status_label.setWordWrap(True)
-        hero_copy.addWidget(self._status_label)
-        header_layout.addLayout(hero_copy, 3)
+        header_layout.addWidget(self._status_label)
 
-        metrics_layout = QVBoxLayout()
-        metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(6)
-        self._page_count_metric = _create_metric_card(metrics_layout, "Pages")
-        self._startup_metric = _create_metric_card(metrics_layout, "Startup")
-        self._dirty_metric = _create_metric_card(metrics_layout, "Dirty")
-        header_layout.addLayout(metrics_layout, 2)
+        self._page_count_metric = QLabel("")
+        self._startup_metric = QLabel("")
+        self._dirty_metric = QLabel("")
+
         layout.addWidget(self._header_frame)
 
         # Project settings group
@@ -222,15 +212,15 @@ class ProjectExplorerDock(QDockWidget):
         pages_card = QFrame()
         pages_card.setObjectName("project_dock_pages_card")
         pages_layout = QVBoxLayout(pages_card)
-        pages_layout.setContentsMargins(14, 16, 14, 14)
-        pages_layout.setSpacing(10)
+        pages_layout.setContentsMargins(12, 12, 12, 12)
+        pages_layout.setSpacing(8)
 
         # Page tree
         self._pages_label = QLabel("Pages")
         self._pages_label.setObjectName("workspace_section_title")
         pages_layout.addWidget(self._pages_label)
 
-        self._pages_hint = QLabel("Use the tree as the single source of page navigation, duplication, rename, startup selection, and deletion.")
+        self._pages_hint = QLabel("Right click a page to rename, duplicate, set startup, or delete.")
         self._pages_hint.setObjectName("workspace_section_subtitle")
         self._pages_hint.setWordWrap(True)
         pages_layout.addWidget(self._pages_hint)
@@ -416,7 +406,8 @@ class ProjectExplorerDock(QDockWidget):
     def _page_item_text(self, page_name):
         startup = self._project.startup_page if self._project else ""
         dirty_suffix = "*" if page_name in self._dirty_pages else ""
-        return f"▶ {page_name}{dirty_suffix}" if page_name == startup else f"  {page_name}{dirty_suffix}"
+        startup_suffix = " (startup)" if page_name == startup else ""
+        return f"{page_name}{startup_suffix}{dirty_suffix}"
 
     def _rebuild_resource_tree(self):
         # Resources are managed by the independent ResourcePanel dock

@@ -1428,12 +1428,12 @@ class ResourcePanel(QWidget):
         hero_copy.setContentsMargins(0, 0, 0, 0)
         hero_copy.setSpacing(4)
 
-        self._panel_eyebrow = QLabel("Asset Pipeline")
+        self._panel_eyebrow = QLabel("Resources")
         self._panel_eyebrow.setObjectName("resource_panel_eyebrow")
         _set_widget_metadata(
             self._panel_eyebrow,
-            tooltip="Resource pipeline workspace.",
-            accessible_name="Resource pipeline workspace.",
+            tooltip="Resources workspace.",
+            accessible_name="Resources workspace.",
         )
         hero_copy.addWidget(self._panel_eyebrow, 0, Qt.AlignLeft)
 
@@ -1447,7 +1447,7 @@ class ResourcePanel(QWidget):
         hero_copy.addWidget(self._panel_title)
 
         self._panel_subtitle = QLabel(
-            "Manage image, font, text, and string assets from one structured workspace, then inspect previews and usage references before editing."
+            "Manage image, font, text, and string files."
         )
         self._panel_subtitle.setObjectName("resource_panel_subtitle")
         self._panel_subtitle.setWordWrap(True)

@@ -158,9 +158,9 @@ _TOKENS = {
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
-        "fs_display": 24,
-        "fs_h1": 17,
-        "fs_h2": 15,
+        "fs_display": 20,
+        "fs_h1": 15,
+        "fs_h2": 14,
         "fs_panel_title": 13,
         "fs_body": 13,
         "fs_body_sm": 12,
@@ -220,9 +220,9 @@ _TOKENS = {
         "pad_input_v": 6,
         "pad_input_h": 10,
         "h_tab_min": 28,
-        "fs_display": 24,
-        "fs_h1": 17,
-        "fs_h2": 15,
+        "fs_display": 20,
+        "fs_h1": 15,
+        "fs_h2": 14,
         "fs_panel_title": 13,
         "fs_body": 13,
         "fs_body_sm": 12,
@@ -650,7 +650,7 @@ QFrame#property_panel_search_shell {{
 
 #property_panel_title {{
     color: {t['text']};
-    font-size: {t['fs_h1'] + 2}px;
+    font-size: {t['fs_h1']}px;
     font-weight: {t['fw_regular']};
 }}
 
@@ -1132,7 +1132,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 
 #workspace_section_title {{
     color: {t['text']};
-    font-size: {t['fs_h2']}px;
+    font-size: {t['fs_body']}px;
     font-weight: {t['fw_semibold']};
 }}
 
@@ -1199,7 +1199,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 
 #resource_panel_title {{
     color: {t['text']};
-    font-size: {t['fs_h1'] + 4}px;
+    font-size: {t['fs_h1']}px;
     font-weight: {t['fw_regular']};
 }}
 
@@ -1278,7 +1278,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 
 #project_dock_title {{
     color: {t['text']};
-    font-size: {t['fs_h1'] + 4}px;
+    font-size: {t['fs_h1']}px;
     font-weight: {t['fw_regular']};
 }}
 

@@ -29,7 +29,6 @@ from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
 from ..settings.ui_prefs import _normalize_inspector_group_expanded
-from .iconography import make_icon, widget_icon_key
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
@@ -752,13 +751,6 @@ class PropertyPanel(QWidget):
         eyebrow.setObjectName("property_panel_header_eyebrow")
         layout.addWidget(eyebrow)
 
-        top_row = QHBoxLayout()
-        top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(10)
-        icon = QLabel()
-        icon.setPixmap(make_icon(widget_icon_key(widget.widget_type), size=22).pixmap(22, 22))
-        top_row.addWidget(icon, 0, Qt.AlignTop)
-
         title_col = QVBoxLayout()
         title_col.setContentsMargins(0, 0, 0, 0)
         title_col.setSpacing(2)
@@ -770,8 +762,7 @@ class PropertyPanel(QWidget):
         subtitle.setObjectName("workspace_section_subtitle")
         subtitle.setWordWrap(True)
         title_col.addWidget(subtitle)
-        top_row.addLayout(title_col, 1)
-        layout.addLayout(top_row)
+        layout.addLayout(title_col)
 
         header_meta = QLabel("Tune geometry, behavior, resources, and callback wiring for this widget.")
         header_meta.setObjectName("property_panel_header_meta")
