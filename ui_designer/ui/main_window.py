@@ -2164,14 +2164,11 @@ class MainWindow(QMainWindow):
         current_mode = self._editor_mode_label(getattr(getattr(self, "editor_tabs", None), "mode", MODE_DESIGN))
         current_page = self._current_page_accessibility_text()
         if getattr(self, "project", None) is None:
-            summary = (
-                "Open a project to activate insert, save, preview, and editor mode controls "
-                "from a unified workspace rail."
-            )
+            summary = "Open a project to enable insert, save, preview, and mode controls."
         else:
             summary = (
-                f"{current_mode} mode active. {current_panel} panel visible. Current page: {current_page}. "
-                "Use the command rail to insert components, save edits, build, and inspect runtime health."
+                f"{current_mode} mode. {current_panel} panel. Current page: {current_page}. "
+                "Use commands to insert, save, build, and check runtime."
             )
         if hasattr(self, "_toolbar_meta_label"):
             if self._toolbar_meta_label.text() != summary:
