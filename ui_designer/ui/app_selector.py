@@ -113,6 +113,7 @@ class AppEntryRowWidget(QWidget):
         icon_label.setPixmap(make_icon(icon_name, size=24).pixmap(24, 24))
         icon_layout.addWidget(icon_label)
         layout.addWidget(icon_shell, 0, Qt.AlignTop)
+        icon_shell.hide()
 
         text_layout = QVBoxLayout()
         text_layout.setContentsMargins(0, 0, 0, 0)
