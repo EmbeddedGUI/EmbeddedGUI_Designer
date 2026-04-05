@@ -145,7 +145,7 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 280
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-WORKSPACE_NAV_RAIL_WIDTH = 72
+WORKSPACE_NAV_RAIL_WIDTH = 68
 LEFT_PANEL_STACK_MIN_WIDTH = 192
 LEFT_PANEL_DEFAULT_WIDTH = 264
 CENTER_PANEL_DEFAULT_WIDTH = 860
@@ -492,11 +492,11 @@ class MainWindow(QMainWindow):
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
-        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_SM)
+        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_XS)
         self._left_shell.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
-        left_shell_layout.setSpacing(_SPACE_SM)
+        left_shell_layout.setSpacing(_SPACE_XS)
         left_shell_layout.addWidget(self._workspace_nav_frame, 0)
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         center_shell.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(_SPACE_SM)
+        center_layout.setSpacing(_SPACE_XS)
 
         self.page_tab_bar = self._create_page_tab_bar()
         center_layout.addWidget(self.page_tab_bar)
