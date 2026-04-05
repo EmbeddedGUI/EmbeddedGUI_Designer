@@ -112,6 +112,8 @@ class TestWidgetTreePanel:
         assert panel._title_label.accessibleName() == "Widget tree title: Structure."
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
         assert panel._header_meta_label.isHidden() is True
+        assert panel._filter_hint_label.accessibleName() == panel._filter_hint_label.text()
+        assert panel._filter_hint_label.isHidden() is True
         assert panel._tree_count_chip.text() == "2 widgets"
         assert panel._tree_count_chip.accessibleName() == "Widget count: 2 widgets."
         assert panel._selection_summary_chip.text() == "No selection"
@@ -2597,6 +2599,8 @@ class TestWidgetTreePanel:
             "Collapse All",
         ]
         assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
+        assert panel._filter_hint_label.isHidden() is True
+        assert panel._filter_hint_label.accessibleName() == panel._filter_hint_label.text()
         assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
         assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
         assert panel.filter_select_btn.toolTip() == "Type a widget filter to select matching widgets."

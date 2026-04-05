@@ -415,6 +415,12 @@ class WidgetTreePanel(QWidget):
         self._filter_hint_label.setObjectName("structure_panel_hint")
         self._filter_hint_label.setWordWrap(True)
         filter_frame_layout.addWidget(self._filter_hint_label)
+        _set_widget_metadata(
+            self._filter_hint_label,
+            tooltip=self._filter_hint_label.text(),
+            accessible_name=self._filter_hint_label.text(),
+        )
+        self._filter_hint_label.hide()
 
         filter_layout = QHBoxLayout()
         filter_layout.setContentsMargins(0, 0, 0, 0)
