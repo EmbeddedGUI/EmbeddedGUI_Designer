@@ -116,6 +116,8 @@ class PageThumbnail(QWidget):
         chip_row.addWidget(self._dirty_chip)
         chip_row.addStretch(1)
         content_layout.addLayout(chip_row)
+        self._state_chip.hide()
+        self._dirty_chip.hide()
         content_layout.addStretch(1)
         layout.addLayout(content_layout, 1)
 
@@ -203,6 +205,16 @@ class PageThumbnail(QWidget):
             self._meta_label,
             tooltip=self._meta_label.text(),
             accessible_name=self._meta_label.text(),
+        )
+        _set_widget_metadata(
+            self._state_chip,
+            tooltip=f"Page state: {self._state_chip.text()}.",
+            accessible_name=f"Page state: {self._state_chip.text()}.",
+        )
+        _set_widget_metadata(
+            self._dirty_chip,
+            tooltip=f"Page save state: {self._dirty_chip.text()}.",
+            accessible_name=f"Page save state: {self._dirty_chip.text()}.",
         )
 
     def set_selected(self, selected):
