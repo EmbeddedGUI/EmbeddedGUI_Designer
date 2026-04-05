@@ -44,8 +44,10 @@ class TestDebugPanel:
         )
         assert panel._meta_label.isHidden() is True
         assert panel._line_count_chip.text() == "0 lines"
+        assert panel._line_count_chip.isHidden() is True
         assert panel._line_count_chip.accessibleName() == "Debug output lines: 0 lines."
         assert panel._stream_state_chip.text() == "Idle"
+        assert panel._stream_state_chip.isHidden() is True
         assert panel._stream_state_chip.accessibleName() == "Debug output state: Idle."
         assert panel._controls_strip.accessibleName() == "Debug output actions. 0 lines."
         assert panel._clear_btn.toolTip() == "Debug output is already clear."

@@ -90,6 +90,8 @@ class DebugPanel(QWidget):
         self._meta_label.setWordWrap(True)
         header_layout.addWidget(self._meta_label)
         self._meta_label.hide()
+        self._line_count_chip.hide()
+        self._stream_state_chip.hide()
 
         self._controls_strip = QFrame()
         self._controls_strip.setObjectName("debug_panel_controls_strip")
