@@ -1249,7 +1249,7 @@ class StatusCenterPanel(QWidget):
         self._set_widget_text(self._recent_actions_label, self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._set_accessible_name(self._recent_actions_label, self._recent_actions_accessible_name())
-        self._set_widget_visible(self._recent_actions_label, self._show_recent_actions_summary())
+        self._set_widget_visible(self._recent_actions_label, False)
         has_action = bool(self._last_action)
         self._set_widget_visible(self._last_action_label, len(self._recent_actions) > 1)
         self._set_widget_visible(self._last_action_host, has_action)
