@@ -290,6 +290,7 @@ class WidgetBrowserPanel(QWidget):
         self._subtitle_label.setObjectName("widget_browser_header_meta")
         self._subtitle_label.setWordWrap(True)
         header_layout.addWidget(self._subtitle_label)
+        self._subtitle_label.hide()
 
         self._metrics_frame = QFrame()
         self._metrics_frame.setObjectName("widget_browser_metrics_strip")

@@ -296,6 +296,7 @@ class TestWidgetBrowserPanel:
         assert panel._header_eyebrow.accessibleName() == "Component catalog workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._subtitle_label.text() == initial_meta
+        assert panel._subtitle_label.isHidden() is True
         assert panel._header_frame.accessibleName() == f"Components header. {initial_meta}"
         assert panel._visible_count_chip.text() == f"{len(panel._cards)} visible"
         assert panel._category_summary_chip.text() == "All Components"
@@ -323,6 +324,7 @@ class TestWidgetBrowserPanel:
 
         assert panel._subtitle_label.text() == scoped_meta
         assert panel._subtitle_label.toolTip() == scoped_meta
+        assert panel._subtitle_label.isHidden() is True
         assert panel._header_frame.accessibleName() == f"Components header. {scoped_meta}"
         assert panel._insert_target.toolTip() == "Current insert target: root_group / content"
         assert panel._visible_count_chip.text() == "1 visible"

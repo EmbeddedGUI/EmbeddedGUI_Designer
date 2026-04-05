@@ -42,6 +42,7 @@ class TestDebugPanel:
         assert panel._meta_label.accessibleName() == (
             "Debug output summary: No output yet. Compile, preview, and bridge logs will appear here."
         )
+        assert panel._meta_label.isHidden() is True
         assert panel._line_count_chip.text() == "0 lines"
         assert panel._line_count_chip.accessibleName() == "Debug output lines: 0 lines."
         assert panel._stream_state_chip.text() == "Idle"
@@ -67,6 +68,7 @@ class TestDebugPanel:
         assert panel.accessibleName() == "Debug output: 1 line. Last message: Build started"
         assert panel.toolTip() == panel.accessibleName()
         assert panel._meta_label.text() == "Showing 1 line. Last message: Build started."
+        assert panel._meta_label.isHidden() is True
         assert panel._line_count_chip.text() == "1 line"
         assert panel._stream_state_chip.text() == "Captured Output"
         assert panel._clear_btn.toolTip() == "Clear 1 line of debug output."
