@@ -582,6 +582,7 @@ class TestNewProjectDialog:
         assert dialog._eyebrow_label.accessibleName() == "New project scaffold workspace."
         assert dialog._title_label.accessibleName() == "New project dialog title: Create EmbeddedGUI App."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+        assert dialog._metrics_frame.isHidden()
         assert dialog._sdk_metric_value.accessibleName() == (
             f"New project metric: Preview Mode. {dialog._sdk_metric_value.text()}."
         )

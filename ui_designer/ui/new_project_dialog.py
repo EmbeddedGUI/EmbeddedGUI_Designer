@@ -125,13 +125,15 @@ class NewProjectDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("new_project_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._sdk_metric_value = self._create_header_metric(metrics_layout, "Preview Mode")
         self._location_metric_value = self._create_header_metric(metrics_layout, "Parent Directory")
         self._canvas_metric_value = self._create_header_metric(metrics_layout, "Canvas")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
@@ -314,6 +316,7 @@ class NewProjectDialog(QDialog):
             accessible_name="Browse parent directory",
         )
         _set_widget_metadata(self._cancel_btn, tooltip="Close this dialog without creating a project.", accessible_name="Cancel")
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def _create_header_metric(self, layout, label_text):
