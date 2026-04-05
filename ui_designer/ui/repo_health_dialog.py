@@ -116,6 +116,7 @@ class RepositoryHealthDialog(QDialog):
         self._summary_label.setObjectName("repo_health_summary_text")
         self._summary_label.setWordWrap(True)
         hero_copy.addWidget(self._summary_label)
+        self._summary_label.hide()
 
         self._overview_label = QLabel("critical 0 | suggestions 0 | stale 0 | blocked 0")
         self._overview_label.setObjectName("repo_health_overview_text")
