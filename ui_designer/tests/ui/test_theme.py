@@ -315,6 +315,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         css = _build_stylesheet(mode)
 
         mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
+        bottom_toggle_button = css.split("QPushButton#workspace_bottom_toggle_button {", 1)[1].split("}", 1)[0]
         nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
         status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
@@ -331,6 +332,9 @@ def test_workspace_chrome_corner_radii_stay_flat():
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in mode_button
+        assert "border-radius: 0px;" in bottom_toggle_button
+        assert "min-width: 52px;" in bottom_toggle_button
+        assert "min-height: 26px;" in bottom_toggle_button
         assert "border-radius: 0px;" in nav_button
         assert "min-width: 60px;" in nav_button
         assert "max-width: 60px;" in nav_button

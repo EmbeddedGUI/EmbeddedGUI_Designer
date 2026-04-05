@@ -6195,7 +6195,7 @@ class TestMainWindowFileFlow:
         assert window._left_shell.layout().spacing() == 4
         assert window._center_shell.layout().spacing() == 4
         assert window._page_inspector_body.layout().spacing() == 8
-        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (8, 4, 8, 4)
+        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (4, 4, 4, 4)
         assert bottom_header_layout.spacing() == 4
         assert window._bottom_shell.layout().spacing() == 4
         assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
@@ -9153,7 +9153,10 @@ class TestMainWindowFileFlow:
         assert window._bottom_shell.toolTip() == (
             "Workspace bottom shell. Current section: Diagnostics. Panel hidden. Current page: none."
         )
+        assert window._bottom_toggle_button.objectName() == "workspace_bottom_toggle_button"
         assert window._bottom_toggle_button.text() == "Show"
+        assert window._bottom_toggle_button.width() == 52
+        assert window._bottom_toggle_button.height() == 26
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
 

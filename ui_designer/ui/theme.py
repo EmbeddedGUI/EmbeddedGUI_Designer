@@ -913,6 +913,32 @@ QPushButton#workspace_mode_button:checked {{
     color: {t['accent_hover']};
 }}
 
+QPushButton#workspace_bottom_toggle_button {{
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0px;
+    color: {t['text_muted']};
+    padding: 2px {t['space_sm']}px;
+    min-width: 52px;
+    min-height: 26px;
+}}
+
+QPushButton#workspace_bottom_toggle_button:hover {{
+    background-color: {t['surface_hover']};
+    border-color: {t['border_strong']};
+    color: {t['text']};
+}}
+
+QPushButton#workspace_bottom_toggle_button:pressed {{
+    background-color: {t['surface_pressed']};
+    border-color: {t['border_strong']};
+}}
+
+QPushButton#workspace_bottom_toggle_button:focus {{
+    background-color: {t['surface_hover']};
+    border-color: {t['focus_ring']};
+}}
+
 #editor_tabs_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
