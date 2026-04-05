@@ -150,6 +150,8 @@ class DiagnosticsPanel(QWidget):
         self._hint_label.setObjectName("diagnostics_header_meta")
         self._hint_label.setWordWrap(True)
         header_layout.addWidget(self._hint_label)
+        self._header_eyebrow.hide()
+        self._hint_label.hide()
 
         self._list = QListWidget()
         self._list.setObjectName("diagnostics_list")

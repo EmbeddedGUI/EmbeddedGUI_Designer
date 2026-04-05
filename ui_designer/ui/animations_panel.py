@@ -116,6 +116,8 @@ class AnimationsPanel(QWidget):
             accessible_name=self._hint_label.text(),
         )
         header_layout.addWidget(self._hint_label)
+        self._header_eyebrow.hide()
+        self._hint_label.hide()
 
         self._table = QTableWidget(0, 4, self)
         self._table.setObjectName("animations_panel_table")

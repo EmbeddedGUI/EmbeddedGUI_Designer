@@ -59,12 +59,14 @@ class TestAnimationsPanel:
         assert panel.accessibleName() == "Animations: 1 animation on label title"
         assert panel.toolTip() == panel.accessibleName()
         assert panel._header_eyebrow.accessibleName() == "Motion timeline workspace surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (
             "Animations header. Animations: 1 animation on label title"
         )
         assert panel._selection_chip.text() == "1 animation"
         assert panel._selection_chip.accessibleName() == "Animation selection status: 1 animation."
         assert panel._hint_label.text() == "Showing 1 animation on label title. Select a row to inspect details."
+        assert panel._hint_label.isHidden() is True
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()

@@ -155,6 +155,9 @@ class PageTimersPanel(QWidget):
         table_layout.addWidget(self._actions_frame)
 
         layout.addWidget(self._table_frame, 1)
+        self._eyebrow_label.hide()
+        self._header_meta_label.hide()
+        self._hint_label.hide()
         self._update_actions()
 
     def _make_status_chip(self, text, tone=None):

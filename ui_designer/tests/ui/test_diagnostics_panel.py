@@ -67,6 +67,7 @@ class TestDiagnosticsPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
         assert panel._header_eyebrow.accessibleName() == "Workspace diagnostics surface."
+        assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (
             "Diagnostics header. Diagnostics: no active issues. Severity filter: Any. 0 visible items."
         )
@@ -78,6 +79,7 @@ class TestDiagnosticsPanel:
         assert panel._hint_label.accessibleName() == (
             "Diagnostics hint: Double-click a diagnostic to switch page or focus the widget."
         )
+        assert panel._hint_label.isHidden() is True
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Any"
         assert panel._controls_primary_strip.accessibleName() == "Diagnostics primary actions. Current filter: Any."
         assert panel._controls_secondary_strip.accessibleName() == "Diagnostics export actions. 0 visible items."
@@ -157,6 +159,7 @@ class TestDiagnosticsPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel._hint_label.text() == "No diagnostics match the current severity filter."
         assert panel._hint_label.toolTip() == "No diagnostics match the current severity filter."
+        assert panel._hint_label.isHidden() is True
         assert panel._visible_count_chip.text() == "0 visible"
         assert panel._filter_chip.text() == "Info Only"
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Info"

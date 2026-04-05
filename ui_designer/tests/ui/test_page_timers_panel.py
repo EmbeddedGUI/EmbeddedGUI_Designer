@@ -55,12 +55,14 @@ class TestPageTimersPanel:
         assert panel._summary_label.toolTip() == panel._summary_label.text()
         assert panel._summary_label.statusTip() == panel._summary_label.toolTip()
         assert panel._summary_label.accessibleName() == panel._summary_label.text()
-        assert panel._eyebrow_label.text() == "Scheduled Callbacks"
+        assert panel._eyebrow_label.text() == "Timers"
         assert panel._eyebrow_label.accessibleName() == "Page timers engineering surface."
+        assert panel._eyebrow_label.isHidden() is True
         assert panel._header_frame.accessibleName() == (
             "Page timers header. Page Timers: 1 timer on main_page. Selected timer: none."
         )
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
+        assert panel._header_meta_label.isHidden() is True
         assert panel._count_chip.text() == "1 timer"
         assert panel._count_chip.accessibleName() == "Timer count: 1 timer."
         assert panel._selection_chip.text() == "No selection"
@@ -69,6 +71,7 @@ class TestPageTimersPanel:
         assert panel._hint_label.toolTip() == panel._hint_label.text()
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
         assert panel._hint_label.accessibleName() == panel._hint_label.text()
+        assert panel._hint_label.isHidden() is True
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
@@ -99,6 +102,7 @@ class TestPageTimersPanel:
         assert panel.toolTip() == panel.accessibleName()
         assert panel._header_frame.accessibleName() == "Page timers header. Page Timers: no active page"
         assert panel._header_meta_label.accessibleName() == panel._header_meta_label.text()
+        assert panel._header_meta_label.isHidden() is True
         assert panel._table.toolTip() == "Page Timers: no active page"
         assert panel._table.accessibleName() == "Page timers table: Page Timers: no active page"
         assert panel._add_button.toolTip() == "Open a page to manage timers."
