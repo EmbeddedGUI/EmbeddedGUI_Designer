@@ -4149,7 +4149,7 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setObjectName("toolbar_host_separator")
         toolbar_rail_sep.setFrameShape(QFrame.VLine)
         toolbar_rail_sep.setFrameShadow(QFrame.Plain)
-        toolbar_rail_sep.setFixedHeight(26)
+        toolbar_rail_sep.setFixedHeight(24)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
         self._insert_widget_button = PrimaryPushButton("Insert")
@@ -4186,7 +4186,7 @@ class MainWindow(QMainWindow):
         mode_host.setObjectName("workspace_mode_switch")
         mode_layout = QHBoxLayout(mode_host)
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
+        mode_layout.setSpacing(2)
         self._mode_buttons = {}
         for label, mode in (
             ("Design", MODE_DESIGN),

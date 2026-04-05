@@ -8704,11 +8704,16 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
+        mode_host = window._mode_buttons["design"].parentWidget()
+        separator = window._toolbar_host.findChild(type(window._toolbar_header), "toolbar_host_separator")
 
         assert window._toolbar.accessibleName() == "Main toolbar: insert, save, edit, and preview commands."
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
         assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
+        assert mode_host.layout().spacing() == 2
+        assert separator.minimumHeight() == 24
+        assert separator.maximumHeight() == 24
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_health_chip.text() == "Open Project"
         assert window._runtime_chip.text() == "Preview Idle"

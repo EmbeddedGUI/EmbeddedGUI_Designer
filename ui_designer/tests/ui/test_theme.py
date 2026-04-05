@@ -298,9 +298,11 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in context
         assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
-        assert f"spacing: {t['space_xs']}px;" in toolbar
+        assert "spacing: 2px;" in toolbar
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
+        assert "padding: 2px 6px;" in toolbar_button
+        assert "min-height: 24px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
