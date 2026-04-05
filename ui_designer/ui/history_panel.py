@@ -3,7 +3,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QLabel, QListWidget, QListWidgetItem, QVBoxLayout, QWidget, QHBoxLayout
 
-from .iconography import make_icon
 from .theme import theme_tokens
 
 
@@ -11,8 +10,7 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
-_ICON_SM = int(_TOKENS.get("icon_sm", 16))
-_ICON_LG = int(_TOKENS.get("icon_lg", 20))
+
 
 
 class HistoryPanel(QWidget):
@@ -42,10 +40,6 @@ class HistoryPanel(QWidget):
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
         top_row.setSpacing(_SPACE_SM)
-
-        self._page_icon = QLabel()
-        self._page_icon.setPixmap(make_icon("state.info", size=_ICON_LG).pixmap(_ICON_LG, _ICON_LG))
-        top_row.addWidget(self._page_icon, 0, Qt.AlignTop)
 
         self._page_value = QLabel("")
         self._page_value.setObjectName("workspace_section_title")
@@ -206,12 +200,6 @@ class HistoryPanel(QWidget):
             marker_prefix = f"[{'/'.join(markers)}] " if markers else ""
             label = entry.get("label") or "State capture"
             item = QListWidgetItem(f"{marker_prefix}{entry.get('index', 0) + 1}. {label}")
-            icon_key = "history"
-            if entry.get("is_current"):
-                icon_key = "navigation"
-            elif entry.get("is_saved"):
-                icon_key = "save"
-            item.setIcon(make_icon(icon_key, size=_ICON_SM))
             marker_summary = ". ".join(markers) + ". " if markers else ""
             item_tooltip = f"History entry {entry.get('index', 0) + 1}. {marker_summary}{label}"
             item.setToolTip(item_tooltip)
