@@ -960,6 +960,7 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     )
     assert dialog._eyebrow_label.isHidden()
     assert dialog._subtitle_label.isHidden()
+    assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
     assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()

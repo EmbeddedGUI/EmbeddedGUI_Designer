@@ -1525,13 +1525,15 @@ class ReleaseHistoryDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("release_history_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._result_metric_value = self._create_metric_card(metrics_layout, "Visible")
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
         self._preview_metric_value = self._create_metric_card(metrics_layout, "Preview")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         root_layout.addWidget(self._header_frame)
 
         controls_layout = QHBoxLayout()
@@ -2006,6 +2008,7 @@ class ReleaseHistoryDialog(QDialog):
                 accessible_name="Close release history dialog",
             )
 
+        self._metrics_frame.hide()
         self._load_history_entries(history_entries)
         self._restore_view_state()
         self._update_history_file_button()
