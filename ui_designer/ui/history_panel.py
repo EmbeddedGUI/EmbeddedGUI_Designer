@@ -24,13 +24,13 @@ class HistoryPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_XS)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("history_panel_header")
         self._header_frame.setProperty("panelTone", "history")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        header_layout.setContentsMargins(6, _SPACE_XS, 6, _SPACE_XS)
         header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Undo Timeline")
@@ -40,7 +40,7 @@ class HistoryPanel(QWidget):
 
         top_row = QHBoxLayout()
         top_row.setContentsMargins(0, 0, 0, 0)
-        top_row.setSpacing(_SPACE_XS)
+        top_row.setSpacing(2)
 
         self._page_value = QLabel("")
         self._page_value.setObjectName("workspace_section_title")

@@ -31,12 +31,18 @@ class TestHistoryPanel:
         from ui_designer.ui.history_panel import HistoryPanel
 
         panel = HistoryPanel()
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
+        top_row = header_layout.itemAt(1).layout()
 
         assert panel.accessibleName() == (
             "History panel: Page -. 0 entries. Current entry none. Undo no. Redo no. Dirty no. Source Saved state."
         )
         assert panel.toolTip() == panel.accessibleName()
         assert panel.statusTip() == panel.toolTip()
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 4, 6, 4)
+        assert top_row.spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Undo timeline workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == (
