@@ -2566,23 +2566,29 @@ class TestWidgetTreePanel:
         assert panel.add_btn.toolTip() == "Open the Components panel to insert a component into root_group (group)."
         assert panel.add_btn.statusTip() == panel.add_btn.toolTip()
         assert panel.add_btn.accessibleName() == "Insert component target: root_group (group)"
+        assert panel.add_btn.icon().isNull()
         assert panel.rename_btn.toolTip() == "Rename the current selection (F2)\nUnavailable: select at least 1 widget."
         assert panel.rename_btn.statusTip() == panel.rename_btn.toolTip()
         assert panel.rename_btn.accessibleName() == "Rename selected widget unavailable"
+        assert panel.rename_btn.icon().isNull()
         assert panel.del_btn.toolTip() == "Delete the current selection (Del)\nUnavailable: select at least 1 widget."
         assert panel.del_btn.statusTip() == panel.del_btn.toolTip()
         assert panel.del_btn.accessibleName() == "Delete selected widget unavailable"
+        assert panel.del_btn.icon().isNull()
         assert panel.expand_btn.toolTip() == "Expand all widgets in the tree."
         assert panel.expand_btn.statusTip() == panel.expand_btn.toolTip()
         assert panel.expand_btn.accessibleName() == "Expand all widget tree items"
+        assert panel.expand_btn.icon().isNull()
         assert panel.collapse_btn.toolTip() == "Collapse all widgets in the tree."
         assert panel.collapse_btn.statusTip() == panel.collapse_btn.toolTip()
         assert panel.collapse_btn.accessibleName() == "Collapse all widget tree items"
+        assert panel.collapse_btn.icon().isNull()
         assert panel.structure_actions_btn.toolTip() == (
             "Open structure actions for grouping, moving, history, and tree visibility."
         )
         assert panel.structure_actions_btn.statusTip() == panel.structure_actions_btn.toolTip()
         assert panel.structure_actions_btn.accessibleName() == "Open structure actions"
+        assert panel.structure_actions_btn.icon().isNull()
         assert panel.tree.columnCount() == 1
         assert panel.tree.headerItem().text(0) == "Structure"
         assert [action.text() for action in panel.structure_actions_btn.menu().actions() if action.text()] == [
@@ -2643,6 +2649,14 @@ class TestWidgetTreePanel:
         assert panel.rename_btn.accessibleName() == "Rename selected widget: field_button"
         assert panel.del_btn.toolTip() == "Delete field_button (Del)."
         assert panel.del_btn.accessibleName() == "Delete selected widget: field_button"
+        assert panel.group_btn.icon().isNull()
+        assert panel.ungroup_btn.icon().isNull()
+        assert panel.into_btn.icon().isNull()
+        assert panel.lift_btn.icon().isNull()
+        assert panel.up_btn.icon().isNull()
+        assert panel.down_btn.icon().isNull()
+        assert panel.top_btn.icon().isNull()
+        assert panel.bottom_btn.icon().isNull()
         assert panel.filter_position_label.accessibleName() == "Widget filter position: 2/2"
         assert panel.filter_prev_btn.accessibleName() == "Previous widget filter match: 2 matches. Current position 2/2."
         assert panel.filter_next_btn.accessibleName() == "Next widget filter match: 2 matches. Current position 2/2."
