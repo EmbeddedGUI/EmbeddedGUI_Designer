@@ -16,7 +16,6 @@ from PyQt5.QtWidgets import (
 )
 
 from ..model.page_fields import COMMON_PAGE_FIELD_TYPES, normalize_page_fields, suggest_page_field_name, validate_page_fields
-from .iconography import make_icon
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -66,7 +65,7 @@ class PageFieldsPanel(QWidget):
         header_layout.setContentsMargins(12, 12, 12, 12)
         header_layout.setSpacing(8)
 
-        self._eyebrow_label = QLabel("Generated Members")
+        self._eyebrow_label = QLabel("Fields")
         self._eyebrow_label.setObjectName("page_fields_eyebrow")
         header_layout.addWidget(self._eyebrow_label)
 
@@ -75,7 +74,7 @@ class PageFieldsPanel(QWidget):
         header_layout.addWidget(self._summary_label)
 
         self._header_meta_label = QLabel(
-            "Page fields become generated struct members and raw C defaults applied during page setup."
+            "Page fields are generated members for the current page."
         )
         self._header_meta_label.setObjectName("page_fields_meta")
         self._header_meta_label.setWordWrap(True)
@@ -105,12 +104,12 @@ class PageFieldsPanel(QWidget):
         code_frame_layout.addWidget(self._code_label)
 
         self._hint_label = QLabel(
-            "Page fields become generated struct members. Default is treated as a raw C expression and is applied on page open."
+            "Defaults are raw C expressions applied when the page opens."
         )
         self._hint_label.setObjectName("workspace_section_subtitle")
         self._hint_label.setWordWrap(True)
 
-        self._code_hint_label = QLabel("Page lifecycle hooks live in {page}.c. Open a section to edit page-level setup and teardown logic.")
+        self._code_hint_label = QLabel("Lifecycle hooks are in {page}.c. Open a section to edit setup and teardown.")
         self._code_hint_label.setObjectName("workspace_section_subtitle")
         self._code_hint_label.setWordWrap(True)
         _set_widget_metadata(
@@ -124,11 +123,8 @@ class PageFieldsPanel(QWidget):
         code_buttons.setContentsMargins(0, 0, 0, 0)
         code_buttons.setSpacing(6)
         self._open_on_open_button = QPushButton("Open on_open")
-        self._open_on_open_button.setIcon(make_icon("nav.page"))
         self._open_on_close_button = QPushButton("Open on_close")
-        self._open_on_close_button.setIcon(make_icon("page"))
         self._open_init_button = QPushButton("Open init")
-        self._open_init_button.setIcon(make_icon("page"))
         self._open_on_open_button.clicked.connect(lambda: self._request_section("on_open"))
         self._open_on_close_button.clicked.connect(lambda: self._request_section("on_close"))
         self._open_init_button.clicked.connect(lambda: self._request_section("init"))
@@ -175,9 +171,7 @@ class PageFieldsPanel(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(6)
         self._add_button = QPushButton("Add Field")
-        self._add_button.setIcon(make_icon("toolbar.new"))
         self._remove_button = QPushButton("Remove Field")
-        self._remove_button.setIcon(make_icon("toolbar.delete"))
         self._add_button.clicked.connect(self._on_add_field)
         self._remove_button.clicked.connect(self._on_remove_field)
         buttons.addWidget(self._add_button)
