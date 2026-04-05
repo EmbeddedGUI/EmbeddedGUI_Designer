@@ -121,6 +121,7 @@ class TestWidgetTreePanel:
         assert panel._selection_summary_chip.accessibleName() == "Selection summary: no selection."
         assert panel._filter_summary_chip.text() == "All widgets"
         assert panel._filter_summary_chip.accessibleName() == "Filter summary: All widgets."
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == "Structure metrics: 2 widgets. Filter status: All widgets."
 
         panel.set_selected_widgets([leaf], primary=leaf)
@@ -138,6 +139,7 @@ class TestWidgetTreePanel:
         assert panel._selection_summary_chip.accessibleName() == "Selection summary: 1 selected - leaf."
         assert panel._filter_summary_chip.text() == "1 match"
         assert panel._filter_summary_chip.accessibleName() == "Filter summary: 1 match."
+        assert panel._metrics_frame.isHidden() is True
         assert panel._metrics_frame.accessibleName() == (
             "Structure metrics: 2 widgets. Filter status: 1 match. Match position: 1/1."
         )

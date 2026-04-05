@@ -242,6 +242,7 @@ class WidgetTreePanel(QWidget):
         metrics_layout.addWidget(self._filter_summary_chip)
         metrics_layout.addStretch()
         header_layout.addWidget(self._metrics_frame)
+        self._metrics_frame.hide()
 
         self.add_btn = QPushButton("Insert")
         self.add_btn.setToolTip("Open the widget browser for the current insert target.")
