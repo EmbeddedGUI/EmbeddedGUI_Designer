@@ -1118,6 +1118,11 @@ class TestResourcePanelFileFlow:
         assert dialog._selected_metric_value._resource_dialog_metric_label.accessibleName() == "Selection metric label."
         assert dialog._selected_metric_value._resource_dialog_metric_card.accessibleName() == "Selection metric: 1 replacement."
         assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
+        assert dialog._caption.isHidden()
+        assert dialog._caption.accessibleName() == (
+            "Replace missing resources help: Choose replacement files for missing resources. "
+            "The selected file names become the new project resource names."
+        )
         assert dialog._table.accessibleName() == "Missing resource replacement table: 2 rows. 1 replacement selected."
         assert first_combo.toolTip() == "Choose replacement file for missing.png. Current selection: missing.png."
         assert second_combo.toolTip() == "Choose replacement file for icon.png. Current selection: (Skip)."

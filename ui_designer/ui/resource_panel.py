@@ -595,6 +595,7 @@ class _MissingResourceReplaceDialog(QDialog):
         self._caption.setObjectName("resource_dialog_summary")
         self._caption.setWordWrap(True)
         content_layout.addWidget(self._caption)
+        self._caption.hide()
 
         self._table = QTableWidget(len(self._missing_names), 2, self)
         _prepare_dialog_table(self._table)
