@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QButtonGroup, QFrame, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QHBoxLayout, QWidget
 
-from .iconography import make_icon
 from .theme import theme_tokens
 
 
@@ -14,7 +12,6 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
-_ICON_SM = int(_TOKENS.get("icon_sm", 16))
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -31,15 +28,6 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         if current_accessible_name is None or str(current_accessible_name) != resolved_accessible_name:
             widget.setAccessibleName(resolved_accessible_name)
             widget.setProperty("_workspace_metadata_accessible_snapshot", resolved_accessible_name)
-
-
-def _set_widget_visible(widget, visible):
-    value = bool(visible)
-    current_value = widget.property("_workspace_visible_snapshot")
-    if current_value is not None and bool(current_value) == value:
-        return
-    widget.setVisible(value)
-    widget.setProperty("_workspace_visible_snapshot", value)
 
 
 class ProjectWorkspacePanel(QWidget):
@@ -74,62 +62,51 @@ class ProjectWorkspacePanel(QWidget):
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
         self._header.setProperty("panelTone", "project")
-        header_layout = QVBoxLayout(self._header)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
+        header_layout = QHBoxLayout(self._header)
+        header_layout.setContentsMargins(_SPACE_MD, _SPACE_SM, _SPACE_MD, _SPACE_SM)
         header_layout.setSpacing(_SPACE_SM)
 
-        self._header_eyebrow = QLabel("Page Navigation")
+        self._header_eyebrow = QLabel("Pages", self._header)
         self._header_eyebrow.setObjectName("project_workspace_eyebrow")
-        header_layout.addWidget(self._header_eyebrow)
-
-        title_row = QHBoxLayout()
-        title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
+        self._header_eyebrow.hide()
 
         self._title_label = QLabel("Pages")
         self._title_label.setObjectName("workspace_section_title")
-        title_row.addWidget(self._title_label)
-        title_row.addStretch()
+        header_layout.addWidget(self._title_label, 1)
 
-        self._view_chip = QLabel("List view")
-        self._view_chip.setObjectName("workspace_status_chip")
-        self._view_chip.setProperty("chipTone", "accent")
-        title_row.addWidget(self._view_chip)
-
-        header_layout.addLayout(title_row)
-
-        self._subtitle_label = QLabel("Page navigation, startup flow, and visual scan.")
+        self._subtitle_label = QLabel("Page navigation, startup flow, and visual scan.", self._header)
         self._subtitle_label.setObjectName("workspace_section_subtitle")
-        self._subtitle_label.setWordWrap(True)
-        header_layout.addWidget(self._subtitle_label)
+        self._subtitle_label.hide()
 
-        self._metrics_frame = QFrame()
+        self._metrics_frame = QFrame(self._header)
         self._metrics_frame.setObjectName("project_workspace_metrics_strip")
+        self._metrics_frame.hide()
         metrics_layout = QHBoxLayout(self._metrics_frame)
-        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + 2, _SPACE_SM, _SPACE_XS + 2)
+        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
         metrics_layout.setSpacing(_SPACE_XS)
 
-        self._page_count_chip = QLabel("0 pages")
+        self._view_chip = QLabel("List view", self._metrics_frame)
+        self._view_chip.setObjectName("workspace_status_chip")
+        self._view_chip.hide()
+        metrics_layout.addWidget(self._view_chip)
+
+        self._page_count_chip = QLabel("0 pages", self._metrics_frame)
         self._page_count_chip.setObjectName("workspace_status_chip")
-        self._page_count_chip.setProperty("chipTone", "accent")
+        self._page_count_chip.hide()
         metrics_layout.addWidget(self._page_count_chip)
 
-        self._dirty_chip = QLabel("Clean")
+        self._dirty_chip = QLabel("Clean", self._metrics_frame)
         self._dirty_chip.setObjectName("workspace_status_chip")
-        self._dirty_chip.setProperty("chipTone", "success")
+        self._dirty_chip.hide()
         metrics_layout.addWidget(self._dirty_chip)
-        metrics_layout.addStretch(1)
-        header_layout.addWidget(self._metrics_frame)
 
-        self._summary_label = QLabel("No pages loaded. Choose list or thumbnails to navigate.")
-        self._summary_label.setObjectName("project_workspace_summary")
-        self._summary_label.setWordWrap(True)
-        header_layout.addWidget(self._summary_label)
+        self._summary_label = QLabel("0 pages. Active: none. Clean.", self._header)
+        self._summary_label.setObjectName("workspace_section_subtitle")
+        self._summary_label.hide()
 
-        self._meta_label = QLabel("Startup: none")
+        self._meta_label = QLabel("Startup: none", self._header)
         self._meta_label.setObjectName("project_workspace_meta")
-        self._meta_label.setWordWrap(True)
-        header_layout.addWidget(self._meta_label)
+        self._meta_label.hide()
 
         toggle_row = QHBoxLayout()
         toggle_row.setContentsMargins(0, 0, 0, 0)
@@ -137,10 +114,17 @@ class ProjectWorkspacePanel(QWidget):
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
+        self._settings_btn = QPushButton("Settings")
+        self._settings_btn.setObjectName("project_workspace_view_button")
+        self._settings_btn.clicked.connect(self._toggle_project_settings)
+        _set_widget_metadata(
+            self._settings_btn,
+            tooltip="Show or hide low-frequency project settings.",
+            accessible_name="Project settings button",
+        )
         self._list_btn = QPushButton("List")
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
-        self._list_btn.setIcon(make_icon("nav.page_group", size=_ICON_SM))
         _set_widget_metadata(
             self._list_btn,
             tooltip="Show the page list for structure-first editing.",
@@ -149,7 +133,6 @@ class ProjectWorkspacePanel(QWidget):
         self._thumb_btn = QPushButton("Thumbnails")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
-        self._thumb_btn.setIcon(make_icon("nav.resource", size=_ICON_SM))
         _set_widget_metadata(
             self._thumb_btn,
             tooltip="Show page thumbnails for a visual scan.",
@@ -159,20 +142,11 @@ class ProjectWorkspacePanel(QWidget):
         self._button_group.addButton(self._thumb_btn)
         self._list_btn.clicked.connect(lambda: self.set_view(self.VIEW_LIST))
         self._thumb_btn.clicked.connect(lambda: self.set_view(self.VIEW_THUMBNAILS))
-        self._list_btn.setIcon(QIcon())
-        self._thumb_btn.setIcon(QIcon())
+        toggle_row.addWidget(self._settings_btn)
         toggle_row.addWidget(self._list_btn)
         toggle_row.addWidget(self._thumb_btn)
-        toggle_row.addStretch()
         header_layout.addLayout(toggle_row)
         layout.addWidget(self._header)
-
-        self._header_eyebrow.hide()
-        self._view_chip.hide()
-        self._subtitle_label.hide()
-        self._metrics_frame.hide()
-        self._summary_label.hide()
-        self._meta_label.hide()
 
         self._stack = QStackedWidget()
         self._stack.addWidget(self._list_view)
@@ -182,27 +156,24 @@ class ProjectWorkspacePanel(QWidget):
         self.set_view(self.VIEW_LIST)
         self.set_workspace_snapshot()
 
-    def _set_chip(self, chip, text, tone=None, accessible_name=None):
-        chip.setText(str(text or ""))
-        metadata_text = str(accessible_name or text or "")
-        _set_widget_metadata(chip, tooltip=metadata_text, accessible_name=metadata_text)
-        if tone is not None:
-            chip.setProperty("chipTone", str(tone or "accent"))
-        chip.style().unpolish(chip)
-        chip.style().polish(chip)
-        chip.update()
-
     def _update_panel_metadata(self):
-        view_label = self._view_chip.text() or "List view"
+        view_label = "Thumbnails" if self._current_view_name == self.VIEW_THUMBNAILS else "List view"
         page_label = f"{self._current_page_count} page" if self._current_page_count == 1 else f"{self._current_page_count} pages"
         active_text = self._current_active_page or "none"
         startup_text = self._current_startup_page or "none"
         dirty_count = int(self._current_dirty_pages or 0)
         dirty_text = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
+        summary_dirty_text = "Clean" if dirty_count == 0 else dirty_text
         summary = (
             f"Project workspace: {view_label}. "
             f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
         )
+        self._view_chip.setText(view_label)
+        self._page_count_chip.setText(page_label)
+        self._dirty_chip.setText("Clean" if dirty_count == 0 else dirty_text)
+        self._summary_label.setText(f"{page_label}. Active: {active_text}. {summary_dirty_text}.")
+        self._meta_label.setText(f"Startup: {startup_text}")
+
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header,
@@ -210,14 +181,14 @@ class ProjectWorkspacePanel(QWidget):
             accessible_name=f"Project workspace header. {summary}",
         )
         _set_widget_metadata(
-            self._header_eyebrow,
-            tooltip="Project navigation workspace surface.",
-            accessible_name="Project navigation workspace surface.",
-        )
-        _set_widget_metadata(
             self._title_label,
             tooltip=summary,
             accessible_name=f"Project Workspace. {view_label}.",
+        )
+        _set_widget_metadata(
+            self._header_eyebrow,
+            tooltip="Project navigation workspace surface.",
+            accessible_name="Project navigation workspace surface.",
         )
         _set_widget_metadata(
             self._subtitle_label,
@@ -225,9 +196,9 @@ class ProjectWorkspacePanel(QWidget):
             accessible_name=self._subtitle_label.text(),
         )
         _set_widget_metadata(
-            self._metrics_frame,
-            tooltip=f"Project workspace metrics: {page_label}. {dirty_text}.",
-            accessible_name=f"Project workspace metrics: {page_label}. {dirty_text}.",
+            self._view_chip,
+            tooltip=f"Workspace view: {view_label}.",
+            accessible_name=f"Workspace view: {view_label}.",
         )
         _set_widget_metadata(
             self._page_count_chip,
@@ -238,6 +209,21 @@ class ProjectWorkspacePanel(QWidget):
             self._dirty_chip,
             tooltip=f"Dirty state: {dirty_text}.",
             accessible_name=f"Dirty state: {dirty_text}.",
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Project workspace metrics: {page_label}. {dirty_text}.",
+            accessible_name=f"Project workspace metrics: {page_label}. {dirty_text}.",
+        )
+        _set_widget_metadata(
+            self._summary_label,
+            tooltip=f"Pages summary: {self._summary_label.text()}",
+            accessible_name=f"Pages summary: {self._summary_label.text()}",
+        )
+        _set_widget_metadata(
+            self._meta_label,
+            tooltip=f"Pages startup summary: {self._meta_label.text()}",
+            accessible_name=f"Pages startup summary: {self._meta_label.text()}",
         )
 
     def _update_view_button_metadata(self, current_view):
@@ -266,10 +252,22 @@ class ProjectWorkspacePanel(QWidget):
                 tooltip = f"Switch to {description}."
                 accessible_name = f"Workspace view button: {label}. {detail}. Available."
             _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
+        if hasattr(self, "_settings_btn"):
+            _set_widget_metadata(
+                self._settings_btn,
+                tooltip="Show or hide low-frequency project settings.",
+                accessible_name="Project settings button",
+            )
 
     def _update_stack_metadata(self, view_label):
         summary = f"Project workspace view stack: {view_label} visible."
         _set_widget_metadata(self._stack, tooltip=summary, accessible_name=summary)
+
+    def _toggle_project_settings(self):
+        if hasattr(self._list_view, "_settings_group"):
+            self.set_view(self.VIEW_LIST)
+            current_visible = bool(self._list_view._settings_group.isVisible())
+            self._list_view._settings_group.setVisible(not current_visible)
 
     def set_view(self, view_name):
         view_name = self.VIEW_THUMBNAILS if view_name == self.VIEW_THUMBNAILS else self.VIEW_LIST
@@ -281,13 +279,11 @@ class ProjectWorkspacePanel(QWidget):
         else:
             self._list_btn.setChecked(True)
             self._stack.setCurrentWidget(self._list_view)
+        self._current_view_name = view_name
         view_label = "Thumbnails" if view_name == self.VIEW_THUMBNAILS else "List view"
-        self._set_chip(self._view_chip, view_label, "accent", accessible_name=f"Workspace view: {view_label}.")
-        _set_widget_visible(self._view_chip, False)
         self._update_view_button_metadata(view_name)
         self._update_stack_metadata(view_label)
         self._update_panel_metadata()
-        self._current_view_name = view_name
         self.view_changed.emit(view_name)
 
     def current_view(self):
@@ -314,29 +310,5 @@ class ProjectWorkspacePanel(QWidget):
         self._current_active_page = normalized_active
         self._current_startup_page = normalized_startup
         self._current_dirty_pages = dirty
-        page_label = f"{pages} page" if pages == 1 else f"{pages} pages"
-        active_label = f"Active: {active}" if active != "None" else "Active: none"
-        dirty_label = "Clean" if dirty == 0 else (f"{dirty} dirty page" if dirty == 1 else f"{dirty} dirty pages")
-        dirty_accessible = "No dirty pages" if dirty == 0 else dirty_label
-        self._summary_label.setText(f"{page_label}. {active_label}. {dirty_label}.")
-        _set_widget_metadata(
-            self._summary_label,
-            tooltip=self._summary_label.text(),
-            accessible_name=f"Pages summary: {self._summary_label.text()}",
-        )
-        startup_label = f"Startup: {startup}" if startup != "None" else "Startup: none"
-        self._meta_label.setText(startup_label)
-        _set_widget_metadata(
-            self._meta_label,
-            tooltip=startup_label,
-            accessible_name=f"Pages startup summary: {startup_label}",
-        )
-        self._set_chip(self._page_count_chip, page_label, "accent", accessible_name=f"Page count: {page_label}.")
-        self._set_chip(
-            self._dirty_chip,
-            dirty_label,
-            "success" if dirty == 0 else "warning",
-            accessible_name=f"Dirty state: {dirty_accessible}.",
-        )
         self._workspace_snapshot_initialized = True
         self._update_panel_metadata()

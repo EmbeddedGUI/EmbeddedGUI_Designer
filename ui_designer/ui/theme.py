@@ -701,13 +701,13 @@ QGroupBox#inspector_collapsible_group::title {{
 #workspace_bottom_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #workspace_command_bar {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #workspace_command_header,
@@ -804,7 +804,7 @@ QGroupBox#inspector_collapsible_group::title {{
 QPushButton#project_workspace_view_button {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: 4px 10px;
@@ -831,7 +831,7 @@ QPushButton#project_workspace_view_button:checked {{
 #workspace_left_shell {{
     background-color: {t['sidebar_bg']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #workspace_nav_rail {{
@@ -844,7 +844,7 @@ QPushButton#project_workspace_view_button:checked {{
 #workspace_mode_switch {{
     background-color: transparent;
     border: none;
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #workspace_indicator_strip {{
@@ -916,7 +916,7 @@ QPushButton#workspace_mode_button:checked {{
 #editor_tabs_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #editor_tabs_eyebrow {{
@@ -934,7 +934,7 @@ QPushButton#workspace_mode_button:checked {{
 #editor_tabs_mode_strip {{
     background-color: {t['panel_soft']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #editor_tabs_shell,
@@ -942,14 +942,14 @@ QPushButton#workspace_mode_button:checked {{
 #editor_tabs_preview_surface {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 QPlainTextEdit#editor_tabs_xml_editor {{
     background-color: {t['canvas_stage']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     selection-background-color: {t['selection']};
 }}
 
@@ -1193,7 +1193,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #resource_panel_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #resource_panel_eyebrow {{
@@ -1218,7 +1218,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #resource_panel_card {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #resource_panel_metric_card {{
@@ -1245,7 +1245,7 @@ QListWidget#resource_panel_image_list,
 QTableWidget#resource_panel_table {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     gridline-color: {t['border']};
 }}
 
@@ -1268,7 +1268,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 #resource_panel_preview {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #project_dock_shell {{
@@ -1278,7 +1278,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 #project_dock_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #project_dock_eyebrow {{
@@ -1303,7 +1303,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 QGroupBox#project_dock_settings_group {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 QGroupBox#project_dock_settings_group {{
@@ -1342,7 +1342,7 @@ QGroupBox#project_dock_settings_group::title {{
 QTreeWidget#project_dock_tree {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #workspace_panel_header[panelTone="structure"] {{
@@ -2481,7 +2481,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #preview_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #preview_eyebrow {{
@@ -2510,14 +2510,14 @@ QPushButton#widget_browser_insert_button:pressed {{
 #preview_content {{
     background-color: {t['canvas_bg']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #preview_stage_shell,
 #preview_overlay_shell {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 QScrollArea#preview_overlay_scroll {{
@@ -2528,7 +2528,7 @@ QScrollArea#preview_overlay_scroll {{
 QWidget#preview_overlay_surface[solidBackground="true"] {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 QWidget#preview_overlay_surface[solidBackground="false"] {{
@@ -2539,7 +2539,7 @@ QWidget#preview_overlay_surface[solidBackground="false"] {{
 #preview_stage_frame {{
     background-color: {t['canvas_stage']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 QSplitter#preview_splitter::handle {{
@@ -2550,7 +2550,7 @@ QSplitter#preview_splitter::handle {{
 #preview_status_shell {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #preview_status_value {{
@@ -2561,7 +2561,7 @@ QSplitter#preview_splitter::handle {{
 QPushButton#preview_status_button {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     padding: 0;
 }}
 

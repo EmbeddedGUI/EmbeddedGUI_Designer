@@ -357,65 +357,45 @@ class MainWindow(QMainWindow):
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QVBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        self._toolbar_host_layout.setSpacing(_SPACE_XS)
+        self._toolbar_host_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
+        self._toolbar_host_layout.setSpacing(0)
 
-        self._toolbar_header = QWidget()
+        self._toolbar_header = QFrame(self)
         self._toolbar_header.setObjectName("workspace_command_header")
-        toolbar_header_layout = QHBoxLayout(self._toolbar_header)
-        toolbar_header_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_header_layout.setSpacing(_SPACE_MD)
-
-        toolbar_heading = QWidget()
-        toolbar_heading.setObjectName("workspace_command_heading")
-        toolbar_heading_layout = QVBoxLayout(toolbar_heading)
-        toolbar_heading_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_heading_layout.setSpacing(_SPACE_XS)
-
-        self._toolbar_eyebrow_label = QLabel("Workspace")
+        self._toolbar_header.hide()
+        self._toolbar_eyebrow_label = QLabel("Workspace", self._toolbar_header)
         self._toolbar_eyebrow_label.setObjectName("workspace_command_eyebrow")
-        toolbar_heading_layout.addWidget(self._toolbar_eyebrow_label)
-
-        self._toolbar_title_label = QLabel("Commands")
+        self._toolbar_eyebrow_label.hide()
+        self._toolbar_title_label = QLabel("Command Surface", self._toolbar_header)
         self._toolbar_title_label.setObjectName("workspace_command_title")
-        toolbar_heading_layout.addWidget(self._toolbar_title_label)
-
-        self._toolbar_meta_label = QLabel(
-            "Open a project to enable insert, save, preview, and mode controls."
-        )
+        self._toolbar_title_label.hide()
+        self._toolbar_meta_label = QLabel("", self._toolbar_header)
         self._toolbar_meta_label.setObjectName("workspace_command_meta")
-        self._toolbar_meta_label.setWordWrap(True)
-        toolbar_heading_layout.addWidget(self._toolbar_meta_label)
+        self._toolbar_meta_label.hide()
 
-        toolbar_header_layout.addWidget(toolbar_heading, 1)
-
-        self._workspace_context_card = QFrame()
+        self._workspace_context_card = QFrame(self)
         self._workspace_context_card.setObjectName("workspace_context_card")
-        self._workspace_context_card.setMinimumWidth(240)
-        context_card_layout = QVBoxLayout(self._workspace_context_card)
-        context_card_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
-        context_card_layout.setSpacing(_SPACE_XS - _SPACE_XXS)
-
-        self._workspace_context_eyebrow = QLabel("Current Context")
+        self._workspace_context_card.hide()
+        self._workspace_context_eyebrow = QLabel("Context", self._workspace_context_card)
         self._workspace_context_eyebrow.setObjectName("workspace_command_context_eyebrow")
-        context_card_layout.addWidget(self._workspace_context_eyebrow)
-
-        self._workspace_context_label = QLabel("No project open")
+        self._workspace_context_eyebrow.hide()
+        self._workspace_context_label = QLabel("No project open", self._workspace_context_card)
         self._workspace_context_label.setObjectName("workspace_command_context_value")
-        self._workspace_context_label.setMinimumWidth(180)
-        self._workspace_context_label.setWordWrap(True)
-        context_card_layout.addWidget(self._workspace_context_label)
+        self._workspace_context_label.hide()
 
-        toolbar_header_layout.addWidget(self._workspace_context_card, 0)
-        self._toolbar_host_layout.addWidget(self._toolbar_header)
+        self._workspace_health_chip = QToolButton(self)
+        self._workspace_health_chip.setObjectName("workspace_summary_indicator")
+        self._workspace_health_chip.hide()
+        self._runtime_chip = QToolButton(self)
+        self._runtime_chip.setObjectName("workspace_summary_indicator")
+        self._runtime_chip.hide()
 
         self._toolbar_command_row = QWidget()
         self._toolbar_command_row.setObjectName("workspace_command_body")
         self._toolbar_command_row_layout = QHBoxLayout(self._toolbar_command_row)
-        self._toolbar_command_row_layout.setContentsMargins(_SPACE_SM, _SPACE_SM - _SPACE_XXS, _SPACE_SM, _SPACE_SM - _SPACE_XXS)
+        self._toolbar_command_row_layout.setContentsMargins(0, 0, 0, 0)
         self._toolbar_command_row_layout.setSpacing(_SPACE_SM)
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
-        self._toolbar_header.hide()
         editor_layout.addWidget(self._toolbar_host)
 
         self.project_dock = ProjectExplorerDock(self)
@@ -477,6 +457,7 @@ class MainWindow(QMainWindow):
         self._project_workspace.setObjectName("project_workspace_panel")
         saved_workspace_state = self._config.workspace_state if isinstance(self._config.workspace_state, dict) else {}
         self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
+        self._project_workspace._view_chip.show()
 
         self._left_panel_stack = QStackedWidget()
         self._left_panel_stack.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
@@ -1710,32 +1691,10 @@ class MainWindow(QMainWindow):
         command_bar_summary = "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         if hasattr(self, "_toolbar_host"):
             self._set_metadata_summary(self._toolbar_host, command_bar_summary)
-        if hasattr(self, "_toolbar_header"):
-            self._set_metadata_summary(
-                self._toolbar_header,
-                "Workspace command header. Engineering summary, current context, and command posture.",
-            )
         toolbar_summary = "Main toolbar: insert, save, edit, and preview commands."
         if hasattr(self, "_toolbar"):
             self._set_metadata_summary(self._toolbar, toolbar_summary)
-        if hasattr(self, "_toolbar_eyebrow_label"):
-            self._set_metadata_summary(
-                self._toolbar_eyebrow_label,
-                "Engineering workspace command surface.",
-            )
-        if hasattr(self, "_toolbar_title_label"):
-            self._set_metadata_summary(
-                self._toolbar_title_label,
-                "Design command center for insert, save, preview, and mode controls.",
-            )
         self._update_workspace_command_surface_metadata()
-        if hasattr(self, "_workspace_context_label"):
-            current_text = str(self._workspace_context_label.text() or "No project open")
-            self._set_metadata_summary(
-                self._workspace_context_label,
-                f"Workspace context label. {current_text}.",
-                f"Workspace context label: {current_text}.",
-            )
         if hasattr(self, "_save_action"):
             has_project = getattr(self, "project", None) is not None
             self._save_action.setEnabled(has_project)
@@ -2152,8 +2111,6 @@ class MainWindow(QMainWindow):
         return True
 
     def _update_workspace_context_label(self, *, page_count=0):
-        if not hasattr(self, "_workspace_context_label"):
-            return
         if getattr(self, "project", None) is None:
             text = "No project open"
             tooltip = "Open or create a project to start editing."
@@ -2163,10 +2120,22 @@ class MainWindow(QMainWindow):
             text = f"{project_label} / {current_page}"
             page_label = f"{page_count} page" if page_count == 1 else f"{page_count} pages"
             tooltip = f"Current workspace context: {project_label}. Current page: {current_page}. Project contains {page_label}."
-        self._workspace_context_label.setText(text)
-        self._set_metadata_summary(self._workspace_context_label, tooltip, f"Workspace context: {text}.")
+        self._workspace_context_summary = {"text": text, "tooltip": tooltip}
+        if hasattr(self, "_workspace_context_label"):
+            self._workspace_context_label.setText(text)
+            self._set_metadata_summary(self._workspace_context_label, tooltip, text)
         if hasattr(self, "_workspace_context_card"):
-            self._set_metadata_summary(self._workspace_context_card, tooltip, f"Workspace context card: {text}.")
+            self._set_metadata_summary(
+                self._workspace_context_card,
+                tooltip,
+                f"Workspace context card: {text}.",
+            )
+        if hasattr(self, "_workspace_context_eyebrow"):
+            self._set_metadata_summary(
+                self._workspace_context_eyebrow,
+                "Current workspace context card.",
+                "Current workspace context card.",
+            )
         self._update_status_bar_summary()
 
     def _status_bar_hint_text(self, *, has_project, error_count, warning_count, selection_count):
@@ -2227,23 +2196,33 @@ class MainWindow(QMainWindow):
                 f"{current_mode} mode. {current_panel} panel. Current page: {current_page}. "
                 "Use commands to insert, save, build, and check runtime."
             )
+        if hasattr(self, "_toolbar_command_row"):
+            self._set_metadata_summary(
+                self._toolbar_command_row,
+                summary,
+                "Workspace command row.",
+            )
+        if hasattr(self, "_toolbar_header"):
+            self._set_metadata_summary(
+                self._toolbar_header,
+                "Workspace command header. Engineering summary, current context, and command posture.",
+                "Workspace command header. Engineering summary, current context, and command posture.",
+            )
+        if hasattr(self, "_toolbar_eyebrow_label"):
+            self._set_metadata_summary(
+                self._toolbar_eyebrow_label,
+                "Engineering workspace command surface.",
+                "Engineering workspace command surface.",
+            )
+        if hasattr(self, "_toolbar_title_label"):
+            self._set_metadata_summary(
+                self._toolbar_title_label,
+                "Design command center for insert, save, preview, and mode controls.",
+                "Design command center for insert, save, preview, and mode controls.",
+            )
         if hasattr(self, "_toolbar_meta_label"):
-            if self._toolbar_meta_label.text() != summary:
-                self._toolbar_meta_label.setText(summary)
-            self._set_metadata_summary(self._toolbar_meta_label, summary)
-        if hasattr(self, "_workspace_context_eyebrow"):
-            self._set_metadata_summary(
-                self._workspace_context_eyebrow,
-                "Current workspace context card.",
-            )
-        if hasattr(self, "_workspace_context_card") and hasattr(self, "_workspace_context_label"):
-            context_text = str(self._workspace_context_label.text() or "No project open")
-            context_tip = str(self._workspace_context_label.toolTip() or summary)
-            self._set_metadata_summary(
-                self._workspace_context_card,
-                context_tip,
-                f"Workspace context card: {context_text}.",
-            )
+            self._toolbar_meta_label.setText(summary)
+            self._set_metadata_summary(self._toolbar_meta_label, summary, summary)
 
     def _open_workspace_health_surface(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
@@ -4265,30 +4244,11 @@ class MainWindow(QMainWindow):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
-            button.setIcon(make_icon(icon_key))
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)
         self._toolbar_command_row_layout.addWidget(mode_host, 0)
         self._update_editor_mode_button_metadata(self.editor_tabs.mode)
-
-        chips_host = QWidget()
-        chips_host.setObjectName("workspace_indicator_strip")
-        chips_layout = QHBoxLayout(chips_host)
-        chips_layout.setContentsMargins(0, 0, 0, 0)
-        chips_layout.setSpacing(_SPACE_SM)
-        self._workspace_health_chip = QToolButton()
-        self._workspace_health_chip.setAutoRaise(True)
-        self._workspace_health_chip.setObjectName("workspace_summary_indicator")
-        self._workspace_health_chip.clicked.connect(lambda checked=False: self._open_workspace_health_surface())
-        self._runtime_chip = QToolButton()
-        self._runtime_chip.setAutoRaise(True)
-        self._runtime_chip.setObjectName("workspace_summary_indicator")
-        self._runtime_chip.clicked.connect(lambda checked=False: self._show_bottom_panel("Debug Output"))
-        self._runtime_chip.hide()
-        for chip in (self._workspace_health_chip, self._runtime_chip):
-            chips_layout.addWidget(chip)
-        self._toolbar_command_row_layout.addWidget(chips_host, 0)
 
         self._toolbar = tb
         self._update_compile_availability()

@@ -188,14 +188,14 @@ def test_editor_tabs_styles_use_engineering_shell_tokens():
         shell = css.split("#editor_tabs_shell,", 1)[1].split("}", 1)[0]
         editor = css.split("QPlainTextEdit#editor_tabs_xml_editor {", 1)[1].split("}", 1)[0]
 
-        assert f"border-radius: {t['r_xl']}px;" in header
+        assert "border-radius: 0px;" in header
         assert f"background-color: {t['panel_raised']};" in header
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in mode_strip
         assert f"background-color: {t['panel_raised']};" in shell
-        assert f"border-radius: {t['r_xl']}px;" in shell
+        assert "border-radius: 0px;" in shell
         assert f"background-color: {t['canvas_stage']};" in editor
-        assert f"border-radius: {t['r_md']}px;" in editor
+        assert f"border-radius: {t['r_sm']}px;" in editor
 
 
 def test_preview_panel_styles_use_engineering_surface_tokens():
@@ -211,10 +211,11 @@ def test_preview_panel_styles_use_engineering_surface_tokens():
         _assert_panel_surface(header, t)
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
-        assert f"border-radius: {t['r_xl']}px;" in header
+        assert "border-radius: 0px;" in header
         assert f"background-color: {t['canvas_bg']};" in content
         assert f"background-color: {t['canvas_stage']};" in overlay
-        assert f"border-radius: {t['r_md']}px;" in overlay
+        assert f"border-radius: {t['r_sm']}px;" in overlay
+        assert "border-radius: 0px;" in content
 
 
 def test_workspace_command_bar_styles_use_engineering_surface_tokens():
@@ -230,7 +231,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         mode_strip = css.split("#workspace_mode_switch {", 1)[1].split("}", 1)[0]
 
         assert f"background-color: {t['panel']};" in command_bar
-        assert f"border-radius: {t['r_md']}px;" in command_bar
+        assert "border-radius: 0px;" in command_bar
         assert "background-color: transparent;" in context
         assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
@@ -239,6 +240,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
+        assert "border-radius: 0px;" in mode_strip
 
 
 def test_property_panel_styles_use_engineering_surface_tokens():
@@ -268,12 +270,13 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         preview = css.split("#resource_panel_preview {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
-        assert f"border-radius: {t['r_md']}px;" in header
+        assert "border-radius: 0px;" in header
         assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in list_surface
         assert f"background-color: {t['panel_alt']};" in preview
-        assert f"border-radius: {t['r_md']}px;" in preview
+        assert "border-radius: 0px;" in preview
+        assert "border-radius: 0px;" in list_surface
 
 
 def test_resource_dialog_styles_use_engineering_surface_tokens():
@@ -327,13 +330,13 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         tree = css.split("QTreeWidget#project_dock_tree {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
-        assert f"border-radius: {t['r_md']}px;" in header
+        assert "border-radius: 0px;" in header
         assert f"background-color: {t['panel']};" in card
-        assert f"border-radius: {t['r_md']}px;" in card
+        assert "border-radius: 0px;" in card
         assert "background-color: transparent;" in metric_card
         assert f"border-radius: {t['r_md']}px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in tree
-        assert f"border-radius: {t['r_md']}px;" in tree
+        assert "border-radius: 0px;" in tree
 
 
 def test_app_selector_styles_use_engineering_surface_tokens():

@@ -88,6 +88,8 @@ class ProjectExplorerDock(QDockWidget):
         compact = bool(compact)
         if hasattr(self, "_header_frame"):
             self._header_frame.setVisible(not compact)
+        if hasattr(self, "_settings_group"):
+            self._settings_group.setVisible(not compact)
 
     def _init_ui(self):
         container = QWidget()

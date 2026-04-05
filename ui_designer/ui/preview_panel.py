@@ -1104,53 +1104,47 @@ class PreviewPanel(QWidget):
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self._main_layout.setSpacing(_SPACE_SM)
 
-        self._header_frame = QFrame()
+        self._header_frame = QFrame(self)
         self._header_frame.setObjectName("preview_header")
+        self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setSpacing(_SPACE_XS)
 
         self._eyebrow_label = QLabel("Preview")
         self._eyebrow_label.setObjectName("preview_eyebrow")
-        header_layout.addWidget(self._eyebrow_label)
         self._eyebrow_label.hide()
-
-        title_row = QHBoxLayout()
-        title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
-        self.status_label = QLabel("Preview - waiting for exe...")
-        self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_label.setObjectName("preview_title")
-        title_row.addWidget(self.status_label)
-        title_row.addStretch(1)
-        self._mode_chip = self._make_status_chip("Horizontal split", tone="accent")
-        title_row.addWidget(self._mode_chip)
-        self._mode_chip.hide()
-        header_layout.addLayout(title_row)
+        header_layout.addWidget(self._eyebrow_label)
 
         self._header_meta_label = QLabel(
-            "Compare renderer output and the editable overlay while tracking zoom, grid state, and pointer diagnostics."
+            "Preview layout, fallback state, and pointer details remain available in the bottom status row."
         )
-        self._header_meta_label.setObjectName("preview_meta")
+        self._header_meta_label.setObjectName("preview_header_meta")
         self._header_meta_label.setWordWrap(True)
-        header_layout.addWidget(self._header_meta_label)
         self._header_meta_label.hide()
+        header_layout.addWidget(self._header_meta_label)
 
-        self._metrics_frame = QFrame()
+        self._metrics_frame = QFrame(self)
         self._metrics_frame.setObjectName("preview_metrics_strip")
-        chip_row = QHBoxLayout(self._metrics_frame)
-        chip_row.setContentsMargins(_SPACE_SM + 2, _SPACE_XS, _SPACE_SM + 2, _SPACE_XS)
-        chip_row.setSpacing(_SPACE_XS)
-        self._grid_chip = self._make_status_chip("Grid on", tone="success")
-        self._pointer_chip = self._make_status_chip("Pointer idle")
-        chip_row.addWidget(self._grid_chip)
-        chip_row.addWidget(self._pointer_chip)
-        chip_row.addStretch(1)
-        header_layout.addWidget(self._metrics_frame)
-        self._grid_chip.hide()
-        self._pointer_chip.hide()
         self._metrics_frame.hide()
-        self._main_layout.addWidget(self._header_frame)
+        metrics_layout = QHBoxLayout(self._metrics_frame)
+        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        metrics_layout.setSpacing(_SPACE_XS)
+
+        self._mode_chip = QLabel("Horizontal split")
+        self._mode_chip.setObjectName("workspace_status_chip")
+        self._mode_chip.hide()
+        metrics_layout.addWidget(self._mode_chip)
+
+        self._grid_chip = QLabel("Grid on")
+        self._grid_chip.setObjectName("workspace_status_chip")
+        self._grid_chip.hide()
+        metrics_layout.addWidget(self._grid_chip)
+
+        self._pointer_chip = QLabel("Pointer idle")
+        self._pointer_chip.setObjectName("workspace_status_chip")
+        self._pointer_chip.hide()
+        metrics_layout.addWidget(self._pointer_chip)
 
         self._content = QFrame()
         self._content.setObjectName("preview_content")
@@ -1207,9 +1201,15 @@ class PreviewPanel(QWidget):
         sbl.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
         sbl.setSpacing(_SPACE_SM)
 
+        self.status_label = QLabel("Preview - waiting for exe...")
+        self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status_label.setObjectName("preview_status_value")
+        self.status_label.setMinimumWidth(220)
+        sbl.addWidget(self.status_label)
+
         self._status_label = QLabel("")
         self._status_label.setObjectName("preview_status_value")
-        self._status_label.setMinimumWidth(280)
+        self._status_label.setMinimumWidth(200)
         sbl.addWidget(self._status_label)
 
         sbl.addStretch()
@@ -1243,20 +1243,6 @@ class PreviewPanel(QWidget):
         self._apply_mode()
         self._update_zoom_label()
         self._update_accessibility_summary()
-
-    def _make_status_chip(self, text, tone=None):
-        chip = QLabel(str(text or ""))
-        chip.setObjectName("workspace_status_chip")
-        if tone:
-            chip.setProperty("chipTone", tone)
-        return chip
-
-    def _set_status_chip_state(self, chip, text, tone=None):
-        chip.setText(str(text or ""))
-        chip.setProperty("chipTone", tone if tone else None)
-        chip.style().unpolish(chip)
-        chip.style().polish(chip)
-        chip.update()
 
     def _clear_content_layout(self):
         """Remove all widgets from the content layout without deleting them."""
@@ -1417,30 +1403,15 @@ class PreviewPanel(QWidget):
         pointer_text = str(self._status_label.text() or "").strip() or "Pointer idle"
         grid_text = "on" if self.show_grid() else "off"
         mode_text = self._mode_summary()
+        pointer_chip_text = "Pointer idle" if pointer_text == "Pointer idle" else "Pointer active"
+        self._mode_chip.setText(mode_text)
+        self._grid_chip.setText(f"Grid {grid_text}")
+        self._pointer_chip.setText(pointer_chip_text)
         summary = (
             f"Preview panel: {status_text}. Mode: {mode_text}. "
             f"Zoom: {zoom_text}. Grid: {grid_text}. Pointer: {pointer_text}."
         )
         controls_summary = f"Preview controls: Zoom {zoom_text}. Pointer {pointer_text}."
-        self._set_status_chip_state(
-            self._mode_chip,
-            mode_text,
-            "accent" if self._mode != MODE_HIDDEN else "warning",
-        )
-        self._set_status_chip_state(
-            self._grid_chip,
-            f"Grid {grid_text}",
-            "success" if grid_text == "on" else "warning",
-        )
-        self._set_status_chip_state(
-            self._pointer_chip,
-            "Pointer active" if pointer_text != "Pointer idle" else "Pointer idle",
-            "accent" if pointer_text != "Pointer idle" else None,
-        )
-        self._header_meta_label.setText(
-            f"Mode: {mode_text}. Zoom: {zoom_text}. Grid: {grid_text}. Use the overlay surface to inspect selection and positioning feedback."
-        )
-        metrics_summary = f"Preview metrics: {mode_text}. Grid {grid_text}. Pointer status: {pointer_text}."
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header_frame,
@@ -1453,14 +1424,14 @@ class PreviewPanel(QWidget):
             accessible_name="Preview workspace.",
         )
         _set_widget_metadata(
-            self.status_label,
-            tooltip=status_text,
-            accessible_name=f"Preview status: {status_text}",
-        )
-        _set_widget_metadata(
             self._header_meta_label,
             tooltip=self._header_meta_label.text(),
             accessible_name=self._header_meta_label.text(),
+        )
+        _set_widget_metadata(
+            self._metrics_frame,
+            tooltip=f"Preview metrics: {mode_text}. Grid {grid_text}. Pointer status: {pointer_text}.",
+            accessible_name=f"Preview metrics: {mode_text}. Grid {grid_text}. Pointer status: {pointer_text}.",
         )
         _set_widget_metadata(
             self._mode_chip,
@@ -1478,9 +1449,9 @@ class PreviewPanel(QWidget):
             accessible_name=f"Preview pointer summary: {pointer_text}",
         )
         _set_widget_metadata(
-            self._metrics_frame,
-            tooltip=metrics_summary,
-            accessible_name=metrics_summary,
+            self.status_label,
+            tooltip=status_text,
+            accessible_name=f"Preview status: {status_text}",
         )
         _set_widget_metadata(
             self.preview_frame,
@@ -1552,7 +1523,7 @@ class PreviewPanel(QWidget):
     def _update_status_label(self, x, y, widget):
         """Update status bar with mouse position and widget info."""
         if x < 0 or y < 0:
-            self._status_label.setText("")
+            self._status_label.setText("Pointer idle")
             self._update_accessibility_summary()
             return
 

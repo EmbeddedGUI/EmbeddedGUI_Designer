@@ -1436,7 +1436,7 @@ class ResourcePanel(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        self._panel_header = QFrame()
+        self._panel_header = QFrame(self)
         self._panel_header.setObjectName("resource_panel_header")
         header_layout = QHBoxLayout(self._panel_header)
         header_layout.setContentsMargins(18, 16, 18, 16)
@@ -1491,7 +1491,7 @@ class ResourcePanel(QWidget):
         self._missing_metric_value = _create_resource_panel_metric_card(metrics_layout, "Missing")
         self._selection_metric_value = _create_resource_panel_metric_card(metrics_layout, "Selection")
         header_layout.addWidget(self._panel_metrics_frame, 2)
-        layout.addWidget(self._panel_header)
+        self._panel_header.hide()
 
         splitter = QSplitter(Qt.Vertical)
         splitter.setObjectName("resource_panel_splitter")
@@ -1508,6 +1508,7 @@ class ResourcePanel(QWidget):
         catalog_title = QLabel("Resource Catalog")
         catalog_title.setObjectName("workspace_section_title")
         top_layout.addWidget(catalog_title)
+        catalog_title.hide()
 
         self._catalog_hint = QLabel(
             "Choose a tab, then import, restore missing files, or replace missing files."
@@ -1741,42 +1742,36 @@ class ResourcePanel(QWidget):
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(8)
+        bottom_layout.setSpacing(0)
 
-        preview_card = QFrame()
-        preview_card.setObjectName("resource_panel_card")
-        preview_layout = QVBoxLayout(preview_card)
-        preview_layout.setContentsMargins(18, 18, 18, 18)
-        preview_layout.setSpacing(10)
+        self._details_tabs = TabWidget()
+        self._details_tabs.setObjectName("resource_panel_details_tabs")
+        bottom_layout.addWidget(self._details_tabs, 1)
 
-        preview_caption = QLabel("Preview Surface")
-        preview_caption.setObjectName("workspace_section_title")
-        preview_layout.addWidget(preview_caption)
+        preview_tab = QWidget()
+        preview_tab_layout = QVBoxLayout(preview_tab)
+        preview_tab_layout.setContentsMargins(12, 12, 12, 12)
+        preview_tab_layout.setSpacing(8)
 
-        self._preview_hint = QLabel("Preview the selected file before changing references.")
+        self._preview_hint = QLabel("Preview the selected asset.")
         self._preview_hint.setObjectName("workspace_section_subtitle")
-        self._preview_hint.setWordWrap(True)
-        preview_layout.addWidget(self._preview_hint)
+        self._preview_hint.hide()
+        preview_tab_layout.addWidget(self._preview_hint)
 
         self._preview = _PreviewWidget()
         self._preview.setObjectName("resource_panel_preview")
         self._preview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        preview_layout.addWidget(self._preview, 1)
-        bottom_layout.addWidget(preview_card, 1)
+        preview_tab_layout.addWidget(self._preview, 1)
+        self._details_tabs.addTab(preview_tab, "Preview")
 
-        usage_card = QFrame()
-        usage_card.setObjectName("resource_panel_card")
-        usage_layout = QVBoxLayout(usage_card)
-        usage_layout.setContentsMargins(18, 18, 18, 18)
-        usage_layout.setSpacing(10)
+        usage_tab = QWidget()
+        usage_layout = QVBoxLayout(usage_tab)
+        usage_layout.setContentsMargins(12, 12, 12, 12)
+        usage_layout.setSpacing(8)
 
-        usage_caption = QLabel("Reference Map")
-        usage_caption.setObjectName("workspace_section_title")
-        usage_layout.addWidget(usage_caption)
-
-        self._usage_hint = QLabel("List widgets that use the selected resource.")
+        self._usage_hint = QLabel("Review where the selected asset is used.")
         self._usage_hint.setObjectName("workspace_section_subtitle")
-        self._usage_hint.setWordWrap(True)
+        self._usage_hint.hide()
         usage_layout.addWidget(self._usage_hint)
 
         usage_filter_row = QHBoxLayout()
@@ -1807,7 +1802,7 @@ class ResourcePanel(QWidget):
         self._usage_table.itemDoubleClicked.connect(self._on_usage_item_activated)
         self._usage_table.itemSelectionChanged.connect(self._update_usage_accessibility_metadata)
         usage_layout.addWidget(self._usage_table, 1)
-        bottom_layout.addWidget(usage_card, 1)
+        self._details_tabs.addTab(usage_tab, "Usage")
 
         splitter.addWidget(bottom_widget)
 
@@ -1822,8 +1817,6 @@ class ResourcePanel(QWidget):
         self._panel_status.hide()
         self._panel_metrics_frame.hide()
         self._catalog_hint.hide()
-        self._preview_hint.hide()
-        self._usage_hint.hide()
         for metric_value in (
             self._catalog_metric_value,
             self._missing_metric_value,

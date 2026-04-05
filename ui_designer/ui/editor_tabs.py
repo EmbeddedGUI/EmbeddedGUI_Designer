@@ -91,49 +91,36 @@ class EditorTabs(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(_SPACE_SM)
 
-        self._header_frame = QFrame()
+        self._header_frame = QFrame(self)
         self._header_frame.setObjectName("editor_tabs_header")
+        self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_SM)
+        header_layout.setSpacing(_SPACE_XS)
 
-        self._eyebrow_label = QLabel("Editor Surface")
+        self._eyebrow_label = QLabel("Editor")
         self._eyebrow_label.setObjectName("editor_tabs_eyebrow")
-        _set_widget_metadata(
-            self._eyebrow_label,
-            tooltip="Editor engineering workspace surface.",
-            accessible_name="Editor engineering workspace surface.",
-        )
-        header_layout.addWidget(self._eyebrow_label)
         self._eyebrow_label.hide()
-
-        title_row = QHBoxLayout()
-        title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_SM)
-        self._title_label = QLabel("Design / Split / Code")
-        self._title_label.setObjectName("workspace_section_title")
-        title_row.addWidget(self._title_label)
-        title_row.addStretch(1)
-        self._mode_chip = QLabel("Design mode")
-        self._mode_chip.setObjectName("workspace_status_chip")
-        self._mode_chip.setProperty("chipTone", "accent")
-        title_row.addWidget(self._mode_chip)
-        self._mode_chip.hide()
-        header_layout.addLayout(title_row)
+        header_layout.addWidget(self._eyebrow_label)
 
         self._meta_label = QLabel(
             "Switch between visual layout, split inspection, and raw XML editing without losing page context."
         )
         self._meta_label.setObjectName("editor_tabs_meta")
         self._meta_label.setWordWrap(True)
-        header_layout.addWidget(self._meta_label)
         self._meta_label.hide()
+        header_layout.addWidget(self._meta_label)
 
         self._summary_label = QLabel("XML source is empty.")
         self._summary_label.setObjectName("editor_tabs_summary")
         self._summary_label.setWordWrap(True)
-        header_layout.addWidget(self._summary_label)
         self._summary_label.hide()
+        header_layout.addWidget(self._summary_label)
+
+        self._mode_chip = QLabel("Design")
+        self._mode_chip.setObjectName("workspace_status_chip")
+        self._mode_chip.hide()
+        header_layout.addWidget(self._mode_chip)
 
         self._btn_group = None
         if self._show_mode_switch:
@@ -156,9 +143,7 @@ class EditorTabs(QWidget):
                 toolbar_layout.addWidget(button)
                 button.clicked.connect(lambda checked, m=mode: self.set_mode(m))
             toolbar_layout.addStretch(1)
-            header_layout.addWidget(self._mode_toolbar)
-
-        layout.addWidget(self._header_frame)
+            layout.addWidget(self._mode_toolbar)
 
         self._stack_shell = QFrame()
         self._stack_shell.setObjectName("editor_tabs_shell")
@@ -242,19 +227,6 @@ class EditorTabs(QWidget):
                 accessible_name = f"Editor mode button: {label}."
             _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
 
-    def _update_mode_chip(self):
-        label = self._mode_label()
-        tone = {
-            MODE_DESIGN: "accent",
-            MODE_SPLIT: "success",
-            MODE_CODE: "warning",
-        }.get(self._mode, "accent")
-        self._mode_chip.setText(f"{label} mode")
-        self._mode_chip.setProperty("chipTone", tone)
-        self._mode_chip.style().unpolish(self._mode_chip)
-        self._mode_chip.style().polish(self._mode_chip)
-        self._mode_chip.update()
-
     def _update_accessibility_metadata(self):
         mode_label = self._mode_label()
         xml_summary = self._xml_source_summary()
@@ -264,7 +236,7 @@ class EditorTabs(QWidget):
         split_state = "visible" if self._mode == MODE_SPLIT else "hidden"
 
         self._summary_label.setText(xml_summary)
-        self._update_mode_chip()
+        self._mode_chip.setText(mode_label)
 
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
@@ -273,14 +245,9 @@ class EditorTabs(QWidget):
             accessible_name=f"Editor tabs header. {summary}",
         )
         _set_widget_metadata(
-            self._stack,
-            tooltip=f"Editor view stack. Current mode: {mode_label}.",
-            accessible_name=f"Editor view stack: {mode_label} mode.",
-        )
-        _set_widget_metadata(
-            self._title_label,
-            tooltip=summary,
-            accessible_name=f"Editor Surface. {mode_label} mode.",
+            self._eyebrow_label,
+            tooltip="Editor engineering workspace surface.",
+            accessible_name="Editor engineering workspace surface.",
         )
         _set_widget_metadata(
             self._meta_label,
@@ -294,8 +261,14 @@ class EditorTabs(QWidget):
         )
         _set_widget_metadata(
             self._mode_chip,
-            tooltip=f"Current editor mode: {mode_label}.",
+            tooltip=f"Current editor mode: {mode_label}",
             accessible_name=f"Current editor mode: {mode_label}",
+        )
+        _set_widget_metadata(self._stack_shell, tooltip=summary, accessible_name=summary)
+        _set_widget_metadata(
+            self._stack,
+            tooltip=f"Editor view stack. Current mode: {mode_label}.",
+            accessible_name=f"Editor view stack: {mode_label} mode.",
         )
         _set_widget_metadata(
             self._design_container,

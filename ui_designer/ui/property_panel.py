@@ -350,44 +350,37 @@ class PropertyPanel(QWidget):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
         outer.setContentsMargins(10, 10, 10, 10)
-        outer.setSpacing(10)
+        outer.setSpacing(8)
 
-        self._overview_frame = QFrame()
-        self._overview_frame.setObjectName("property_panel_overview")
-        overview_layout = QVBoxLayout(self._overview_frame)
-        overview_layout.setContentsMargins(12, 12, 12, 12)
-        overview_layout.setSpacing(8)
+        self._context_frame = QWidget()
+        self._context_frame.setObjectName("property_panel_context")
+        context_layout = QVBoxLayout(self._context_frame)
+        context_layout.setContentsMargins(0, 0, 0, 0)
+        context_layout.setSpacing(4)
 
-        self._overview_eyebrow = QLabel("Workspace Inspector")
+        self._overview_eyebrow = QLabel("Inspector")
         self._overview_eyebrow.setObjectName("property_panel_eyebrow")
-        overview_layout.addWidget(self._overview_eyebrow)
+        self._overview_eyebrow.hide()
+        context_layout.addWidget(self._overview_eyebrow)
 
-        self._overview_title = QLabel("Property Inspector")
-        self._overview_title.setObjectName("property_panel_title")
-        overview_layout.addWidget(self._overview_title)
+        self._context_title = QLabel("No selection")
+        self._context_title.setObjectName("workspace_section_title")
+        context_layout.addWidget(self._context_title)
 
-        self._overview_meta = QLabel("Select a widget to inspect geometry, behavior, resources, and callback wiring.")
-        self._overview_meta.setObjectName("property_panel_meta")
-        self._overview_meta.setWordWrap(True)
-        overview_layout.addWidget(self._overview_meta)
-
-        self._overview_chip_row = QHBoxLayout()
-        self._overview_chip_row.setContentsMargins(0, 0, 0, 0)
-        self._overview_chip_row.setSpacing(6)
-        overview_layout.addLayout(self._overview_chip_row)
+        self._context_meta = QLabel("Select a widget to inspect geometry, behavior, resources, and callback wiring.")
+        self._context_meta.setObjectName("workspace_section_subtitle")
+        self._context_meta.setWordWrap(True)
+        context_layout.addWidget(self._context_meta)
+        outer.addWidget(self._context_frame)
 
         self._search_shell = QFrame()
         self._search_shell.setObjectName("property_panel_search_shell")
         search_layout = QVBoxLayout(self._search_shell)
-        search_layout.setContentsMargins(10, 10, 10, 10)
+        search_layout.setContentsMargins(0, 0, 0, 0)
         search_layout.setSpacing(4)
 
-        search_label = QLabel("Filter Visible Fields")
-        search_label.setObjectName("property_panel_search_label")
-        search_layout.addWidget(search_label)
-
         self._search_hint = QLabel("Search labels, resource bindings, and callbacks for the current selection.")
-        self._search_hint.setObjectName("property_panel_search_hint")
+        self._search_hint.setObjectName("workspace_section_subtitle")
         self._search_hint.setWordWrap(True)
         search_layout.addWidget(self._search_hint)
 
@@ -396,11 +389,8 @@ class PropertyPanel(QWidget):
         self._search_edit.textChanged.connect(self._on_search_changed)
         self._search_edit.setVisible(False)
         search_layout.addWidget(self._search_edit)
-        self._overview_eyebrow.hide()
-        self._search_hint.hide()
         self._search_shell.setVisible(False)
-        overview_layout.addWidget(self._search_shell)
-        outer.addWidget(self._overview_frame)
+        outer.addWidget(self._search_shell)
 
         scroll = QScrollArea()
         scroll.setObjectName("property_panel_scroll")
@@ -491,14 +481,12 @@ class PropertyPanel(QWidget):
 
         if len(self._selection) == 1:
             widget = self._primary_widget
-            size_chip = getattr(self, "_header_size_chip", None)
-            if size_chip is not None:
-                size_chip.setText(f"{widget.width}×{widget.height}")
             for field in ("x", "y", "width", "height"):
                 self._update_numeric_editor_value(field, getattr(widget, field))
-            if size_chip is not None:
+            if self._header_size_chip is not None:
+                self._header_size_chip.setText(f"{widget.width}×{widget.height}")
                 _set_widget_metadata(
-                    size_chip,
+                    self._header_size_chip,
                     tooltip=f"Widget size: {widget.width} by {widget.height}.",
                     accessible_name=f"Widget size: {widget.width} by {widget.height}.",
                 )
@@ -693,39 +681,44 @@ class PropertyPanel(QWidget):
                 f"Current widget: {self._primary_widget.name} ({self._primary_widget.widget_type}). "
                 f"Search: {search_summary}."
             )
+        _set_widget_metadata(
+            self._context_title,
+            tooltip=self._context_title.text(),
+            accessible_name=self._context_title.text(),
+        )
+        _set_widget_metadata(
+            self._context_meta,
+            tooltip=self._context_meta.text(),
+            accessible_name=self._context_meta.text(),
+        )
         _set_widget_metadata(self, tooltip=panel_summary, accessible_name=panel_summary)
 
     def _update_overview_content(self):
-        if not hasattr(self, "_overview_title"):
+        if not hasattr(self, "_context_title"):
             return
 
         if self._primary_widget is None:
-            self._overview_meta.setText(
+            self._context_title.setText("No selection")
+            self._context_meta.setText(
                 "Select a widget to inspect geometry, behavior, resources, and callback wiring."
             )
             self._search_hint.setText("Search becomes available after you select a widget.")
-            self._populate_chip_row(self._overview_chip_row, [("Idle", "accent"), ("Canvas or Tree", None)])
+            self._search_hint.setVisible(False)
             return
 
+        self._search_hint.setVisible(True)
         if len(self._selection) > 1:
             widget_types = sorted({widget.widget_type for widget in self._selection})
             callback_entries = self._collect_multi_callback_entries()
             common_props = self._collect_multi_common_properties()
             mixed_total = self._selection_mixed_field_count(callback_entries, common_props)
             primary_name = self._primary_widget.name if self._primary_widget else "none"
-            self._overview_meta.setText(
-                f"Batch editing {_count_label(len(self._selection), 'widget')} across "
-                f"{_count_label(len(widget_types), 'type')}. Primary widget: {primary_name}."
+            self._context_title.setText(f"Selected {_count_label(len(self._selection), 'widget')}")
+            self._context_meta.setText(
+                f"Primary: {primary_name}. Types: {', '.join(widget_types)}. "
+                f"Mixed fields: {mixed_total}."
             )
             self._search_hint.setText("Search common fields, resource bindings, and callbacks for the current batch selection.")
-            self._populate_chip_row(
-                self._overview_chip_row,
-                [
-                    (_count_label(len(self._selection), "widget"), "accent"),
-                    (_count_label(mixed_total, "mixed field"), "warning"),
-                    ("Batch", "success"),
-                ],
-            )
             return
 
         widget = self._primary_widget
@@ -734,17 +727,19 @@ class PropertyPanel(QWidget):
         bound_assets = self._resource_binding_count(widget)
         active_callbacks = self._active_callback_count(widget)
         placement = f"Managed by {layout_parent}" if layout_parent else "Freeform placement"
-        self._overview_meta.setText(
-            f"{widget.name} - {display_name} ({widget.widget_type}). {placement}. "
+        self._context_title.setText(widget.name)
+        self._context_meta.setText(
+            f"{display_name} ({widget.widget_type}). {placement}. "
             f"{_count_label(bound_assets, 'asset binding')} and {_count_label(active_callbacks, 'active callback')}."
         )
         self._search_hint.setText("Search fields, resource bindings, and callbacks for the current widget.")
-        chips = [
-            (widget.widget_type, "accent"),
-            (f"{widget.width} x {widget.height}", None),
-            ("Layout-managed", "warning") if layout_parent else ("Freeform", "success"),
-        ]
-        self._populate_chip_row(self._overview_chip_row, chips)
+        if self._header_size_chip is not None:
+            self._header_size_chip.setText(f"{widget.width}×{widget.height}")
+            _set_widget_metadata(
+                self._header_size_chip,
+                tooltip=f"Widget size: {widget.width} by {widget.height}.",
+                accessible_name=f"Widget size: {widget.width} by {widget.height}.",
+            )
 
     def _update_file_selector_metadata(self, prop_name, combo, tooltip=None):
         value_text = self._editor_value_summary(combo)
@@ -1041,7 +1036,7 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
 
         if self._primary_widget is None:
-            self._overview_frame.setVisible(True)
+            self._context_frame.setVisible(True)
             self._search_shell.setVisible(False)
             self._search_edit.setVisible(False)
             self._no_selection_label = self._create_no_selection_label()
@@ -1049,16 +1044,21 @@ class PropertyPanel(QWidget):
             self._update_panel_metadata()
             return
 
-        self._overview_frame.setVisible(False)
+        self._context_frame.setVisible(True)
         self._search_shell.setVisible(True)
         self._search_edit.setVisible(True)
         if len(self._selection) > 1:
+            header = self._build_multi_selection_header(self._collect_multi_callback_entries())
+            header.hide()
+            self._layout.addWidget(header)
             self._build_multi_selection_form()
             self._on_search_changed(self._search_edit.text())
             return
 
         w = self._primary_widget
-        self._layout.addWidget(self._build_single_selection_header(w))
+        header = self._build_single_selection_header(w)
+        header.hide()
+        self._layout.addWidget(header)
 
         # Layout group
         layout_group = CollapsibleGroupBox("Layout")
@@ -1197,7 +1197,6 @@ class PropertyPanel(QWidget):
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
-        self._layout.addWidget(self._build_multi_selection_header(callback_entries))
 
         geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
         for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
@@ -1290,8 +1289,7 @@ class PropertyPanel(QWidget):
         return messages
 
     def _build_selection_feedback_group(self):
-        messages = self._selection_feedback_messages()
-        return self._build_selection_feedback_strip(messages)
+        return self._build_selection_feedback_strip(self._selection_feedback_messages())
 
     def _build_multi_common_properties_group(self):
         common_props = self._collect_multi_common_properties()
