@@ -69,13 +69,17 @@ def test_status_center_styles_reduce_resting_container_weight():
         css = _build_stylesheet(mode)
         metrics = css.split("#status_center_metrics", 1)[1].split("}", 1)[0]
         actions = css.split("#status_center_actions", 1)[1].split("}", 1)[0]
+        sections = css.split("#status_center_health,", 1)[1].split("}", 1)[0]
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
 
         assert "background-color: transparent;" in metrics
         assert "border: none;" in metrics
         assert "background-color: transparent;" in actions
         assert "border: none;" in actions
-        assert f"background-color: {t['panel_soft']};" in metric_card
+        assert "background-color: transparent;" in sections
+        assert "border: none;" in sections
+        assert "border-radius: 0px;" in sections
+        assert "background-color: transparent;" in metric_card
         assert "border: 1px solid transparent;" in metric_card
 
 
@@ -90,9 +94,11 @@ def test_status_center_header_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
         assert f"color: {t['accent_hover']};" in eyebrow
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
 
 
 def test_tokens_include_xxs_spacing_for_all_themes():
@@ -118,7 +124,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
 
         assert f"border-radius: {tokens['r_md']}px;" in chip
         assert f"border-radius: {tokens['r_sm']}px;" in browser_card
-        assert f"border-radius: {tokens['r_md']}px;" in metric_card
+        assert f"border-radius: {tokens['r_sm']}px;" in metric_card
 
 
 def test_page_navigator_styles_use_token_driven_cards():

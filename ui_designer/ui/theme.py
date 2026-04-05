@@ -2458,9 +2458,9 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #status_center_header[panelTone="status"] {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #status_center_eyebrow {{
@@ -2470,16 +2470,16 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #status_center_header_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #status_center_health,
 #status_center_runtime {{
-    background-color: {t['panel_alt']};
-    border: 1px solid transparent;
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #status_center_metrics,
@@ -2489,9 +2489,9 @@ QPushButton#widget_browser_insert_button:pressed {{
 }}
 
 #status_center_metric_card {{
-    background-color: {t['panel_soft']};
+    background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #status_center_metric_card:hover {{
@@ -2604,7 +2604,7 @@ QPushButton#preview_status_button:hover {{
 #status_center_health_row {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #status_center_health_row:hover {{
@@ -2629,8 +2629,8 @@ QProgressBar#status_center_health_info_bar {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
     border-radius: {t['r_sm']}px;
-    min-height: 10px;
-    max-height: 10px;
+    min-height: 8px;
+    max-height: 8px;
 }}
 
 QProgressBar#status_center_health_error_bar::chunk {{
@@ -2649,13 +2649,13 @@ QProgressBar#status_center_health_info_bar::chunk {{
 }}
 
 #status_center_runtime:hover {{
-    border-color: {t['accent_soft']};
-    background-color: {t['panel_alt']};
+    border: 1px solid {t['accent_soft']};
+    background-color: {t['panel_soft']};
 }}
 
 #status_center_runtime:focus {{
-    border-color: {t['accent']};
-    background-color: {t['panel_alt']};
+    border: 1px solid {t['accent']};
+    background-color: {t['panel_soft']};
 }}
 """
 

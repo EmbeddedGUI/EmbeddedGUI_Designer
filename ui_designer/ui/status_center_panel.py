@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QSize, Qt, pyqtSignal
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QMenu, QProgressBar, QPushButton, QToolButton, QVBoxLayout, QWidget
 
 from .theme import theme_tokens
@@ -13,6 +14,19 @@ _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_TOKENS.get("space_lg", 16))
+_TEXT_ONLY_ICON_CACHE: dict[int, QIcon] = {}
+
+
+def _text_only_icon(size=16):
+    icon_size = max(int(size or 16), 1)
+    cached = _TEXT_ONLY_ICON_CACHE.get(icon_size)
+    if cached is not None:
+        return cached
+    pixmap = QPixmap(icon_size, icon_size)
+    pixmap.fill(Qt.transparent)
+    icon = QIcon(pixmap)
+    _TEXT_ONLY_ICON_CACHE[icon_size] = icon
+    return icon
 
 
 class _ClickableFrame(QFrame):
@@ -77,14 +91,14 @@ class StatusCenterPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_SM)
+        layout.setSpacing(6)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("status_center_header")
         self._header_frame.setProperty("panelTone", "status")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(12, 12, 12, 12)
-        header_layout.setSpacing(6)
+        header_layout.setContentsMargins(10, 10, 10, 10)
+        header_layout.setSpacing(4)
 
         self._header_eyebrow = QLabel("Workspace")
         self._header_eyebrow.setObjectName("status_center_eyebrow")
@@ -95,7 +109,7 @@ class StatusCenterPanel(QWidget):
 
         header_title_row = QHBoxLayout()
         header_title_row.setContentsMargins(0, 0, 0, 0)
-        header_title_row.setSpacing(8)
+        header_title_row.setSpacing(6)
         self._header_title = QLabel("Status Center")
         self._header_title.setObjectName("workspace_section_title")
         self._header_title.setAccessibleName("Status Center")
@@ -119,7 +133,7 @@ class StatusCenterPanel(QWidget):
         self._header_metrics_frame = QFrame()
         self._header_metrics_frame.setObjectName("status_center_header_metrics_strip")
         header_metrics_layout = QHBoxLayout(self._header_metrics_frame)
-        header_metrics_layout.setContentsMargins(8, _SPACE_XS, 8, _SPACE_XS)
+        header_metrics_layout.setContentsMargins(0, 0, 0, 0)
         header_metrics_layout.setSpacing(_SPACE_XS)
         self._header_focus_chip = QLabel("Focus: Workspace")
         self._header_focus_chip.setObjectName("workspace_status_chip")
@@ -144,9 +158,9 @@ class StatusCenterPanel(QWidget):
         metrics = QFrame()
         metrics.setObjectName("status_center_metrics")
         metrics_layout = QGridLayout(metrics)
-        metrics_layout.setContentsMargins(6, 2, 6, 2)
-        metrics_layout.setHorizontalSpacing(8)
-        metrics_layout.setVerticalSpacing(8)
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setHorizontalSpacing(6)
+        metrics_layout.setVerticalSpacing(6)
         self._sdk_value, self._sdk_card = self._create_metric(
             metrics_layout, 0, 0, "SDK", "Missing", "open_project_panel"
         )
@@ -171,12 +185,12 @@ class StatusCenterPanel(QWidget):
         health.setObjectName("status_center_health")
         self._health_section = health
         health_layout = QVBoxLayout(health)
-        health_layout.setContentsMargins(10, 10, 10, 10)
-        health_layout.setSpacing(6)
+        health_layout.setContentsMargins(8, 8, 8, 8)
+        health_layout.setSpacing(4)
 
         health_title_row = QHBoxLayout()
         health_title_row.setContentsMargins(0, 0, 0, 0)
-        health_title_row.setSpacing(8)
+        health_title_row.setSpacing(6)
         self._health_title = QLabel("Diagnostic Mix")
         self._health_title.setObjectName("workspace_section_title")
         self._health_title.setAccessibleName("Diagnostic Mix")
@@ -212,7 +226,7 @@ class StatusCenterPanel(QWidget):
         quick_actions.setObjectName("status_center_actions")
         self._quick_actions_section = quick_actions
         quick_layout = QVBoxLayout(quick_actions)
-        quick_layout.setContentsMargins(10, 8, 10, 10)
+        quick_layout.setContentsMargins(0, 0, 0, 0)
         quick_layout.setSpacing(6)
 
         self._actions_title = QLabel("Quick Actions")
@@ -223,7 +237,7 @@ class StatusCenterPanel(QWidget):
         self._last_action_host.setObjectName("status_center_last_action_host")
         last_action_row = QHBoxLayout(self._last_action_host)
         last_action_row.setContentsMargins(0, 0, 0, 0)
-        last_action_row.setSpacing(8)
+        last_action_row.setSpacing(6)
         self._last_action_label = QLabel("Last action: None")
         self._last_action_label.setObjectName("workspace_section_subtitle")
         last_action_row.addWidget(self._last_action_label, 0)
@@ -243,7 +257,7 @@ class StatusCenterPanel(QWidget):
         quick_layout.addWidget(self._recent_actions_label)
         suggested_row = QHBoxLayout()
         suggested_row.setContentsMargins(0, 0, 0, 0)
-        suggested_row.setSpacing(8)
+        suggested_row.setSpacing(6)
         self._suggested_action_label = QLabel("Suggested next step:")
         self._suggested_action_label.setObjectName("workspace_section_subtitle")
         self._suggested_action_label.setVisible(False)
@@ -262,7 +276,7 @@ class StatusCenterPanel(QWidget):
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(8)
+        row.setSpacing(6)
         self._diag_btn = self._build_action_button("Diagnostics", "state.error", "open_diagnostics")
         self._history_btn = self._build_action_button("History", "state.info", "open_history")
         self._debug_btn = self._build_action_button("Debug Output", "state.warn", "open_debug")
@@ -275,7 +289,7 @@ class StatusCenterPanel(QWidget):
         self._diagnostic_jump_host.setObjectName("status_center_diagnostic_jump_host")
         row2 = QHBoxLayout(self._diagnostic_jump_host)
         row2.setContentsMargins(0, 0, 0, 0)
-        row2.setSpacing(8)
+        row2.setSpacing(6)
         self._first_error_btn = self._build_action_button("Open First Error", "state.error", "open_first_error")
         self._first_warning_btn = self._build_action_button("Open First Warning", "state.warn", "open_first_warning")
         row2.addWidget(self._first_error_btn)
@@ -285,7 +299,7 @@ class StatusCenterPanel(QWidget):
 
         row3 = QHBoxLayout()
         row3.setContentsMargins(0, 0, 0, 0)
-        row3.setSpacing(8)
+        row3.setSpacing(6)
         self._project_btn = self._build_action_button("Project", "nav.page_group", "open_project_panel")
         self._structure_btn = self._build_action_button("Structure", "nav.page_group", "open_structure_panel")
         self._components_btn = self._build_action_button("Components", "nav.component_library", "open_components_panel")
@@ -299,7 +313,7 @@ class StatusCenterPanel(QWidget):
 
         row4 = QHBoxLayout()
         row4.setContentsMargins(0, 0, 0, 0)
-        row4.setSpacing(8)
+        row4.setSpacing(6)
         self._properties_btn = self._build_action_button("Properties", "toolbar.settings.global", "open_properties_inspector")
         self._animations_btn = self._build_action_button("Animations", "toolbar.preview", "open_animations_inspector")
         self._fields_btn = self._build_action_button("Fields", "nav.page", "open_page_fields")
@@ -319,11 +333,11 @@ class StatusCenterPanel(QWidget):
         self._set_hint(runtime, "Open Debug Output")
         runtime.setAccessibleName("Runtime section")
         runtime_layout = QVBoxLayout(runtime)
-        runtime_layout.setContentsMargins(10, 10, 10, 10)
-        runtime_layout.setSpacing(6)
+        runtime_layout.setContentsMargins(8, 8, 8, 8)
+        runtime_layout.setSpacing(4)
         runtime_title_row = QHBoxLayout()
         runtime_title_row.setContentsMargins(0, 0, 0, 0)
-        runtime_title_row.setSpacing(8)
+        runtime_title_row.setSpacing(6)
         self._runtime_title = QLabel("Runtime")
         self._runtime_title.setObjectName("workspace_section_title")
         self._runtime_title.setAccessibleName("Runtime")
@@ -356,11 +370,11 @@ class StatusCenterPanel(QWidget):
             self._set_hint(card, f"Open {label}")
             card.setAccessibleName(f"{label} metric")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(8, 8, 8, 8)
-        card_layout.setSpacing(4)
+        card_layout.setContentsMargins(6, 6, 6, 6)
+        card_layout.setSpacing(3)
         top = QHBoxLayout()
         top.setContentsMargins(0, 0, 0, 0)
-        top.setSpacing(6)
+        top.setSpacing(4)
         title = QLabel(label)
         title.setObjectName("workspace_section_subtitle")
         top.addWidget(title, 1)
@@ -381,11 +395,11 @@ class StatusCenterPanel(QWidget):
             row.setAccessibleName(f"{label} diagnostics")
         row_layout = QVBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(4)
+        row_layout.setSpacing(2)
 
         top = QHBoxLayout()
         top.setContentsMargins(0, 0, 0, 0)
-        top.setSpacing(6)
+        top.setSpacing(4)
         title = QLabel(label)
         title.setObjectName("workspace_section_subtitle")
         top.addWidget(title, 1)
@@ -457,16 +471,27 @@ class StatusCenterPanel(QWidget):
         widget.setProperty("_status_center_visible_snapshot", value)
 
     def _set_widget_icon(self, widget, icon_key, size=16):
-        _ = widget
-        _ = icon_key
-        _ = size
-        return
+        resolved_key = str(icon_key or "").strip()
+        resolved_size = max(int(size or 16), 0)
+        current_key = str(widget.property("_status_center_icon_snapshot") or "")
+        current_size = int(widget.property("_status_center_icon_size_snapshot") or -1)
+        if current_key == resolved_key and current_size == resolved_size:
+            return
+        widget.setIcon(_text_only_icon(resolved_size) if resolved_key else QIcon())
+        if hasattr(widget, "setIconSize"):
+            try:
+                widget.setIconSize(QSize(0, 0))
+            except Exception:
+                pass
+        widget.setProperty("iconKey", resolved_key or None)
+        widget.setProperty("_status_center_icon_snapshot", resolved_key)
+        widget.setProperty("_status_center_icon_size_snapshot", resolved_size)
 
     def _build_action_button(self, text, icon_key, action_key):
-        _ = icon_key
         button = QPushButton(text)
         button.setProperty("baseText", text)
         default_hint = f"Open {self._action_label(action_key)}."
+        self._set_widget_icon(button, icon_key, size=16)
         button.setAccessibleName(
             self._action_button_accessible_name(action_key, text, hint=default_hint)
         )
@@ -481,8 +506,25 @@ class StatusCenterPanel(QWidget):
         return self._ACTION_LABELS.get(action, action.replace("_", " ").title())
 
     def _action_icon_key(self, action_key):
-        _ = action_key
-        return ""
+        action = str(action_key or "").strip()
+        return {
+            "open_project_panel": "nav.page_group",
+            "open_structure_panel": "structure",
+            "open_components_panel": "nav.component_library",
+            "open_assets_panel": "nav.resource",
+            "open_properties_inspector": "toolbar.settings.global",
+            "open_animations_inspector": "toolbar.preview",
+            "open_page_fields": "nav.page",
+            "open_page_timers": "state.progress",
+            "open_diagnostics": "diagnostics",
+            "open_error_diagnostics": "state.error",
+            "open_warning_diagnostics": "state.warn",
+            "open_info_diagnostics": "state.info",
+            "open_history": "history",
+            "open_debug": "debug",
+            "open_first_error": "diagnostics",
+            "open_first_warning": "diagnostics",
+        }.get(action, "")
 
     def _normalize_recent_actions(self, recent_actions, prepend_action=""):
         normalized = []
@@ -512,6 +554,8 @@ class StatusCenterPanel(QWidget):
         for action_key in self._recent_actions:
             action_label = self._action_label(action_key)
             menu_action = self._repeat_action_menu.addAction(action_label)
+            menu_action.setIcon(_text_only_icon(16))
+            menu_action.setProperty("iconKey", self._action_icon_key(action_key) or None)
             if action_key == self._last_action:
                 menu_tooltip = f"Repeat the current action: {action_label}."
             else:
@@ -520,6 +564,8 @@ class StatusCenterPanel(QWidget):
             menu_action.triggered.connect(lambda checked=False, key=action_key: self._emit_action(key))
         self._repeat_action_menu.addSeparator()
         clear_action = self._repeat_action_menu.addAction(self._clear_recent_actions_label())
+        clear_action.setIcon(_text_only_icon(16))
+        clear_action.setProperty("iconKey", "history")
         self._set_action_hint(clear_action, self._clear_recent_actions_tooltip())
         clear_action.triggered.connect(self._clear_recent_actions)
         self._update_repeat_action_menu_metadata()
@@ -1249,7 +1295,7 @@ class StatusCenterPanel(QWidget):
         self._set_widget_text(self._recent_actions_label, self._recent_actions_summary())
         self._set_hint(self._recent_actions_label, self._recent_actions_tooltip())
         self._set_accessible_name(self._recent_actions_label, self._recent_actions_accessible_name())
-        self._set_widget_visible(self._recent_actions_label, False)
+        self._set_widget_visible(self._recent_actions_label, self._show_recent_actions_summary())
         has_action = bool(self._last_action)
         self._set_widget_visible(self._last_action_label, len(self._recent_actions) > 1)
         self._set_widget_visible(self._last_action_host, has_action)
@@ -1261,6 +1307,11 @@ class StatusCenterPanel(QWidget):
         self._set_widget_text(self._repeat_action_button, f"Repeat {action_label}" if has_action else "Repeat Action")
         self._set_hint(self._repeat_action_button, self._repeat_action_tooltip(action_label))
         self._set_accessible_name(self._repeat_action_button, self._repeat_action_accessible_name(action_label))
+        self._set_widget_icon(
+            self._repeat_action_button,
+            self._action_icon_key(self._last_action) if has_action else "history",
+            size=16,
+        )
         self._update_header_metrics_state()
         self._refresh_repeat_action_menu()
 
@@ -1680,24 +1731,28 @@ class StatusCenterPanel(QWidget):
             self._health_chip_action = "open_error_diagnostics"
             self._set_chip_text(self._health_chip, self._counted_label("Critical", error_count), "danger")
             health_hint = f"Open Errors. {self._active_count_hint(error_count, 'error', 'errors')}"
+            health_icon_key = "state.error"
         elif warning_count > 0:
             self._health_chip_action = "open_warning_diagnostics"
             self._set_chip_text(self._health_chip, self._counted_label("Attention", warning_count), "warning")
             health_hint = f"Open Warnings. {self._active_count_hint(warning_count, 'warning', 'warnings')}"
+            health_icon_key = "state.warn"
         elif info_count > 0:
             self._health_chip_action = "open_info_diagnostics"
             self._set_chip_text(self._health_chip, self._counted_label("Info", info_count), "accent")
             health_hint = f"Open Info. {self._active_count_hint(info_count, 'info item', 'info items')}"
+            health_icon_key = "state.info"
         else:
             self._health_chip_action = "open_diagnostics"
             self._set_chip_text(self._health_chip, "Stable", "success")
             health_hint = "Open Diagnostics. No active diagnostics."
-        self._set_widget_icon(self._health_chip, self._action_icon_key(self._health_chip_action), size=16)
+            health_icon_key = "state.error"
+        self._set_widget_icon(self._health_chip, health_icon_key, size=16)
         self._set_hint(self._health_chip, health_hint)
         self._health_chip.setAccessibleName(
             self._health_chip_accessible_name(self._health_chip.text(), health_hint)
         )
-        self._set_widget_visible(self._health_chip, False)
+        self._set_widget_visible(self._health_chip, diag_total > 0)
         show_error_jump = error_count > 0
         show_warning_jump = warning_count > 0
         self._set_widget_visible(self._diagnostic_jump_host, show_error_jump or show_warning_jump)
@@ -1764,7 +1819,7 @@ class StatusCenterPanel(QWidget):
             self._set_widget_icon(self._runtime_chip, "state.warn", size=16)
             self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
             self._set_accessible_name(self._runtime_chip, self._runtime_chip_accessible_name(runtime_text))
-            self._set_widget_visible(self._runtime_chip, False)
+            self._set_widget_visible(self._runtime_chip, True)
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
             self._set_widget_text(self._runtime_title, self._runtime_title_text(""))
