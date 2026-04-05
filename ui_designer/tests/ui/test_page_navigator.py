@@ -121,6 +121,7 @@ class TestPageNavigator:
         assert navigator._header_meta_label.isHidden() is True
         assert navigator._count_chip.isHidden() is True
         assert navigator._count_chip.accessibleName() == "Page count: 0 pages."
+        assert navigator._startup_chip.isHidden() is True
         assert navigator._startup_chip.accessibleName() == "Startup page: none."
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: No dirty pages."
         assert navigator._guidance_frame.accessibleName() == (
@@ -144,6 +145,7 @@ class TestPageNavigator:
         )
         assert navigator._count_chip.isHidden() is True
         assert navigator._count_chip.accessibleName() == "Page count: 2 pages."
+        assert navigator._startup_chip.isHidden() is True
         assert navigator._startup_chip.accessibleName() == "Startup page: main_page."
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: 1 dirty page."
         navigator.deleteLater()
