@@ -122,7 +122,7 @@ class PageFieldsPanel(QWidget):
 
         code_buttons = QHBoxLayout()
         code_buttons.setContentsMargins(0, 0, 0, 0)
-        code_buttons.setSpacing(4)
+        code_buttons.setSpacing(2)
         self._open_on_open_button = QPushButton("Open on_open")
         self._open_on_close_button = QPushButton("Open on_close")
         self._open_init_button = QPushButton("Open init")
@@ -172,7 +172,7 @@ class PageFieldsPanel(QWidget):
         self._actions_label.hide()
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(4)
+        buttons.setSpacing(2)
         self._add_button = QPushButton("Add Field")
         self._remove_button = QPushButton("Remove Field")
         self._add_button.clicked.connect(self._on_add_field)

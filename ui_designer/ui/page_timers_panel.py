@@ -142,7 +142,7 @@ class PageTimersPanel(QWidget):
         self._actions_label.hide()
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
-        buttons.setSpacing(4)
+        buttons.setSpacing(2)
         self._add_button = QPushButton("Add Timer")
         self._remove_button = QPushButton("Remove Timer")
         self._open_code_button = QPushButton("Open User Code")

@@ -190,8 +190,9 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections
-        assert f"border-radius: {t['r_sm']}px;" in buttons
-        assert "min-height: 30px;" in buttons
+        assert "border-radius: 0px;" in buttons
+        assert "min-height: 28px;" in buttons
+        assert f"padding: 3px {t['space_sm']}px;" in buttons
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -215,8 +216,9 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections
-        assert f"border-radius: {t['r_sm']}px;" in buttons
-        assert "min-height: 30px;" in buttons
+        assert "border-radius: 0px;" in buttons
+        assert "min-height: 28px;" in buttons
+        assert f"padding: 3px {t['space_sm']}px;" in buttons
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():

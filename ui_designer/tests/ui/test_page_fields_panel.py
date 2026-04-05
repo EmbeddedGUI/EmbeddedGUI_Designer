@@ -52,11 +52,15 @@ class TestPageFieldsPanel:
 
         header_margins = panel._header_frame.layout().contentsMargins()
         chip_margins = panel._header_chip_row.contentsMargins()
+        code_buttons = panel._code_frame.layout().itemAt(2).layout()
+        action_buttons = panel._actions_frame.layout().itemAt(1).layout()
 
         assert panel.layout().spacing() == 6
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
         assert (chip_margins.left(), chip_margins.top(), chip_margins.right(), chip_margins.bottom()) == (0, 0, 0, 0)
         assert panel._header_chip_row.spacing() == 6
+        assert code_buttons.spacing() == 2
+        assert action_buttons.spacing() == 2
         assert panel._summary_label.text() == "Page Fields: 2 fields on main_page"
         assert panel.accessibleName() == "Page Fields: 2 fields on main_page. Selected field: none."
         assert panel.toolTip() == panel.accessibleName()

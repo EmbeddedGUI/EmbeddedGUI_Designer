@@ -1734,10 +1734,10 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_table_shell QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 30px;
+    padding: 3px {t['space_sm']}px;
+    min-height: 28px;
 }}
 
 #page_editor_actions QPushButton:hover,
