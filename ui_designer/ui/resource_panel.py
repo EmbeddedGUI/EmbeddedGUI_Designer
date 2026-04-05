@@ -112,7 +112,7 @@ def _create_dialog_metric_card(layout, label_text):
     card = QFrame()
     card.setObjectName("resource_dialog_metric_card")
     card_layout = QVBoxLayout(card)
-    card_layout.setContentsMargins(14, 12, 14, 12)
+    card_layout.setContentsMargins(0, 0, 0, 0)
     card_layout.setSpacing(4)
 
     label = QLabel(label_text)
@@ -526,18 +526,18 @@ class _MissingResourceReplaceDialog(QDialog):
         self.resize(820, 560)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Resource Recovery")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -577,7 +577,7 @@ class _MissingResourceReplaceDialog(QDialog):
         self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._missing_metric_value = _create_dialog_metric_card(metrics_layout, "Missing")
         self._candidate_metric_value = _create_dialog_metric_card(metrics_layout, "Candidates")
         self._selected_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
@@ -587,8 +587,8 @@ class _MissingResourceReplaceDialog(QDialog):
         content_card = QFrame()
         content_card.setObjectName("resource_dialog_card")
         content_layout = QVBoxLayout(content_card)
-        content_layout.setContentsMargins(22, 22, 22, 22)
-        content_layout.setSpacing(12)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(10)
 
         self._caption = CaptionLabel(
             "Choose replacement files for missing resources. "
@@ -778,18 +778,18 @@ class _ReferenceImpactDialog(QDialog):
         self.resize(860, 560)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Impact Review")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -829,7 +829,7 @@ class _ReferenceImpactDialog(QDialog):
         self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Affected Usages")
         self._selection_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
         self._action_metric_value = _create_dialog_metric_card(metrics_layout, "Action")
@@ -839,8 +839,8 @@ class _ReferenceImpactDialog(QDialog):
         content_card = QFrame()
         content_card.setObjectName("resource_dialog_card")
         content_layout = QVBoxLayout(content_card)
-        content_layout.setContentsMargins(22, 22, 22, 22)
-        content_layout.setSpacing(12)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(10)
 
         self._summary_label = QLabel(summary)
         self._summary_label.setObjectName("resource_dialog_summary")
@@ -978,18 +978,18 @@ class _BatchReplaceImpactDialog(QDialog):
         self.resize(980, 720)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("resource_dialog_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Batch Rename Impact")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
@@ -1029,7 +1029,7 @@ class _BatchReplaceImpactDialog(QDialog):
         self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._rename_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Renames")
         self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Usages")
         self._filter_metric_value = _create_dialog_metric_card(metrics_layout, "Page Filter")
@@ -1039,8 +1039,8 @@ class _BatchReplaceImpactDialog(QDialog):
         summary_card = QFrame()
         summary_card.setObjectName("resource_dialog_card")
         summary_layout = QVBoxLayout(summary_card)
-        summary_layout.setContentsMargins(22, 22, 22, 22)
-        summary_layout.setSpacing(12)
+        summary_layout.setContentsMargins(0, 0, 0, 0)
+        summary_layout.setSpacing(10)
 
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("resource_dialog_summary")
@@ -1051,7 +1051,7 @@ class _BatchReplaceImpactDialog(QDialog):
         if self._current_page_name:
             filter_row = QHBoxLayout()
             filter_row.setContentsMargins(0, 0, 0, 0)
-            filter_row.setSpacing(10)
+            filter_row.setSpacing(8)
             self._current_page_only = QCheckBox("Current Page Only")
             self._current_page_only.toggled.connect(self._refresh_impact_view)
             filter_row.addWidget(self._current_page_only)
@@ -1064,8 +1064,8 @@ class _BatchReplaceImpactDialog(QDialog):
         impact_card = QFrame()
         impact_card.setObjectName("resource_dialog_card")
         impact_layout = QVBoxLayout(impact_card)
-        impact_layout.setContentsMargins(22, 22, 22, 22)
-        impact_layout.setSpacing(12)
+        impact_layout.setContentsMargins(0, 0, 0, 0)
+        impact_layout.setSpacing(10)
 
         self._group_caption = QLabel("Rename Impact Summary")
         self._group_caption.setObjectName("workspace_section_title")
@@ -1090,8 +1090,8 @@ class _BatchReplaceImpactDialog(QDialog):
         usage_card = QFrame()
         usage_card.setObjectName("resource_dialog_card")
         usage_layout = QVBoxLayout(usage_card)
-        usage_layout.setContentsMargins(22, 22, 22, 22)
-        usage_layout.setSpacing(12)
+        usage_layout.setContentsMargins(0, 0, 0, 0)
+        usage_layout.setSpacing(10)
 
         self._usage_caption = QLabel("Affected Usages")
         self._usage_caption.setObjectName("workspace_section_title")

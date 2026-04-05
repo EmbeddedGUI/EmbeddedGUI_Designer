@@ -1991,9 +1991,9 @@ QListWidget#app_selector_list::item:hover {{
 }}
 
 #resource_dialog_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #resource_dialog_eyebrow {{
@@ -2015,15 +2015,15 @@ QListWidget#app_selector_list::item:hover {{
 }}
 
 #resource_dialog_card {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #resource_dialog_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #resource_dialog_metric_label {{
@@ -2046,7 +2046,7 @@ QListWidget#app_selector_list::item:hover {{
 QTableWidget#resource_dialog_table {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     gridline-color: {t['border']};
 }}
 
