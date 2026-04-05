@@ -1198,8 +1198,8 @@ class PreviewPanel(QWidget):
         self._status_bar = QWidget()
         self._status_bar.setObjectName("preview_status_shell")
         sbl = QHBoxLayout(self._status_bar)
-        sbl.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
-        sbl.setSpacing(_SPACE_SM)
+        sbl.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        sbl.setSpacing(_SPACE_XS)
 
         self.status_label = QLabel("Preview - waiting for exe...")
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -1216,7 +1216,7 @@ class PreviewPanel(QWidget):
 
         self._btn_zoom_out = QPushButton("-")
         self._btn_zoom_out.setObjectName("preview_status_button")
-        self._btn_zoom_out.setFixedSize(28, 28)
+        self._btn_zoom_out.setFixedSize(24, 24)
         self._btn_zoom_out.clicked.connect(self._on_zoom_out)
 
         self._zoom_label = QLabel("100% (4px)")
@@ -1226,7 +1226,7 @@ class PreviewPanel(QWidget):
 
         self._btn_zoom_in = QPushButton("+")
         self._btn_zoom_in.setObjectName("preview_status_button")
-        self._btn_zoom_in.setFixedSize(28, 28)
+        self._btn_zoom_in.setFixedSize(24, 24)
         self._btn_zoom_in.clicked.connect(self._on_zoom_in)
 
         sbl.addWidget(self._btn_zoom_out)

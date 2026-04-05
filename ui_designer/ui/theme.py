@@ -2598,7 +2598,7 @@ QSplitter#preview_splitter::handle {{
 #preview_status_shell {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
 }}
 
 #preview_status_value {{
@@ -2609,7 +2609,7 @@ QSplitter#preview_splitter::handle {{
 QPushButton#preview_status_button {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     padding: 0;
 }}
 
