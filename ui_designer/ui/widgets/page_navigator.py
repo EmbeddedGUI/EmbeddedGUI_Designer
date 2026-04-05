@@ -10,8 +10,8 @@ from ..theme import theme_tokens
 
 
 # Thumbnail size (kept minimal; preview is secondary to page names)
-THUMB_WIDTH = 96
-THUMB_HEIGHT = 128
+THUMB_WIDTH = 84
+THUMB_HEIGHT = 112
 
 _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
@@ -62,12 +62,12 @@ class PageThumbnail(QWidget):
         self.setProperty("dirty", False)
         self.setProperty("startup", False)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(THUMB_HEIGHT + 20)
+        self.setMinimumHeight(THUMB_HEIGHT + 16)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(_SPACE_SM + 2, _SPACE_SM + 2, _SPACE_SM + 2, _SPACE_SM + 2)
-        layout.setSpacing(_SPACE_SM + 2)
+        layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        layout.setSpacing(_SPACE_SM)
 
         self._preview_frame = QFrame()
         self._preview_frame.setObjectName("page_navigator_thumb_surface")
@@ -76,7 +76,7 @@ class PageThumbnail(QWidget):
         self._preview_frame.setProperty("startup", False)
         self._preview_frame.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         preview_layout = QVBoxLayout(self._preview_frame)
-        preview_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        preview_layout.setContentsMargins(_SPACE_XS + 2, _SPACE_XS + 2, _SPACE_XS + 2, _SPACE_XS + 2)
         preview_layout.setSpacing(0)
 
         self._thumb_label = QLabel()
@@ -92,7 +92,7 @@ class PageThumbnail(QWidget):
 
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(_SPACE_XS + 2)
+        content_layout.setSpacing(_SPACE_XS)
 
         self._name_label = QLabel(page_name)
         self._name_label.setObjectName("page_navigator_page_name")

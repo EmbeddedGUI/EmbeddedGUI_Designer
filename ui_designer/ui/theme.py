@@ -1803,7 +1803,7 @@ QScrollArea#page_navigator_scroll,
 #page_navigator_thumbnail {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: {t['r_sm']}px;
 }}
 
 #page_navigator_thumbnail:hover {{

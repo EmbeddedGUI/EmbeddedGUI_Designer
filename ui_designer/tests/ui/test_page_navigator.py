@@ -28,10 +28,13 @@ def qapp():
 @_skip_no_qt
 class TestPageNavigator:
     def test_page_thumbnail_accessibility_tracks_selected_and_dirty_state(self, qapp):
-        from ui_designer.ui.widgets.page_navigator import PageThumbnail
+        from ui_designer.ui.widgets.page_navigator import PageThumbnail, THUMB_HEIGHT, THUMB_WIDTH
 
         thumb = PageThumbnail("main_page")
 
+        assert thumb.minimumHeight() == THUMB_HEIGHT + 16
+        assert thumb._thumb_label.width() == THUMB_WIDTH
+        assert thumb._thumb_label.height() == THUMB_HEIGHT
         assert thumb.toolTip() == "Open page: main_page. Available. No unsaved changes."
         assert thumb.statusTip() == thumb.toolTip()
         assert thumb.accessibleName() == "Page thumbnail: main_page. Available. No unsaved changes."

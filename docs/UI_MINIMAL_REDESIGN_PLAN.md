@@ -67,6 +67,7 @@
   - header 收敛为标题 + 视图切换按钮 + Settings 入口。
   - 去掉可见的 eyebrow、summary block、metrics strip、view chip。
   - 缩略图视图保留，但降级为次级入口。
+  - 页面缩略图区已缩小卡片尺寸与外层圆角，提升同屏页数。
   - 相关 summary / chip 仅以隐藏 metadata 方式保留。
 
 - `project_dock.py`

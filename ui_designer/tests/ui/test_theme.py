@@ -140,7 +140,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert f"background-color: {t['panel_raised']};" in scroll_shell
         assert f"border-radius: {t['r_xl']}px;" in scroll_shell
         assert f"background-color: {t['panel_alt']};" in thumb
-        assert f"border-radius: {t['r_xl']}px;" in thumb
+        assert f"border-radius: {t['r_sm']}px;" in thumb
         assert f"border-color: {t['accent']};" in selected
         assert f"border: 1px dashed {t['border']};" in empty
 
