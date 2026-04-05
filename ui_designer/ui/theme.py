@@ -2129,9 +2129,9 @@ QTextEdit#repo_health_details {{
 }}
 
 #release_history_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #release_build_eyebrow,
@@ -2171,9 +2171,9 @@ QTextEdit#repo_health_details {{
 }}
 
 #release_history_card {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #release_build_metric_card {{
@@ -2189,9 +2189,9 @@ QTextEdit#repo_health_details {{
 }}
 
 #release_history_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #release_build_metric_label,
@@ -2217,17 +2217,23 @@ QTextEdit#repo_health_details {{
 }}
 
 QListWidget#release_profiles_list,
-QListWidget#release_history_list {{
+QListWidget#release_profiles_list {{
     background-color: transparent;
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
+}}
+
+QListWidget#release_history_list {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 0px;
 }}
 
 QTextEdit#release_history_details,
 QTextEdit#release_history_preview {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #new_project_header {{

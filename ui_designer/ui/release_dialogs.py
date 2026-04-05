@@ -1478,18 +1478,18 @@ class ReleaseHistoryDialog(QDialog):
         self._filtered_history_entries: list[dict[str, object]] = []
 
         root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(24, 24, 24, 24)
-        root_layout.setSpacing(16)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("release_history_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Release Intelligence")
         self._eyebrow_label.setObjectName("release_history_eyebrow")
@@ -1529,7 +1529,7 @@ class ReleaseHistoryDialog(QDialog):
         self._metrics_frame.setObjectName("release_history_metrics_frame")
         metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(8)
+        metrics_layout.setSpacing(6)
         self._result_metric_value = self._create_metric_card(metrics_layout, "Visible")
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
         self._preview_metric_value = self._create_metric_card(metrics_layout, "Preview")
@@ -1537,14 +1537,14 @@ class ReleaseHistoryDialog(QDialog):
         root_layout.addWidget(self._header_frame)
 
         controls_layout = QHBoxLayout()
-        controls_layout.setSpacing(16)
+        controls_layout.setSpacing(12)
         root_layout.addLayout(controls_layout)
 
         filters_card = QFrame()
         filters_card.setObjectName("release_history_card")
         filters_layout = QVBoxLayout(filters_card)
-        filters_layout.setContentsMargins(22, 22, 22, 22)
-        filters_layout.setSpacing(12)
+        filters_layout.setContentsMargins(0, 0, 0, 0)
+        filters_layout.setSpacing(10)
 
         filters_title = QLabel("Filter Stack")
         filters_title.setObjectName("workspace_section_title")
@@ -1559,8 +1559,8 @@ class ReleaseHistoryDialog(QDialog):
         filters_hint.hide()
 
         filters_grid = QGridLayout()
-        filters_grid.setHorizontalSpacing(12)
-        filters_grid.setVerticalSpacing(8)
+        filters_grid.setHorizontalSpacing(10)
+        filters_grid.setVerticalSpacing(6)
 
         range_label = QLabel("Range")
         range_label.setObjectName("release_history_field_label")
@@ -1649,8 +1649,8 @@ class ReleaseHistoryDialog(QDialog):
         overview_card = QFrame()
         overview_card.setObjectName("release_history_card")
         overview_layout = QVBoxLayout(overview_card)
-        overview_layout.setContentsMargins(22, 22, 22, 22)
-        overview_layout.setSpacing(12)
+        overview_layout.setContentsMargins(0, 0, 0, 0)
+        overview_layout.setSpacing(10)
 
         overview_title = QLabel("History State")
         overview_title.setObjectName("workspace_section_title")
@@ -1665,8 +1665,8 @@ class ReleaseHistoryDialog(QDialog):
         overview_hint.hide()
 
         stats_grid = QGridLayout()
-        stats_grid.setHorizontalSpacing(12)
-        stats_grid.setVerticalSpacing(8)
+        stats_grid.setHorizontalSpacing(10)
+        stats_grid.setVerticalSpacing(6)
         self._result_count_label = QLabel("0 / 0")
         self._result_count_label.setObjectName("release_history_stat_value")
         stats_grid.addWidget(QLabel("Results"), 0, 0)
@@ -1704,8 +1704,8 @@ class ReleaseHistoryDialog(QDialog):
         overview_layout.addLayout(stats_grid)
 
         actions_grid = QGridLayout()
-        actions_grid.setHorizontalSpacing(10)
-        actions_grid.setVerticalSpacing(10)
+        actions_grid.setHorizontalSpacing(8)
+        actions_grid.setVerticalSpacing(8)
 
         self._clear_filters_button = QPushButton("Clear Filters")
         self._clear_filters_button.clicked.connect(self._clear_filters)
@@ -1753,14 +1753,14 @@ class ReleaseHistoryDialog(QDialog):
         controls_layout.addWidget(overview_card, 4)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
         root_layout.addLayout(content_layout, 1)
 
         history_card = QFrame()
         history_card.setObjectName("release_history_card")
         history_layout = QVBoxLayout(history_card)
-        history_layout.setContentsMargins(22, 22, 22, 22)
-        history_layout.setSpacing(12)
+        history_layout.setContentsMargins(0, 0, 0, 0)
+        history_layout.setSpacing(10)
 
         history_title = QLabel("Release Runs")
         history_title.setObjectName("workspace_section_title")
@@ -1776,21 +1776,21 @@ class ReleaseHistoryDialog(QDialog):
 
         self._history_list = QListWidget()
         self._history_list.setObjectName("release_history_list")
-        self._history_list.setSpacing(8)
+        self._history_list.setSpacing(6)
         self._history_list.currentRowChanged.connect(self._update_current_entry)
         history_layout.addWidget(self._history_list, 1)
         content_layout.addWidget(history_card, 3)
 
         right_layout = QVBoxLayout()
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(16)
+        right_layout.setSpacing(12)
         content_layout.addLayout(right_layout, 5)
 
         details_card = QFrame()
         details_card.setObjectName("release_history_card")
         details_layout = QVBoxLayout(details_card)
-        details_layout.setContentsMargins(22, 22, 22, 22)
-        details_layout.setSpacing(12)
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.setSpacing(10)
 
         details_title = QLabel("Selection Details")
         details_title.setObjectName("workspace_section_title")
@@ -1816,8 +1816,8 @@ class ReleaseHistoryDialog(QDialog):
         details_layout.addWidget(self._details_edit, 1)
 
         details_actions = QGridLayout()
-        details_actions.setHorizontalSpacing(10)
-        details_actions.setVerticalSpacing(10)
+        details_actions.setHorizontalSpacing(8)
+        details_actions.setVerticalSpacing(8)
 
         self._preview_auto_button = QPushButton("Auto Preview")
         self._preview_manifest_button = QPushButton("Preview Manifest")
@@ -1888,8 +1888,8 @@ class ReleaseHistoryDialog(QDialog):
         preview_card = QFrame()
         preview_card.setObjectName("release_history_card")
         preview_layout = QVBoxLayout(preview_card)
-        preview_layout.setContentsMargins(22, 22, 22, 22)
-        preview_layout.setSpacing(12)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(10)
 
         preview_title = QLabel("Artifacts & Preview")
         preview_title.setObjectName("workspace_section_title")
@@ -1915,7 +1915,7 @@ class ReleaseHistoryDialog(QDialog):
 
         preview_mode_row = QHBoxLayout()
         preview_mode_row.setContentsMargins(0, 0, 0, 0)
-        preview_mode_row.setSpacing(10)
+        preview_mode_row.setSpacing(8)
         preview_mode_row.addWidget(self._preview_auto_button)
         preview_mode_row.addWidget(self._preview_manifest_button)
         preview_mode_row.addWidget(self._preview_log_button)
@@ -1924,8 +1924,8 @@ class ReleaseHistoryDialog(QDialog):
         preview_layout.addLayout(preview_mode_row)
 
         preview_actions = QGridLayout()
-        preview_actions.setHorizontalSpacing(10)
-        preview_actions.setVerticalSpacing(10)
+        preview_actions.setHorizontalSpacing(8)
+        preview_actions.setVerticalSpacing(8)
         preview_actions.addWidget(self._copy_preview_button, 0, 0)
         preview_actions.addWidget(self._copy_preview_path_button, 0, 1)
         preview_actions.addWidget(self._export_preview_button, 0, 2)
@@ -2018,7 +2018,7 @@ class ReleaseHistoryDialog(QDialog):
         card = QFrame()
         card.setObjectName("release_history_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)
