@@ -65,18 +65,18 @@ class RepositoryHealthDialog(QDialog):
         self._payload: dict[str, object] = {}
 
         root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(24, 24, 24, 24)
-        root_layout.setSpacing(16)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(12)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("repo_health_header")
         header_layout = QHBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(24, 22, 24, 22)
-        header_layout.setSpacing(24)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
 
         hero_copy = QVBoxLayout()
         hero_copy.setContentsMargins(0, 0, 0, 0)
-        hero_copy.setSpacing(6)
+        hero_copy.setSpacing(4)
 
         self._eyebrow_label = QLabel("Workspace Diagnostics")
         self._eyebrow_label.setObjectName("repo_health_eyebrow")
@@ -129,8 +129,8 @@ class RepositoryHealthDialog(QDialog):
         self._metrics_frame.setObjectName("repo_health_metrics_frame")
         metrics_layout = QGridLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setHorizontalSpacing(10)
-        metrics_layout.setVerticalSpacing(10)
+        metrics_layout.setHorizontalSpacing(8)
+        metrics_layout.setVerticalSpacing(8)
         self._critical_metric_value = self._create_metric_card(metrics_layout, 0, 0, "Critical")
         self._suggestions_metric_value = self._create_metric_card(metrics_layout, 0, 1, "Suggestions")
         self._stale_metric_value = self._create_metric_card(metrics_layout, 1, 0, "Stale Dirs")
@@ -139,13 +139,13 @@ class RepositoryHealthDialog(QDialog):
         root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(12)
 
         details_card = QFrame()
         details_card.setObjectName("repo_health_details_card")
         details_layout = QVBoxLayout(details_card)
-        details_layout.setContentsMargins(22, 22, 22, 22)
-        details_layout.setSpacing(12)
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.setSpacing(10)
 
         details_title = QLabel("Repository Report")
         details_title.setObjectName("workspace_section_title")
@@ -165,13 +165,13 @@ class RepositoryHealthDialog(QDialog):
 
         sidebar = QVBoxLayout()
         sidebar.setContentsMargins(0, 0, 0, 0)
-        sidebar.setSpacing(16)
+        sidebar.setSpacing(12)
 
         controls_card = QFrame()
         controls_card.setObjectName("repo_health_tool_card")
         controls_layout = QVBoxLayout(controls_card)
-        controls_layout.setContentsMargins(22, 22, 22, 22)
-        controls_layout.setSpacing(12)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(10)
 
         controls_title = QLabel("View Controls")
         controls_title.setObjectName("workspace_section_title")
@@ -225,13 +225,13 @@ class RepositoryHealthDialog(QDialog):
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
         controls_row = QHBoxLayout()
-        controls_row.setSpacing(10)
+        controls_row.setSpacing(8)
         controls_row.addWidget(self._refresh_button)
         controls_row.addWidget(self._reset_view_button)
         controls_layout.addLayout(controls_row)
 
         filters_row = QHBoxLayout()
-        filters_row.setSpacing(12)
+        filters_row.setSpacing(10)
         filters_row.addWidget(self._critical_only_check)
         filters_row.addWidget(self._blocked_only_check)
         filters_row.addWidget(self._show_json_check)
@@ -242,7 +242,7 @@ class RepositoryHealthDialog(QDialog):
         reports_card = QFrame()
         reports_card.setObjectName("repo_health_tool_card")
         reports_layout = QVBoxLayout(reports_card)
-        reports_layout.setContentsMargins(22, 22, 22, 22)
+        reports_layout.setContentsMargins(0, 0, 0, 0)
         reports_layout.setSpacing(10)
 
         reports_title = QLabel("Reports")
@@ -256,8 +256,8 @@ class RepositoryHealthDialog(QDialog):
         reports_hint.hide()
 
         reports_grid = QGridLayout()
-        reports_grid.setHorizontalSpacing(10)
-        reports_grid.setVerticalSpacing(10)
+        reports_grid.setHorizontalSpacing(8)
+        reports_grid.setVerticalSpacing(8)
         reports_grid.addWidget(self._copy_summary_button, 0, 0)
         reports_grid.addWidget(self._export_summary_button, 0, 1)
         reports_grid.addWidget(self._copy_report_button, 1, 0)
@@ -269,7 +269,7 @@ class RepositoryHealthDialog(QDialog):
         paths_card = QFrame()
         paths_card.setObjectName("repo_health_tool_card")
         paths_layout = QVBoxLayout(paths_card)
-        paths_layout.setContentsMargins(22, 22, 22, 22)
+        paths_layout.setContentsMargins(0, 0, 0, 0)
         paths_layout.setSpacing(10)
 
         paths_title = QLabel("Workspace Paths")
@@ -283,8 +283,8 @@ class RepositoryHealthDialog(QDialog):
         paths_hint.hide()
 
         paths_grid = QGridLayout()
-        paths_grid.setHorizontalSpacing(10)
-        paths_grid.setVerticalSpacing(10)
+        paths_grid.setHorizontalSpacing(8)
+        paths_grid.setVerticalSpacing(8)
         paths_grid.addWidget(self._copy_repo_button, 0, 0)
         paths_grid.addWidget(self._open_repo_button, 0, 1)
         paths_grid.addWidget(self._copy_sdk_button, 1, 0)
@@ -297,7 +297,7 @@ class RepositoryHealthDialog(QDialog):
         stale_card = QFrame()
         stale_card.setObjectName("repo_health_tool_card")
         stale_layout = QVBoxLayout(stale_card)
-        stale_layout.setContentsMargins(22, 22, 22, 22)
+        stale_layout.setContentsMargins(0, 0, 0, 0)
         stale_layout.setSpacing(10)
 
         stale_title = QLabel("Stale Temp Directories")
@@ -312,7 +312,7 @@ class RepositoryHealthDialog(QDialog):
 
         stale_layout.addWidget(self._stale_dir_combo)
         stale_row = QHBoxLayout()
-        stale_row.setSpacing(10)
+        stale_row.setSpacing(8)
         stale_row.addWidget(self._copy_stale_path_button)
         stale_row.addWidget(self._open_stale_button)
         stale_layout.addLayout(stale_row)
@@ -365,7 +365,7 @@ class RepositoryHealthDialog(QDialog):
         card = QFrame()
         card.setObjectName("repo_health_metric_card")
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(14, 12, 14, 12)
+        card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(4)
 
         label = QLabel(label_text)

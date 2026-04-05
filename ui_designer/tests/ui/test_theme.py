@@ -473,14 +473,16 @@ def test_repository_health_dialog_styles_use_engineering_surface_tokens():
         metric_card = css.split("#repo_health_metric_card {", 1)[1].split("}", 1)[0]
         details = css.split("QTextEdit#repo_health_details {", 1)[1].split("}", 1)[0]
 
-        assert t["panel_raised"] in header
-        assert f"border-radius: {t['r_xl']}px;" in header
-        assert f"background-color: {t['panel_raised']};" in card
-        assert f"border-radius: {t['r_xl']}px;" in card
-        assert f"background-color: {t['panel_soft']};" in metric_card
-        assert f"border-radius: {t['r_md']}px;" in metric_card
+        _assert_panel_surface(header, t)
+        assert "border-radius: 0px;" in header
+        assert "background-color: transparent;" in card
+        assert "border: none;" in card
+        assert "border-radius: 0px;" in card
+        assert "background-color: transparent;" in metric_card
+        assert "border: none;" in metric_card
+        assert "border-radius: 0px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in details
-        assert f"border-radius: {t['r_md']}px;" in details
+        assert "border-radius: 0px;" in details
 
 
 def test_release_build_dialog_styles_use_engineering_surface_tokens():

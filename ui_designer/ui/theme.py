@@ -2061,9 +2061,9 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 }}
 
 #repo_health_header {{
-    background-color: {t['panel_raised']};
+    background-color: {t['panel']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #repo_health_eyebrow {{
@@ -2087,15 +2087,15 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 
 #repo_health_details_card,
 #repo_health_tool_card {{
-    background-color: {t['panel_raised']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #repo_health_metric_card {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #repo_health_metric_label {{
@@ -2113,7 +2113,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 QTextEdit#repo_health_details {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #release_build_header {{
