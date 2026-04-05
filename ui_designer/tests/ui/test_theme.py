@@ -168,9 +168,11 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
         assert f"color: {t['accent_hover']};" in eyebrow
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections
@@ -191,9 +193,11 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
         assert f"color: {t['accent_hover']};" in eyebrow
-        assert f"background-color: {t['panel_soft']};" in metrics
-        assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections

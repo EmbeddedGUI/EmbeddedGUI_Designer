@@ -1665,13 +1665,13 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #page_fields_header[panelTone="fields"] {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #page_fields_eyebrow {{
@@ -1686,15 +1686,15 @@ QTreeWidget#widget_tree_panel_tree {{
 }}
 
 #page_fields_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #page_timers_header[panelTone="timers"] {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_xl']}px;
+    border-radius: 0px;
 }}
 
 #page_timers_eyebrow {{
@@ -1709,9 +1709,9 @@ QTreeWidget#widget_tree_panel_tree {{
 }}
 
 #page_timers_metrics_strip {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #page_editor_eyebrow {{

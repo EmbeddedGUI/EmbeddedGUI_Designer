@@ -56,13 +56,13 @@ class PageFieldsPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(6)
 
         self._header_frame = QWidget()
         self._header_frame.setObjectName("page_fields_header")
         self._header_frame.setProperty("panelTone", "fields")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(8, 8, 8, 8)
+        header_layout.setContentsMargins(6, 6, 6, 6)
         header_layout.setSpacing(4)
 
         self._eyebrow_label = QLabel("Fields")
@@ -83,8 +83,8 @@ class PageFieldsPanel(QWidget):
         self._metrics_frame = QWidget()
         self._metrics_frame.setObjectName("page_fields_metrics_strip")
         self._header_chip_row = QHBoxLayout(self._metrics_frame)
-        self._header_chip_row.setContentsMargins(8, 6, 8, 6)
-        self._header_chip_row.setSpacing(4)
+        self._header_chip_row.setContentsMargins(0, 0, 0, 0)
+        self._header_chip_row.setSpacing(6)
         self._count_chip = self._make_status_chip("0 fields", "accent")
         self._selection_chip = self._make_status_chip("No selection", "warning")
         self._header_chip_row.addWidget(self._count_chip)
