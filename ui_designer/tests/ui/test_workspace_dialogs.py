@@ -244,7 +244,10 @@ class TestAppSelectorDialog:
         assert dialog._app_list.item(0).text() == "ModernApp"
         assert dialog._app_list.currentItem().text() == "ModernApp"
         modern_widget = dialog._app_list.itemWidget(dialog._app_list.item(0))
+        modern_path_label = modern_widget.findChild(QLabel, "app_selector_item_meta")
         modern_kind_label = modern_widget.findChild(QLabel, "app_selector_item_kind")
+        assert modern_path_label.isHidden()
+        assert "ModernApp.egui" in modern_path_label.accessibleName()
         assert modern_kind_label.isHidden()
         assert modern_kind_label.accessibleName() == "SDK example kind: Designer Project"
         dialog.deleteLater()
@@ -318,7 +321,11 @@ class TestAppSelectorDialog:
             "Opening it will initialize a Designer project."
         )
         legacy_widget = dialog._app_list.itemWidget(legacy_item)
+        legacy_path_label = legacy_widget.findChild(QLabel, "app_selector_item_meta")
         legacy_kind_label = legacy_widget.findChild(QLabel, "app_selector_item_kind")
+        assert legacy_path_label.isHidden()
+        assert legacy_path_label.accessibleName().startswith("SDK example path: ")
+        assert "LegacyApp" in legacy_path_label.accessibleName()
         assert legacy_kind_label.isHidden()
         assert legacy_kind_label.accessibleName() == "SDK example kind: Legacy Import"
         dialog.deleteLater()

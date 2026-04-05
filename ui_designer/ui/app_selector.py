@@ -127,6 +127,7 @@ class AppEntryRowWidget(QWidget):
         self._path_label.setObjectName("app_selector_item_meta")
         self._path_label.setWordWrap(True)
         text_layout.addWidget(self._path_label)
+        self._path_label.hide()
 
         self._kind_label = QLabel(kind_text)
         self._kind_label.setObjectName("app_selector_item_kind")
