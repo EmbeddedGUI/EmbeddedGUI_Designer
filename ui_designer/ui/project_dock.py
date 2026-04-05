@@ -53,62 +53,6 @@ def _set_action_metadata(action, tooltip):
     action.setStatusTip(tooltip)
 
 
-def _create_metric_card(layout, label_text):
-    card = QFrame()
-    card.setObjectName("project_dock_metric_card")
-    card_layout = QVBoxLayout(card)
-    card_layout.setContentsMargins(12, 10, 12, 10)
-    card_layout.setSpacing(4)
-
-    label = QLabel(label_text)
-    label.setObjectName("project_dock_metric_label")
-    card_layout.addWidget(label)
-
-    value = QLabel("")
-    value.setObjectName("project_dock_metric_value")
-    value.setWordWrap(True)
-    card_layout.addWidget(value)
-
-    value._project_dock_metric_name = label_text
-    value._project_dock_metric_label = label
-    value._project_dock_metric_card = card
-    _set_widget_metadata(
-        label,
-        tooltip=f"{label_text} metric label.",
-        accessible_name=f"{label_text} metric label.",
-    )
-    layout.addWidget(card)
-    return value
-
-
-def _update_metric_card_metadata(metric_value):
-    metric_name = getattr(metric_value, "_project_dock_metric_name", "Project")
-    metric_text = (metric_value.text() or "none").strip() or "none"
-    summary = f"{metric_name}: {metric_text}."
-
-    _set_widget_metadata(
-        metric_value,
-        tooltip=summary,
-        accessible_name=f"Project explorer metric: {metric_name}. {metric_text}.",
-    )
-
-    label = getattr(metric_value, "_project_dock_metric_label", None)
-    if label is not None:
-        _set_widget_metadata(
-            label,
-            tooltip=summary,
-            accessible_name=f"{metric_name} metric label.",
-        )
-
-    card = getattr(metric_value, "_project_dock_metric_card", None)
-    if card is not None:
-        _set_widget_metadata(
-            card,
-            tooltip=summary,
-            accessible_name=f"{metric_name} metric: {metric_text}.",
-        )
-
-
 class ProjectExplorerDock(QDockWidget):
     """Dock widget showing project pages and resources.
 
@@ -144,8 +88,6 @@ class ProjectExplorerDock(QDockWidget):
         compact = bool(compact)
         if hasattr(self, "_header_frame"):
             self._header_frame.setVisible(not compact)
-        if hasattr(self, "_pages_hint"):
-            self._pages_hint.setVisible(not compact)
 
     def _init_ui(self):
         container = QWidget()
@@ -183,10 +125,6 @@ class ProjectExplorerDock(QDockWidget):
         self._status_label.setObjectName("project_dock_status")
         self._status_label.setWordWrap(True)
         header_layout.addWidget(self._status_label)
-
-        self._page_count_metric = QLabel("")
-        self._startup_metric = QLabel("")
-        self._dirty_metric = QLabel("")
 
         layout.addWidget(self._header_frame)
 
@@ -248,6 +186,10 @@ class ProjectExplorerDock(QDockWidget):
 
         layout.addStretch()
 
+        self._subtitle_label.hide()
+        self._status_label.hide()
+        self._pages_hint.hide()
+
         self.setWidget(container)
         self._update_accessibility_summary()
 
@@ -266,9 +208,6 @@ class ProjectExplorerDock(QDockWidget):
         mode_hint = f"Choose how pages are generated for the current project. Current mode: {mode}."
         add_page_hint = self._new_page_action_hint()
         self._status_label.setText(f"Mode {mode} | Current {current_page}")
-        self._page_count_metric.setText(page_label)
-        self._startup_metric.setText(startup_page)
-        self._dirty_metric.setText(dirty_label)
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
             self._header_frame,
@@ -310,9 +249,6 @@ class ProjectExplorerDock(QDockWidget):
             tooltip=f"Project explorer status: mode {mode}. Current page: {current_page}.",
             accessible_name=f"Project explorer status: mode {mode}. Current page: {current_page}",
         )
-        _update_metric_card_metadata(self._page_count_metric)
-        _update_metric_card_metadata(self._startup_metric)
-        _update_metric_card_metadata(self._dirty_metric)
 
     def _apply_page_item_metadata(self, item, page_name):
         item.setText(0, self._page_item_text(page_name))

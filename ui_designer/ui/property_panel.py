@@ -396,6 +396,8 @@ class PropertyPanel(QWidget):
         self._search_edit.textChanged.connect(self._on_search_changed)
         self._search_edit.setVisible(False)
         search_layout.addWidget(self._search_edit)
+        self._overview_eyebrow.hide()
+        self._search_hint.hide()
         self._search_shell.setVisible(False)
         overview_layout.addWidget(self._search_shell)
         outer.addWidget(self._overview_frame)
@@ -783,6 +785,8 @@ class PropertyPanel(QWidget):
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)
+        eyebrow.hide()
+        header_meta.hide()
         _set_widget_metadata(
             eyebrow,
             tooltip="Property inspection surface.",
@@ -882,6 +886,8 @@ class PropertyPanel(QWidget):
         header_meta.setObjectName("property_panel_header_meta")
         header_meta.setWordWrap(True)
         layout.addWidget(header_meta)
+        eyebrow.hide()
+        header_meta.hide()
         _set_widget_metadata(
             eyebrow,
             tooltip="Batch property inspection surface.",
@@ -976,6 +982,7 @@ class PropertyPanel(QWidget):
         eyebrow = QLabel("Interaction Notes")
         eyebrow.setObjectName("property_panel_header_eyebrow")
         layout.addWidget(eyebrow)
+        eyebrow.hide()
         _set_widget_metadata(
             eyebrow,
             tooltip="Property interaction notes surface.",

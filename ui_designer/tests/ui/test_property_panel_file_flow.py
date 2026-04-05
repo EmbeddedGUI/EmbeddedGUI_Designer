@@ -80,6 +80,8 @@ class TestPropertyPanelFileFlow:
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
         assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
         assert panel._search_edit.accessibleName() == "Property search: none"
+        assert panel._overview_eyebrow.isHidden() is True
+        assert panel._search_hint.isHidden() is True
         assert panel._no_selection_label.toolTip() == "Select a widget from the canvas or tree to edit its properties."
         assert panel._no_selection_label.accessibleName() == "Property panel empty state: No widget selected."
 
@@ -116,9 +118,11 @@ class TestPropertyPanelFileFlow:
         assert header.objectName() == "workspace_panel_header"
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
         assert eyebrow.accessibleName() == "Property inspection surface."
+        assert eyebrow.isHidden() is True
         assert title.accessibleName() == "Selected widget: title."
         assert subtitle.accessibleName() == f"Widget type: {subtitle.text()}."
         assert meta.accessibleName() == meta.text()
+        assert meta.isHidden() is True
         assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
         panel.deleteLater()
 
@@ -547,14 +551,17 @@ class TestPropertyPanelFileFlow:
             for label in summary_header.findChildren(QLabel)
             if label.objectName() == "workspace_section_subtitle"
         )
+        meta = summary_header.findChild(QLabel, "property_panel_header_meta")
         chips = [label for label in summary_header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
         hint_strip = _find_hint_strip(panel)
         hint_eyebrow = next(label for label in hint_strip.findChildren(QLabel) if label.text() == "Interaction Notes")
 
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
+        assert eyebrow.isHidden() is True
         assert title.accessibleName() == "Batch selection: Selected 2 widgets."
         assert subtitle.accessibleName() == subtitle.text()
+        assert meta.isHidden() is True
         assert any(chip.accessibleName() == "Batch types: 2 types." for chip in chips)
         assert any(chip.accessibleName().startswith("Batch mixed state: ") for chip in chips)
         assert any(chip.accessibleName() == "Batch edit state: Batch edit." for chip in chips)
@@ -563,6 +570,7 @@ class TestPropertyPanelFileFlow:
             "Hidden: 1 selected widget is skipped by canvas hit testing."
         )
         assert hint_eyebrow.accessibleName() == "Property interaction notes surface."
+        assert hint_eyebrow.isHidden() is True
         panel.deleteLater()
 
     def test_multi_selection_common_geometry_and_text_update_all_widgets(self, qapp):
