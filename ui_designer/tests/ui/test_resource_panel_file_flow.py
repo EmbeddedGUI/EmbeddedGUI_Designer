@@ -78,11 +78,11 @@ class TestResourcePanelFileFlow:
         preview_layout = panel._details_tabs.widget(0).layout()
         usage_layout = panel._details_tabs.widget(1).layout()
         usage_filter_layout = usage_layout.itemAt(1).layout()
-        assert preview_layout.spacing() == 4
-        assert usage_layout.spacing() == 4
-        assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (4, 4, 4, 4)
-        assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (4, 4, 4, 4)
-        assert usage_filter_layout.spacing() == 4
+        assert preview_layout.spacing() == 2
+        assert usage_layout.spacing() == 2
+        assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (2, 2, 2, 2)
+        assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (2, 2, 2, 2)
+        assert usage_filter_layout.spacing() == 2
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."
         assert eyebrow.isHidden() is True
