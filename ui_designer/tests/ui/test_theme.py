@@ -600,7 +600,8 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#diagnostics_header[panelTone="diagnostics"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#diagnostics_header {", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#diagnostics_header[panelTone="diagnostics"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#diagnostics_header_meta {", 1)[1].split("}", 1)[0]
         controls = css.split("#diagnostics_controls_strip,", 1)[1].split("}", 1)[0]
         buttons = css.split("#diagnostics_controls_strip QPushButton,", 1)[1].split("}", 1)[0]
@@ -608,6 +609,9 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
         assert "background-color: transparent;" in controls
         assert "border: none;" in controls
@@ -615,7 +619,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert f"border-radius: {t['r_sm']}px;" in buttons
         assert "min-height: 30px;" in buttons
         assert f"background-color: {t['panel_alt']};" in list_block
-        assert f"border-radius: {t['r_md']}px;" in list_block
+        assert "border-radius: 0px;" in list_block
 
 
 def test_debug_panel_styles_use_engineering_surface_tokens():
