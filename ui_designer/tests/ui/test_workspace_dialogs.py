@@ -891,6 +891,7 @@ class TestWelcomePage:
             f"Welcome hero. Welcome page: Ready: using selected SDK root. SDK path: {sdk_root}. No recent projects."
         )
         assert page._eyebrow_label.isHidden()
+        assert page._subtitle_label.isHidden()
         assert page._hero_hint_label.isHidden()
         assert page._start_hint_label.isHidden()
         assert page._recent_hint_label.isHidden()
@@ -1062,6 +1063,7 @@ class TestWelcomePage:
         assert widget is not None
         assert "No recent projects" in (widget.accessibleName() or "")
         assert any("No recent projects" in (lb.text() or "") for lb in widget.findChildren(QLabel))
+        assert _find_label_by_text(widget, "Open a .egui file or create a project - it will appear here.").isHidden()
         assert "No recent projects." in page.accessibleName()
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         page.deleteLater()

@@ -193,6 +193,7 @@ class WelcomePage(QWidget):
             accessible_name=self._subtitle_label.text(),
         )
         hero_copy.addWidget(self._subtitle_label)
+        self._subtitle_label.hide()
 
         self._hero_hint_label = QLabel(
             "Pick an action below: new project, open project, or open recent."
@@ -479,6 +480,7 @@ class WelcomePage(QWidget):
             sub.setWordWrap(True)
             el.addWidget(no_recent)
             el.addWidget(sub)
+            sub.hide()
             summary = "No recent projects. Open a project to see it listed here."
             _set_widget_metadata(empty, tooltip=summary, accessible_name=summary)
             self._recent_list.addWidget(empty)
