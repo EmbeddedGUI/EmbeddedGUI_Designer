@@ -32,7 +32,6 @@ from ..model.widget_animations import (
     create_default_animation,
     normalize_widget_animations,
 )
-from .iconography import make_icon
 from .theme import theme_tokens
 
 
@@ -40,7 +39,7 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
-_ICON_SM = int(_TOKENS.get("icon_sm", 16))
+
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -89,7 +88,7 @@ class AnimationsPanel(QWidget):
         header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
         header_layout.setSpacing(_SPACE_SM)
 
-        self._header_eyebrow = QLabel("Motion Timeline")
+        self._header_eyebrow = QLabel("Animations")
         self._header_eyebrow.setObjectName("animations_panel_eyebrow")
         header_layout.addWidget(self._header_eyebrow)
 
@@ -107,7 +106,7 @@ class AnimationsPanel(QWidget):
         header_layout.addLayout(title_row)
 
         self._hint_label = QLabel(
-            "Animations are stored on the selected widget and compiled into the generated layout source."
+            "Edit animations for the selected widget."
         )
         self._hint_label.setObjectName("animations_panel_meta")
         self._hint_label.setWordWrap(True)
@@ -138,11 +137,8 @@ class AnimationsPanel(QWidget):
         buttons.setContentsMargins(_SPACE_SM, _SPACE_SM - 2, _SPACE_SM, _SPACE_SM - 2)
         buttons.setSpacing(_SPACE_SM - 2)
         self._add_button = QPushButton("Add Animation")
-        self._add_button.setIcon(make_icon("toolbar.new", size=_ICON_SM))
         self._duplicate_button = QPushButton("Duplicate")
-        self._duplicate_button.setIcon(make_icon("toolbar.copy", size=_ICON_SM))
         self._remove_button = QPushButton("Remove")
-        self._remove_button.setIcon(make_icon("toolbar.delete", size=_ICON_SM))
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)
