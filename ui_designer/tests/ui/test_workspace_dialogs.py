@@ -1056,6 +1056,8 @@ class TestWelcomePage:
         assert widget.accessibleName() == (
             f"Recent project: DemoApp. Project ready. SDK ready. Path: {project_path}."
         )
+        assert widget._path_label.isHidden()
+        assert widget._path_label.accessibleName() == f"Recent project path: {project_path}"
         assert page._hero.accessibleName() == (
             f"Welcome hero. Welcome page: Missing: editing only, Python preview fallback. SDK path: No SDK root configured. 1 recent item."
         )

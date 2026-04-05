@@ -67,6 +67,7 @@ class RecentProjectItem(QWidget):
         self._path_label.setObjectName("welcome_recent_path")
         self._path_label.setWordWrap(True)
         text_layout.addWidget(self._path_label)
+        self._path_label.hide()
 
         self._project_status = "ready" if os.path.exists(project_path) else "missing"
         self._sdk_status = describe_sdk_root(sdk_root)
