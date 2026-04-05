@@ -153,12 +153,19 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         header = css.split('#page_fields_header[panelTone="fields"] {', 1)[1].split("}", 1)[0]
         eyebrow = css.split("#page_fields_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_fields_metrics_strip {", 1)[1].split("}", 1)[0]
+        sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
+        buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in sections
+        assert "border: none;" in sections
+        assert "border-radius: 0px;" in sections
+        assert f"border-radius: {t['r_sm']}px;" in buttons
+        assert "min-height: 30px;" in buttons
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -169,12 +176,19 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         header = css.split('#page_timers_header[panelTone="timers"] {', 1)[1].split("}", 1)[0]
         eyebrow = css.split("#page_timers_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_timers_metrics_strip {", 1)[1].split("}", 1)[0]
+        sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
+        buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"color: {t['accent_hover']};" in eyebrow
         assert f"background-color: {t['panel_soft']};" in metrics
         assert f"border-radius: {t['r_md']}px;" in metrics
+        assert "background-color: transparent;" in sections
+        assert "border: none;" in sections
+        assert "border-radius: 0px;" in sections
+        assert f"border-radius: {t['r_sm']}px;" in buttons
+        assert "min-height: 30px;" in buttons
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():

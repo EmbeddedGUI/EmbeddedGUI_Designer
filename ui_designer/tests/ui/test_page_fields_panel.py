@@ -78,6 +78,9 @@ class TestPageFieldsPanel:
         assert panel._code_hint_label.statusTip() == panel._code_hint_label.toolTip()
         assert panel._code_hint_label.accessibleName() == panel._code_hint_label.text()
         assert panel._code_hint_label.isHidden() is True
+        assert panel._code_label.isHidden() is True
+        assert panel._table_label.isHidden() is True
+        assert panel._actions_label.isHidden() is True
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page. Selected field: none."
@@ -115,6 +118,9 @@ class TestPageFieldsPanel:
         assert panel._header_meta_label.isHidden() is True
         assert panel._table.toolTip() == "Page Fields: no active page"
         assert panel._table.accessibleName() == "Page fields table: Page Fields: no active page"
+        assert panel._code_label.isHidden() is True
+        assert panel._table_label.isHidden() is True
+        assert panel._actions_label.isHidden() is True
         assert panel._add_button.toolTip() == "Open a page to manage fields."
         assert panel._add_button.accessibleName() == "Add page field unavailable"
         assert panel._remove_button.toolTip() == "Open a page to manage fields."

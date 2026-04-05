@@ -73,6 +73,8 @@ class TestPageTimersPanel:
         assert panel._hint_label.statusTip() == panel._hint_label.toolTip()
         assert panel._hint_label.accessibleName() == panel._hint_label.text()
         assert panel._hint_label.isHidden() is True
+        assert panel._table_label.isHidden() is True
+        assert panel._actions_label.isHidden() is True
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
@@ -106,6 +108,8 @@ class TestPageTimersPanel:
         assert panel._header_meta_label.isHidden() is True
         assert panel._table.toolTip() == "Page Timers: no active page"
         assert panel._table.accessibleName() == "Page timers table: Page Timers: no active page"
+        assert panel._table_label.isHidden() is True
+        assert panel._actions_label.isHidden() is True
         assert panel._add_button.toolTip() == "Open a page to manage timers."
         assert panel._add_button.accessibleName() == "Add page timer unavailable"
         assert panel._remove_button.toolTip() == "Open a page to manage timers."

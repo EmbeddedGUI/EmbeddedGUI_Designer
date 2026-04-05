@@ -1727,9 +1727,9 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_section,
 #page_editor_actions,
 #page_editor_table_shell {{
-    background-color: {t['panel_soft']};
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
 }}
 
 #page_editor_section_label {{
@@ -1749,10 +1749,10 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_table_shell QPushButton {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: {t['r_sm']}px;
     color: {t['text_muted']};
     padding: {t['space_xs']}px {t['space_sm']}px;
-    min-height: 34px;
+    min-height: 30px;
 }}
 
 #page_editor_actions QPushButton:hover,
