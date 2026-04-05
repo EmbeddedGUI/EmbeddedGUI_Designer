@@ -19,7 +19,6 @@ from ..model.sdk_bootstrap import (
     sdk_root_source_kind,
 )
 from ..model.workspace import describe_sdk_root, resolve_configured_sdk_root
-from .iconography import make_icon
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -55,18 +54,6 @@ class RecentProjectItem(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(18, 16, 18, 16)
         layout.setSpacing(14)
-
-        icon_shell = QFrame()
-        icon_shell.setObjectName("welcome_recent_icon_shell")
-        icon_shell.setFixedSize(44, 44)
-        icon_layout = QVBoxLayout(icon_shell)
-        icon_layout.setContentsMargins(0, 0, 0, 0)
-
-        icon_label = QLabel()
-        icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setPixmap(make_icon("nav.page_group", size=28).pixmap(28, 28))
-        icon_layout.addWidget(icon_label)
-        layout.addWidget(icon_shell, 0, Qt.AlignTop)
 
         text_layout = QVBoxLayout()
         text_layout.setSpacing(6)
@@ -177,7 +164,7 @@ class WelcomePage(QWidget):
         hero_copy.setContentsMargins(0, 0, 0, 0)
         hero_copy.setSpacing(8)
 
-        self._eyebrow_label = QLabel("Workspace Launcher")
+        self._eyebrow_label = QLabel("Welcome")
         self._eyebrow_label.setObjectName("welcome_eyebrow")
         _set_widget_metadata(
             self._eyebrow_label,
@@ -196,7 +183,7 @@ class WelcomePage(QWidget):
         )
         hero_copy.addWidget(self._title_label)
 
-        self._subtitle_label = QLabel("Visual UI design, compile-backed preview, and SDK workspace control in one shell")
+        self._subtitle_label = QLabel("Create or open a project to start editing.")
         self._subtitle_label.setFont(QFont("Segoe UI", 12))
         self._subtitle_label.setObjectName("welcome_hero_subtitle")
         self._subtitle_label.setWordWrap(True)
@@ -208,7 +195,7 @@ class WelcomePage(QWidget):
         hero_copy.addWidget(self._subtitle_label)
 
         self._hero_hint_label = QLabel(
-            "Create a project, reopen recent work, or attach an SDK example. The launch surface stays lightweight while the editor shell stays canvas-first."
+            "Pick an action below: new project, open project, or open recent."
         )
         self._hero_hint_label.setObjectName("welcome_hero_hint")
         self._hero_hint_label.setWordWrap(True)
@@ -239,7 +226,7 @@ class WelcomePage(QWidget):
         self._start_label.setObjectName("workspace_section_title")
         left_col.addWidget(self._start_label)
 
-        self._start_hint_label = QLabel("Open the main editor through a clean, single-path launch surface.")
+        self._start_hint_label = QLabel("Open the editor from here.")
         self._start_hint_label.setObjectName("workspace_section_subtitle")
         self._start_hint_label.setWordWrap(True)
         left_col.addWidget(self._start_hint_label)
