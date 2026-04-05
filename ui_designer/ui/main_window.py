@@ -32,8 +32,8 @@ from PyQt5.QtWidgets import (
     QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
     QLineEdit, QPlainTextEdit, QTextEdit, QSizePolicy,
 )
-from PyQt5.QtCore import Qt, QTimer, QSize, QByteArray, QSignalBlocker
-from PyQt5.QtGui import QGuiApplication, QIcon
+from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker
+from PyQt5.QtGui import QGuiApplication
 
 from qfluentwidgets import PrimaryPushButton, PushButton, TabBar, TabCloseButtonDisplayMode
 
@@ -726,10 +726,6 @@ class MainWindow(QMainWindow):
         button.setProperty("workspaceNav", True)
         button.setCheckable(True)
         button.setToolButtonStyle(Qt.ToolButtonTextOnly)
-        tokens = theme_tokens(getattr(self._config, "theme", "dark"))
-        nav_icon_size = int(tokens.get("icon_md", 18))
-        button.setIcon(QIcon())
-        button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         button.setText(str(short_label or label or ""))
         button.setFixedSize(64, 30)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
@@ -2362,24 +2358,6 @@ class MainWindow(QMainWindow):
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
         self._update_view_panel_navigation_action_metadata()
 
-    def _apply_workspace_iconography(self):
-        tokens = theme_tokens(getattr(self._config, "theme", "dark"))
-        nav_icon_size = int(tokens.get("icon_md", 18))
-        toolbar_icon_size = int(tokens.get("icon_lg", 20))
-        mode_icon_size = int(tokens.get("icon_sm", 16))
-        if hasattr(self, "_workspace_nav_buttons"):
-            for button in self._workspace_nav_buttons.values():
-                button.setIcon(QIcon())
-                button.setIconSize(QSize(nav_icon_size, nav_icon_size))
-        if hasattr(self, "_insert_widget_button"):
-            self._insert_widget_button.setIcon(QIcon())
-        if hasattr(self, "_toolbar_more_button"):
-            self._toolbar_more_button.setIcon(QIcon())
-            self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
-        if hasattr(self, "_mode_buttons"):
-            for button in self._mode_buttons.values():
-                button.setIcon(QIcon())
-
     def _on_status_center_action_requested(self, action_key):
         action = str(action_key or "").strip().lower()
         if action == "open_project_panel":
@@ -3798,7 +3776,6 @@ class MainWindow(QMainWindow):
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
-        self._compile_action.setIcon(make_icon("toolbar.compile"))
         self._compile_action.setShortcut("F5")
         self._compile_action.triggered.connect(self._do_compile_and_run)
         build_menu.addAction(self._compile_action)
@@ -3811,14 +3788,12 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self.auto_compile_action)
 
         self._stop_action = QAction("Stop Exe", self)
-        self._stop_action.setIcon(make_icon("toolbar.stop"))
         self._stop_action.triggered.connect(self._stop_exe)
         build_menu.addAction(self._stop_action)
 
         build_menu.addSeparator()
 
         self._release_build_action = QAction("Release Build (EXE)...", self)
-        self._release_build_action.setIcon(make_icon("toolbar.compile"))
         self._apply_action_hint(self._release_build_action, "Build an EXE release package for the current project.")
         self._release_build_action.triggered.connect(self._release_build)
         build_menu.addAction(self._release_build_action)
@@ -3857,7 +3832,6 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._open_release_history_file_action)
 
         self._release_history_action = QAction("Release History...", self)
-        self._release_history_action.setIcon(make_icon("state.info"))
         self._apply_action_hint(self._release_history_action, "Browse recorded release builds for the current project.")
         self._release_history_action.triggered.connect(self._show_release_history)
         build_menu.addAction(self._release_history_action)
@@ -4090,7 +4064,6 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         self._show_grid_action = QAction("Show Grid", self)
-        self._show_grid_action.setIcon(make_icon("canvas.grid"))
         self._show_grid_action.setCheckable(True)
         self._show_grid_action.setChecked(self.preview_panel.show_grid())
         self._apply_action_hint(self._show_grid_action, "Toggle the preview grid overlay.")
@@ -4098,7 +4071,6 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self._show_grid_action)
 
         self._grid_menu = view_menu.addMenu("Grid Size")
-        self._grid_menu.setIcon(make_icon("canvas.snap"))
         self._apply_action_hint(self._grid_menu.menuAction(), "Choose the grid snap size.")
         self._grid_size_group = QActionGroup(self)
         self._grid_size_group.setExclusive(True)
@@ -4170,8 +4142,6 @@ class MainWindow(QMainWindow):
         tb = QToolBar("Main Toolbar", self)
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
-        toolbar_icon_size = int(theme_tokens(getattr(self._config, "theme", "dark")).get("icon_lg", 20))
-        tb.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         tb.setToolButtonStyle(Qt.ToolButtonTextOnly)
         self._toolbar_command_row_layout.addWidget(tb, 1)
 
@@ -4182,19 +4152,7 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFixedHeight(26)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
-        for action in (
-            self._save_action,
-            self._undo_action,
-            self._redo_action,
-            self._copy_action,
-            self._paste_action,
-            self._compile_action,
-            self._stop_action,
-        ):
-            action.setIcon(QIcon())
-
         self._insert_widget_button = PrimaryPushButton("Insert")
-        self._insert_widget_button.setIcon(QIcon())
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
@@ -4213,8 +4171,6 @@ class MainWindow(QMainWindow):
         self._toolbar_more_button.setObjectName("workspace_toolbar_more")
         self._toolbar_more_button.setToolTip("More: copy, paste")
         self._toolbar_more_button.setAccessibleName("More toolbar actions")
-        self._toolbar_more_button.setIcon(QIcon())
-        self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         self._toolbar_more_button.setPopupMode(QToolButton.InstantPopup)
         self._toolbar_more_button.setMenu(more_menu)
         self._toolbar_more_button.setText("More")
@@ -4232,10 +4188,10 @@ class MainWindow(QMainWindow):
         mode_layout.setContentsMargins(0, 0, 0, 0)
         mode_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
         self._mode_buttons = {}
-        for label, mode, icon_key in (
-            ("Design", MODE_DESIGN, "nav.component_library"),
-            ("Split", MODE_SPLIT, "layout.align.left"),
-            ("Code", MODE_CODE, "nav.page"),
+        for label, mode in (
+            ("Design", MODE_DESIGN),
+            ("Split", MODE_SPLIT),
+            ("Code", MODE_CODE),
         ):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
@@ -4250,7 +4206,6 @@ class MainWindow(QMainWindow):
         self._update_compile_availability()
         self._update_edit_actions()
         self._update_toolbar_action_metadata()
-        self._apply_workspace_iconography()
         self._update_workspace_chips()
 
     def _set_focus_canvas_enabled(self, enabled):
@@ -4303,7 +4258,6 @@ class MainWindow(QMainWindow):
         )
         self._config.theme = theme
         self._config.save()
-        self._apply_workspace_iconography()
         self._update_view_and_theme_action_metadata()
         if hasattr(self, "widget_browser"):
             self.widget_browser.refresh()
@@ -4318,7 +4272,6 @@ class MainWindow(QMainWindow):
         apply_theme(QApplication.instance(), self._config.theme, density=normalized)
         self._config.ui_density = normalized
         self._config.save()
-        self._apply_workspace_iconography()
         self._update_view_and_theme_action_metadata()
         if hasattr(self, "widget_browser"):
             self.widget_browser.refresh()

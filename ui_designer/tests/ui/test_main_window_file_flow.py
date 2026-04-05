@@ -8682,6 +8682,7 @@ class TestMainWindowFileFlow:
 
     def test_toolbar_and_top_level_actions_expose_dynamic_hints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
+        import ui_designer.ui.main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
@@ -8705,9 +8706,14 @@ class TestMainWindowFileFlow:
                 window._stop_action,
             )
         )
+        assert window._release_build_action.icon().isNull() is True
+        assert window._release_history_action.icon().isNull() is True
+        assert window._show_grid_action.icon().isNull() is True
+        assert window._grid_menu.icon().isNull() is True
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
+        assert all(button.icon().isNull() for button in window._mode_buttons.values())
         assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unavailable: open a project first."
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is False
@@ -8722,6 +8728,29 @@ class TestMainWindowFileFlow:
         assert window._stop_action.toolTip() == (
             "Stop the running preview executable. Project: none. Preview: stopped. Unavailable: preview is not running."
         )
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda *args, **kwargs: None)
+        window._set_theme("light")
+        window._set_ui_density("roomy")
+        assert all(
+            action.icon().isNull()
+            for action in (
+                window._save_action,
+                window._undo_action,
+                window._redo_action,
+                window._copy_action,
+                window._paste_action,
+                window._compile_action,
+                window._stop_action,
+                window._release_build_action,
+                window._release_history_action,
+                window._show_grid_action,
+            )
+        )
+        assert window._grid_menu.icon().isNull() is True
+        assert window._insert_widget_button.icon().isNull() is True
+        assert window._toolbar_more_button.icon().isNull() is True
+        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
+        assert all(button.icon().isNull() for button in window._mode_buttons.values())
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)

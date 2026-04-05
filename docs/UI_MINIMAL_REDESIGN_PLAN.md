@@ -45,6 +45,7 @@
   - 顶部只保留一条命令条。
   - 删除可见的 command header、workspace context card、toolbar indicator strip。
   - `Save / Undo / Redo / Copy / Paste / Build / Stop` 等文字命令统一采用纯文字，不再附带图标。
+  - `Release Build / Release History / Show Grid / Grid Size` 等带明确文字标签的菜单入口也统一去图标化，保持命令面与菜单面的规则一致。
   - workspace context、health、runtime 仍保留隐藏的 metadata 代理，用于状态同步和测试稳定性。
   - 底部状态栏继续承担当前页、选择状态、警告数量和下一步提示。
 
@@ -117,7 +118,8 @@
 
 - 文本按钮默认无图标。
 - 导航、页签、模式切换采用纯文字。
-- 只在错误、警告、运行控制等极少数场景保留必要图标。
+- 只在错误、警告、消息框等缺少明确文字承载或需要系统语义提示的场景保留必要图标。
+- 主题切换和密度切换不再依赖“重新清空图标”的兜底逻辑，文本优先入口在初始化和刷新后都应天然保持无图标。
 
 ## 5. 当前实现中的兼容层说明
 
@@ -160,7 +162,7 @@
 - `ui_designer/tests/ui/test_main_window_runtime_indicator_visibility.py`
 - `ui_designer/tests/ui/test_theme.py`
 
-另外补跑了主窗口中与本轮改动直接相关的 workspace / toolbar / command surface / chip 元数据测试，结果通过。
+另外补跑了主窗口中与本轮改动直接相关的 workspace / toolbar / command surface / chip 元数据测试，并覆盖了 theme / density 切换后的无图标约束，结果通过。
 
 ## 8. 后续建议
 
