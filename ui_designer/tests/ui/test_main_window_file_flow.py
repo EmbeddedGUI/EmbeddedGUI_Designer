@@ -8443,6 +8443,9 @@ class TestMainWindowFileFlow:
         )
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
+        assert window._insert_widget_button.icon().isNull() is True
+        assert window._toolbar_more_button.icon().isNull() is True
+        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
         assert window._project_workspace._view_chip.isHidden() is False
         assert window._project_workspace._summary_label.text() == "1 page. Active: main_page. Clean."
         assert window._project_workspace._meta_label.text() == "Startup: main_page"
@@ -8690,6 +8693,9 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_health_chip.text() == "Open Project"
         assert window._runtime_chip.text() == "Preview Idle"
+        assert window._insert_widget_button.icon().isNull() is True
+        assert window._toolbar_more_button.icon().isNull() is True
+        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
         assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unavailable: open a project first."
         assert window._save_action.statusTip() == window._save_action.toolTip()
         assert window._save_action.isEnabled() is False

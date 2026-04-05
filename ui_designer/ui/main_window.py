@@ -479,13 +479,13 @@ class MainWindow(QMainWindow):
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
         nav_layout.setContentsMargins(_SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS, _SPACE_XS + _SPACE_XXS)
         nav_layout.setSpacing(_SPACE_SM - _SPACE_XXS)
-        for key, label, short_label, icon_key in (
-            ("project", "Project", "Pages", "nav.project"),
-            ("structure", "Structure", "Tree", "nav.structure"),
-            ("widgets", "Components", "Insert", "nav.component_library"),
-            ("assets", "Assets", "Assets", "nav.resource"),
+        for key, label, short_label in (
+            ("project", "Project", "Pages"),
+            ("structure", "Structure", "Tree"),
+            ("widgets", "Components", "Insert"),
+            ("assets", "Assets", "Assets"),
         ):
-            button = self._create_workspace_nav_button(label, short_label, icon_key, key)
+            button = self._create_workspace_nav_button(label, short_label, key)
             self._workspace_nav_buttons[key] = button
             nav_layout.addWidget(button)
         nav_layout.addStretch()
@@ -724,7 +724,7 @@ class MainWindow(QMainWindow):
         dock_widget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         dock_widget.setTitleBarWidget(QWidget(dock_widget))
 
-    def _create_workspace_nav_button(self, label, short_label, icon_key, panel_key):
+    def _create_workspace_nav_button(self, label, short_label, panel_key):
         button = QToolButton(self)
         button.setObjectName(f"workspace_nav_button_{panel_key}")
         button.setProperty("workspaceNav", True)
@@ -732,7 +732,7 @@ class MainWindow(QMainWindow):
         button.setToolButtonStyle(Qt.ToolButtonTextOnly)
         tokens = theme_tokens(getattr(self._config, "theme", "dark"))
         nav_icon_size = int(tokens.get("icon_md", 18))
-        button.setIcon(make_icon(icon_key, size=nav_icon_size))
+        button.setIcon(QIcon())
         button.setIconSize(QSize(nav_icon_size, nav_icon_size))
         button.setText(str(short_label or label or ""))
         button.setFixedSize(64, 30)
@@ -4198,7 +4198,7 @@ class MainWindow(QMainWindow):
         self._paste_action.setIcon(make_icon("toolbar.paste", size=toolbar_icon_size))
 
         self._insert_widget_button = PrimaryPushButton("Insert")
-        self._insert_widget_button.setIcon(make_icon("nav.component_library", size=toolbar_icon_size))
+        self._insert_widget_button.setIcon(QIcon())
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
@@ -4217,7 +4217,7 @@ class MainWindow(QMainWindow):
         self._toolbar_more_button.setObjectName("workspace_toolbar_more")
         self._toolbar_more_button.setToolTip("More: copy, paste")
         self._toolbar_more_button.setAccessibleName("More toolbar actions")
-        self._toolbar_more_button.setIcon(make_icon("toolbar.settings.global", size=toolbar_icon_size))
+        self._toolbar_more_button.setIcon(QIcon())
         self._toolbar_more_button.setIconSize(QSize(toolbar_icon_size, toolbar_icon_size))
         self._toolbar_more_button.setPopupMode(QToolButton.InstantPopup)
         self._toolbar_more_button.setMenu(more_menu)
