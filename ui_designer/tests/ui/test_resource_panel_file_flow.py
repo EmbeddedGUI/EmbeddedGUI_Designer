@@ -47,15 +47,24 @@ class TestResourcePanelFileFlow:
         panel.set_resource_catalog(catalog)
 
         header = panel.findChild(QFrame, "resource_panel_header")
+        header_margins = header.layout().contentsMargins()
         eyebrow = header.findChild(QLabel, "resource_panel_eyebrow")
         title = header.findChild(QLabel, "resource_panel_title")
         subtitle = header.findChild(QLabel, "resource_panel_subtitle")
         status = header.findChild(QLabel, "resource_panel_status")
+        top_card = panel.findChild(QFrame, "resource_panel_card")
 
         assert panel.accessibleName() == (
             "Resource panel: Workspace configured. Active tab: Images. "
             "Catalog: 3 assets. Missing: 2 missing files. Selection: Images: none."
         )
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
+        assert header.layout().spacing() == 8
+        assert top_card.layout().spacing() == 6
+        assert panel._tabs.widget(0).layout().spacing() == 6
+        assert panel._tabs.widget(1).layout().spacing() == 6
+        assert panel._tabs.widget(2).layout().spacing() == 6
+        assert panel._tabs.widget(3).layout().spacing() == 6
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."
         assert eyebrow.isHidden() is True
