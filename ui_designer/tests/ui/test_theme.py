@@ -178,6 +178,7 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#page_fields_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_fields_metrics_strip {", 1)[1].split("}", 1)[0]
         sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
+        table = css.split("#page_editor_table {", 1)[1].split("}", 1)[0]
         buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -190,6 +191,9 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections
+        assert f"background-color: {t['panel_alt']};" in table
+        assert f"border: 1px solid {t['border']};" in table
+        assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
         assert "min-height: 28px;" in buttons
         assert f"padding: 3px {t['space_sm']}px;" in buttons
@@ -204,6 +208,7 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         eyebrow = css.split("#page_timers_eyebrow {", 1)[1].split("}", 1)[0]
         metrics = css.split("#page_timers_metrics_strip {", 1)[1].split("}", 1)[0]
         sections = css.split("#page_editor_section,", 1)[1].split("}", 1)[0]
+        table = css.split("#page_editor_table {", 1)[1].split("}", 1)[0]
         buttons = css.split("#page_editor_actions QPushButton,", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -216,6 +221,9 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in sections
         assert "border: none;" in sections
         assert "border-radius: 0px;" in sections
+        assert f"background-color: {t['panel_alt']};" in table
+        assert f"border: 1px solid {t['border']};" in table
+        assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
         assert "min-height: 28px;" in buttons
         assert f"padding: 3px {t['space_sm']}px;" in buttons

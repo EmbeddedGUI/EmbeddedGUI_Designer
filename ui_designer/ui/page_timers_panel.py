@@ -102,7 +102,7 @@ class PageTimersPanel(QWidget):
         self._table_frame.setObjectName("page_editor_table_shell")
         table_layout = QVBoxLayout(self._table_frame)
         table_layout.setContentsMargins(0, 0, 0, 0)
-        table_layout.setSpacing(6)
+        table_layout.setSpacing(4)
         self._table_label = QLabel("Timer Definitions")
         self._table_label.setObjectName("page_editor_section_label")
         table_layout.addWidget(self._table_label)

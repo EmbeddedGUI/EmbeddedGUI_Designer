@@ -1726,7 +1726,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_table {{
     background-color: {t['panel_alt']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #page_editor_actions QPushButton,
