@@ -602,6 +602,23 @@ class PropertyPanel(QWidget):
         layout.addWidget(eyebrow)
         layout.addWidget(title)
         layout.addWidget(sub)
+        eyebrow.hide()
+        sub.hide()
+        _set_widget_metadata(
+            eyebrow,
+            tooltip="Property inspection surface.",
+            accessible_name="Property inspection surface.",
+        )
+        _set_widget_metadata(
+            title,
+            tooltip="No widget selected.",
+            accessible_name="No widget selected.",
+        )
+        _set_widget_metadata(
+            sub,
+            tooltip=sub.text(),
+            accessible_name=sub.text(),
+        )
         _set_widget_metadata(
             frame,
             tooltip="Select a widget from the canvas or tree to edit its properties.",
@@ -802,6 +819,7 @@ class PropertyPanel(QWidget):
             tooltip=f"Widget type: {subtitle.text()}.",
             accessible_name=f"Widget type: {subtitle.text()}.",
         )
+        subtitle.hide()
         _set_widget_metadata(
             header_meta,
             tooltip=header_meta.text(),

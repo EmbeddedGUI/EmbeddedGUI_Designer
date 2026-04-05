@@ -84,6 +84,13 @@ class TestPropertyPanelFileFlow:
         assert panel._search_hint.isHidden() is True
         assert panel._no_selection_label.toolTip() == "Select a widget from the canvas or tree to edit its properties."
         assert panel._no_selection_label.accessibleName() == "Property panel empty state: No widget selected."
+        empty_subtitle = next(
+            label
+            for label in panel._no_selection_label.findChildren(QLabel)
+            if label.objectName() == "workspace_section_subtitle"
+        )
+        assert empty_subtitle.accessibleName() == empty_subtitle.text()
+        assert empty_subtitle.isHidden() is True
 
         panel._search_edit.setText("font")
 
@@ -121,6 +128,7 @@ class TestPropertyPanelFileFlow:
         assert eyebrow.isHidden() is True
         assert title.accessibleName() == "Selected widget: title."
         assert subtitle.accessibleName() == f"Widget type: {subtitle.text()}."
+        assert subtitle.isHidden() is True
         assert meta.accessibleName() == meta.text()
         assert meta.isHidden() is True
         assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
