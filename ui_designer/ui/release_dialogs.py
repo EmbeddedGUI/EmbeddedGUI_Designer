@@ -648,13 +648,15 @@ class ReleaseBuildDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("release_build_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._profile_metric_value = self._create_metric_card(metrics_layout, "Profile")
         self._diagnostics_metric_value = self._create_metric_card(metrics_layout, "Diagnostics")
         self._package_metric_value = self._create_metric_card(metrics_layout, "Packaging")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
@@ -749,6 +751,7 @@ class ReleaseBuildDialog(QDialog):
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def _create_metric_card(self, layout: QVBoxLayout, label_text: str) -> QLabel:
@@ -959,13 +962,15 @@ class ReleaseProfilesDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("release_profiles_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._profile_count_metric_value = self._create_metric_card(metrics_layout, "Profiles")
         self._default_metric_value = self._create_metric_card(metrics_layout, "Default")
         self._selection_metric_value = self._create_metric_card(metrics_layout, "Selection")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         root_layout.addWidget(self._header_frame)
 
         content_layout = QHBoxLayout()
@@ -1100,6 +1105,7 @@ class ReleaseProfilesDialog(QDialog):
         self._rebuild_profile_list()
         if self._profile_list.count():
             self._profile_list.setCurrentRow(0)
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def _create_metric_card(self, layout: QVBoxLayout, label_text: str) -> QLabel:

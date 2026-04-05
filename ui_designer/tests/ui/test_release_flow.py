@@ -608,6 +608,7 @@ def test_release_build_header_exposes_pipeline_metadata(qapp):
     assert dialog._header_frame.accessibleName().startswith("Release build header. Release build: profile Windows PC (windows-pc).")
     assert dialog._eyebrow_label.isHidden()
     assert dialog._subtitle_label.isHidden()
+    assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release pipeline workspace."
     assert dialog._title_label.accessibleName() == "Release build title: Prepare Release Build."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -736,6 +737,7 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     )
     assert dialog._eyebrow_label.isHidden()
     assert dialog._subtitle_label.isHidden()
+    assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
     assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
