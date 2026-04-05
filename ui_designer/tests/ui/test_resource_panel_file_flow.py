@@ -65,6 +65,12 @@ class TestResourcePanelFileFlow:
         assert panel._tabs.widget(1).layout().spacing() == 6
         assert panel._tabs.widget(2).layout().spacing() == 6
         assert panel._tabs.widget(3).layout().spacing() == 6
+        preview_layout = panel._details_tabs.widget(0).layout()
+        usage_layout = panel._details_tabs.widget(1).layout()
+        usage_filter_layout = usage_layout.itemAt(1).layout()
+        assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (6, 6, 6, 6)
+        assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (6, 6, 6, 6)
+        assert usage_filter_layout.spacing() == 4
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."
         assert eyebrow.isHidden() is True

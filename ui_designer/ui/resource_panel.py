@@ -1750,7 +1750,7 @@ class ResourcePanel(QWidget):
 
         preview_tab = QWidget()
         preview_tab_layout = QVBoxLayout(preview_tab)
-        preview_tab_layout.setContentsMargins(8, 8, 8, 8)
+        preview_tab_layout.setContentsMargins(6, 6, 6, 6)
         preview_tab_layout.setSpacing(6)
 
         self._preview_hint = QLabel("Preview the selected asset.")
@@ -1766,7 +1766,7 @@ class ResourcePanel(QWidget):
 
         usage_tab = QWidget()
         usage_layout = QVBoxLayout(usage_tab)
-        usage_layout.setContentsMargins(8, 8, 8, 8)
+        usage_layout.setContentsMargins(6, 6, 6, 6)
         usage_layout.setSpacing(6)
 
         self._usage_hint = QLabel("Review where the selected asset is used.")
@@ -1775,7 +1775,7 @@ class ResourcePanel(QWidget):
         usage_layout.addWidget(self._usage_hint)
 
         usage_filter_row = QHBoxLayout()
-        usage_filter_row.setSpacing(6)
+        usage_filter_row.setSpacing(4)
         self._usage_current_page_only = QCheckBox("Current Page Only")
         self._usage_current_page_only.toggled.connect(self._refresh_usage_view)
         self._usage_current_page_only.toggled.connect(self._update_usage_accessibility_metadata)
