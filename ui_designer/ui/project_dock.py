@@ -16,7 +16,7 @@ import os
 from PyQt5.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QTreeWidget, QTreeWidgetItem,
     QMenu, QAction, QInputDialog, QMessageBox, QLabel, QHBoxLayout,
-    QPushButton, QComboBox, QGroupBox, QFrame,
+    QPushButton, QComboBox, QFrame,
 )
 from PyQt5.QtCore import pyqtSignal, Qt
 
@@ -101,7 +101,7 @@ class ProjectExplorerDock(QDockWidget):
         self._header_frame = QFrame()
         self._header_frame.setObjectName("project_dock_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(10, 10, 10, 10)
+        header_layout.setContentsMargins(6, 6, 6, 6)
         header_layout.setSpacing(4)
 
         self._title_label = QLabel("Project")
@@ -130,18 +130,17 @@ class ProjectExplorerDock(QDockWidget):
 
         layout.addWidget(self._header_frame)
 
-        # Project settings group
-        self._settings_group = QGroupBox("")
+        self._settings_group = QFrame()
         self._settings_group.setObjectName("project_dock_settings_group")
         self._settings_group.setAccessibleName("Project settings")
         settings_layout = QVBoxLayout(self._settings_group)
         settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.setSpacing(8)
+        settings_layout.setSpacing(6)
 
         # Page mode selector
         mode_layout = QHBoxLayout()
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        mode_layout.setSpacing(8)
+        mode_layout.setSpacing(6)
         self._mode_label = QLabel("Mode")
         _set_widget_metadata(
             self._mode_label,
@@ -157,21 +156,15 @@ class ProjectExplorerDock(QDockWidget):
         settings_layout.addLayout(mode_layout)
         layout.addWidget(self._settings_group)
 
-        pages_card = QFrame()
-        pages_card.setObjectName("project_dock_pages_card")
-        pages_layout = QVBoxLayout(pages_card)
-        pages_layout.setContentsMargins(0, 0, 0, 0)
-        pages_layout.setSpacing(6)
-
         # Page tree
         self._pages_label = QLabel("Pages")
         self._pages_label.setObjectName("workspace_section_title")
-        pages_layout.addWidget(self._pages_label)
+        layout.addWidget(self._pages_label)
 
         self._pages_hint = QLabel("Right click a page to rename, duplicate, set startup, or delete.")
         self._pages_hint.setObjectName("workspace_section_subtitle")
         self._pages_hint.setWordWrap(True)
-        pages_layout.addWidget(self._pages_hint)
+        layout.addWidget(self._pages_hint)
 
         self._page_tree = QTreeWidget()
         self._page_tree.setObjectName("project_dock_tree")
@@ -179,15 +172,12 @@ class ProjectExplorerDock(QDockWidget):
         self._page_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._page_tree.customContextMenuRequested.connect(self._on_page_context_menu)
         self._page_tree.currentItemChanged.connect(self._on_page_item_changed)
-        pages_layout.addWidget(self._page_tree, 1)
+        layout.addWidget(self._page_tree, 1)
 
         # Add page button
         self._add_page_button = QPushButton("New Page")
         self._add_page_button.clicked.connect(self._on_add_page)
-        pages_layout.addWidget(self._add_page_button)
-        layout.addWidget(pages_card, 1)
-
-        layout.addStretch()
+        layout.addWidget(self._add_page_button)
 
         self._subtitle_label.hide()
         self._status_label.hide()

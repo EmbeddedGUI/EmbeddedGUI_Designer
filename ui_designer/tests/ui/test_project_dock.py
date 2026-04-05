@@ -50,7 +50,12 @@ class TestProjectExplorerDock:
         from ui_designer.ui.project_dock import ProjectExplorerDock
 
         dock = ProjectExplorerDock()
+        root_layout = dock.widget().layout()
+        header_margins = dock._header_frame.layout().contentsMargins()
 
+        assert root_layout.spacing() == 6
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert dock._settings_group.layout().spacing() == 6
         assert dock._header_frame.accessibleName() == (
             "Project explorer header. Project Explorer: 0 pages. Current page: none. Startup page: none. No dirty pages."
         )

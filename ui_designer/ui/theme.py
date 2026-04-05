@@ -1327,32 +1327,16 @@ QTableWidget#resource_panel_table QHeaderView::section {{
     font-size: {t['fs_body_sm']}px;
 }}
 
-#project_dock_pages_card,
-QGroupBox#project_dock_settings_group {{
+#project_dock_settings_group {{
     background-color: transparent;
     border: none;
     border-radius: 0px;
 }}
 
-QGroupBox#project_dock_settings_group {{
-    margin-top: 0px;
-    padding-top: 0px;
-}}
-
-QGroupBox#project_dock_settings_group::title {{
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    left: 0px;
-    color: {t['text_soft']};
-    font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
-    padding: 0;
-}}
-
 #project_dock_metric_card {{
     background-color: transparent;
-    border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border: none;
+    border-radius: 0px;
 }}
 
 #project_dock_metric_label,
