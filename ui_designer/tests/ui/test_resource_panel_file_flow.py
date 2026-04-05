@@ -1335,6 +1335,10 @@ class TestResourcePanelFileFlow:
         assert dialog._filter_metric_value.accessibleName() == "Resource dialog metric: Page Filter. All pages."
         assert dialog._filter_metric_value._resource_dialog_metric_card.accessibleName() == "Page Filter metric: All pages."
         assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
+        assert dialog._summary_label.isHidden()
+        assert dialog._summary_label.accessibleName().startswith(
+            "Batch replace summary: The selected replacements will rename 2 missing image resources."
+        )
         assert dialog._current_page_only.toolTip() == "Filter impacts to the current page: detail_page."
         assert dialog._impact_table.accessibleName() == (
             "Rename impact table: 2 rows. Current selection: missing_a.png -> renamed_a.png."

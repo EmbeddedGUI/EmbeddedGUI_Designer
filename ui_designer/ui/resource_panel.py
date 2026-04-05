@@ -1037,6 +1037,7 @@ class _BatchReplaceImpactDialog(QDialog):
         self._summary_label.setObjectName("resource_dialog_summary")
         self._summary_label.setWordWrap(True)
         summary_layout.addWidget(self._summary_label)
+        self._summary_label.hide()
 
         if self._current_page_name:
             filter_row = QHBoxLayout()
