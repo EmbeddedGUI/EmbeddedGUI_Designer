@@ -173,7 +173,7 @@ def _create_resource_panel_metric_card(layout, label_text):
     card = QFrame()
     card.setObjectName("resource_panel_metric_card")
     card_layout = QVBoxLayout(card)
-    card_layout.setContentsMargins(12, 10, 12, 10)
+    card_layout.setContentsMargins(8, 6, 8, 6)
     card_layout.setSpacing(4)
 
     label = QLabel(label_text)
@@ -1486,7 +1486,7 @@ class ResourcePanel(QWidget):
         self._panel_metrics_frame.setObjectName("resource_panel_metrics_frame")
         metrics_layout = QVBoxLayout(self._panel_metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
-        metrics_layout.setSpacing(6)
+        metrics_layout.setSpacing(4)
         self._catalog_metric_value = _create_resource_panel_metric_card(metrics_layout, "Catalog")
         self._missing_metric_value = _create_resource_panel_metric_card(metrics_layout, "Missing")
         self._selection_metric_value = _create_resource_panel_metric_card(metrics_layout, "Selection")

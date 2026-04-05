@@ -1224,7 +1224,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #resource_panel_metric_card {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 #resource_panel_metric_label,

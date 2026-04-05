@@ -368,7 +368,7 @@ def test_resource_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in card
         assert "border-radius: 0px;" in card
         assert "background-color: transparent;" in metric_card
-        assert f"border-radius: {t['r_md']}px;" in metric_card
+        assert "border-radius: 0px;" in metric_card
         assert f"background-color: {t['panel_alt']};" in list_surface
         assert f"background-color: {t['panel_alt']};" in preview
         assert "border-radius: 0px;" in preview

@@ -53,6 +53,8 @@ class TestResourcePanelFileFlow:
         subtitle = header.findChild(QLabel, "resource_panel_subtitle")
         status = header.findChild(QLabel, "resource_panel_status")
         top_card = panel.findChild(QFrame, "resource_panel_card")
+        metrics_layout = panel._panel_metrics_frame.layout()
+        metric_margins = panel._catalog_metric_value._resource_panel_metric_card.layout().contentsMargins()
 
         assert panel.accessibleName() == (
             "Resource panel: Workspace configured. Active tab: Images. "
@@ -65,6 +67,13 @@ class TestResourcePanelFileFlow:
         assert panel._tabs.widget(1).layout().spacing() == 6
         assert panel._tabs.widget(2).layout().spacing() == 6
         assert panel._tabs.widget(3).layout().spacing() == 6
+        assert metrics_layout.spacing() == 4
+        assert (
+            metric_margins.left(),
+            metric_margins.top(),
+            metric_margins.right(),
+            metric_margins.bottom(),
+        ) == (8, 6, 8, 6)
         preview_layout = panel._details_tabs.widget(0).layout()
         usage_layout = panel._details_tabs.widget(1).layout()
         usage_filter_layout = usage_layout.itemAt(1).layout()
