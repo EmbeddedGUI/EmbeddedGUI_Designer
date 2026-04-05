@@ -262,7 +262,7 @@ class WidgetBrowserPanel(QWidget):
         self._header_frame.setObjectName("widget_browser_header")
         self._header_frame.setProperty("panelTone", "components")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
         header_layout.setSpacing(_SPACE_XXS)
 
         self._header_eyebrow = QLabel("Components")
@@ -295,7 +295,7 @@ class WidgetBrowserPanel(QWidget):
         self._metrics_frame = QFrame()
         self._metrics_frame.setObjectName("widget_browser_metrics_strip")
         metrics_layout = QHBoxLayout(self._metrics_frame)
-        metrics_layout.setContentsMargins(_SPACE_SM, _SPACE_XS + _SPACE_XXS, _SPACE_SM, _SPACE_XS + _SPACE_XXS)
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(_SPACE_XS)
 
         self._visible_count_chip = QLabel("0 visible")

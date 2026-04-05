@@ -123,7 +123,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
         metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
 
         assert f"border-radius: {tokens['r_md']}px;" in chip
-        assert f"border-radius: {tokens['r_sm']}px;" in browser_card
+        assert "border-radius: 0px;" in browser_card
         assert f"border-radius: {tokens['r_sm']}px;" in metric_card
 
 
@@ -555,7 +555,8 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         t = theme_tokens(mode)
         css = _build_stylesheet(mode)
 
-        header = css.split('#widget_browser_header[panelTone="components"] {', 1)[1].split("}", 1)[0]
+        header = css.split("#workspace_panel_header,", 1)[1].split("}", 1)[0]
+        tone_header = css.split('#widget_browser_header[panelTone="components"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#widget_browser_header_meta {", 1)[1].split("}", 1)[0]
         metrics = css.split("#widget_browser_metrics_strip {", 1)[1].split("}", 1)[0]
         filter_bar = css.split("#widget_browser_filter_bar {", 1)[1].split("}", 1)[0]
@@ -563,13 +564,18 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-radius: 0px;" in header
+        assert f"background-color: {t['panel']};" in tone_header
+        assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
-        assert f"background-color: {t['panel_soft']};" in metrics
+        assert "background-color: transparent;" in metrics
+        assert "border: none;" in metrics
+        assert "border-radius: 0px;" in metrics
         assert "background-color: transparent;" in filter_bar
         assert "border: none;" in filter_bar
         assert "border-radius: 0px;" in filter_bar
         assert "background-color: transparent;" in card
-        assert f"border-radius: {t['r_sm']}px;" in card
+        assert "border-radius: 0px;" in card
 
 
 def test_widget_tree_styles_use_engineering_surface_tokens():
