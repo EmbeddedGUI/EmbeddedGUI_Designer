@@ -105,6 +105,7 @@ class PageThumbnail(QWidget):
         self._meta_label.setWordWrap(True)
         self._meta_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         content_layout.addWidget(self._meta_label)
+        self._meta_label.hide()
 
         chip_row = QHBoxLayout()
         chip_row.setContentsMargins(0, 0, 0, 0)
@@ -197,6 +198,11 @@ class PageThumbnail(QWidget):
             self._name_label,
             tooltip=tooltip,
             accessible_name=f"Page name: {self._name_label.text()}. {summary}",
+        )
+        _set_widget_metadata(
+            self._meta_label,
+            tooltip=self._meta_label.text(),
+            accessible_name=self._meta_label.text(),
         )
 
     def set_selected(self, selected):

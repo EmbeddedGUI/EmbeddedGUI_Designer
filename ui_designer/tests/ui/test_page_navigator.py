@@ -41,6 +41,10 @@ class TestPageNavigator:
         assert thumb._name_label.toolTip() == thumb.toolTip()
         assert thumb._name_label.statusTip() == thumb._name_label.toolTip()
         assert thumb._name_label.accessibleName() == "Page name: main_page. Available. No unsaved changes."
+        assert thumb._meta_label.isHidden() is True
+        assert thumb._meta_label.toolTip() == "Available. No unsaved changes. Left click to open."
+        assert thumb._meta_label.statusTip() == thumb._meta_label.toolTip()
+        assert thumb._meta_label.accessibleName() == "Available. No unsaved changes. Left click to open."
 
         thumb.set_startup(True)
         assert thumb.toolTip() == "Open page: main_page. Startup page. Available. No unsaved changes."
@@ -48,11 +52,13 @@ class TestPageNavigator:
 
         thumb.set_selected(True)
         assert thumb.accessibleName() == "Page thumbnail: main_page. Startup page. Current page. No unsaved changes."
+        assert thumb._meta_label.accessibleName() == "Startup page. Current page. No unsaved changes. Right click for actions."
 
         thumb.set_dirty(True)
         assert thumb._name_label.text() == "main_page*"
         assert thumb.toolTip() == "Open page: main_page. Startup page. Current page. Unsaved changes."
         assert thumb._name_label.accessibleName() == "Page name: main_page*. Startup page. Current page. Unsaved changes."
+        assert thumb._meta_label.accessibleName() == "Startup page. Current page. Unsaved changes. Right click for actions."
         thumb.deleteLater()
 
     def test_page_navigator_accessibility_summarizes_pages_current_and_dirty_state(self, qapp):
