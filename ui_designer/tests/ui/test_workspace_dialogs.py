@@ -901,6 +901,7 @@ class TestWelcomePage:
         assert page._subtitle_label.accessibleName() == page._subtitle_label.text()
         assert page._sdk_status_label.accessibleName() == "SDK status: Ready: using selected SDK root"
         assert page._sdk_path_label.accessibleName() == f"SDK path: {sdk_root}"
+        assert page._sdk_hint_label.isHidden()
         assert page._recent_label.accessibleName() == "Recent Projects: No recent projects."
         assert page._overview_sdk_value.accessibleName() == "Welcome metric: SDK Binding. Ready: using selected SDK root."
         assert page._overview_sdk_value._welcome_metric_label.accessibleName() == "SDK Binding metric label."

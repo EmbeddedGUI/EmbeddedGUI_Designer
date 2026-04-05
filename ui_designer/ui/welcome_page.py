@@ -282,6 +282,7 @@ class WelcomePage(QWidget):
         self._sdk_hint_label.setWordWrap(True)
         self._sdk_hint_label.setObjectName("workspace_section_subtitle")
         sdk_layout.addWidget(self._sdk_hint_label)
+        self._sdk_hint_label.hide()
 
         left_col.addSpacing(10)
         left_col.addWidget(self._sdk_card)
