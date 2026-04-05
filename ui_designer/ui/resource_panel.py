@@ -573,13 +573,15 @@ class _MissingResourceReplaceDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._missing_metric_value = _create_dialog_metric_card(metrics_layout, "Missing")
         self._candidate_metric_value = _create_dialog_metric_card(metrics_layout, "Candidates")
         self._selected_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         content_card = QFrame()
@@ -638,6 +640,7 @@ class _MissingResourceReplaceDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def _selected_paths(self):
@@ -822,13 +825,15 @@ class _ReferenceImpactDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Affected Usages")
         self._selection_metric_value = _create_dialog_metric_card(metrics_layout, "Selection")
         self._action_metric_value = _create_dialog_metric_card(metrics_layout, "Action")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         content_card = QFrame()
@@ -888,6 +893,7 @@ class _ReferenceImpactDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+        self._metrics_frame.hide()
         self._update_accessibility_summary()
 
     def selected_usage(self):
@@ -1019,13 +1025,15 @@ class _BatchReplaceImpactDialog(QDialog):
         hero_copy.addStretch(1)
         header_layout.addLayout(hero_copy, 3)
 
-        metrics_layout = QVBoxLayout()
+        self._metrics_frame = QFrame()
+        self._metrics_frame.setObjectName("resource_dialog_metrics_frame")
+        metrics_layout = QVBoxLayout(self._metrics_frame)
         metrics_layout.setContentsMargins(0, 0, 0, 0)
         metrics_layout.setSpacing(8)
         self._rename_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Renames")
         self._usage_metric_value = _create_dialog_metric_card(metrics_layout, "Visible Usages")
         self._filter_metric_value = _create_dialog_metric_card(metrics_layout, "Page Filter")
-        header_layout.addLayout(metrics_layout, 2)
+        header_layout.addWidget(self._metrics_frame, 2)
         layout.addWidget(self._header_frame)
 
         summary_card = QFrame()
@@ -1117,6 +1125,7 @@ class _BatchReplaceImpactDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+        self._metrics_frame.hide()
         self._refresh_impact_view()
 
     def selected_usage(self):

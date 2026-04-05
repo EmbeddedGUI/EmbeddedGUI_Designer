@@ -1105,6 +1105,7 @@ class TestResourcePanelFileFlow:
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
+        assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Resource recovery workspace."
         assert dialog._title_label.accessibleName() == "Resource replacement title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -1242,6 +1243,7 @@ class TestResourcePanelFileFlow:
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
+        assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Resource impact workspace."
         assert dialog._title_label.accessibleName() == "Reference impact title: Delete Resource."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -1329,6 +1331,7 @@ class TestResourcePanelFileFlow:
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
+        assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Batch rename impact workspace."
         assert dialog._title_label.accessibleName() == "Batch replace impact title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
