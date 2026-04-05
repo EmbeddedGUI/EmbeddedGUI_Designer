@@ -840,6 +840,7 @@ class _ReferenceImpactDialog(QDialog):
         self._summary_label.setObjectName("resource_dialog_summary")
         self._summary_label.setWordWrap(True)
         content_layout.addWidget(self._summary_label)
+        self._summary_label.hide()
 
         self._table = QTableWidget(len(usages), 3, self)
         _prepare_dialog_table(self._table)

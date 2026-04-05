@@ -1252,6 +1252,7 @@ class TestResourcePanelFileFlow:
         assert dialog._action_metric_value.accessibleName() == "Resource dialog metric: Action. Delete."
         assert dialog._action_metric_value._resource_dialog_metric_card.accessibleName() == "Action metric: Delete."
         assert len(dialog.findChildren(QFrame, "resource_dialog_metric_card")) == 3
+        assert dialog._summary_label.isHidden()
         assert dialog._summary_label.accessibleName() == (
             "Reference impact summary: This action updates 2 widget references."
         )
