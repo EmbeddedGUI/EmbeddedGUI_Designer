@@ -79,6 +79,7 @@
   - 去掉可见单选 / 多选 header card。
   - 去掉可见 metric grid、状态 chip 行。
   - 保留顶部简短上下文标题与搜索入口。
+  - 搜索引导优先收敛到输入框 placeholder，不再额外占用一整行解释文案。
   - 属性编辑区域直接进入 Layout / Basic / Appearance / Data / Callbacks / Designer 分组。
   - 仅在确实存在锁定、隐藏、布局托管等情况时，显示简短的交互提示。
   - 原有 header / size chip 等对象只作为隐藏兼容层存在。

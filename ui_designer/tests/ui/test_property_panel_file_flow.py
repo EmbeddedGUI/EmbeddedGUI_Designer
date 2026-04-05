@@ -173,9 +173,14 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
         assert panel._search_edit.isHidden() is True
+        assert panel._search_edit.placeholderText() == "Select a widget to filter properties"
+        assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
 
         panel.set_widget(first)
         assert panel._search_edit.isHidden() is False
+        assert panel._search_hint.isHidden() is True
+        assert panel._search_edit.placeholderText() == "Filter widget properties..."
+        assert panel._context_meta.text() == "Label (label) | Freeform | 0 asset bindings | 0 active callbacks."
 
         panel._search_edit.setText("name")
         assert _find_group(panel, "Basic").isHidden() is False
@@ -185,12 +190,21 @@ class TestPropertyPanelFileFlow:
 
         assert panel._search_edit.isHidden() is False
         assert panel._search_edit.text() == "name"
+        assert panel._search_edit.placeholderText() == "Filter widget properties..."
         assert _find_group(panel, "Basic").isHidden() is False
         assert _find_group(panel, "Data").isHidden() is True
+
+        panel.set_selection([first, second], primary=second)
+        assert panel._search_edit.isHidden() is False
+        assert panel._search_hint.isHidden() is True
+        assert panel._search_edit.placeholderText() == "Filter shared properties..."
+        assert panel._context_meta.text().startswith("Primary: second | 1 type | ")
+        assert "mixed field" in panel._context_meta.text()
 
         panel.set_widget(None)
 
         assert panel._search_edit.isHidden() is True
+        assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
         panel.deleteLater()
 
     def test_file_selector_sets_accessibility_metadata(self, qapp):

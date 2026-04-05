@@ -367,7 +367,7 @@ class PropertyPanel(QWidget):
         self._context_title.setObjectName("workspace_section_title")
         context_layout.addWidget(self._context_title)
 
-        self._context_meta = QLabel("Select a widget to inspect geometry, behavior, resources, and callback wiring.")
+        self._context_meta = QLabel("Select a widget to inspect properties, resources, and callbacks.")
         self._context_meta.setObjectName("workspace_section_subtitle")
         self._context_meta.setWordWrap(True)
         context_layout.addWidget(self._context_meta)
@@ -377,15 +377,18 @@ class PropertyPanel(QWidget):
         self._search_shell.setObjectName("property_panel_search_shell")
         search_layout = QVBoxLayout(self._search_shell)
         search_layout.setContentsMargins(0, 0, 0, 0)
-        search_layout.setSpacing(4)
+        search_layout.setSpacing(0)
 
-        self._search_hint = QLabel("Search labels, resource bindings, and callbacks for the current selection.")
+        self._search_hint = QLabel(
+            "Search labels, resource bindings, and callbacks for the current selection.",
+            self._search_shell,
+        )
         self._search_hint.setObjectName("workspace_section_subtitle")
         self._search_hint.setWordWrap(True)
-        search_layout.addWidget(self._search_hint)
+        self._search_hint.hide()
 
         self._search_edit = SearchLineEdit()
-        self._search_edit.setPlaceholderText("Filter properties...")
+        self._search_edit.setPlaceholderText("Select a widget to filter properties")
         self._search_edit.textChanged.connect(self._on_search_changed)
         self._search_edit.setVisible(False)
         search_layout.addWidget(self._search_edit)
@@ -700,13 +703,14 @@ class PropertyPanel(QWidget):
         if self._primary_widget is None:
             self._context_title.setText("No selection")
             self._context_meta.setText(
-                "Select a widget to inspect geometry, behavior, resources, and callback wiring."
+                "Select a widget to inspect properties, resources, and callbacks."
             )
+            self._search_edit.setPlaceholderText("Select a widget to filter properties")
             self._search_hint.setText("Search becomes available after you select a widget.")
             self._search_hint.setVisible(False)
             return
 
-        self._search_hint.setVisible(True)
+        self._search_hint.setVisible(False)
         if len(self._selection) > 1:
             widget_types = sorted({widget.widget_type for widget in self._selection})
             callback_entries = self._collect_multi_callback_entries()
@@ -715,9 +719,9 @@ class PropertyPanel(QWidget):
             primary_name = self._primary_widget.name if self._primary_widget else "none"
             self._context_title.setText(f"Selected {_count_label(len(self._selection), 'widget')}")
             self._context_meta.setText(
-                f"Primary: {primary_name}. Types: {', '.join(widget_types)}. "
-                f"Mixed fields: {mixed_total}."
+                f"Primary: {primary_name} | {_count_label(len(widget_types), 'type')} | {_count_label(mixed_total, 'mixed field')}."
             )
+            self._search_edit.setPlaceholderText("Filter shared properties...")
             self._search_hint.setText("Search common fields, resource bindings, and callbacks for the current batch selection.")
             return
 
@@ -726,12 +730,13 @@ class PropertyPanel(QWidget):
         display_name = WidgetRegistry.instance().display_name(widget.widget_type)
         bound_assets = self._resource_binding_count(widget)
         active_callbacks = self._active_callback_count(widget)
-        placement = f"Managed by {layout_parent}" if layout_parent else "Freeform placement"
+        placement = f"Managed by {layout_parent}" if layout_parent else "Freeform"
         self._context_title.setText(widget.name)
         self._context_meta.setText(
-            f"{display_name} ({widget.widget_type}). {placement}. "
-            f"{_count_label(bound_assets, 'asset binding')} and {_count_label(active_callbacks, 'active callback')}."
+            f"{display_name} ({widget.widget_type}) | {placement} | "
+            f"{_count_label(bound_assets, 'asset binding')} | {_count_label(active_callbacks, 'active callback')}."
         )
+        self._search_edit.setPlaceholderText("Filter widget properties...")
         self._search_hint.setText("Search fields, resource bindings, and callbacks for the current widget.")
         if self._header_size_chip is not None:
             self._header_size_chip.setText(f"{widget.width}×{widget.height}")
