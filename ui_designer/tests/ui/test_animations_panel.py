@@ -54,10 +54,16 @@ class TestAnimationsPanel:
 
         panel = AnimationsPanel()
         panel.set_selection([widget], primary=widget)
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
+        title_row = header_layout.itemAt(1).layout()
 
         assert panel._summary_label.text() == "Animations: 1 animation on label title"
         assert panel.accessibleName() == "Animations: 1 animation on label title"
         assert panel.toolTip() == panel.accessibleName()
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 4, 6, 4)
+        assert title_row.spacing() == 2
         assert panel._actions_strip.layout().spacing() == 2
         assert panel._header_eyebrow.accessibleName() == "Motion timeline workspace surface."
         assert panel._header_eyebrow.isHidden() is True

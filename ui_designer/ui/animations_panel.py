@@ -79,13 +79,13 @@ class AnimationsPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_SM - 2)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("animations_panel_header")
         self._header_frame.setProperty("panelTone", "animations")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_SM, _SPACE_XS, _SPACE_SM, _SPACE_XS)
+        header_layout.setContentsMargins(6, _SPACE_XS, 6, _SPACE_XS)
         header_layout.setSpacing(_SPACE_XS)
 
         self._header_eyebrow = QLabel("Animations")
@@ -94,7 +94,7 @@ class AnimationsPanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(_SPACE_XS)
+        title_row.setSpacing(2)
         self._summary_label = QLabel("")
         self._summary_label.setObjectName("workspace_section_title")
         title_row.addWidget(self._summary_label, 1)
