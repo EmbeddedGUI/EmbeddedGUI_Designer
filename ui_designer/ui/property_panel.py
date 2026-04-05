@@ -547,8 +547,8 @@ class PropertyPanel(QWidget):
     def _build_metric_grid(self, metrics):
         grid = QGridLayout()
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.setHorizontalSpacing(6)
-        grid.setVerticalSpacing(6)
+        grid.setHorizontalSpacing(4)
+        grid.setVerticalSpacing(4)
         for index, (label, value, tone) in enumerate(metrics):
             grid.addWidget(self._make_metric_card(label, value, tone), index // 2, index % 2)
         return grid
@@ -587,8 +587,8 @@ class PropertyPanel(QWidget):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(12, 14, 12, 14)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 12, 10, 12)
+        layout.setSpacing(4)
         eyebrow = QLabel("Inspector")
         eyebrow.setObjectName("property_panel_eyebrow")
         title = QLabel("No selection")
@@ -783,8 +783,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
         header.setLayout(layout)
 
         eyebrow = QLabel("Widget Profile")
@@ -850,7 +850,7 @@ class PropertyPanel(QWidget):
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(6)
+        chips_row.setSpacing(4)
         self._header_size_chip = self._make_status_chip(f"{widget.width}×{widget.height}", "accent")
         _set_widget_metadata(
             self._header_size_chip,
@@ -886,8 +886,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
         header.setLayout(layout)
 
         eyebrow = QLabel("Batch Inspector")
@@ -962,7 +962,7 @@ class PropertyPanel(QWidget):
         chips_frame.hide()
         chips_row = QHBoxLayout(chips_frame)
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(6)
+        chips_row.setSpacing(4)
         types_chip = self._make_status_chip(_count_label(len(widget_types), "type"), "accent")
         _set_widget_metadata(
             types_chip,
@@ -1004,7 +1004,7 @@ class PropertyPanel(QWidget):
         frame.setObjectName("workspace_hint_strip")
         frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(4)
         frame.setLayout(layout)
 

@@ -353,12 +353,16 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         header = css.split('#workspace_panel_header[panelTone="property"] {', 1)[1].split("}", 1)[0]
         hint_strip = css.split('#workspace_hint_strip[panelTone="property"] {', 1)[1].split("}", 1)[0]
         metric_card = css.split("QFrame#property_panel_metric_card {", 1)[1].split("}", 1)[0]
+        inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"background-color: {t['panel_soft']};" in hint_strip
         assert "background-color: transparent;" in metric_card
         assert "border-radius: 0px;" in metric_card
+        assert "background-color: transparent;" in inspector_group
+        assert "border: 1px solid transparent;" in inspector_group
+        assert "border-radius: 0px;" in inspector_group
 
 
 def test_resource_panel_styles_use_engineering_surface_tokens():

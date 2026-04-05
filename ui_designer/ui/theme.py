@@ -681,7 +681,7 @@ QScrollArea#property_panel_scroll {{
 QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     margin-top: {t['space_xs']}px;
     padding-top: {t['space_sm']}px;
     font-size: {t['fs_panel_title']}px;

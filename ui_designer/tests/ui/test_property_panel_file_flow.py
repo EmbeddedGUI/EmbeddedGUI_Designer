@@ -83,8 +83,8 @@ class TestPropertyPanelFileFlow:
         metric_cards = header.findChildren(QFrame, "property_panel_metric_card")
 
         assert len(metric_cards) == 4
-        assert metric_grid.horizontalSpacing() == 6
-        assert metric_grid.verticalSpacing() == 6
+        assert metric_grid.horizontalSpacing() == 4
+        assert metric_grid.verticalSpacing() == 4
         margins = metric_cards[0].layout().contentsMargins()
         assert margins.left() == 8
         assert margins.top() == 6
@@ -96,10 +96,14 @@ class TestPropertyPanelFileFlow:
         from ui_designer.ui.property_panel import PropertyPanel
 
         panel = PropertyPanel()
+        empty_layout = panel._no_selection_label.layout()
 
         assert panel._search_edit.isHidden() is True
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
+        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (10, 12)
+        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (10, 12)
+        assert empty_layout.spacing() == 4
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
         assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
         assert panel._search_edit.accessibleName() == "Property search: none"
@@ -144,8 +148,14 @@ class TestPropertyPanelFileFlow:
             if label.objectName() == "workspace_section_subtitle"
         )
         chips = [label for label in header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
+        header_layout = header.layout()
+        header_margins = header_layout.contentsMargins()
+        chips_row = header_layout.itemAt(4).layout()
 
         assert header.objectName() == "workspace_panel_header"
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (10, 10, 10, 10)
+        assert header_layout.spacing() == 8
+        assert chips_row.spacing() == 4
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
         assert eyebrow.accessibleName() == "Property inspection surface."
         assert eyebrow.isHidden() is True
@@ -602,7 +612,16 @@ class TestPropertyPanelFileFlow:
         chips = [label for label in summary_header.findChildren(QLabel) if label.objectName() == "workspace_status_chip"]
         hint_strip = _find_hint_strip(panel)
         hint_eyebrow = next(label for label in hint_strip.findChildren(QLabel) if label.text() == "Interaction Notes")
+        summary_layout = summary_header.layout()
+        summary_margins = summary_layout.contentsMargins()
+        chips_row = chips_frame.layout()
+        hint_layout = hint_strip.layout()
 
+        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (10, 10, 10, 10)
+        assert summary_layout.spacing() == 8
+        assert chips_row.spacing() == 4
+        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (8, 8)
+        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (8, 8)
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
         assert eyebrow.isHidden() is True
