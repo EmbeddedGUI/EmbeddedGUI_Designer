@@ -1125,6 +1125,7 @@ class PreviewPanel(QWidget):
         title_row.addStretch(1)
         self._mode_chip = self._make_status_chip("Horizontal split", tone="accent")
         title_row.addWidget(self._mode_chip)
+        self._mode_chip.hide()
         header_layout.addLayout(title_row)
 
         self._header_meta_label = QLabel(
