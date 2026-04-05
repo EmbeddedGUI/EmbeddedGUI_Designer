@@ -337,6 +337,7 @@ class StatusCenterPanel(QWidget):
         self._runtime_chip.clicked.connect(lambda: self._emit_action("open_debug"))
         runtime_title_row.addStretch()
         runtime_title_row.addWidget(self._runtime_chip)
+        self._runtime_chip.hide()
         runtime_layout.addLayout(runtime_title_row)
         self._runtime_label = QLabel("No runtime errors.")
         self._runtime_label.setObjectName("workspace_section_subtitle")
@@ -1763,7 +1764,7 @@ class StatusCenterPanel(QWidget):
             self._set_widget_icon(self._runtime_chip, "state.warn", size=16)
             self._set_hint(self._runtime_chip, f"Open Debug Output. Runtime issue: {runtime_text}")
             self._set_accessible_name(self._runtime_chip, self._runtime_chip_accessible_name(runtime_text))
-            self._set_widget_visible(self._runtime_chip, True)
+            self._set_widget_visible(self._runtime_chip, False)
             self._set_hint(self._runtime_panel, f"Open Debug Output. Runtime issue: {runtime_text}")
         else:
             self._set_widget_text(self._runtime_title, self._runtime_title_text(""))
