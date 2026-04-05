@@ -1102,14 +1102,14 @@ class PreviewPanel(QWidget):
     def _init_ui(self):
         self._main_layout = QVBoxLayout(self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
-        self._main_layout.setSpacing(_SPACE_SM)
+        self._main_layout.setSpacing(_SPACE_XS)
 
         self._header_frame = QFrame(self)
         self._header_frame.setObjectName("preview_header")
         self._header_frame.hide()
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_MD, _SPACE_MD, _SPACE_MD, _SPACE_MD)
-        header_layout.setSpacing(_SPACE_XS)
+        header_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
+        header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Preview")
         self._eyebrow_label.setObjectName("preview_eyebrow")
@@ -1128,8 +1128,8 @@ class PreviewPanel(QWidget):
         self._metrics_frame.setObjectName("preview_metrics_strip")
         self._metrics_frame.hide()
         metrics_layout = QHBoxLayout(self._metrics_frame)
-        metrics_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
-        metrics_layout.setSpacing(_SPACE_XS)
+        metrics_layout.setContentsMargins(2, 2, 2, 2)
+        metrics_layout.setSpacing(2)
 
         self._mode_chip = QLabel("Horizontal split")
         self._mode_chip.setObjectName("workspace_status_chip")
@@ -1198,8 +1198,8 @@ class PreviewPanel(QWidget):
         self._status_bar = QWidget()
         self._status_bar.setObjectName("preview_status_shell")
         sbl = QHBoxLayout(self._status_bar)
-        sbl.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
-        sbl.setSpacing(_SPACE_XS)
+        sbl.setContentsMargins(2, 2, 2, 2)
+        sbl.setSpacing(2)
 
         self.status_label = QLabel("Preview - waiting for exe...")
         self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)

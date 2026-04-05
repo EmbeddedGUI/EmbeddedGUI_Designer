@@ -89,11 +89,11 @@ class TestPreviewPanelFallback:
 
         margins = panel._metrics_frame.layout().contentsMargins()
 
-        assert margins.left() == 4
-        assert margins.top() == 4
-        assert margins.right() == 4
-        assert margins.bottom() == 4
-        assert panel._metrics_frame.layout().spacing() == 4
+        assert margins.left() == 2
+        assert margins.top() == 2
+        assert margins.right() == 2
+        assert margins.bottom() == 2
+        assert panel._metrics_frame.layout().spacing() == 2
         _dispose_widget(panel)
 
     def test_preview_status_bar_uses_compact_flat_controls(self, qapp):
@@ -103,11 +103,11 @@ class TestPreviewPanelFallback:
 
         margins = panel._status_bar.layout().contentsMargins()
 
-        assert margins.left() == 4
-        assert margins.top() == 4
-        assert margins.right() == 4
-        assert margins.bottom() == 4
-        assert panel._status_bar.layout().spacing() == 4
+        assert margins.left() == 2
+        assert margins.top() == 2
+        assert margins.right() == 2
+        assert margins.bottom() == 2
+        assert panel._status_bar.layout().spacing() == 2
         assert panel._btn_zoom_out.width() == 24
         assert panel._btn_zoom_out.height() == 24
         assert panel._btn_zoom_in.width() == 24
@@ -118,8 +118,16 @@ class TestPreviewPanelFallback:
         from ui_designer.ui.preview_panel import PreviewPanel
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
 
         assert panel._zoom_label.text() == "100% (8px)"
+        assert panel._main_layout.spacing() == 4
+        assert header_margins.left() == 8
+        assert header_margins.top() == 8
+        assert header_margins.right() == 8
+        assert header_margins.bottom() == 8
+        assert header_layout.spacing() == 2
         assert panel.accessibleName() == (
             "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
             "Zoom: 100% (8px). Grid: on. Pointer: Pointer idle."
