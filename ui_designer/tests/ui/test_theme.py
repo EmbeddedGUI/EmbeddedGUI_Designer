@@ -134,7 +134,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
         health_row = css.split("#status_center_health_row {", 1)[1].split("}", 1)[0]
         health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
 
-        assert f"border-radius: {tokens['r_md']}px;" in chip
+        assert "border-radius: 0px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in metric_card
         assert "border-radius: 0px;" in health_row
@@ -312,7 +312,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
 
         assert "border-radius: 0px;" in mode_button
         assert "border-radius: 0px;" in nav_button
-        assert f"border-radius: {t['r_sm']}px;" in status_chip
+        assert "border-radius: 0px;" in status_chip
         assert "border-radius: 0px;" in search_shell
         assert "border-radius: 0px;" in empty_state
         assert "background-color: transparent;" in resource_tabs_pane

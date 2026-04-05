@@ -1005,7 +1005,7 @@ QToolButton[workspaceNav="true"]:checked {{
 #workspace_status_chip {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
     padding: {t['space_xxs']}px {t['space_xs']}px;
 }}
@@ -1013,7 +1013,7 @@ QToolButton[workspaceNav="true"]:checked {{
 QToolButton#workspace_status_chip {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_sm']}px;
+    border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: {t['space_xxs']}px {t['space_xs']}px;
@@ -1100,7 +1100,7 @@ QFrame#property_panel_metric_card[metricTone="danger"] {{
 QToolButton#workspace_summary_indicator {{
     background-color: transparent;
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
