@@ -53,26 +53,32 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
 
         metrics_layout = panel._sdk_card.parentWidget().layout()
+        header_layout = panel._header_frame.layout()
+        header_margins = header_layout.contentsMargins()
         sdk_margins = panel._sdk_card.layout().contentsMargins()
         health_margins = panel._health_section.layout().contentsMargins()
         runtime_margins = panel._runtime_panel.layout().contentsMargins()
 
-        assert metrics_layout.horizontalSpacing() == 4
-        assert metrics_layout.verticalSpacing() == 4
-        assert sdk_margins.left() == 4
-        assert sdk_margins.top() == 4
-        assert sdk_margins.right() == 4
-        assert sdk_margins.bottom() == 4
-        assert panel._sdk_card.layout().spacing() == 4
-        assert health_margins.left() == 4
-        assert health_margins.top() == 4
-        assert health_margins.right() == 4
-        assert health_margins.bottom() == 4
-        assert runtime_margins.left() == 4
-        assert runtime_margins.top() == 4
-        assert runtime_margins.right() == 4
-        assert runtime_margins.bottom() == 4
-        assert panel._runtime_panel.layout().spacing() == 4
+        assert panel.layout().spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
+        assert header_layout.spacing() == 2
+        assert metrics_layout.horizontalSpacing() == 2
+        assert metrics_layout.verticalSpacing() == 2
+        assert sdk_margins.left() == 2
+        assert sdk_margins.top() == 2
+        assert sdk_margins.right() == 2
+        assert sdk_margins.bottom() == 2
+        assert panel._sdk_card.layout().spacing() == 2
+        assert health_margins.left() == 2
+        assert health_margins.top() == 2
+        assert health_margins.right() == 2
+        assert health_margins.bottom() == 2
+        assert panel._health_section.layout().spacing() == 2
+        assert runtime_margins.left() == 2
+        assert runtime_margins.top() == 2
+        assert runtime_margins.right() == 2
+        assert runtime_margins.bottom() == 2
+        assert panel._runtime_panel.layout().spacing() == 2
         panel.deleteLater()
 
     def test_health_chip_and_bars_track_diagnostic_mix(self, qapp):
@@ -81,7 +87,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=2, diagnostics_warnings=1, diagnostics_infos=1)
 
-        assert panel._health_chip.isHidden() is False
+        assert panel._health_chip.isHidden() is True
         assert panel._health_chip.text() == "Critical (2)"
         assert panel._health_chip.property("chipTone") == "danger"
         assert panel._workspace_chip.isHidden() is False
@@ -174,7 +180,7 @@ class TestStatusCenterPanel:
         panel = StatusCenterPanel()
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=3, diagnostics_infos=1, runtime_error="Runtime failed")
 
-        assert panel._health_chip.isHidden() is False
+        assert panel._health_chip.isHidden() is True
         assert panel._health_chip.text() == "Attention (3)"
         assert panel._health_chip.property("chipTone") == "warning"
         assert panel._workspace_chip.text() == "Check Workspace (Diagnostics)"
@@ -204,7 +210,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_title.text() == "Runtime (Issue)"
         assert panel._runtime_title.toolTip() == "Runtime status: issue detected. Runtime failed"
         assert panel._runtime_title.accessibleName() == "Runtime title: Issue detected. Runtime failed"
-        assert panel._runtime_chip.isHidden() is False
+        assert panel._runtime_chip.isHidden() is True
         assert panel._runtime_chip.text() == "Issue"
         assert panel._runtime_chip.property("chipTone") == "danger"
         assert panel._runtime_chip.toolTip() == "Open Debug Output. Runtime issue: Runtime failed"
@@ -251,7 +257,7 @@ class TestStatusCenterPanel:
 
         panel.set_status(diagnostics_errors=0, diagnostics_warnings=0, diagnostics_infos=2, runtime_error="")
 
-        assert panel._health_chip.isHidden() is False
+        assert panel._health_chip.isHidden() is True
         assert panel._health_chip.text() == "Info (2)"
         assert panel._health_chip.property("chipTone") == "accent"
         assert panel._workspace_chip.text() == "Check Workspace (Setup)"
@@ -430,7 +436,7 @@ class TestStatusCenterPanel:
         assert panel._runtime_label.toolTip() == "Bridge disconnected"
         assert panel._runtime_label.accessibleName() == "Runtime details: Bridge disconnected"
         assert panel._runtime_panel.accessibleName() == "Runtime section: Issue. Bridge disconnected"
-        assert panel._runtime_chip.isHidden() is False
+        assert panel._runtime_chip.isHidden() is True
         assert panel._sdk_value.toolTip() == "SDK: Ready"
         assert panel._sdk_value.accessibleName() == "SDK value: Ready"
         assert panel._sdk_card.accessibleName() == "SDK metric: Ready. Open Project. SDK workspace is ready."
@@ -1251,7 +1257,7 @@ class TestStatusCenterPanel:
         assert visible_calls == 0
 
         panel.set_status()
-        assert visible_calls == 1
+        assert visible_calls == 0
         assert panel._health_chip.isHidden() is True
         panel.deleteLater()
 
@@ -1292,7 +1298,7 @@ class TestStatusCenterPanel:
 
         panel.set_status()
         assert label_visible_calls == 1
-        assert chip_visible_calls == 1
+        assert chip_visible_calls == 0
         assert panel._runtime_label.isHidden() is True
         assert panel._runtime_chip.isHidden() is True
         panel.deleteLater()
