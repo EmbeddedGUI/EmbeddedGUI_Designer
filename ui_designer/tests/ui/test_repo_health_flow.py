@@ -207,6 +207,8 @@ def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, 
     dialog = RepositoryHealthDialog(str(tmp_path))
 
     assert dialog._header_frame.accessibleName().startswith("Repository health header. Repository health: ")
+    assert dialog._eyebrow_label.isHidden()
+    assert dialog._subtitle_label.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Repository diagnostics workspace."
     assert dialog._title_label.accessibleName() == "Repository health title: Repository Health."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()

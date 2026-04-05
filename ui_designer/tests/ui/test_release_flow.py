@@ -599,6 +599,8 @@ def test_release_build_header_exposes_pipeline_metadata(qapp):
     )
 
     assert dialog._header_frame.accessibleName().startswith("Release build header. Release build: profile Windows PC (windows-pc).")
+    assert dialog._eyebrow_label.isHidden()
+    assert dialog._subtitle_label.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release pipeline workspace."
     assert dialog._title_label.accessibleName() == "Release build title: Prepare Release Build."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -716,6 +718,8 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
         "Release profiles header. Release profiles: 2 profiles. Default profile: windows-pc. "
         "Current profile: Windows PC [windows-pc] default."
     )
+    assert dialog._eyebrow_label.isHidden()
+    assert dialog._subtitle_label.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
     assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
@@ -918,6 +922,8 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         "artifact Any, diagnostics Any, sort Newest First, search none. Preview mode: auto. "
         "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
+    assert dialog._eyebrow_label.isHidden()
+    assert dialog._subtitle_label.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
     assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
