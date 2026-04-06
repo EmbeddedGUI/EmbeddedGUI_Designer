@@ -67,19 +67,19 @@ class TestPreviewPanelFallback:
         preview_shell_margins = panel._preview_shell.layout().contentsMargins()
         overlay_shell_margins = panel._overlay_shell.layout().contentsMargins()
 
-        assert content_margins.left() == 4
-        assert content_margins.top() == 4
-        assert content_margins.right() == 4
-        assert content_margins.bottom() == 4
-        assert panel._content.layout().spacing() == 4
-        assert preview_shell_margins.left() == 4
-        assert preview_shell_margins.top() == 4
-        assert preview_shell_margins.right() == 4
-        assert preview_shell_margins.bottom() == 4
-        assert overlay_shell_margins.left() == 4
-        assert overlay_shell_margins.top() == 4
-        assert overlay_shell_margins.right() == 4
-        assert overlay_shell_margins.bottom() == 4
+        assert content_margins.left() == 2
+        assert content_margins.top() == 2
+        assert content_margins.right() == 2
+        assert content_margins.bottom() == 2
+        assert panel._content.layout().spacing() == 2
+        assert preview_shell_margins.left() == 2
+        assert preview_shell_margins.top() == 2
+        assert preview_shell_margins.right() == 2
+        assert preview_shell_margins.bottom() == 2
+        assert overlay_shell_margins.left() == 2
+        assert overlay_shell_margins.top() == 2
+        assert overlay_shell_margins.right() == 2
+        assert overlay_shell_margins.bottom() == 2
         _dispose_widget(panel)
 
     def test_preview_metrics_strip_uses_flat_compact_layout(self, qapp):
@@ -122,11 +122,11 @@ class TestPreviewPanelFallback:
         header_margins = header_layout.contentsMargins()
 
         assert panel._zoom_label.text() == "100% (8px)"
-        assert panel._main_layout.spacing() == 4
-        assert header_margins.left() == 8
-        assert header_margins.top() == 8
-        assert header_margins.right() == 8
-        assert header_margins.bottom() == 8
+        assert panel._main_layout.spacing() == 2
+        assert header_margins.left() == 6
+        assert header_margins.top() == 6
+        assert header_margins.right() == 6
+        assert header_margins.bottom() == 6
         assert header_layout.spacing() == 2
         assert panel.accessibleName() == (
             "Preview panel: Preview - waiting for exe.... Mode: Horizontal split. "
