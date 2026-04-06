@@ -97,6 +97,7 @@ class TestAppSelectorDialog:
         assert initial_count == 1
         assert filtered_count == 1
         assert restored_count == 1
+        assert dialog._app_list.item(0).sizeHint().height() >= 28
         dialog.deleteLater()
 
     def test_header_exposes_sdk_example_workspace_metadata(self, qapp, isolated_config):

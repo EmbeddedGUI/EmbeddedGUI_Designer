@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel
+    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget
 
     _has_pyqt5 = True
 except ImportError:
@@ -293,6 +293,24 @@ class TestPropertyPanelFileFlow:
         assert "Fontbitsize:" not in labels
         assert "External:" not in labels
         assert "Text File:" not in labels
+        panel.deleteLater()
+
+    def test_collapsed_groups_hide_nested_form_widgets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        widget.properties["font_builtin"] = "&egui_res_font_montserrat_8_4"
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+        panel.show()
+        qapp.processEvents()
+
+        text_group = _find_group(panel, "Text")
+        assert text_group.isChecked() is False
+        assert text_group.maximumHeight() >= 32
+        assert all(not child.isVisible() for child in text_group.findChildren(QWidget))
         panel.deleteLater()
 
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):

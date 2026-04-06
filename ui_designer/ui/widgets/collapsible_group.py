@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from PyQt5.QtGui import QShowEvent
 from PyQt5.QtWidgets import QGroupBox
 
 
@@ -24,15 +25,32 @@ class CollapsibleGroupBox(QGroupBox):
         finally:
             self.blockSignals(False)
 
-    def _on_toggled(self, checked: bool):
-        layout = self.layout()
+    def _set_layout_visibility(self, layout, visible: bool):
         if layout is None:
             return
         for i in range(layout.count()):
             item = layout.itemAt(i)
-            if item.widget():
-                item.widget().setVisible(checked)
+            widget = item.widget()
+            child_layout = item.layout()
+            if widget is not None:
+                widget.setVisible(visible)
+            if child_layout is not None:
+                self._set_layout_visibility(child_layout, visible)
+
+    def _collapsed_height(self) -> int:
+        return max(32, self.fontMetrics().height() + 18)
+
+    def showEvent(self, event: QShowEvent):
+        super().showEvent(event)
+        self._on_toggled(self.isChecked())
+
+    def _on_toggled(self, checked: bool):
+        layout = self.layout()
+        if layout is None:
+            return
+        self._set_layout_visibility(layout, checked)
         if checked:
             self.setMaximumHeight(16777215)
         else:
-            self.setMaximumHeight(32)
+            self.setMaximumHeight(self._collapsed_height())
+        self.updateGeometry()

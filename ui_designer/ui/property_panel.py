@@ -540,6 +540,10 @@ class PropertyPanel(QWidget):
             elif item.layout():
                 self._clear_layout(item.layout())
 
+    def _sync_collapsible_group_states(self):
+        for group in self.findChildren(CollapsibleGroupBox):
+            group.apply_expanded_state(group.isChecked())
+
     def _make_status_chip(self, text, tone=None):
         chip = QLabel(text)
         chip.setObjectName("workspace_status_chip")
@@ -1101,6 +1105,7 @@ class PropertyPanel(QWidget):
             header.hide()
             self._layout.addWidget(header)
             self._build_multi_selection_form()
+            self._sync_collapsible_group_states()
             self._on_search_changed(self._search_edit.text())
             return
 
@@ -1242,6 +1247,7 @@ class PropertyPanel(QWidget):
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
         self._layout.addStretch()
+        self._sync_collapsible_group_states()
         self._on_search_changed(self._search_edit.text())
 
     def _build_multi_selection_form(self):
@@ -1270,6 +1276,7 @@ class PropertyPanel(QWidget):
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
         self._layout.addStretch()
+        self._sync_collapsible_group_states()
 
     def _build_designer_state_group(self):
         group, form = self._build_inspector_group("Designer")

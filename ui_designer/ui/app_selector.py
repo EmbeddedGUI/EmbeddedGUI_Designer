@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -135,6 +137,10 @@ class AppEntryRowWidget(QWidget):
             tooltip=kind_text,
             accessible_name=f"SDK example kind: {kind_text}",
         )
+
+    def sizeHint(self):
+        size = super().sizeHint()
+        return QSize(size.width(), max(size.height(), 28))
 
     def set_selected(self, selected):
         self.setProperty("selected", "true" if selected else "false")
@@ -590,6 +596,7 @@ class AppSelectorDialog(QDialog):
                     ),
                 )
             self._app_list.addItem(item)
+            item.setForeground(QColor(0, 0, 0, 0))
             item_widget = self._create_entry_row(entry, label)
             item.setSizeHint(item_widget.sizeHint())
             self._app_list.setItemWidget(item, item_widget)
