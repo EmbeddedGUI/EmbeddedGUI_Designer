@@ -533,7 +533,10 @@ class PropertyPanel(QWidget):
         while layout.count():
             item = layout.takeAt(0)
             if item.widget():
-                item.widget().deleteLater()
+                widget = item.widget()
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
             elif item.layout():
                 self._clear_layout(item.layout())
 

@@ -69,6 +69,24 @@ def _find_hint_strip(panel):
 
 @_skip_no_qt
 class TestPropertyPanelFileFlow:
+    def test_rebuild_form_does_not_leave_stale_group_widgets_attached(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        panel = PropertyPanel()
+        panel.set_widget(first)
+        first_group_count = len(panel.findChildren(QGroupBox))
+
+        panel.set_widget(second)
+        second_group_count = len(panel.findChildren(QGroupBox))
+
+        assert first_group_count > 0
+        assert second_group_count == first_group_count
+        panel.deleteLater()
+
     def test_property_metric_cards_use_compact_flat_layout(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

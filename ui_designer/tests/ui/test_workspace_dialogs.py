@@ -75,6 +75,30 @@ def _find_label_by_text(root, text):
 
 @_skip_no_qt
 class TestAppSelectorDialog:
+    def test_refresh_app_list_does_not_leave_stale_row_widgets_attached(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.app_selector import AppEntryRowWidget, AppSelectorDialog
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        modern_dir = sdk_root / "example" / "HelloModern"
+        modern_dir.mkdir(parents=True)
+        (modern_dir / "build.mk").write_text("all:\n", encoding="utf-8")
+        (modern_dir / "HelloModern.egui").write_text("<project />", encoding="utf-8")
+
+        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        initial_count = len(dialog.findChildren(AppEntryRowWidget))
+
+        dialog._search_edit.setText("HelloModern")
+        filtered_count = len(dialog.findChildren(AppEntryRowWidget))
+
+        dialog._search_edit.setText("")
+        restored_count = len(dialog.findChildren(AppEntryRowWidget))
+
+        assert initial_count == 1
+        assert filtered_count == 1
+        assert restored_count == 1
+        dialog.deleteLater()
+
     def test_header_exposes_sdk_example_workspace_metadata(self, qapp, isolated_config):
         from ui_designer.ui.app_selector import AppSelectorDialog
 

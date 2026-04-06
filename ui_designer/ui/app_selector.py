@@ -521,10 +521,22 @@ class AppSelectorDialog(QDialog):
         _set_item_metadata(item, tooltip=tooltip, accessible_text=accessible_text)
         self._app_list.addItem(item)
 
+    def _clear_app_list_items(self):
+        while self._app_list.count():
+            item = self._app_list.item(0)
+            widget = self._app_list.itemWidget(item)
+            if widget is not None:
+                self._app_list.removeItemWidget(item)
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
+            item = self._app_list.takeItem(0)
+            del item
+
     def _refresh_app_list(self):
         previous_app = self._selected_entry.get("app_name", "") if self._selected_entry else ""
 
-        self._app_list.clear()
+        self._clear_app_list_items()
         self._visible_entry_count = 0
         self._set_selection_feedback(None)
         self._refresh_root_status()
