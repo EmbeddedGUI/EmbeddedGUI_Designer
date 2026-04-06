@@ -1408,6 +1408,15 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
     background-color: transparent;
 }}
 
+#resource_panel_shell QPushButton,
+#resource_panel_shell QToolButton,
+#resource_panel_shell QComboBox,
+#resource_dialog_shell QPushButton,
+#resource_dialog_shell QToolButton,
+#resource_dialog_shell QComboBox {{
+    border-radius: 0px;
+}}
+
 #resource_panel_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};

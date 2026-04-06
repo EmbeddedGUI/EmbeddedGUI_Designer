@@ -518,6 +518,7 @@ class _MissingResourceReplaceDialog(QDialog):
 
     def __init__(self, missing_names, source_paths, parent=None):
         super().__init__(parent)
+        self.setObjectName("resource_dialog_shell")
         self._missing_names = list(missing_names)
         self._source_paths = list(source_paths)
         self._combos = []
@@ -771,6 +772,7 @@ class _ReferenceImpactDialog(QDialog):
 
     def __init__(self, parent, title, summary, usages, confirm_text):
         super().__init__(parent)
+        self.setObjectName("resource_dialog_shell")
         self._usages = list(usages)
         self._selected_usage = ("", "")
         self.setWindowTitle(title)
@@ -967,6 +969,7 @@ class _BatchReplaceImpactDialog(QDialog):
 
     def __init__(self, parent, title, resource_type, impacts, total_rename_count, confirm_text, current_page_name=""):
         super().__init__(parent)
+        self.setObjectName("resource_dialog_shell")
         self._all_impacts = list(impacts)
         self._visible_impacts = []
         self._selected_usage = ("", "")
@@ -1539,7 +1542,7 @@ class ResourcePanel(QWidget):
 
         img_btn_layout = QHBoxLayout()
         img_btn_layout.setSpacing(2)
-        import_img_btn = PushButton("Import Image...")
+        import_img_btn = PushButton("Import...")
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
         restore_img_btn = PushButton("Restore Missing...")
@@ -1591,7 +1594,7 @@ class ResourcePanel(QWidget):
 
         font_btn_layout = QHBoxLayout()
         font_btn_layout.setSpacing(2)
-        import_font_btn = PushButton("Import Font...")
+        import_font_btn = PushButton("Import...")
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
         restore_font_btn = PushButton("Restore Missing...")
@@ -1643,7 +1646,7 @@ class ResourcePanel(QWidget):
 
         text_btn_layout = QHBoxLayout()
         text_btn_layout.setSpacing(2)
-        import_text_btn = PushButton("Import Text...")
+        import_text_btn = PushButton("Import...")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
         restore_text_btn = PushButton("Restore Missing...")
@@ -1693,10 +1696,10 @@ class ResourcePanel(QWidget):
         self._locale_combo.setMinimumWidth(96)
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
-        self._add_locale_btn = PushButton("Add Locale...")
+        self._add_locale_btn = PushButton("Add...")
         self._add_locale_btn.clicked.connect(self._on_add_locale)
         locale_row.addWidget(self._add_locale_btn)
-        self._remove_locale_btn = PushButton("Remove Locale")
+        self._remove_locale_btn = PushButton("Remove")
         self._remove_locale_btn.clicked.connect(self._on_remove_locale)
         locale_row.addWidget(self._remove_locale_btn)
         locale_row.addStretch()
@@ -1721,13 +1724,13 @@ class ResourcePanel(QWidget):
         # Buttons
         str_btn_layout = QHBoxLayout()
         str_btn_layout.setSpacing(2)
-        self._add_key_btn = PushButton("Add Key...")
+        self._add_key_btn = PushButton("Add...")
         self._add_key_btn.clicked.connect(self._on_add_string_key)
         str_btn_layout.addWidget(self._add_key_btn)
-        self._rename_key_btn = PushButton("Rename Key...")
+        self._rename_key_btn = PushButton("Rename...")
         self._rename_key_btn.clicked.connect(self._on_rename_string_key)
         str_btn_layout.addWidget(self._rename_key_btn)
-        self._remove_key_btn = PushButton("Remove Key")
+        self._remove_key_btn = PushButton("Remove")
         self._remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(self._remove_key_btn)
         str_btn_layout.addStretch()

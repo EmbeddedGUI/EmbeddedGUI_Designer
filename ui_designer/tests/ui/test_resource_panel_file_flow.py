@@ -335,6 +335,7 @@ class TestResourcePanelFileFlow:
         panel = ResourcePanel()
         buttons = panel._resource_action_buttons["text"]
 
+        assert buttons["import"].text() == "Import..."
         assert buttons["import"].toolTip() == "Save or open a project first to import text resources."
         assert buttons["import"].statusTip() == buttons["import"].toolTip()
         assert buttons["import"].accessibleName() == "Import text resources unavailable"
@@ -372,6 +373,7 @@ class TestResourcePanelFileFlow:
 
         buttons = panel._resource_action_buttons["image"]
 
+        assert buttons["import"].text() == "Import..."
         assert buttons["import"].toolTip() == (
             "Import image files into the project resource catalog. 2 image resources listed. "
             "1 missing image resource."
@@ -683,6 +685,11 @@ class TestResourcePanelFileFlow:
         assert panel._string_table.accessibleName() == (
             "String resource table: 0 string keys. Current locale: Default. Current key: none."
         )
+        assert panel._add_locale_btn.text() == "Add..."
+        assert panel._remove_locale_btn.text() == "Remove"
+        assert panel._add_key_btn.text() == "Add..."
+        assert panel._rename_key_btn.text() == "Rename..."
+        assert panel._remove_key_btn.text() == "Remove"
         assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 0 locales configured."
         assert panel._add_locale_btn.accessibleName() == "Add locale from Default. 0 locales configured."
         assert panel._remove_locale_btn.toolTip() == "Select a non-default locale to remove it."
@@ -721,6 +728,11 @@ class TestResourcePanelFileFlow:
         assert panel._string_table.accessibleName() == (
             "String resource table: 2 string keys. Current locale: Default. Current key: greeting."
         )
+        assert panel._add_locale_btn.text() == "Add..."
+        assert panel._remove_locale_btn.text() == "Remove"
+        assert panel._add_key_btn.text() == "Add..."
+        assert panel._rename_key_btn.text() == "Rename..."
+        assert panel._remove_key_btn.text() == "Remove"
         assert panel._add_locale_btn.toolTip() == "Add a new locale for translated string values. 2 locales configured."
         assert panel._add_locale_btn.statusTip() == panel._add_locale_btn.toolTip()
         assert panel._add_locale_btn.accessibleName() == "Add locale from Default. 2 locales configured."

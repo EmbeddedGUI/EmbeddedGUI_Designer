@@ -345,6 +345,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         resource_tabs_tab = css.split("QTabWidget#resource_panel_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         resource_details_pane = css.split("QTabWidget#resource_panel_details_tabs::pane {", 1)[1].split("}", 1)[0]
         resource_details_tab = css.split("QTabWidget#resource_panel_details_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
+        resource_control_shell = css.split("#resource_panel_shell QPushButton,", 1)[1].split("}", 1)[0]
+        resource_dialog_control_shell = css.split("#resource_dialog_shell QPushButton,", 1)[1].split("}", 1)[0]
         inspector_tabs_pane = css.split("QTabWidget#workspace_inspector_tabs::pane {", 1)[1].split("}", 1)[0]
         inspector_tabs_tab = css.split("QTabWidget#workspace_inspector_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         bottom_tabs_pane = css.split("QTabWidget#workspace_bottom_tabs::pane {", 1)[1].split("}", 1)[0]
@@ -378,6 +380,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "background-color: transparent;" in resource_tabs_pane
         assert "border: none;" in resource_tabs_pane
         assert "border-radius: 0px;" in resource_tabs_pane
+        assert "border-radius: 0px;" in resource_control_shell
+        assert "border-radius: 0px;" in resource_dialog_control_shell
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
         assert "min-height: 28px;" in resource_tabs_tab
