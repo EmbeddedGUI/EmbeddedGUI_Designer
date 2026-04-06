@@ -83,6 +83,7 @@ class TestResourcePanelFileFlow:
         assert (preview_layout.contentsMargins().left(), preview_layout.contentsMargins().top(), preview_layout.contentsMargins().right(), preview_layout.contentsMargins().bottom()) == (2, 2, 2, 2)
         assert (usage_layout.contentsMargins().left(), usage_layout.contentsMargins().top(), usage_layout.contentsMargins().right(), usage_layout.contentsMargins().bottom()) == (2, 2, 2, 2)
         assert usage_filter_layout.spacing() == 2
+        assert title.text() == "Resources"
         assert header.accessibleName() == "Resource header: Project Resources. Workspace configured. Active tab: Images."
         assert eyebrow.accessibleName() == "Resource pipeline workspace."
         assert eyebrow.isHidden() is True
@@ -1292,6 +1293,7 @@ class TestResourcePanelFileFlow:
         assert dialog._summary_label.accessibleName() == (
             "Reference impact summary: This action updates 2 widget references."
         )
+        assert dialog._open_usage_button.text() == "Open"
         assert dialog._table.accessibleName() == (
             "Affected usages table: 2 rows. Current selection: main_page/hero (image)."
         )
@@ -1377,6 +1379,8 @@ class TestResourcePanelFileFlow:
             "Batch replace summary: The selected replacements will rename 2 missing image resources."
         )
         assert dialog._current_page_only.text() == "This Page"
+        assert dialog._group_caption.text() == "Impacts"
+        assert dialog._usage_caption.text() == "Usages"
         assert dialog._current_page_only.toolTip() == "Filter impacts to the current page: detail_page."
         assert dialog._impact_table.accessibleName() == (
             "Rename impact table: 2 rows. Current selection: missing_a.png -> renamed_a.png."
@@ -1391,6 +1395,7 @@ class TestResourcePanelFileFlow:
         assert dialog._impact_table.item(0, 0).data(Qt.AccessibleTextRole) == dialog._impact_table.item(0, 0).toolTip()
         assert dialog._usage_table.item(0, 1).statusTip() == dialog._usage_table.item(0, 1).toolTip()
         assert dialog._usage_table.item(0, 1).data(Qt.AccessibleTextRole) == dialog._usage_table.item(0, 1).toolTip()
+        assert dialog._open_usage_button.text() == "Open"
         assert dialog._open_usage_button.toolTip() == "Open the selected affected usage in the editor."
         assert dialog._open_usage_button.accessibleName() == "Open selected affected usage"
         assert dialog._ok_button.accessibleName() == "Replace"

@@ -882,7 +882,7 @@ class _ReferenceImpactDialog(QDialog):
         layout.addWidget(content_card, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
-        self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
+        self._open_usage_button = buttons.addButton("Open", QDialogButtonBox.ActionRole)
         self._ok_button = buttons.button(QDialogButtonBox.Ok)
         if self._ok_button is not None:
             self._ok_button.setText(confirm_text or "Continue")
@@ -1067,7 +1067,7 @@ class _BatchReplaceImpactDialog(QDialog):
         impact_layout.setContentsMargins(0, 0, 0, 0)
         impact_layout.setSpacing(10)
 
-        self._group_caption = QLabel("Rename Impact Summary")
+        self._group_caption = QLabel("Impacts")
         self._group_caption.setObjectName("workspace_section_title")
         impact_layout.addWidget(self._group_caption)
 
@@ -1093,7 +1093,7 @@ class _BatchReplaceImpactDialog(QDialog):
         usage_layout.setContentsMargins(0, 0, 0, 0)
         usage_layout.setSpacing(10)
 
-        self._usage_caption = QLabel("Affected Usages")
+        self._usage_caption = QLabel("Usages")
         self._usage_caption.setObjectName("workspace_section_title")
         usage_layout.addWidget(self._usage_caption)
 
@@ -1113,7 +1113,7 @@ class _BatchReplaceImpactDialog(QDialog):
         layout.addWidget(usage_card, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
-        self._open_usage_button = buttons.addButton("Open Selected Usage", QDialogButtonBox.ActionRole)
+        self._open_usage_button = buttons.addButton("Open", QDialogButtonBox.ActionRole)
         self._ok_button = buttons.button(QDialogButtonBox.Ok)
         if self._ok_button is not None:
             self._ok_button.setText(confirm_text or "Continue")
@@ -1455,7 +1455,7 @@ class ResourcePanel(QWidget):
         )
         hero_copy.addWidget(self._panel_eyebrow, 0, Qt.AlignLeft)
 
-        self._panel_title = QLabel("Project Resources")
+        self._panel_title = QLabel("Resources")
         self._panel_title.setObjectName("resource_panel_title")
         _set_widget_metadata(
             self._panel_title,
