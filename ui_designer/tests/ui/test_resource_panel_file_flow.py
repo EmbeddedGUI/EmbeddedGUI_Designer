@@ -174,6 +174,17 @@ class TestResourcePanelFileFlow:
         assert button.accessibleName() == "More image actions"
         panel.deleteLater()
 
+    def test_resource_more_menu_uses_compact_visible_labels(self, qapp):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+        actions = panel._resource_more_menus["image"]["actions"]
+
+        assert actions["restore"].text() == "Restore"
+        assert actions["replace"].text() == "Replace"
+        assert actions["next_missing"].text() == "Next"
+        panel.deleteLater()
+
     def test_more_menu_action_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.resource_panel import ResourcePanel
 
@@ -1149,6 +1160,7 @@ class TestResourcePanelFileFlow:
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Resource recovery workspace."
+        assert dialog._title_label.text() == "Replace Missing"
         assert dialog._title_label.accessibleName() == "Resource replacement title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
         assert dialog._missing_metric_value.accessibleName() == "Resource dialog metric: Missing. 2 resources."
@@ -1376,6 +1388,7 @@ class TestResourcePanelFileFlow:
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "Batch rename impact workspace."
+        assert dialog._title_label.text() == "Replace Missing"
         assert dialog._title_label.accessibleName() == "Batch replace impact title: Replace Missing Resources."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
         assert dialog._rename_metric_value.accessibleName() == "Resource dialog metric: Visible Renames. 2 renames."

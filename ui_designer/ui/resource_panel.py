@@ -240,6 +240,19 @@ def _count_label(count, singular, plural=None):
     return f"{value} {noun}"
 
 
+def _compact_resource_title(title):
+    text = str(title or "").strip()
+    compact_map = {
+        "Replace Missing Resources": "Replace Missing",
+        "Replace Missing Resource": "Replace Missing",
+        "Restore Missing Resources": "Restore Missing",
+        "Restore Missing Resource": "Restore Missing",
+        "Review Reference Impact": "Impact",
+        "Review Batch Replace Impact": "Replace Impact",
+    }
+    return compact_map.get(text, text)
+
+
 # -- Lazy-loading image list --------------------------------------------
 
 class _LazyImageList(QListWidget):
@@ -549,12 +562,13 @@ class _MissingResourceReplaceDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Replace Missing Resources")
+        full_title = "Replace Missing Resources"
+        self._title_label = QLabel(_compact_resource_title(full_title))
         self._title_label.setObjectName("resource_dialog_title")
         _set_widget_metadata(
             self._title_label,
-            tooltip="Resource replacement title: Replace Missing Resources.",
-            accessible_name="Resource replacement title: Replace Missing Resources.",
+            tooltip=f"Resource replacement title: {full_title}.",
+            accessible_name=f"Resource replacement title: {full_title}.",
         )
         hero_copy.addWidget(self._title_label)
 
@@ -802,12 +816,13 @@ class _ReferenceImpactDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel(title or "Review Reference Impact")
+        full_title = title or "Review Reference Impact"
+        self._title_label = QLabel(_compact_resource_title(full_title))
         self._title_label.setObjectName("resource_dialog_title")
         _set_widget_metadata(
             self._title_label,
-            tooltip=f"Reference impact title: {self._title_label.text()}.",
-            accessible_name=f"Reference impact title: {self._title_label.text()}.",
+            tooltip=f"Reference impact title: {full_title}.",
+            accessible_name=f"Reference impact title: {full_title}.",
         )
         hero_copy.addWidget(self._title_label)
 
@@ -1003,12 +1018,13 @@ class _BatchReplaceImpactDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel(title or "Review Batch Replace Impact")
+        full_title = title or "Review Batch Replace Impact"
+        self._title_label = QLabel(_compact_resource_title(full_title))
         self._title_label.setObjectName("resource_dialog_title")
         _set_widget_metadata(
             self._title_label,
-            tooltip=f"Batch replace impact title: {self._title_label.text()}.",
-            accessible_name=f"Batch replace impact title: {self._title_label.text()}.",
+            tooltip=f"Batch replace impact title: {full_title}.",
+            accessible_name=f"Batch replace impact title: {full_title}.",
         )
         hero_copy.addWidget(self._title_label)
 
@@ -1837,9 +1853,9 @@ class ResourcePanel(QWidget):
         menu.setToolTipsVisible(True)
         actions = {}
         for key, label in (
-            ("restore", "Restore Missing"),
-            ("replace", "Replace Missing"),
-            ("next_missing", "Next Missing"),
+            ("restore", "Restore"),
+            ("replace", "Replace"),
+            ("next_missing", "Next"),
         ):
             action = menu.addAction(label)
             action.triggered.connect(lambda checked=False, source_button=buttons[key]: source_button.click())
@@ -3139,22 +3155,22 @@ class ResourcePanel(QWidget):
 
         menu = QMenu(self)
 
-        assign_act = menu.addAction("Assign to Selected Widget")
+        assign_act = menu.addAction("Assign")
         assign_act.triggered.connect(lambda: self.resource_selected.emit(resource_type, filename))
 
-        copy_act = menu.addAction(f"Copy: {filename}")
+        copy_act = menu.addAction("Copy Name")
         copy_act.triggered.connect(lambda: QApplication.clipboard().setText(filename))
 
         menu.addSeparator()
 
         if not os.path.isfile(path):
-            restore_act = menu.addAction("Restore Missing File...")
+            restore_act = menu.addAction("Restore...")
             restore_act.triggered.connect(lambda: self._restore_missing_resource(filename, resource_type))
-            replace_act = menu.addAction("Replace With File...")
+            replace_act = menu.addAction("Replace...")
             replace_act.triggered.connect(lambda: self._replace_missing_resource(filename, resource_type))
             menu.addSeparator()
 
-        reveal_act = menu.addAction("Reveal in File Manager")
+        reveal_act = menu.addAction("Reveal")
         reveal_act.triggered.connect(lambda: self._reveal_in_explorer(path))
 
         menu.addSeparator()
