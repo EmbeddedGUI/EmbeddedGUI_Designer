@@ -610,12 +610,15 @@ def test_release_build_header_exposes_pipeline_metadata(qapp):
     assert dialog._subtitle_label.isHidden()
     assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release pipeline workspace."
+    assert dialog._title_label.text() == "Release Build"
     assert dialog._title_label.accessibleName() == "Release build title: Prepare Release Build."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(dialog, "Context") is not None
     assert _find_label_by_text(
         dialog,
         "The selected profile drives target settings, while the SDK and output path define the actual packaging workspace.",
     ).isHidden()
+    assert _find_label_by_text(dialog, "Options") is not None
     assert _find_label_by_text(
         dialog,
         "Choose whether warnings should block the build and whether the output should also be packaged as a zip artifact.",
@@ -739,6 +742,7 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog._subtitle_label.isHidden()
     assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
+    assert dialog._title_label.text() == "Profiles"
     assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
     assert _find_label_by_text(
@@ -962,12 +966,15 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._subtitle_label.isHidden()
     assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
+    assert dialog._title_label.text() == "History"
     assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(dialog, "Filters") is not None
     assert _find_label_by_text(
         dialog,
         "Use time range, release state, artifact presence, diagnostics, and text search together to narrow the list before drilling into a single run.",
     ).isHidden()
+    assert _find_label_by_text(dialog, "Overview") is not None
     assert _find_label_by_text(
         dialog,
         "Track filtered volume, artifact coverage, and history file availability before copying or exporting a batch.",

@@ -623,7 +623,7 @@ class ReleaseBuildDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Prepare Release Build")
+        self._title_label = QLabel("Release Build")
         self._title_label.setObjectName("release_build_title")
         _set_widget_metadata(
             self._title_label,
@@ -668,7 +668,7 @@ class ReleaseBuildDialog(QDialog):
         context_layout.setContentsMargins(0, 0, 0, 0)
         context_layout.setSpacing(10)
 
-        context_title = QLabel("Build Context")
+        context_title = QLabel("Context")
         context_title.setObjectName("workspace_section_title")
         context_layout.addWidget(context_title)
 
@@ -715,7 +715,7 @@ class ReleaseBuildDialog(QDialog):
         options_layout.setContentsMargins(0, 0, 0, 0)
         options_layout.setSpacing(10)
 
-        options_title = QLabel("Build Options")
+        options_title = QLabel("Options")
         options_title.setObjectName("workspace_section_title")
         options_layout.addWidget(options_title)
 
@@ -937,7 +937,7 @@ class ReleaseProfilesDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Manage Release Profiles")
+        self._title_label = QLabel("Profiles")
         self._title_label.setObjectName("release_profiles_title")
         _set_widget_metadata(
             self._title_label,
@@ -1500,7 +1500,7 @@ class ReleaseHistoryDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Inspect Release History")
+        self._title_label = QLabel("History")
         self._title_label.setObjectName("release_history_title")
         _set_widget_metadata(
             self._title_label,
@@ -1546,7 +1546,7 @@ class ReleaseHistoryDialog(QDialog):
         filters_layout.setContentsMargins(0, 0, 0, 0)
         filters_layout.setSpacing(10)
 
-        filters_title = QLabel("Filter Stack")
+        filters_title = QLabel("Filters")
         filters_title.setObjectName("workspace_section_title")
         filters_layout.addWidget(filters_title)
 
@@ -1652,7 +1652,7 @@ class ReleaseHistoryDialog(QDialog):
         overview_layout.setContentsMargins(0, 0, 0, 0)
         overview_layout.setSpacing(10)
 
-        overview_title = QLabel("History State")
+        overview_title = QLabel("Overview")
         overview_title.setObjectName("workspace_section_title")
         overview_layout.addWidget(overview_title)
 

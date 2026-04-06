@@ -237,19 +237,19 @@ class WelcomePage(QWidget):
         self._new_project_btn.clicked.connect(self.new_project.emit)
         left_col.addWidget(self._new_project_btn)
 
-        self._open_project_btn = PushButton("Open Project File...")
+        self._open_project_btn = PushButton("Open Project...")
         self._open_project_btn.clicked.connect(self.open_project.emit)
         left_col.addWidget(self._open_project_btn)
 
-        self._open_app_btn = PushButton("Open SDK Example...")
+        self._open_app_btn = PushButton("Open Example...")
         self._open_app_btn.clicked.connect(self.open_app.emit)
         left_col.addWidget(self._open_app_btn)
 
-        self._set_sdk_root_btn = PushButton("Set SDK Root...")
+        self._set_sdk_root_btn = PushButton("Set SDK...")
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
 
-        self._download_sdk_btn = PushButton("Download SDK...")
+        self._download_sdk_btn = PushButton("Download...")
         self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
         self._download_sdk_btn.setToolTip(describe_auto_download_plan())
         self._download_sdk_btn.setStatusTip(self._download_sdk_btn.toolTip())
@@ -292,7 +292,7 @@ class WelcomePage(QWidget):
         right_col.setContentsMargins(0, 0, 0, 0)
         right_col.setSpacing(8)
 
-        self._recent_label = QLabel("Recent Projects")
+        self._recent_label = QLabel("Recent")
         self._recent_label.setObjectName("workspace_section_title")
         right_col.addWidget(self._recent_label)
 

@@ -955,23 +955,28 @@ class TestWelcomePage:
         assert page._new_project_btn.accessibleName() == (
             "Create new project action. Create a new EmbeddedGUI Designer project."
         )
+        assert page._open_project_btn.text() == "Open Project..."
         assert page._open_project_btn.toolTip() == "Open an existing .egui project file."
         assert page._open_project_btn.accessibleName() == (
             "Open project file action. Open an existing .egui project file."
         )
+        assert page._open_app_btn.text() == "Open Example..."
         assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
         assert page._open_app_btn.accessibleName() == (
             "Open SDK example action. Open an SDK example project or legacy example."
         )
+        assert page._set_sdk_root_btn.text() == "Set SDK..."
         assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."
         assert page._set_sdk_root_btn.accessibleName() == (
             "Set SDK root action. Change the EmbeddedGUI SDK root used for compile preview."
         )
+        assert page._download_sdk_btn.text() == "Download..."
         assert page._download_sdk_btn.statusTip() == page._download_sdk_btn.toolTip()
         assert page._download_sdk_btn.accessibleName() == (
             f"Download SDK action. {page._download_sdk_btn.toolTip()}"
         )
+        assert page._recent_label.text() == "Recent"
         page.deleteLater()
 
     def test_hero_hint_skips_no_op_rewrites(self, qapp, isolated_config, tmp_path, monkeypatch):
