@@ -349,8 +349,8 @@ class PropertyPanel(QWidget):
     def _init_ui(self):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(8, 8, 8, 8)
-        outer.setSpacing(6)
+        outer.setContentsMargins(6, 6, 6, 6)
+        outer.setSpacing(4)
 
         self._context_frame = QWidget()
         self._context_frame.setObjectName("property_panel_context")
@@ -404,7 +404,7 @@ class PropertyPanel(QWidget):
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(2, 4, 2, 4)
-        self._layout.setSpacing(6)
+        self._layout.setSpacing(4)
         scroll.setWidget(self._container)
 
         self._no_selection_label = self._create_no_selection_label()

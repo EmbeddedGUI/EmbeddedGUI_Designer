@@ -110,15 +110,15 @@ class TestPropertyPanelFileFlow:
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
         assert panel._context_frame.isHidden() is True
-        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (8, 8)
-        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (8, 8)
-        assert root_layout.spacing() == 6
+        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (6, 6)
+        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (6, 6)
+        assert root_layout.spacing() == 4
         assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
         assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
         assert context_layout.spacing() == 2
         assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (2, 4)
         assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (2, 4)
-        assert content_layout.spacing() == 6
+        assert content_layout.spacing() == 4
         assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (6, 8)
         assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (6, 8)
         assert empty_layout.spacing() == 2
