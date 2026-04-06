@@ -83,10 +83,10 @@ class TestPageNavigator:
         header_margins = header_layout.contentsMargins()
         title_row = header_layout.itemAt(1).layout()
 
-        assert root_layout.spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
-        assert title_row.spacing() == 4
-        assert navigator._layout.spacing() == 4
+        assert root_layout.spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert title_row.spacing() == 2
+        assert navigator._layout.spacing() == 2
         assert navigator.accessibleName() == "Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
         assert navigator.toolTip() == navigator.accessibleName()
         assert navigator.statusTip() == navigator.toolTip()
@@ -127,8 +127,8 @@ class TestPageNavigator:
         header_margins = header_layout.contentsMargins()
         title_row = header_layout.itemAt(1).layout()
 
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
-        assert title_row.spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert title_row.spacing() == 2
         assert navigator._header_frame.accessibleName() == (
             "Page navigator header. Page navigator: 0 pages. Current page: none. Startup page: none. No dirty pages."
         )

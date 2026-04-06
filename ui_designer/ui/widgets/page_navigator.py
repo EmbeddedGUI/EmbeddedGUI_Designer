@@ -302,13 +302,13 @@ class PageNavigator(QWidget):
     def _init_ui(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(4)
+        outer.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("page_navigator_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(8, 8, 8, 8)
-        header_layout.setSpacing(4)
+        header_layout.setContentsMargins(6, 6, 6, 6)
+        header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Page Flow")
         self._eyebrow_label.setObjectName("page_navigator_eyebrow")
@@ -321,7 +321,7 @@ class PageNavigator(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(4)
+        title_row.setSpacing(2)
         self._title_label = QLabel("Thumbnail Rail")
         self._title_label.setObjectName("workspace_section_title")
         self._title_label.setAccessibleName("Pages")
@@ -387,7 +387,7 @@ class PageNavigator(QWidget):
         self._container.setAccessibleName("Page thumbnail list")
         self._layout = QVBoxLayout(self._container)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(4)
+        self._layout.setSpacing(2)
         self._scroll_area.setWidget(self._container)
         self._update_accessibility_summary()
 
