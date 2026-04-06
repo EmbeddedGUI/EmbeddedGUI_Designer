@@ -979,7 +979,7 @@ class TestPropertyPanelFileFlow:
         labels = _form_labels(group)
 
         assert "Click:" in labels
-        assert "Value Changed:" in labels
+        assert "Change:" in labels
         assert panel._editors["callback_onClick"].text() == "on_slider_click"
         assert panel._editors["callback_onValueChanged"].text() == "on_slider_changed"
         assert "void callback_name(egui_view_t *self)" in panel._editors["callback_onClick"].toolTip()
@@ -1097,7 +1097,7 @@ class TestPropertyPanelFileFlow:
 
         assert "1 mixed field" in _group_label_texts(summary_header)
         assert "Click:" in _form_labels(callbacks_group)
-        assert "Value Changed:" in _form_labels(callbacks_group)
+        assert "Change:" in _form_labels(callbacks_group)
         assert click_editor.text() == ""
         assert click_editor.placeholderText() == "Mixed"
         assert "different callback names" in click_editor.toolTip()

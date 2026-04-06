@@ -60,6 +60,9 @@ _CALLBACK_INVALID_MESSAGE = (
 )
 
 _MIXED_PLACEHOLDER = "Mixed"
+_COMPACT_CALLBACK_LABELS = {
+    "onValueChanged": "Change",
+}
 
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
@@ -1636,6 +1639,9 @@ class PropertyPanel(QWidget):
         name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
         return name.strip().title() or "Callback"
 
+    def _callback_row_label(self, event_name):
+        return _COMPACT_CALLBACK_LABELS.get(event_name, self._humanize_callback_name(event_name))
+
     def _suggest_callback_name(self, widget, event_name):
         widget_name = sanitize_widget_name(getattr(widget, "name", "")) or getattr(widget, "widget_type", "widget")
         suffix = self._humanize_callback_name(event_name).lower().replace(" ", "_")
@@ -1789,7 +1795,7 @@ class PropertyPanel(QWidget):
                 ),
             )
             self._callback_open_buttons[f"callback_{event_name}"] = button
-            form.addRow(f"{self._humanize_callback_name(event_name)}:", container)
+            form.addRow(f"{self._callback_row_label(event_name)}:", container)
 
         return group
 
@@ -1890,7 +1896,7 @@ class PropertyPanel(QWidget):
                 else "Normalize this callback first to open a single user function.",
             )
             self._callback_open_buttons[f"callback_{event_name}"] = button
-            label = self._humanize_callback_name(event_name)
+            label = self._callback_row_label(event_name)
             form.addRow(f"{label}:", container)
 
         return group
