@@ -807,7 +807,7 @@ QPushButton#project_workspace_view_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
-    padding: 2px 8px;
+    padding: 2px 6px;
     text-align: left;
     min-height: 24px;
 }}
@@ -1426,7 +1426,7 @@ QPushButton#project_dock_add_page_button {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
+    padding: 3px 6px;
     min-height: 28px;
 }}
 

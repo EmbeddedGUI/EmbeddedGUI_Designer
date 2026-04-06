@@ -523,7 +523,7 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert "border: none;" in settings
         assert "border-radius: 0px;" in settings
         assert "border-radius: 0px;" in controls
-        assert f"padding: 3px {t['space_sm']}px;" in controls
+        assert "padding: 3px 6px;" in controls
         assert "min-height: 28px;" in controls
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
@@ -853,7 +853,7 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in buttons
-        assert "padding: 2px 8px;" in buttons
+        assert "padding: 2px 6px;" in buttons
         assert "min-height: 24px;" in buttons
 
 
