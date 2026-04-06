@@ -1005,7 +1005,7 @@ class ReleaseProfilesDialog(QDialog):
         self._add_btn = QPushButton("Add")
         self._copy_btn = QPushButton("Copy")
         self._delete_btn = QPushButton("Delete")
-        self._set_default_btn = QPushButton("Set Default")
+        self._set_default_btn = QPushButton("Default")
         self._add_btn.clicked.connect(self._add_profile)
         self._copy_btn.clicked.connect(self._copy_profile)
         self._delete_btn.clicked.connect(self._delete_profile)
@@ -1027,7 +1027,7 @@ class ReleaseProfilesDialog(QDialog):
         form_shell.setContentsMargins(0, 0, 0, 0)
         form_shell.setSpacing(10)
 
-        form_title = QLabel("Profile Details")
+        form_title = QLabel("Details")
         form_title.setObjectName("workspace_section_title")
         form_shell.addWidget(form_title)
 
@@ -1052,7 +1052,7 @@ class ReleaseProfilesDialog(QDialog):
         self._package_format_combo.addItem("Directory Only", "dir")
         self._package_format_combo.addItem("Directory + Zip", "dir+zip")
         self._extra_args_edit = QLineEdit()
-        self._copy_resource_check = QCheckBox("Copy resource directory into dist")
+        self._copy_resource_check = QCheckBox("Copy resources to dist")
 
         self._id_edit.textEdited.connect(self._sync_current_profile)
         self._name_edit.textEdited.connect(self._sync_current_profile)
@@ -1062,12 +1062,12 @@ class ReleaseProfilesDialog(QDialog):
         self._extra_args_edit.textEdited.connect(self._sync_current_profile)
         self._copy_resource_check.toggled.connect(self._sync_current_profile)
 
-        form_layout.addRow("Profile ID", self._id_edit)
+        form_layout.addRow("ID", self._id_edit)
         form_layout.addRow("Name", self._name_edit)
         form_layout.addRow("Port", self._port_edit)
-        form_layout.addRow("Make Target", self._make_target_edit)
+        form_layout.addRow("Target", self._make_target_edit)
         form_layout.addRow("Package", self._package_format_combo)
-        form_layout.addRow("Extra Make Args", self._extra_args_edit)
+        form_layout.addRow("Extra Args", self._extra_args_edit)
         form_layout.addRow("", self._copy_resource_check)
         form_shell.addLayout(form_layout)
         right_column.addWidget(form_container, 3)
@@ -1078,7 +1078,7 @@ class ReleaseProfilesDialog(QDialog):
         summary_layout.setContentsMargins(0, 0, 0, 0)
         summary_layout.setSpacing(8)
 
-        summary_title = QLabel("Profile Summary")
+        summary_title = QLabel("Summary")
         summary_title.setObjectName("workspace_section_title")
         summary_layout.addWidget(summary_title)
 
@@ -1202,7 +1202,7 @@ class ReleaseProfilesDialog(QDialog):
                 if item.data(Qt.UserRole) == current_id:
                     self._profile_list.setCurrentRow(row)
                     break
-        self._default_label.setText(f"Default Profile: {self._release_config.default_profile}")
+        self._default_label.setText(f"Default: {self._release_config.default_profile}")
         self._update_accessibility_summary()
 
     def _load_profile_into_form(self, row: int) -> None:
@@ -1697,7 +1697,7 @@ class ReleaseHistoryDialog(QDialog):
         self._history_file_value_label = QLabel("")
         self._history_file_value_label.setObjectName("release_history_file_path")
         self._history_file_value_label.setWordWrap(True)
-        stats_grid.addWidget(QLabel("History File"), 4, 0)
+        stats_grid.addWidget(QLabel("File"), 4, 0)
         stats_grid.itemAtPosition(4, 0).widget().setObjectName("release_history_field_label")
         stats_grid.addWidget(self._history_file_value_label, 4, 1)
         stats_grid.setColumnStretch(1, 1)
@@ -1707,39 +1707,39 @@ class ReleaseHistoryDialog(QDialog):
         actions_grid.setHorizontalSpacing(8)
         actions_grid.setVerticalSpacing(8)
 
-        self._clear_filters_button = QPushButton("Clear Filters")
+        self._clear_filters_button = QPushButton("Clear")
         self._clear_filters_button.clicked.connect(self._clear_filters)
         actions_grid.addWidget(self._clear_filters_button, 0, 0)
 
-        self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button = QPushButton("Reset")
         self._reset_view_button.clicked.connect(self._reset_view)
         actions_grid.addWidget(self._reset_view_button, 0, 1)
 
-        self._copy_filtered_button = QPushButton("Copy Filtered")
+        self._copy_filtered_button = QPushButton("Summary")
         self._copy_filtered_button.clicked.connect(self._copy_filtered_summary)
         actions_grid.addWidget(self._copy_filtered_button, 1, 0)
 
-        self._copy_filtered_json_button = QPushButton("Copy Filtered JSON")
+        self._copy_filtered_json_button = QPushButton("JSON")
         self._copy_filtered_json_button.clicked.connect(self._copy_filtered_json)
         actions_grid.addWidget(self._copy_filtered_json_button, 1, 1)
 
-        self._export_filtered_button = QPushButton("Export Filtered...")
+        self._export_filtered_button = QPushButton("Export...")
         self._export_filtered_button.clicked.connect(self._export_filtered_summary)
         actions_grid.addWidget(self._export_filtered_button, 2, 0)
 
-        self._copy_history_file_button = QPushButton("Copy History Path")
+        self._copy_history_file_button = QPushButton("Path")
         self._copy_history_file_button.clicked.connect(self._copy_history_file_path)
         actions_grid.addWidget(self._copy_history_file_button, 3, 0)
 
-        self._copy_history_json_button = QPushButton("Copy History JSON")
+        self._copy_history_json_button = QPushButton("History JSON")
         self._copy_history_json_button.clicked.connect(self._copy_history_file_json)
         actions_grid.addWidget(self._copy_history_json_button, 3, 1)
 
-        self._export_history_json_button = QPushButton("Export History JSON...")
+        self._export_history_json_button = QPushButton("JSON...")
         self._export_history_json_button.clicked.connect(self._export_history_file_json)
         actions_grid.addWidget(self._export_history_json_button, 4, 0)
 
-        self._open_history_file_button = QPushButton("Open History File")
+        self._open_history_file_button = QPushButton("Open File")
         self._open_history_file_button.clicked.connect(self._open_history_file)
         actions_grid.addWidget(self._open_history_file_button, 4, 1)
 
@@ -1762,7 +1762,7 @@ class ReleaseHistoryDialog(QDialog):
         history_layout.setContentsMargins(0, 0, 0, 0)
         history_layout.setSpacing(10)
 
-        history_title = QLabel("Release Runs")
+        history_title = QLabel("Runs")
         history_title.setObjectName("workspace_section_title")
         history_layout.addWidget(history_title)
 
@@ -1792,7 +1792,7 @@ class ReleaseHistoryDialog(QDialog):
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.setSpacing(10)
 
-        details_title = QLabel("Selection Details")
+        details_title = QLabel("Details")
         details_title.setObjectName("workspace_section_title")
         details_layout.addWidget(details_title)
 
@@ -1819,23 +1819,23 @@ class ReleaseHistoryDialog(QDialog):
         details_actions.setHorizontalSpacing(8)
         details_actions.setVerticalSpacing(8)
 
-        self._preview_auto_button = QPushButton("Auto Preview")
-        self._preview_manifest_button = QPushButton("Preview Manifest")
-        self._preview_log_button = QPushButton("Preview Log")
-        self._preview_version_button = QPushButton("Preview Version")
-        self._copy_summary_button = QPushButton("Copy Summary")
-        self._export_summary_button = QPushButton("Export Summary...")
-        self._copy_details_button = QPushButton("Copy Details")
-        self._copy_preview_button = QPushButton("Copy Preview")
-        self._copy_preview_path_button = QPushButton("Copy Preview Path")
-        self._export_preview_button = QPushButton("Export Preview...")
+        self._preview_auto_button = QPushButton("Auto")
+        self._preview_manifest_button = QPushButton("Manifest")
+        self._preview_log_button = QPushButton("Log")
+        self._preview_version_button = QPushButton("Version")
+        self._copy_summary_button = QPushButton("Summary")
+        self._export_summary_button = QPushButton("Summary...")
+        self._copy_details_button = QPushButton("Details")
+        self._copy_preview_button = QPushButton("Copy")
+        self._copy_preview_path_button = QPushButton("Path")
+        self._export_preview_button = QPushButton("Export...")
         self._open_preview_button = QPushButton("Open Preview")
-        self._copy_folder_path_button = QPushButton("Copy Folder Path")
-        self._copy_dist_path_button = QPushButton("Copy Dist Path")
-        self._copy_package_path_button = QPushButton("Copy Package Path")
-        self._export_details_button = QPushButton("Export Details...")
-        self._copy_entry_json_button = QPushButton("Copy Entry JSON")
-        self._export_entry_json_button = QPushButton("Export Entry JSON...")
+        self._copy_folder_path_button = QPushButton("Folder Path")
+        self._copy_dist_path_button = QPushButton("Dist Path")
+        self._copy_package_path_button = QPushButton("Package Path")
+        self._export_details_button = QPushButton("Details...")
+        self._copy_entry_json_button = QPushButton("JSON")
+        self._export_entry_json_button = QPushButton("JSON...")
         self._open_folder_button = QPushButton("Open Folder")
         self._open_dist_button = QPushButton("Open Dist")
         self._open_version_button = QPushButton("Open Version")
@@ -1891,7 +1891,7 @@ class ReleaseHistoryDialog(QDialog):
         preview_layout.setContentsMargins(0, 0, 0, 0)
         preview_layout.setSpacing(10)
 
-        preview_title = QLabel("Artifacts & Preview")
+        preview_title = QLabel("Preview")
         preview_title.setObjectName("workspace_section_title")
         preview_layout.addWidget(preview_title)
 
@@ -3038,12 +3038,12 @@ class ReleaseHistoryDialog(QDialog):
 
     def _update_preview_path_button(self, entry: dict[str, object] | None = None) -> None:
         label, path = self._current_preview_target(entry)
-        self._copy_preview_path_button.setText(f"Copy {label} Path")
+        self._copy_preview_path_button.setText(f"{label} Path")
         self._copy_preview_path_button.setEnabled(bool(path))
 
     def _update_preview_export_button(self, entry: dict[str, object] | None = None) -> None:
         label, path, _prefer_json, _suffix = self._current_preview_target_options(entry)
-        self._export_preview_button.setText(f"Export {label}...")
+        self._export_preview_button.setText(f"{label}...")
         self._export_preview_button.setEnabled(bool(path and os.path.isfile(path)))
 
     def _update_preview_open_button(self, entry: dict[str, object] | None = None) -> None:

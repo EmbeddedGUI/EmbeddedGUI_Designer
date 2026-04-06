@@ -743,6 +743,11 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release configuration workspace."
     assert dialog._title_label.text() == "Profiles"
+    assert _find_label_by_text(dialog, "Details") is not None
+    assert _find_label_by_text(dialog, "Summary") is not None
+    assert _find_label_by_text(dialog, "ID") is not None
+    assert _find_label_by_text(dialog, "Target") is not None
+    assert _find_label_by_text(dialog, "Extra Args") is not None
     assert dialog._title_label.accessibleName() == "Release profiles title: Manage Release Profiles."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
     assert _find_label_by_text(
@@ -777,6 +782,7 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert "Default profile." in dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).statusTip() == dialog._profile_list.item(0).toolTip()
     assert dialog._profile_list.item(0).data(Qt.AccessibleTextRole) == dialog._profile_list.item(0).toolTip()
+    assert dialog._set_default_btn.text() == "Default"
     assert dialog._add_btn.toolTip() == (
         "Add a new release profile. Release profiles: 2 profiles. Default profile: windows-pc. "
         "Current profile: Windows PC [windows-pc] default."
@@ -803,9 +809,11 @@ def test_release_profiles_dialog_exposes_accessibility_metadata(qapp):
     assert dialog._package_format_combo.toolTip() == (
         "Release package format: Directory + Zip. Current profile: Windows PC [windows-pc] default."
     )
+    assert dialog._copy_resource_check.text() == "Copy resources to dist"
     assert dialog._copy_resource_check.toolTip() == (
         "Copy the resource directory into the release dist output. Current profile: Windows PC [windows-pc] default."
     )
+    assert dialog._default_label.text() == "Default: windows-pc"
     assert dialog._set_default_btn.accessibleName() == "Set default release profile unavailable"
     assert dialog._id_edit.accessibleName() == "Release profile ID: windows-pc"
 
@@ -967,6 +975,9 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._metrics_frame.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Release history workspace."
     assert dialog._title_label.text() == "History"
+    assert _find_label_by_text(dialog, "Runs") is not None
+    assert _find_label_by_text(dialog, "Details") is not None
+    assert _find_label_by_text(dialog, "Preview") is not None
     assert dialog._title_label.accessibleName() == "Release history title: Inspect Release History."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
     assert _find_label_by_text(dialog, "Filters") is not None
@@ -1005,6 +1016,15 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
     assert dialog._preview_metric_value._release_history_metric_label.accessibleName() == "Preview metric label."
     assert dialog._preview_metric_value._release_history_metric_card.accessibleName() == "Preview metric: Auto | Manifest."
     assert len(dialog.findChildren(QFrame, "release_history_metric_card")) == 3
+    assert dialog._clear_filters_button.text() == "Clear"
+    assert dialog._reset_view_button.text() == "Reset"
+    assert dialog._copy_filtered_button.text() == "Summary"
+    assert dialog._copy_filtered_json_button.text() == "JSON"
+    assert dialog._export_filtered_button.text() == "Export..."
+    assert dialog._copy_history_file_button.text() == "Path"
+    assert dialog._copy_history_json_button.text() == "History JSON"
+    assert dialog._export_history_json_button.text() == "JSON..."
+    assert dialog._open_history_file_button.text() == "Open File"
     assert dialog._search_edit.toolTip() == (
         "Filter release history by build ID, message, SDK revision, or artifact path. Current search: none."
     )
@@ -1029,23 +1049,31 @@ def test_release_history_dialog_exposes_accessibility_metadata(qapp, tmp_path):
         "Showing the best available preview for the selected release entry. "
         f"Path state: available. Current path: {manifest_path}."
     )
+    assert dialog._preview_auto_button.text() == "Auto"
     assert dialog._preview_auto_button.accessibleName() == "Auto preview"
     assert dialog._preview_auto_button.icon().isNull()
     assert dialog._preview_manifest_button.toolTip() == (
         f"Preview the selected release manifest. Path state: available. Current path: {manifest_path}."
     )
+    assert dialog._preview_manifest_button.text() == "Manifest"
     assert dialog._preview_manifest_button.accessibleName() == "Preview manifest"
     assert dialog._preview_manifest_button.icon().isNull()
+    assert dialog._copy_summary_button.text() == "Summary"
     assert dialog._copy_summary_button.toolTip() == (
         "Copy the selected release summary. "
         "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
     assert dialog._copy_summary_button.icon().isNull()
+    assert dialog._copy_details_button.text() == "Details"
     assert dialog._copy_preview_button.toolTip() == (
         "Copy the full manifest preview text. "
         "Current selection: 20260326T000000Z [windows-pc] success sdk sdk-good."
     )
+    assert dialog._copy_preview_button.text() == "Copy"
     assert dialog._copy_preview_button.icon().isNull()
+    assert dialog._copy_preview_path_button.text() == "Manifest Path"
+    assert dialog._export_preview_button.text() == "Manifest..."
+    assert dialog._copy_entry_json_button.text() == "JSON"
     assert dialog._preview_edit.accessibleName() == "Release preview: Manifest Preview."
     assert dialog._copy_history_file_button.toolTip() == "No release history file path is available to copy. Current path: none."
     assert dialog._copy_history_file_button.accessibleName() == "Copy release history file path unavailable"
@@ -1538,23 +1566,23 @@ def test_release_history_dialog_copy_preview_path_tracks_preview_mode(qapp, tmp_
         ]
     )
 
-    assert dialog._copy_preview_path_button.text() == "Copy Manifest Path"
-    assert dialog._export_preview_button.text() == "Export Manifest..."
+    assert dialog._copy_preview_path_button.text() == "Manifest Path"
+    assert dialog._export_preview_button.text() == "Manifest..."
     assert dialog._open_preview_button.text() == "Open Manifest"
     QApplication.clipboard().clear()
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(manifest_path) + "\n"
 
     dialog._preview_log_button.click()
-    assert dialog._copy_preview_path_button.text() == "Copy Log Path"
-    assert dialog._export_preview_button.text() == "Export Log..."
+    assert dialog._copy_preview_path_button.text() == "Log Path"
+    assert dialog._export_preview_button.text() == "Log..."
     assert dialog._open_preview_button.text() == "Open Log"
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(log_path) + "\n"
 
     dialog._preview_version_button.click()
-    assert dialog._copy_preview_path_button.text() == "Copy Version Path"
-    assert dialog._export_preview_button.text() == "Export Version..."
+    assert dialog._copy_preview_path_button.text() == "Version Path"
+    assert dialog._export_preview_button.text() == "Version..."
     assert dialog._open_preview_button.text() == "Open Version"
     dialog._copy_preview_path_button.click()
     assert QApplication.clipboard().text() == str(version_path) + "\n"
