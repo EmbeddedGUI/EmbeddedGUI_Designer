@@ -4259,8 +4259,11 @@ class MainWindow(QMainWindow):
 
     def _set_theme(self, theme):
         """Set the application theme and save to config."""
+        app = QApplication.instance()
+        if app is not None:
+            app.setProperty("designer_font_size_pt", int(getattr(self._config, "font_size_px", 0) or 0))
         apply_theme(
-            QApplication.instance(),
+            app,
             theme,
             density=str(getattr(self._config, "ui_density", "standard") or "standard"),
         )
@@ -4277,7 +4280,10 @@ class MainWindow(QMainWindow):
             normalized = "roomy_plus"
         elif normalized not in {"standard", "roomy", "roomy_plus"}:
             normalized = "standard"
-        apply_theme(QApplication.instance(), self._config.theme, density=normalized)
+        app = QApplication.instance()
+        if app is not None:
+            app.setProperty("designer_font_size_pt", int(getattr(self._config, "font_size_px", 0) or 0))
+        apply_theme(app, self._config.theme, density=normalized)
         self._config.ui_density = normalized
         self._config.save()
         self._update_view_and_theme_action_metadata()
@@ -4292,7 +4298,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"UI density set to {label} (saved)", 3000)
 
     def _set_font_sizes(self):
-        """Set a single font size for the entire UI."""
+        """Set the theme-driven application font size."""
         current_size = self._config.font_size_px
         if not current_size or current_size <= 0:
             current_size = 9
@@ -4304,10 +4310,14 @@ class MainWindow(QMainWindow):
         if not ok:
             return
 
-        # Apply via stylesheet (DPI-independent, overrides all widgets)
         app = QApplication.instance()
-        base_ss = self._get_base_stylesheet(app)
-        app.setStyleSheet(base_ss + f"\n* {{ font-size: {size}pt; }}")
+        if app is not None:
+            app.setProperty("designer_font_size_pt", int(size))
+            apply_theme(
+                app,
+                self._config.theme,
+                density=str(getattr(self._config, "ui_density", "standard") or "standard"),
+            )
 
         # Debug panel uses its own font
         self.debug_panel.set_output_font_size_pt(size)
@@ -4317,14 +4327,6 @@ class MainWindow(QMainWindow):
         self._config.save()
         self._update_view_and_theme_action_metadata()
         self.statusBar().showMessage(f"Font size set to {size}pt (saved)")
-
-    def _get_base_stylesheet(self, app):
-        """Get the base stylesheet without any font-size override."""
-        ss = app.styleSheet()
-        # Remove any previous font-size override line we added
-        import re
-        ss = re.sub(r'\n\*\s*\{\s*font-size:\s*\d+pt;\s*\}', '', ss)
-        return ss
 
     # 鈹€鈹€ Project operations 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 

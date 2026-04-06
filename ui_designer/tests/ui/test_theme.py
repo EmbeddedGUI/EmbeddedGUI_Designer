@@ -170,6 +170,20 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
 
 
+def test_font_preference_scales_typography_tokens_consistently():
+    base = theme_tokens("dark")
+    scaled = theme_tokens("dark", font_size_pt=12)
+    css = _build_stylesheet("dark", font_size_pt=12)
+
+    welcome_title = css.split("#welcome_hero_title {", 1)[1].split("}", 1)[0]
+    body = css.split("QLabel, QCheckBox, QRadioButton {", 1)[1].split("}", 1)[0]
+
+    assert int(scaled["fs_body"]) > int(base["fs_body"])
+    assert int(scaled["fs_h1"]) > int(base["fs_h1"])
+    assert f"font-size: {scaled['fs_h1']}px;" in welcome_title
+    assert f"font-size: {scaled['fs_body']}px;" in body
+
+
 def test_engineering_theme_radii_remove_pill_shapes():
     for mode in ("light", "dark"):
         tokens = theme_tokens(mode)

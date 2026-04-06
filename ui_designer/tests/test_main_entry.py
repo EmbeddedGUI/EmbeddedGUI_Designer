@@ -41,6 +41,7 @@ class _FakeApp:
         self.argv = argv
         self.application_name = ""
         self._style_sheet = "base-style"
+        self._properties = {}
         self.exec_calls = 0
         type(self).last_instance = self
 
@@ -52,6 +53,12 @@ class _FakeApp:
 
     def setStyleSheet(self, style):
         self._style_sheet = style
+
+    def setProperty(self, key, value):
+        self._properties[key] = value
+
+    def property(self, key):
+        return self._properties.get(key)
 
     def exec_(self):
         self.exec_calls += 1
@@ -173,7 +180,8 @@ def test_main_opens_cli_project_with_resolved_sdk_root(monkeypatch, tmp_path, ma
     ]
     assert window.show_called is True
     assert app.application_name == "EmbeddedGUI Designer"
-    assert "font-size: 9pt" in app.styleSheet()
+    assert app.styleSheet() == "base-style"
+    assert app.property("designer_font_size_pt") == 0
     assert window.prompt_calls == 0
     assert exit_codes == [0]
 

@@ -85,10 +85,8 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("EmbeddedGUI Designer")
+    app.setProperty("designer_font_size_pt", int(getattr(config, "font_size_px", 0) or 0))
     apply_theme(app, config.theme, density=getattr(config, "ui_density", "standard"))
-
-    font_pt = getattr(config, "font_size_px", 0) or 9
-    app.setStyleSheet(app.styleSheet() + f"\n* {{ font-size: {font_pt}pt; }}")
 
     window = MainWindow(sdk_root, app_name=app_name)
 
@@ -128,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

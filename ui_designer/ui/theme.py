@@ -307,6 +307,18 @@ _TOKENS = {
     },
 }
 
+_FONT_SCALE_DEFAULT_PT = 9
+_FONT_SIZE_KEYS = (
+    "fs_display",
+    "fs_h1",
+    "fs_h2",
+    "fs_panel_title",
+    "fs_body",
+    "fs_body_sm",
+    "fs_caption",
+    "fs_micro",
+)
+
 
 def _normalize_density(density="standard"):
     value = str(density or "standard").strip().lower()
@@ -315,6 +327,14 @@ def _normalize_density(density="standard"):
     if value in {"roomy", "comfortable", "relaxed"}:
         return "roomy"
     return "standard"
+
+
+def _normalize_font_size_pt(font_size_pt=0):
+    try:
+        value = int(font_size_pt or 0)
+    except (TypeError, ValueError):
+        return 0
+    return value if value > 0 else 0
 
 
 def _density_adjusted_tokens(tokens: dict, density="standard"):
@@ -347,10 +367,43 @@ def _density_adjusted_tokens(tokens: dict, density="standard"):
     return out
 
 
-def theme_tokens(mode="dark", density="standard"):
+def _font_adjusted_tokens(tokens: dict, font_size_pt=0):
+    """Return a copy of tokens scaled from the user font preference."""
+    out = dict(tokens or {})
+    normalized = _normalize_font_size_pt(font_size_pt)
+    if normalized <= 0:
+        return out
+
+    scale = normalized / float(_FONT_SCALE_DEFAULT_PT)
+    if abs(scale - 1.0) < 0.001:
+        return out
+
+    for key in _FONT_SIZE_KEYS:
+        try:
+            out[key] = max(1, int(round(float(out.get(key, 0)) * scale)))
+        except Exception:
+            pass
+
+    for key in ("pad_btn_v", "pad_btn_h", "pad_input_v", "pad_input_h"):
+        try:
+            out[key] = max(1, int(round(float(out.get(key, 0)) * scale)))
+        except Exception:
+            pass
+
+    for key in ("h_tab_min",):
+        try:
+            out[key] = max(1, int(round(float(out.get(key, 0)) * scale)))
+        except Exception:
+            pass
+
+    return out
+
+
+def theme_tokens(mode="dark", density="standard", font_size_pt=0):
     """Return the active token map."""
     base = dict(_TOKENS["light" if mode == "light" else "dark"])
-    return _density_adjusted_tokens(base, density)
+    density_tokens = _density_adjusted_tokens(base, density)
+    return _font_adjusted_tokens(density_tokens, font_size_pt=font_size_pt)
 
 
 # Semantic aliases (spec names → existing keys) for documentation and future refactors.
@@ -443,8 +496,8 @@ def _ensure_fluent_engineering_style_manager(app):
     return manager
 
 
-def _build_stylesheet(mode="dark", density="standard"):
-    t = theme_tokens(mode, density=density)
+def _build_stylesheet(mode="dark", density="standard", font_size_pt=0):
+    t = theme_tokens(mode, density=density, font_size_pt=font_size_pt)
     return f"""
 QMainWindow, QDialog {{
     background-color: {t['shell_bg']};
@@ -2928,10 +2981,29 @@ QProgressBar#status_center_health_info_bar::chunk {{
 """
 
 
+def _apply_app_base_font(app: QApplication, tokens: dict):
+    """Set the application baseline font so unstylized widgets match theme body text."""
+    if app is None:
+        return
+    font = app.font()
+    try:
+        pixel_size = int(tokens.get("fs_body", 13))
+    except (TypeError, ValueError):
+        pixel_size = 13
+    try:
+        weight = int(tokens.get("fw_regular", 400))
+    except (TypeError, ValueError):
+        weight = 400
+    font.setPixelSize(max(pixel_size, 1))
+    font.setWeight(weight)
+    app.setFont(font)
+
+
 def apply_theme(app: QApplication, mode="dark", density="standard"):
     """Apply the requested theme mode and density profile."""
     mode = "light" if mode == "light" else "dark"
     density = _normalize_density(density)
+    font_size_pt = _normalize_font_size_pt(app.property("designer_font_size_pt") if app is not None else 0)
     if HAS_FLUENT:
         try:
             setTheme(Theme.LIGHT if mode == "light" else Theme.DARK)
@@ -2943,7 +3015,10 @@ def apply_theme(app: QApplication, mode="dark", density="standard"):
                 raise
     app.setProperty("designer_theme_mode", mode)
     app.setProperty("designer_ui_density", density)
-    app.setStyleSheet(_build_stylesheet(mode, density=density))
+    app.setProperty("designer_font_size_pt", font_size_pt)
+    tokens = theme_tokens(mode, density=density, font_size_pt=font_size_pt)
+    _apply_app_base_font(app, tokens)
+    app.setStyleSheet(_build_stylesheet(mode, density=density, font_size_pt=font_size_pt))
     manager = _ensure_fluent_engineering_style_manager(app)
     if manager is not None:
         manager.refresh_all()
