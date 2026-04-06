@@ -3730,6 +3730,7 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_view_appearance_actions_expose_status_hints(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
         from ui_designer.ui.preview_panel import MODE_HIDDEN, MODE_VERTICAL
@@ -3830,6 +3831,12 @@ class TestMainWindowFileFlow:
         assert actions["Dark"].toolTip() == "Switch the Designer theme to dark."
         assert actions["Light"].toolTip() == "Currently using the light Designer theme."
 
+        label = WidgetModel("label", name="title")
+        label.properties["font_builtin"] = "&egui_res_font_montserrat_8_4"
+        window.property_panel.set_widget(label)
+        font_selector = window.property_panel._editors["prop_font_builtin"]
+        initial_preview_style = font_selector._preview.styleSheet()
+
         monkeypatch.setattr(main_window_module.QInputDialog, "getInt", lambda *args, **kwargs: (11, True))
         window._set_font_sizes()
 
@@ -3837,6 +3844,8 @@ class TestMainWindowFileFlow:
         assert window.debug_panel.get_output_font().pointSize() == 11
         assert window.editor_tabs.code_editor.font().pointSize() == 11
         assert window.editor_tabs.split_editor.font().pointSize() == 11
+        assert font_selector._preview.styleSheet() != initial_preview_style
+        assert f"font-size: {font_selector._preview_font_floor_px()}px;" in font_selector._preview.styleSheet()
         _close_window(window)
 
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):

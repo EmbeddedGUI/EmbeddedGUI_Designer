@@ -4267,6 +4267,7 @@ class MainWindow(QMainWindow):
             theme,
             density=str(getattr(self._config, "ui_density", "standard") or "standard"),
         )
+        self._refresh_theme_dependent_widgets()
         self._config.theme = theme
         self._config.save()
         self._update_view_and_theme_action_metadata()
@@ -4284,6 +4285,7 @@ class MainWindow(QMainWindow):
         if app is not None:
             app.setProperty("designer_font_size_pt", int(getattr(self._config, "font_size_px", 0) or 0))
         apply_theme(app, self._config.theme, density=normalized)
+        self._refresh_theme_dependent_widgets()
         self._config.ui_density = normalized
         self._config.save()
         self._update_view_and_theme_action_metadata()
@@ -4318,6 +4320,7 @@ class MainWindow(QMainWindow):
                 self._config.theme,
                 density=str(getattr(self._config, "ui_density", "standard") or "standard"),
             )
+        self._refresh_theme_dependent_widgets()
 
         # Debug panel uses its own font
         self.debug_panel.set_output_font_size_pt(size)
@@ -4331,6 +4334,18 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Font size set to {size}pt (saved)")
 
     # 鈹€鈹€ Project operations 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+    def _refresh_theme_dependent_widgets(self):
+        """Refresh inline theme-sensitive widgets after theme or font changes."""
+        try:
+            from .widgets.font_selector import EguiFontSelector
+        except Exception:
+            return
+        for selector in self.findChildren(EguiFontSelector):
+            try:
+                selector.refresh_theme_metrics()
+            except Exception:
+                continue
 
     def _update_recent_menu(self):
         """Update the Recent Projects submenu."""

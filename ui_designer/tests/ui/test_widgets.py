@@ -202,6 +202,23 @@ class TestEguiFontSelector:
             selector.deleteLater()
             qapp.setProperty("designer_font_size_pt", 0)
 
+    def test_selector_can_refresh_preview_after_ui_scale_changes(self, qapp):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(fonts=["&egui_res_font_montserrat_8_4"])
+        try:
+            selector.set_value("&egui_res_font_montserrat_8_4")
+            initial_style = selector._preview.styleSheet()
+
+            qapp.setProperty("designer_font_size_pt", 12)
+            selector.refresh_theme_metrics()
+
+            assert selector._preview.styleSheet() != initial_style
+            assert f"font-size: {selector._preview_font_floor_px()}px;" in selector._preview.styleSheet()
+        finally:
+            selector.deleteLater()
+            qapp.setProperty("designer_font_size_pt", 0)
+
     def test_selector_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 

@@ -100,6 +100,11 @@ class EguiFontSelector(QWidget):
         except (TypeError, ValueError):
             return 12
 
+    def refresh_theme_metrics(self):
+        """Re-apply preview sizing after theme, density, or UI font changes."""
+        self._update_preview(self.value())
+        self._update_accessibility_metadata(self.value())
+
     def _update_preview(self, text):
         info = _font_display_info(text)
         if info:
