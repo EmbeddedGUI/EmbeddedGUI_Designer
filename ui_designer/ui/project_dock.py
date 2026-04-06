@@ -77,7 +77,7 @@ class ProjectExplorerDock(QDockWidget):
     def __init__(self, parent=None):
         super().__init__("Project Explorer", parent)
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
-        self.setMinimumWidth(180)
+        self.setMinimumWidth(172)
 
         self._project = None
         self._current_page_name = None

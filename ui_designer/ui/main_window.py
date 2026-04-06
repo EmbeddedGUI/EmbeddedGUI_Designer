@@ -146,8 +146,8 @@ INSPECTOR_SCROLL_MIN_WIDTH = 272
 
 # UIX-004: workspace shell proportions (top-level frame balance)
 WORKSPACE_NAV_RAIL_WIDTH = 60
-LEFT_PANEL_STACK_MIN_WIDTH = 180
-LEFT_PANEL_DEFAULT_WIDTH = 244
+LEFT_PANEL_STACK_MIN_WIDTH = 172
+LEFT_PANEL_DEFAULT_WIDTH = 236
 CENTER_PANEL_DEFAULT_WIDTH = 860
 INSPECTOR_PANEL_DEFAULT_WIDTH = 272
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
@@ -402,7 +402,7 @@ class MainWindow(QMainWindow):
 
         self.project_dock = ProjectExplorerDock(self)
         self.project_dock.setObjectName("project_explorer_dock")
-        self.project_dock.setMinimumWidth(180)
+        self.project_dock.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
         self._prepare_workspace_dock(self.project_dock)
 
         self.page_navigator = PageNavigator()
