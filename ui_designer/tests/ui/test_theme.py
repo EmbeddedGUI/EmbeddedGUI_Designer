@@ -420,6 +420,8 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         metric_success = css.split('QFrame#property_panel_metric_card[metricTone="success"] {', 1)[1].split("}", 1)[0]
         metric_warning = css.split('QFrame#property_panel_metric_card[metricTone="warning"] {', 1)[1].split("}", 1)[0]
         metric_danger = css.split('QFrame#property_panel_metric_card[metricTone="danger"] {', 1)[1].split("}", 1)[0]
+        metric_label = css.split("#property_panel_metric_label {", 1)[1].split("}", 1)[0]
+        metric_value = css.split("#property_panel_metric_value {", 1)[1].split("}", 1)[0]
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
         inspector_group_title = css.split("QGroupBox#inspector_collapsible_group::title {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
@@ -430,11 +432,23 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in search_shell
         assert "border: none;" in search_shell
         assert "background-color: transparent;" in metric_card
+        assert f"border-top: 1px solid {t['border']};" in metric_card
+        assert "border-right: none;" in metric_card
+        assert "border-bottom: none;" in metric_card
+        assert "border-left: none;" in metric_card
         assert "border-radius: 0px;" in metric_card
         assert "background-color: transparent;" in metric_accent
+        assert f"border-top-color: {t['accent']};" in metric_accent
         assert "background-color: transparent;" in metric_success
+        assert f"border-top-color: {t['success']};" in metric_success
         assert "background-color: transparent;" in metric_warning
+        assert f"border-top-color: {t['warning']};" in metric_warning
         assert "background-color: transparent;" in metric_danger
+        assert f"border-top-color: {t['danger']};" in metric_danger
+        assert f"color: {t['text_muted']};" in metric_label
+        assert f"font-size: {t['fs_caption']}px;" in metric_label
+        assert f"font-size: {t['fs_body_sm']}px;" in metric_value
+        assert f"font-weight: {t['fw_medium']};" in metric_value
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group

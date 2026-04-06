@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QLabel
+    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel
 
     _has_pyqt5 = True
 except ImportError:
@@ -85,11 +85,16 @@ class TestPropertyPanelFileFlow:
         assert len(metric_cards) == 4
         assert metric_grid.horizontalSpacing() == 2
         assert metric_grid.verticalSpacing() == 2
-        margins = metric_cards[0].layout().contentsMargins()
+        card_layout = metric_cards[0].layout()
+        assert isinstance(card_layout, QHBoxLayout)
+        assert card_layout.spacing() == 4
+        assert card_layout.itemAt(0).widget().objectName() == "property_panel_metric_label"
+        assert card_layout.itemAt(2).widget().objectName() == "property_panel_metric_value"
+        margins = card_layout.contentsMargins()
         assert margins.left() == 6
-        assert margins.top() == 4
+        assert margins.top() == 3
         assert margins.right() == 6
-        assert margins.bottom() == 4
+        assert margins.bottom() == 3
         panel.deleteLater()
 
     def test_empty_state_and_search_metadata(self, qapp):

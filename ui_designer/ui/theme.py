@@ -1217,40 +1217,43 @@ QToolButton#workspace_status_chip:focus {{
 
 QFrame#property_panel_metric_card {{
     background-color: transparent;
-    border: 1px solid {t['border']};
+    border-top: 1px solid {t['border']};
+    border-right: none;
+    border-bottom: none;
+    border-left: none;
     border-radius: 0px;
 }}
 
 QFrame#property_panel_metric_card[metricTone="accent"] {{
     background-color: transparent;
-    border-color: {t['accent']};
+    border-top-color: {t['accent']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="success"] {{
     background-color: transparent;
-    border-color: {t['success']};
+    border-top-color: {t['success']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="warning"] {{
     background-color: transparent;
-    border-color: {t['warning']};
+    border-top-color: {t['warning']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="danger"] {{
     background-color: transparent;
-    border-color: {t['danger']};
+    border-top-color: {t['danger']};
 }}
 
 #property_panel_metric_label {{
-    color: {t['text_soft']};
+    color: {t['text_muted']};
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
 }}
 
 #property_panel_metric_value {{
     color: {t['text']};
-    font-size: {t['fs_panel_title']}px;
-    font-weight: {t['fw_semibold']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
 }}
 
 QToolButton#workspace_summary_indicator {{

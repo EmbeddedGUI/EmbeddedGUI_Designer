@@ -526,17 +526,18 @@ class PropertyPanel(QWidget):
         card.setObjectName("property_panel_metric_card")
         if tone:
             card.setProperty("metricTone", tone)
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(6, 4, 6, 4)
-        layout.setSpacing(2)
+        layout = QHBoxLayout(card)
+        layout.setContentsMargins(6, 3, 6, 3)
+        layout.setSpacing(4)
 
         caption = QLabel(label)
         caption.setObjectName("property_panel_metric_label")
         metric_value = QLabel(value)
         metric_value.setObjectName("property_panel_metric_value")
-        metric_value.setWordWrap(True)
+        metric_value.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         layout.addWidget(caption)
+        layout.addStretch(1)
         layout.addWidget(metric_value)
         summary = f"{label}: {value}"
         _set_widget_metadata(caption, tooltip=summary, accessible_name=f"{label} metric label")
