@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame.setFixedWidth(WORKSPACE_NAV_RAIL_WIDTH)
         self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(2, _SPACE_XS, 2, _SPACE_XS)
+        nav_layout.setContentsMargins(2, 2, 2, 2)
         nav_layout.setSpacing(2)
         for key, label, short_label in (
             ("project", "Project", "Pages"),

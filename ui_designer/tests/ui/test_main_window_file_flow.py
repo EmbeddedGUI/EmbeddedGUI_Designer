@@ -6189,7 +6189,7 @@ class TestMainWindowFileFlow:
         assert editor_layout.spacing() == 2
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (2, 2, 2, 2)
         assert window._toolbar_command_row_layout.spacing() == 2
-        assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (2, 4, 2, 4)
+        assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (2, 2, 2, 2)
         assert window._workspace_nav_frame.width() == 60
         assert window.project_dock.minimumWidth() == 172
         assert window._left_panel_stack.minimumWidth() == 172
