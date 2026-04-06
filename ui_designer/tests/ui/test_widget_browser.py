@@ -85,8 +85,8 @@ class TestWidgetBrowserPanel:
         card_layout = button_card.layout()
         card_margins = card_layout.contentsMargins()
 
-        assert panel.layout().spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert header_layout.spacing() == 2
         assert title_row.spacing() == 2
         assert metrics_layout.spacing() == 2

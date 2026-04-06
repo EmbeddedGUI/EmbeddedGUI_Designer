@@ -256,13 +256,13 @@ class WidgetBrowserPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(_SPACE_XS)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("widget_browser_header")
         self._header_frame.setProperty("panelTone", "components")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Components")
