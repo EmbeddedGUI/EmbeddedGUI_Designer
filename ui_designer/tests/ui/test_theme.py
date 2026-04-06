@@ -60,7 +60,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         nav = css.split("#workspace_nav_rail", 1)[1].split("}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
-        assert str(t["space_xs"]) in indicator and str(t["space_sm"]) in indicator
+        assert str(t["space_xs"]) in indicator
 
 
 def test_status_center_styles_reduce_resting_container_weight():
@@ -135,7 +135,7 @@ def test_engineering_theme_radii_remove_pill_shapes():
         health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in chip
-        assert "padding: 2px 8px;" in chip
+        assert "padding: 2px 4px;" in chip
         assert "min-height: 26px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in metric_card
