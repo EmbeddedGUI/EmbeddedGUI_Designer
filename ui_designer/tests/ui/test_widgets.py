@@ -275,6 +275,16 @@ class TestEguiColorPicker:
         assert picker._btn.text() == "Pick"
         picker.deleteLater()
 
+    def test_picker_swatch_uses_soft_border_color(self, qapp):
+        from ui_designer.ui.widgets.color_picker import EguiColorPicker
+
+        picker = EguiColorPicker()
+        border = picker._swatch._border_color()
+
+        assert border.isValid() is True
+        assert border.alpha() == 96
+        picker.deleteLater()
+
     def test_picker_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.widgets.color_picker import EguiColorPicker
 

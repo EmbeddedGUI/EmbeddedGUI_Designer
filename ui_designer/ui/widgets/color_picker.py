@@ -4,7 +4,7 @@ import re
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QColorDialog
 from PyQt5.QtCore import pyqtSignal, Qt, QSize
-from PyQt5.QtGui import QColor, QPainter, QBrush
+from PyQt5.QtGui import QColor, QPainter, QBrush, QPalette
 
 from ...model.widget_model import COLORS, COLOR_RGB
 
@@ -72,10 +72,17 @@ class ColorSwatch(QWidget):
             self._color = QColor(Qt.white)
         self.update()
 
+    def _border_color(self):
+        border = QColor(self.palette().color(QPalette.Mid))
+        if not border.isValid():
+            border = QColor(Qt.gray)
+        border.setAlpha(96)
+        return border
+
     def paintEvent(self, event):
         p = QPainter(self)
         p.setBrush(QBrush(self._color))
-        p.setPen(Qt.gray)
+        p.setPen(self._border_color())
         p.drawRect(1, 1, 18, 18)
         p.end()
 
