@@ -117,6 +117,7 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = []
         self._interactive_widgets = []
         self._visible_non_root_widgets = False
+        self._snap_target_edges = []
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
@@ -179,6 +180,26 @@ class WidgetOverlay(QWidget):
 
     def _show_full_label_overlay(self):
         return not (self._dragging or self._resizing or self._rubber_band)
+
+    def _widget_edge_triplets(self, widget, *, axis="x"):
+        if axis == "y":
+            start = widget.display_y
+            size = widget.height
+        else:
+            start = widget.display_x
+            size = widget.width
+        return (start, start + size // 2, start + size)
+
+    def _logical_visible_rect(self, screen_rect, zoom):
+        if zoom <= 0:
+            return QRectF()
+        margin = 8.0 / zoom
+        return QRectF(
+            (screen_rect.x() / zoom) - margin,
+            (screen_rect.y() / zoom) - margin,
+            (screen_rect.width() / zoom) + margin * 2,
+            (screen_rect.height() / zoom) + margin * 2,
+        )
 
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
@@ -290,6 +311,10 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
+        self._snap_target_edges = [
+            (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
+            for widget in self._visible_widgets
+        ]
         valid_ids = {id(widget) for widget in self._widgets}
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
@@ -487,11 +512,9 @@ class WidgetOverlay(QWidget):
         edges_x = [new_x, new_x + new_w // 2, new_x + new_w]  # left, center, right
         edges_y = [new_y, new_y + new_h // 2, new_y + new_h]  # top, center, bottom
 
-        for w in self._visible_widgets:
+        for w, other_x, other_y in self._snap_target_edges:
             if w == widget:
                 continue
-            other_x = [w.display_x, w.display_x + w.width // 2, w.display_x + w.width]
-            other_y = [w.display_y, w.display_y + w.height // 2, w.display_y + w.height]
 
             for ex in edges_x:
                 for ox in other_x:
@@ -511,6 +534,7 @@ class WidgetOverlay(QWidget):
 
         z = self._zoom
         bw, bh = self._base_width, self._base_height
+        visible_logical_rect = self._logical_visible_rect(event.rect(), z)
 
         # ── Phase 1: Scaled space (geometry) ──────────────────────
         painter.scale(z, z)
@@ -534,6 +558,8 @@ class WidgetOverlay(QWidget):
         # Draw all widget bounds (rects + fills only)
         for w in self._visible_widgets:
             rect = QRect(w.display_x, w.display_y, w.width, w.height)
+            if not visible_logical_rect.intersects(QRectF(rect)):
+                continue
 
             if w == self._selected:
                 pen = QPen(QColor(255, 100, 100, 200), 2.0 / z, Qt.SolidLine)
@@ -590,6 +616,7 @@ class WidgetOverlay(QWidget):
         painter.setFont(label_font)
         fm = painter.fontMetrics()
         lh = fm.height() + 2
+        event_rect = event.rect()
 
         show_full_labels = self._show_full_label_overlay()
         for w in self._visible_widgets:
@@ -606,6 +633,8 @@ class WidgetOverlay(QWidget):
                 if sh < lh:
                     continue
                 label_rect = QRect(sx, sy, sw, lh)
+                if not event_rect.intersects(label_rect):
+                    continue
                 painter.fillRect(label_rect, QColor(30, 30, 30, 180))
                 painter.setPen(QColor(220, 220, 220))
                 # Clip text within the widget width
@@ -614,6 +643,8 @@ class WidgetOverlay(QWidget):
             elif w == self._selected or w == self._hovered:
                 lw = max(sw, fm.horizontalAdvance(label_text) + 8)
                 label_rect = QRect(sx, sy - lh, lw, lh)
+                if not event_rect.intersects(label_rect):
+                    continue
                 painter.fillRect(label_rect, QColor(50, 50, 50, 200))
                 painter.setPen(QColor(255, 255, 255, 240))
                 painter.drawText(label_rect, Qt.AlignCenter, label_text)
