@@ -61,13 +61,13 @@ class PageTimersPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._header_frame = QWidget()
         self._header_frame.setObjectName("page_timers_header")
         self._header_frame.setProperty("panelTone", "timers")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._eyebrow_label = QLabel("Timers")
@@ -89,7 +89,7 @@ class PageTimersPanel(QWidget):
         self._metrics_frame.setObjectName("page_timers_metrics_strip")
         self._header_chip_row = QHBoxLayout(self._metrics_frame)
         self._header_chip_row.setContentsMargins(0, 0, 0, 0)
-        self._header_chip_row.setSpacing(4)
+        self._header_chip_row.setSpacing(2)
         self._count_chip = self._make_status_chip("0 timers", "accent")
         self._selection_chip = self._make_status_chip("No selection", "warning")
         self._header_chip_row.addWidget(self._count_chip)
@@ -135,7 +135,7 @@ class PageTimersPanel(QWidget):
         self._actions_frame.setObjectName("page_editor_actions")
         actions_layout = QVBoxLayout(self._actions_frame)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(4)
+        actions_layout.setSpacing(2)
         self._actions_label = QLabel("Timer Actions")
         self._actions_label.setObjectName("page_editor_section_label")
         actions_layout.addWidget(self._actions_label)

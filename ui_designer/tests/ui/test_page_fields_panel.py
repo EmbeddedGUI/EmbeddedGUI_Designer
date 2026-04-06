@@ -56,14 +56,14 @@ class TestPageFieldsPanel:
         action_buttons = panel._actions_frame.layout().itemAt(1).layout()
         table_layout = panel._table_frame.layout()
 
-        assert panel.layout().spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert panel._header_frame.layout().spacing() == 2
         assert (chip_margins.left(), chip_margins.top(), chip_margins.right(), chip_margins.bottom()) == (0, 0, 0, 0)
-        assert panel._header_chip_row.spacing() == 4
-        assert panel._code_frame.layout().spacing() == 4
+        assert panel._header_chip_row.spacing() == 2
+        assert panel._code_frame.layout().spacing() == 2
         assert table_layout.spacing() == 2
-        assert panel._actions_frame.layout().spacing() == 4
+        assert panel._actions_frame.layout().spacing() == 2
         assert code_buttons.spacing() == 2
         assert action_buttons.spacing() == 2
         assert panel._summary_label.text() == "Page Fields: 2 fields on main_page"
