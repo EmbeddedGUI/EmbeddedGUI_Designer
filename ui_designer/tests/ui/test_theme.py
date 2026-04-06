@@ -479,9 +479,9 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
-        assert "margin-top: 2px;" in inspector_group
-        assert "padding-top: 4px;" in inspector_group
-        assert "left: 2px;" in inspector_group_title
+        assert "margin-top: 1px;" in inspector_group
+        assert "padding-top: 2px;" in inspector_group
+        assert "left: 0px;" in inspector_group_title
         assert "padding: 0px;" in inspector_group_title
 
 

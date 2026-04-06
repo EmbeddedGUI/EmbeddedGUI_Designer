@@ -750,8 +750,8 @@ QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
-    margin-top: 2px;
-    padding-top: 4px;
+    margin-top: 1px;
+    padding-top: 2px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
@@ -759,7 +759,7 @@ QGroupBox#inspector_collapsible_group {{
 QGroupBox#inspector_collapsible_group::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 2px;
+    left: 0px;
     color: {t['text_muted']};
     padding: 0px;
 }}

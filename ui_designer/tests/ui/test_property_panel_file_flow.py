@@ -204,7 +204,7 @@ class TestPropertyPanelFileFlow:
 
             assert group.objectName() == "inspector_collapsible_group"
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
-            assert form.verticalSpacing() == 6
+            assert form.verticalSpacing() == 4
             assert form.horizontalSpacing() == 0
 
         panel.deleteLater()
@@ -706,7 +706,7 @@ class TestPropertyPanelFileFlow:
 
             assert group.objectName() == "inspector_collapsible_group"
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
-            assert form.verticalSpacing() == 6
+            assert form.verticalSpacing() == 4
             assert form.horizontalSpacing() == 0
 
         panel.deleteLater()

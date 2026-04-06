@@ -120,7 +120,7 @@ def _inspector_form():
     """Consistent label/field rhythm for inspector property forms (readable balanced density)."""
     form = QFormLayout()
     form.setContentsMargins(0, 0, 0, 0)
-    form.setSpacing(6)
+    form.setSpacing(4)
     form.setHorizontalSpacing(0)
     form.setRowWrapPolicy(QFormLayout.WrapAllRows)
     form.setLabelAlignment(Qt.AlignLeft | Qt.AlignBottom)
