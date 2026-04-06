@@ -402,6 +402,31 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_overlay_caches_visible_and_interactive_widgets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        visible_child = WidgetModel("label", name="visible", x=10, y=10, width=80, height=24)
+        hidden_child = WidgetModel("button", name="hidden", x=10, y=40, width=80, height=24)
+        locked_child = WidgetModel("button", name="locked", x=10, y=70, width=80, height=24)
+        hidden_child.designer_hidden = True
+        locked_child.designer_locked = True
+        root.add_child(visible_child)
+        root.add_child(hidden_child)
+        root.add_child(locked_child)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            assert overlay._visible_non_root_widgets is True
+            assert visible_child in overlay._visible_widgets
+            assert hidden_child not in overlay._visible_widgets
+            assert visible_child in overlay._interactive_widgets
+            assert locked_child not in overlay._interactive_widgets
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

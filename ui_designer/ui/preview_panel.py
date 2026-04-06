@@ -114,6 +114,9 @@ class WidgetOverlay(QWidget):
         self._solid_background = False
 
         self._widgets = []  # list of WidgetModel
+        self._visible_widgets = []
+        self._interactive_widgets = []
+        self._visible_non_root_widgets = False
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
@@ -284,6 +287,9 @@ class WidgetOverlay(QWidget):
     def set_widgets(self, widgets):
         """Set the flat list of widgets to display."""
         self._widgets = widgets or []
+        self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
+        self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
+        self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         valid_ids = {id(widget) for widget in self._widgets}
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
@@ -328,14 +334,12 @@ class WidgetOverlay(QWidget):
         return bool(getattr(widget, "designer_locked", False))
 
     def _has_visible_non_root_widgets(self):
-        return any(widget.parent is not None and not self._is_hidden(widget) for widget in self._widgets)
+        return self._visible_non_root_widgets
 
     def _widget_at(self, pos, *, allow_root=True):
         """Find widget at given position using display coordinates."""
         hide_root = not allow_root and self._has_visible_non_root_widgets()
-        for w in reversed(self._widgets):
-            if self._is_hidden(w) or self._is_locked(w):
-                continue
+        for w in reversed(self._interactive_widgets):
             if hide_root and w.parent is None:
                 continue
             rect = QRect(w.display_x, w.display_y, w.width, w.height)
@@ -483,7 +487,7 @@ class WidgetOverlay(QWidget):
         edges_x = [new_x, new_x + new_w // 2, new_x + new_w]  # left, center, right
         edges_y = [new_y, new_y + new_h // 2, new_y + new_h]  # top, center, bottom
 
-        for w in self._widgets:
+        for w in self._visible_widgets:
             if w == widget:
                 continue
             other_x = [w.display_x, w.display_x + w.width // 2, w.display_x + w.width]
@@ -528,9 +532,7 @@ class WidgetOverlay(QWidget):
                 painter.drawLine(0, y, bw, y)
 
         # Draw all widget bounds (rects + fills only)
-        for w in self._widgets:
-            if self._is_hidden(w):
-                continue
+        for w in self._visible_widgets:
             rect = QRect(w.display_x, w.display_y, w.width, w.height)
 
             if w == self._selected:
@@ -590,9 +592,7 @@ class WidgetOverlay(QWidget):
         lh = fm.height() + 2
 
         show_full_labels = self._show_full_label_overlay()
-        for w in self._widgets:
-            if self._is_hidden(w):
-                continue
+        for w in self._visible_widgets:
             if not show_full_labels and w not in {self._selected, self._hovered} and w not in self._multi_selected:
                 continue
             sx, sy = _s(w.display_x), _s(w.display_y)
