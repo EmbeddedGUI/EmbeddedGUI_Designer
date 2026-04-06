@@ -416,6 +416,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         header = css.split('#workspace_panel_header[panelTone="property"] {', 1)[1].split("}", 1)[0]
         hint_strip = css.split('#workspace_hint_strip[panelTone="property"] {', 1)[1].split("}", 1)[0]
         metric_card = css.split("QFrame#property_panel_metric_card {", 1)[1].split("}", 1)[0]
+        metric_accent = css.split('QFrame#property_panel_metric_card[metricTone="accent"] {', 1)[1].split("}", 1)[0]
+        metric_success = css.split('QFrame#property_panel_metric_card[metricTone="success"] {', 1)[1].split("}", 1)[0]
+        metric_warning = css.split('QFrame#property_panel_metric_card[metricTone="warning"] {', 1)[1].split("}", 1)[0]
+        metric_danger = css.split('QFrame#property_panel_metric_card[metricTone="danger"] {', 1)[1].split("}", 1)[0]
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
         inspector_group_title = css.split("QGroupBox#inspector_collapsible_group::title {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
@@ -427,6 +431,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in search_shell
         assert "background-color: transparent;" in metric_card
         assert "border-radius: 0px;" in metric_card
+        assert "background-color: transparent;" in metric_accent
+        assert "background-color: transparent;" in metric_success
+        assert "background-color: transparent;" in metric_warning
+        assert "background-color: transparent;" in metric_danger
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group

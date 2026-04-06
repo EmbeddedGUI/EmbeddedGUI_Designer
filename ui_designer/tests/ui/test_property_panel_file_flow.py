@@ -83,13 +83,13 @@ class TestPropertyPanelFileFlow:
         metric_cards = header.findChildren(QFrame, "property_panel_metric_card")
 
         assert len(metric_cards) == 4
-        assert metric_grid.horizontalSpacing() == 4
-        assert metric_grid.verticalSpacing() == 4
+        assert metric_grid.horizontalSpacing() == 2
+        assert metric_grid.verticalSpacing() == 2
         margins = metric_cards[0].layout().contentsMargins()
-        assert margins.left() == 8
-        assert margins.top() == 6
-        assert margins.right() == 8
-        assert margins.bottom() == 6
+        assert margins.left() == 6
+        assert margins.top() == 4
+        assert margins.right() == 6
+        assert margins.bottom() == 4
         panel.deleteLater()
 
     def test_empty_state_and_search_metadata(self, qapp):

@@ -1222,22 +1222,22 @@ QFrame#property_panel_metric_card {{
 }}
 
 QFrame#property_panel_metric_card[metricTone="accent"] {{
-    background-color: {t['selection_soft']};
+    background-color: transparent;
     border-color: {t['accent']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="success"] {{
-    background-color: {t['selection_soft']};
+    background-color: transparent;
     border-color: {t['success']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="warning"] {{
-    background-color: {t['accent_soft']};
+    background-color: transparent;
     border-color: {t['warning']};
 }}
 
 QFrame#property_panel_metric_card[metricTone="danger"] {{
-    background-color: {t['accent_soft']};
+    background-color: transparent;
     border-color: {t['danger']};
 }}
 
