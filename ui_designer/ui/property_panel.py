@@ -63,6 +63,11 @@ _MIXED_PLACEHOLDER = "Mixed"
 _COMPACT_CALLBACK_LABELS = {
     "onValueChanged": "Change",
 }
+_COMPACT_PROPERTY_LABELS = {
+    "font_file": "Font",
+    "image_file": "Image",
+    "text_file": "Text",
+}
 
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
@@ -638,6 +643,17 @@ class PropertyPanel(QWidget):
 
     def _property_label(self, prop_name):
         return prop_name.replace("_", " ").title()
+
+    def _property_row_label(self, prop_name, *, strip_asset_prefix=False):
+        if prop_name in _COMPACT_PROPERTY_LABELS:
+            return _COMPACT_PROPERTY_LABELS[prop_name]
+        label = prop_name
+        if strip_asset_prefix:
+            for prefix in ("image_", "font_"):
+                if label.startswith(prefix):
+                    label = label[len(prefix):]
+                    break
+        return label.replace("_", " ").title()
 
     def _editor_value_summary(self, editor):
         text = editor.text().strip() if hasattr(editor, "text") else ""
@@ -1329,7 +1345,7 @@ class PropertyPanel(QWidget):
             if has_missing_file:
                 self._apply_missing_file_editor_state(editor, prop_name, prop_info, current_value, values=values)
 
-            label = prop_name.replace("_", " ").title()
+            label = self._property_row_label(prop_name)
             if has_missing_file:
                 label += " (Missing)"
             label += ":"
@@ -1590,13 +1606,7 @@ class PropertyPanel(QWidget):
                 editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
                 if editor:
                     # Derive a human-readable label from prop_name
-                    label = prop_name
-                    # Strip common prefixes for cleaner display
-                    for prefix in ("image_", "font_"):
-                        if label.startswith(prefix) and group_key != "main":
-                            label = label[len(prefix):]
-                            break
-                    label = label.replace("_", " ").title()
+                    label = self._property_row_label(prop_name, strip_asset_prefix=group_key != "main")
                     if self._is_missing_file_property(prop_name, prop_info, w.properties.get(prop_name)):
                         label += " (Missing)"
                         self._apply_missing_file_editor_state(editor, prop_name, prop_info, w.properties.get(prop_name))
@@ -1618,12 +1628,7 @@ class PropertyPanel(QWidget):
             editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
             if editor is None:
                 continue
-            label = prop_name
-            for prefix in ("image_", "font_"):
-                if label.startswith(prefix):
-                    label = label[len(prefix):]
-                    break
-            label = label.replace("_", " ").title()
+            label = self._property_row_label(prop_name, strip_asset_prefix=True)
             if self._is_missing_file_property(prop_name, prop_info, w.properties.get(prop_name)):
                 label += " (Missing)"
                 self._apply_missing_file_editor_state(editor, prop_name, prop_info, w.properties.get(prop_name))

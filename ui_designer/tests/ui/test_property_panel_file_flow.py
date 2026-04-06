@@ -538,7 +538,7 @@ class TestPropertyPanelFileFlow:
         data_group = _find_group(panel, "Data")
         editor = panel._editors["prop_font_file"]
 
-        assert "File (Missing):" in _form_labels(data_group)
+        assert "Font (Missing):" in _form_labels(data_group)
         assert "not present in the project catalog" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: missing.ttf"
@@ -566,7 +566,7 @@ class TestPropertyPanelFileFlow:
         data_group = _find_group(panel, "Data")
         editor = panel._editors["prop_font_file"]
 
-        assert "File (Missing):" in _form_labels(data_group)
+        assert "Font (Missing):" in _form_labels(data_group)
         assert "source file is missing on disk" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: missing.ttf"
@@ -598,7 +598,7 @@ class TestPropertyPanelFileFlow:
         common_group = _find_group(panel, "Common Properties")
         editor = panel._editors["prop_font_file"]
 
-        assert any(label.startswith("Font File") and "(Missing)" in label for label in _form_labels(common_group))
+        assert any(label.startswith("Font") and "(Missing)" in label for label in _form_labels(common_group))
         assert "missing from the project catalog or source directory" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: mixed values"
@@ -795,7 +795,7 @@ class TestPropertyPanelFileFlow:
         common_group = _find_group(panel, "Common Properties")
         editor = panel._editors["prop_font_file"]
 
-        assert "Font File:" in _form_labels(common_group)
+        assert "Font:" in _form_labels(common_group)
         assert editor.currentIndex() == -1
         assert editor.placeholderText() == "Mixed"
         assert "different values" in editor.toolTip()
