@@ -6193,8 +6193,8 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_frame.width() == 60
         assert window.project_dock.minimumWidth() == 172
         assert window._left_panel_stack.minimumWidth() == 172
-        assert window._left_shell.minimumWidth() == 236
-        assert window._left_shell.layout().spacing() == 4
+        assert window._left_shell.minimumWidth() == 234
+        assert window._left_shell.layout().spacing() == 2
         assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 2
         assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (2, 2, 2, 2)
@@ -9116,10 +9116,10 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
         assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextOnly
         assert window._workspace_nav_frame.width() == 60
-        assert window._workspace_nav_frame.layout().spacing() == 4
+        assert window._workspace_nav_frame.layout().spacing() == 2
         assert window.project_dock.minimumWidth() == 172
         assert window._left_panel_stack.minimumWidth() == 172
-        assert window._left_shell.minimumWidth() == 236
+        assert window._left_shell.minimumWidth() == 234
         assert window._workspace_nav_buttons["project"].width() == 56
         assert window._workspace_nav_buttons["project"].height() == 26
 

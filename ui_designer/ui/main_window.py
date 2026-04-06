@@ -480,7 +480,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
         nav_layout.setContentsMargins(2, _SPACE_XS, 2, _SPACE_XS)
-        nav_layout.setSpacing(_SPACE_XS)
+        nav_layout.setSpacing(2)
         for key, label, short_label in (
             ("project", "Project", "Pages"),
             ("structure", "Structure", "Tree"),
@@ -494,11 +494,11 @@ class MainWindow(QMainWindow):
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
-        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + _SPACE_XS)
+        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + 2)
         self._left_shell.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         left_shell_layout = QHBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
-        left_shell_layout.setSpacing(_SPACE_XS)
+        left_shell_layout.setSpacing(2)
         left_shell_layout.addWidget(self._workspace_nav_frame, 0)
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
