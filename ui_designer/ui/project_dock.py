@@ -96,12 +96,12 @@ class ProjectExplorerDock(QDockWidget):
         container.setObjectName("project_dock_shell")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("project_dock_header")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._title_label = QLabel("Project")

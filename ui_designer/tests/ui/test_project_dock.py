@@ -54,8 +54,8 @@ class TestProjectExplorerDock:
         header_margins = dock._header_frame.layout().contentsMargins()
         mode_layout = dock._settings_group.layout().itemAt(0).layout()
 
-        assert root_layout.spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (4, 4, 4, 4)
+        assert root_layout.spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (2, 2, 2, 2)
         assert dock._header_frame.layout().spacing() == 2
         assert dock._settings_group.layout().spacing() == 2
         assert mode_layout.spacing() == 2
