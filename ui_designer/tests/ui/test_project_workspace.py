@@ -69,6 +69,7 @@ class TestProjectWorkspacePanel:
         assert panel._thumb_btn.toolTip() == "Switch to page thumbnails for a visual scan."
         assert panel._thumb_btn.statusTip() == panel._thumb_btn.toolTip()
         assert panel._thumb_btn.accessibleName() == "Workspace view button: Thumbnails. Visual scan. Available."
+        assert panel._thumb_btn.text() == "Thumbs"
         assert panel._stack.accessibleName() == "Project workspace view stack: List view visible."
         assert panel._stack.toolTip() == panel._stack.accessibleName()
         assert panel._header.accessibleName() == f"Project workspace header. {panel.accessibleName()}"
@@ -102,6 +103,7 @@ class TestProjectWorkspacePanel:
             "Project workspace: Thumbnails. Pages: 0 pages. Active page: none. Startup page: none. Dirty state: No dirty pages."
         )
         assert panel._list_btn.text() == "List"
+        assert panel._thumb_btn.text() == "Thumbs"
         assert emitted[-1] == ProjectWorkspacePanel.VIEW_THUMBNAILS
         emitted_count = len(emitted)
 

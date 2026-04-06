@@ -131,7 +131,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show the page list for structure-first editing.",
             accessible_name="Workspace view button: List. Structure first.",
         )
-        self._thumb_btn = QPushButton("Thumbnails")
+        self._thumb_btn = QPushButton("Thumbs")
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         _set_widget_metadata(
