@@ -92,6 +92,7 @@ class TestWidgetBrowserPanel:
         assert metrics_layout.spacing() == 2
         assert filter_layout.spacing() == 2
         assert panel._cards_layout.spacing() == 2
+        assert panel._search.placeholderText() == "Search"
         assert panel._category_combo.minimumWidth() == 144
         assert panel._insert_target.wordWrap() is False
         assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (2, 2, 2, 2)
@@ -507,9 +508,9 @@ class TestWidgetBrowserPanel:
         buttons = {button.text(): button for button in empty_state.findChildren(QPushButton)}
 
         assert hint.text() == "No matching widgets. Switch back to All to browse the full widget catalog."
-        assert sorted(buttons) == ["Show All Components"]
+        assert sorted(buttons) == ["Show All"]
 
-        buttons["Show All Components"].click()
+        buttons["Show All"].click()
 
         assert panel._selected_category() == "all"
         panel.deleteLater()

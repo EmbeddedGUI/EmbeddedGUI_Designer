@@ -317,7 +317,7 @@ class WidgetBrowserPanel(QWidget):
         filter_layout.setSpacing(2)
 
         self._search = SearchLineEdit()
-        self._search.setPlaceholderText("Search components")
+        self._search.setPlaceholderText("Search")
         self._search.textChanged.connect(self._schedule_search_refresh)
         filter_layout.addWidget(self._search, 1)
 
@@ -647,7 +647,7 @@ class WidgetBrowserPanel(QWidget):
                 )
                 empty_layout.addWidget(primary, alignment=Qt.AlignCenter)
             elif self._selected_category() != "all":
-                primary = QPushButton("Show All Components")
+                primary = QPushButton("Show All")
                 primary.clicked.connect(self._reset_to_all_categories)
                 _set_widget_metadata(
                     primary,
