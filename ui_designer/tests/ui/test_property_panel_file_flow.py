@@ -171,8 +171,8 @@ class TestPropertyPanelFileFlow:
         chips_row = header_layout.itemAt(4).layout()
 
         assert header.objectName() == "workspace_panel_header"
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
-        assert header_layout.spacing() == 6
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
+        assert header_layout.spacing() == 4
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
@@ -662,8 +662,8 @@ class TestPropertyPanelFileFlow:
         chips_row = chips_frame.layout()
         hint_layout = hint_strip.layout()
 
-        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (8, 8, 8, 8)
-        assert summary_layout.spacing() == 6
+        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (6, 6, 6, 6)
+        assert summary_layout.spacing() == 4
         assert chips_row.spacing() == 2
         assert panel._context_frame.isHidden() is True
         assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (4, 4)

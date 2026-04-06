@@ -785,8 +785,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(4)
         header.setLayout(layout)
 
         eyebrow = QLabel("Widget Profile")
@@ -795,7 +795,7 @@ class PropertyPanel(QWidget):
 
         title_col = QVBoxLayout()
         title_col.setContentsMargins(0, 0, 0, 0)
-        title_col.setSpacing(2)
+        title_col.setSpacing(1)
         title = QLabel(widget.name)
         title.setObjectName("workspace_section_title")
         title_col.addWidget(title)
@@ -888,8 +888,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(4)
         header.setLayout(layout)
 
         eyebrow = QLabel("Batch Inspector")
