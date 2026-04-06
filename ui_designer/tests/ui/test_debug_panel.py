@@ -27,6 +27,18 @@ def qapp():
 
 @_skip_no_qt
 class TestDebugPanel:
+    def test_panel_uses_designer_font_preference_for_output(self, qapp):
+        from ui_designer.ui.debug_panel import DebugPanel
+
+        qapp.setProperty("designer_font_size_pt", 12)
+        panel = DebugPanel()
+
+        try:
+            assert panel.get_output_font().pointSize() == 12
+        finally:
+            panel.deleteLater()
+            qapp.setProperty("designer_font_size_pt", 0)
+
     def test_panel_exposes_initial_accessibility_metadata(self, qapp):
         from ui_designer.ui.debug_panel import DebugPanel
 

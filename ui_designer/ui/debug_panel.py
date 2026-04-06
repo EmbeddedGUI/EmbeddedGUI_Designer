@@ -3,6 +3,7 @@
 import datetime
 
 from PyQt5.QtWidgets import (
+    QApplication,
     QWidget,
     QFrame,
     QVBoxLayout,
@@ -21,6 +22,16 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
+_DEFAULT_DEBUG_FONT_PT = 9
+
+
+def _debug_font_size_pt():
+    app = QApplication.instance()
+    try:
+        value = int(app.property("designer_font_size_pt") if app is not None else 0)
+    except (TypeError, ValueError):
+        value = 0
+    return value if value > 0 else _DEFAULT_DEBUG_FONT_PT
 
 
 
@@ -111,7 +122,7 @@ class DebugPanel(QWidget):
         self._output = QPlainTextEdit()
         self._output.setObjectName("debug_output_surface")
         self._output.setReadOnly(True)
-        self._output.setFont(QFont("Consolas", 9))
+        self._output.setFont(QFont("Consolas", _debug_font_size_pt()))
         self._output.setLineWrapMode(QPlainTextEdit.NoWrap)
         self._output.setMaximumBlockCount(5000)  # Limit lines
         layout.addWidget(self._output)

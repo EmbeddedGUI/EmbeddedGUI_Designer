@@ -3834,6 +3834,9 @@ class TestMainWindowFileFlow:
         window._set_font_sizes()
 
         assert actions["Font Size..."].toolTip() == "Adjust the Designer font size. Current size: 11pt."
+        assert window.debug_panel.get_output_font().pointSize() == 11
+        assert window.editor_tabs.code_editor.font().pointSize() == 11
+        assert window.editor_tabs.split_editor.font().pointSize() == 11
         _close_window(window)
 
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):

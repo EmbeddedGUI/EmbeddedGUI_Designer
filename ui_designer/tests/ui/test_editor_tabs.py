@@ -27,6 +27,24 @@ def qapp():
 
 @_skip_no_qt
 class TestEditorTabsAccessibility:
+    def test_xml_editors_follow_designer_font_preference(self, qapp):
+        from ui_designer.ui.editor_tabs import EditorTabs
+
+        qapp.setProperty("designer_font_size_pt", 12)
+        tabs = EditorTabs(QWidget(), show_mode_switch=True)
+
+        try:
+            assert tabs._code_editor.font().pointSize() == 12
+            assert tabs._split_editor.font().pointSize() == 12
+
+            tabs.set_editor_font_size_pt(11)
+
+            assert tabs._code_editor.font().pointSize() == 11
+            assert tabs._split_editor.font().pointSize() == 11
+        finally:
+            tabs.deleteLater()
+            qapp.setProperty("designer_font_size_pt", 0)
+
     def test_header_exposes_editor_workspace_metadata(self, qapp):
         from ui_designer.ui.editor_tabs import EditorTabs, MODE_CODE
 

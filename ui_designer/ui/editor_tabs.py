@@ -3,6 +3,7 @@
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -28,6 +29,16 @@ _DEFAULT_UI_TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
+_DEFAULT_EDITOR_FONT_PT = 9
+
+
+def _editor_font_size_pt():
+    app = QApplication.instance()
+    try:
+        value = int(app.property("designer_font_size_pt") if app is not None else 0)
+    except (TypeError, ValueError):
+        value = 0
+    return value if value > 0 else _DEFAULT_EDITOR_FONT_PT
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -50,17 +61,20 @@ class XmlEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("editor_tabs_xml_editor")
-        font = QFont("Consolas", 10)
-        font.setStyleHint(QFont.Monospace)
-        self.setFont(font)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
+        self.set_editor_font_size_pt(_editor_font_size_pt())
         self._highlighter = XmlSyntaxHighlighter(self.document())
         _set_widget_metadata(
             self,
             tooltip="XML editor for the current page source.",
             accessible_name="XML editor",
         )
+
+    def set_editor_font_size_pt(self, point_size):
+        font = QFont("Consolas", int(point_size))
+        font.setStyleHint(QFont.Monospace)
+        self.setFont(font)
+        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
 
 
 class EditorTabs(QWidget):
@@ -306,6 +320,10 @@ class EditorTabs(QWidget):
     @property
     def mode(self):
         return self._mode
+
+    def set_editor_font_size_pt(self, point_size):
+        self._code_editor.set_editor_font_size_pt(point_size)
+        self._split_editor.set_editor_font_size_pt(point_size)
 
     def set_mode(self, mode):
         """Switch between Design / Split / Code."""

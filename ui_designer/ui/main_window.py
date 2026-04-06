@@ -4321,6 +4321,8 @@ class MainWindow(QMainWindow):
 
         # Debug panel uses its own font
         self.debug_panel.set_output_font_size_pt(size)
+        if hasattr(self, "editor_tabs"):
+            self.editor_tabs.set_editor_font_size_pt(size)
 
         # Persist to config
         self._config.font_size_px = size
