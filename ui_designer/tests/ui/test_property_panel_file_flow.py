@@ -750,7 +750,7 @@ class TestPropertyPanelFileFlow:
         assert "1 mixed field" in _group_label_texts(summary_header)
         assert "Text:" in _form_labels(common_group)
         assert text_editor.text() == ""
-        assert text_editor.placeholderText() == "Mixed values"
+        assert text_editor.placeholderText() == "Mixed"
         assert "different values" in text_editor.toolTip()
         assert text_editor.statusTip() == text_editor.toolTip()
         assert text_editor.accessibleName() == "Text property: mixed values"
@@ -797,7 +797,7 @@ class TestPropertyPanelFileFlow:
 
         assert "Font File:" in _form_labels(common_group)
         assert editor.currentIndex() == -1
-        assert editor.placeholderText() == "Mixed values"
+        assert editor.placeholderText() == "Mixed"
         assert "different values" in editor.toolTip()
         assert editor.statusTip() == editor.toolTip()
         assert editor.accessibleName() == "Font File selector: mixed values"
@@ -1099,7 +1099,7 @@ class TestPropertyPanelFileFlow:
         assert "Click:" in _form_labels(callbacks_group)
         assert "Value Changed:" in _form_labels(callbacks_group)
         assert click_editor.text() == ""
-        assert click_editor.placeholderText() == "Mixed values"
+        assert click_editor.placeholderText() == "Mixed"
         assert "different callback names" in click_editor.toolTip()
         assert value_editor.text() == "on_volume_changed"
         assert "applies the same callback to all selected widgets" in value_editor.toolTip()

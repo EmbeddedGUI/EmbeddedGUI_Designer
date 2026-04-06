@@ -59,6 +59,8 @@ _CALLBACK_INVALID_MESSAGE = (
     "and it cannot start with a digit."
 )
 
+_MIXED_PLACEHOLDER = "Mixed"
+
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
 
@@ -639,7 +641,7 @@ class PropertyPanel(QWidget):
         if text:
             return text
         placeholder = editor.placeholderText().strip() if hasattr(editor, "placeholderText") else ""
-        if placeholder == "Mixed values":
+        if placeholder in {"Mixed values", _MIXED_PLACEHOLDER}:
             return "mixed values"
         return placeholder or "none"
 
@@ -1369,7 +1371,7 @@ class PropertyPanel(QWidget):
             target = self._editors.get(f"prop_{prop_name}", editor)
             with QSignalBlocker(target):
                 if hasattr(target, "setPlaceholderText"):
-                    target.setPlaceholderText("Mixed values")
+                    target.setPlaceholderText(_MIXED_PLACEHOLDER)
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
             self._update_file_selector_metadata(prop_name, target, tooltip=tooltip)
@@ -1378,14 +1380,14 @@ class PropertyPanel(QWidget):
         if isinstance(target, LineEdit):
             with QSignalBlocker(target):
                 target.clear()
-                target.setPlaceholderText("Mixed values")
+                target.setPlaceholderText(_MIXED_PLACEHOLDER)
             self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
             return
 
         if isinstance(target, EditableComboBox):
             with QSignalBlocker(target):
                 if hasattr(target, "setPlaceholderText"):
-                    target.setPlaceholderText("Mixed values")
+                    target.setPlaceholderText(_MIXED_PLACEHOLDER)
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
             self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
@@ -1394,7 +1396,7 @@ class PropertyPanel(QWidget):
         if isinstance(target, ComboBox):
             with QSignalBlocker(target):
                 if hasattr(target, "setPlaceholderText"):
-                    target.setPlaceholderText("Mixed values")
+                    target.setPlaceholderText(_MIXED_PLACEHOLDER)
                 if hasattr(target, "setCurrentIndex"):
                     target.setCurrentIndex(-1)
             self._update_mixed_editor_metadata(target, f"{self._property_label(prop_name)} property", tooltip=tooltip)
@@ -1821,7 +1823,7 @@ class PropertyPanel(QWidget):
         with QSignalBlocker(editor):
             if is_mixed:
                 editor.clear()
-                editor.setPlaceholderText("Mixed values")
+                editor.setPlaceholderText(_MIXED_PLACEHOLDER)
             else:
                 editor.setText(current_values[0] if current_values else "")
                 editor.setPlaceholderText(self._suggest_multi_callback_name(event_name))
