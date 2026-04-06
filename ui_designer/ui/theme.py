@@ -11,6 +11,7 @@ Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
 from __future__ import annotations
 
 from PyQt5.QtCore import QEvent, QObject
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget
 
 try:
@@ -360,6 +361,31 @@ def designer_font_scale(app: QApplication | None = None, default_pt=_FONT_SCALE_
 def scaled_point_size(base_point_size, *, app: QApplication | None = None, minimum=1, default_pt=_FONT_SCALE_DEFAULT_PT):
     """Scale a point size using the Designer font preference."""
     return max(int(minimum), int(round(float(base_point_size) * designer_font_scale(app, default_pt=default_pt))))
+
+
+def qt_font_weight(weight):
+    """Convert a CSS-like font weight token (100-900) to a Qt QFont weight."""
+    try:
+        numeric = int(weight)
+    except (TypeError, ValueError):
+        numeric = 400
+    if numeric <= 150:
+        return QFont.Thin
+    if numeric <= 250:
+        return QFont.ExtraLight
+    if numeric <= 350:
+        return QFont.Light
+    if numeric <= 450:
+        return QFont.Normal
+    if numeric <= 550:
+        return QFont.Medium
+    if numeric <= 650:
+        return QFont.DemiBold
+    if numeric <= 750:
+        return QFont.Bold
+    if numeric <= 850:
+        return QFont.ExtraBold
+    return QFont.Black
 
 
 def _density_adjusted_tokens(tokens: dict, density="standard"):
@@ -3034,7 +3060,7 @@ def _apply_app_base_font(app: QApplication, tokens: dict):
     except (TypeError, ValueError):
         weight = 400
     font.setPixelSize(max(pixel_size, 1))
-    font.setWeight(weight)
+    font.setWeight(qt_font_weight(weight))
     app.setFont(font)
 
 

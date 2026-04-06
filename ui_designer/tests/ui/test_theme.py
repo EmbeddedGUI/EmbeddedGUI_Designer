@@ -2,11 +2,13 @@ import pytest
 from PyQt5.QtWidgets import QApplication
 
 from ui_designer.ui.iconography import semantic_icon_keys
+from ui_designer.ui.typography import apply_typography_role
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
     app_theme_tokens,
     apply_theme,
+    qt_font_weight,
     designer_font_scale,
     designer_font_size_pt,
     scaled_point_size,
@@ -203,6 +205,33 @@ def test_font_scale_helpers_follow_app_preference():
         app.setProperty("designer_font_size_pt", 0)
         app.setProperty("designer_theme_mode", None)
         app.setProperty("designer_ui_density", None)
+
+
+def test_apply_typography_role_uses_active_density_and_font_preference():
+    from PyQt5.QtWidgets import QLabel
+
+    app = _app()
+    app.setProperty("designer_theme_mode", "light")
+    app.setProperty("designer_ui_density", "roomy")
+    app.setProperty("designer_font_size_pt", 12)
+    label = QLabel("Meta")
+    try:
+        expected = theme_tokens("light", density="roomy", font_size_pt=12)
+
+        assert apply_typography_role(label, "meta") is True
+        assert label.font().pixelSize() == int(expected["fs_body_sm"])
+        assert label.font().weight() == int(qt_font_weight(expected["fw_regular"]))
+    finally:
+        label.deleteLater()
+        app.setProperty("designer_theme_mode", None)
+        app.setProperty("designer_ui_density", None)
+        app.setProperty("designer_font_size_pt", 0)
+
+
+def test_qt_font_weight_maps_css_scale_to_qfont_weights():
+    assert int(qt_font_weight(400)) > 0
+    assert int(qt_font_weight(500)) > int(qt_font_weight(400))
+    assert int(qt_font_weight(700)) > int(qt_font_weight(500))
 
 
 def test_engineering_theme_radii_remove_pill_shapes():

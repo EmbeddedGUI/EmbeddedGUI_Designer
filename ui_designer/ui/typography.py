@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from PyQt5.QtWidgets import QApplication, QFormLayout, QLabel, QVBoxLayout, QWidget
 
-from .theme import theme_tokens
+from .theme import app_theme_tokens, designer_font_size_pt, qt_font_weight, theme_tokens
 
 # Role → (fs_key, fw_key) into theme_tokens()
 _TYPO_ROLES = {
@@ -46,10 +46,10 @@ def control_baseline_role(control_name: str) -> str | None:
     return _CONTROL_BASELINE_ROLES.get(key)
 
 
-def _app_theme_mode() -> str:
+def _app_theme_density() -> str:
     app = QApplication.instance()
-    m = app.property("designer_theme_mode") if app is not None else None
-    return m if m in ("dark", "light") else "dark"
+    value = str(app.property("designer_ui_density") if app is not None else "standard").strip().lower()
+    return value if value in {"standard", "roomy", "roomy_plus"} else "standard"
 
 
 def apply_typography_role(widget: QWidget, role: str, *, mode: str | None = None) -> bool:
@@ -58,8 +58,15 @@ def apply_typography_role(widget: QWidget, role: str, *, mode: str | None = None
     if spec is None or widget is None:
         return False
     fs_key, fw_key = spec
-    app_mode = mode if mode in ("dark", "light") else _app_theme_mode()
-    tokens = theme_tokens(app_mode)
+    app = QApplication.instance()
+    if mode in ("dark", "light"):
+        tokens = theme_tokens(
+            mode,
+            density=_app_theme_density(),
+            font_size_pt=designer_font_size_pt(app, default=0),
+        )
+    else:
+        tokens = app_theme_tokens(app)
     try:
         px = int(tokens.get(fs_key, 13))
         weight = int(tokens.get(fw_key, 400))
@@ -67,7 +74,7 @@ def apply_typography_role(widget: QWidget, role: str, *, mode: str | None = None
         px, weight = 13, 400
     font = widget.font()
     font.setPixelSize(max(px, 1))
-    font.setWeight(weight)
+    font.setWeight(qt_font_weight(weight))
     widget.setFont(font)
     return True
 
