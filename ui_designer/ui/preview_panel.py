@@ -174,6 +174,9 @@ class WidgetOverlay(QWidget):
     def _coord_tooltip_font_point_size(self):
         return self._scaled_font_point_size(7, minimum=6)
 
+    def _show_full_label_overlay(self):
+        return not (self._dragging or self._resizing or self._rubber_band)
+
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
         self.style().unpolish(self)
@@ -586,8 +589,11 @@ class WidgetOverlay(QWidget):
         fm = painter.fontMetrics()
         lh = fm.height() + 2
 
+        show_full_labels = self._show_full_label_overlay()
         for w in self._widgets:
             if self._is_hidden(w):
+                continue
+            if not show_full_labels and w not in {self._selected, self._hovered} and w not in self._multi_selected:
                 continue
             sx, sy = _s(w.display_x), _s(w.display_y)
             sw, sh = _s(w.width), _s(w.height)
@@ -595,7 +601,7 @@ class WidgetOverlay(QWidget):
             if self._is_locked(w):
                 label_text += " [L]"
 
-            if self._solid_background:
+            if self._solid_background and show_full_labels:
                 # Skip label if widget is too small on screen to fit it
                 if sh < lh:
                     continue

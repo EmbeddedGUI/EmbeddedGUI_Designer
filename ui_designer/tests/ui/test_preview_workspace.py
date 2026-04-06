@@ -384,6 +384,24 @@ class TestWidgetOverlaySelection:
             _dispose_widget(overlay)
             qapp.setProperty("designer_font_size_pt", 0)
 
+    def test_overlay_hides_nonessential_labels_during_drag_states(self, qapp):
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+
+        try:
+            assert overlay._show_full_label_overlay() is True
+            overlay._dragging = True
+            assert overlay._show_full_label_overlay() is False
+            overlay._dragging = False
+            overlay._resizing = True
+            assert overlay._show_full_label_overlay() is False
+            overlay._resizing = False
+            overlay._rubber_band = True
+            assert overlay._show_full_label_overlay() is False
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay
