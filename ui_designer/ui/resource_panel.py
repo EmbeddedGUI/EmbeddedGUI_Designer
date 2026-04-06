@@ -1052,7 +1052,7 @@ class _BatchReplaceImpactDialog(QDialog):
             filter_row = QHBoxLayout()
             filter_row.setContentsMargins(0, 0, 0, 0)
             filter_row.setSpacing(8)
-            self._current_page_only = QCheckBox("Current Page Only")
+            self._current_page_only = QCheckBox("This Page")
             self._current_page_only.toggled.connect(self._refresh_impact_view)
             filter_row.addWidget(self._current_page_only)
             filter_row.addStretch()
@@ -1288,7 +1288,7 @@ class _BatchReplaceImpactDialog(QDialog):
             summary_lines.append(
                 f"No affected usages were found on the current page ({total_widget_count} total {widget_noun} across {total_page_count} {page_noun})."
             )
-            summary_lines.append("Uncheck Current Page Only to inspect all project usages.")
+            summary_lines.append("Uncheck This Page to inspect all project usages.")
             self._summary_label.setText("\n".join(summary_lines))
             return
 
@@ -1776,7 +1776,7 @@ class ResourcePanel(QWidget):
 
         usage_filter_row = QHBoxLayout()
         usage_filter_row.setSpacing(2)
-        self._usage_current_page_only = QCheckBox("Current Page Only")
+        self._usage_current_page_only = QCheckBox("This Page")
         self._usage_current_page_only.toggled.connect(self._refresh_usage_view)
         self._usage_current_page_only.toggled.connect(self._update_usage_accessibility_metadata)
         usage_filter_row.addWidget(self._usage_current_page_only)

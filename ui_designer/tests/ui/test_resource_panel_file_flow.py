@@ -435,6 +435,7 @@ class TestResourcePanelFileFlow:
         panel._select_resource_item("image", "star.png")
 
         assert panel._usage_summary.text() == "2 widgets across 2 pages | star.png"
+        assert panel._usage_current_page_only.text() == "This Page"
         assert panel._usage_current_page_only.toolTip() == "Open or select a page to filter usages to the current page."
         assert panel._usage_current_page_only.accessibleName() == "Usage filter unavailable: Current Page Only"
         assert panel._usage_summary.accessibleName() == (
@@ -482,6 +483,7 @@ class TestResourcePanelFileFlow:
 
         panel._usage_current_page_only.setChecked(True)
 
+        assert panel._usage_current_page_only.text() == "This Page"
         assert panel._usage_summary.text() == "1 widget on this page | 2 total across 2 pages | star.png"
         assert panel._usage_current_page_only.toolTip() == "Showing only usages on the current page: detail_page."
         assert panel._usage_current_page_only.accessibleName() == "Usage filter: current page only on for detail_page"
@@ -1374,6 +1376,7 @@ class TestResourcePanelFileFlow:
         assert dialog._summary_label.accessibleName().startswith(
             "Batch replace summary: The selected replacements will rename 2 missing image resources."
         )
+        assert dialog._current_page_only.text() == "This Page"
         assert dialog._current_page_only.toolTip() == "Filter impacts to the current page: detail_page."
         assert dialog._impact_table.accessibleName() == (
             "Rename impact table: 2 rows. Current selection: missing_a.png -> renamed_a.png."
@@ -1456,6 +1459,7 @@ class TestResourcePanelFileFlow:
         assert dialog._impact_table.item(0, 0).text() == "missing_b.png"
         assert dialog._usage_table.rowCount() == 1
         assert dialog._usage_table.item(0, 0).text() == "detail_page"
+        assert dialog._current_page_only.text() == "This Page"
         assert "Showing impacts on the current page: detail_page." in dialog._summary_label.text()
         dialog.deleteLater()
 
