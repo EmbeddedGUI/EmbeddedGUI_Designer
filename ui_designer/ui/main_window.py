@@ -145,9 +145,9 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 272
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-WORKSPACE_NAV_RAIL_WIDTH = 68
+WORKSPACE_NAV_RAIL_WIDTH = 64
 LEFT_PANEL_STACK_MIN_WIDTH = 180
-LEFT_PANEL_DEFAULT_WIDTH = 252
+LEFT_PANEL_DEFAULT_WIDTH = 248
 CENTER_PANEL_DEFAULT_WIDTH = 860
 INSPECTOR_PANEL_DEFAULT_WIDTH = 272
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
@@ -479,7 +479,7 @@ class MainWindow(QMainWindow):
         self._workspace_nav_frame.setFixedWidth(WORKSPACE_NAV_RAIL_WIDTH)
         self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
         nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        nav_layout.setContentsMargins(2, _SPACE_XS, 2, _SPACE_XS)
         nav_layout.setSpacing(_SPACE_XS)
         for key, label, short_label in (
             ("project", "Project", "Pages"),
