@@ -24,6 +24,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTabWidget, QToolButton, QPushButton, QFrame,
@@ -309,6 +310,9 @@ class MainWindow(QMainWindow):
         self._undo_manager = UndoManager()
         self._undoing = False  # True during undo/redo to suppress snapshot recording
         self._active_batch_source = ""
+        self._canvas_drag_batch_active = False
+        self._canvas_drag_dirty = False
+        self._last_drag_geometry_refresh_ts = 0.0
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._last_runtime_error_text = ""
@@ -7746,14 +7750,29 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_inspector_tabs") and self._inspector_tabs.currentIndex() != 0:
             self._show_inspector_tab("properties")
 
+    def _refresh_drag_geometry_if_due(self, widget):
+        if widget != self._selection_state.primary:
+            return
+        now = time.monotonic()
+        if (
+            self._canvas_drag_batch_active
+            and self._last_drag_geometry_refresh_ts > 0.0
+            and (now - self._last_drag_geometry_refresh_ts) < (1.0 / 30.0)
+        ):
+            return
+        self._last_drag_geometry_refresh_ts = now
+        self.property_panel.refresh_live_geometry(
+            self._selection_state.widgets,
+            self._selection_state.primary,
+        )
+
     def _on_widget_moved(self, widget, new_x, new_y):
         """Widget dragged on preview overlay."""
         self._active_batch_source = "canvas move"
-        if widget == self._selection_state.primary:
-            self.property_panel.refresh_live_geometry(
-                self._selection_state.widgets,
-                self._selection_state.primary,
-            )
+        self._refresh_drag_geometry_if_due(widget)
+        if self._canvas_drag_batch_active:
+            self._canvas_drag_dirty = True
+            return
         self._record_page_state_change(
             update_preview=False,
             trigger_compile=True,
@@ -7765,11 +7784,10 @@ class MainWindow(QMainWindow):
     def _on_widget_resized(self, widget, new_width, new_height):
         """Widget resized on preview overlay."""
         self._active_batch_source = "canvas resize"
-        if widget == self._selection_state.primary:
-            self.property_panel.refresh_live_geometry(
-                self._selection_state.widgets,
-                self._selection_state.primary,
-            )
+        self._refresh_drag_geometry_if_due(widget)
+        if self._canvas_drag_batch_active:
+            self._canvas_drag_dirty = True
+            return
         self._record_page_state_change(
             update_preview=False,
             trigger_compile=True,
@@ -7911,6 +7929,9 @@ class MainWindow(QMainWindow):
         """Preview drag/resize began 鈥?start undo batch."""
         if self._current_page:
             self._active_batch_source = ""
+            self._canvas_drag_batch_active = True
+            self._canvas_drag_dirty = False
+            self._last_drag_geometry_refresh_ts = 0.0
             stack = self._undo_manager.get_stack(self._current_page.name)
             stack.begin_batch()
 
@@ -7921,11 +7942,22 @@ class MainWindow(QMainWindow):
             stack = self._undo_manager.get_stack(self._current_page.name)
             should_finalize_canvas_refresh = self._active_batch_source in {"canvas move", "canvas resize"}
             stack.end_batch(xml, label=self._active_batch_source or "canvas drag")
-            if should_finalize_canvas_refresh:
+            if should_finalize_canvas_refresh and self._canvas_drag_dirty:
+                self.property_panel.refresh_live_geometry(
+                    self._selection_state.widgets,
+                    self._selection_state.primary,
+                )
                 self._update_preview_overlay()
                 self._sync_xml_to_editors()
                 self._update_resource_usage_panel()
+                self._trigger_compile()
+                message = self._format_page_change_message(self._active_batch_source)
+                if message and not self._undoing:
+                    self.statusBar().showMessage(message, 3000)
             self._active_batch_source = ""
+            self._canvas_drag_batch_active = False
+            self._canvas_drag_dirty = False
+            self._last_drag_geometry_refresh_ts = 0.0
             self._update_undo_actions()
             self._update_window_title()
 

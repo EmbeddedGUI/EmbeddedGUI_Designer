@@ -1252,6 +1252,7 @@ class PreviewPanel(QWidget):
         # Connect signals
         self.overlay.zoom_changed.connect(self._update_zoom_label)
         self.overlay.mouse_position_changed.connect(self._update_status_label)
+        self.overlay.drag_finished.connect(self._update_accessibility_summary)
 
         # Apply initial layout mode
         self._apply_mode()
@@ -1537,7 +1538,8 @@ class PreviewPanel(QWidget):
     def _update_status_label(self, x, y, widget):
         """Update status bar with mouse position and widget info."""
         if x < 0 or y < 0:
-            self._status_label.setText("Pointer idle")
+            if self._status_label.text() != "Pointer idle":
+                self._status_label.setText("Pointer idle")
             self._update_accessibility_summary()
             return
 
@@ -1548,8 +1550,10 @@ class PreviewPanel(QWidget):
             # Just show mouse position
             text = f"({x}, {y})"
 
-        self._status_label.setText(text)
-        self._update_accessibility_summary()
+        if self._status_label.text() != text:
+            self._status_label.setText(text)
+        if not (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band):
+            self._update_accessibility_summary()
 
     def set_widgets(self, widgets):
         """Update the widget list for overlay display."""

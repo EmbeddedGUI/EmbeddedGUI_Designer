@@ -2174,18 +2174,59 @@ class TestMainWindowFileFlow:
             "update_preview_overlay": 0,
             "sync_xml_to_editors": 0,
             "update_resource_usage_panel": 0,
-            "trigger_compile": 1,
+            "trigger_compile": 0,
         }
 
         window._on_drag_finished()
 
         assert calls == {
-            "property_panel_refresh_live_geometry": 1,
+            "property_panel_refresh_live_geometry": 2,
             "update_preview_overlay": 1,
             "sync_xml_to_editors": 1,
             "update_resource_usage_panel": 1,
             "trigger_compile": 1,
         }
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_canvas_move_throttles_live_geometry_refresh_during_drag(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CanvasMoveThrottleDemo"
+        project = _create_project(project_dir, "CanvasMoveThrottleDemo", sdk_root)
+        widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
+        project.get_startup_page().root_widget.add_child(widget)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        calls = {"property_panel_refresh_live_geometry": 0}
+        monkeypatch.setattr(
+            window.property_panel,
+            "refresh_live_geometry",
+            lambda *args, **kwargs: calls.__setitem__(
+                "property_panel_refresh_live_geometry",
+                calls["property_panel_refresh_live_geometry"] + 1,
+            ) or True,
+        )
+        tick_values = iter([0.0, 0.01, 0.02, 0.06])
+        monkeypatch.setattr(main_window_module.time, "monotonic", lambda: next(tick_values))
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._set_selection([widget], primary=widget, sync_tree=False, sync_preview=False)
+        calls["property_panel_refresh_live_geometry"] = 0
+        window._on_drag_started()
+
+        window._on_widget_moved(widget, 11, 10)
+        window._on_widget_moved(widget, 12, 10)
+        window._on_widget_moved(widget, 13, 10)
+
+        assert calls["property_panel_refresh_live_geometry"] == 2
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
