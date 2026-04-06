@@ -922,7 +922,7 @@ QPushButton#workspace_bottom_toggle_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 2px {t['space_sm']}px;
-    min-width: 52px;
+    min-width: 48px;
     min-height: 26px;
 }}
 
