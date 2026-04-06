@@ -59,8 +59,8 @@ class TestStatusCenterPanel:
         health_margins = panel._health_section.layout().contentsMargins()
         runtime_margins = panel._runtime_panel.layout().contentsMargins()
 
-        assert panel.layout().spacing() == 4
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
+        assert panel.layout().spacing() == 2
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (6, 6, 6, 6)
         assert header_layout.spacing() == 2
         assert metrics_layout.horizontalSpacing() == 2
         assert metrics_layout.verticalSpacing() == 2

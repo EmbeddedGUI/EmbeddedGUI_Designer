@@ -91,13 +91,13 @@ class StatusCenterPanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("status_center_header")
         self._header_frame.setProperty("panelTone", "status")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(8, 8, 8, 8)
+        header_layout.setContentsMargins(6, 6, 6, 6)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Workspace")
@@ -109,7 +109,7 @@ class StatusCenterPanel(QWidget):
 
         header_title_row = QHBoxLayout()
         header_title_row.setContentsMargins(0, 0, 0, 0)
-        header_title_row.setSpacing(4)
+        header_title_row.setSpacing(2)
         self._header_title = QLabel("Status Center")
         self._header_title.setObjectName("workspace_section_title")
         self._header_title.setAccessibleName("Status Center")
@@ -227,7 +227,7 @@ class StatusCenterPanel(QWidget):
         self._quick_actions_section = quick_actions
         quick_layout = QVBoxLayout(quick_actions)
         quick_layout.setContentsMargins(0, 0, 0, 0)
-        quick_layout.setSpacing(4)
+        quick_layout.setSpacing(2)
 
         self._actions_title = QLabel("Quick Actions")
         self._actions_title.setObjectName("workspace_section_title")
@@ -237,7 +237,7 @@ class StatusCenterPanel(QWidget):
         self._last_action_host.setObjectName("status_center_last_action_host")
         last_action_row = QHBoxLayout(self._last_action_host)
         last_action_row.setContentsMargins(0, 0, 0, 0)
-        last_action_row.setSpacing(4)
+        last_action_row.setSpacing(2)
         self._last_action_label = QLabel("Last action: None")
         self._last_action_label.setObjectName("workspace_section_subtitle")
         last_action_row.addWidget(self._last_action_label, 0)
@@ -257,7 +257,7 @@ class StatusCenterPanel(QWidget):
         quick_layout.addWidget(self._recent_actions_label)
         suggested_row = QHBoxLayout()
         suggested_row.setContentsMargins(0, 0, 0, 0)
-        suggested_row.setSpacing(4)
+        suggested_row.setSpacing(2)
         self._suggested_action_label = QLabel("Suggested next step:")
         self._suggested_action_label.setObjectName("workspace_section_subtitle")
         self._suggested_action_label.setVisible(False)
@@ -276,7 +276,7 @@ class StatusCenterPanel(QWidget):
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(4)
+        row.setSpacing(2)
         self._diag_btn = self._build_action_button("Diagnostics", "state.error", "open_diagnostics")
         self._history_btn = self._build_action_button("History", "state.info", "open_history")
         self._debug_btn = self._build_action_button("Debug Output", "state.warn", "open_debug")
@@ -289,7 +289,7 @@ class StatusCenterPanel(QWidget):
         self._diagnostic_jump_host.setObjectName("status_center_diagnostic_jump_host")
         row2 = QHBoxLayout(self._diagnostic_jump_host)
         row2.setContentsMargins(0, 0, 0, 0)
-        row2.setSpacing(4)
+        row2.setSpacing(2)
         self._first_error_btn = self._build_action_button("Open First Error", "state.error", "open_first_error")
         self._first_warning_btn = self._build_action_button("Open First Warning", "state.warn", "open_first_warning")
         row2.addWidget(self._first_error_btn)
@@ -299,7 +299,7 @@ class StatusCenterPanel(QWidget):
 
         row3 = QHBoxLayout()
         row3.setContentsMargins(0, 0, 0, 0)
-        row3.setSpacing(4)
+        row3.setSpacing(2)
         self._project_btn = self._build_action_button("Project", "nav.page_group", "open_project_panel")
         self._structure_btn = self._build_action_button("Structure", "nav.page_group", "open_structure_panel")
         self._components_btn = self._build_action_button("Components", "nav.component_library", "open_components_panel")
@@ -313,7 +313,7 @@ class StatusCenterPanel(QWidget):
 
         row4 = QHBoxLayout()
         row4.setContentsMargins(0, 0, 0, 0)
-        row4.setSpacing(4)
+        row4.setSpacing(2)
         self._properties_btn = self._build_action_button("Properties", "toolbar.settings.global", "open_properties_inspector")
         self._animations_btn = self._build_action_button("Animations", "toolbar.preview", "open_animations_inspector")
         self._fields_btn = self._build_action_button("Fields", "nav.page", "open_page_fields")
