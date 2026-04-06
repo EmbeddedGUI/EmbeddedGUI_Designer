@@ -250,6 +250,33 @@ class TestPropertyPanelFileFlow:
         assert pressed_toggle.text() == "Pressed state"
         panel.deleteLater()
 
+    def test_single_selection_data_group_uses_compact_font_row_labels(self, qapp):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        widget.properties["font_file"] = "demo.ttf"
+        panel = PropertyPanel()
+        catalog = ResourceCatalog()
+        catalog.add_font("demo.ttf")
+        panel.set_resource_catalog(catalog)
+        panel.set_widget(widget)
+
+        data_group = _find_group(panel, "Data")
+        labels = _form_labels(data_group)
+
+        assert "Font:" in labels
+        assert "Px:" in labels
+        assert "Bits:" in labels
+        assert "Ext:" in labels
+        assert "Text:" in labels
+        assert "Pixelsize:" not in labels
+        assert "Fontbitsize:" not in labels
+        assert "External:" not in labels
+        assert "Text File:" not in labels
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

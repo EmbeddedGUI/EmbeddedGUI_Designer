@@ -67,6 +67,12 @@ _COMPACT_PROPERTY_LABELS = {
     "font_file": "Font",
     "image_file": "Image",
     "text_file": "Text",
+    "font_text_file": "Text",
+    "font_pixelsize": "Px",
+    "font_fontbitsize": "Bits",
+    "font_external": "Ext",
+    "image_format": "Fmt",
+    "image_external": "Ext",
 }
 _APPEARANCE_ROW_LABELS = {
     "stroke_width": "Stroke:",
