@@ -5,6 +5,7 @@ from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
+    app_theme_tokens,
     apply_theme,
     designer_font_scale,
     designer_font_size_pt,
@@ -190,12 +191,18 @@ def test_font_preference_scales_typography_tokens_consistently():
 def test_font_scale_helpers_follow_app_preference():
     app = _app()
     app.setProperty("designer_font_size_pt", 12)
+    app.setProperty("designer_theme_mode", "light")
+    app.setProperty("designer_ui_density", "roomy")
     try:
         assert designer_font_size_pt(app, default=9) == 12
         assert designer_font_scale(app, default_pt=9) == pytest.approx(12 / 9)
         assert scaled_point_size(7, app=app, default_pt=9, minimum=1) == 9
+        tokens = app_theme_tokens(app)
+        assert int(tokens["fs_body"]) > int(theme_tokens("light")["fs_body"])
     finally:
         app.setProperty("designer_font_size_pt", 0)
+        app.setProperty("designer_theme_mode", None)
+        app.setProperty("designer_ui_density", None)
 
 
 def test_engineering_theme_radii_remove_pill_shapes():

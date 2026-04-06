@@ -431,6 +431,20 @@ def theme_tokens(mode="dark", density="standard", font_size_pt=0):
     return _font_adjusted_tokens(density_tokens, font_size_pt=font_size_pt)
 
 
+def app_theme_tokens(app: QApplication | None = None):
+    """Return active theme tokens based on current application properties."""
+    target_app = app if app is not None else QApplication.instance()
+    mode = "dark"
+    density = "standard"
+    if target_app is not None:
+        mode_prop = str(target_app.property("designer_theme_mode") or "dark").strip().lower()
+        if mode_prop == "light":
+            mode = "light"
+        density_prop = str(target_app.property("designer_ui_density") or "standard").strip().lower()
+        density = density_prop if density_prop in {"standard", "roomy", "roomy_plus"} else "standard"
+    return theme_tokens(mode, density=density, font_size_pt=designer_font_size_pt(target_app, default=0))
+
+
 # Semantic aliases (spec names → existing keys) for documentation and future refactors.
 TOKEN_SEMANTIC_ALIASES = {
     "bg.canvas": "bg",

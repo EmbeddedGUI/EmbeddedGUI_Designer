@@ -186,6 +186,22 @@ class TestEguiFontSelector:
         assert selector._preview.alignment() == (Qt.AlignRight | Qt.AlignVCenter)
         selector.deleteLater()
 
+    def test_selector_preview_font_size_respects_ui_floor(self, qapp):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        qapp.setProperty("designer_font_size_pt", 12)
+        selector = EguiFontSelector(fonts=["&egui_res_font_montserrat_8_4", "&egui_res_font_montserrat_20_4"])
+
+        try:
+            selector.set_value("&egui_res_font_montserrat_8_4")
+            assert f"font-size: {selector._preview_font_floor_px()}px;" in selector._preview.styleSheet()
+
+            selector.set_value("&egui_res_font_montserrat_20_4")
+            assert "font-size: 20px;" in selector._preview.styleSheet()
+        finally:
+            selector.deleteLater()
+            qapp.setProperty("designer_font_size_pt", 0)
+
     def test_selector_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 

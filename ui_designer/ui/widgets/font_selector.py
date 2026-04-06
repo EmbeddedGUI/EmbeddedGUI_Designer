@@ -2,12 +2,13 @@
 
 import re
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QLabel
 from PyQt5.QtCore import pyqtSignal, Qt
 
 from qfluentwidgets import EditableComboBox, BodyLabel
 
 from ...model.widget_model import FONTS
+from ..theme import app_theme_tokens
 
 
 # Parse font resource name to extract display info
@@ -92,14 +93,21 @@ class EguiFontSelector(QWidget):
         self._update_accessibility_metadata(text)
         self.font_changed.emit(text)
 
+    def _preview_font_floor_px(self):
+        tokens = app_theme_tokens(QApplication.instance())
+        try:
+            return max(8, int(tokens.get("fs_body_sm", tokens.get("fs_body", 12))))
+        except (TypeError, ValueError):
+            return 12
+
     def _update_preview(self, text):
         info = _font_display_info(text)
         if info:
             _family, size, _bpp = info
             self._preview.setText(f"{size}px")
             try:
-                pt = max(8, min(int(size), 20))
-                self._preview.setStyleSheet(f"font-size: {pt}px;")
+                px = max(self._preview_font_floor_px(), min(int(size), 20))
+                self._preview.setStyleSheet(f"font-size: {px}px;")
             except ValueError:
                 self._preview.setStyleSheet("")
         elif text == "EGUI_CONFIG_FONT_DEFAULT":
