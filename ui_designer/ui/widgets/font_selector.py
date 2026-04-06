@@ -3,7 +3,7 @@
 import re
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 
 from qfluentwidgets import EditableComboBox, BodyLabel
 
@@ -61,7 +61,8 @@ class EguiFontSelector(QWidget):
         layout.addWidget(self._combo, 1)
 
         self._preview = self._create_preview_label()
-        self._preview.setFixedWidth(72)
+        self._preview.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self._preview.setFixedWidth(60)
         layout.addWidget(self._preview)
         self._update_preview(self.value())
         self._update_accessibility_metadata(self.value())
@@ -94,8 +95,8 @@ class EguiFontSelector(QWidget):
     def _update_preview(self, text):
         info = _font_display_info(text)
         if info:
-            family, size, bpp = info
-            self._preview.setText(f"{family} {size}px")
+            _family, size, _bpp = info
+            self._preview.setText(f"{size}px")
             try:
                 pt = max(8, min(int(size), 20))
                 self._preview.setStyleSheet(f"font-size: {pt}px;")

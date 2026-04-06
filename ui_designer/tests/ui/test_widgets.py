@@ -147,6 +147,7 @@ class TestEguiFontSelector:
         selector.deleteLater()
 
     def test_accessibility_metadata_updates_with_font_value(self, qapp):
+        from PyQt5.QtCore import Qt
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 
         selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
@@ -159,8 +160,9 @@ class TestEguiFontSelector:
         )
         assert selector._combo.statusTip() == selector._combo.toolTip()
         assert selector._combo.accessibleName() == "Font value: &egui_res_font_montserrat_14_4"
-        assert selector._preview.toolTip() == "Font preview: montserrat 14px."
-        assert selector._preview.accessibleName() == "Font preview: montserrat 14px. montserrat 14px 4bpp."
+        assert selector._preview.toolTip() == "Font preview: 14px."
+        assert selector._preview.accessibleName() == "Font preview: 14px. montserrat 14px 4bpp."
+        assert selector._preview.alignment() == (Qt.AlignRight | Qt.AlignVCenter)
 
         selector.set_value("custom_font_expr")
 
@@ -171,15 +173,17 @@ class TestEguiFontSelector:
         selector.deleteLater()
 
     def test_selector_uses_compact_preview_layout(self, qapp):
+        from PyQt5.QtCore import Qt
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 
         selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
         layout = selector.layout()
 
         assert layout.spacing() == 2
-        assert selector._preview.width() == 72
-        assert selector._preview.minimumWidth() == 72
-        assert selector._preview.maximumWidth() == 72
+        assert selector._preview.width() == 60
+        assert selector._preview.minimumWidth() == 60
+        assert selector._preview.maximumWidth() == 60
+        assert selector._preview.alignment() == (Qt.AlignRight | Qt.AlignVCenter)
         selector.deleteLater()
 
     def test_selector_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
