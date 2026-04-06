@@ -5,11 +5,12 @@ from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
+    apply_theme,
     theme_tokens,
 )
 
 try:
-    from qfluentwidgets import ComboBox, PushButton, SearchLineEdit, SpinBox
+    from qfluentwidgets import ComboBox, PushButton, SearchLineEdit, SpinBox, ToolButton
 
     HAS_FLUENT = True
 except ImportError:
@@ -926,6 +927,48 @@ def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
         button.deleteLater()
         search.close()
         search.deleteLater()
+        app.processEvents()
+
+
+@pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
+def test_apply_theme_flattens_property_panel_fluent_widgets():
+    from ui_designer.model.widget_model import WidgetModel
+    from ui_designer.ui.property_panel import PropertyPanel
+
+    app = _app()
+    apply_theme(app)
+
+    panel = PropertyPanel()
+    panel.set_widget(WidgetModel("label", name="title", x=10, y=20, width=80, height=24))
+
+    try:
+        panel.show()
+        app.processEvents()
+
+        search = panel._search_edit
+        name_edit = panel._editors["name"]
+        alpha_combo = panel._editors["prop_alpha"]
+        x_spin = panel._editors["x"]
+        browse_button = next(
+            button for button in panel.findChildren(ToolButton) if button.text() == "Browse"
+        )
+
+        assert search.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
+        assert name_edit.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
+        assert alpha_combo.property("_designer_fluent_engineering_style") == "property_panel_combo_box"
+        assert x_spin.property("_designer_fluent_engineering_style") == "property_panel_spin_box"
+        assert browse_button.property("_designer_fluent_engineering_style") == "property_panel_button"
+
+        assert "#lineEditButton" in search.styleSheet()
+        assert "border-radius: 0px;" in search.styleSheet()
+        assert "border-radius: 0px;" in name_edit.styleSheet()
+        assert "border-radius: 0px;" in alpha_combo.styleSheet()
+        assert "SpinButton" in x_spin.styleSheet()
+        assert "border-radius: 0px;" in x_spin.styleSheet()
+        assert "border-radius: 0px;" in browse_button.styleSheet()
+    finally:
+        panel.close()
+        panel.deleteLater()
         app.processEvents()
 
 

@@ -61,6 +61,25 @@ TransparentToggleToolButton {{
 }}
 """
 
+_FLUENT_PROPERTY_PANEL_BUTTON_QSS = """
+PushButton,
+ToolButton,
+ToggleButton,
+ToggleToolButton,
+PrimaryPushButton,
+PrimaryToolButton,
+DropDownToolButton,
+PrimaryDropDownToolButton,
+DropDownPushButton,
+PrimaryDropDownPushButton,
+TransparentPushButton,
+TransparentToolButton,
+TransparentToggleButton,
+TransparentToggleToolButton {
+    border-radius: 0px;
+}
+"""
+
 _FLUENT_LINE_EDIT_RADIUS_QSS = f"""
 LineEdit,
 TextEdit,
@@ -74,11 +93,31 @@ TextBrowser {{
 }}
 """
 
+_FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS = """
+LineEdit,
+TextEdit,
+PlainTextEdit,
+TextBrowser {
+    border-radius: 0px;
+}
+
+#lineEditButton {
+    border-radius: 0px;
+}
+"""
+
 _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
     border-radius: {_ENGINEERING_RADIUS_MD}px;
 }}
+"""
+
+_FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = """
+ComboBox,
+ModelComboBox {
+    border-radius: 0px;
+}
 """
 
 _FLUENT_SPIN_BOX_RADIUS_QSS = f"""
@@ -98,6 +137,25 @@ CompactTimeEdit {{
 SpinButton {{
     border-radius: {_ENGINEERING_RADIUS_SM}px;
 }}
+"""
+
+_FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS = """
+SpinBox,
+DoubleSpinBox,
+DateEdit,
+DateTimeEdit,
+TimeEdit,
+CompactSpinBox,
+CompactDoubleSpinBox,
+CompactDateEdit,
+CompactDateTimeEdit,
+CompactTimeEdit {
+    border-radius: 0px;
+}
+
+SpinButton {
+    border-radius: 0px;
+}
 """
 
 if HAS_FLUENT:
@@ -310,25 +368,35 @@ def resolve_semantic_token(mode: str, semantic_name: str, tokens: dict | None = 
     return t.get(key)
 
 
+def _has_ancestor_object_name(widget: QWidget | None, object_name: str) -> bool:
+    current = widget if isinstance(widget, QWidget) else None
+    while current is not None:
+        if current.objectName() == object_name:
+            return True
+        current = current.parentWidget()
+    return False
+
+
 def _apply_fluent_engineering_style(widget):
     """Reduce Fluent widget radii so embedded controls match the shell theme."""
     if not HAS_FLUENT or widget is None or not isinstance(widget, QWidget):
         return False
 
+    in_property_panel = _has_ancestor_object_name(widget, "property_panel_root")
     style_kind = None
     custom_qss = ""
     if isinstance(widget, _FLUENT_BUTTON_TYPES):
-        style_kind = "button"
-        custom_qss = _FLUENT_BUTTON_RADIUS_QSS
+        style_kind = "property_panel_button" if in_property_panel else "button"
+        custom_qss = _FLUENT_PROPERTY_PANEL_BUTTON_QSS if in_property_panel else _FLUENT_BUTTON_RADIUS_QSS
     elif isinstance(widget, _FLUENT_LINE_EDIT_TYPES):
-        style_kind = "line_edit"
-        custom_qss = _FLUENT_LINE_EDIT_RADIUS_QSS
+        style_kind = "property_panel_line_edit" if in_property_panel else "line_edit"
+        custom_qss = _FLUENT_PROPERTY_PANEL_LINE_EDIT_QSS if in_property_panel else _FLUENT_LINE_EDIT_RADIUS_QSS
     elif isinstance(widget, _FLUENT_COMBO_BOX_TYPES):
-        style_kind = "combo_box"
-        custom_qss = _FLUENT_COMBO_BOX_RADIUS_QSS
+        style_kind = "property_panel_combo_box" if in_property_panel else "combo_box"
+        custom_qss = _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS if in_property_panel else _FLUENT_COMBO_BOX_RADIUS_QSS
     elif isinstance(widget, _FLUENT_SPIN_BOX_TYPES):
-        style_kind = "spin_box"
-        custom_qss = _FLUENT_SPIN_BOX_RADIUS_QSS
+        style_kind = "property_panel_spin_box" if in_property_panel else "spin_box"
+        custom_qss = _FLUENT_PROPERTY_PANEL_SPIN_BOX_QSS if in_property_panel else _FLUENT_SPIN_BOX_RADIUS_QSS
 
     if not style_kind:
         return False
