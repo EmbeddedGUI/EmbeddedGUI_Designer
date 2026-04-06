@@ -82,7 +82,7 @@ class ColorSwatch(QWidget):
 
 
 class EguiColorPicker(QWidget):
-    """Combo box with color swatch and a '...' button to open a color dialog.
+    """Combo box with color swatch and a text button to open a color dialog.
 
     Emits ``color_changed(str)`` with the EGUI color expression.
     """
@@ -106,7 +106,7 @@ class EguiColorPicker(QWidget):
         layout.addWidget(self._combo, 1)
 
         self._btn = ToolButton()
-        self._btn.setText("...")
+        self._btn.setText("Pick")
         self._btn.clicked.connect(self._open_dialog)
         layout.addWidget(self._btn)
         self._update_accessibility_metadata(self.value())

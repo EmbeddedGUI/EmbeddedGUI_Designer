@@ -237,6 +237,7 @@ class TestEguiColorPicker:
         assert picker._combo.statusTip() == picker._combo.toolTip()
         assert picker._combo.accessibleName() == "Color value: EGUI_COLOR_RED"
         assert picker._swatch.accessibleName() == "Color swatch: EGUI_COLOR_RED (#FF0000)"
+        assert picker._btn.text() == "Pick"
         assert picker._btn.toolTip() == "Open the custom color dialog. Current color: EGUI_COLOR_RED (#FF0000)"
         assert picker._btn.accessibleName() == "Open color dialog: EGUI_COLOR_RED (#FF0000)"
 
