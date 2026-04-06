@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QEvent, Qt
-    from PyQt5.QtGui import QKeyEvent
+    from PyQt5.QtGui import QFont, QKeyEvent
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QToolButton
 
     _has_pyqt5 = True
@@ -91,6 +91,33 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_refresh_tree_typography_reuses_current_tree_font(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        label = WidgetModel("label", name="field_label")
+        button = WidgetModel("button", name="field_button")
+        root.add_child(label)
+        root.add_child(button)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.filter_edit.setText("field_button")
+
+        font = QFont(panel.tree.font())
+        font.setPointSize(15)
+        panel.tree.setFont(font)
+        panel.refresh_tree_typography()
+
+        label_item = panel._item_map[id(label)]
+        button_item = panel._item_map[id(button)]
+        assert label_item.font(0).pointSize() == 15
+        assert button_item.font(0).pointSize() == 15
+        assert label_item.font(0).bold() is False
+        assert button_item.font(0).bold() is True
+        panel.deleteLater()
+
     def test_header_metadata_tracks_selection_and_filter_context(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

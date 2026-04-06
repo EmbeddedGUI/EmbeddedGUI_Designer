@@ -3848,6 +3848,37 @@ class TestMainWindowFileFlow:
         assert f"font-size: {font_selector._preview_font_floor_px()}px;" in font_selector._preview.styleSheet()
         _close_window(window)
 
+    def test_view_appearance_refreshes_tree_typography_helpers(self, qapp, isolated_config, monkeypatch):
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        monkeypatch.setattr(main_window_module, "apply_theme", lambda app, theme, density="standard": None)
+
+        window = MainWindow("")
+        calls = {"project": 0, "tree": 0}
+        original_project_refresh = window.project_dock.refresh_tree_typography
+        original_tree_refresh = window.widget_tree.refresh_tree_typography
+
+        def count_project_refresh():
+            calls["project"] += 1
+            return original_project_refresh()
+
+        def count_tree_refresh():
+            calls["tree"] += 1
+            return original_tree_refresh()
+
+        monkeypatch.setattr(window.project_dock, "refresh_tree_typography", count_project_refresh)
+        monkeypatch.setattr(window.widget_tree, "refresh_tree_typography", count_tree_refresh)
+
+        window._set_theme("light")
+        window._set_ui_density("roomy")
+        monkeypatch.setattr(main_window_module.QInputDialog, "getInt", lambda *args, **kwargs: (11, True))
+        window._set_font_sizes()
+
+        assert calls["project"] == 3
+        assert calls["tree"] == 3
+        _close_window(window)
+
     def test_view_grid_and_mockup_actions_expose_status_hints(self, qapp, isolated_config):
         from PyQt5.QtGui import QPixmap
         from ui_designer.ui.main_window import MainWindow

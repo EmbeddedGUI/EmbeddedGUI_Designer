@@ -4340,12 +4340,21 @@ class MainWindow(QMainWindow):
         try:
             from .widgets.font_selector import EguiFontSelector
         except Exception:
-            return
-        for selector in self.findChildren(EguiFontSelector):
-            try:
-                selector.refresh_theme_metrics()
-            except Exception:
-                continue
+            EguiFontSelector = None
+        if EguiFontSelector is not None:
+            for selector in self.findChildren(EguiFontSelector):
+                try:
+                    selector.refresh_theme_metrics()
+                except Exception:
+                    continue
+        for attr_name in ("project_dock", "widget_tree"):
+            panel = getattr(self, attr_name, None)
+            refresh = getattr(panel, "refresh_tree_typography", None)
+            if callable(refresh):
+                try:
+                    refresh()
+                except Exception:
+                    continue
 
     def _update_recent_menu(self):
         """Update the Recent Projects submenu."""

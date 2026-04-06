@@ -3583,11 +3583,26 @@ class WidgetTreePanel(QWidget):
         for index in range(item.childCount()):
             self._clear_item_filter(item.child(index))
 
+    def _tree_item_font(self, matched=False):
+        font = self.tree.font()
+        font.setBold(bool(matched))
+        return font
+
     def _set_item_match_state(self, item, matched):
         for column in range(self.tree.columnCount()):
-            font = item.font(column)
-            font.setBold(bool(matched))
-            item.setFont(column, font)
+            item.setFont(column, self._tree_item_font(matched))
+
+    def refresh_tree_typography(self):
+        """Re-apply match emphasis using the current tree font."""
+        query = self.filter_edit.text().strip().lower()
+        for item in self._item_map.values():
+            widget = self._widget_map.get(id(item))
+            matched = False
+            if query and widget is not None:
+                name = (widget.name or "").lower()
+                type_name = (widget.widget_type or "").lower()
+                matched = query in name or query in type_name
+            self._set_item_match_state(item, matched)
 
     def _update_filter_status(self, query, match_count):
         has_matches = bool(query and self._filter_matches)

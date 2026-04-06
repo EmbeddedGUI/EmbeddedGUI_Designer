@@ -268,6 +268,11 @@ class ProjectExplorerDock(QDockWidget):
         parts.append("Unsaved changes." if page_name in self._dirty_pages else "No unsaved changes.")
         return " ".join(parts)
 
+    def _page_item_font(self, is_current=False):
+        font = self._page_tree.font()
+        font.setBold(bool(is_current))
+        return font
+
     def _page_context_action_hint(self, action_key, page_name=""):
         page_label = str(page_name or "").strip() or "current page"
         startup = self._project.startup_page if self._project else ""
@@ -308,12 +313,17 @@ class ProjectExplorerDock(QDockWidget):
         for i in range(self._page_tree.topLevelItemCount()):
             item = self._page_tree.topLevelItem(i)
             name = item.data(0, Qt.UserRole)
-            font = item.font(0)
-            font.setBold(name == page_name)
-            item.setFont(0, font)
+            item.setFont(0, self._page_item_font(name == page_name))
             if name:
                 self._apply_page_item_metadata(item, name)
         self._update_accessibility_summary()
+
+    def refresh_tree_typography(self):
+        """Re-apply page item emphasis using the current tree font."""
+        for i in range(self._page_tree.topLevelItemCount()):
+            item = self._page_tree.topLevelItem(i)
+            name = item.data(0, Qt.UserRole)
+            item.setFont(0, self._page_item_font(name == self._current_page_name))
 
     def set_dirty_pages(self, page_names):
         self._dirty_pages = set(page_names or [])
@@ -334,10 +344,7 @@ class ProjectExplorerDock(QDockWidget):
             name = page.name
             item = QTreeWidgetItem([self._page_item_text(name)])
             item.setData(0, Qt.UserRole, name)
-            if name == self._current_page_name:
-                font = item.font(0)
-                font.setBold(True)
-                item.setFont(0, font)
+            item.setFont(0, self._page_item_font(name == self._current_page_name))
             self._apply_page_item_metadata(item, name)
             self._page_tree.addTopLevelItem(item)
 
