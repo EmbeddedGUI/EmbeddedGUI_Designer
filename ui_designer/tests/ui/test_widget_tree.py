@@ -2618,6 +2618,8 @@ class TestWidgetTreePanel:
         assert panel.structure_actions_btn.statusTip() == panel.structure_actions_btn.toolTip()
         assert panel.structure_actions_btn.accessibleName() == "Open structure actions"
         assert panel.structure_actions_btn.icon().isNull()
+        assert panel.add_btn.text() == "Add"
+        assert panel.structure_actions_btn.text() == "More"
         assert panel.structure_hint_label.isHidden() is True
         assert panel._primary_actions_label.isHidden() is True
         assert panel._selection_toolbar_label.isHidden() is True
@@ -2638,12 +2640,14 @@ class TestWidgetTreePanel:
             "Expand All",
             "Collapse All",
         ]
+        assert panel.filter_edit.placeholderText() == "Filter"
         assert panel.filter_edit.toolTip() == "Filter widgets by name or type. Current filter: none."
         assert panel._filter_hint_label.isHidden() is True
         assert panel._filter_hint_label.accessibleName() == panel._filter_hint_label.text()
         assert panel.filter_prev_btn.toolTip() == "Type a widget filter to navigate previous matches."
         assert panel.filter_next_btn.toolTip() == "Type a widget filter to navigate next matches."
         assert panel.filter_select_btn.toolTip() == "Type a widget filter to select matching widgets."
+        assert panel.filter_select_btn.text() == "All"
         assert panel.filter_prev_btn.accessibleName() == "Previous widget filter match unavailable"
         assert panel.filter_next_btn.accessibleName() == "Next widget filter match unavailable"
         assert panel.filter_select_btn.accessibleName() == "Select widget filter matches unavailable"
