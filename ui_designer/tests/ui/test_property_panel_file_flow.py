@@ -153,9 +153,9 @@ class TestPropertyPanelFileFlow:
         chips_row = header_layout.itemAt(4).layout()
 
         assert header.objectName() == "workspace_panel_header"
-        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (10, 10, 10, 10)
-        assert header_layout.spacing() == 8
-        assert chips_row.spacing() == 4
+        assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
+        assert header_layout.spacing() == 6
+        assert chips_row.spacing() == 2
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
         assert eyebrow.accessibleName() == "Property inspection surface."
         assert eyebrow.isHidden() is True
@@ -617,9 +617,9 @@ class TestPropertyPanelFileFlow:
         chips_row = chips_frame.layout()
         hint_layout = hint_strip.layout()
 
-        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (10, 10, 10, 10)
-        assert summary_layout.spacing() == 8
-        assert chips_row.spacing() == 4
+        assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (8, 8, 8, 8)
+        assert summary_layout.spacing() == 6
+        assert chips_row.spacing() == 2
         assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (8, 8)
         assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (8, 8)
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."

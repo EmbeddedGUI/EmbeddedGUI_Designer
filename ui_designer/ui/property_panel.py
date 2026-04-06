@@ -783,8 +783,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
         header.setLayout(layout)
 
         eyebrow = QLabel("Widget Profile")
@@ -850,7 +850,7 @@ class PropertyPanel(QWidget):
 
         chips_row = QHBoxLayout()
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(4)
+        chips_row.setSpacing(2)
         self._header_size_chip = self._make_status_chip(f"{widget.width}×{widget.height}", "accent")
         _set_widget_metadata(
             self._header_size_chip,
@@ -886,8 +886,8 @@ class PropertyPanel(QWidget):
         header.setObjectName("workspace_panel_header")
         header.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
         header.setLayout(layout)
 
         eyebrow = QLabel("Batch Inspector")
@@ -962,7 +962,7 @@ class PropertyPanel(QWidget):
         chips_frame.hide()
         chips_row = QHBoxLayout(chips_frame)
         chips_row.setContentsMargins(0, 0, 0, 0)
-        chips_row.setSpacing(4)
+        chips_row.setSpacing(2)
         types_chip = self._make_status_chip(_count_label(len(widget_types), "type"), "accent")
         _set_widget_metadata(
             types_chip,
