@@ -2678,7 +2678,7 @@ QTextEdit#release_history_preview {{
 }}
 
 #widget_browser_card_title {{
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_body']}px;
     font-weight: 600;
     color: {t['text']};
 }}
