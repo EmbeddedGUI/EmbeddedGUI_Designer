@@ -149,7 +149,7 @@ class HistoryPanel(QWidget):
         )
 
     def clear(self):
-        self._page_value.setText("Page: -")
+        self._page_value.setText("-")
         self._stack_value.setText("History: 0 entries")
         self._dirty_value.setText("Dirty: No")
         self._source_value.setText("Source: Saved state")
@@ -171,7 +171,7 @@ class HistoryPanel(QWidget):
         dirty = bool(dirty)
         entries = list(entries or [])
 
-        self._page_value.setText(f"Page: {page_name}")
+        self._page_value.setText(page_name)
         self._stack_value.setText(
             f"History: {len(entries)} entries | Undo: {'Yes' if can_undo else 'No'} | Redo: {'Yes' if can_redo else 'No'}"
         )

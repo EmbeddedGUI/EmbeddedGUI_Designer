@@ -45,6 +45,7 @@ class TestDebugPanel:
         assert panel._header_eyebrow.accessibleName() == "Runtime console workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._header_frame.accessibleName() == "Debug output header. Debug output: 0 lines. Last message: No output yet."
+        assert panel._title_label.text() == "Debug"
         assert panel._meta_label.text() == "No output yet. Compile, preview, and bridge logs will appear here."
         assert panel._meta_label.accessibleName() == (
             "Debug output summary: No output yet. Compile, preview, and bridge logs will appear here."

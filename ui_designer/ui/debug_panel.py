@@ -67,7 +67,7 @@ class DebugPanel(QWidget):
         title_row.setContentsMargins(0, 0, 0, 0)
         title_row.setSpacing(2)
 
-        self._title_label = QLabel("Debug Output")
+        self._title_label = QLabel("Debug")
         self._title_label.setObjectName("workspace_section_title")
         self._title_label.setAccessibleName("Debug Output")
         title_row.addWidget(self._title_label)
