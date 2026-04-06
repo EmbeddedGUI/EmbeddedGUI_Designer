@@ -8470,6 +8470,7 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
+        assert window._insert_widget_button.text() == "Add"
         assert window._insert_widget_button.width() == 52
         assert window._insert_widget_button.height() == 26
         assert window._insert_widget_button.icon().isNull() is True
@@ -9112,7 +9113,7 @@ class TestMainWindowFileFlow:
 
         assert window._workspace_nav_buttons["project"].text() == "Pages"
         assert window._workspace_nav_buttons["structure"].text() == "Tree"
-        assert window._workspace_nav_buttons["widgets"].text() == "Insert"
+        assert window._workspace_nav_buttons["widgets"].text() == "Add"
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
         assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextOnly
         assert window._workspace_nav_frame.width() == 60

@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
         for key, label, short_label in (
             ("project", "Project", "Pages"),
             ("structure", "Structure", "Tree"),
-            ("widgets", "Components", "Insert"),
+            ("widgets", "Components", "Add"),
             ("assets", "Assets", "Assets"),
         ):
             button = self._create_workspace_nav_button(label, short_label, key)
@@ -4157,7 +4157,7 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFixedHeight(22)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
-        self._insert_widget_button = PushButton("Insert")
+        self._insert_widget_button = PushButton("Add")
         self._insert_widget_button.setObjectName("workspace_insert_button")
         self._insert_widget_button.setFixedSize(52, 26)
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
