@@ -209,6 +209,36 @@ class TestPropertyPanelFileFlow:
 
         panel.deleteLater()
 
+    def test_single_selection_appearance_group_uses_compact_row_labels(self, qapp):
+        from ui_designer.model.widget_model import BackgroundModel, WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+        bg = BackgroundModel()
+        bg.bg_type = "solid"
+        bg.stroke_width = 2
+        bg.has_pressed = True
+        widget.background = bg
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        appearance_group = _find_group(panel, "Appearance")
+        labels = _form_labels(appearance_group)
+
+        assert "Type:" in labels
+        assert "Color:" in labels
+        assert "Alpha:" in labels
+        assert "Stroke:" in labels
+        assert "Border:" in labels
+        assert "Border A:" in labels
+        assert "Pressed:" in labels
+        assert "Stroke Width:" not in labels
+        assert "Stroke Color:" not in labels
+        assert "Stroke Alpha:" not in labels
+        assert "Pressed Color:" not in labels
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

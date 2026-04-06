@@ -68,6 +68,12 @@ _COMPACT_PROPERTY_LABELS = {
     "image_file": "Image",
     "text_file": "Text",
 }
+_APPEARANCE_ROW_LABELS = {
+    "stroke_width": "Stroke:",
+    "stroke_color": "Border:",
+    "stroke_alpha": "Border A:",
+    "pressed_color": "Pressed:",
+}
 
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
@@ -1184,19 +1190,19 @@ class PropertyPanel(QWidget):
             stroke_spin.setRange(0, 50)
             stroke_spin.setValue(bg.stroke_width)
             stroke_spin.valueChanged.connect(lambda val: self._on_bg_changed("stroke_width", val))
-            bg_form.addRow("Stroke Width:", stroke_spin)
+            bg_form.addRow(self._appearance_row_label("stroke_width", "Stroke Width:"), stroke_spin)
 
             if bg.stroke_width > 0:
                 stroke_color = EguiColorPicker()
                 stroke_color.set_value(bg.stroke_color)
                 stroke_color.color_changed.connect(lambda val: self._on_bg_changed("stroke_color", val))
-                bg_form.addRow("Stroke Color:", stroke_color)
+                bg_form.addRow(self._appearance_row_label("stroke_color", "Stroke Color:"), stroke_color)
 
                 stroke_alpha = ComboBox()
                 stroke_alpha.addItems(ALPHAS)
                 stroke_alpha.setCurrentText(bg.stroke_alpha)
                 stroke_alpha.currentTextChanged.connect(lambda val: self._on_bg_changed("stroke_alpha", val))
-                bg_form.addRow("Stroke Alpha:", stroke_alpha)
+                bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
 
             # Pressed state
             pressed_check = CheckBox("Enable pressed state")
@@ -1208,7 +1214,7 @@ class PropertyPanel(QWidget):
                 pressed_color = EguiColorPicker()
                 pressed_color.set_value(bg.pressed_color)
                 pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
-                bg_form.addRow("Pressed Color:", pressed_color)
+                bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
 
         self._layout.addWidget(bg_group)
 
@@ -1646,6 +1652,9 @@ class PropertyPanel(QWidget):
 
     def _callback_row_label(self, event_name):
         return _COMPACT_CALLBACK_LABELS.get(event_name, self._humanize_callback_name(event_name))
+
+    def _appearance_row_label(self, key, fallback):
+        return _APPEARANCE_ROW_LABELS.get(key, fallback)
 
     def _suggest_callback_name(self, widget, event_name):
         widget_name = sanitize_widget_name(getattr(widget, "name", "")) or getattr(widget, "widget_type", "widget")
