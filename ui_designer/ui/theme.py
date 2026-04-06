@@ -1037,8 +1037,8 @@ QToolButton[workspaceNav="true"] {{
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
     padding: 2px 0;
-    min-width: 60px;
-    max-width: 60px;
+    min-width: 56px;
+    max-width: 56px;
     min-height: 26px;
     max-height: 26px;
 }}
