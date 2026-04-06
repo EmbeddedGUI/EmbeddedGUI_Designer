@@ -3447,30 +3447,30 @@ class MainWindow(QMainWindow):
         self._new_project_action.triggered.connect(self._new_project)
         file_menu.addAction(self._new_project_action)
 
-        self._open_app_action = QAction("Open SDK Example...", self)
+        self._open_app_action = QAction("Open Example...", self)
         self._open_app_action.setShortcut("Ctrl+Shift+O")
         self._apply_action_hint(self._open_app_action, "Open an SDK example project or legacy example.")
         self._open_app_action.triggered.connect(self._open_app_dialog)
         file_menu.addAction(self._open_app_action)
 
-        self._open_project_action = QAction("Open Project File...", self)
+        self._open_project_action = QAction("Open Project...", self)
         self._open_project_action.setShortcut("Ctrl+O")
         self._apply_action_hint(self._open_project_action, "Open an existing .egui project file.")
         self._open_project_action.triggered.connect(self._open_project)
         file_menu.addAction(self._open_project_action)
 
-        self._download_sdk_action = QAction("Download SDK Copy...", self)
+        self._download_sdk_action = QAction("Download SDK...", self)
         self._apply_action_hint(self._download_sdk_action, describe_auto_download_plan())
         self._download_sdk_action.triggered.connect(self._download_sdk)
         file_menu.addAction(self._download_sdk_action)
 
-        self._set_sdk_root_action = QAction("Set SDK Root...", self)
+        self._set_sdk_root_action = QAction("Set SDK...", self)
         self._apply_action_hint(self._set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
         self._set_sdk_root_action.triggered.connect(self._set_sdk_root)
         file_menu.addAction(self._set_sdk_root_action)
 
         # Recent Projects submenu
-        self._recent_menu = file_menu.addMenu("Recent Projects")
+        self._recent_menu = file_menu.addMenu("Recent")
         self._apply_action_hint(self._recent_menu.menuAction(), "Open a recently used project.")
         self._update_recent_menu()
 

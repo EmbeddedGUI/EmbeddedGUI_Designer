@@ -2942,8 +2942,8 @@ class TestMainWindowFileFlow:
         view_actions = {action.text(): action for action in view_menu.actions() if action.text()}
         background_actions = {action.text(): action for action in background_menu.actions() if action.text()}
 
-        assert file_actions["Recent Projects"].toolTip() == window._recent_menu.menuAction().toolTip()
-        assert file_actions["Recent Projects"].statusTip() == file_actions["Recent Projects"].toolTip()
+        assert file_actions["Recent"].toolTip() == window._recent_menu.menuAction().toolTip()
+        assert file_actions["Recent"].statusTip() == file_actions["Recent"].toolTip()
         assert view_actions["Theme"].toolTip() == "Choose the Designer theme. Current theme: Dark."
         assert view_actions["Theme"].statusTip() == view_actions["Theme"].toolTip()
         assert view_actions["UI Density"].toolTip() == "Choose standard or roomy UI density."
@@ -4395,10 +4395,10 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in {
                 "New Project",
-                "Open SDK Example...",
-                "Open Project File...",
-                "Download SDK Copy...",
-                "Set SDK Root...",
+                "Open Example...",
+                "Open Project...",
+                "Download SDK...",
+                "Set SDK...",
             }
         }
 
@@ -4407,25 +4407,25 @@ class TestMainWindowFileFlow:
             f"Current binding: SDK: missing. Default parent: {window._default_new_project_parent_dir()}."
         )
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
-        assert actions["Open SDK Example..."].toolTip() == (
+        assert actions["Open Example..."].toolTip() == (
             "Open an SDK example project or legacy example. "
             f"Current binding: SDK: missing. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
-        assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
-        assert actions["Open Project File..."].toolTip() == (
+        assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
+        assert actions["Open Project..."].toolTip() == (
             "Open an existing .egui project file. "
             f"Recent projects: none. Default directory: {window._default_open_project_dir()}."
         )
-        assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
-        assert "GitHub archive" in actions["Download SDK Copy..."].toolTip()
-        assert "Current binding: SDK: missing." in actions["Download SDK Copy..."].toolTip()
-        assert f"Install target: {main_window_module.default_sdk_install_dir()}." in actions["Download SDK Copy..."].toolTip()
-        assert actions["Download SDK Copy..."].statusTip() == actions["Download SDK Copy..."].toolTip()
-        assert actions["Set SDK Root..."].toolTip() == (
+        assert actions["Open Project..."].statusTip() == actions["Open Project..."].toolTip()
+        assert "GitHub archive" in actions["Download SDK..."].toolTip()
+        assert "Current binding: SDK: missing." in actions["Download SDK..."].toolTip()
+        assert f"Install target: {main_window_module.default_sdk_install_dir()}." in actions["Download SDK..."].toolTip()
+        assert actions["Download SDK..."].statusTip() == actions["Download SDK..."].toolTip()
+        assert actions["Set SDK..."].toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. "
             f"Current binding: SDK: missing. Default selection: {window._active_sdk_root() or 'none'}."
         )
-        assert actions["Set SDK Root..."].statusTip() == actions["Set SDK Root..."].toolTip()
+        assert actions["Set SDK..."].statusTip() == actions["Set SDK..."].toolTip()
         _close_window(window)
 
     def test_set_sdk_root_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
@@ -4440,7 +4440,7 @@ class TestMainWindowFileFlow:
 
         action = next(
             action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Set SDK Root..."
+            if action.text() == "Set SDK..."
         )
         assert action.toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. "
@@ -4466,18 +4466,18 @@ class TestMainWindowFileFlow:
         actions = {
             action.text(): action
             for action in window.findChildren(type(window._save_action))
-            if action.text() in {"Open SDK Example...", "Open Project File..."}
+            if action.text() in {"Open Example...", "Open Project..."}
         }
-        assert actions["Open SDK Example..."].toolTip() == (
+        assert actions["Open Example..."].toolTip() == (
             "Open an SDK example project or legacy example. "
             f"Current binding: SDK: cached. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
-        assert actions["Open SDK Example..."].statusTip() == actions["Open SDK Example..."].toolTip()
-        assert actions["Open Project File..."].toolTip() == (
+        assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
+        assert actions["Open Project..."].toolTip() == (
             "Open an existing .egui project file. "
             f"Recent projects: 1 project. Default directory: {window._default_open_project_dir()}."
         )
-        assert actions["Open Project File..."].statusTip() == actions["Open Project File..."].toolTip()
+        assert actions["Open Project..."].statusTip() == actions["Open Project..."].toolTip()
         _close_window(window)
 
     def test_open_sdk_example_action_tracks_default_sdk_root(self, qapp, isolated_config, monkeypatch):
@@ -4491,7 +4491,7 @@ class TestMainWindowFileFlow:
 
         action = next(
             action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Open SDK Example..."
+            if action.text() == "Open Example..."
         )
         assert action.toolTip() == (
             "Open an SDK example project or legacy example. "
@@ -4513,7 +4513,7 @@ class TestMainWindowFileFlow:
 
         action = next(
             action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Open Project File..."
+            if action.text() == "Open Project..."
         )
         assert action.toolTip() == (
             "Open an existing .egui project file. "
@@ -4535,7 +4535,7 @@ class TestMainWindowFileFlow:
 
         action = next(
             action for action in window.findChildren(type(window._save_action))
-            if action.text() == "Download SDK Copy..."
+            if action.text() == "Download SDK..."
         )
         assert "Current binding: SDK: download-test." in action.toolTip()
         assert f"Install target: {os.path.normpath('C:/sdk-target')}." in action.toolTip()
