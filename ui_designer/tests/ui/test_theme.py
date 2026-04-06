@@ -119,6 +119,57 @@ def test_tokens_include_xxs_spacing_for_all_themes():
         assert int(tokens["space_xxs"]) == 4
 
 
+def test_compact_typography_scale_stays_consistent():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        roomy = theme_tokens(mode, "roomy")
+        roomy_plus = theme_tokens(mode, "roomy_plus")
+        css = _build_stylesheet(mode)
+
+        property_title = css.split("#property_panel_title {", 1)[1].split("}", 1)[0]
+        command_title = css.split("#workspace_command_title {", 1)[1].split("}", 1)[0]
+        resource_title = css.split("#resource_panel_title {", 1)[1].split("}", 1)[0]
+        project_title = css.split("#project_dock_title {", 1)[1].split("}", 1)[0]
+        app_selector_title = css.split("#app_selector_title {", 1)[1].split("}", 1)[0]
+        resource_dialog_title = css.split("#resource_dialog_title {", 1)[1].split("}", 1)[0]
+        repo_health_title = css.split("#repo_health_title {", 1)[1].split("}", 1)[0]
+        repo_health_metric_value = css.split("#repo_health_metric_value {", 1)[1].split("}", 1)[0]
+        release_title = css.split("#release_build_title,", 1)[1].split("}", 1)[0]
+        new_project_title = css.split("#new_project_title {", 1)[1].split("}", 1)[0]
+        welcome_title = css.split("#welcome_hero_title {", 1)[1].split("}", 1)[0]
+        welcome_subtitle = css.split("#welcome_hero_subtitle {", 1)[1].split("}", 1)[0]
+        preview_title = css.split("#preview_title {", 1)[1].split("}", 1)[0]
+
+        assert int(t["fs_h1"]) == 14
+        assert int(t["fs_h2"]) == 13
+        assert int(t["fs_panel_title"]) == 13
+        assert int(t["fs_body"]) == 13
+        assert int(t["fs_body_sm"]) == 12
+        assert int(t["fs_caption"]) == 12
+        assert int(roomy["fs_h1"]) == int(t["fs_h1"]) + 1
+        assert int(roomy_plus["fs_h1"]) == int(t["fs_h1"]) + 2
+
+        assert f"font-size: {t['fs_panel_title']}px;" in property_title
+        assert f"font-weight: {t['fw_semibold']};" in property_title
+        assert f"font-size: {t['fs_panel_title']}px;" in command_title
+        assert f"font-size: {t['fs_panel_title']}px;" in resource_title
+        assert f"font-size: {t['fs_panel_title']}px;" in project_title
+        assert f"font-size: {t['fs_panel_title']}px;" in preview_title
+
+        assert f"font-size: {t['fs_h1']}px;" in app_selector_title
+        assert f"font-weight: {t['fw_semibold']};" in app_selector_title
+        assert f"font-size: {t['fs_h1']}px;" in resource_dialog_title
+        assert f"font-weight: {t['fw_semibold']};" in resource_dialog_title
+        assert f"font-size: {t['fs_h1']}px;" in repo_health_title
+        assert f"font-size: {t['fs_h1']}px;" in release_title
+        assert f"font-size: {t['fs_h1']}px;" in new_project_title
+        assert f"font-size: {t['fs_h1']}px;" in welcome_title
+
+        assert f"font-size: {t['fs_body']}px;" in repo_health_metric_value
+        assert f"font-size: {t['fs_body']}px;" in welcome_subtitle
+        assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
+
+
 def test_engineering_theme_radii_remove_pill_shapes():
     for mode in ("light", "dark"):
         tokens = theme_tokens(mode)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QFrame, QLabel, QHBoxLayout, QVBoxLayout, QWidget
 
 from qfluentwidgets import PrimaryPushButton, PushButton
@@ -59,7 +58,6 @@ class RecentProjectItem(QWidget):
         text_layout.setSpacing(2)
 
         self._name_label = QLabel(display_name)
-        self._name_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
         self._name_label.setObjectName("welcome_recent_name")
         text_layout.addWidget(self._name_label)
 
@@ -175,7 +173,6 @@ class WelcomePage(QWidget):
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("EmbeddedGUI Designer")
-        self._title_label.setFont(QFont("Segoe UI", 28, QFont.Light))
         self._title_label.setObjectName("welcome_hero_title")
         _set_widget_metadata(
             self._title_label,
@@ -185,7 +182,6 @@ class WelcomePage(QWidget):
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel("Create or open a project to start editing.")
-        self._subtitle_label.setFont(QFont("Segoe UI", 12))
         self._subtitle_label.setObjectName("welcome_hero_subtitle")
         self._subtitle_label.setWordWrap(True)
         _set_widget_metadata(
@@ -228,7 +224,6 @@ class WelcomePage(QWidget):
         left_col.setSpacing(8)
 
         self._start_label = QLabel("Start")
-        self._start_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
         self._start_label.setObjectName("workspace_section_title")
         left_col.addWidget(self._start_label)
 
@@ -267,7 +262,6 @@ class WelcomePage(QWidget):
         sdk_layout.setSpacing(6)
 
         self._sdk_title_label = QLabel("SDK Status")
-        self._sdk_title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
         self._sdk_title_label.setObjectName("workspace_section_title")
         sdk_layout.addWidget(self._sdk_title_label)
 
@@ -299,7 +293,6 @@ class WelcomePage(QWidget):
         right_col.setSpacing(8)
 
         self._recent_label = QLabel("Recent Projects")
-        self._recent_label.setFont(QFont("Segoe UI", 14, QFont.DemiBold))
         self._recent_label.setObjectName("workspace_section_title")
         right_col.addWidget(self._recent_label)
 

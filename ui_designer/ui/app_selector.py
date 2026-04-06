@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -103,7 +102,6 @@ class AppEntryRowWidget(QWidget):
         text_layout.setSpacing(4)
 
         self._title_label = QLabel(title)
-        self._title_label.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
         self._title_label.setObjectName("app_selector_item_title")
         text_layout.addWidget(self._title_label)
 
@@ -195,7 +193,6 @@ class AppSelectorDialog(QDialog):
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Open EmbeddedGUI SDK Example")
-        self._title_label.setFont(QFont("Segoe UI", 26, QFont.Light))
         self._title_label.setObjectName("app_selector_title")
         _set_widget_metadata(
             self._title_label,

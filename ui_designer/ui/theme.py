@@ -227,8 +227,8 @@ _TOKENS = {
         "pad_input_h": 10,
         "h_tab_min": 28,
         "fs_display": 20,
-        "fs_h1": 15,
-        "fs_h2": 14,
+        "fs_h1": 14,
+        "fs_h2": 13,
         "fs_panel_title": 13,
         "fs_body": 13,
         "fs_body_sm": 12,
@@ -289,8 +289,8 @@ _TOKENS = {
         "pad_input_h": 10,
         "h_tab_min": 28,
         "fs_display": 20,
-        "fs_h1": 15,
-        "fs_h2": 14,
+        "fs_h1": 14,
+        "fs_h2": 13,
         "fs_panel_title": 13,
         "fs_body": 13,
         "fs_body_sm": 12,
@@ -329,7 +329,7 @@ def _density_adjusted_tokens(tokens: dict, density="standard"):
     tab_delta = 2 if normalized == "roomy" else 4
 
     # Comfortable profiles: larger text and touch targets.
-    for key in ("fs_h2", "fs_panel_title", "fs_body", "fs_body_sm", "fs_caption", "fs_micro"):
+    for key in ("fs_h1", "fs_h2", "fs_panel_title", "fs_body", "fs_body_sm", "fs_caption", "fs_micro"):
         try:
             out[key] = int(out.get(key, 0)) + text_delta
         except Exception:
@@ -734,8 +734,8 @@ QFrame#property_panel_search_shell {{
 
 #property_panel_title {{
     color: {t['text']};
-    font-size: {t['fs_h1']}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #property_panel_meta,
@@ -810,7 +810,7 @@ QGroupBox#inspector_collapsible_group::title {{
 
 #workspace_command_title {{
     color: {t['text']};
-    font-size: {t['fs_h2']}px;
+    font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
 
@@ -1431,8 +1431,8 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 
 #resource_panel_title {{
     color: {t['text']};
-    font-size: {t['fs_h1']}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #resource_panel_subtitle,
@@ -1544,8 +1544,8 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 
 #project_dock_title {{
     color: {t['text']};
-    font-size: {t['fs_h1']}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_panel_title']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #project_dock_subtitle,
@@ -2127,8 +2127,8 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 
 #app_selector_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 3}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #app_selector_subtitle {{
@@ -2240,8 +2240,8 @@ QListWidget#app_selector_list::item:hover {{
 
 #resource_dialog_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 6}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #resource_dialog_subtitle {{
@@ -2310,8 +2310,8 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 
 #repo_health_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 6}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #repo_health_subtitle,
@@ -2342,7 +2342,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 
 #repo_health_metric_value {{
     color: {t['text']};
-    font-size: {t['fs_h2']}px;
+    font-size: {t['fs_body']}px;
     font-weight: {t['fw_semibold']};
 }}
 
@@ -2382,8 +2382,8 @@ QTextEdit#repo_health_details {{
 #release_profiles_title,
 #release_history_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 6}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #release_build_subtitle,
@@ -2486,8 +2486,8 @@ QTextEdit#release_history_preview {{
 
 #new_project_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 6}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #new_project_subtitle {{
@@ -2545,14 +2545,14 @@ QTextEdit#release_history_preview {{
 
 #welcome_hero_title {{
     color: {t['text']};
-    font-size: {t['fs_display'] + 4}px;
-    font-weight: {t['fw_regular']};
+    font-size: {t['fs_h1']}px;
+    font-weight: {t['fw_semibold']};
 }}
 
 #welcome_hero_subtitle {{
     color: {t['text_muted']};
-    font-size: {t['fs_h2']}px;
-    font-weight: {t['fw_medium']};
+    font-size: {t['fs_body']}px;
+    font-weight: {t['fw_regular']};
 }}
 
 #welcome_hero_hint {{
@@ -2803,7 +2803,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 
 #preview_title {{
     color: {t['text']};
-    font-size: {t['fs_h2']}px;
+    font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
 
