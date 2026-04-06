@@ -72,6 +72,25 @@ def _find_empty_state(panel):
 
 @_skip_no_qt
 class TestWidgetBrowserPanel:
+    def test_rebuild_cards_does_not_leave_stale_card_widgets_attached(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserCard, WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        initial_count = len(panel.findChildren(WidgetBrowserCard))
+
+        panel._search.setText("slider")
+        panel.refresh()
+        filtered_count = len(panel.findChildren(WidgetBrowserCard))
+
+        panel._search.setText("")
+        panel.refresh()
+        restored_count = len(panel.findChildren(WidgetBrowserCard))
+
+        assert initial_count > 0
+        assert filtered_count > 0
+        assert restored_count == initial_count
+        panel.deleteLater()
+
     def test_browser_uses_compact_header_and_card_layouts(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 
