@@ -1071,7 +1071,7 @@ QTabWidget#workspace_inspector_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 26px;
-    padding: 3px {t['space_sm']}px;
+    padding: 3px 6px;
 }}
 
 QTabWidget#workspace_bottom_tabs::pane {{
@@ -1086,7 +1086,7 @@ QTabWidget#workspace_bottom_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
     min-height: 26px;
-    padding: 3px {t['space_sm']}px;
+    padding: 3px 6px;
 }}
 
 #workspace_status_chip {{
