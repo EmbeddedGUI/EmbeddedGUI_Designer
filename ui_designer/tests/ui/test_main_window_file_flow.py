@@ -6195,11 +6195,11 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.minimumWidth() == 180
         assert window._left_shell.minimumWidth() == 252
         assert window._left_shell.layout().spacing() == 4
-        assert window._center_shell.layout().spacing() == 4
+        assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 4
         assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (4, 4, 4, 4)
         assert bottom_header_layout.spacing() == 4
-        assert window._bottom_shell.layout().spacing() == 4
+        assert window._bottom_shell.layout().spacing() == 2
         assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page."

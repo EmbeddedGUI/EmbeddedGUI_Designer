@@ -508,7 +508,7 @@ class MainWindow(QMainWindow):
         center_shell.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         center_layout = QVBoxLayout(center_shell)
         center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(_SPACE_XS)
+        center_layout.setSpacing(2)
 
         self.page_tab_bar = self._create_page_tab_bar()
         center_layout.addWidget(self.page_tab_bar)
@@ -586,7 +586,7 @@ class MainWindow(QMainWindow):
         bottom_shell.setObjectName("workspace_bottom_shell")
         bottom_layout = QVBoxLayout(bottom_shell)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(_SPACE_XS)
+        bottom_layout.setSpacing(2)
         bottom_layout.addWidget(self._bottom_header)
         bottom_layout.addWidget(self._bottom_tabs, 1)
 
