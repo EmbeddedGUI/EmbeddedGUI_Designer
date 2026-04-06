@@ -44,6 +44,7 @@ from qfluentwidgets import (
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
+from .theme import designer_font_scale, scaled_point_size
 
 
 # -- Constants ----------------------------------------------------------
@@ -395,16 +396,11 @@ class _PreviewWidget(QWidget):
 
     def _ui_font_scale(self):
         app = QApplication.instance()
-        try:
-            value = int(app.property("designer_font_size_pt") if app is not None else 0)
-        except (TypeError, ValueError):
-            value = 0
-        if value <= 0:
-            value = _DEFAULT_RESOURCE_PREVIEW_FONT_PT
-        return float(value) / float(_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
+        return designer_font_scale(app, default_pt=_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
 
     def _scaled_ui_font_point_size(self, base_point_size, minimum=1):
-        return max(int(minimum), int(round(float(base_point_size) * self._ui_font_scale())))
+        app = QApplication.instance()
+        return scaled_point_size(base_point_size, app=app, minimum=minimum, default_pt=_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
 
     def _image_meta_font_point_size(self):
         return self._scaled_ui_font_point_size(9, minimum=8)

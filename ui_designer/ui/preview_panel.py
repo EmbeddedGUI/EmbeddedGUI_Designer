@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage
 
 
-from .theme import theme_tokens
+from .theme import designer_font_scale, scaled_point_size, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -162,16 +162,11 @@ class WidgetOverlay(QWidget):
 
     def _ui_font_scale(self):
         app = QApplication.instance()
-        try:
-            value = int(app.property("designer_font_size_pt") if app is not None else 0)
-        except (TypeError, ValueError):
-            value = 0
-        if value <= 0:
-            value = _DEFAULT_PREVIEW_FONT_PT
-        return float(value) / float(_DEFAULT_PREVIEW_FONT_PT)
+        return designer_font_scale(app, default_pt=_DEFAULT_PREVIEW_FONT_PT)
 
     def _scaled_font_point_size(self, base_point_size, minimum=1):
-        return max(int(minimum), int(round(float(base_point_size) * self._ui_font_scale())))
+        app = QApplication.instance()
+        return scaled_point_size(base_point_size, app=app, minimum=minimum, default_pt=_DEFAULT_PREVIEW_FONT_PT)
 
     def _widget_label_font_point_size(self):
         return self._scaled_font_point_size(7, minimum=6)

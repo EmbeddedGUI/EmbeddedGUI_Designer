@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
-from .theme import theme_tokens
+from .theme import designer_font_size_pt, theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
@@ -26,12 +26,7 @@ _DEFAULT_DEBUG_FONT_PT = 9
 
 
 def _debug_font_size_pt():
-    app = QApplication.instance()
-    try:
-        value = int(app.property("designer_font_size_pt") if app is not None else 0)
-    except (TypeError, ValueError):
-        value = 0
-    return value if value > 0 else _DEFAULT_DEBUG_FONT_PT
+    return designer_font_size_pt(QApplication.instance(), default=_DEFAULT_DEBUG_FONT_PT)
 
 
 

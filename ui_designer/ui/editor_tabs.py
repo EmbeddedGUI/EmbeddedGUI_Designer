@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .preview_panel import PreviewPanel
-from .theme import theme_tokens
+from .theme import designer_font_size_pt, theme_tokens
 from .xml_highlighter import XmlSyntaxHighlighter
 
 
@@ -33,12 +33,7 @@ _DEFAULT_EDITOR_FONT_PT = 9
 
 
 def _editor_font_size_pt():
-    app = QApplication.instance()
-    try:
-        value = int(app.property("designer_font_size_pt") if app is not None else 0)
-    except (TypeError, ValueError):
-        value = 0
-    return value if value > 0 else _DEFAULT_EDITOR_FONT_PT
+    return designer_font_size_pt(QApplication.instance(), default=_DEFAULT_EDITOR_FONT_PT)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):

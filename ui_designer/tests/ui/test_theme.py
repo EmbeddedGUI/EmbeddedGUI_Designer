@@ -6,6 +6,9 @@ from ui_designer.ui.theme import (
     _build_stylesheet,
     _ensure_fluent_engineering_style_manager,
     apply_theme,
+    designer_font_scale,
+    designer_font_size_pt,
+    scaled_point_size,
     theme_tokens,
 )
 
@@ -182,6 +185,17 @@ def test_font_preference_scales_typography_tokens_consistently():
     assert int(scaled["fs_h1"]) > int(base["fs_h1"])
     assert f"font-size: {scaled['fs_h1']}px;" in welcome_title
     assert f"font-size: {scaled['fs_body']}px;" in body
+
+
+def test_font_scale_helpers_follow_app_preference():
+    app = _app()
+    app.setProperty("designer_font_size_pt", 12)
+    try:
+        assert designer_font_size_pt(app, default=9) == 12
+        assert designer_font_scale(app, default_pt=9) == pytest.approx(12 / 9)
+        assert scaled_point_size(7, app=app, default_pt=9, minimum=1) == 9
+    finally:
+        app.setProperty("designer_font_size_pt", 0)
 
 
 def test_engineering_theme_radii_remove_pill_shapes():

@@ -337,6 +337,31 @@ def _normalize_font_size_pt(font_size_pt=0):
     return value if value > 0 else 0
 
 
+def designer_font_size_pt(app: QApplication | None = None, default=0):
+    """Return the persisted Designer font preference in points, or ``default``."""
+    target_app = app if app is not None else QApplication.instance()
+    value = _normalize_font_size_pt(target_app.property("designer_font_size_pt") if target_app is not None else 0)
+    if value > 0:
+        return value
+    try:
+        fallback = int(default or 0)
+    except (TypeError, ValueError):
+        fallback = 0
+    return fallback if fallback > 0 else 0
+
+
+def designer_font_scale(app: QApplication | None = None, default_pt=_FONT_SCALE_DEFAULT_PT):
+    """Return the current Designer font scale relative to the default point size."""
+    active_pt = designer_font_size_pt(app, default=default_pt)
+    baseline = max(int(default_pt or _FONT_SCALE_DEFAULT_PT), 1)
+    return float(active_pt or baseline) / float(baseline)
+
+
+def scaled_point_size(base_point_size, *, app: QApplication | None = None, minimum=1, default_pt=_FONT_SCALE_DEFAULT_PT):
+    """Scale a point size using the Designer font preference."""
+    return max(int(minimum), int(round(float(base_point_size) * designer_font_scale(app, default_pt=default_pt))))
+
+
 def _density_adjusted_tokens(tokens: dict, density="standard"):
     """Return a copy of tokens adjusted for UI density profile."""
     out = dict(tokens or {})
