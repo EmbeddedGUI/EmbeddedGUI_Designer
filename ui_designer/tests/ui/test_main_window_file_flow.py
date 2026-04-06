@@ -8088,7 +8088,7 @@ class TestMainWindowFileFlow:
         assert window.width() <= 1000 - 2 * margin
         assert window.height() <= 700 - 2 * margin
         assert window.minimumWidth() == 960
-        assert window.props_dock.minimumWidth() == 280
+        assert window.props_dock.minimumWidth() == 272
         _close_window(window)
 
     def test_workspace_preferences_restore_focus_canvas_mode(self, qapp, isolated_config):
@@ -9302,6 +9302,7 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.accessibleName() == (
             "Inspector tabs: Properties selected. 3 tabs. Current page: none. Selection: none."
         )
+        assert window._inspector_tabs.minimumWidth() == 272
         assert all(window._inspector_tabs.tabBar().tabIcon(i).isNull() for i in range(window._inspector_tabs.count()))
         assert window._inspector_tabs.toolTip() == (
             "Inspector tabs. Current section: Properties. Current page: none. Selection: none."
