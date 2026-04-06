@@ -97,10 +97,14 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
         empty_layout = panel._no_selection_label.layout()
+        context_layout = panel._context_frame.layout()
 
         assert panel._search_edit.isHidden() is True
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
+        assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
+        assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
+        assert context_layout.spacing() == 2
         assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (10, 12)
         assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (10, 12)
         assert empty_layout.spacing() == 4
@@ -620,8 +624,9 @@ class TestPropertyPanelFileFlow:
         assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (8, 8, 8, 8)
         assert summary_layout.spacing() == 6
         assert chips_row.spacing() == 2
-        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (8, 8)
-        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (8, 8)
+        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (6, 6)
+        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (6, 6)
+        assert hint_layout.spacing() == 2
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
         assert eyebrow.isHidden() is True

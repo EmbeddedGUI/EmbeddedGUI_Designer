@@ -356,7 +356,7 @@ class PropertyPanel(QWidget):
         self._context_frame.setObjectName("property_panel_context")
         context_layout = QVBoxLayout(self._context_frame)
         context_layout.setContentsMargins(0, 0, 0, 0)
-        context_layout.setSpacing(4)
+        context_layout.setSpacing(2)
 
         self._overview_eyebrow = QLabel("Inspector")
         self._overview_eyebrow.setObjectName("property_panel_eyebrow")
@@ -1004,8 +1004,8 @@ class PropertyPanel(QWidget):
         frame.setObjectName("workspace_hint_strip")
         frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(4)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(2)
         frame.setLayout(layout)
 
         eyebrow = QLabel("Interaction Notes")
