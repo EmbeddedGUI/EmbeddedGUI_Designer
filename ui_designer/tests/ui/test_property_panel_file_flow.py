@@ -109,6 +109,7 @@ class TestPropertyPanelFileFlow:
         assert panel._search_edit.isHidden() is True
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
+        assert panel._context_frame.isHidden() is True
         assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (8, 8)
         assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (8, 8)
         assert root_layout.spacing() == 6
@@ -118,8 +119,8 @@ class TestPropertyPanelFileFlow:
         assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (2, 4)
         assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (2, 4)
         assert content_layout.spacing() == 6
-        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (8, 10)
-        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (8, 10)
+        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (6, 8)
+        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (6, 8)
         assert empty_layout.spacing() == 2
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
         assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
@@ -134,7 +135,7 @@ class TestPropertyPanelFileFlow:
             if label.objectName() == "workspace_section_subtitle"
         )
         assert empty_subtitle.accessibleName() == empty_subtitle.text()
-        assert empty_subtitle.isHidden() is True
+        assert empty_subtitle.isHidden() is False
 
         panel._search_edit.setText("font")
 
@@ -246,7 +247,7 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
         assert panel._search_edit.isHidden() is True
-        assert panel._context_frame.isHidden() is False
+        assert panel._context_frame.isHidden() is True
         assert panel._search_edit.placeholderText() == "Select a widget to filter properties"
         assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
 
@@ -280,7 +281,7 @@ class TestPropertyPanelFileFlow:
         panel.set_widget(None)
 
         assert panel._search_edit.isHidden() is True
-        assert panel._context_frame.isHidden() is False
+        assert panel._context_frame.isHidden() is True
         assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
         panel.deleteLater()
 

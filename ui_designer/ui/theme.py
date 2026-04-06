@@ -1377,8 +1377,11 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 #property_panel_empty_state {{
-    background-color: {t['panel_alt']};
-    border: 1px dashed {t['border']};
+    background-color: transparent;
+    border-top: 1px solid {t['border']};
+    border-right: none;
+    border-bottom: none;
+    border-left: none;
     border-radius: 0px;
 }}
 

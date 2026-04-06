@@ -372,6 +372,7 @@ class PropertyPanel(QWidget):
         self._context_meta.setWordWrap(True)
         context_layout.addWidget(self._context_meta)
         outer.addWidget(self._context_frame)
+        self._context_frame.setVisible(False)
 
         self._search_shell = QFrame()
         self._search_shell.setObjectName("property_panel_search_shell")
@@ -589,20 +590,19 @@ class PropertyPanel(QWidget):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(8, 10, 8, 10)
+        layout.setContentsMargins(6, 8, 6, 8)
         layout.setSpacing(2)
         eyebrow = QLabel("Inspector")
         eyebrow.setObjectName("property_panel_eyebrow")
         title = QLabel("No selection")
         title.setObjectName("workspace_section_title")
-        sub = QLabel("Select a widget in the structure tree or on the canvas to edit properties.")
+        sub = QLabel("Select a widget from the tree or canvas to edit its properties.")
         sub.setObjectName("workspace_section_subtitle")
         sub.setWordWrap(True)
         layout.addWidget(eyebrow)
         layout.addWidget(title)
         layout.addWidget(sub)
         eyebrow.hide()
-        sub.hide()
         _set_widget_metadata(
             eyebrow,
             tooltip="Property inspection surface.",
@@ -1043,7 +1043,7 @@ class PropertyPanel(QWidget):
         self._header_size_chip = None
 
         if self._primary_widget is None:
-            self._context_frame.setVisible(True)
+            self._context_frame.setVisible(False)
             self._search_shell.setVisible(False)
             self._search_edit.setVisible(False)
             self._no_selection_label = self._create_no_selection_label()
