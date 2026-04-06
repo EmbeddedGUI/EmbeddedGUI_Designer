@@ -90,6 +90,20 @@ class TestDiagnosticsPanel:
             "Diagnostics hint: Double-click a diagnostic to switch page or focus the widget."
         )
         assert panel._hint_label.isHidden() is True
+        assert [panel._severity_filter_combo.itemText(i) for i in range(panel._severity_filter_combo.count())] == [
+            "Any",
+            "Error",
+            "Warning",
+            "Info",
+        ]
+        assert panel._reset_view_button.text() == "Reset"
+        assert panel._open_selected_button.text() == "Open"
+        assert panel._open_first_error_button.text() == "First Error"
+        assert panel._open_first_warning_button.text() == "First Warn"
+        assert panel._copy_button.text() == "Copy"
+        assert panel._copy_json_button.text() == "Copy JSON"
+        assert panel._export_button.text() == "Export"
+        assert panel._export_json_button.text() == "Export JSON"
         assert panel._severity_filter_combo.accessibleName() == "Diagnostics severity filter: Any"
         assert panel._controls_primary_strip.accessibleName() == "Diagnostics primary actions. Current filter: Any."
         assert panel._controls_secondary_strip.accessibleName() == "Diagnostics export actions. 0 visible items."
