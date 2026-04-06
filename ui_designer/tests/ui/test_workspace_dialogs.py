@@ -90,6 +90,7 @@ class TestAppSelectorDialog:
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
         assert dialog._eyebrow_label.accessibleName() == "SDK example browser workspace."
+        assert dialog._title_label.text() == "Open Example"
         assert dialog._title_label.accessibleName() == "SDK example browser title: Open EmbeddedGUI SDK Example."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
         assert dialog._root_metric_value.accessibleName() == (
@@ -122,6 +123,12 @@ class TestAppSelectorDialog:
             dialog,
             "Review the selected example path and import mode before opening it in the workspace.",
         ).isHidden()
+        assert _find_label_by_text(dialog, "SDK") is not None
+        assert _find_label_by_text(dialog, "Filters") is not None
+        assert _find_label_by_text(dialog, "Examples") is not None
+        assert dialog._show_legacy.text() == "Show legacy"
+        assert dialog._download_btn.text() == "Download..."
+        assert dialog._search_edit.placeholderText() == "Search examples..."
         assert len(dialog.findChildren(QFrame, "app_selector_metric_card")) == 3
         dialog.deleteLater()
 
@@ -478,10 +485,10 @@ class TestAppSelectorDialog:
                 break
 
         assert dialog.selected_entry["app_name"] == "LegacyApp"
-        assert dialog._open_btn.text() == "Import Legacy Example"
+        assert dialog._open_btn.text() == "Import"
         assert dialog._open_btn.toolTip() == "Import the selected legacy example into a Designer project."
         assert dialog._open_btn.accessibleName() == (
-            "Open action: Import Legacy Example. Import the selected legacy example into a Designer project."
+            "Open action: Import. Import the selected legacy example into a Designer project."
         )
         assert "initialize a Designer project" in dialog._selection_hint_label.text()
         assert str(legacy) in dialog._selection_hint_label.text()

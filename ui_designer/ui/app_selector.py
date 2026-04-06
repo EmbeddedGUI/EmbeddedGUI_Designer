@@ -192,7 +192,7 @@ class AppSelectorDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Open EmbeddedGUI SDK Example")
+        self._title_label = QLabel("Open Example")
         self._title_label.setObjectName("app_selector_title")
         _set_widget_metadata(
             self._title_label,
@@ -241,7 +241,7 @@ class AppSelectorDialog(QDialog):
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(10)
 
-        root_title = QLabel("SDK Binding")
+        root_title = QLabel("SDK")
         root_title.setObjectName("workspace_section_title")
         root_layout.addWidget(root_title)
 
@@ -251,7 +251,7 @@ class AppSelectorDialog(QDialog):
         root_layout.addWidget(root_hint)
         root_hint.hide()
 
-        root_label = QLabel("SDK Root")
+        root_label = QLabel("Root")
         root_label.setObjectName("app_selector_field_label")
         root_layout.addWidget(root_label)
 
@@ -272,7 +272,7 @@ class AppSelectorDialog(QDialog):
         )
         actions_row.addWidget(self._browse_btn)
 
-        self._download_btn = PushButton("Download SDK...")
+        self._download_btn = PushButton("Download...")
         self._download_btn.clicked.connect(self._download_sdk)
         _set_widget_metadata(
             self._download_btn,
@@ -294,7 +294,7 @@ class AppSelectorDialog(QDialog):
         options_layout.setContentsMargins(0, 0, 0, 0)
         options_layout.setSpacing(10)
 
-        options_title = QLabel("Catalog Filters")
+        options_title = QLabel("Filters")
         options_title.setObjectName("workspace_section_title")
         options_layout.addWidget(options_title)
 
@@ -304,7 +304,7 @@ class AppSelectorDialog(QDialog):
         options_layout.addWidget(options_hint)
         options_hint.hide()
 
-        self._show_legacy = QCheckBox("Show legacy examples without .egui")
+        self._show_legacy = QCheckBox("Show legacy")
         self._show_legacy.setChecked(self._config.show_all_examples)
         self._show_legacy.toggled.connect(self._on_toggle_legacy)
         _set_widget_metadata(
@@ -328,7 +328,7 @@ class AppSelectorDialog(QDialog):
         browser_layout.setContentsMargins(0, 0, 0, 0)
         browser_layout.setSpacing(10)
 
-        browser_title = QLabel("SDK Examples")
+        browser_title = QLabel("Examples")
         browser_title.setObjectName("workspace_section_title")
         browser_layout.addWidget(browser_title)
 
@@ -339,7 +339,7 @@ class AppSelectorDialog(QDialog):
         browser_hint.hide()
 
         self._search_edit = LineEdit()
-        self._search_edit.setPlaceholderText("Filter examples by name...")
+        self._search_edit.setPlaceholderText("Search examples...")
         self._search_edit.textChanged.connect(self._refresh_app_list)
         self._search_edit.setAccessibleName("SDK example search")
         browser_layout.addWidget(self._search_edit)
@@ -668,9 +668,9 @@ class AppSelectorDialog(QDialog):
             return
 
         if entry.get("is_legacy"):
-            self._open_btn.setText("Import Legacy Example")
+            self._open_btn.setText("Import")
             self._selection_hint_label.setText(
-                f"Legacy example path:\n{entry.get('app_dir', '')}\n\n"
+                f"Legacy path:\n{entry.get('app_dir', '')}\n\n"
                 "Opening it will initialize a Designer project in this app directory."
             )
             _set_label_hint_tone(self._selection_hint_label, "warning")
@@ -679,7 +679,7 @@ class AppSelectorDialog(QDialog):
 
         self._open_btn.setText("Open")
         self._selection_hint_label.setText(
-            f"Designer project path:\n{entry.get('project_path', '')}"
+            f"Project path:\n{entry.get('project_path', '')}"
         )
         _set_label_hint_tone(self._selection_hint_label, "success")
         self._update_accessibility_summary()

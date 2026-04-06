@@ -86,7 +86,7 @@ class RepositoryHealthDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Repository Health")
+        self._title_label = QLabel("Health")
         self._title_label.setObjectName("repo_health_title")
         _set_widget_metadata(
             self._title_label,
@@ -145,7 +145,7 @@ class RepositoryHealthDialog(QDialog):
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.setSpacing(10)
 
-        details_title = QLabel("Repository Report")
+        details_title = QLabel("Report")
         details_title.setObjectName("workspace_section_title")
         details_layout.addWidget(details_title)
 
@@ -171,7 +171,7 @@ class RepositoryHealthDialog(QDialog):
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(10)
 
-        controls_title = QLabel("View Controls")
+        controls_title = QLabel("Controls")
         controls_title.setObjectName("workspace_section_title")
         controls_layout.addWidget(controls_title)
 
@@ -182,24 +182,24 @@ class RepositoryHealthDialog(QDialog):
         controls_hint.hide()
 
         self._refresh_button = QPushButton("Refresh")
-        self._reset_view_button = QPushButton("Reset View")
+        self._reset_view_button = QPushButton("Reset")
         self._critical_only_check = QCheckBox("Critical Only")
         self._blocked_only_check = QCheckBox("Blocked Only")
         self._show_json_check = QCheckBox("Show JSON")
-        self._copy_summary_button = QPushButton("Copy Summary")
-        self._export_summary_button = QPushButton("Export Summary...")
-        self._copy_report_button = QPushButton("Copy Report")
+        self._copy_summary_button = QPushButton("Summary")
+        self._export_summary_button = QPushButton("Summary...")
+        self._copy_report_button = QPushButton("Report")
         self._copy_json_button = QPushButton("Copy JSON")
-        self._export_report_button = QPushButton("Export Report...")
+        self._export_report_button = QPushButton("Report...")
         self._copy_repo_button = QPushButton("Copy Repo")
         self._open_repo_button = QPushButton("Open Repo")
         self._copy_sdk_button = QPushButton("Copy SDK")
         self._open_sdk_button = QPushButton("Open SDK")
         self._copy_smoke_button = QPushButton("Copy Smoke")
-        self._open_smoke_button = QPushButton("Open Smoke Sample")
+        self._open_smoke_button = QPushButton("Open Smoke")
         self._stale_dir_combo = QComboBox()
-        self._copy_stale_path_button = QPushButton("Copy Stale Path")
-        self._open_stale_button = QPushButton("Open Stale Dir")
+        self._copy_stale_path_button = QPushButton("Stale Path")
+        self._open_stale_button = QPushButton("Open Stale")
         self._stale_dir_combo.setMinimumContentsLength(28)
 
         self._refresh_button.clicked.connect(self.refresh)
@@ -270,7 +270,7 @@ class RepositoryHealthDialog(QDialog):
         paths_layout.setContentsMargins(0, 0, 0, 0)
         paths_layout.setSpacing(10)
 
-        paths_title = QLabel("Workspace Paths")
+        paths_title = QLabel("Paths")
         paths_title.setObjectName("workspace_section_title")
         paths_layout.addWidget(paths_title)
 
@@ -298,7 +298,7 @@ class RepositoryHealthDialog(QDialog):
         stale_layout.setContentsMargins(0, 0, 0, 0)
         stale_layout.setSpacing(10)
 
-        stale_title = QLabel("Stale Temp Directories")
+        stale_title = QLabel("Stale Dirs")
         stale_title.setObjectName("workspace_section_title")
         stale_layout.addWidget(stale_title)
 

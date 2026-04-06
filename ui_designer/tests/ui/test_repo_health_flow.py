@@ -229,8 +229,13 @@ def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, 
     assert dialog._summary_label.isHidden()
     assert dialog._overview_label.isHidden()
     assert dialog._eyebrow_label.accessibleName() == "Repository diagnostics workspace."
+    assert dialog._title_label.text() == "Health"
     assert dialog._title_label.accessibleName() == "Repository health title: Repository Health."
     assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+    assert _find_label_by_text(dialog, "Report") is not None
+    assert _find_label_by_text(dialog, "Controls") is not None
+    assert _find_label_by_text(dialog, "Paths") is not None
+    assert _find_label_by_text(dialog, "Stale Dirs") is not None
     assert _find_label_by_text(
         dialog,
         "Use text view for a compact operator report, or switch to JSON when you need the raw diagnostic payload.",
@@ -257,6 +262,14 @@ def test_repository_health_header_exposes_workspace_metadata(qapp, monkeypatch, 
     assert dialog._suggestions_metric_value.accessibleName() == "Repository health metric: Suggestions. 1."
     assert dialog._stale_metric_value.accessibleName() == "Repository health metric: Stale Dirs. 1."
     assert dialog._blocked_metric_value.accessibleName() == "Repository health metric: Blocked. 1."
+    assert dialog._reset_view_button.text() == "Reset"
+    assert dialog._copy_summary_button.text() == "Summary"
+    assert dialog._export_summary_button.text() == "Summary..."
+    assert dialog._copy_report_button.text() == "Report"
+    assert dialog._export_report_button.text() == "Report..."
+    assert dialog._open_smoke_button.text() == "Open Smoke"
+    assert dialog._copy_stale_path_button.text() == "Stale Path"
+    assert dialog._open_stale_button.text() == "Open Stale"
     assert len(dialog.findChildren(QFrame, "repo_health_metric_card")) == 4
 
 
