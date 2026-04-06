@@ -553,6 +553,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         metric_value = css.split("#property_panel_metric_value {", 1)[1].split("}", 1)[0]
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
         inspector_group_title = css.split("QGroupBox#inspector_collapsible_group::title {", 1)[1].split("}", 1)[0]
+        inspector_group_indicator = css.split("QGroupBox#inspector_collapsible_group::indicator {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -598,10 +599,12 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
-        assert "margin-top: 1px;" in inspector_group
-        assert "padding-top: 2px;" in inspector_group
+        assert "margin-top: 14px;" in inspector_group
+        assert "padding-top: 4px;" in inspector_group
         assert "left: 0px;" in inspector_group_title
-        assert "padding: 0px;" in inspector_group_title
+        assert "padding: 0px 0px 2px 0px;" in inspector_group_title
+        assert "width: 0px;" in inspector_group_indicator
+        assert "height: 0px;" in inspector_group_indicator
 
 
 def test_resource_panel_styles_use_engineering_surface_tokens():

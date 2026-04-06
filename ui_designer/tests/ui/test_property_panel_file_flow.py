@@ -309,6 +309,7 @@ class TestPropertyPanelFileFlow:
 
         text_group = _find_group(panel, "Text")
         assert text_group.isChecked() is False
+        assert text_group.title() == "Text"
         assert text_group.maximumHeight() >= 32
         assert all(not child.isVisible() for child in text_group.findChildren(QWidget))
         panel.deleteLater()

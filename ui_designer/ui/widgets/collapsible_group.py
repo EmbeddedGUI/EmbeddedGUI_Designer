@@ -10,11 +10,25 @@ class CollapsibleGroupBox(QGroupBox):
     """A QGroupBox that can be collapsed/expanded by clicking its title."""
 
     def __init__(self, title: str, parent=None):
-        super().__init__(title, parent)
+        super().__init__("", parent)
+        self._base_title = str(title or "").strip()
         self.setObjectName("inspector_collapsible_group")
         self.setCheckable(True)
         self.setChecked(True)
         self.toggled.connect(self._on_toggled)
+        self._sync_title()
+
+    def title(self):
+        return self._base_title
+
+    def setTitle(self, title):
+        self._base_title = str(title or "").strip()
+        self._sync_title()
+
+    def _sync_title(self):
+        arrow = "▾" if self.isChecked() else "▸"
+        label = self._base_title or ""
+        super().setTitle(f"{arrow} {label}".strip())
 
     def apply_expanded_state(self, expanded: bool):
         """Set expanded/collapsed without emitting ``toggled``; updates child visibility."""
@@ -48,6 +62,7 @@ class CollapsibleGroupBox(QGroupBox):
         layout = self.layout()
         if layout is None:
             return
+        self._sync_title()
         self._set_layout_visibility(layout, checked)
         if checked:
             self.setMaximumHeight(16777215)

@@ -878,8 +878,8 @@ QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
-    margin-top: 1px;
-    padding-top: 2px;
+    margin-top: 14px;
+    padding-top: 4px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
@@ -888,8 +888,13 @@ QGroupBox#inspector_collapsible_group::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
     left: 0px;
-    color: {t['text_muted']};
-    padding: 0px;
+    color: {t['text']};
+    padding: 0px 0px 2px 0px;
+}}
+
+QGroupBox#inspector_collapsible_group::indicator {{
+    width: 0px;
+    height: 0px;
 }}
 
 #workspace_panel_header,
