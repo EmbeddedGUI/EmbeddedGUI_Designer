@@ -985,6 +985,7 @@ class TestPropertyPanelFileFlow:
         button = panel._callback_open_buttons["callback_onValueChanged"]
 
         assert editor.accessibleName() == "Value Changed callback: on_slider_changed"
+        assert button.text() == "Open"
         assert button.accessibleName() == "Open Value Changed callback code"
         assert button.statusTip() == button.toolTip()
         panel.deleteLater()
@@ -1105,6 +1106,7 @@ class TestPropertyPanelFileFlow:
         button = panel._callback_open_buttons["callback_onClick"]
 
         assert editor.accessibleName() == "Click callback: mixed values"
+        assert button.text() == "Open"
         assert button.isHidden() is True
         assert button.isEnabled() is False
         assert button.accessibleName() == "Open Click callback code unavailable"
@@ -1132,6 +1134,7 @@ class TestPropertyPanelFileFlow:
         assert first.events["onValueChanged"] == "handle_volume_changed"
         assert second.events["onValueChanged"] == "handle_volume_changed"
         assert editor.text() == "handle_volume_changed"
+        assert button.text() == "Open"
         assert button.isHidden() is False
         assert button.isEnabled() is True
         assert property_events == ["changed"]

@@ -1906,7 +1906,7 @@ class PropertyPanel(QWidget):
         layout.addWidget(editor, 1)
 
         button = ToolButton()
-        button.setText("Code")
+        button.setText("Open")
         button.setVisible(enabled)
         button.setEnabled(enabled)
         self._update_callback_button_metadata(button, event_name, enabled, tooltip)
