@@ -203,6 +203,7 @@ class TestEguiFontSelector:
             qapp.setProperty("designer_font_size_pt", 0)
 
     def test_selector_can_refresh_preview_after_ui_scale_changes(self, qapp):
+        from PyQt5.QtCore import QEvent
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 
         selector = EguiFontSelector(fonts=["&egui_res_font_montserrat_8_4"])
@@ -211,7 +212,7 @@ class TestEguiFontSelector:
             initial_style = selector._preview.styleSheet()
 
             qapp.setProperty("designer_font_size_pt", 12)
-            selector.refresh_theme_metrics()
+            selector.changeEvent(QEvent(QEvent.StyleChange))
 
             assert selector._preview.styleSheet() != initial_style
             assert f"font-size: {selector._preview_font_floor_px()}px;" in selector._preview.styleSheet()

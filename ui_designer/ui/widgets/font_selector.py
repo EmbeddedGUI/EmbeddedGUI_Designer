@@ -3,7 +3,7 @@
 import re
 
 from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QLabel
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import QEvent, pyqtSignal, Qt
 
 from qfluentwidgets import EditableComboBox, BodyLabel
 
@@ -99,6 +99,11 @@ class EguiFontSelector(QWidget):
             return max(8, int(tokens.get("fs_body_sm", tokens.get("fs_body", 12))))
         except (TypeError, ValueError):
             return 12
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self.refresh_theme_metrics()
 
     def refresh_theme_metrics(self):
         """Re-apply preview sizing after theme, density, or UI font changes."""
