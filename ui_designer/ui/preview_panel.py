@@ -3,7 +3,7 @@
 import sys
 import json
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QSizePolicy, QPushButton, QSplitter,
 )
 from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF, QEvent
@@ -76,6 +76,7 @@ _DEFAULT_UI_TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
+_DEFAULT_PREVIEW_FONT_PT = 9
 
 
 class WidgetOverlay(QWidget):
@@ -157,8 +158,26 @@ class WidgetOverlay(QWidget):
         self._rubber_mode = "replace"
         self._rubber_base_selection = []
         self._rubber_base_primary = None
-
         self.setFocusPolicy(Qt.StrongFocus)  # Enable keyboard events
+
+    def _ui_font_scale(self):
+        app = QApplication.instance()
+        try:
+            value = int(app.property("designer_font_size_pt") if app is not None else 0)
+        except (TypeError, ValueError):
+            value = 0
+        if value <= 0:
+            value = _DEFAULT_PREVIEW_FONT_PT
+        return float(value) / float(_DEFAULT_PREVIEW_FONT_PT)
+
+    def _scaled_font_point_size(self, base_point_size, minimum=1):
+        return max(int(minimum), int(round(float(base_point_size) * self._ui_font_scale())))
+
+    def _widget_label_font_point_size(self):
+        return self._scaled_font_point_size(7, minimum=6)
+
+    def _coord_tooltip_font_point_size(self):
+        return self._scaled_font_point_size(7, minimum=6)
 
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
@@ -567,7 +586,7 @@ class WidgetOverlay(QWidget):
             return int(v * z)
 
         # Draw widget labels in screen space (constant font size)
-        label_font = QFont("Segoe UI", 7)
+        label_font = QFont("Segoe UI", self._widget_label_font_point_size())
         painter.setFont(label_font)
         fm = painter.fontMetrics()
         lh = fm.height() + 2
@@ -624,7 +643,7 @@ class WidgetOverlay(QWidget):
         if self._show_coords and self._selected:
             w = self._selected
             coord_text = f"({w.x}, {w.y})  {w.width}\u00d7{w.height}"
-            painter.setFont(QFont("Consolas", 7))
+            painter.setFont(QFont("Consolas", self._coord_tooltip_font_point_size()))
             fm2 = painter.fontMetrics()
             tw = fm2.horizontalAdvance(coord_text) + 8
             th = fm2.height() + 4

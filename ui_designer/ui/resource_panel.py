@@ -56,6 +56,7 @@ EGUI_RESOURCE_MIME = "application/x-egui-resource"
 
 # Regex for validating English-only filenames
 _VALID_FILENAME_RE = re.compile(r'^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$')
+_DEFAULT_RESOURCE_PREVIEW_FONT_PT = 9
 
 
 # -- Helpers ------------------------------------------------------------
@@ -392,6 +393,28 @@ class _PreviewWidget(QWidget):
         self._font_file = None
         self._text_lines = []
 
+    def _ui_font_scale(self):
+        app = QApplication.instance()
+        try:
+            value = int(app.property("designer_font_size_pt") if app is not None else 0)
+        except (TypeError, ValueError):
+            value = 0
+        if value <= 0:
+            value = _DEFAULT_RESOURCE_PREVIEW_FONT_PT
+        return float(value) / float(_DEFAULT_RESOURCE_PREVIEW_FONT_PT)
+
+    def _scaled_ui_font_point_size(self, base_point_size, minimum=1):
+        return max(int(minimum), int(round(float(base_point_size) * self._ui_font_scale())))
+
+    def _image_meta_font_point_size(self):
+        return self._scaled_ui_font_point_size(9, minimum=8)
+
+    def _meta_font_point_size(self):
+        return self._scaled_ui_font_point_size(8, minimum=7)
+
+    def _text_preview_font_point_size(self):
+        return self._scaled_ui_font_point_size(9, minimum=8)
+
     def show_image(self, path):
         self._mode = "image"
         self._font_family = None
@@ -485,7 +508,7 @@ class _PreviewWidget(QWidget):
         painter.drawPixmap(x, y, scaled)
         text_x = x + scaled.width() + 8
         painter.setPen(QColor(200, 200, 200))
-        painter.setFont(QFont("Segoe UI", 9))
+        painter.setFont(QFont("Segoe UI", self._image_meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 8
         for line in self._meta_lines:
@@ -494,7 +517,7 @@ class _PreviewWidget(QWidget):
 
     def _paint_font(self, painter, w, h):
         painter.setPen(QColor(180, 180, 180))
-        painter.setFont(QFont("Segoe UI", 8))
+        painter.setFont(QFont("Segoe UI", self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -513,7 +536,7 @@ class _PreviewWidget(QWidget):
 
     def _paint_text(self, painter, w, h):
         painter.setPen(QColor(180, 180, 180))
-        painter.setFont(QFont("Segoe UI", 8))
+        painter.setFont(QFont("Segoe UI", self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -522,7 +545,7 @@ class _PreviewWidget(QWidget):
 
         preview_rect = QRect(8, ty + 6, max(w - 16, 0), max(h - ty - 12, 0))
         painter.setPen(QColor(220, 220, 220))
-        painter.setFont(QFont("Consolas", 9))
+        painter.setFont(QFont("Consolas", self._text_preview_font_point_size()))
         painter.drawText(preview_rect, Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, "\n".join(self._text_lines))
 
 

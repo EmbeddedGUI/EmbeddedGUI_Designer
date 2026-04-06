@@ -28,6 +28,20 @@ def qapp():
 
 @_skip_no_qt
 class TestResourcePanelFileFlow:
+    def test_preview_widget_font_sizes_follow_designer_font_preference(self, qapp):
+        from ui_designer.ui.resource_panel import _PreviewWidget
+
+        qapp.setProperty("designer_font_size_pt", 12)
+        preview = _PreviewWidget()
+
+        try:
+            assert preview._image_meta_font_point_size() == 12
+            assert preview._meta_font_point_size() == 11
+            assert preview._text_preview_font_point_size() == 12
+        finally:
+            preview.deleteLater()
+            qapp.setProperty("designer_font_size_pt", 0)
+
     def test_header_exposes_workspace_and_metric_metadata(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
