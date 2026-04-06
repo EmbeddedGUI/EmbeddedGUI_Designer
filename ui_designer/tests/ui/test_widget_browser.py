@@ -92,7 +92,8 @@ class TestWidgetBrowserPanel:
         assert metrics_layout.spacing() == 2
         assert filter_layout.spacing() == 2
         assert panel._cards_layout.spacing() == 2
-        assert panel._category_combo.minimumWidth() == 160
+        assert panel._category_combo.minimumWidth() == 144
+        assert panel._insert_target.wordWrap() is False
         assert (card_margins.left(), card_margins.top(), card_margins.right(), card_margins.bottom()) == (2, 2, 2, 2)
         assert card_layout.spacing() == 2
         panel.deleteLater()
@@ -168,7 +169,7 @@ class TestWidgetBrowserPanel:
         panel.refresh()
 
         assert panel._insert_target.isHidden() is False
-        assert panel._insert_target.text() == "Target: root_group / content"
+        assert panel._insert_target.text() == "Into root_group / content"
         assert "slider" in [card.type_name for card in panel._cards.values()]
 
         inserted = []

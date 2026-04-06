@@ -279,9 +279,10 @@ class WidgetBrowserPanel(QWidget):
         title_row.addWidget(self._title_label)
 
         self._insert_target = QLabel("")
-        self._insert_target.setObjectName("workspace_status_chip")
-        self._insert_target.setProperty("chipTone", "accent")
-        self._insert_target.setWordWrap(True)
+        self._insert_target.setObjectName("widget_browser_header_target")
+        self._insert_target.setWordWrap(False)
+        self._insert_target.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self._insert_target.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         title_row.addStretch()
         title_row.addWidget(self._insert_target, 0, Qt.AlignVCenter)
         header_layout.addLayout(title_row)
@@ -322,7 +323,7 @@ class WidgetBrowserPanel(QWidget):
 
         self._category_combo = ComboBox()
         self._category_combo.setObjectName("widget_browser_category_combo")
-        self._category_combo.setMinimumWidth(160)
+        self._category_combo.setMinimumWidth(144)
         self._category_combo.currentIndexChanged.connect(self._on_category_changed)
         filter_layout.addWidget(self._category_combo, 0)
         header_layout.addWidget(self._filter_bar)
@@ -428,7 +429,7 @@ class WidgetBrowserPanel(QWidget):
 
     def _update_insert_target(self):
         _set_widget_visible(self._insert_target, self._insert_target_label != "Current page root")
-        self._insert_target.setText(f"Target: {self._insert_target_label}")
+        self._insert_target.setText(f"Into {self._insert_target_label}")
 
     def _selected_display_name(self):
         return next(

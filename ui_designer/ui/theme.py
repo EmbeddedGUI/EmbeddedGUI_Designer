@@ -871,6 +871,15 @@ QGroupBox#inspector_collapsible_group::title {{
     font-size: {t['fs_body_sm']}px;
 }}
 
+#widget_browser_header_target {{
+    background-color: transparent;
+    border: none;
+    color: {t['text_soft']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+    padding: 0px;
+}}
+
 #widget_browser_metrics_strip {{
     background-color: transparent;
     border: none;

@@ -727,6 +727,7 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         header = css.split("#workspace_panel_header,", 1)[1].split("}", 1)[0]
         tone_header = css.split('#widget_browser_header[panelTone="components"] {', 1)[1].split("}", 1)[0]
         meta = css.split("#widget_browser_header_meta {", 1)[1].split("}", 1)[0]
+        target = css.split("#widget_browser_header_target {", 1)[1].split("}", 1)[0]
         metrics = css.split("#widget_browser_metrics_strip {", 1)[1].split("}", 1)[0]
         filter_bar = css.split("#widget_browser_filter_bar {", 1)[1].split("}", 1)[0]
         card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
@@ -738,6 +739,10 @@ def test_widget_browser_styles_use_engineering_panel_tokens():
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
         assert f"color: {t['text_muted']};" in meta
+        assert "background-color: transparent;" in target
+        assert "border: none;" in target
+        assert f"color: {t['text_soft']};" in target
+        assert f"font-size: {t['fs_body_sm']}px;" in target
         assert "background-color: transparent;" in metrics
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
