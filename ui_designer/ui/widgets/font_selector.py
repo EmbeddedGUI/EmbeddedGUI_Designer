@@ -52,7 +52,7 @@ class EguiFontSelector(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._combo = EditableComboBox()
         items = list(fonts) if fonts else list(FONTS)
@@ -61,7 +61,7 @@ class EguiFontSelector(QWidget):
         layout.addWidget(self._combo, 1)
 
         self._preview = self._create_preview_label()
-        self._preview.setFixedWidth(80)
+        self._preview.setFixedWidth(72)
         layout.addWidget(self._preview)
         self._update_preview(self.value())
         self._update_accessibility_metadata(self.value())

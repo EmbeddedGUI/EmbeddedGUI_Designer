@@ -170,6 +170,18 @@ class TestEguiFontSelector:
         )
         selector.deleteLater()
 
+    def test_selector_uses_compact_preview_layout(self, qapp):
+        from ui_designer.ui.widgets.font_selector import EguiFontSelector
+
+        selector = EguiFontSelector(fonts=["EGUI_CONFIG_FONT_DEFAULT", "&egui_res_font_montserrat_14_4"])
+        layout = selector.layout()
+
+        assert layout.spacing() == 2
+        assert selector._preview.width() == 72
+        assert selector._preview.minimumWidth() == 72
+        assert selector._preview.maximumWidth() == 72
+        selector.deleteLater()
+
     def test_selector_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.widgets.font_selector import EguiFontSelector
 
@@ -245,6 +257,18 @@ class TestEguiColorPicker:
 
         assert picker.accessibleName() == "Color picker: NOT_A_COLOR. Preview unavailable."
         assert picker._swatch.accessibleName() == "Color swatch: NOT_A_COLOR. Preview unavailable."
+        picker.deleteLater()
+
+    def test_picker_uses_compact_square_swatch_and_text_button(self, qapp):
+        from ui_designer.ui.widgets.color_picker import EguiColorPicker
+
+        picker = EguiColorPicker()
+        layout = picker.layout()
+
+        assert layout.spacing() == 2
+        assert picker._swatch.width() == 20
+        assert picker._swatch.height() == 20
+        assert picker._btn.text() == "Pick"
         picker.deleteLater()
 
     def test_picker_hint_skips_no_op_rewrites(self, qapp, monkeypatch):

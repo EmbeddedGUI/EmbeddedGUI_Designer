@@ -58,7 +58,7 @@ class ColorSwatch(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._color = QColor(Qt.white)
-        self.setFixedSize(QSize(22, 22))
+        self.setFixedSize(QSize(20, 20))
         _set_widget_metadata(
             self,
             tooltip="Color swatch preview.",
@@ -74,10 +74,9 @@ class ColorSwatch(QWidget):
 
     def paintEvent(self, event):
         p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(self._color))
         p.setPen(Qt.gray)
-        p.drawRoundedRect(1, 1, 20, 20, 3, 3)
+        p.drawRect(1, 1, 18, 18)
         p.end()
 
 
