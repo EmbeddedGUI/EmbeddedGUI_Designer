@@ -349,8 +349,8 @@ class PropertyPanel(QWidget):
     def _init_ui(self):
         self.setObjectName("property_panel_root")
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(10, 10, 10, 10)
-        outer.setSpacing(8)
+        outer.setContentsMargins(8, 8, 8, 8)
+        outer.setSpacing(6)
 
         self._context_frame = QWidget()
         self._context_frame.setObjectName("property_panel_context")
@@ -402,8 +402,8 @@ class PropertyPanel(QWidget):
 
         self._container = QWidget()
         self._layout = QVBoxLayout(self._container)
-        self._layout.setContentsMargins(2, 6, 2, 6)
-        self._layout.setSpacing(8)
+        self._layout.setContentsMargins(2, 4, 2, 4)
+        self._layout.setSpacing(6)
         scroll.setWidget(self._container)
 
         self._no_selection_label = self._create_no_selection_label()
@@ -587,8 +587,8 @@ class PropertyPanel(QWidget):
         frame = QWidget()
         frame.setObjectName("property_panel_empty_state")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(10, 12, 10, 12)
-        layout.setSpacing(4)
+        layout.setContentsMargins(8, 10, 8, 10)
+        layout.setSpacing(2)
         eyebrow = QLabel("Inspector")
         eyebrow.setObjectName("property_panel_eyebrow")
         title = QLabel("No selection")

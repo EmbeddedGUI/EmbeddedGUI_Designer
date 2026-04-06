@@ -96,18 +96,26 @@ class TestPropertyPanelFileFlow:
         from ui_designer.ui.property_panel import PropertyPanel
 
         panel = PropertyPanel()
+        root_layout = panel.layout()
         empty_layout = panel._no_selection_label.layout()
         context_layout = panel._context_frame.layout()
+        content_layout = panel._layout
 
         assert panel._search_edit.isHidden() is True
         assert panel.accessibleName() == "Property panel: no widget selected. Search: none."
         assert panel.toolTip() == panel.accessibleName()
+        assert (root_layout.contentsMargins().left(), root_layout.contentsMargins().top()) == (8, 8)
+        assert (root_layout.contentsMargins().right(), root_layout.contentsMargins().bottom()) == (8, 8)
+        assert root_layout.spacing() == 6
         assert (context_layout.contentsMargins().left(), context_layout.contentsMargins().top()) == (0, 0)
         assert (context_layout.contentsMargins().right(), context_layout.contentsMargins().bottom()) == (0, 0)
         assert context_layout.spacing() == 2
-        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (10, 12)
-        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (10, 12)
-        assert empty_layout.spacing() == 4
+        assert (content_layout.contentsMargins().left(), content_layout.contentsMargins().top()) == (2, 4)
+        assert (content_layout.contentsMargins().right(), content_layout.contentsMargins().bottom()) == (2, 4)
+        assert content_layout.spacing() == 6
+        assert (empty_layout.contentsMargins().left(), empty_layout.contentsMargins().top()) == (8, 10)
+        assert (empty_layout.contentsMargins().right(), empty_layout.contentsMargins().bottom()) == (8, 10)
+        assert empty_layout.spacing() == 2
         assert panel._search_edit.toolTip() == "Filter visible property rows by label. Current filter: none."
         assert panel._search_edit.statusTip() == panel._search_edit.toolTip()
         assert panel._search_edit.accessibleName() == "Property search: none"
