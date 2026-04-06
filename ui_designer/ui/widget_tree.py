@@ -192,6 +192,11 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_expand_timer.timeout.connect(self._expand_drag_hover_item)
         self._init_ui()
 
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self.refresh_tree_typography()
+
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

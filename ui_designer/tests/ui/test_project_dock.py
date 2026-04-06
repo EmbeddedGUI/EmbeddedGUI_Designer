@@ -8,7 +8,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtCore import Qt
+    from PyQt5.QtCore import QEvent, Qt
     from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import QApplication
 
@@ -47,6 +47,26 @@ def _build_project():
 
 @_skip_no_qt
 class TestProjectExplorerDock:
+    def test_change_event_refreshes_tree_typography(self, qapp):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+
+        dock = ProjectExplorerDock()
+        dock.set_project(_build_project())
+        dock.set_current_page("main_page")
+
+        font = QFont(dock._page_tree.font())
+        font.setPointSize(15)
+        dock._page_tree.setFont(font)
+        dock.changeEvent(QEvent(QEvent.FontChange))
+
+        first = dock._page_tree.topLevelItem(0)
+        second = dock._page_tree.topLevelItem(1)
+        assert first.font(0).pointSize() == 15
+        assert second.font(0).pointSize() == 15
+        assert first.font(0).bold() is True
+        assert second.font(0).bold() is False
+        dock.deleteLater()
+
     def test_refresh_tree_typography_reuses_current_tree_font(self, qapp):
         from ui_designer.ui.project_dock import ProjectExplorerDock
 

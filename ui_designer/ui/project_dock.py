@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
     QMenu, QAction, QInputDialog, QMessageBox, QLabel, QHBoxLayout,
     QPushButton, QComboBox, QFrame,
 )
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import QEvent, pyqtSignal, Qt
 
 # Page names that collide with egui internal module names.
 # A page named "test" generates egui_test_init() which conflicts with
@@ -90,6 +90,11 @@ class ProjectExplorerDock(QDockWidget):
             self._header_frame.setVisible(not compact)
         if hasattr(self, "_settings_group"):
             self._settings_group.setVisible(not compact)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+            self.refresh_tree_typography()
 
     def _init_ui(self):
         container = QWidget()

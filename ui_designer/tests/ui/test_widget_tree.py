@@ -118,6 +118,33 @@ class TestWidgetTreePanel:
         assert button_item.font(0).bold() is True
         panel.deleteLater()
 
+    def test_change_event_refreshes_tree_typography(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        label = WidgetModel("label", name="field_label")
+        button = WidgetModel("button", name="field_button")
+        root.add_child(label)
+        root.add_child(button)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+        panel.filter_edit.setText("field_button")
+
+        font = QFont(panel.tree.font())
+        font.setPointSize(15)
+        panel.tree.setFont(font)
+        panel.changeEvent(QEvent(QEvent.FontChange))
+
+        label_item = panel._item_map[id(label)]
+        button_item = panel._item_map[id(button)]
+        assert label_item.font(0).pointSize() == 15
+        assert button_item.font(0).pointSize() == 15
+        assert label_item.font(0).bold() is False
+        assert button_item.font(0).bold() is True
+        panel.deleteLater()
+
     def test_header_metadata_tracks_selection_and_filter_context(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
