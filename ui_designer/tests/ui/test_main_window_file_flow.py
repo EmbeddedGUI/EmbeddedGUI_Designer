@@ -6194,7 +6194,7 @@ class TestMainWindowFileFlow:
         assert window._left_shell.minimumWidth() == 264
         assert window._left_shell.layout().spacing() == 4
         assert window._center_shell.layout().spacing() == 4
-        assert window._page_inspector_body.layout().spacing() == 8
+        assert window._page_inspector_body.layout().spacing() == 4
         assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (4, 4, 4, 4)
         assert bottom_header_layout.spacing() == 4
         assert window._bottom_shell.layout().spacing() == 4

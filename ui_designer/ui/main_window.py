@@ -524,7 +524,7 @@ class MainWindow(QMainWindow):
         self._page_inspector_body.setObjectName("page_inspector_body")
         page_body_layout = QVBoxLayout(self._page_inspector_body)
         page_body_layout.setContentsMargins(0, 0, 0, 0)
-        page_body_layout.setSpacing(_SPACE_SM)
+        page_body_layout.setSpacing(_SPACE_XS)
         page_body_layout.addWidget(self.page_fields_panel)
         page_body_layout.addWidget(self.page_timers_panel)
 
