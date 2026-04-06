@@ -1215,6 +1215,40 @@ QToolButton#workspace_status_chip:focus {{
     border-color: {t['danger']};
 }}
 
+#workspace_status_chip[chipVariant="property"] {{
+    background-color: transparent;
+    border-top: 1px solid {t['border']};
+    border-right: none;
+    border-bottom: none;
+    border-left: none;
+    color: {t['text_muted']};
+    padding: 1px {t['space_xs']}px;
+}}
+
+#workspace_status_chip[chipVariant="property"][chipTone="accent"] {{
+    background-color: transparent;
+    color: {t['accent']};
+    border-top-color: {t['accent']};
+}}
+
+#workspace_status_chip[chipVariant="property"][chipTone="success"] {{
+    background-color: transparent;
+    color: {t['success']};
+    border-top-color: {t['success']};
+}}
+
+#workspace_status_chip[chipVariant="property"][chipTone="warning"] {{
+    background-color: transparent;
+    color: {t['warning']};
+    border-top-color: {t['warning']};
+}}
+
+#workspace_status_chip[chipVariant="property"][chipTone="danger"] {{
+    background-color: transparent;
+    color: {t['danger']};
+    border-top-color: {t['danger']};
+}}
+
 QFrame#property_panel_metric_card {{
     background-color: transparent;
     border-top: 1px solid {t['border']};

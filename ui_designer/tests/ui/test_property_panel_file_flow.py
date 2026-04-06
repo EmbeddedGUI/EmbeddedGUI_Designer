@@ -182,6 +182,7 @@ class TestPropertyPanelFileFlow:
         assert meta.accessibleName() == meta.text()
         assert meta.isHidden() is True
         assert panel._header_size_chip.isHidden() is True
+        assert all(chip.property("chipVariant") == "property" for chip in chips)
         assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
         panel.deleteLater()
 
@@ -669,6 +670,7 @@ class TestPropertyPanelFileFlow:
         assert subtitle.isHidden() is True
         assert meta.isHidden() is True
         assert chips_frame.isHidden() is True
+        assert all(chip.property("chipVariant") == "property" for chip in chips)
         assert any(chip.accessibleName() == "Batch types: 2 types." for chip in chips)
         assert any(chip.accessibleName().startswith("Batch mixed state: ") for chip in chips)
         assert any(chip.accessibleName() == "Batch edit state: Batch edit." for chip in chips)

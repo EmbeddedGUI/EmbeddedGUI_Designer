@@ -511,6 +511,7 @@ class PropertyPanel(QWidget):
     def _make_status_chip(self, text, tone=None):
         chip = QLabel(text)
         chip.setObjectName("workspace_status_chip")
+        chip.setProperty("chipVariant", "property")
         if tone:
             chip.setProperty("chipTone", tone)
         return chip

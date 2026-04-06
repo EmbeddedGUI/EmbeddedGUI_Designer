@@ -420,6 +420,11 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         metric_success = css.split('QFrame#property_panel_metric_card[metricTone="success"] {', 1)[1].split("}", 1)[0]
         metric_warning = css.split('QFrame#property_panel_metric_card[metricTone="warning"] {', 1)[1].split("}", 1)[0]
         metric_danger = css.split('QFrame#property_panel_metric_card[metricTone="danger"] {', 1)[1].split("}", 1)[0]
+        property_chip = css.split('#workspace_status_chip[chipVariant="property"] {', 1)[1].split("}", 1)[0]
+        property_chip_accent = css.split('#workspace_status_chip[chipVariant="property"][chipTone="accent"] {', 1)[1].split("}", 1)[0]
+        property_chip_success = css.split('#workspace_status_chip[chipVariant="property"][chipTone="success"] {', 1)[1].split("}", 1)[0]
+        property_chip_warning = css.split('#workspace_status_chip[chipVariant="property"][chipTone="warning"] {', 1)[1].split("}", 1)[0]
+        property_chip_danger = css.split('#workspace_status_chip[chipVariant="property"][chipTone="danger"] {', 1)[1].split("}", 1)[0]
         metric_label = css.split("#property_panel_metric_label {", 1)[1].split("}", 1)[0]
         metric_value = css.split("#property_panel_metric_value {", 1)[1].split("}", 1)[0]
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
@@ -431,6 +436,19 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel_soft']};" in hint_strip
         assert "background-color: transparent;" in search_shell
         assert "border: none;" in search_shell
+        assert "background-color: transparent;" in property_chip
+        assert f"border-top: 1px solid {t['border']};" in property_chip
+        assert "border-right: none;" in property_chip
+        assert "border-bottom: none;" in property_chip
+        assert "border-left: none;" in property_chip
+        assert "background-color: transparent;" in property_chip_accent
+        assert f"border-top-color: {t['accent']};" in property_chip_accent
+        assert "background-color: transparent;" in property_chip_success
+        assert f"border-top-color: {t['success']};" in property_chip_success
+        assert "background-color: transparent;" in property_chip_warning
+        assert f"border-top-color: {t['warning']};" in property_chip_warning
+        assert "background-color: transparent;" in property_chip_danger
+        assert f"border-top-color: {t['danger']};" in property_chip_danger
         assert "background-color: transparent;" in metric_card
         assert f"border-top: 1px solid {t['border']};" in metric_card
         assert "border-right: none;" in metric_card
