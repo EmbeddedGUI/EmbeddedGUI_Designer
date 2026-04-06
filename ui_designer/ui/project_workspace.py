@@ -57,13 +57,13 @@ class ProjectWorkspacePanel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._header = QFrame()
         self._header.setObjectName("workspace_panel_header")
         self._header.setProperty("panelTone", "project")
         header_layout = QHBoxLayout(self._header)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Pages", self._header)
