@@ -298,9 +298,10 @@ class TestPropertyPanelFileFlow:
         assert combo.statusTip() == combo.toolTip()
         assert combo.accessibleName() == "Font File selector: title.ttf"
         assert browse_btn is not None
-        assert browse_btn.toolTip() == "Browse font files for Font File."
+        assert browse_btn.text() == "Pick"
+        assert browse_btn.toolTip() == "Pick font files for Font File."
         assert browse_btn.statusTip() == browse_btn.toolTip()
-        assert browse_btn.accessibleName() == "Browse Font File"
+        assert browse_btn.accessibleName() == "Pick Font File"
         panel.deleteLater()
 
     def test_browse_file_warns_when_project_resource_dir_is_missing(self, qapp, monkeypatch):

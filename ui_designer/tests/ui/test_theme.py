@@ -999,7 +999,7 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         alpha_combo = panel._editors["prop_alpha"]
         x_spin = panel._editors["x"]
         browse_button = next(
-            button for button in panel.findChildren(ToolButton) if button.text() == "Browse"
+            button for button in panel.findChildren(ToolButton) if button.text() == "Pick"
         )
 
         assert search.property("_designer_fluent_engineering_style") == "property_panel_line_edit"

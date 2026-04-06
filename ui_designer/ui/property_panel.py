@@ -651,7 +651,7 @@ class PropertyPanel(QWidget):
 
     def _browse_button_tooltip(self, prop_name, file_filter):
         browse_target = (file_filter or "").split("(")[0].strip().lower() or "files"
-        return f"Browse {browse_target} for {self._property_label(prop_name)}."
+        return f"Pick {browse_target} for {self._property_label(prop_name)}."
 
     def _mixed_value_tooltip(self):
         return "Selected widgets currently have different values. Editing here will normalize them."
@@ -2089,7 +2089,7 @@ class PropertyPanel(QWidget):
         return None
 
     def _create_file_selector(self, prop_name, current_value, catalog_items, file_filter, file_prop_handler=None):
-        """Create a ComboBox + '...' browse button for file selection."""
+        """Create a combo box with a compact text button for file selection."""
         file_prop_handler = file_prop_handler or self._on_file_prop_changed
         container = QWidget()
         h_layout = QHBoxLayout(container)
@@ -2109,11 +2109,11 @@ class PropertyPanel(QWidget):
         h_layout.addWidget(combo, 1)
 
         browse_btn = ToolButton()
-        browse_btn.setText("Browse")
+        browse_btn.setText("Pick")
         _set_widget_metadata(
             browse_btn,
             tooltip=self._browse_button_tooltip(prop_name, file_filter),
-            accessible_name=f"Browse {self._property_label(prop_name)}",
+            accessible_name=f"Pick {self._property_label(prop_name)}",
         )
         browse_btn.clicked.connect(lambda: self._browse_file(combo, file_filter))
         h_layout.addWidget(browse_btn)
