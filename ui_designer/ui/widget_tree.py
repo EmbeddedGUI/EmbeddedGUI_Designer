@@ -195,13 +195,13 @@ class WidgetTreePanel(QWidget):
     def _init_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
         self._header_frame = QFrame()
         self._header_frame.setObjectName("workspace_panel_header")
         self._header_frame.setProperty("panelTone", "structure")
         header_layout = QVBoxLayout(self._header_frame)
-        header_layout.setContentsMargins(4, 4, 4, 4)
+        header_layout.setContentsMargins(2, 2, 2, 2)
         header_layout.setSpacing(2)
 
         self._header_eyebrow = QLabel("Widget Map")
@@ -211,7 +211,7 @@ class WidgetTreePanel(QWidget):
 
         title_row = QHBoxLayout()
         title_row.setContentsMargins(0, 0, 0, 0)
-        title_row.setSpacing(4)
+        title_row.setSpacing(2)
         self._title_label = QLabel("Structure")
         self._title_label.setObjectName("workspace_section_title")
         title_row.addWidget(self._title_label)
@@ -379,7 +379,7 @@ class WidgetTreePanel(QWidget):
         self._drag_hint_frame = QFrame()
         self._drag_hint_frame.setObjectName("structure_drag_hint_strip")
         drag_hint_layout = QVBoxLayout(self._drag_hint_frame)
-        drag_hint_layout.setContentsMargins(4, 2, 4, 2)
+        drag_hint_layout.setContentsMargins(2, 2, 2, 2)
         drag_hint_layout.setSpacing(2)
         self._drag_hint_label = QLabel("Drag Preview")
         self._drag_hint_label.setObjectName("structure_panel_label")
