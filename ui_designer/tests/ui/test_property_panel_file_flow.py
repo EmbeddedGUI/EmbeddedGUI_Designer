@@ -210,12 +210,13 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_single_selection_appearance_group_uses_compact_row_labels(self, qapp):
+        from qfluentwidgets import CheckBox
         from ui_designer.model.widget_model import BackgroundModel, WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
         widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
         bg = BackgroundModel()
-        bg.bg_type = "solid"
+        bg.bg_type = "round_rectangle_corners"
         bg.stroke_width = 2
         bg.has_pressed = True
         widget.background = bg
@@ -229,14 +230,24 @@ class TestPropertyPanelFileFlow:
         assert "Type:" in labels
         assert "Color:" in labels
         assert "Alpha:" in labels
+        assert "TL:" in labels
+        assert "BL:" in labels
+        assert "TR:" in labels
+        assert "BR:" in labels
         assert "Stroke:" in labels
         assert "Border:" in labels
         assert "Border A:" in labels
         assert "Pressed:" in labels
+        assert "Left Top:" not in labels
+        assert "Left Bottom:" not in labels
+        assert "Right Top:" not in labels
+        assert "Right Bottom:" not in labels
         assert "Stroke Width:" not in labels
         assert "Stroke Color:" not in labels
         assert "Stroke Alpha:" not in labels
         assert "Pressed Color:" not in labels
+        pressed_toggle = next(box for box in appearance_group.findChildren(CheckBox) if box.text())
+        assert pressed_toggle.text() == "Pressed state"
         panel.deleteLater()
 
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):

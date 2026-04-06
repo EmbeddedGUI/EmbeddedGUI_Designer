@@ -74,6 +74,12 @@ _APPEARANCE_ROW_LABELS = {
     "stroke_alpha": "Border A:",
     "pressed_color": "Pressed:",
 }
+_CORNER_RADIUS_ROW_LABELS = {
+    "radius_left_top": "TL:",
+    "radius_left_bottom": "BL:",
+    "radius_right_top": "TR:",
+    "radius_right_bottom": "BR:",
+}
 
 # UIX-005: default expanded groups <=2 — keep first-edit path focused.
 _DEFAULT_EXPANDED_INSPECTOR_TITLES = frozenset({"Basic", "Layout"})
@@ -1182,7 +1188,7 @@ class PropertyPanel(QWidget):
                     spin.setRange(0, 999)
                     spin.setValue(getattr(bg, corner))
                     spin.valueChanged.connect(lambda val, c=corner: self._on_bg_changed(c, val))
-                    label = corner.replace("radius_", "").replace("_", " ").title() + ":"
+                    label = self._corner_radius_row_label(corner)
                     bg_form.addRow(label, spin)
 
             # Stroke
@@ -1205,7 +1211,7 @@ class PropertyPanel(QWidget):
                 bg_form.addRow(self._appearance_row_label("stroke_alpha", "Stroke Alpha:"), stroke_alpha)
 
             # Pressed state
-            pressed_check = CheckBox("Enable pressed state")
+            pressed_check = CheckBox("Pressed state")
             pressed_check.setChecked(bg.has_pressed)
             pressed_check.toggled.connect(lambda val: self._on_bg_changed("has_pressed", val))
             bg_form.addRow(pressed_check)
@@ -1655,6 +1661,9 @@ class PropertyPanel(QWidget):
 
     def _appearance_row_label(self, key, fallback):
         return _APPEARANCE_ROW_LABELS.get(key, fallback)
+
+    def _corner_radius_row_label(self, key):
+        return _CORNER_RADIUS_ROW_LABELS.get(key, key.replace("radius_", "").replace("_", " ").title() + ":")
 
     def _suggest_callback_name(self, widget, event_name):
         widget_name = sanitize_widget_name(getattr(widget, "name", "")) or getattr(widget, "widget_type", "widget")
