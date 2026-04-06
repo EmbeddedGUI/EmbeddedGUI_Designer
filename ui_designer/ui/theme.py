@@ -77,6 +77,8 @@ TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {
     border-radius: 0px;
+    min-height: 22px;
+    padding: 1px 6px;
 }
 """
 
@@ -99,10 +101,13 @@ TextEdit,
 PlainTextEdit,
 TextBrowser {
     border-radius: 0px;
+    min-height: 24px;
+    padding: 0px 6px;
 }
 
 #lineEditButton {
     border-radius: 0px;
+    min-width: 18px;
 }
 """
 
@@ -117,6 +122,8 @@ _FLUENT_PROPERTY_PANEL_COMBO_BOX_QSS = """
 ComboBox,
 ModelComboBox {
     border-radius: 0px;
+    min-height: 24px;
+    padding: 0px 6px;
 }
 """
 
@@ -151,10 +158,13 @@ CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {
     border-radius: 0px;
+    min-height: 24px;
+    padding: 0px 6px;
 }
 
 SpinButton {
     border-radius: 0px;
+    min-width: 18px;
 }
 """
 
