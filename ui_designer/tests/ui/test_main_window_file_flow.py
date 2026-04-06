@@ -6188,7 +6188,7 @@ class TestMainWindowFileFlow:
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (8, 8, 8, 8)
         assert editor_layout.spacing() == 4
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (4, 4, 4, 4)
-        assert window._toolbar_command_row_layout.spacing() == 4
+        assert window._toolbar_command_row_layout.spacing() == 2
         assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (4, 4, 4, 4)
         assert window._workspace_nav_frame.width() == 68
         assert window.project_dock.minimumWidth() == 184
@@ -8724,6 +8724,7 @@ class TestMainWindowFileFlow:
         assert window._toolbar.toolTip() == window._toolbar.accessibleName()
         assert window._toolbar_host.accessibleName() == "Workspace command bar with insert, save, build, mode, context, and runtime indicators."
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
+        assert window._toolbar_command_row_layout.spacing() == 2
         assert mode_host.layout().spacing() == 1
         assert window._mode_buttons["design"].width() == 56
         assert window._mode_buttons["design"].height() == 26

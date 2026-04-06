@@ -396,7 +396,7 @@ class MainWindow(QMainWindow):
         self._toolbar_command_row.setObjectName("workspace_command_body")
         self._toolbar_command_row_layout = QHBoxLayout(self._toolbar_command_row)
         self._toolbar_command_row_layout.setContentsMargins(0, 0, 0, 0)
-        self._toolbar_command_row_layout.setSpacing(_SPACE_XS)
+        self._toolbar_command_row_layout.setSpacing(2)
         self._toolbar_host_layout.addWidget(self._toolbar_command_row)
         editor_layout.addWidget(self._toolbar_host)
 
