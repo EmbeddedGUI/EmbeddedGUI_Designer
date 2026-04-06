@@ -173,6 +173,7 @@ class TestPropertyPanelFileFlow:
         assert (header_margins.left(), header_margins.top(), header_margins.right(), header_margins.bottom()) == (8, 8, 8, 8)
         assert header_layout.spacing() == 6
         assert chips_row.spacing() == 2
+        assert panel._context_frame.isHidden() is True
         assert header.accessibleName() == f"Property header: title. {subtitle.text()}."
         assert eyebrow.accessibleName() == "Property inspection surface."
         assert eyebrow.isHidden() is True
@@ -245,11 +246,13 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
         assert panel._search_edit.isHidden() is True
+        assert panel._context_frame.isHidden() is False
         assert panel._search_edit.placeholderText() == "Select a widget to filter properties"
         assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
 
         panel.set_widget(first)
         assert panel._search_edit.isHidden() is False
+        assert panel._context_frame.isHidden() is True
         assert panel._search_hint.isHidden() is True
         assert panel._search_edit.placeholderText() == "Filter widget properties..."
         assert panel._context_meta.text() == "Label (label) | Freeform | 0 asset bindings | 0 active callbacks."
@@ -268,6 +271,7 @@ class TestPropertyPanelFileFlow:
 
         panel.set_selection([first, second], primary=second)
         assert panel._search_edit.isHidden() is False
+        assert panel._context_frame.isHidden() is True
         assert panel._search_hint.isHidden() is True
         assert panel._search_edit.placeholderText() == "Filter shared properties..."
         assert panel._context_meta.text().startswith("Primary: second | 1 type | ")
@@ -276,6 +280,7 @@ class TestPropertyPanelFileFlow:
         panel.set_widget(None)
 
         assert panel._search_edit.isHidden() is True
+        assert panel._context_frame.isHidden() is False
         assert panel._context_meta.text() == "Select a widget to inspect properties, resources, and callbacks."
         panel.deleteLater()
 
@@ -659,9 +664,10 @@ class TestPropertyPanelFileFlow:
         assert (summary_margins.left(), summary_margins.top(), summary_margins.right(), summary_margins.bottom()) == (8, 8, 8, 8)
         assert summary_layout.spacing() == 6
         assert chips_row.spacing() == 2
-        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (6, 6)
-        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (6, 6)
-        assert hint_layout.spacing() == 2
+        assert panel._context_frame.isHidden() is True
+        assert (hint_layout.contentsMargins().left(), hint_layout.contentsMargins().top()) == (4, 4)
+        assert (hint_layout.contentsMargins().right(), hint_layout.contentsMargins().bottom()) == (4, 4)
+        assert hint_layout.spacing() == 1
         assert summary_header.accessibleName() == "Property batch header: 2 widgets selected. Primary: second. 2 types."
         assert eyebrow.accessibleName() == "Batch property inspection surface."
         assert eyebrow.isHidden() is True

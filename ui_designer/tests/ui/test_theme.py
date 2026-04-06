@@ -433,7 +433,11 @@ def test_property_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
-        assert f"background-color: {t['panel_soft']};" in hint_strip
+        assert "background-color: transparent;" in hint_strip
+        assert "border-top: none;" in hint_strip
+        assert "border-right: none;" in hint_strip
+        assert "border-bottom: none;" in hint_strip
+        assert f"border-left: 2px solid {t['border_strong']};" in hint_strip
         assert "background-color: transparent;" in search_shell
         assert "border: none;" in search_shell
         assert "background-color: transparent;" in property_chip

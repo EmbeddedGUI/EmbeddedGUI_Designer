@@ -838,8 +838,11 @@ QGroupBox#inspector_collapsible_group::title {{
 }}
 
 #workspace_hint_strip[panelTone="property"] {{
-    background-color: {t['panel_soft']};
-    border-color: {t['border']};
+    background-color: transparent;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    border-left: 2px solid {t['border_strong']};
 }}
 
 #widget_browser_header[panelTone="components"] {{

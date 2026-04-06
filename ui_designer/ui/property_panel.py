@@ -1006,8 +1006,8 @@ class PropertyPanel(QWidget):
         frame.setObjectName("workspace_hint_strip")
         frame.setProperty("panelTone", "property")
         layout = QVBoxLayout()
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(2)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(1)
         frame.setLayout(layout)
 
         eyebrow = QLabel("Interaction Notes")
@@ -1051,7 +1051,7 @@ class PropertyPanel(QWidget):
             self._update_panel_metadata()
             return
 
-        self._context_frame.setVisible(True)
+        self._context_frame.setVisible(False)
         self._search_shell.setVisible(True)
         self._search_edit.setVisible(True)
         if len(self._selection) > 1:
