@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
         self._toolbar_host_layout = QVBoxLayout(self._toolbar_host)
-        self._toolbar_host_layout.setContentsMargins(_SPACE_XS, _SPACE_XS, _SPACE_XS, _SPACE_XS)
+        self._toolbar_host_layout.setContentsMargins(2, 2, 2, 2)
         self._toolbar_host_layout.setSpacing(0)
 
         self._toolbar_header = QFrame(self)
