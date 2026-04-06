@@ -291,8 +291,10 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         command_bar = css.split("#workspace_command_bar {", 1)[1].split("}", 1)[0]
         context = css.split("#workspace_context_card {", 1)[1].split("}", 1)[0]
         toolbar = css.split("QToolBar#main_toolbar {", 1)[1].split("}", 1)[0]
+        toolbar_separator = css.split("QToolBar#main_toolbar::separator {", 1)[1].split("}", 1)[0]
         toolbar_button = css.split("QToolBar#main_toolbar QToolButton {", 1)[1].split("}", 1)[0]
         toolbar_button_hover = css.split("QToolBar#main_toolbar QToolButton:hover {", 1)[1].split("}", 1)[0]
+        host_separator = css.split("QFrame#toolbar_host_separator {", 1)[1].split("}", 1)[0]
         insert_button = css.split("QPushButton#workspace_insert_button {", 1)[1].split("}", 1)[0]
         insert_button_hover = css.split("QPushButton#workspace_insert_button:hover {", 1)[1].split("}", 1)[0]
         mode_strip = css.split("#workspace_mode_switch {", 1)[1].split("}", 1)[0]
@@ -303,11 +305,17 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "border: none;" in context
         assert f"border-radius: {t['r_md']}px;" in context
         assert "spacing: 1px;" in toolbar
+        assert "width: 1px;" in toolbar_separator
+        assert "margin: 1px 1px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
         assert "padding: 1px 5px;" in toolbar_button
         assert "min-height: 22px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
+        assert "min-width: 1px;" in host_separator
+        assert "max-width: 1px;" in host_separator
+        assert "margin-left: 4px;" in host_separator
+        assert "margin-right: 4px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
         assert "padding: 2px 8px;" in insert_button

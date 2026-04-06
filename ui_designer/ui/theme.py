@@ -861,7 +861,7 @@ QToolBar#main_toolbar {{
 QToolBar#main_toolbar::separator {{
     background-color: {t['border']};
     width: 1px;
-    margin: 2px 2px;
+    margin: 1px 1px;
 }}
 
 QToolBar#main_toolbar QToolButton {{
@@ -1025,8 +1025,8 @@ QFrame#toolbar_host_separator {{
     min-width: 1px;
     max-width: 1px;
     border: none;
-    margin-left: 6px;
-    margin-right: 6px;
+    margin-left: 4px;
+    margin-right: 4px;
 }}
 
 QToolButton[workspaceNav="true"] {{
