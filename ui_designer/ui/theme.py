@@ -899,8 +899,8 @@ QPushButton#workspace_mode_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 2px {t['space_sm']}px;
-    min-width: 56px;
-    max-width: 56px;
+    min-width: 52px;
+    max-width: 52px;
     min-height: 26px;
     max-height: 26px;
 }}
@@ -948,8 +948,8 @@ QPushButton#workspace_insert_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 2px {t['space_sm']}px;
-    min-width: 56px;
-    max-width: 56px;
+    min-width: 52px;
+    max-width: 52px;
     min-height: 26px;
     max-height: 26px;
 }}

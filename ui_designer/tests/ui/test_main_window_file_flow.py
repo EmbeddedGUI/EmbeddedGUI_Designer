@@ -8470,7 +8470,7 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component target: root_group."
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
-        assert window._insert_widget_button.width() == 56
+        assert window._insert_widget_button.width() == 52
         assert window._insert_widget_button.height() == 26
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
@@ -8726,7 +8726,7 @@ class TestMainWindowFileFlow:
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
         assert window._toolbar_command_row_layout.spacing() == 2
         assert mode_host.layout().spacing() == 1
-        assert window._mode_buttons["design"].width() == 56
+        assert window._mode_buttons["design"].width() == 52
         assert window._mode_buttons["design"].height() == 26
         assert separator.minimumHeight() == 22
         assert separator.maximumHeight() == 22

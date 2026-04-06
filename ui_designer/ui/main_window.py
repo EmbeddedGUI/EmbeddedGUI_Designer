@@ -4159,7 +4159,7 @@ class MainWindow(QMainWindow):
 
         self._insert_widget_button = PushButton("Insert")
         self._insert_widget_button.setObjectName("workspace_insert_button")
-        self._insert_widget_button.setFixedSize(56, 26)
+        self._insert_widget_button.setFixedSize(52, 26)
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
@@ -4203,7 +4203,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
-            button.setFixedSize(56, 26)
+            button.setFixedSize(52, 26)
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)
