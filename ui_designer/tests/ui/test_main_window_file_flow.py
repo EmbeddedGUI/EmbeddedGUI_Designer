@@ -6185,8 +6185,8 @@ class TestMainWindowFileFlow:
         nav_margins = nav_layout.contentsMargins()
         bottom_header_layout = window._bottom_header.layout()
         bottom_header_margins = bottom_header_layout.contentsMargins()
-        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (8, 8, 8, 8)
-        assert editor_layout.spacing() == 4
+        assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (6, 6, 6, 6)
+        assert editor_layout.spacing() == 2
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (2, 2, 2, 2)
         assert window._toolbar_command_row_layout.spacing() == 2
         assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (2, 4, 2, 4)
@@ -6196,7 +6196,7 @@ class TestMainWindowFileFlow:
         assert window._left_shell.minimumWidth() == 236
         assert window._left_shell.layout().spacing() == 4
         assert window._center_shell.layout().spacing() == 2
-        assert window._page_inspector_body.layout().spacing() == 4
+        assert window._page_inspector_body.layout().spacing() == 2
         assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (2, 2, 2, 2)
         assert bottom_header_layout.spacing() == 2
         assert window._bottom_shell.layout().spacing() == 2

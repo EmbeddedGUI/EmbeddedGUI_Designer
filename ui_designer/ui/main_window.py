@@ -351,8 +351,8 @@ class MainWindow(QMainWindow):
         self._editor_container = editor_container
         editor_container.setObjectName("workspace_shell")
         editor_layout = QVBoxLayout(editor_container)
-        editor_layout.setContentsMargins(_SPACE_SM, _SPACE_SM, _SPACE_SM, _SPACE_SM)
-        editor_layout.setSpacing(_SPACE_XS)
+        editor_layout.setContentsMargins(6, 6, 6, 6)
+        editor_layout.setSpacing(2)
 
         self._toolbar_host = QFrame()
         self._toolbar_host.setObjectName("workspace_command_bar")
@@ -524,7 +524,7 @@ class MainWindow(QMainWindow):
         self._page_inspector_body.setObjectName("page_inspector_body")
         page_body_layout = QVBoxLayout(self._page_inspector_body)
         page_body_layout.setContentsMargins(0, 0, 0, 0)
-        page_body_layout.setSpacing(_SPACE_XS)
+        page_body_layout.setSpacing(2)
         page_body_layout.addWidget(self.page_fields_panel)
         page_body_layout.addWidget(self.page_timers_panel)
 
