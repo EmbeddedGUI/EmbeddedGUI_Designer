@@ -562,7 +562,7 @@ class MainWindow(QMainWindow):
         self._bottom_header = QFrame()
         self._bottom_header.setObjectName("workspace_bottom_header")
         bottom_header_layout = QHBoxLayout(self._bottom_header)
-        bottom_header_layout.setContentsMargins(2, 2, 2, 2)
+        bottom_header_layout.setContentsMargins(1, 1, 1, 1)
         bottom_header_layout.setSpacing(2)
         self._bottom_title = QLabel("Tools")
         self._bottom_title.setObjectName("workspace_section_title")

@@ -6197,7 +6197,7 @@ class TestMainWindowFileFlow:
         assert window._left_shell.layout().spacing() == 2
         assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 2
-        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (2, 2, 2, 2)
+        assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (1, 1, 1, 1)
         assert bottom_header_layout.spacing() == 2
         assert window._bottom_shell.layout().spacing() == 2
         assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
