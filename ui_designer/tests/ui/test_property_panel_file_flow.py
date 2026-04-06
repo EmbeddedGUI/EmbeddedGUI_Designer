@@ -180,6 +180,27 @@ class TestPropertyPanelFileFlow:
         assert any(chip.accessibleName() == "Widget size: 80 by 24." for chip in chips)
         panel.deleteLater()
 
+    def test_single_selection_groups_use_compact_inspector_form_layouts(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        for title in ("Layout", "Basic", "Data"):
+            group = _find_group(panel, title)
+            form = group.layout()
+            margins = form.contentsMargins()
+
+            assert group.objectName() == "inspector_collapsible_group"
+            assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
+            assert form.verticalSpacing() == 6
+            assert form.horizontalSpacing() == 0
+
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
@@ -652,6 +673,28 @@ class TestPropertyPanelFileFlow:
         )
         assert hint_eyebrow.accessibleName() == "Property interaction notes surface."
         assert hint_eyebrow.isHidden() is True
+        panel.deleteLater()
+
+    def test_multi_selection_groups_use_compact_inspector_form_layouts(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first", x=10, y=20, width=80, height=24)
+        second = WidgetModel("label", name="second", x=10, y=20, width=80, height=24)
+
+        panel = PropertyPanel()
+        panel.set_selection([first, second], primary=second)
+
+        for title in ("Batch Geometry", "Designer", "Common Properties"):
+            group = _find_group(panel, title)
+            form = group.layout()
+            margins = form.contentsMargins()
+
+            assert group.objectName() == "inspector_collapsible_group"
+            assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
+            assert form.verticalSpacing() == 6
+            assert form.horizontalSpacing() == 0
+
         panel.deleteLater()
 
     def test_multi_selection_common_geometry_and_text_update_all_widgets(self, qapp):

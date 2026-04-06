@@ -643,7 +643,7 @@ QFrame#property_panel_overview {{
 
 QFrame#property_panel_search_shell {{
     background-color: transparent;
-    border: 1px solid {t['border']};
+    border: none;
     border-radius: 0px;
 }}
 
@@ -682,8 +682,8 @@ QGroupBox#inspector_collapsible_group {{
     background-color: transparent;
     border: 1px solid transparent;
     border-radius: 0px;
-    margin-top: {t['space_xs']}px;
-    padding-top: {t['space_sm']}px;
+    margin-top: 2px;
+    padding-top: 4px;
     font-size: {t['fs_panel_title']}px;
     font-weight: {t['fw_semibold']};
 }}
@@ -691,8 +691,9 @@ QGroupBox#inspector_collapsible_group {{
 QGroupBox#inspector_collapsible_group::title {{
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: {t['space_xs']}px;
+    left: 2px;
     color: {t['text_muted']};
+    padding: 0px;
 }}
 
 #workspace_panel_header,

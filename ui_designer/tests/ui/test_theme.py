@@ -365,6 +365,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "min-height: 26px;" in nav_button
         assert "max-height: 26px;" in nav_button
         assert "border-radius: 0px;" in status_chip
+        assert "background-color: transparent;" in search_shell
+        assert "border: none;" in search_shell
         assert "border-radius: 0px;" in search_shell
         assert "border-radius: 0px;" in empty_state
         assert "background-color: transparent;" in resource_tabs_pane
@@ -414,15 +416,23 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         hint_strip = css.split('#workspace_hint_strip[panelTone="property"] {', 1)[1].split("}", 1)[0]
         metric_card = css.split("QFrame#property_panel_metric_card {", 1)[1].split("}", 1)[0]
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
+        inspector_group_title = css.split("QGroupBox#inspector_collapsible_group::title {", 1)[1].split("}", 1)[0]
+        search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
         assert f"background-color: {t['panel_soft']};" in hint_strip
+        assert "background-color: transparent;" in search_shell
+        assert "border: none;" in search_shell
         assert "background-color: transparent;" in metric_card
         assert "border-radius: 0px;" in metric_card
         assert "background-color: transparent;" in inspector_group
         assert "border: 1px solid transparent;" in inspector_group
         assert "border-radius: 0px;" in inspector_group
+        assert "margin-top: 2px;" in inspector_group
+        assert "padding-top: 4px;" in inspector_group
+        assert "left: 2px;" in inspector_group_title
+        assert "padding: 0px;" in inspector_group_title
 
 
 def test_resource_panel_styles_use_engineering_surface_tokens():
