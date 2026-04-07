@@ -374,6 +374,18 @@ class TestResourcePanelFileFlow:
         assert buttons["next_missing"].toolTip() == "Save or open a project first to navigate missing text resources."
         assert buttons["next_missing"].statusTip() == buttons["next_missing"].toolTip()
         assert buttons["next_missing"].accessibleName() == "Next missing text resource unavailable"
+        assert panel._generate_charset_btn.toolTip() == "Save or open a project first to generate font charset resources."
+        assert panel._generate_charset_text_btn.toolTip() == panel._generate_charset_btn.toolTip()
+        assert panel._generate_charset_text_btn.accessibleName() == "Generate font charset resource unavailable"
+        panel.deleteLater()
+
+    def test_text_tab_exposes_generate_charset_entry_alongside_import(self, qapp):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+
+        assert panel._generate_charset_text_btn.text() == "Generate Charset..."
+        assert panel._generate_charset_text_btn.toolTip() == panel._generate_charset_btn.toolTip()
         panel.deleteLater()
 
     def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):

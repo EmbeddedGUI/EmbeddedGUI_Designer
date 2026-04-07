@@ -1989,6 +1989,9 @@ class ResourcePanel(QWidget):
         import_text_btn = PushButton("Import...")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
+        self._generate_charset_text_btn = PushButton("Generate Charset...")
+        self._generate_charset_text_btn.clicked.connect(self._on_generate_charset)
+        text_btn_layout.addWidget(self._generate_charset_text_btn)
         restore_text_btn = PushButton("Restore Missing...")
         restore_text_btn.clicked.connect(lambda: self._restore_missing_resources("text"))
         text_btn_layout.addWidget(restore_text_btn)
@@ -2507,7 +2510,12 @@ class ResourcePanel(QWidget):
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
             self._sync_resource_more_menu(resource_type)
 
+        charset_buttons = []
         if hasattr(self, "_generate_charset_btn"):
+            charset_buttons.append(self._generate_charset_btn)
+        if hasattr(self, "_generate_charset_text_btn"):
+            charset_buttons.append(self._generate_charset_text_btn)
+        if charset_buttons:
             if self._resource_dir:
                 tooltip = (
                     "Generate a supported-text .txt resource from built-in charset presets, "
@@ -2517,11 +2525,12 @@ class ResourcePanel(QWidget):
             else:
                 tooltip = "Save or open a project first to generate font charset resources."
                 accessible_name = "Generate font charset resource unavailable"
-            _set_widget_metadata(
-                self._generate_charset_btn,
-                tooltip=tooltip,
-                accessible_name=accessible_name,
-            )
+            for button in charset_buttons:
+                _set_widget_metadata(
+                    button,
+                    tooltip=tooltip,
+                    accessible_name=accessible_name,
+                )
 
     def _selected_string_key(self):
         if not hasattr(self, "_string_table"):
