@@ -560,6 +560,8 @@ class PropertyPanel(QWidget):
         self._property_tree.header().setMinimumSectionSize(120)
         self._property_tree.header().hide()
         self._property_tree.setColumnWidth(0, 176)
+        self._property_tree.setExpandsOnDoubleClick(False)
+        self._property_tree.itemClicked.connect(self._on_property_tree_item_clicked)
         self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
         self._property_tree.itemCollapsed.connect(self._on_property_tree_item_collapsed)
         self._property_sections = OrderedDict()
@@ -846,6 +848,11 @@ class PropertyPanel(QWidget):
                 row["label_frame"].setVisible(False)
                 row["editor_host"].setVisible(False)
                 row["editor"].setVisible(False)
+
+    def _on_property_tree_item_clicked(self, item, _column):
+        if item is None or item.parent() is not None:
+            return
+        item.setExpanded(not item.isExpanded())
 
     def _apply_property_tree_filter(self, text):
         if not hasattr(self, "_property_tree"):

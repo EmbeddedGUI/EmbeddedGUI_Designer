@@ -312,6 +312,24 @@ class TestPropertyPanelFileFlow:
         assert all(not child.isVisible() for child in text_group.findChildren(QWidget))
         panel.deleteLater()
 
+    def test_property_grid_section_click_toggles_expanded_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        group = _find_group(panel, "Text")
+        item = panel._property_sections["Text"]["item"]
+
+        assert group.isChecked() is False
+        panel._on_property_tree_item_clicked(item, 0)
+        assert group.isChecked() is True
+        panel._on_property_tree_item_clicked(item, 0)
+        assert group.isChecked() is False
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
