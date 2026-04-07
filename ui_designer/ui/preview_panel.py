@@ -129,6 +129,7 @@ class WidgetOverlay(QWidget):
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
+        self._passive_bounds_cache = None
 
         # Zoom state
         self._zoom = 1.0
@@ -186,34 +187,46 @@ class WidgetOverlay(QWidget):
     def _coord_tooltip_font_point_size(self):
         return self._scaled_font_point_size(7, minimum=6)
 
+    def _is_lightweight_interaction_active(self):
+        return bool(getattr(self._config, "lightweight_drag", True)) and (
+            self._dragging or self._resizing or self._rubber_band
+        )
+
     def _show_full_label_overlay(self):
-        if bool(getattr(self._config, "lightweight_drag", True)):
-            return not (self._dragging or self._resizing or self._rubber_band)
-        return True
+        return not self._is_lightweight_interaction_active()
 
     def _show_full_bounds_overlay(self):
-        if bool(getattr(self._config, "lightweight_drag", True)):
-            return not (self._dragging or self._resizing or self._rubber_band)
-        return True
+        return not self._is_lightweight_interaction_active()
 
     def _show_snap_guides(self):
         if bool(getattr(self._config, "lightweight_drag", True)):
             return not (self._dragging or self._resizing)
         return True
 
-    def _paint_candidate_widgets(self):
-        if self._show_full_bounds_overlay():
-            return self._visible_widgets
+    def _dynamic_paint_widgets(self):
+        if self._selected is None and self._hovered is None and not self._multi_selected:
+            return []
+        active_ids = set()
+        if self._selected is not None:
+            active_ids.add(id(self._selected))
+        if self._hovered is not None:
+            active_ids.add(id(self._hovered))
+        active_ids.update(id(widget) for widget in self._multi_selected)
+        return [widget for widget in self._visible_widgets if id(widget) in active_ids]
 
-        candidates = []
-        selected_parent = self._selected.parent if (self._reorder_mode and self._selected is not None) else None
-        for widget in self._visible_widgets:
-            if widget is self._selected or widget is self._hovered or widget in self._multi_selected:
-                candidates.append(widget)
-                continue
-            if selected_parent is not None and widget.parent is selected_parent:
-                candidates.append(widget)
-        return candidates
+    def _should_use_passive_bounds_cache(self):
+        return self._is_lightweight_interaction_active() and bool(self._visible_widgets)
+
+    def _passive_cache_widgets(self):
+        if not self._should_use_passive_bounds_cache():
+            return []
+        dynamic_ids = {id(widget) for widget in self._dynamic_paint_widgets()}
+        return [widget for widget in self._visible_widgets if id(widget) not in dynamic_ids]
+
+    def _paint_candidate_widgets(self):
+        if self._should_use_passive_bounds_cache():
+            return self._dynamic_paint_widgets()
+        return self._visible_widgets
 
     def _widget_edge_triplets(self, widget, *, axis="x"):
         if axis == "y":
@@ -268,6 +281,72 @@ class WidgetOverlay(QWidget):
         for rect in self._screen_rect_for_guides(guides):
             self.update(rect)
 
+    def _invalidate_passive_bounds_cache(self):
+        self._passive_bounds_cache = None
+
+    def _widget_bounds_style(self, widget, z, *, passive_only=False):
+        if not passive_only:
+            if widget == self._selected:
+                return (
+                    QPen(QColor(255, 100, 100, 200), 2.0 / z, Qt.SolidLine),
+                    QColor(255, 120, 100, 40),
+                )
+            if widget in self._multi_selected:
+                return (
+                    QPen(QColor(255, 180, 80, 200), 2.0 / z, Qt.SolidLine),
+                    QColor(255, 180, 80, 40),
+                )
+            if widget == self._hovered:
+                return (
+                    QPen(QColor(100, 200, 255, 180), 1.5 / z, Qt.DashLine),
+                    QColor(100, 200, 255, 30),
+                )
+
+        if self._solid_background:
+            return (
+                QPen(QColor(140, 140, 140, 180), 1.0 / z, Qt.DotLine),
+                QColor(160, 180, 210, 28),
+            )
+        return (
+            QPen(QColor(100, 100, 100, 100), 1.0 / z, Qt.DotLine),
+            QColor(150, 170, 200, 20),
+        )
+
+    def _draw_widget_bounds(self, painter, widgets, z, *, visible_logical_rect=None, passive_only=False):
+        for widget in widgets:
+            rect = QRect(widget.display_x, widget.display_y, widget.width, widget.height)
+            if visible_logical_rect is not None and not visible_logical_rect.intersects(QRectF(rect)):
+                continue
+            pen, fill = self._widget_bounds_style(widget, z, passive_only=passive_only)
+            painter.setPen(pen)
+            painter.setBrush(fill)
+            painter.drawRect(rect)
+
+    def _ensure_passive_bounds_cache(self):
+        if not self._should_use_passive_bounds_cache():
+            return None
+        size = self.size()
+        if size.width() <= 0 or size.height() <= 0:
+            return None
+        if self._passive_bounds_cache is not None and self._passive_bounds_cache.size() == size:
+            return self._passive_bounds_cache
+
+        pixmap = QPixmap(size)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing, False)
+        painter.scale(self._zoom, self._zoom)
+        self._draw_widget_bounds(
+            painter,
+            self._passive_cache_widgets(),
+            self._zoom,
+            visible_logical_rect=QRectF(0, 0, self._base_width, self._base_height),
+            passive_only=True,
+        )
+        painter.end()
+        self._passive_bounds_cache = pixmap
+        return self._passive_bounds_cache
+
     def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
         if not edge_values:
             return None
@@ -293,6 +372,7 @@ class WidgetOverlay(QWidget):
         self.setProperty("solidBackground", bool(self._solid_background))
         self.style().unpolish(self)
         self.style().polish(self)
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     # ── Zoom helpers ───────────────────────────────────────────────
@@ -308,6 +388,7 @@ class WidgetOverlay(QWidget):
         new_w = int(self._base_width * self._zoom)
         new_h = int(self._base_height * self._zoom)
         self.setFixedSize(new_w, new_h)
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def set_zoom(self, factor):
@@ -419,6 +500,7 @@ class WidgetOverlay(QWidget):
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
             self._selected = None
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def set_selected(self, widget):
@@ -430,12 +512,14 @@ class WidgetOverlay(QWidget):
         if not widgets:
             self._selected = None
             self._multi_selected.clear()
+            self._invalidate_passive_bounds_cache()
             self.update()
             return
         if primary is None or all(widget is not primary for widget in widgets):
             primary = widgets[-1]
         self._selected = primary
         self._multi_selected = {widget for widget in widgets if widget is not primary}
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def selected_widgets(self):
@@ -643,12 +727,13 @@ class WidgetOverlay(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.Antialiasing, not self._is_lightweight_interaction_active())
         painter.setRenderHint(QPainter.TextAntialiasing)
 
         z = self._zoom
         bw, bh = self._base_width, self._base_height
         visible_logical_rect = self._logical_visible_rect(event.rect(), z)
+        use_passive_bounds_cache = self._should_use_passive_bounds_cache()
 
         # ── Phase 1: Scaled space (geometry) ──────────────────────
         painter.scale(z, z)
@@ -669,34 +754,21 @@ class WidgetOverlay(QWidget):
             for y in range(0, bh, eff_grid):
                 painter.drawLine(0, y, bw, y)
 
-        # Draw active widget bounds; during drag keep the overlay focused on the
-        # current interaction instead of repainting the whole model every frame.
-        for w in self._paint_candidate_widgets():
-            rect = QRect(w.display_x, w.display_y, w.width, w.height)
-            if not visible_logical_rect.intersects(QRectF(rect)):
-                continue
+        if use_passive_bounds_cache:
+            painter.resetTransform()
+            passive_cache = self._ensure_passive_bounds_cache()
+            if passive_cache is not None:
+                source_rect = event.rect().intersected(passive_cache.rect())
+                if not source_rect.isNull():
+                    painter.drawPixmap(source_rect, passive_cache, source_rect)
+            painter.scale(z, z)
 
-            if w == self._selected:
-                pen = QPen(QColor(255, 100, 100, 200), 2.0 / z, Qt.SolidLine)
-                fill = QColor(255, 120, 100, 40)
-            elif w in self._multi_selected:
-                pen = QPen(QColor(255, 180, 80, 200), 2.0 / z, Qt.SolidLine)
-                fill = QColor(255, 180, 80, 40)
-            elif w == self._hovered:
-                pen = QPen(QColor(100, 200, 255, 180), 1.5 / z, Qt.DashLine)
-                fill = QColor(100, 200, 255, 30)
-            else:
-                # Normal widgets also get a visible light fill
-                if self._solid_background:
-                    pen = QPen(QColor(140, 140, 140, 180), 1.0 / z, Qt.DotLine)
-                    fill = QColor(160, 180, 210, 28)
-                else:
-                    pen = QPen(QColor(100, 100, 100, 100), 1.0 / z, Qt.DotLine)
-                    fill = QColor(150, 170, 200, 20)
-
-            painter.setPen(pen)
-            painter.setBrush(fill)
-            painter.drawRect(rect)
+        self._draw_widget_bounds(
+            painter,
+            self._paint_candidate_widgets(),
+            z,
+            visible_logical_rect=visible_logical_rect,
+        )
 
         # Draw snap guide lines (in logical space)
         if self._snap_guides:
@@ -849,6 +921,7 @@ class WidgetOverlay(QWidget):
                     if self._selected is not None:
                         self._multi_selected.add(self._selected)
                     self._selected = w
+                self._invalidate_passive_bounds_cache()
                 self._emit_selection_changed()
                 self.update()
                 return
@@ -856,6 +929,7 @@ class WidgetOverlay(QWidget):
             # Normal click: single select + start drag
             self._selected = w
             self._multi_selected.clear()
+            self._invalidate_passive_bounds_cache()
             self._dragging = True
             self._drag_offset = pos - QPoint(w.display_x, w.display_y)
             self._reorder_mode = _parent_has_layout(w)
@@ -881,6 +955,7 @@ class WidgetOverlay(QWidget):
         if self._rubber_mode == "replace":
             self._selected = None
             self._multi_selected.clear()
+            self._invalidate_passive_bounds_cache()
             self._emit_selection_changed()
         self.update()
 

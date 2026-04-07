@@ -420,7 +420,7 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
-    def test_overlay_limits_paint_candidates_during_drag(self, qapp):
+    def test_overlay_uses_passive_bounds_cache_to_keep_other_widgets_visible_during_drag(self, qapp):
         overlay, _root, first, second, third = self._make_overlay()
         overlay.set_selection([first, second], primary=first)
 
@@ -428,10 +428,24 @@ class TestWidgetOverlaySelection:
             assert overlay._paint_candidate_widgets() == overlay._visible_widgets
 
             overlay._dragging = True
-            candidates = overlay._paint_candidate_widgets()
-            assert first in candidates
-            assert second in candidates
-            assert third not in candidates
+            assert overlay._should_use_passive_bounds_cache() is True
+            assert overlay._paint_candidate_widgets() == [first, second]
+            assert overlay._passive_cache_widgets() == [_root, third]
+            overlay._ensure_passive_bounds_cache()
+            assert overlay._passive_bounds_cache is not None
+        finally:
+            _dispose_widget(overlay)
+
+    def test_overlay_invalidates_passive_bounds_cache_when_selection_changes(self, qapp):
+        overlay, _root, first, second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+        overlay._dragging = True
+
+        try:
+            overlay._ensure_passive_bounds_cache()
+            assert overlay._passive_bounds_cache is not None
+            overlay.set_selection([second], primary=second)
+            assert overlay._passive_bounds_cache is None
         finally:
             _dispose_widget(overlay)
 
