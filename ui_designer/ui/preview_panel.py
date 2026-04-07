@@ -3,6 +3,7 @@
 import bisect
 import sys
 import json
+import time
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QSizePolicy, QPushButton, QSplitter,
@@ -1327,6 +1328,7 @@ class PreviewPanel(QWidget):
         self._python_preview_active = False
         self._frame_failure_count = 0
         self._runtime_error_emitted = False
+        self._last_pointer_status_ts = -1.0
 
         self._init_ui()
 
@@ -1754,6 +1756,17 @@ class PreviewPanel(QWidget):
 
     def _update_status_label(self, x, y, widget):
         """Update status bar with mouse position and widget info."""
+        if (
+            bool(getattr(self.overlay._config, "lightweight_drag", True))
+            and (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band)
+        ):
+            now = time.monotonic()
+            if self._last_pointer_status_ts >= 0.0 and (now - self._last_pointer_status_ts) < (1.0 / 30.0):
+                return
+            self._last_pointer_status_ts = now
+        else:
+            self._last_pointer_status_ts = -1.0
+
         if x < 0 or y < 0:
             if self._status_label.text() != "Pointer idle":
                 self._status_label.setText("Pointer idle")

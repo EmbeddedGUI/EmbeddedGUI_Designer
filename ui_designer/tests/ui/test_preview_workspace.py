@@ -220,6 +220,24 @@ class TestPreviewPanelFallback:
         )
         _dispose_widget(panel)
 
+    def test_pointer_status_updates_are_throttled_during_lightweight_drag(self, qapp, monkeypatch):
+        from ui_designer.ui import preview_panel as preview_panel_module
+        from ui_designer.ui.preview_panel import PreviewPanel
+
+        panel = PreviewPanel(screen_width=240, screen_height=320)
+        panel.overlay._config.lightweight_drag = True
+        panel.overlay._dragging = True
+        ticks = iter([0.0, 0.01, 0.05])
+        monkeypatch.setattr(preview_panel_module.time, "monotonic", lambda: next(ticks))
+
+        panel._update_status_label(10, 10, None)
+        first_text = panel._status_label.text()
+        panel._update_status_label(20, 20, None)
+        assert panel._status_label.text() == first_text
+        panel._update_status_label(30, 30, None)
+        assert panel._status_label.text() == "(30, 30)"
+        _dispose_widget(panel)
+
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.preview_panel import PreviewPanel
 
