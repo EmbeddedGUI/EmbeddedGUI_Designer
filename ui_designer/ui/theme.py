@@ -971,6 +971,11 @@ QFrame#property_grid_section_fill[sectionExpanded="true"] {{
     border-bottom: 1px solid {t['accent']};
 }}
 
+QFrame#property_grid_section_cell[sectionHovered="true"],
+QFrame#property_grid_section_fill[sectionHovered="true"] {{
+    background-color: {t['surface_hover']};
+}}
+
 #property_grid_section_text {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
@@ -989,6 +994,11 @@ QFrame#property_grid_section_fill[sectionExpanded="true"] {{
 
 #property_grid_section_indicator[sectionExpanded="true"] {{
     color: {t['accent_hover']};
+}}
+
+#property_grid_section_text[sectionHovered="true"],
+#property_grid_section_indicator[sectionHovered="true"] {{
+    color: {t['text']};
 }}
 
 QFrame#property_grid_label_cell {{

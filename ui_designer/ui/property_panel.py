@@ -567,6 +567,7 @@ class PropertyPanel(QWidget):
         self._property_tree.setUniformRowHeights(False)
         self._property_tree.setSelectionMode(QTreeWidget.NoSelection)
         self._property_tree.setFocusPolicy(Qt.NoFocus)
+        self._property_tree.setMouseTracking(True)
         self._property_tree.header().setStretchLastSection(True)
         self._property_tree.header().setSectionResizeMode(0, QHeaderView.Interactive)
         self._property_tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -576,11 +577,14 @@ class PropertyPanel(QWidget):
         self._property_tree.header().sectionResized.connect(self._on_property_tree_section_resized)
         self._property_tree.setExpandsOnDoubleClick(False)
         self._property_tree.itemClicked.connect(self._on_property_tree_item_clicked)
+        self._property_tree.itemEntered.connect(self._on_property_tree_item_entered)
         self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
         self._property_tree.itemCollapsed.connect(self._on_property_tree_item_collapsed)
+        self._property_tree.viewport().installEventFilter(self)
         self._property_sections = OrderedDict()
         self._property_tree_items = {}
         self._property_grid_rows_by_widget = {}
+        self._hovered_property_section_title = ""
         self._property_tree.hide()
 
         self._no_selection_label = self._create_no_selection_label()
@@ -689,6 +693,7 @@ class PropertyPanel(QWidget):
         self._property_sections = OrderedDict()
         self._property_tree_items = {}
         self._property_grid_rows_by_widget = {}
+        self._hovered_property_section_title = ""
 
     def _on_property_tree_section_resized(self, logical_index, _old_size, new_size):
         if logical_index != 0:
@@ -930,6 +935,20 @@ class PropertyPanel(QWidget):
             return
         item.setExpanded(not item.isExpanded())
 
+    def _on_property_tree_item_entered(self, item, _column):
+        title = self._property_tree_items.get(id(item))
+        if title == self._hovered_property_section_title:
+            return
+        if self._hovered_property_section_title:
+            previous = self._property_sections.get(self._hovered_property_section_title)
+            if previous is not None:
+                self._refresh_property_section_hover(previous, hovered=False)
+        self._hovered_property_section_title = title or ""
+        if title:
+            section = self._property_sections.get(title)
+            if section is not None:
+                self._refresh_property_section_hover(section, hovered=True)
+
     def _apply_property_tree_filter(self, text):
         if not hasattr(self, "_property_tree"):
             return
@@ -1001,6 +1020,17 @@ class PropertyPanel(QWidget):
             style.polish(title_label)
             title_label.update()
 
+    def _refresh_property_section_hover(self, section, hovered):
+        for key in ("header_frame", "header_fill", "arrow_label", "title_label"):
+            target = section.get(key)
+            if not isinstance(target, QWidget):
+                continue
+            target.setProperty("sectionHovered", bool(hovered))
+            style = target.style()
+            style.unpolish(target)
+            style.polish(target)
+            target.update()
+
     def eventFilter(self, watched, event):
         if isinstance(watched, QWidget):
             if event.type() == QEvent.FocusIn:
@@ -1015,6 +1045,13 @@ class PropertyPanel(QWidget):
                 row_data = self._property_grid_row_data(watched)
                 if row_data is not None:
                     QTimer.singleShot(0, lambda row_data=row_data: self._refresh_property_grid_row_hover_from_app(row_data))
+        viewport = getattr(getattr(self, "_property_tree", None), "viewport", lambda: None)()
+        if watched is viewport and event.type() == QEvent.Leave:
+            if self._hovered_property_section_title:
+                previous = self._property_sections.get(self._hovered_property_section_title)
+                if previous is not None:
+                    self._refresh_property_section_hover(previous, hovered=False)
+                self._hovered_property_section_title = ""
         return super().eventFilter(watched, event)
 
     def _make_status_chip(self, text, tone=None):

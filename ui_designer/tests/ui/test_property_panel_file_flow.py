@@ -385,6 +385,21 @@ class TestPropertyPanelFileFlow:
         assert text_section["arrow_label"].text() == "▼"
         panel.deleteLater()
 
+    def test_property_grid_section_hover_tracks_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        text_section = panel._property_sections["Text"]
+        panel._refresh_property_section_hover(text_section, hovered=True)
+        assert text_section["header_frame"].property("sectionHovered") is True
+        panel._refresh_property_section_hover(text_section, hovered=False)
+        assert text_section["header_frame"].property("sectionHovered") is False
+        panel.deleteLater()
+
     def test_property_grid_preserves_name_column_width_across_rebuilds(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
