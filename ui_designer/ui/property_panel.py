@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox, QMessageBox, QFileDialog, QFrame, QSpinBox,
     QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication,
 )
-from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize
+from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize, QEvent, QTimer
 from PyQt5.QtGui import QFont, QColor, QBrush
 
 from qfluentwidgets import (
@@ -785,6 +785,9 @@ class PropertyPanel(QWidget):
     def _register_property_grid_row_widget(self, row_data, widget):
         if isinstance(widget, QWidget):
             self._property_grid_rows_by_widget[id(widget)] = row_data
+            if not bool(widget.property("_property_grid_focus_filter")):
+                widget.installEventFilter(self)
+                widget.setProperty("_property_grid_focus_filter", True)
 
     def _property_grid_row_data(self, widget):
         current = widget if isinstance(widget, QWidget) else None
@@ -799,12 +802,31 @@ class PropertyPanel(QWidget):
         row_data = self._property_grid_row_data(widget)
         if row_data is None:
             return
-        tone_value = str(tone or "")
+        row_data["rowTone"] = str(tone or "")
+        self._refresh_property_grid_row_style(row_data)
+
+    def _set_property_grid_row_focus(self, widget, active):
+        row_data = self._property_grid_row_data(widget)
+        if row_data is None:
+            return
+        row_data["focusActive"] = bool(active)
+        self._refresh_property_grid_row_style(row_data)
+
+    def _refresh_property_grid_row_focus_from_app(self, row_data):
+        focus_widget = QApplication.focusWidget()
+        active_row = self._property_grid_row_data(focus_widget)
+        row_data["focusActive"] = active_row is row_data
+        self._refresh_property_grid_row_style(row_data)
+
+    def _refresh_property_grid_row_style(self, row_data):
+        tone_value = str(row_data.get("rowTone", "") or "")
+        focus_active = bool(row_data.get("focusActive"))
         for key in ("label_frame", "editor_host", "label_widget"):
             target = row_data.get(key)
             if not isinstance(target, QWidget):
                 continue
             target.setProperty("rowTone", tone_value)
+            target.setProperty("focusActive", focus_active)
             style = target.style()
             style.unpolish(target)
             style.polish(target)
@@ -893,6 +915,16 @@ class PropertyPanel(QWidget):
         manager = _ensure_fluent_engineering_style_manager(QApplication.instance())
         if manager is not None:
             manager.refresh_all()
+
+    def eventFilter(self, watched, event):
+        if isinstance(watched, QWidget):
+            if event.type() == QEvent.FocusIn:
+                self._set_property_grid_row_focus(watched, True)
+            elif event.type() == QEvent.FocusOut:
+                row_data = self._property_grid_row_data(watched)
+                if row_data is not None:
+                    QTimer.singleShot(0, lambda row_data=row_data: self._refresh_property_grid_row_focus_from_app(row_data))
+        return super().eventFilter(watched, event)
 
     def _make_status_chip(self, text, tone=None):
         chip = QLabel(text)

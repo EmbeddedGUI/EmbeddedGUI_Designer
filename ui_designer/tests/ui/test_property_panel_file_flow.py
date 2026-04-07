@@ -330,6 +330,30 @@ class TestPropertyPanelFileFlow:
         assert group.isChecked() is False
         panel.deleteLater()
 
+    def test_property_grid_focus_highlights_active_row(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+        panel.show()
+        qapp.processEvents()
+
+        x_row = panel._property_grid_row_data(panel._editors["x"])
+        name_row = panel._property_grid_row_data(panel._editors["name"])
+
+        panel._editors["x"].setFocus()
+        qapp.processEvents()
+        assert x_row["label_frame"].property("focusActive") is True
+        assert name_row["label_frame"].property("focusActive") in (False, None)
+
+        panel._editors["name"].setFocus()
+        qapp.processEvents()
+        assert name_row["label_frame"].property("focusActive") is True
+        assert x_row["label_frame"].property("focusActive") is False
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

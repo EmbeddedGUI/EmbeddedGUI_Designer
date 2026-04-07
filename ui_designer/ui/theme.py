@@ -998,6 +998,18 @@ QFrame#property_grid_editor_cell[rowTone="danger"] {{
     background-color: {t['selection_soft']};
 }}
 
+QFrame#property_grid_label_cell[focusActive="true"] {{
+    background-color: {t['panel_soft']};
+    border-left: 2px solid {t['focus_ring']};
+    border-right: 1px solid {t['border']};
+    border-bottom: 1px solid {t['border']};
+}}
+
+QFrame#property_grid_editor_cell[focusActive="true"] {{
+    background-color: {t['panel_soft']};
+    border-bottom: 1px solid {t['border']};
+}}
+
 #property_grid_label_text[rowTone="accent"] {{
     color: {t['accent_hover']};
 }}
@@ -1008,6 +1020,10 @@ QFrame#property_grid_editor_cell[rowTone="danger"] {{
 
 #property_grid_label_text[rowTone="danger"] {{
     color: {t['danger']};
+}}
+
+#property_grid_label_text[focusActive="true"] {{
+    color: {t['text']};
 }}
 
 #property_panel_eyebrow,

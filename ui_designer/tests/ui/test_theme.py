@@ -565,6 +565,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         property_grid_accent = css.split('QFrame#property_grid_label_cell[rowTone="accent"],', 1)[1].split("}", 1)[0]
         property_grid_warning = css.split('QFrame#property_grid_label_cell[rowTone="warning"],', 1)[1].split("}", 1)[0]
         property_grid_danger = css.split('QFrame#property_grid_label_cell[rowTone="danger"],', 1)[1].split("}", 1)[0]
+        property_grid_focus = css.split('QFrame#property_grid_label_cell[focusActive="true"] {', 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -593,6 +594,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['accent_soft']};" in property_grid_accent
         assert f"background-color: {t['panel_soft']};" in property_grid_warning
         assert f"background-color: {t['selection_soft']};" in property_grid_danger
+        assert f"border-left: 2px solid {t['focus_ring']};" in property_grid_focus
         assert "background-color: transparent;" in property_chip
         assert f"border-top: 1px solid {t['border']};" in property_chip
         assert "border-right: none;" in property_chip
