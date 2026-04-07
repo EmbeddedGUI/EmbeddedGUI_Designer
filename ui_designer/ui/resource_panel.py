@@ -47,6 +47,7 @@ from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
 from ..services.font_charset_presets import (
     build_charset,
     charset_presets,
+    infer_charset_presets_from_text,
     preview_charset_chars,
     serialize_charset_chars,
     suggest_charset_filename,
@@ -3454,6 +3455,14 @@ class ResourcePanel(QWidget):
             normalized_initial = _suggest_charset_filename_for_resource(resource_type, source_name)
         if not initial_preset_ids:
             initial_preset_ids = _suggest_charset_presets_for_resource("text", normalized_initial)
+            if not initial_preset_ids and normalized_initial:
+                existing_text_path = os.path.join(self._src_dir, normalized_initial)
+                if os.path.isfile(existing_text_path):
+                    try:
+                        with open(existing_text_path, "r", encoding="utf-8", errors="replace") as handle:
+                            initial_preset_ids = infer_charset_presets_from_text(handle.read())
+                    except OSError:
+                        initial_preset_ids = ()
             if not initial_preset_ids:
                 initial_preset_ids = _suggest_charset_presets_for_resource(resource_type, source_name)
         self._open_generate_charset_dialog(

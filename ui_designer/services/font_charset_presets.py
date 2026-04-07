@@ -298,6 +298,29 @@ def suggest_charset_filename(preset_ids, custom_text: str = "") -> str:
     return "charset.txt"
 
 
+def infer_charset_presets_from_text(text: str) -> tuple[str, ...]:
+    """Infer a built-in preset when text content exactly matches one preset."""
+
+    chars = custom_chars_from_text(text)
+    if not chars:
+        return ()
+
+    char_set = set(chars)
+    char_count = len(chars)
+    matches = []
+    for preset in _PRESETS:
+        preset_chars = charset_chars_for_preset(preset.preset_id)
+        if len(preset_chars) != char_count:
+            continue
+        if set(preset_chars) != char_set:
+            continue
+        matches.append(preset.preset_id)
+
+    if len(matches) == 1:
+        return (matches[0],)
+    return ()
+
+
 def summarize_charset_diff(existing_text: str, new_chars) -> CharsetDiff:
     """Compare an existing text file body with a newly generated charset."""
 

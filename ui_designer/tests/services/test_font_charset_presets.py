@@ -3,6 +3,7 @@
 from ui_designer.services.font_charset_presets import (
     build_charset,
     charset_count_for_preset,
+    infer_charset_presets_from_text,
     charset_presets,
     custom_chars_from_text,
     preview_charset_chars,
@@ -68,6 +69,13 @@ def test_suggest_charset_filename_covers_single_combo_and_custom_cases():
     assert suggest_charset_filename(("ascii_printable", "gb2312_level1_hanzi"), "") == "charset_combo.txt"
     assert suggest_charset_filename(("ascii_printable", "gb2312_level1_hanzi"), "中") == "charset_combo_custom.txt"
     assert suggest_charset_filename((), "中") == "charset_custom.txt"
+
+
+def test_infer_charset_presets_from_text_matches_exact_builtin_content():
+    assert infer_charset_presets_from_text(serialize_charset_chars((" ", "A", "B"))) == ()
+    assert infer_charset_presets_from_text(serialize_charset_chars(build_charset(("ascii_printable",)).chars)) == (
+        "ascii_printable",
+    )
 
 
 def test_summarize_charset_diff_tracks_added_and_removed_chars():
