@@ -2516,6 +2516,9 @@ class MainWindow(QMainWindow):
             self.property_panel.set_inspector_group_expanded_state(
                 getattr(ui_prefs, "inspector_group_expanded", {}) or {},
             )
+            self.property_panel.set_property_grid_name_column_width(
+                getattr(ui_prefs, "property_grid_name_column_width", 176),
+            )
 
         self._clamp_window_to_available_screen()
 
@@ -2595,6 +2598,11 @@ class MainWindow(QMainWindow):
                     self.property_panel.inspector_group_expanded_snapshot()
                     if hasattr(self, "property_panel")
                     else {}
+                ),
+                property_grid_name_column_width=(
+                    self.property_panel.property_grid_name_column_width()
+                    if hasattr(self, "property_panel")
+                    else 176
                 ),
             )
             self._config.workspace_state = ui_prefs.to_workspace_state()

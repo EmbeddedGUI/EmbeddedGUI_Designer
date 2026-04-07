@@ -13,3 +13,12 @@ def test_inspector_group_expanded_roundtrip():
 def test_inspector_group_expanded_ignores_bad_payload():
     u = UIPreferences.from_workspace_state({"inspector_group_expanded": "nope"})
     assert u.inspector_group_expanded == {}
+
+
+def test_property_grid_name_column_width_roundtrip_and_clamp():
+    u = UIPreferences(property_grid_name_column_width=96)
+    state = u.to_workspace_state()
+    assert state["property_grid_name_column_width"] == 120
+
+    u2 = UIPreferences.from_workspace_state({"property_grid_name_column_width": 512})
+    assert u2.property_grid_name_column_width == 480

@@ -21,6 +21,14 @@ def _normalize_inspector_group_expanded(raw: Any) -> dict[str, bool]:
     return out
 
 
+def _normalize_property_grid_name_column_width(raw: Any) -> int:
+    try:
+        value = int(raw or 176)
+    except (TypeError, ValueError):
+        value = 176
+    return max(120, min(value, 480))
+
+
 @dataclass
 class UIPreferences:
     """Serializable workspace panel preferences."""
@@ -37,6 +45,7 @@ class UIPreferences:
     active_left_panel: str = "project"
     panel_layout: dict[str, Any] = field(default_factory=dict)
     inspector_group_expanded: dict[str, bool] = field(default_factory=dict)
+    property_grid_name_column_width: int = 176
 
     @classmethod
     def from_workspace_state(cls, state: dict[str, Any] | None) -> "UIPreferences":
@@ -67,6 +76,9 @@ class UIPreferences:
             active_left_panel=active_left_panel,
             panel_layout=data.get("panel_layout", {}) if isinstance(data.get("panel_layout", {}), dict) else {},
             inspector_group_expanded=_normalize_inspector_group_expanded(data.get("inspector_group_expanded")),
+            property_grid_name_column_width=_normalize_property_grid_name_column_width(
+                data.get("property_grid_name_column_width", 176)
+            ),
         )
 
     def to_workspace_state(self) -> dict[str, Any]:
@@ -83,4 +95,7 @@ class UIPreferences:
             "active_left_panel": "project" if str(self.active_left_panel or "project") == "status" else self.active_left_panel,
             "panel_layout": self.panel_layout,
             "inspector_group_expanded": dict(self.inspector_group_expanded),
+            "property_grid_name_column_width": _normalize_property_grid_name_column_width(
+                self.property_grid_name_column_width
+            ),
         }

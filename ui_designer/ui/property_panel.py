@@ -344,6 +344,18 @@ class PropertyPanel(QWidget):
         """Return flags to merge into workspace_state when saving the window."""
         return dict(self._inspector_group_expanded)
 
+    def set_property_grid_name_column_width(self, width):
+        try:
+            value = int(width or 176)
+        except (TypeError, ValueError):
+            value = 176
+        self._property_tree_name_column_width = max(120, min(value, 480))
+        if hasattr(self, "_property_tree"):
+            self._property_tree.setColumnWidth(0, self._property_tree_name_column_width)
+
+    def property_grid_name_column_width(self):
+        return int(getattr(self, "_property_tree_name_column_width", 176) or 176)
+
     def _inspector_group_storage_key(self, title: str) -> str:
         title = (title or "").strip()
         if len(self._selection) > 1:

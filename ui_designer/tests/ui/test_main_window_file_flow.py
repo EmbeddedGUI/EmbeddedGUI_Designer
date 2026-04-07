@@ -8164,6 +8164,27 @@ class TestMainWindowFileFlow:
         assert window2.property_panel.inspector_group_expanded_snapshot() == {"button\tStyle": False}
         _close_window(window2)
 
+    def test_property_grid_name_column_width_persists_and_restores(self, qapp, isolated_config, monkeypatch):
+        from PyQt5.QtCore import QByteArray
+
+        from ui_designer.ui.main_window import MainWindow
+
+        window = MainWindow("")
+        window.property_panel.set_property_grid_name_column_width(222)
+        monkeypatch.setattr(window, "saveGeometry", lambda: QByteArray())
+        monkeypatch.setattr(window, "saveState", lambda: QByteArray())
+        window._save_window_state_to_config()
+        assert isolated_config.workspace_state.get("property_grid_name_column_width") == 222
+        _close_window(window)
+
+        isolated_config.workspace_layout_version = 3
+        isolated_config.workspace_state = {
+            "property_grid_name_column_width": 244,
+        }
+        window2 = MainWindow("")
+        assert window2.property_panel.property_grid_name_column_width() == 244
+        _close_window(window2)
+
     def test_main_window_clamps_to_available_screen(self, qapp, monkeypatch):
         from PyQt5.QtCore import QRect
 

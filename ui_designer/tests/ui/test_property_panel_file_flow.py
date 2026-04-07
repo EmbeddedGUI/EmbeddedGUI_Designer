@@ -402,6 +402,19 @@ class TestPropertyPanelFileFlow:
         assert panel._property_tree.columnWidth(0) == 214
         panel.deleteLater()
 
+    def test_property_grid_name_column_width_setter_clamps_and_applies(self, qapp):
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+        panel.set_property_grid_name_column_width(96)
+        assert panel.property_grid_name_column_width() == 120
+        assert panel._property_tree.columnWidth(0) == 120
+
+        panel.set_property_grid_name_column_width(248)
+        assert panel.property_grid_name_column_width() == 248
+        assert panel._property_tree.columnWidth(0) == 248
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
