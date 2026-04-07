@@ -275,6 +275,30 @@ def _suggest_charset_filename_for_resource(resource_type, filename):
     return ""
 
 
+_CN_FONT_KEYWORDS = (
+    "noto", "sc", "hans", "cn", "chinese", "cjk", "simhei", "simsun",
+    "source_han", "wenquanyi", "unifont", "wqy", "notosans",
+)
+_ICON_FONT_KEYWORDS = (
+    "material", "symbol", "icon", "fontawesome", "fa-", "ionicon",
+    "feather", "boxicon", "remixicon",
+)
+
+
+def _suggest_charset_presets_for_resource(resource_type, filename):
+    if resource_type != "font":
+        return ()
+
+    name = os.path.basename(str(filename or "")).lower()
+    if any(keyword in name for keyword in _ICON_FONT_KEYWORDS):
+        return ()
+    if "gbk" in name:
+        return ("gbk_all",)
+    if any(keyword in name for keyword in _CN_FONT_KEYWORDS):
+        return ("gb2312_all",)
+    return ("ascii_printable",)
+
+
 # -- Lazy-loading image list --------------------------------------------
 
 class _LazyImageList(QListWidget):
@@ -568,12 +592,13 @@ class _PreviewWidget(QWidget):
 class _GenerateCharsetDialog(QDialog):
     """Create or overwrite a text resource from built-in charset presets."""
 
-    def __init__(self, resource_dir, initial_filename="", source_label="", parent=None):
+    def __init__(self, resource_dir, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
         super().__init__(parent)
         self.setObjectName("resource_dialog_shell")
         self._resource_dir = resource_dir or ""
         self._initial_filename = str(initial_filename or "").strip()
         self._source_label = str(source_label or "").strip()
+        self._initial_preset_ids = tuple(initial_preset_ids or ())
         self._presets = charset_presets()
         self._preset_checks = {}
         self._filename_manual = False
@@ -771,6 +796,11 @@ class _GenerateCharsetDialog(QDialog):
             self._filename_edit.setText(self._initial_filename)
             self._filename_manual = True
             self._suggested_filename = self._initial_filename
+
+        for preset_id in self._initial_preset_ids:
+            checkbox = self._preset_checks.get(preset_id)
+            if checkbox is not None:
+                checkbox.setChecked(True)
 
         self._refresh_preview()
 
@@ -3377,13 +3407,19 @@ class ResourcePanel(QWidget):
         active_type, active_name = self._selected_resource_for_active_tab()
         initial_filename = _suggest_charset_filename_for_resource(active_type, active_name)
         source_label = active_name if active_type in {"font", "text"} else ""
-        self._open_generate_charset_dialog(initial_filename=initial_filename, source_label=source_label)
+        initial_preset_ids = _suggest_charset_presets_for_resource(active_type, active_name)
+        self._open_generate_charset_dialog(
+            initial_filename=initial_filename,
+            source_label=source_label,
+            initial_preset_ids=initial_preset_ids,
+        )
 
-    def _open_generate_charset_dialog(self, initial_filename="", source_label=""):
+    def _open_generate_charset_dialog(self, initial_filename="", source_label="", initial_preset_ids=()):
         dialog = _GenerateCharsetDialog(
             self._src_dir,
             initial_filename=initial_filename,
             source_label=source_label,
+            initial_preset_ids=initial_preset_ids,
             parent=self,
         )
         if dialog.exec_() != QDialog.Accepted:
@@ -3747,6 +3783,7 @@ class ResourcePanel(QWidget):
                 lambda: self._open_generate_charset_dialog(
                     initial_filename=_suggest_charset_filename_for_resource(resource_type, filename),
                     source_label=filename,
+                    initial_preset_ids=_suggest_charset_presets_for_resource(resource_type, filename),
                 )
             )
 

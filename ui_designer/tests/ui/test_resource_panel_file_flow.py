@@ -414,8 +414,12 @@ class TestResourcePanelFileFlow:
         monkeypatch.setattr(
             panel,
             "_open_generate_charset_dialog",
-            lambda initial_filename="", source_label="": captured.update(
-                {"filename": initial_filename, "source_label": source_label}
+            lambda initial_filename="", source_label="", initial_preset_ids=(): captured.update(
+                {
+                    "filename": initial_filename,
+                    "source_label": source_label,
+                    "initial_preset_ids": initial_preset_ids,
+                }
             ),
         )
 
@@ -435,6 +439,7 @@ class TestResourcePanelFileFlow:
         assert "Generate Charset..." in captured["actions"]
         assert captured["filename"] == "charset_existing.txt"
         assert captured["source_label"] == "charset_existing.txt"
+        assert captured["initial_preset_ids"] == ()
         panel.deleteLater()
 
     def test_font_resource_context_menu_can_open_generate_charset_with_suggested_filename(self, qapp, tmp_path, monkeypatch):
@@ -463,8 +468,12 @@ class TestResourcePanelFileFlow:
         monkeypatch.setattr(
             panel,
             "_open_generate_charset_dialog",
-            lambda initial_filename="", source_label="": captured.update(
-                {"filename": initial_filename, "source_label": source_label}
+            lambda initial_filename="", source_label="", initial_preset_ids=(): captured.update(
+                {
+                    "filename": initial_filename,
+                    "source_label": source_label,
+                    "initial_preset_ids": initial_preset_ids,
+                }
             ),
         )
 
@@ -484,6 +493,7 @@ class TestResourcePanelFileFlow:
         assert "Generate Charset..." in captured["actions"]
         assert captured["filename"] == "demo_font_charset.txt"
         assert captured["source_label"] == "demo_font.ttf"
+        assert captured["initial_preset_ids"] == ("ascii_printable",)
         panel.deleteLater()
 
     def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):
@@ -2207,6 +2217,24 @@ class TestResourcePanelFileFlow:
         finally:
             dialog.deleteLater()
 
+    def test_generate_charset_dialog_can_apply_initial_preset_selection(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        dialog = _GenerateCharsetDialog(
+            str(resource_dir),
+            initial_filename="demo_font_charset.txt",
+            source_label="simhei.ttf",
+            initial_preset_ids=("gb2312_all",),
+        )
+        try:
+            assert dialog._preset_checks["gb2312_all"].isChecked() is True
+            assert dialog._char_metric.text() == "7540 chars"
+        finally:
+            dialog.deleteLater()
+
     def test_generate_charset_creates_text_resource_refreshes_panel_and_emits_signals(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
@@ -2226,10 +2254,11 @@ class TestResourcePanelFileFlow:
         panel.feedback_message.connect(messages.append)
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
                 assert source_label == ""
+                assert initial_preset_ids == ()
 
             def exec_(self):
                 return 1
@@ -2285,10 +2314,11 @@ class TestResourcePanelFileFlow:
         panel.resource_imported.connect(lambda: imported.append(True))
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
                 assert source_label == ""
+                assert initial_preset_ids == ()
 
             def exec_(self):
                 return 1
@@ -2395,10 +2425,11 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
 
             def exec_(self):
                 return 0
@@ -2411,6 +2442,7 @@ class TestResourcePanelFileFlow:
             "resource_dir": str(resource_dir),
             "initial_filename": "charset_existing.txt",
             "source_label": "charset_existing.txt",
+            "initial_preset_ids": (),
         }
         panel.deleteLater()
 
@@ -2434,10 +2466,11 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
 
             def exec_(self):
                 return 0
@@ -2450,5 +2483,47 @@ class TestResourcePanelFileFlow:
             "resource_dir": str(resource_dir),
             "initial_filename": "demo_font_charset.txt",
             "source_label": "demo_font.ttf",
+            "initial_preset_ids": ("ascii_printable",),
+        }
+        panel.deleteLater()
+
+    def test_generate_charset_prefills_cn_preset_from_selected_cn_font_tab(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        font_path = resource_dir / "simhei.ttf"
+        font_path.write_bytes(b"FONT")
+
+        catalog = ResourceCatalog()
+        catalog.add_font("simhei.ttf")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("font", "simhei.ttf")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "simhei_charset.txt",
+            "source_label": "simhei.ttf",
+            "initial_preset_ids": ("gb2312_all",),
         }
         panel.deleteLater()
