@@ -73,6 +73,7 @@ class TestDebugPanel:
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
         assert panel._clear_btn.statusTip() == panel._clear_btn.toolTip()
         assert panel._clear_btn.accessibleName() == "Clear debug output unavailable"
+        assert panel._rebuild_btn.isHidden() is True
         assert panel._title_label.toolTip() == "Debug output: 0 lines. Last message: No output yet."
         assert panel._title_label.statusTip() == panel._title_label.toolTip()
         assert panel._title_label.accessibleName() == "Debug output title: 0 lines"
@@ -108,6 +109,32 @@ class TestDebugPanel:
         assert panel.accessibleName() == "Debug output: 0 lines. Last message: No output yet."
         assert panel._stream_state_chip.text() == "Idle"
         assert panel._clear_btn.toolTip() == "Debug output is already clear."
+        panel.deleteLater()
+
+    def test_rebuild_button_can_be_exposed_for_failure_recovery(self, qapp):
+        from ui_designer.ui.debug_panel import DebugPanel
+
+        panel = DebugPanel()
+        clicks = []
+        panel.rebuild_requested.connect(lambda: clicks.append("rebuild"))
+        panel.append_text("=== Compilation Failed ===", "error")
+
+        panel.set_rebuild_action_state(
+            visible=True,
+            enabled=True,
+            tooltip="Clean rebuild the project.",
+            accessible_name="Debug output recovery action: rebuild EGUI project",
+        )
+
+        assert panel._rebuild_btn.isHidden() is False
+        assert panel._rebuild_btn.isEnabled() is True
+        assert panel._rebuild_btn.toolTip() == "Clean rebuild the project."
+        assert panel._rebuild_btn.accessibleName() == "Debug output recovery action: rebuild EGUI project"
+        assert panel._controls_strip.accessibleName() == "Debug output actions. 1 line. Recovery rebuild available."
+
+        panel._rebuild_btn.click()
+
+        assert clicks == ["rebuild"]
         panel.deleteLater()
 
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):

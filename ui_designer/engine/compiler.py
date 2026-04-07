@@ -121,11 +121,12 @@ class CompileWorker(QThread):
     finished = pyqtSignal(bool, str, object)  # success, message, old_process
     log = pyqtSignal(str, str)  # message, msg_type
 
-    def __init__(self, compiler, code=None, files_dict=None, parent=None):
+    def __init__(self, compiler, code=None, files_dict=None, force_rebuild=False, parent=None):
         super().__init__(parent)
         self.compiler = compiler
         self.code = code
         self.files_dict = files_dict
+        self.force_rebuild = bool(force_rebuild)
         self._old_process = None
 
     def run(self):
@@ -148,14 +149,18 @@ class CompileWorker(QThread):
             self.log.emit(f"Write files: {(t2-t1)*1000:.0f}ms (no changes)", "info")
 
         # Compile
-        use_fast = self.compiler._build_config is not None and written
-        self.log.emit(f"Compiling ({'fast' if use_fast else 'make'})...", "info")
-        success, output = self.compiler.compile()
+        use_fast = (not self.force_rebuild) and self.compiler._build_config is not None and written
+        if self.force_rebuild:
+            self.log.emit("Compiling (clean rebuild)...", "info")
+        else:
+            self.log.emit(f"Compiling ({'fast' if use_fast else 'make'})...", "info")
+        success, output = self.compiler.compile(force_rebuild=self.force_rebuild)
         t3 = time.time()
         self.log.emit(f"Compile completed: {(t3-t2)*1000:.0f}ms", "info")
 
         if not success:
-            self.finished.emit(False, f"Compilation failed:\n{output}", None)
+            failed_label = "Rebuild failed" if self.force_rebuild else "Compilation failed"
+            self.finished.emit(False, f"{failed_label}:\n{output}", None)
             return
 
         # Copy and start new exe via bridge
@@ -175,7 +180,8 @@ class CompileWorker(QThread):
             return
 
         self.log.emit(f"Total compile time: {(t4-t0)*1000:.0f}ms", "success")
-        self.finished.emit(True, f"Build #{self.compiler._compile_count} OK", None)
+        success_label = "Rebuild" if self.force_rebuild else "Build"
+        self.finished.emit(True, f"{success_label} #{self.compiler._compile_count} OK", None)
 
 
 class PrecompileWorker(QThread):
@@ -413,7 +419,7 @@ class CompilerEngine:
         self._last_changed_files = [f for f in written if f.endswith(".c")]
         return written
 
-    def compile(self, changed_files=None):
+    def compile(self, changed_files=None, force_rebuild=False):
         """Run incremental compilation. Returns (success, output).
 
         Uses a two-tier strategy:
@@ -427,9 +433,14 @@ class CompilerEngine:
         Args:
             changed_files: list of changed .c basenames (e.g. ["uicode.c"]).
                 If None, uses self._last_changed_files from write_project_files().
+            force_rebuild: when True, bypass incremental compilation and run a
+                clean full rebuild via make.
         """
         if changed_files is None:
             changed_files = self._last_changed_files
+
+        if force_rebuild:
+            return self._make_compile(clean=True)
 
         lib_path = os.path.join(self.project_root, "output", "libegui.a")
         can_fast = (
@@ -449,10 +460,39 @@ class CompilerEngine:
 
         return self._make_compile()
 
-    def _make_compile(self):
+    def _make_clean(self):
+        """Run ``make clean`` for the current app/port configuration."""
+        try:
+            result = subprocess.run(
+                ["make", "clean", f"APP={self.app_name}",
+                 "PORT=designer",
+                 f"EGUI_APP_ROOT_PATH={self.app_root_arg}",
+                 "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0"],
+                cwd=self.project_root,
+                capture_output=True, text=True, timeout=30,
+            )
+            output = result.stdout + result.stderr
+            if result.returncode != 0:
+                return False, output or "make clean failed"
+            return True, output
+        except subprocess.TimeoutExpired:
+            return False, "make clean timed out"
+        except FileNotFoundError:
+            return False, "make not found in PATH"
+
+    def _make_compile(self, clean=False):
         """Full make-based compilation (slow path). Also refreshes BuildConfig."""
         if getattr(self, "_app_root_error", ""):
             return False, self._app_root_error
+        output_parts = []
+        if clean:
+            self._build_config = None
+            self.stop_exe()
+            cleaned, clean_output = self._make_clean()
+            if clean_output:
+                output_parts.append(clean_output)
+            if not cleaned:
+                return False, "\n".join(part.rstrip() for part in output_parts if part).strip()
         # Delete stale output/main.exe to force re-link.  The exe is shared
         # across all apps, so switching apps (e.g. 240x320 → 320x480) can
         # leave a stale binary that make considers up-to-date.
@@ -474,7 +514,8 @@ class CompilerEngine:
             )
             self._compile_count += 1
             success = result.returncode == 0
-            output = result.stdout + result.stderr
+            output_parts.append(result.stdout + result.stderr)
+            output = "\n".join(part.rstrip() for part in output_parts if part).strip()
 
             # After successful make, extract build config for future fast compiles
             if success:
@@ -660,7 +701,7 @@ class CompilerEngine:
                 self._last_runtime_error = str(exc)
                 pass
 
-    def compile_and_run(self, code):
+    def compile_and_run(self, code, force_rebuild=False):
         """Full cycle: write code -> compile -> start bridge -> return.
 
         Returns (success, message, None).
@@ -672,9 +713,10 @@ class CompilerEngine:
         self.write_uicode(code)
 
         # Compile
-        success, output = self.compile()
+        success, output = self.compile(force_rebuild=force_rebuild)
         if not success:
-            return False, f"Compilation failed:\n{output}", None
+            failed_label = "Rebuild failed" if force_rebuild else "Compilation failed"
+            return False, f"{failed_label}:\n{output}", None
 
         # Copy new exe and start bridge
         ok, msg, _ = self._copy_and_start()
@@ -688,18 +730,19 @@ class CompilerEngine:
 
         return True, f"Build #{self._compile_count} OK", None
 
-    def compile_and_run_async(self, code, callback, files_dict=None):
+    def compile_and_run_async(self, code, callback, files_dict=None, force_rebuild=False):
         """Asynchronous version - runs compile in background thread.
 
         Args:
             code: Generated C code to compile (single-file mode, can be None)
             callback: Function(success, message, old_process) called when done
             files_dict: dict of filename->content (multi-file mode)
+            force_rebuild: when True, run a full clean rebuild before preview
 
         Returns:
             CompileWorker: The worker thread (caller should keep reference)
         """
-        worker = CompileWorker(self, code=code, files_dict=files_dict)
+        worker = CompileWorker(self, code=code, files_dict=files_dict, force_rebuild=force_rebuild)
         worker.finished.connect(callback)
         worker.start()
         return worker

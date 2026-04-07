@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
 from .theme import designer_font_size_pt, theme_tokens
@@ -47,8 +47,14 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
 class DebugPanel(QWidget):
     """Panel for displaying compile output and debug information."""
 
+    rebuild_requested = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._rebuild_action_visible = False
+        self._rebuild_action_enabled = False
+        self._rebuild_button_tooltip = ""
+        self._rebuild_button_accessible_name = ""
         self._init_ui()
         self._update_accessibility_summary("No output yet.")
 
@@ -108,6 +114,12 @@ class DebugPanel(QWidget):
         self._clear_btn = QPushButton("Clear")
         self._clear_btn.clicked.connect(self.clear)
         controls_layout.addWidget(self._clear_btn)
+
+        self._rebuild_btn = QPushButton("Rebuild Project")
+        self._rebuild_btn.clicked.connect(self.rebuild_requested.emit)
+        self._rebuild_btn.hide()
+        controls_layout.addWidget(self._rebuild_btn)
+
         controls_layout.addStretch(1)
         header_layout.addWidget(self._controls_strip)
 
@@ -137,6 +149,24 @@ class DebugPanel(QWidget):
 
         self._cmd_format = QTextCharFormat()
         self._cmd_format.setForeground(QColor("#ffd43b"))
+
+    def _current_last_message(self):
+        lines = self._output.toPlainText().splitlines()
+        if not lines:
+            return "No output yet."
+        return lines[-1]
+
+    def set_rebuild_action_state(self, *, visible=False, enabled=False, tooltip="", accessible_name=""):
+        self._rebuild_action_visible = bool(visible)
+        self._rebuild_action_enabled = bool(enabled) and self._rebuild_action_visible
+        self._rebuild_button_tooltip = str(tooltip or "")
+        self._rebuild_button_accessible_name = str(accessible_name or "")
+        self._rebuild_btn.setVisible(self._rebuild_action_visible)
+        self._rebuild_btn.setEnabled(self._rebuild_action_enabled)
+        self._update_accessibility_summary(self._current_last_message())
+
+    def is_rebuild_action_visible(self):
+        return bool(self._rebuild_action_visible)
 
     def _update_accessibility_summary(self, last_message):
         lines = self._output.toPlainText().splitlines()
@@ -204,10 +234,27 @@ class DebugPanel(QWidget):
             tooltip=clear_tooltip,
             accessible_name=clear_accessible_name,
         )
+        controls_summary = f"Debug output actions. {line_label}."
+        if self._rebuild_action_visible:
+            rebuild_tooltip = self._rebuild_button_tooltip or "Clean and rebuild the EGUI project."
+            if self._rebuild_action_enabled:
+                rebuild_accessible_name = self._rebuild_button_accessible_name or "Rebuild EGUI project from debug output"
+                controls_summary += " Recovery rebuild available."
+            else:
+                rebuild_accessible_name = (
+                    self._rebuild_button_accessible_name
+                    or "Rebuild EGUI project from debug output unavailable"
+                )
+                controls_summary += " Recovery rebuild unavailable."
+            _set_widget_metadata(
+                self._rebuild_btn,
+                tooltip=rebuild_tooltip,
+                accessible_name=rebuild_accessible_name,
+            )
         _set_widget_metadata(
             self._controls_strip,
-            tooltip=f"Debug output actions. {line_label}.",
-            accessible_name=f"Debug output actions. {line_label}.",
+            tooltip=controls_summary,
+            accessible_name=controls_summary,
         )
 
     def _timestamp(self):

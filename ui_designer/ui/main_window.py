@@ -308,6 +308,7 @@ class MainWindow(QMainWindow):
         self._syncing_tabs = False
         self._resources_need_regen = False
         self._pending_compile = False  # Track if compile needed after current one
+        self._pending_rebuild = False  # Track if a clean rebuild is queued
         self._undo_manager = UndoManager()
         self._undoing = False  # True during undo/redo to suppress snapshot recording
         self._active_batch_source = ""
@@ -332,6 +333,30 @@ class MainWindow(QMainWindow):
         self._show_welcome_page()
 
     # 鈹€鈹€ UI Construction 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+    def _update_debug_rebuild_action(self, show=None):
+        if not hasattr(self, "debug_panel") or not hasattr(self, "_rebuild_action"):
+            return
+        visible = self.debug_panel.is_rebuild_action_visible() if show is None else bool(show)
+        if not visible:
+            self.debug_panel.set_rebuild_action_state(visible=False, enabled=False)
+            return
+        enabled = bool(self._rebuild_action.isEnabled())
+        reason = self._compile_action_blocked_reason() if not enabled else ""
+        tooltip = self._rebuild_action.toolTip() or (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5)."
+        )
+        accessible_name = (
+            "Debug output recovery action: rebuild EGUI project"
+            if enabled
+            else f"Debug output recovery action unavailable: {reason}"
+        )
+        self.debug_panel.set_rebuild_action_state(
+            visible=True,
+            enabled=enabled,
+            tooltip=tooltip,
+            accessible_name=accessible_name,
+        )
 
     def _init_ui(self):
         self.setWindowTitle("EmbeddedGUI Designer")
@@ -1744,6 +1769,15 @@ class MainWindow(QMainWindow):
             else:
                 compile_hint = f"{base_text} {compile_context} Unavailable: {self._compile_action_blocked_reason()}."
             self._apply_action_hint(self._compile_action, compile_hint)
+        if hasattr(self, "_rebuild_action"):
+            base_text = "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5)."
+            rebuild_context = self._compile_action_context_summary()
+            if self._rebuild_action.isEnabled():
+                rebuild_hint = f"{base_text} {rebuild_context}"
+            else:
+                rebuild_hint = f"{base_text} {rebuild_context} Unavailable: {self._compile_action_blocked_reason()}."
+            self._apply_action_hint(self._rebuild_action, rebuild_hint)
+            self._update_debug_rebuild_action()
         if hasattr(self, "_stop_action"):
             base_text = "Stop the running preview executable."
             stop_context = self._stop_action_context_summary()
@@ -2631,6 +2665,7 @@ class MainWindow(QMainWindow):
     def _bump_async_generation(self):
         self._async_generation += 1
         self._pending_compile = False
+        self._pending_rebuild = False
 
     def _stop_background_timers(self):
         for timer in (
@@ -2881,6 +2916,7 @@ class MainWindow(QMainWindow):
         zip_exists = bool(zip_path and os.path.isfile(zip_path))
         log_exists = bool(log_path and os.path.isfile(log_path))
         self._compile_action.setEnabled(can_compile)
+        self._rebuild_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
         auto_compile_base = "Automatically compile and rerun the preview after changes."
         auto_compile_context = self._auto_compile_action_context_summary()
@@ -3391,6 +3427,7 @@ class MainWindow(QMainWindow):
         self.animations_panel.clear()
         self.page_fields_panel.clear()
         self.page_timers_panel.clear()
+        self._update_debug_rebuild_action(show=False)
         self._update_edit_actions()
         self._update_widget_browser_target(preferred_parent=None)
         self._update_workspace_chips()
@@ -3467,6 +3504,7 @@ class MainWindow(QMainWindow):
         self._central_stack.setCurrentIndex(0)
         self._welcome_page.refresh()
         self.setWindowTitle("EmbeddedGUI Designer")
+        self._update_debug_rebuild_action(show=False)
         self._update_main_view_metadata()
         self._update_sdk_status_label()
 
@@ -3868,6 +3906,13 @@ class MainWindow(QMainWindow):
         self._compile_action.setShortcut("F5")
         self._compile_action.triggered.connect(self._do_compile_and_run)
         build_menu.addAction(self._compile_action)
+
+        self._rebuild_action = QAction("Rebuild EGUI Project", self)
+        self._rebuild_action.setShortcut("Ctrl+F5")
+        self._rebuild_action.triggered.connect(self._do_rebuild_egui_project)
+        build_menu.addAction(self._rebuild_action)
+        self.debug_panel.rebuild_requested.connect(self._do_rebuild_egui_project)
+        self._update_debug_rebuild_action(show=False)
 
         self.auto_compile_action = QAction("Auto Compile", self)
         self.auto_compile_action.setCheckable(True)
@@ -8222,6 +8267,23 @@ class MainWindow(QMainWindow):
 
     def _do_compile_and_run(self):
         """Execute compile and run cycle (async, multi-file)."""
+        self._start_compile_cycle(force_rebuild=False)
+
+    def _do_rebuild_egui_project(self):
+        """Run a clean rebuild for the current EGUI project and restart preview."""
+        self._start_compile_cycle(force_rebuild=True)
+
+    @staticmethod
+    def _compile_failure_summary(message, default):
+        lines = [line.strip() for line in str(message or "").splitlines() if line.strip()]
+        if not lines:
+            return default
+        if lines[0].lower() in {"compilation failed:", "rebuild failed:"} and len(lines) > 1:
+            return lines[1]
+        return lines[0]
+
+    def _start_compile_cycle(self, *, force_rebuild=False):
+        """Execute compile or clean rebuild asynchronously."""
         if not self.project:
             return
         if self._is_closing:
@@ -8236,28 +8298,52 @@ class MainWindow(QMainWindow):
             self._update_workspace_chips()
             return
         if self._compile_worker is not None and self._compile_worker.isRunning():
-            # Mark that we need to recompile after current one finishes
-            self._pending_compile = True
+            if force_rebuild:
+                self._pending_rebuild = True
+                self._pending_compile = False
+                self.statusBar().showMessage("Queued clean rebuild after current compile finishes...")
+                self.debug_panel.log_info("Queued clean rebuild after current compile finishes...")
+            elif not self._pending_rebuild:
+                self._pending_compile = True
             return
         # Wait for precompile to finish to avoid conflicts
         if self._precompile_worker is not None and self._precompile_worker.isRunning():
-            self.statusBar().showMessage("Waiting for background compile...")
-            self.debug_panel.log_info("Waiting for background compile to finish...")
-            self._pending_compile = True
+            if force_rebuild:
+                self._pending_rebuild = True
+                self._pending_compile = False
+                self.statusBar().showMessage("Waiting for background compile before clean rebuild...")
+                self.debug_panel.log_info("Waiting for background compile to finish before clean rebuild...")
+            else:
+                self.statusBar().showMessage("Waiting for background compile...")
+                self.debug_panel.log_info("Waiting for background compile to finish...")
+                if not self._pending_rebuild:
+                    self._pending_compile = True
             return
 
         self._pending_compile = False
+        if force_rebuild:
+            self._pending_rebuild = False
 
         # Always use the latest editor content
         self._flush_pending_xml()
         self._update_diagnostics_panel()
-        if not self._ensure_codegen_preflight("Compile preview", show_dialog=False, switch_to_python_preview=True):
+        if not self._ensure_codegen_preflight(
+            "Rebuild preview" if force_rebuild else "Compile preview",
+            show_dialog=False,
+            switch_to_python_preview=True,
+        ):
             return
 
-        self.statusBar().showMessage("Compiling...")
-        self.preview_panel.status_label.setText("Compiling...")
+        action_label = "Rebuilding..." if force_rebuild else "Compiling..."
+        self.statusBar().showMessage(action_label)
+        self.preview_panel.status_label.setText(action_label)
 
-        self.debug_panel.log_action("Starting compile and run...")
+        if force_rebuild:
+            self.preview_panel.stop_rendering()
+            if self.compiler is not None:
+                self.compiler.stop_exe()
+
+        self.debug_panel.log_action("Starting clean rebuild and run..." if force_rebuild else "Starting compile and run...")
         self.debug_panel.log_info(f"Generating code for {len(self.project.pages)} page(s)")
 
         # Generate resource config + resource C files if needed
@@ -8274,6 +8360,10 @@ class MainWindow(QMainWindow):
         self.project.startup_page = original_startup
 
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
+        if force_rebuild:
+            self.debug_panel.log_cmd(
+                f"make clean APP={self.app_name} PORT=designer EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
+            )
         self.debug_panel.log_cmd(
             f"make -j main.exe APP={self.app_name} PORT=designer EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
         )
@@ -8281,8 +8371,11 @@ class MainWindow(QMainWindow):
         generation = self._async_generation
         worker = self.compiler.compile_and_run_async(
             code=None,
-            callback=lambda success, message, old_process: self._on_compile_finished(worker, generation, success, message, old_process),
+            callback=lambda success, message, old_process: self._on_compile_finished(
+                worker, generation, force_rebuild, success, message, old_process
+            ),
             files_dict=files,
+            force_rebuild=force_rebuild,
         )
         self._compile_worker = worker
         # Connect log signal for detailed timing info
@@ -8294,7 +8387,7 @@ class MainWindow(QMainWindow):
             return
         self.debug_panel.log(message, msg_type)
 
-    def _on_compile_finished(self, worker, generation, success, message, old_process):
+    def _on_compile_finished(self, worker, generation, force_rebuild, success, message, old_process):
         """Callback when background compilation completes."""
         del old_process
         self._cleanup_worker_ref(worker, "_compile_worker")
@@ -8304,9 +8397,10 @@ class MainWindow(QMainWindow):
         self.debug_panel.log_compile_output(success, message)
 
         # Check if we need to recompile due to pending changes
-        if self._pending_compile:
-            self._pending_compile = False
-            self._trigger_compile()
+        pending_rebuild = bool(self._pending_rebuild)
+        pending_compile = bool(self._pending_compile) and not pending_rebuild
+        self._pending_rebuild = False
+        self._pending_compile = False
 
         if success:
             self._last_runtime_error_text = ""
@@ -8314,15 +8408,36 @@ class MainWindow(QMainWindow):
             self.preview_panel.status_label.setText(f"OK - {message}")
             # Start headless frame rendering
             self.preview_panel.start_rendering(self.compiler)
-            self.debug_panel.log_action("Headless preview started")
+            self.debug_panel.log_action(
+                "Headless preview restarted after clean rebuild" if force_rebuild else "Headless preview started"
+            )
+            self._update_debug_rebuild_action(show=False)
         else:
-            self._last_runtime_error_text = (message.splitlines()[0] if message else "Compile failed")
-            self.statusBar().showMessage("EXE build failed, switched to Python fallback (see Debug Output)")
+            failure_summary = self._compile_failure_summary(
+                message,
+                "Rebuild failed" if force_rebuild else "Compile failed",
+            )
+            self._last_runtime_error_text = failure_summary
+            if force_rebuild:
+                self.statusBar().showMessage("EGUI clean rebuild failed, switched to Python fallback (see Debug Output)")
+                self.debug_panel.log_info("Clean rebuild did not recover the preview. Review the full build log above.")
+            else:
+                self.statusBar().showMessage(
+                    "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project to recover."
+                )
+                self.debug_panel.log_info(
+                    "Build failed. Use Build > Rebuild EGUI Project to clean and recover the EGUI build state."
+                )
             if self.compiler is not None:
                 self.compiler.stop_exe()
-            self._switch_to_python_preview(message.splitlines()[0] if message else "Compile failed")
+            self._switch_to_python_preview(failure_summary)
             # Show debug dock on compile failure
             self._show_bottom_panel("Debug Output")
+            self._update_debug_rebuild_action(show=True)
+        if pending_rebuild:
+            self._start_compile_cycle(force_rebuild=True)
+        elif pending_compile:
+            self._trigger_compile()
         self._update_compile_availability()
 
     def _on_preview_runtime_failed(self, reason):

@@ -2821,6 +2821,165 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_rebuild_egui_project_uses_clean_rebuild_cycle(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _DummySignal:
+            def connect(self, _handler):
+                return None
+
+        class _DummyWorker:
+            def __init__(self):
+                self.log = _DummySignal()
+
+            def isRunning(self):
+                return False
+
+        class _RebuildCaptureCompiler:
+            app_root_arg = "example"
+
+            def __init__(self):
+                self.stop_calls = 0
+                self.force_rebuild = None
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return True
+
+            def stop_exe(self):
+                self.stop_calls += 1
+
+            def cleanup(self):
+                return None
+
+            def compile_and_run_async(self, *args, **kwargs):
+                self.force_rebuild = kwargs.get("force_rebuild")
+                return _DummyWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RebuildDemo"
+        project = _create_project(project_dir, "RebuildDemo", sdk_root)
+        compiler = _RebuildCaptureCompiler()
+        preview_stop_calls = []
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+        monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: preview_stop_calls.append("stop"))
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.generate_all_files",
+            lambda project_obj: {"uicode.c": ("// rebuild test\n", "generated_always")},
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        compiler.force_rebuild = None
+        compiler.stop_calls = 0
+        preview_stop_calls.clear()
+
+        window._do_rebuild_egui_project()
+
+        assert compiler.force_rebuild is True
+        assert compiler.stop_calls == 1
+        assert preview_stop_calls == ["stop"]
+        assert window.preview_panel.status_label.text() == "Rebuilding..."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_compile_failure_shows_debug_rebuild_button_and_click_runs_rebuild(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _DummySignal:
+            def connect(self, _handler):
+                return None
+
+        class _DummyWorker:
+            def __init__(self):
+                self.log = _DummySignal()
+
+            def isRunning(self):
+                return False
+
+        class _RebuildCaptureCompiler:
+            app_root_arg = "example"
+
+            def __init__(self):
+                self.force_rebuild = None
+                self.stop_calls = 0
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return True
+
+            def stop_exe(self):
+                self.stop_calls += 1
+
+            def cleanup(self):
+                return None
+
+            def compile_and_run_async(self, *args, **kwargs):
+                self.force_rebuild = kwargs.get("force_rebuild")
+                return _DummyWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RebuildButtonDemo"
+        project = _create_project(project_dir, "RebuildButtonDemo", sdk_root)
+        compiler = _RebuildCaptureCompiler()
+        preview_reasons = []
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+        monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: None)
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.generate_all_files",
+            lambda project_obj: {"uicode.c": ("// rebuild button test\n", "generated_always")},
+        )
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        compiler.force_rebuild = None
+        preview_reasons.clear()
+
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+
+        assert preview_reasons == ["boom"]
+        assert window.debug_panel._rebuild_btn.isHidden() is False
+        assert window.debug_panel._rebuild_btn.isEnabled() is True
+
+        window.debug_panel._rebuild_btn.click()
+
+        assert compiler.force_rebuild is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_download_sdk_failure_mentions_target_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -3223,6 +3382,7 @@ class TestMainWindowFileFlow:
             action.text(): action
             for action in window.findChildren(type(window._save_action))
             if action.text() in {
+                "Rebuild EGUI Project",
                 "Auto Compile",
                 "Release Build (EXE)...",
                 "Release Profiles...",
@@ -3232,6 +3392,11 @@ class TestMainWindowFileFlow:
         }
         build_action = next(action for action in window.menuBar().actions() if action.text() == "Build")
 
+        assert actions["Rebuild EGUI Project"].toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
+        )
+        assert actions["Rebuild EGUI Project"].statusTip() == actions["Rebuild EGUI Project"].toolTip()
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. "
             "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
@@ -3291,6 +3456,11 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
+        assert unsaved_actions["Rebuild EGUI Project"].toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: open. SDK: valid. Preview: stopped."
+        )
+        assert unsaved_actions["Rebuild EGUI Project"].statusTip() == unsaved_actions["Rebuild EGUI Project"].toolTip()
         assert unsaved_actions["Release Build (EXE)..."].toolTip() == (
             "Build a release package for the current project. "
             "SDK: valid. Output root: none. History file: not created yet. "
@@ -3329,6 +3499,11 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
+        assert refreshed_actions["Rebuild EGUI Project"].toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: open. SDK: valid. Preview: stopped."
+        )
+        assert refreshed_actions["Rebuild EGUI Project"].statusTip() == refreshed_actions["Rebuild EGUI Project"].toolTip()
         assert refreshed_actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. Project: open. SDK: valid. Preview: stopped."
         )
@@ -3398,6 +3573,11 @@ class TestMainWindowFileFlow:
             for action in window.findChildren(type(window._save_action))
             if action.text() in actions
         }
+        assert invalid_actions["Rebuild EGUI Project"].toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: open. SDK: invalid. Preview: stopped. Unavailable: set a valid SDK root first."
+        )
+        assert invalid_actions["Rebuild EGUI Project"].statusTip() == invalid_actions["Rebuild EGUI Project"].toolTip()
         assert invalid_actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. "
             "Project: open. SDK: invalid. Preview: stopped. Unavailable: set a valid SDK root first."
