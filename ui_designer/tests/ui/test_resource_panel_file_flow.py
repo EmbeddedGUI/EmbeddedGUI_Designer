@@ -411,7 +411,13 @@ class TestResourcePanelFileFlow:
         pos = panel._text_list.visualItemRect(item).center()
         captured = {}
 
-        monkeypatch.setattr(panel, "_open_generate_charset_dialog", lambda initial_filename="": captured.setdefault("filename", initial_filename))
+        monkeypatch.setattr(
+            panel,
+            "_open_generate_charset_dialog",
+            lambda initial_filename="", source_label="": captured.update(
+                {"filename": initial_filename, "source_label": source_label}
+            ),
+        )
 
         def fake_exec(menu, *args, **kwargs):
             actions = [action.text() for action in menu.actions() if not action.isSeparator()]
@@ -428,6 +434,7 @@ class TestResourcePanelFileFlow:
 
         assert "Generate Charset..." in captured["actions"]
         assert captured["filename"] == "charset_existing.txt"
+        assert captured["source_label"] == "charset_existing.txt"
         panel.deleteLater()
 
     def test_font_resource_context_menu_can_open_generate_charset_with_suggested_filename(self, qapp, tmp_path, monkeypatch):
@@ -453,7 +460,13 @@ class TestResourcePanelFileFlow:
         pos = panel._font_list.visualItemRect(item).center()
         captured = {}
 
-        monkeypatch.setattr(panel, "_open_generate_charset_dialog", lambda initial_filename="": captured.setdefault("filename", initial_filename))
+        monkeypatch.setattr(
+            panel,
+            "_open_generate_charset_dialog",
+            lambda initial_filename="", source_label="": captured.update(
+                {"filename": initial_filename, "source_label": source_label}
+            ),
+        )
 
         def fake_exec(menu, *args, **kwargs):
             actions = [action.text() for action in menu.actions() if not action.isSeparator()]
@@ -470,6 +483,7 @@ class TestResourcePanelFileFlow:
 
         assert "Generate Charset..." in captured["actions"]
         assert captured["filename"] == "demo_font_charset.txt"
+        assert captured["source_label"] == "demo_font.ttf"
         panel.deleteLater()
 
     def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):
@@ -2172,6 +2186,27 @@ class TestResourcePanelFileFlow:
         finally:
             dialog.deleteLater()
 
+    def test_generate_charset_dialog_shows_source_label_when_opened_from_font_context(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        dialog = _GenerateCharsetDialog(
+            str(resource_dir),
+            initial_filename="demo_font_charset.txt",
+            source_label="demo_font.ttf",
+        )
+        try:
+            assert dialog.windowTitle() == "Generate Charset for demo_font.ttf"
+            assert dialog._title_label.text() == "Generate Charset for demo_font.ttf"
+            assert dialog._title_label.accessibleName() == (
+                "Font charset generator title: Generate Charset for demo_font.ttf."
+            )
+            assert "Source: demo_font.ttf." in dialog.accessibleName()
+        finally:
+            dialog.deleteLater()
+
     def test_generate_charset_creates_text_resource_refreshes_panel_and_emits_signals(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
@@ -2191,9 +2226,10 @@ class TestResourcePanelFileFlow:
         panel.feedback_message.connect(messages.append)
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
+                assert source_label == ""
 
             def exec_(self):
                 return 1
@@ -2249,9 +2285,10 @@ class TestResourcePanelFileFlow:
         panel.resource_imported.connect(lambda: imported.append(True))
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
+                assert source_label == ""
 
             def exec_(self):
                 return 1
@@ -2300,9 +2337,10 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
 
             def exec_(self):
                 return 0
@@ -2314,6 +2352,7 @@ class TestResourcePanelFileFlow:
         assert captured == {
             "resource_dir": str(resource_dir),
             "initial_filename": "charset_existing.txt",
+            "source_label": "charset_existing.txt",
         }
         panel.deleteLater()
 
@@ -2337,9 +2376,10 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
 
             def exec_(self):
                 return 0
@@ -2351,5 +2391,6 @@ class TestResourcePanelFileFlow:
         assert captured == {
             "resource_dir": str(resource_dir),
             "initial_filename": "demo_font_charset.txt",
+            "source_label": "demo_font.ttf",
         }
         panel.deleteLater()

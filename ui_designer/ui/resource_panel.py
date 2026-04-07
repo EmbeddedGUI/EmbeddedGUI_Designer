@@ -568,11 +568,12 @@ class _PreviewWidget(QWidget):
 class _GenerateCharsetDialog(QDialog):
     """Create or overwrite a text resource from built-in charset presets."""
 
-    def __init__(self, resource_dir, initial_filename="", parent=None):
+    def __init__(self, resource_dir, initial_filename="", source_label="", parent=None):
         super().__init__(parent)
         self.setObjectName("resource_dialog_shell")
         self._resource_dir = resource_dir or ""
         self._initial_filename = str(initial_filename or "").strip()
+        self._source_label = str(source_label or "").strip()
         self._presets = charset_presets()
         self._preset_checks = {}
         self._filename_manual = False
@@ -580,7 +581,10 @@ class _GenerateCharsetDialog(QDialog):
         self._save_and_assign_requested = False
         self._build_result = build_charset(())
 
-        self.setWindowTitle("Generate Charset")
+        title_text = "Generate Charset"
+        if self._source_label:
+            title_text = f"Generate Charset for {self._source_label}"
+        self.setWindowTitle(title_text)
         self.setMinimumSize(760, 620)
         self.resize(860, 680)
 
@@ -607,12 +611,12 @@ class _GenerateCharsetDialog(QDialog):
         )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
-        self._title_label = QLabel("Generate Charset")
+        self._title_label = QLabel(title_text)
         self._title_label.setObjectName("resource_dialog_title")
         _set_widget_metadata(
             self._title_label,
-            tooltip="Font charset generator title: Generate Charset.",
-            accessible_name="Font charset generator title: Generate Charset.",
+            tooltip=f"Font charset generator title: {title_text}.",
+            accessible_name=f"Font charset generator title: {title_text}.",
         )
         hero_copy.addWidget(self._title_label)
 
@@ -919,10 +923,11 @@ class _GenerateCharsetDialog(QDialog):
         filename = self.filename() or "none"
         char_summary = self._char_metric.text() or "0 chars"
         overwrite_text = (self._overwrite_summary.text() or "").strip() or "No overwrite summary available."
+        source_summary = f" Source: {self._source_label}." if self._source_label else ""
         dialog_summary = (
             f"Generate Charset: {_count_label(selected_count, 'preset')} selected. "
             f"Custom chars: {custom_count}. {char_summary.capitalize()}. "
-            f"File: {filename}. {overwrite_text}"
+            f"File: {filename}.{source_summary} {overwrite_text}".strip()
         )
         _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
         _set_widget_metadata(
@@ -930,10 +935,12 @@ class _GenerateCharsetDialog(QDialog):
             tooltip=(
                 f"Font charset dialog header: {_count_label(selected_count, 'preset')} selected. "
                 f"{char_summary.capitalize()}. File: {filename}."
+                f"{f' Source: {self._source_label}.' if self._source_label else ''}"
             ),
             accessible_name=(
                 f"Font charset dialog header: {_count_label(selected_count, 'preset')} selected. "
                 f"{char_summary.capitalize()}. File: {filename}."
+                f"{f' Source: {self._source_label}.' if self._source_label else ''}"
             ),
         )
         _set_widget_metadata(
@@ -3369,10 +3376,16 @@ class ResourcePanel(QWidget):
 
         active_type, active_name = self._selected_resource_for_active_tab()
         initial_filename = _suggest_charset_filename_for_resource(active_type, active_name)
-        self._open_generate_charset_dialog(initial_filename=initial_filename)
+        source_label = active_name if active_type in {"font", "text"} else ""
+        self._open_generate_charset_dialog(initial_filename=initial_filename, source_label=source_label)
 
-    def _open_generate_charset_dialog(self, initial_filename=""):
-        dialog = _GenerateCharsetDialog(self._src_dir, initial_filename=initial_filename, parent=self)
+    def _open_generate_charset_dialog(self, initial_filename="", source_label=""):
+        dialog = _GenerateCharsetDialog(
+            self._src_dir,
+            initial_filename=initial_filename,
+            source_label=source_label,
+            parent=self,
+        )
         if dialog.exec_() != QDialog.Accepted:
             return
 
@@ -3725,7 +3738,8 @@ class ResourcePanel(QWidget):
             generate_charset_act = menu.addAction("Generate Charset...")
             generate_charset_act.triggered.connect(
                 lambda: self._open_generate_charset_dialog(
-                    initial_filename=_suggest_charset_filename_for_resource(resource_type, filename)
+                    initial_filename=_suggest_charset_filename_for_resource(resource_type, filename),
+                    source_label=filename,
                 )
             )
 
