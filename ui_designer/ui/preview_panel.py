@@ -137,7 +137,9 @@ class WidgetOverlay(QWidget):
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
         self._active_paint_widgets = []
+        self._active_paint_widget_ids = set()
         self._passive_cache_widget_list = []
+        self._passive_cache_widget_ids = set()
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
         self._passive_bounds_cache_rect = QRect()
@@ -146,6 +148,7 @@ class WidgetOverlay(QWidget):
         self._coord_font_cache = None
         self._coord_font_cache_pt = None
         self._widget_label_text_by_id = {}
+        self._visible_widget_order_by_id = {}
 
         # Zoom state
         self._zoom = 1.0
@@ -240,10 +243,14 @@ class WidgetOverlay(QWidget):
         active_ids.update(id(widget) for widget in self._multi_selected)
         if not active_ids:
             self._active_paint_widgets = []
+            self._active_paint_widget_ids = set()
             self._passive_cache_widget_list = list(self._visible_widgets)
+            self._passive_cache_widget_ids = {id(widget) for widget in self._passive_cache_widget_list}
             return
         self._active_paint_widgets = [widget for widget in self._visible_widgets if id(widget) in active_ids]
+        self._active_paint_widget_ids = {id(widget) for widget in self._active_paint_widgets}
         self._passive_cache_widget_list = [widget for widget in self._visible_widgets if id(widget) not in active_ids]
+        self._passive_cache_widget_ids = {id(widget) for widget in self._passive_cache_widget_list}
 
     def _set_hovered_widget(self, widget):
         if widget is self._hovered:
@@ -316,6 +323,23 @@ class WidgetOverlay(QWidget):
                     seen.add(widget_id)
                     candidates.append(widget)
         return candidates
+
+    def _visible_candidates_for_rect(self, rect):
+        candidates = self._selection_candidates_for_rect(rect)
+        if not candidates:
+            return []
+        return sorted(candidates, key=lambda widget: self._visible_widget_order_by_id.get(id(widget), 1 << 30))
+
+    def _paint_widgets_for_visible_rect(self, widgets, visible_logical_rect, *, widget_ids=None):
+        if visible_logical_rect is None or visible_logical_rect.isNull():
+            return widgets
+        if len(widgets) <= 12:
+            return widgets
+        candidates = self._visible_candidates_for_rect(visible_logical_rect)
+        if widgets is self._visible_widgets:
+            return candidates
+        allowed_ids = widget_ids if widget_ids is not None else {id(widget) for widget in widgets}
+        return [widget for widget in candidates if id(widget) in allowed_ids]
 
     @staticmethod
     def _point_hits_widget(pos, widget):
@@ -478,7 +502,12 @@ class WidgetOverlay(QWidget):
         )
 
     def _draw_widget_bounds(self, painter, widgets, z, *, visible_logical_rect=None, passive_only=False):
-        for widget in widgets:
+        widget_ids = None
+        if widgets is self._passive_cache_widget_list:
+            widget_ids = self._passive_cache_widget_ids
+        elif widgets is self._active_paint_widgets:
+            widget_ids = self._active_paint_widget_ids
+        for widget in self._paint_widgets_for_visible_rect(widgets, visible_logical_rect, widget_ids=widget_ids):
             if not self._widget_intersects_visible_rect(widget, visible_logical_rect):
                 continue
             rect = QRect(widget.display_x, widget.display_y, widget.width, widget.height)
@@ -517,7 +546,12 @@ class WidgetOverlay(QWidget):
         lh = fm.height() + 2
         show_full = self._show_full_label_overlay() if show_full_labels is None else bool(show_full_labels)
 
-        for w in widgets:
+        widget_ids = None
+        if widgets is self._passive_cache_widget_list:
+            widget_ids = self._passive_cache_widget_ids
+        elif widgets is self._active_paint_widgets:
+            widget_ids = self._active_paint_widget_ids
+        for w in self._paint_widgets_for_visible_rect(widgets, visible_logical_rect, widget_ids=widget_ids):
             if not self._widget_intersects_visible_rect(w, visible_logical_rect):
                 continue
             if not show_full and w not in {self._selected, self._hovered} and w not in self._multi_selected:
@@ -826,6 +860,7 @@ class WidgetOverlay(QWidget):
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
         self._widget_label_text_by_id = {}
+        self._visible_widget_order_by_id = {id(widget): index for index, widget in enumerate(self._visible_widgets)}
         for widget in self._visible_widgets:
             label_text = f"{widget.widget_type} : {widget.name}"
             if self._is_locked(widget):

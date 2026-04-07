@@ -774,6 +774,24 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_visible_candidates_for_rect_keep_widget_order(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
+        first = WidgetModel("label", name="first", x=10, y=70, width=180, height=30)
+        second = WidgetModel("button", name="second", x=20, y=90, width=40, height=20)
+        root.add_child(first)
+        root.add_child(second)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            candidates = overlay._visible_candidates_for_rect(QRect(0, 64, 200, 64))
+            assert candidates == [root, first, second]
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay
