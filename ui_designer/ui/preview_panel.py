@@ -645,18 +645,21 @@ class WidgetOverlay(QWidget):
     def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
         if not edge_values:
             return None
+        values = edge_values
+        entries = edge_entries
+        total = len(values)
         best_edge = None
         best_delta = None
-        right = bisect.bisect_left(edge_values, target_edge)
+        right = bisect.bisect_left(values, target_edge)
         left = right - 1
 
-        while left >= 0 or right < len(edge_values):
+        while left >= 0 or right < total:
             left_delta = None
             if left >= 0:
-                left_delta = target_edge - edge_values[left]
+                left_delta = target_edge - values[left]
             right_delta = None
-            if right < len(edge_values):
-                right_delta = edge_values[right] - target_edge
+            if right < total:
+                right_delta = values[right] - target_edge
 
             use_left = right_delta is None or (left_delta is not None and left_delta <= right_delta)
             if use_left:
@@ -675,7 +678,10 @@ class WidgetOverlay(QWidget):
                     break
                 continue
 
-            edge, owner_id = edge_entries[idx]
+            if best_delta is not None and delta > best_delta:
+                break
+
+            edge, owner_id = entries[idx]
             if owner_id == widget_id:
                 continue
             if best_delta is None or delta < best_delta:
