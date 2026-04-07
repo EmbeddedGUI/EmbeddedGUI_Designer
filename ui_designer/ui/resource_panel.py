@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (
     QDialog, QDialogButtonBox, QMenu, QApplication,
     QSplitter, QSizePolicy, QAbstractItemView,
     QInputDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QComboBox, QCheckBox, QToolButton,
+    QComboBox, QCheckBox, QToolButton, QLineEdit, QPlainTextEdit,
 )
 from PyQt5.QtCore import (
     Qt, QSize, pyqtSignal, QMimeData, QUrl, QTimer, QRect,
@@ -44,6 +44,14 @@ from qfluentwidgets import (
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
+from ..services.font_charset_presets import (
+    build_charset,
+    charset_presets,
+    preview_charset_chars,
+    serialize_charset_chars,
+    suggest_charset_filename,
+    summarize_charset_diff,
+)
 from .theme import designer_font_scale, scaled_point_size
 
 
@@ -543,6 +551,300 @@ class _PreviewWidget(QWidget):
         painter.setPen(QColor(220, 220, 220))
         painter.setFont(QFont("Consolas", self._text_preview_font_point_size()))
         painter.drawText(preview_rect, Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, "\n".join(self._text_lines))
+
+
+class _GenerateCharsetDialog(QDialog):
+    """Create or overwrite a text resource from built-in charset presets."""
+
+    def __init__(self, resource_dir, parent=None):
+        super().__init__(parent)
+        self.setObjectName("resource_dialog_shell")
+        self._resource_dir = resource_dir or ""
+        self._presets = charset_presets()
+        self._preset_checks = {}
+        self._filename_manual = False
+        self._suggested_filename = ""
+        self._save_and_assign_requested = False
+        self._build_result = build_charset(())
+
+        self.setWindowTitle("Generate Charset")
+        self.setMinimumSize(760, 620)
+        self.resize(860, 680)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+
+        self._header_frame = QFrame()
+        self._header_frame.setObjectName("resource_dialog_header")
+        header_layout = QHBoxLayout(self._header_frame)
+        header_layout.setContentsMargins(16, 14, 16, 14)
+        header_layout.setSpacing(16)
+
+        hero_copy = QVBoxLayout()
+        hero_copy.setContentsMargins(0, 0, 0, 0)
+        hero_copy.setSpacing(4)
+
+        self._eyebrow_label = QLabel("Font Charset Tool")
+        self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
+
+        self._title_label = QLabel("Generate Charset")
+        self._title_label.setObjectName("resource_dialog_title")
+        hero_copy.addWidget(self._title_label)
+
+        self._subtitle_label = QLabel(
+            "Combine built-in presets and custom characters, then save them as a Text resource."
+        )
+        self._subtitle_label.setObjectName("resource_dialog_subtitle")
+        self._subtitle_label.setWordWrap(True)
+        hero_copy.addWidget(self._subtitle_label)
+        header_layout.addLayout(hero_copy, 3)
+
+        metrics_layout = QVBoxLayout()
+        metrics_layout.setContentsMargins(0, 0, 0, 0)
+        metrics_layout.setSpacing(8)
+        self._selection_metric = _create_dialog_metric_card(metrics_layout, "Selection")
+        self._char_metric = _create_dialog_metric_card(metrics_layout, "Chars")
+        self._file_metric = _create_dialog_metric_card(metrics_layout, "File")
+        header_layout.addLayout(metrics_layout, 2)
+        layout.addWidget(self._header_frame)
+
+        self._preset_card = QFrame()
+        self._preset_card.setObjectName("resource_dialog_card")
+        preset_layout = QVBoxLayout(self._preset_card)
+        preset_layout.setContentsMargins(16, 14, 16, 14)
+        preset_layout.setSpacing(8)
+
+        preset_title = QLabel("Built-in Presets")
+        preset_title.setObjectName("workspace_section_title")
+        preset_layout.addWidget(preset_title)
+
+        for preset in self._presets:
+            count = len(build_charset((preset.preset_id,)).chars)
+            checkbox = QCheckBox(f"{preset.label} ({count})")
+            checkbox.setToolTip(preset.description)
+            checkbox.setStatusTip(preset.description)
+            checkbox.toggled.connect(self._refresh_preview)
+            preset_layout.addWidget(checkbox)
+            self._preset_checks[preset.preset_id] = checkbox
+        layout.addWidget(self._preset_card)
+
+        self._custom_card = QFrame()
+        self._custom_card.setObjectName("resource_dialog_card")
+        custom_layout = QVBoxLayout(self._custom_card)
+        custom_layout.setContentsMargins(16, 14, 16, 14)
+        custom_layout.setSpacing(8)
+
+        custom_title = QLabel("Custom Characters")
+        custom_title.setObjectName("workspace_section_title")
+        custom_layout.addWidget(custom_title)
+
+        custom_hint = QLabel(
+            "Paste literal characters or &#xHHHH; entities. Line breaks are ignored; spaces are preserved."
+        )
+        custom_hint.setObjectName("workspace_section_subtitle")
+        custom_hint.setWordWrap(True)
+        custom_layout.addWidget(custom_hint)
+
+        self._custom_input = QPlainTextEdit()
+        self._custom_input.setObjectName("resource_charset_custom_input")
+        self._custom_input.setPlaceholderText("例如：℃°你好&#x4E2D;")
+        self._custom_input.textChanged.connect(self._refresh_preview)
+        custom_layout.addWidget(self._custom_input, 1)
+        layout.addWidget(self._custom_card, 1)
+
+        self._output_card = QFrame()
+        self._output_card.setObjectName("resource_dialog_card")
+        output_layout = QVBoxLayout(self._output_card)
+        output_layout.setContentsMargins(16, 14, 16, 14)
+        output_layout.setSpacing(8)
+
+        output_title = QLabel("Output")
+        output_title.setObjectName("workspace_section_title")
+        output_layout.addWidget(output_title)
+
+        file_row = QHBoxLayout()
+        file_row.setContentsMargins(0, 0, 0, 0)
+        file_row.setSpacing(8)
+        file_label = QLabel("Filename")
+        file_label.setObjectName("resource_panel_field_label")
+        file_row.addWidget(file_label)
+
+        self._filename_edit = QLineEdit()
+        self._filename_edit.setObjectName("resource_charset_filename")
+        self._filename_edit.setPlaceholderText("charset_ascii_printable.txt")
+        self._filename_edit.textEdited.connect(self._on_filename_edited)
+        self._filename_edit.textChanged.connect(self._refresh_preview)
+        file_row.addWidget(self._filename_edit, 1)
+        output_layout.addLayout(file_row)
+
+        self._summary_label = QLabel("")
+        self._summary_label.setObjectName("resource_dialog_summary")
+        self._summary_label.setWordWrap(True)
+        output_layout.addWidget(self._summary_label)
+
+        self._overwrite_summary = QLabel("")
+        self._overwrite_summary.setObjectName("resource_dialog_summary")
+        self._overwrite_summary.setWordWrap(True)
+        output_layout.addWidget(self._overwrite_summary)
+
+        self._preview_box = QPlainTextEdit()
+        self._preview_box.setObjectName("resource_charset_preview")
+        self._preview_box.setReadOnly(True)
+        self._preview_box.setPlaceholderText("Select a preset or enter custom characters to preview the output.")
+        self._preview_box.setMaximumHeight(140)
+        output_layout.addWidget(self._preview_box)
+        layout.addWidget(self._output_card)
+
+        button_box = QDialogButtonBox(Qt.Horizontal)
+        self._save_button = button_box.addButton("Save", QDialogButtonBox.AcceptRole)
+        self._save_assign_button = button_box.addButton("Save and Bind Current Widget", QDialogButtonBox.AcceptRole)
+        self._cancel_button = button_box.addButton(QDialogButtonBox.Cancel)
+        self._save_button.clicked.connect(self._accept_save)
+        self._save_assign_button.clicked.connect(self._accept_save_and_assign)
+        self._cancel_button.clicked.connect(self.reject)
+        layout.addWidget(button_box)
+
+        self._refresh_preview()
+
+    def selected_preset_ids(self):
+        return tuple(
+            preset.preset_id
+            for preset in self._presets
+            if self._preset_checks[preset.preset_id].isChecked()
+        )
+
+    def generated_chars(self):
+        return self._build_result.chars
+
+    def generated_text(self):
+        return serialize_charset_chars(self.generated_chars())
+
+    def filename(self):
+        return self._normalized_filename()
+
+    def save_and_assign(self):
+        return self._save_and_assign_requested
+
+    def overwrite_diff(self):
+        filename = self.filename()
+        if not filename:
+            return summarize_charset_diff("", self.generated_chars())
+        path = os.path.join(self._resource_dir, filename)
+        if not os.path.isfile(path):
+            return summarize_charset_diff("", self.generated_chars())
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as handle:
+                existing_text = handle.read()
+        except OSError:
+            existing_text = ""
+        return summarize_charset_diff(existing_text, self.generated_chars())
+
+    def _accept_save(self):
+        self._save_and_assign_requested = False
+        if self._validate_before_accept():
+            self.accept()
+
+    def _accept_save_and_assign(self):
+        self._save_and_assign_requested = True
+        if self._validate_before_accept():
+            self.accept()
+
+    def _validate_before_accept(self):
+        error = self._filename_error()
+        if error:
+            QMessageBox.warning(self, "Invalid Filename", error)
+            return False
+        if not self.generated_chars():
+            QMessageBox.warning(self, "Empty Charset", "Select at least one preset or enter custom characters.")
+            return False
+        return True
+
+    def _on_filename_edited(self, _text):
+        self._filename_manual = True
+        self._refresh_preview()
+
+    def _normalized_filename(self):
+        name = (self._filename_edit.text() or "").strip()
+        if name and "." not in name:
+            name += ".txt"
+        return name
+
+    def _filename_error(self):
+        filename = self._normalized_filename()
+        if not filename:
+            return "Enter a filename for the generated charset resource."
+        if not filename.lower().endswith(".txt"):
+            return "Charset resources must use the .txt extension."
+        if not _validate_english_filename(filename):
+            return (
+                f"'{filename}' is invalid.\n"
+                "Use only ASCII letters, digits, underscore, and dash."
+            )
+        return ""
+
+    def _refresh_preview(self):
+        preset_ids = self.selected_preset_ids()
+        custom_text = self._custom_input.toPlainText()
+        self._build_result = build_charset(preset_ids, custom_text)
+
+        suggested = suggest_charset_filename(preset_ids, custom_text)
+        current_text = (self._filename_edit.text() or "").strip()
+        should_update_filename = (not self._filename_manual) or (not current_text) or (current_text == self._suggested_filename)
+        self._suggested_filename = suggested
+        if should_update_filename and suggested and current_text != suggested:
+            self._filename_edit.blockSignals(True)
+            self._filename_edit.setText(suggested)
+            self._filename_edit.blockSignals(False)
+
+        selection_parts = []
+        if preset_ids:
+            selection_parts.append(_count_label(len(preset_ids), "preset"))
+        if any(item.source_id == "custom" for item in self._build_result.contributions):
+            selection_parts.append("custom input")
+        self._selection_metric.setText(", ".join(selection_parts) if selection_parts else "None")
+        self._char_metric.setText(_count_label(self._build_result.total_chars, "char"))
+        self._file_metric.setText(self.filename() or "None")
+        _update_dialog_metric_metadata(self._selection_metric)
+        _update_dialog_metric_metadata(self._char_metric)
+        _update_dialog_metric_metadata(self._file_metric)
+
+        contribution_lines = []
+        for item in self._build_result.contributions:
+            contribution_lines.append(f"{item.label}: {item.added_chars}/{item.total_chars} new")
+        if contribution_lines:
+            summary = " | ".join(contribution_lines)
+        else:
+            summary = "Choose presets or add custom characters to generate output."
+        preview = preview_charset_chars(self._build_result.chars, limit=16) or "(empty)"
+        self._summary_label.setText(
+            f"{summary}\nPreview: {preview}"
+        )
+
+        filename_error = self._filename_error()
+        diff = self.overwrite_diff()
+        target_path = os.path.join(self._resource_dir, self.filename()) if self.filename() else ""
+        if filename_error:
+            overwrite_summary = filename_error.replace("\n", " ")
+        elif target_path and os.path.isfile(target_path):
+            overwrite_summary = (
+                f"Overwrite existing file: {self.filename()} | "
+                f"Existing {diff.existing_count} chars | New {diff.new_count} chars | "
+                f"Added {diff.added_count} | Removed {diff.removed_count}"
+            )
+        elif self.filename():
+            overwrite_summary = f"Create new file: {self.filename()} | {diff.new_count} chars"
+        else:
+            overwrite_summary = "Enter a filename to save the generated charset."
+        self._overwrite_summary.setText(overwrite_summary)
+
+        serialized = self.generated_text()
+        self._preview_box.setPlainText(serialized[:2000].rstrip())
+
+        can_save = bool(self.generated_chars()) and not filename_error
+        self._save_button.setEnabled(can_save)
+        self._save_assign_button.setEnabled(can_save)
 
 
 class _MissingResourceReplaceDialog(QDialog):
@@ -1632,6 +1934,9 @@ class ResourcePanel(QWidget):
         import_font_btn = PushButton("Import...")
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
+        self._generate_charset_btn = PushButton("Generate Charset...")
+        self._generate_charset_btn.clicked.connect(self._on_generate_charset)
+        font_btn_layout.addWidget(self._generate_charset_btn)
         restore_font_btn = PushButton("Restore Missing...")
         restore_font_btn.clicked.connect(lambda: self._restore_missing_resources("font"))
         font_btn_layout.addWidget(restore_font_btn)
@@ -2201,6 +2506,22 @@ class ResourcePanel(QWidget):
                     accessible_name = f"{action_label} unavailable"
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
             self._sync_resource_more_menu(resource_type)
+
+        if hasattr(self, "_generate_charset_btn"):
+            if self._resource_dir:
+                tooltip = (
+                    "Generate a supported-text .txt resource from built-in charset presets, "
+                    "then optionally bind it to the current widget."
+                )
+                accessible_name = "Generate font charset resource"
+            else:
+                tooltip = "Save or open a project first to generate font charset resources."
+                accessible_name = "Generate font charset resource unavailable"
+            _set_widget_metadata(
+                self._generate_charset_btn,
+                tooltip=tooltip,
+                accessible_name=accessible_name,
+            )
 
     def _selected_string_key(self):
         if not hasattr(self, "_string_table"):
@@ -2871,6 +3192,50 @@ class ResourcePanel(QWidget):
         if paths:
             self._remember_external_import_paths(paths)
             self._do_import(paths, "text")
+
+    def _on_generate_charset(self):
+        if not self._ensure_src_dir():
+            return
+
+        dialog = _GenerateCharsetDialog(self._src_dir, self)
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        filename = dialog.filename()
+        target_path = os.path.join(self._src_dir, filename)
+        chars = dialog.generated_chars()
+        diff = dialog.overwrite_diff()
+
+        if os.path.isfile(target_path):
+            confirm_text = (
+                f"Overwrite '{filename}'?\n\n"
+                f"Existing chars: {diff.existing_count}\n"
+                f"New chars: {diff.new_count}\n"
+                f"Added: {diff.added_count}\n"
+                f"Removed: {diff.removed_count}"
+            )
+            reply = QMessageBox.question(
+                self,
+                "Overwrite Charset Resource",
+                confirm_text,
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return
+
+        with open(target_path, "w", encoding="utf-8") as handle:
+            handle.write(dialog.generated_text())
+
+        self._catalog.add_file(filename)
+        self.set_resource_dir(self._resource_dir)
+        self._select_resource_item("text", filename)
+        self.resource_imported.emit()
+
+        if dialog.save_and_assign():
+            self.resource_selected.emit("text", filename)
+
+        action = "Generated and assigned" if dialog.save_and_assign() else "Generated"
+        self.feedback_message.emit(f"{action} text resource '{filename}' with {len(chars)} chars.")
 
     def _restore_missing_resources_from_paths(self, resource_type, source_paths):
         target_dir = self._target_dir_for_resource_type(resource_type)

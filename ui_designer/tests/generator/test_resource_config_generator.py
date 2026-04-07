@@ -148,6 +148,34 @@ class TestFontCollection:
         config = gen.generate(proj)
         assert len(config["font"]) == 1
 
+    @pytest.mark.parametrize(
+        ("widget_type", "expected_inline_char"),
+        (
+            ("textblock", "段"),
+            ("gauge", "9"),
+            ("digital_clock", "8"),
+        ),
+    )
+    def test_non_label_widgets_with_font_file_are_included(self, widget_type, expected_inline_char):
+        widget = WidgetModel(widget_type, name=f"{widget_type}_1", x=0, y=0, width=100, height=40)
+        widget.properties["font_file"] = "test.ttf"
+        widget.properties["font_pixelsize"] = "16"
+        widget.properties["font_fontbitsize"] = "4"
+        widget.properties["font_text"] = expected_inline_char
+        widget.properties["font_text_file"] = "chars.txt"
+        if "text" in widget.properties:
+            widget.properties["text"] = expected_inline_char
+
+        proj = _make_project_with_widgets([widget])
+        gen = ResourceConfigGenerator()
+        config = gen.generate(proj)
+
+        assert len(config["font"]) == 1
+        assert config["font"][0]["file"] == "test.ttf"
+        assert config["font"][0]["text"].startswith("_generated_text_")
+        assert config["font"][0]["_extra_text_files"] == ["chars.txt"]
+        assert expected_inline_char in config["font"][0].get("_generated_text_content", "")
+
 
 class TestFontMerging:
     """Test font config merging logic."""

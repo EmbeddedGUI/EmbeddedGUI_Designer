@@ -1,6 +1,7 @@
 """Qt UI tests for ResourcePanel import dialog defaults."""
 
 import os
+from types import SimpleNamespace
 
 import pytest
 
@@ -2017,4 +2018,127 @@ class TestResourcePanelFileFlow:
 
         assert confirmed is False
         assert activated == [("detail_page", "subtitle")]
+        panel.deleteLater()
+
+    def test_generate_charset_dialog_updates_preview_and_overwrite_summary(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        existing_path = resource_dir / "charset_ascii_printable.txt"
+        existing_path.write_text("A\n", encoding="utf-8")
+
+        dialog = _GenerateCharsetDialog(str(resource_dir))
+        try:
+            dialog._preset_checks["ascii_printable"].setChecked(True)
+
+            assert dialog.filename() == "charset_ascii_printable.txt"
+            assert len(dialog.generated_chars()) == 95
+            assert dialog._char_metric.text() == "95 chars"
+            assert "Overwrite existing file" in dialog._overwrite_summary.text()
+            assert "Existing 1 chars" in dialog._overwrite_summary.text()
+        finally:
+            dialog.deleteLater()
+
+    def test_generate_charset_creates_text_resource_refreshes_panel_and_emits_signals(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(ResourceCatalog())
+
+        imported = []
+        selected = []
+        messages = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+        panel.resource_selected.connect(lambda res_type, filename: selected.append((res_type, filename)))
+        panel.feedback_message.connect(messages.append)
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, parent=None):
+                assert resource_dir_arg == str(resource_dir)
+
+            def exec_(self):
+                return 1
+
+            def filename(self):
+                return "charset_combo.txt"
+
+            def generated_chars(self):
+                return tuple("AB中")
+
+            def generated_text(self):
+                return "A\nB\n&#x4E2D;\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=0, new_count=3, added_count=3, removed_count=0)
+
+            def save_and_assign(self):
+                return True
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert (resource_dir / "charset_combo.txt").read_text(encoding="utf-8") == "A\nB\n&#x4E2D;\n"
+        assert panel.get_resource_catalog().text_files == ["charset_combo.txt"]
+        assert panel._tabs.currentIndex() == 2
+        assert panel._text_list.currentItem().data(Qt.UserRole + 1) == "charset_combo.txt"
+        assert imported == [True]
+        assert selected == [("text", "charset_combo.txt")]
+        assert messages == ["Generated and assigned text resource 'charset_combo.txt' with 3 chars."]
+        panel.deleteLater()
+
+    def test_generate_charset_requires_confirmation_before_overwriting_existing_file(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        existing_path = resource_dir / "charset_ascii_printable.txt"
+        existing_path.write_text("A\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("charset_ascii_printable.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        imported = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, parent=None):
+                assert resource_dir_arg == str(resource_dir)
+
+            def exec_(self):
+                return 1
+
+            def filename(self):
+                return "charset_ascii_printable.txt"
+
+            def generated_chars(self):
+                return tuple("AB")
+
+            def generated_text(self):
+                return "A\nB\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=1, new_count=2, added_count=1, removed_count=0)
+
+            def save_and_assign(self):
+                return False
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+        monkeypatch.setattr("ui_designer.ui.resource_panel.QMessageBox.question", lambda *args, **kwargs: QMessageBox.No)
+
+        panel._on_generate_charset()
+
+        assert existing_path.read_text(encoding="utf-8") == "A\n"
+        assert imported == []
         panel.deleteLater()

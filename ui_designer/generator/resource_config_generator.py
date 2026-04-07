@@ -38,7 +38,7 @@ class ResourceConfigGenerator:
                     cfg = self._collect_image_config(widget)
                     if cfg:
                         img_configs.append(cfg)
-                elif widget.widget_type in ("label", "button"):
+                elif "font_file" in getattr(widget, "properties", {}):
                     cfg = self._collect_font_config(widget, string_catalog)
                     if cfg:
                         font_configs.append(cfg)
