@@ -992,6 +992,10 @@ QToolButton#property_grid_section_indicator {{
     background-color: transparent;
     border: none;
     padding: 0px;
+    min-width: 12px;
+    min-height: 12px;
+    max-width: 12px;
+    max-height: 12px;
 }}
 
 QToolButton#property_grid_section_indicator::menu-indicator {{
