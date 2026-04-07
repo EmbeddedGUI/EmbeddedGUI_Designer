@@ -948,15 +948,15 @@ QTreeWidget#property_panel_tree QHeaderView::section {{
 }}
 
 QFrame#property_grid_section_cell {{
-    background-color: {t['panel_alt']};
+    background-color: {t['panel_raised']};
     border: none;
-    border-top: 1px solid {t['border']};
-    border-bottom: 1px solid {t['border_strong']};
+    border-top: 1px solid {t['border_strong']};
+    border-bottom: 1px solid {t['border']};
 }}
 
 QFrame#property_grid_section_cell[sectionExpanded="true"] {{
     background-color: {t['panel_soft']};
-    border-bottom: 1px solid {t['accent_soft']};
+    border-bottom: 1px solid {t['accent']};
 }}
 
 #property_grid_section_text {{
@@ -980,15 +980,15 @@ QFrame#property_grid_section_cell[sectionExpanded="true"] {{
 }}
 
 QFrame#property_grid_label_cell {{
-    background-color: transparent;
+    background-color: {t['panel_alt']};
     border: none;
-    border-right: 1px solid {t['border']};
+    border-right: 1px solid {t['border_strong']};
     border-bottom: 1px solid {t['border']};
 }}
 
 QFrame#property_grid_label_cell[rowStripe="odd"],
 QFrame#property_grid_editor_cell[rowStripe="odd"] {{
-    background-color: {t['panel_alt']};
+    background-color: {t['panel_raised']};
 }}
 
 #property_grid_label_text {{
@@ -997,7 +997,7 @@ QFrame#property_grid_editor_cell[rowStripe="odd"] {{
 }}
 
 QFrame#property_grid_editor_cell {{
-    background-color: transparent;
+    background-color: {t['panel']};
     border: none;
     border-bottom: 1px solid {t['border']};
 }}

@@ -589,16 +589,18 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 24px;" in property_tree_item
         assert f"background-color: {t['panel_alt']};" in property_tree_header
         assert f"color: {t['text_muted']};" in property_tree_header
-        assert f"background-color: {t['panel_alt']};" in property_grid_section
-        assert f"border-bottom: 1px solid {t['border_strong']};" in property_grid_section
+        assert f"background-color: {t['panel_raised']};" in property_grid_section
+        assert f"border-top: 1px solid {t['border_strong']};" in property_grid_section
         assert f"background-color: {t['panel_soft']};" in property_grid_section_expanded
+        assert f"border-bottom: 1px solid {t['accent']};" in property_grid_section_expanded
         assert f"color: {t['text']};" in property_grid_section_text
         assert f"color: {t['accent_hover']};" in property_grid_section_text_expanded
         assert f"color: {t['text_soft']};" in property_grid_section_indicator
         assert f"color: {t['accent_hover']};" in property_grid_section_indicator_expanded
-        assert f"border-right: 1px solid {t['border']};" in property_grid_label
+        assert f"background-color: {t['panel_alt']};" in property_grid_label
+        assert f"border-right: 1px solid {t['border_strong']};" in property_grid_label
         assert f"border-bottom: 1px solid {t['border']};" in property_grid_label
-        assert f"background-color: {t['panel_alt']};" in property_grid_odd
+        assert f"background-color: {t['panel_raised']};" in property_grid_odd
         assert f"color: {t['text_muted']};" in property_grid_label_text
         assert f"background-color: {t['accent_soft']};" in property_grid_accent
         assert f"background-color: {t['panel_soft']};" in property_grid_warning
