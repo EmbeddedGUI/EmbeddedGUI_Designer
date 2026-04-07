@@ -175,6 +175,7 @@ class WidgetOverlay(QWidget):
         self._grid_size = 8  # Snap to 8px grid
         self._show_grid = True
         self._snap_guides = []  # List of (orientation, position) for snap lines
+        self._snap_guide_rects = []
 
         # Coordinate display
         self._show_coords = False  # True while dragging/resizing
@@ -425,6 +426,10 @@ class WidgetOverlay(QWidget):
                 rects.append(QRect(0, y - 3, self.width(), 7).intersected(self.rect()))
         return rects
 
+    def _set_snap_guides(self, guides):
+        self._snap_guides = list(guides or [])
+        self._snap_guide_rects = self._screen_rect_for_guides(self._snap_guides)
+
     def _update_regions(self, *rects):
         dirty_region = QRegion()
         for rect in rects:
@@ -435,6 +440,9 @@ class WidgetOverlay(QWidget):
 
     def _update_regions_for_guides(self, guides):
         self._update_regions(*self._screen_rect_for_guides(guides))
+
+    def _update_regions_for_guide_rects(self, rects):
+        self._update_regions(*(rects or ()))
 
     def _invalidate_passive_bounds_cache(self):
         self._passive_bounds_cache = None
@@ -807,6 +815,8 @@ class WidgetOverlay(QWidget):
         new_h = int(self._base_height * self._zoom)
         self.setFixedSize(new_w, new_h)
         self._invalidate_passive_bounds_cache()
+        if self._snap_guides:
+            self._snap_guide_rects = self._screen_rect_for_guides(self._snap_guides)
         self.update()
 
     def set_zoom(self, factor):
@@ -1458,6 +1468,7 @@ class WidgetOverlay(QWidget):
         old_display_x = self._selected.display_x
         old_display_y = self._selected.display_y
         old_guides = list(self._snap_guides)
+        old_guide_rects = list(self._snap_guide_rects)
         new_pos = pos - self._drag_offset
         eff_grid = self._effective_grid_size()
         new_display_x, guide_x = self._snap_drag_axis(
@@ -1483,7 +1494,8 @@ class WidgetOverlay(QWidget):
             new_guides.append(("v", guide_x))
         if guide_y is not None:
             new_guides.append(("h", guide_y))
-        self._snap_guides = new_guides
+        self._set_snap_guides(new_guides)
+        new_guide_rects = list(self._snap_guide_rects)
 
         parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
         new_x = new_display_x - parent_display_x
@@ -1504,11 +1516,11 @@ class WidgetOverlay(QWidget):
                 ),
             )
             if new_guides != old_guides:
-                self._update_regions_for_guides(old_guides)
-                self._update_regions_for_guides(new_guides)
+                self._update_regions_for_guide_rects(old_guide_rects)
+                self._update_regions_for_guide_rects(new_guide_rects)
         elif new_guides != old_guides:
-            self._update_regions_for_guides(old_guides)
-            self._update_regions_for_guides(new_guides)
+            self._update_regions_for_guide_rects(old_guide_rects)
+            self._update_regions_for_guide_rects(new_guide_rects)
 
     def _do_resize(self, pos):
         """Handle resize with object/page snap and grid fallback."""
@@ -1517,6 +1529,7 @@ class WidgetOverlay(QWidget):
         r = self._resize_start_rect
         h = self._resize_handle
         old_guides = list(self._snap_guides)
+        old_guide_rects = list(self._snap_guide_rects)
 
         min_size = 10  # Minimum widget size
         eff_grid = self._effective_grid_size()
@@ -1574,7 +1587,8 @@ class WidgetOverlay(QWidget):
             new_guides.append(("v", guide_x))
         if guide_y is not None:
             new_guides.append(("h", guide_y))
-        self._snap_guides = new_guides
+        self._set_snap_guides(new_guides)
+        new_guide_rects = list(self._snap_guide_rects)
 
         parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
         new_x = new_display_x - parent_display_x
@@ -1599,11 +1613,11 @@ class WidgetOverlay(QWidget):
                 self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
             )
             if new_guides != old_guides:
-                self._update_regions_for_guides(old_guides)
-                self._update_regions_for_guides(new_guides)
+                self._update_regions_for_guide_rects(old_guide_rects)
+                self._update_regions_for_guide_rects(new_guide_rects)
         elif new_guides != old_guides:
-            self._update_regions_for_guides(old_guides)
-            self._update_regions_for_guides(new_guides)
+            self._update_regions_for_guide_rects(old_guide_rects)
+            self._update_regions_for_guide_rects(new_guide_rects)
 
     def mouseReleaseEvent(self, event):
         if event.button() != Qt.LeftButton:
@@ -1629,6 +1643,7 @@ class WidgetOverlay(QWidget):
 
         if self._resizing:
             old_guides = list(self._snap_guides)
+            old_guide_rects = list(self._snap_guide_rects)
             old_rect = QRect(
                 self._selected.display_x if self._selected is not None else 0,
                 self._selected.display_y if self._selected is not None else 0,
@@ -1640,16 +1655,17 @@ class WidgetOverlay(QWidget):
             self._resize_start_rect = None
             self._resize_start_pos = None
             self._show_coords = False
-            self._snap_guides = []
+            self._set_snap_guides([])
             self.setCursor(Qt.ArrowCursor)
             self.drag_finished.emit()
             self._update_regions(self._screen_rect_for_logical_rect(old_rect))
-            self._update_regions_for_guides(old_guides)
+            self._update_regions_for_guide_rects(old_guide_rects)
             return
 
         if self._dragging:
             old_insert_rect = QRect(self._insert_line_rect) if self._insert_line_rect is not None else QRect()
             old_guides = list(self._snap_guides)
+            old_guide_rects = list(self._snap_guide_rects)
             old_rect = QRect(
                 self._selected.display_x if self._selected is not None else 0,
                 self._selected.display_y if self._selected is not None else 0,
@@ -1673,14 +1689,14 @@ class WidgetOverlay(QWidget):
             self._insert_index = -1
             self._insert_line_rect = None
             self._show_coords = False
-            self._snap_guides = []
+            self._set_snap_guides([])
             self.setCursor(Qt.ArrowCursor)
             self.drag_finished.emit()
             self._update_regions(
                 self._screen_rect_for_logical_rect(old_insert_rect),
                 self._screen_rect_for_logical_rect(old_rect),
             )
-            self._update_regions_for_guides(old_guides)
+            self._update_regions_for_guide_rects(old_guide_rects)
 
     def leaveEvent(self, event):
         old_hover = self._hovered

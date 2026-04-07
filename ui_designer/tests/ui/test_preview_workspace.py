@@ -625,7 +625,7 @@ class TestWidgetOverlaySelection:
             overlay.set_selection([moving], primary=moving)
             overlay._dragging = True
             overlay._drag_offset = QPoint()
-            monkeypatch.setattr(overlay, "_update_regions_for_guides", lambda guides: guide_updates.append(list(guides)))
+            monkeypatch.setattr(overlay, "_update_regions_for_guide_rects", lambda rects: guide_updates.append(list(rects)))
 
             overlay._do_free_drag(QPoint(57, 14))
             assert guide_updates
