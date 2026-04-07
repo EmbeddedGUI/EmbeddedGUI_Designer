@@ -2052,6 +2052,42 @@ class TestResourcePanelFileFlow:
         finally:
             dialog.deleteLater()
 
+    def test_generate_charset_dialog_exposes_accessibility_metadata(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        dialog = _GenerateCharsetDialog(str(resource_dir))
+        try:
+            dialog._preset_checks["ascii_printable"].setChecked(True)
+            dialog._custom_input.setPlainText("中")
+
+            assert dialog.accessibleName().startswith("Generate Charset: 1 preset selected.")
+            assert dialog._header_frame.accessibleName() == (
+                "Font charset dialog header: 1 preset selected. 96 chars. File: charset_ascii_printable_custom.txt."
+            )
+            assert dialog._eyebrow_label.accessibleName() == "Font charset generation workspace."
+            assert dialog._title_label.accessibleName() == "Font charset generator title: Generate Charset."
+            assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
+            assert dialog._selection_metric.accessibleName() == "Resource dialog metric: Selection. 1 preset, custom input."
+            assert dialog._char_metric.accessibleName() == "Resource dialog metric: Chars. 96 chars."
+            assert dialog._file_metric.accessibleName() == (
+                "Resource dialog metric: File. charset_ascii_printable_custom.txt."
+            )
+            assert dialog._custom_input.accessibleName() == "Custom charset input: 1 custom chars."
+            assert dialog._filename_edit.accessibleName() == (
+                "Charset output filename: charset_ascii_printable_custom.txt."
+            )
+            assert dialog._preview_box.accessibleName() == "Generated charset preview. Showing 96 line preview."
+            assert dialog._save_button.toolTip() == "Save charset resource to charset_ascii_printable_custom.txt."
+            assert dialog._save_button.accessibleName() == "Save charset resource"
+            assert dialog._save_assign_button.accessibleName() == "Save charset resource and bind current widget"
+            assert dialog._cancel_button.accessibleName() == "Cancel charset generation"
+            assert dialog._custom_input.placeholderText() == "e.g. A&#x2103;&#x00B0;&#x4F60;&#x597D;"
+        finally:
+            dialog.deleteLater()
+
     def test_generate_charset_creates_text_resource_refreshes_panel_and_emits_signals(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel

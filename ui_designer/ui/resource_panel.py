@@ -587,10 +587,20 @@ class _GenerateCharsetDialog(QDialog):
 
         self._eyebrow_label = QLabel("Font Charset Tool")
         self._eyebrow_label.setObjectName("resource_dialog_eyebrow")
+        _set_widget_metadata(
+            self._eyebrow_label,
+            tooltip="Font charset generation workspace.",
+            accessible_name="Font charset generation workspace.",
+        )
         hero_copy.addWidget(self._eyebrow_label, 0, Qt.AlignLeft)
 
         self._title_label = QLabel("Generate Charset")
         self._title_label.setObjectName("resource_dialog_title")
+        _set_widget_metadata(
+            self._title_label,
+            tooltip="Font charset generator title: Generate Charset.",
+            accessible_name="Font charset generator title: Generate Charset.",
+        )
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
@@ -598,6 +608,11 @@ class _GenerateCharsetDialog(QDialog):
         )
         self._subtitle_label.setObjectName("resource_dialog_subtitle")
         self._subtitle_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._subtitle_label,
+            tooltip=self._subtitle_label.text(),
+            accessible_name=self._subtitle_label.text(),
+        )
         hero_copy.addWidget(self._subtitle_label)
         header_layout.addLayout(hero_copy, 3)
 
@@ -618,13 +633,21 @@ class _GenerateCharsetDialog(QDialog):
 
         preset_title = QLabel("Built-in Presets")
         preset_title.setObjectName("workspace_section_title")
+        _set_widget_metadata(
+            preset_title,
+            tooltip="Built-in charset presets.",
+            accessible_name="Built-in charset presets.",
+        )
         preset_layout.addWidget(preset_title)
 
         for preset in self._presets:
             count = len(build_charset((preset.preset_id,)).chars)
             checkbox = QCheckBox(f"{preset.label} ({count})")
-            checkbox.setToolTip(preset.description)
-            checkbox.setStatusTip(preset.description)
+            _set_widget_metadata(
+                checkbox,
+                tooltip=preset.description,
+                accessible_name=f"Charset preset: {preset.label}. {preset.description}",
+            )
             checkbox.toggled.connect(self._refresh_preview)
             preset_layout.addWidget(checkbox)
             self._preset_checks[preset.preset_id] = checkbox
@@ -638,6 +661,11 @@ class _GenerateCharsetDialog(QDialog):
 
         custom_title = QLabel("Custom Characters")
         custom_title.setObjectName("workspace_section_title")
+        _set_widget_metadata(
+            custom_title,
+            tooltip="Custom characters to merge into the generated charset.",
+            accessible_name="Custom characters to merge into the generated charset.",
+        )
         custom_layout.addWidget(custom_title)
 
         custom_hint = QLabel(
@@ -645,12 +673,18 @@ class _GenerateCharsetDialog(QDialog):
         )
         custom_hint.setObjectName("workspace_section_subtitle")
         custom_hint.setWordWrap(True)
+        _set_widget_metadata(
+            custom_hint,
+            tooltip=custom_hint.text(),
+            accessible_name=custom_hint.text(),
+        )
         custom_layout.addWidget(custom_hint)
 
         self._custom_input = QPlainTextEdit()
         self._custom_input.setObjectName("resource_charset_custom_input")
         self._custom_input.setPlaceholderText("例如：℃°你好&#x4E2D;")
         self._custom_input.textChanged.connect(self._refresh_preview)
+        self._custom_input.setPlaceholderText("e.g. A&#x2103;&#x00B0;&#x4F60;&#x597D;")
         custom_layout.addWidget(self._custom_input, 1)
         layout.addWidget(self._custom_card, 1)
 
@@ -662,6 +696,11 @@ class _GenerateCharsetDialog(QDialog):
 
         output_title = QLabel("Output")
         output_title.setObjectName("workspace_section_title")
+        _set_widget_metadata(
+            output_title,
+            tooltip="Output settings for the generated charset resource.",
+            accessible_name="Output settings for the generated charset resource.",
+        )
         output_layout.addWidget(output_title)
 
         file_row = QHBoxLayout()
@@ -669,6 +708,11 @@ class _GenerateCharsetDialog(QDialog):
         file_row.setSpacing(8)
         file_label = QLabel("Filename")
         file_label.setObjectName("resource_panel_field_label")
+        _set_widget_metadata(
+            file_label,
+            tooltip="Filename for the generated charset resource.",
+            accessible_name="Filename for the generated charset resource.",
+        )
         file_row.addWidget(file_label)
 
         self._filename_edit = QLineEdit()
@@ -845,6 +889,105 @@ class _GenerateCharsetDialog(QDialog):
         can_save = bool(self.generated_chars()) and not filename_error
         self._save_button.setEnabled(can_save)
         self._save_assign_button.setEnabled(can_save)
+        self._update_accessibility_summary()
+
+    def _update_accessibility_summary(self):
+        selected_count = len(self.selected_preset_ids())
+        custom_contribution = next(
+            (item for item in self._build_result.contributions if item.source_id == "custom"),
+            None,
+        )
+        custom_count = custom_contribution.total_chars if custom_contribution is not None else 0
+        filename = self.filename() or "none"
+        char_summary = self._char_metric.text() or "0 chars"
+        overwrite_text = (self._overwrite_summary.text() or "").strip() or "No overwrite summary available."
+        dialog_summary = (
+            f"Generate Charset: {_count_label(selected_count, 'preset')} selected. "
+            f"Custom chars: {custom_count}. {char_summary.capitalize()}. "
+            f"File: {filename}. {overwrite_text}"
+        )
+        _set_widget_metadata(self, tooltip=dialog_summary, accessible_name=dialog_summary)
+        _set_widget_metadata(
+            self._header_frame,
+            tooltip=(
+                f"Font charset dialog header: {_count_label(selected_count, 'preset')} selected. "
+                f"{char_summary.capitalize()}. File: {filename}."
+            ),
+            accessible_name=(
+                f"Font charset dialog header: {_count_label(selected_count, 'preset')} selected. "
+                f"{char_summary.capitalize()}. File: {filename}."
+            ),
+        )
+        _set_widget_metadata(
+            self._preset_card,
+            tooltip=f"Preset selection area. {_count_label(selected_count, 'preset')} selected.",
+            accessible_name=f"Preset selection area. {_count_label(selected_count, 'preset')} selected.",
+        )
+        _set_widget_metadata(
+            self._custom_card,
+            tooltip=f"Custom character input area. {custom_count} custom chars entered.",
+            accessible_name=f"Custom character input area. {custom_count} custom chars entered.",
+        )
+        _set_widget_metadata(
+            self._custom_input,
+            tooltip=(
+                "Enter literal characters or &#xHHHH; entities. "
+                f"Current custom chars: {custom_count}."
+            ),
+            accessible_name=f"Custom charset input: {custom_count} custom chars.",
+        )
+        _set_widget_metadata(
+            self._output_card,
+            tooltip=f"Output area for {filename}. {char_summary.capitalize()}.",
+            accessible_name=f"Output area for {filename}. {char_summary.capitalize()}.",
+        )
+        _set_widget_metadata(
+            self._filename_edit,
+            tooltip=f"Charset output filename. Current value: {filename}.",
+            accessible_name=f"Charset output filename: {filename}.",
+        )
+        summary_text = (self._summary_label.text() or "").replace("\n", " ").strip() or "No charset summary available."
+        _set_widget_metadata(
+            self._summary_label,
+            tooltip=summary_text,
+            accessible_name=f"Charset summary: {summary_text}",
+        )
+        _set_widget_metadata(
+            self._overwrite_summary,
+            tooltip=overwrite_text,
+            accessible_name=f"Overwrite summary: {overwrite_text}",
+        )
+        preview_lines = max(1, len([line for line in self._preview_box.toPlainText().splitlines() if line]))
+        _set_widget_metadata(
+            self._preview_box,
+            tooltip=f"Generated charset preview. Showing {preview_lines} line preview.",
+            accessible_name=f"Generated charset preview. Showing {preview_lines} line preview.",
+        )
+        save_enabled = self._save_button.isEnabled()
+        save_tooltip = f"Save charset resource to {filename}."
+        save_assign_tooltip = f"Save charset resource to {filename} and bind it to the current widget."
+        if not save_enabled:
+            save_tooltip = "Select presets or enter custom characters, then provide a valid filename."
+            save_assign_tooltip = save_tooltip
+        _set_widget_metadata(
+            self._save_button,
+            tooltip=save_tooltip,
+            accessible_name="Save charset resource" if save_enabled else "Save charset resource unavailable",
+        )
+        _set_widget_metadata(
+            self._save_assign_button,
+            tooltip=save_assign_tooltip,
+            accessible_name=(
+                "Save charset resource and bind current widget"
+                if save_enabled
+                else "Save charset resource and bind current widget unavailable"
+            ),
+        )
+        _set_widget_metadata(
+            self._cancel_button,
+            tooltip="Close the charset generator without saving.",
+            accessible_name="Cancel charset generation",
+        )
 
 
 class _MissingResourceReplaceDialog(QDialog):
