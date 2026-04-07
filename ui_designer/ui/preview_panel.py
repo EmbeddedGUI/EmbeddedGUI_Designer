@@ -189,6 +189,9 @@ class WidgetOverlay(QWidget):
     def _show_full_bounds_overlay(self):
         return not (self._dragging or self._resizing or self._rubber_band)
 
+    def _show_snap_guides(self):
+        return not (self._dragging or self._resizing)
+
     def _paint_candidate_widgets(self):
         if self._show_full_bounds_overlay():
             return self._visible_widgets
@@ -594,6 +597,8 @@ class WidgetOverlay(QWidget):
 
     def _find_snap_guides(self, widget, new_x, new_y, new_w, new_h):
         """Find snap guide lines based on other widgets' edges."""
+        if not self._show_snap_guides():
+            return []
         snap_threshold = 5
         widget_id = id(widget) if widget is not None else 0
         vertical_guides = set()
