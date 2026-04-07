@@ -369,6 +369,20 @@ class TestPropertyPanelFileFlow:
         assert x_row["label_frame"].property("hoverActive") is False
         panel.deleteLater()
 
+    def test_property_grid_section_style_tracks_expanded_state(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        text_section = panel._property_sections["Text"]
+        assert text_section["header_frame"].property("sectionExpanded") is False
+        panel._on_property_tree_item_clicked(text_section["item"], 0)
+        assert text_section["header_frame"].property("sectionExpanded") is True
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

@@ -954,10 +954,19 @@ QFrame#property_grid_section_cell {{
     border-bottom: 1px solid {t['border_strong']};
 }}
 
+QFrame#property_grid_section_cell[sectionExpanded="true"] {{
+    background-color: {t['panel_soft']};
+    border-bottom: 1px solid {t['accent_soft']};
+}}
+
 #property_grid_section_text {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_semibold']};
+}}
+
+#property_grid_section_text[sectionExpanded="true"] {{
+    color: {t['accent_hover']};
 }}
 
 QFrame#property_grid_label_cell {{

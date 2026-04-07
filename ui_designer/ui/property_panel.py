@@ -723,6 +723,7 @@ class PropertyPanel(QWidget):
         }
         self._property_sections[title] = section
         self._property_tree_items[id(item)] = title
+        self._refresh_property_section_style(section, expanded=False)
         return handle
 
     def _add_property_grid_row(self, section_handle, label_text, editor):
@@ -855,6 +856,7 @@ class PropertyPanel(QWidget):
             default_open = self._inspector_group_default_expanded(title, key)
             expanded = bool(self._inspector_group_expanded.get(key, default_open))
             section["item"].setExpanded(expanded)
+            self._refresh_property_section_style(section, expanded=expanded)
             for row in section["rows"]:
                 row_visible = expanded and not row["item"].isHidden()
                 row["label_frame"].setVisible(row_visible)
@@ -869,6 +871,7 @@ class PropertyPanel(QWidget):
             self._inspector_group_expanded[self._property_tree_section_key(title)] = True
         section = self._property_sections.get(title)
         if section:
+            self._refresh_property_section_style(section, expanded=True)
             for row in section["rows"]:
                 if not row["item"].isHidden():
                     row["label_frame"].setVisible(True)
@@ -883,6 +886,7 @@ class PropertyPanel(QWidget):
             self._inspector_group_expanded[self._property_tree_section_key(title)] = False
         section = self._property_sections.get(title)
         if section:
+            self._refresh_property_section_style(section, expanded=False)
             for row in section["rows"]:
                 row["label_frame"].setVisible(False)
                 row["editor_host"].setVisible(False)
@@ -932,6 +936,22 @@ class PropertyPanel(QWidget):
         manager = _ensure_fluent_engineering_style_manager(QApplication.instance())
         if manager is not None:
             manager.refresh_all()
+
+    def _refresh_property_section_style(self, section, expanded):
+        header_frame = section.get("header_frame")
+        title_label = section.get("title_label")
+        if isinstance(header_frame, QWidget):
+            header_frame.setProperty("sectionExpanded", bool(expanded))
+            style = header_frame.style()
+            style.unpolish(header_frame)
+            style.polish(header_frame)
+            header_frame.update()
+        if isinstance(title_label, QWidget):
+            title_label.setProperty("sectionExpanded", bool(expanded))
+            style = title_label.style()
+            style.unpolish(title_label)
+            style.polish(title_label)
+            title_label.update()
 
     def eventFilter(self, watched, event):
         if isinstance(watched, QWidget):
