@@ -2635,6 +2635,42 @@ class TestResourcePanelFileFlow:
         }
         panel.deleteLater()
 
+    def test_generate_charset_prefers_existing_text_resource_preset_over_font_guess(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+
+        captured = {}
+
+        monkeypatch.setattr(
+            panel,
+            "_open_generate_charset_dialog",
+            lambda initial_filename="", source_label="", initial_preset_ids=(): captured.update(
+                {
+                    "initial_filename": initial_filename,
+                    "source_label": source_label,
+                    "initial_preset_ids": initial_preset_ids,
+                }
+            ),
+        )
+
+        panel.open_generate_charset_dialog_for_resource(
+            "font",
+            "simhei.ttf",
+            initial_filename="charset_ascii_printable.txt",
+        )
+
+        assert captured == {
+            "initial_filename": "charset_ascii_printable.txt",
+            "source_label": "simhei.ttf",
+            "initial_preset_ids": ("ascii_printable",),
+        }
+        panel.deleteLater()
+
     def test_generate_charset_does_not_prefill_preset_for_icon_font(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel

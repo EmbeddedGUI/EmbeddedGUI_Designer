@@ -3453,7 +3453,9 @@ class ResourcePanel(QWidget):
         if not normalized_initial:
             normalized_initial = _suggest_charset_filename_for_resource(resource_type, source_name)
         if not initial_preset_ids:
-            initial_preset_ids = _suggest_charset_presets_for_resource(resource_type, source_name)
+            initial_preset_ids = _suggest_charset_presets_for_resource("text", normalized_initial)
+            if not initial_preset_ids:
+                initial_preset_ids = _suggest_charset_presets_for_resource(resource_type, source_name)
         self._open_generate_charset_dialog(
             initial_filename=normalized_initial,
             source_label=source_name if resource_type in {"font", "text"} else "",

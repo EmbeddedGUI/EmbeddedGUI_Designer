@@ -6106,6 +6106,40 @@ class TestMainWindowFileFlow:
         assert captured == [("font", "demo_font.ttf", "chars.txt")]
         _close_window(window)
 
+    def test_property_panel_generate_charset_keeps_existing_text_resource_hint_for_res_panel(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PropertyCharsetPresetDemo"
+        project = _create_project(project_dir, "PropertyCharsetPresetDemo", sdk_root)
+        label = WidgetModel("label", name="title")
+        label.properties["font_file"] = "simhei.ttf"
+        label.properties["font_text_file"] = "charset_ascii_printable.txt"
+        project.get_page_by_name("main_page").root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selected_widget = label
+        window.property_panel.set_widget(label)
+        captured = []
+        monkeypatch.setattr(
+            window.res_panel,
+            "open_generate_charset_dialog_for_resource",
+            lambda resource_type, source_name, initial_filename="": captured.append((resource_type, source_name, initial_filename)),
+        )
+
+        window.property_panel.generate_charset_requested.emit("font", "simhei.ttf", "charset_ascii_printable.txt")
+
+        assert window._left_panel_stack.currentWidget() is window.res_panel
+        assert captured == [("font", "simhei.ttf", "charset_ascii_printable.txt")]
+        _close_window(window)
+
     def test_resource_rename_updates_text_references_across_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
