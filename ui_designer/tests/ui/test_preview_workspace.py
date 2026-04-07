@@ -792,6 +792,23 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_grid_line_positions_are_limited_to_visible_rect(self, qapp):
+        from PyQt5.QtCore import QRectF
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+
+        try:
+            visible_rect = QRectF(70.0, 130.0, 100.0, 80.0)
+            xs = list(overlay._grid_line_positions(500, 8, visible_rect, "x"))
+            ys = list(overlay._grid_line_positions(500, 8, visible_rect, "y"))
+            assert xs[0] == 64
+            assert xs[-1] == 176
+            assert ys[0] == 128
+            assert ys[-1] == 216
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

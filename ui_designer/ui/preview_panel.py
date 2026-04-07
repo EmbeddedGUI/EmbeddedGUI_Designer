@@ -1,6 +1,7 @@
 """Preview panel that embeds the exe window with draggable widget overlays."""
 
 import bisect
+import math
 import sys
 import json
 import time
@@ -516,7 +517,21 @@ class WidgetOverlay(QWidget):
             painter.setBrush(fill)
             painter.drawRect(rect)
 
-    def _draw_background_and_grid(self, painter, z, bw, bh):
+    @staticmethod
+    def _grid_line_positions(limit, grid_size, visible_logical_rect, axis):
+        if grid_size < 1 or limit <= 0:
+            return []
+        if visible_logical_rect is None or visible_logical_rect.isNull():
+            start = 0
+            end = limit
+        else:
+            start_value = visible_logical_rect.left() if axis == "x" else visible_logical_rect.top()
+            end_value = visible_logical_rect.right() if axis == "x" else visible_logical_rect.bottom()
+            start = max(0, int(math.floor(start_value / grid_size)) * grid_size)
+            end = min(limit, int(math.ceil(end_value / grid_size)) * grid_size + grid_size)
+        return range(start, max(start, end), grid_size)
+
+    def _draw_background_and_grid(self, painter, z, bw, bh, *, visible_logical_rect=None):
         if self._bg_image is not None and self._bg_image_visible:
             painter.save()
             painter.setOpacity(self._bg_image_opacity)
@@ -526,9 +541,9 @@ class WidgetOverlay(QWidget):
         eff_grid = self._effective_grid_size()
         if self._show_grid and eff_grid >= 1 and self._solid_background:
             painter.setPen(QPen(QColor(60, 60, 60, 100), 1.0 / z, Qt.DotLine))
-            for x in range(0, bw, eff_grid):
+            for x in self._grid_line_positions(bw, eff_grid, visible_logical_rect, "x"):
                 painter.drawLine(x, 0, x, bh)
-            for y in range(0, bh, eff_grid):
+            for y in self._grid_line_positions(bh, eff_grid, visible_logical_rect, "y"):
                 painter.drawLine(0, y, bw, y)
 
     def _draw_widget_labels(
@@ -597,7 +612,13 @@ class WidgetOverlay(QWidget):
         painter.setRenderHint(QPainter.Antialiasing, False)
         painter.scale(self._zoom, self._zoom)
         painter.translate(-(cache_rect.x() / self._zoom), -(cache_rect.y() / self._zoom))
-        self._draw_background_and_grid(painter, self._zoom, self._base_width, self._base_height)
+        self._draw_background_and_grid(
+            painter,
+            self._zoom,
+            self._base_width,
+            self._base_height,
+            visible_logical_rect=self._logical_visible_rect(cache_rect, self._zoom),
+        )
         self._draw_widget_bounds(
             painter,
             self._passive_cache_widgets(),
@@ -1166,7 +1187,7 @@ class WidgetOverlay(QWidget):
                     painter.drawPixmap(target_rect, passive_cache, source_rect)
             painter.scale(z, z)
         else:
-            self._draw_background_and_grid(painter, z, bw, bh)
+            self._draw_background_and_grid(painter, z, bw, bh, visible_logical_rect=visible_logical_rect)
 
         self._draw_widget_bounds(
             painter,
