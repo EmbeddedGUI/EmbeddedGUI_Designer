@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QSpinBox
 
 from ui_designer.ui.iconography import semantic_icon_keys
 from ui_designer.ui.typography import apply_typography_role
@@ -554,6 +554,9 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         inspector_group = css.split("QGroupBox#inspector_collapsible_group {", 1)[1].split("}", 1)[0]
         inspector_group_title = css.split("QGroupBox#inspector_collapsible_group::title {", 1)[1].split("}", 1)[0]
         inspector_group_indicator = css.split("QGroupBox#inspector_collapsible_group::indicator {", 1)[1].split("}", 1)[0]
+        property_tree = css.split("QTreeWidget#property_panel_tree {", 1)[1].split("}", 1)[0]
+        property_tree_item = css.split("QTreeWidget#property_panel_tree::item {", 1)[1].split("}", 1)[0]
+        property_tree_header = css.split("QTreeWidget#property_panel_tree QHeaderView::section {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
@@ -565,6 +568,13 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"border-left: 2px solid {t['border_strong']};" in hint_strip
         assert "background-color: transparent;" in search_shell
         assert "border: none;" in search_shell
+        assert "background-color: transparent;" in property_tree
+        assert "border: none;" in property_tree
+        assert "padding: 0px;" in property_tree
+        assert f"border-bottom: 1px solid {t['border']};" in property_tree_item
+        assert "min-height: 24px;" in property_tree_item
+        assert f"background-color: {t['panel_alt']};" in property_tree_header
+        assert f"color: {t['text_muted']};" in property_tree_header
         assert "background-color: transparent;" in property_chip
         assert f"border-top: 1px solid {t['border']};" in property_chip
         assert "border-right: none;" in property_chip
@@ -1134,7 +1144,8 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert search.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
         assert name_edit.property("_designer_fluent_engineering_style") == "property_panel_line_edit"
         assert alpha_combo.property("_designer_fluent_engineering_style") == "property_panel_combo_box"
-        assert x_spin.property("_designer_fluent_engineering_style") == "property_panel_spin_box"
+        assert isinstance(x_spin, QSpinBox)
+        assert x_spin.property("propertyPanelSpin") is True
         assert browse_button.property("_designer_fluent_engineering_style") == "property_panel_button"
 
         assert "#lineEditButton" in search.styleSheet()
@@ -1146,10 +1157,7 @@ def test_apply_theme_flattens_property_panel_fluent_widgets():
         assert "min-height: 24px;" in name_edit.styleSheet()
         assert "border-radius: 0px;" in alpha_combo.styleSheet()
         assert "min-height: 24px;" in alpha_combo.styleSheet()
-        assert "SpinButton" in x_spin.styleSheet()
-        assert "border-radius: 0px;" in x_spin.styleSheet()
-        assert "min-height: 24px;" in x_spin.styleSheet()
-        assert "min-width: 18px;" in x_spin.styleSheet()
+        assert x_spin.minimumHeight() >= 24
         assert "border-radius: 0px;" in browse_button.styleSheet()
         assert "min-height: 22px;" in browse_button.styleSheet()
         assert "padding: 1px 6px;" in browse_button.styleSheet()

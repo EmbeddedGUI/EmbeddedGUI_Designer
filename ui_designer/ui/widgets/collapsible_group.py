@@ -3,18 +3,32 @@
 from __future__ import annotations
 
 from PyQt5.QtGui import QShowEvent
-from PyQt5.QtWidgets import QGroupBox
+from PyQt5.QtWidgets import QFrame, QGroupBox, QVBoxLayout
 
 
 class CollapsibleGroupBox(QGroupBox):
     """A QGroupBox that can be collapsed/expanded by clicking its title."""
 
+    _CONTENT_INDENT = 18
+
     def __init__(self, title: str, parent=None):
         super().__init__("", parent)
         self._base_title = str(title or "").strip()
+        self._content_layout = None
         self.setObjectName("inspector_collapsible_group")
         self.setCheckable(True)
         self.setChecked(True)
+
+        self._content_frame = QFrame(self)
+        self._content_frame.setObjectName("inspector_group_body")
+        self._content_frame.setFrameShape(QFrame.NoFrame)
+
+        outer_layout = QVBoxLayout()
+        outer_layout.setContentsMargins(self._CONTENT_INDENT, 0, 0, 0)
+        outer_layout.setSpacing(0)
+        outer_layout.addWidget(self._content_frame)
+        super().setLayout(outer_layout)
+
         self.toggled.connect(self._on_toggled)
         self._sync_title()
 
@@ -25,8 +39,23 @@ class CollapsibleGroupBox(QGroupBox):
         self._base_title = str(title or "").strip()
         self._sync_title()
 
+    def setLayout(self, layout):
+        if layout is None:
+            return
+        self._content_layout = layout
+        self._content_frame.setLayout(layout)
+
+    def layout(self):
+        return self._content_layout
+
+    def content_frame(self):
+        return self._content_frame
+
+    def content_indent(self):
+        return self._CONTENT_INDENT
+
     def _sync_title(self):
-        arrow = "▾" if self.isChecked() else "▸"
+        arrow = "▼" if self.isChecked() else "▶"
         label = self._base_title or ""
         super().setTitle(f"{arrow} {label}".strip())
 
@@ -39,18 +68,6 @@ class CollapsibleGroupBox(QGroupBox):
         finally:
             self.blockSignals(False)
 
-    def _set_layout_visibility(self, layout, visible: bool):
-        if layout is None:
-            return
-        for i in range(layout.count()):
-            item = layout.itemAt(i)
-            widget = item.widget()
-            child_layout = item.layout()
-            if widget is not None:
-                widget.setVisible(visible)
-            if child_layout is not None:
-                self._set_layout_visibility(child_layout, visible)
-
     def _collapsed_height(self) -> int:
         return max(32, self.fontMetrics().height() + 18)
 
@@ -59,11 +76,10 @@ class CollapsibleGroupBox(QGroupBox):
         self._on_toggled(self.isChecked())
 
     def _on_toggled(self, checked: bool):
-        layout = self.layout()
-        if layout is None:
+        if self._content_layout is None:
             return
         self._sync_title()
-        self._set_layout_visibility(layout, checked)
+        self._content_frame.setVisible(checked)
         if checked:
             self.setMaximumHeight(16777215)
         else:

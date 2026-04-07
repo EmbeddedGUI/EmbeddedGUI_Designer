@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QToolButton, QHBoxLayout, QMenu, QAction, QInputDialog, QAbstractItemView, QMessageBox, QLineEdit, QLabel,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QItemSelectionModel, QEvent, QTimer
-from PyQt5.QtGui import QColor, QBrush
+from PyQt5.QtGui import QColor, QBrush, QFont
 
 from ..model.config import get_config
 from ..model.widget_name import (
@@ -460,6 +460,7 @@ class WidgetTreePanel(QWidget):
         self.tree.setHeaderLabels(["Structure"])
         self.tree.header().setStretchLastSection(True)
         self.tree.header().hide()
+        self.tree.setIndentation(24)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self._on_context_menu)
@@ -3588,14 +3589,22 @@ class WidgetTreePanel(QWidget):
         for index in range(item.childCount()):
             self._clear_item_filter(item.child(index))
 
-    def _tree_item_font(self, matched=False):
+    def _tree_item_font(self, item, matched=False):
         font = self.tree.font()
-        font.setBold(bool(matched))
+        if matched:
+            font.setWeight(QFont.Bold)
+            font.setBold(True)
+            return font
+
+        if item is not None and item.childCount() > 0:
+            font.setWeight(QFont.DemiBold)
+        else:
+            font.setWeight(QFont.Normal)
         return font
 
     def _set_item_match_state(self, item, matched):
         for column in range(self.tree.columnCount()):
-            item.setFont(column, self._tree_item_font(matched))
+            item.setFont(column, self._tree_item_font(item, matched))
 
     def refresh_tree_typography(self):
         """Re-apply match emphasis using the current tree font."""

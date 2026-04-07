@@ -145,6 +145,36 @@ class TestWidgetTreePanel:
         assert button_item.font(0).bold() is True
         panel.deleteLater()
 
+    def test_parent_nodes_use_semibold_tree_typography(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        branch = WidgetModel("group", name="branch")
+        nested = WidgetModel("group", name="nested")
+        leaf = WidgetModel("label", name="leaf")
+        nested_leaf = WidgetModel("button", name="nested_leaf")
+        root.add_child(branch)
+        branch.add_child(leaf)
+        branch.add_child(nested)
+        nested.add_child(nested_leaf)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        root_item = panel._item_map[id(root)]
+        branch_item = panel._item_map[id(branch)]
+        nested_item = panel._item_map[id(nested)]
+        leaf_item = panel._item_map[id(leaf)]
+        nested_leaf_item = panel._item_map[id(nested_leaf)]
+
+        assert root_item.font(0).weight() == QFont.DemiBold
+        assert branch_item.font(0).weight() == QFont.DemiBold
+        assert nested_item.font(0).weight() == QFont.DemiBold
+        assert leaf_item.font(0).weight() == QFont.Normal
+        assert nested_leaf_item.font(0).weight() == QFont.Normal
+        panel.deleteLater()
+
     def test_header_metadata_tracks_selection_and_filter_context(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -2681,6 +2711,7 @@ class TestWidgetTreePanel:
         assert panel._filter_label.isHidden() is True
         assert panel.tree.columnCount() == 1
         assert panel.tree.headerItem().text(0) == "Structure"
+        assert panel.tree.indentation() == 24
         assert [action.text() for action in panel.structure_actions_btn.menu().actions() if action.text()] == [
             "Group Selection",
             "Ungroup",
@@ -2828,8 +2859,8 @@ class TestWidgetTreePanel:
         assert panel._item_map[id(container)].isHidden() is False
         assert panel._item_map[id(target)].isHidden() is False
         assert panel._item_map[id(container)].isExpanded() is True
-        assert panel._item_map[id(container)].font(0).bold() is False
-        assert panel._item_map[id(target)].font(0).bold() is True
+        assert panel._item_map[id(container)].font(0).weight() == QFont.DemiBold
+        assert panel._item_map[id(target)].font(0).weight() == QFont.Bold
         assert panel._item_map[id(other)].isHidden() is True
         assert panel.filter_position_label.text() == "0/1"
         assert panel.filter_status_label.text() == "1 match"
@@ -2840,7 +2871,8 @@ class TestWidgetTreePanel:
         assert panel._item_map[id(container)].isHidden() is False
         assert panel._item_map[id(target)].isHidden() is False
         assert panel._item_map[id(other)].isHidden() is True
-        assert panel._item_map[id(target)].font(0).bold() is True
+        assert panel._item_map[id(container)].font(0).weight() == QFont.DemiBold
+        assert panel._item_map[id(target)].font(0).weight() == QFont.Bold
         assert panel.filter_position_label.text() == "0/1"
         assert panel.filter_status_label.text() == "1 match"
 

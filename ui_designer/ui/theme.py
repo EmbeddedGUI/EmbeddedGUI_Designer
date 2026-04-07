@@ -10,7 +10,7 @@ Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
 
 from __future__ import annotations
 
-from PyQt5.QtCore import QEvent, QObject
+from PyQt5.QtCore import QEvent, QObject, QSize
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QWidget
 
@@ -42,6 +42,21 @@ except ImportError:
 _ENGINEERING_RADIUS_SM = 4
 _ENGINEERING_RADIUS_MD = 6
 _FLUENT_STYLE_MARKER = "_designer_fluent_engineering_style"
+_PROPERTY_PANEL_SPIN_BUTTON_WIDTH = 20
+_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT = 20
+_PROPERTY_PANEL_SPIN_ICON_SIZE = 10
+_PROPERTY_PANEL_SPIN_LAYOUT_SPACING = 2
+_PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN = 2
+_PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN = 3
+_PROPERTY_PANEL_SPIN_BUTTON_QSS = (
+    f"min-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
+    f"max-width: {_PROPERTY_PANEL_SPIN_BUTTON_WIDTH}px;"
+    f"min-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
+    f"max-height: {_PROPERTY_PANEL_SPIN_BUTTON_HEIGHT}px;"
+    "padding: 0px;"
+    "margin: 0px;"
+    "border-radius: 0px;"
+)
 
 _FLUENT_BUTTON_RADIUS_QSS = f"""
 PushButton,
@@ -532,6 +547,28 @@ def _apply_fluent_engineering_style(widget):
         return False
 
     set_fluent_custom_stylesheet(widget, custom_qss, custom_qss)
+    if style_kind == "property_panel_spin_box":
+        layout = getattr(widget, "hBoxLayout", None)
+        if layout is not None:
+            layout.setContentsMargins(
+                0,
+                _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN,
+                _PROPERTY_PANEL_SPIN_LAYOUT_RIGHT_MARGIN,
+                _PROPERTY_PANEL_SPIN_LAYOUT_VERTICAL_MARGIN,
+            )
+            layout.setSpacing(_PROPERTY_PANEL_SPIN_LAYOUT_SPACING)
+
+        button_size = QSize(_PROPERTY_PANEL_SPIN_BUTTON_WIDTH, _PROPERTY_PANEL_SPIN_BUTTON_HEIGHT)
+        icon_size = QSize(_PROPERTY_PANEL_SPIN_ICON_SIZE, _PROPERTY_PANEL_SPIN_ICON_SIZE)
+        for attr_name in ("upButton", "downButton"):
+            button = getattr(widget, attr_name, None)
+            if button is None:
+                continue
+            button.setFixedSize(button_size)
+            button.setMinimumSize(button_size)
+            button.setMaximumSize(button_size)
+            button.setIconSize(icon_size)
+            button.setStyleSheet(_PROPERTY_PANEL_SPIN_BUTTON_QSS)
     widget.setProperty(_FLUENT_STYLE_MARKER, style_kind)
     return True
 
@@ -626,6 +663,46 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus, 
 QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QAbstractSpinBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {{
     color: {t['text_soft']};
     background-color: {t['panel_alt']};
+}}
+
+QSpinBox[propertyPanelSpin="true"], QDoubleSpinBox[propertyPanelSpin="true"] {{
+    border-radius: 0px;
+    min-height: 24px;
+    padding: 0px 52px 0px 6px;
+}}
+
+QSpinBox[propertyPanelSpin="true"]::up-button, QSpinBox[propertyPanelSpin="true"]::down-button,
+QDoubleSpinBox[propertyPanelSpin="true"]::up-button, QDoubleSpinBox[propertyPanelSpin="true"]::down-button {{
+    subcontrol-origin: border;
+    width: 20px;
+    border: none;
+    background-color: transparent;
+}}
+
+QSpinBox[propertyPanelSpin="true"]::up-button, QDoubleSpinBox[propertyPanelSpin="true"]::up-button {{
+    subcontrol-position: top right;
+    margin: 2px 2px 0px 0px;
+}}
+
+QSpinBox[propertyPanelSpin="true"]::down-button, QDoubleSpinBox[propertyPanelSpin="true"]::down-button {{
+    subcontrol-position: bottom right;
+    margin: 0px 2px 2px 0px;
+}}
+
+QSpinBox[propertyPanelSpin="true"]::up-button:hover, QSpinBox[propertyPanelSpin="true"]::down-button:hover,
+QDoubleSpinBox[propertyPanelSpin="true"]::up-button:hover, QDoubleSpinBox[propertyPanelSpin="true"]::down-button:hover {{
+    background-color: {t['surface_hover']};
+}}
+
+QSpinBox[propertyPanelSpin="true"]::up-button:pressed, QSpinBox[propertyPanelSpin="true"]::down-button:pressed,
+QDoubleSpinBox[propertyPanelSpin="true"]::up-button:pressed, QDoubleSpinBox[propertyPanelSpin="true"]::down-button:pressed {{
+    background-color: {t['surface_pressed']};
+}}
+
+QSpinBox[propertyPanelSpin="true"]::up-arrow, QSpinBox[propertyPanelSpin="true"]::down-arrow,
+QDoubleSpinBox[propertyPanelSpin="true"]::up-arrow, QDoubleSpinBox[propertyPanelSpin="true"]::down-arrow {{
+    width: 8px;
+    height: 8px;
 }}
 
 QPushButton, QToolButton {{
@@ -843,6 +920,33 @@ QFrame#property_panel_search_shell {{
     border-radius: 0px;
 }}
 
+QTreeWidget#property_panel_tree {{
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}}
+
+QTreeWidget#property_panel_tree::item {{
+    border-bottom: 1px solid {t['border']};
+    padding: 3px 6px;
+    min-height: 24px;
+}}
+
+QTreeWidget#property_panel_tree::item:selected {{
+    background-color: transparent;
+    color: {t['text']};
+}}
+
+QTreeWidget#property_panel_tree QHeaderView::section {{
+    background-color: {t['panel_alt']};
+    color: {t['text_muted']};
+    border: none;
+    border-bottom: 1px solid {t['border']};
+    padding: 3px 6px;
+    font-size: {t['fs_caption']}px;
+    font-weight: {t['fw_medium']};
+}}
+
 #property_panel_eyebrow,
 #property_panel_header_eyebrow {{
     color: {t['accent_hover']};
@@ -895,6 +999,13 @@ QGroupBox#inspector_collapsible_group::title {{
 QGroupBox#inspector_collapsible_group::indicator {{
     width: 0px;
     height: 0px;
+}}
+
+QFrame#inspector_group_body {{
+    background-color: transparent;
+    border: none;
+    border-left: 1px solid {t['border_strong']};
+    margin-top: 2px;
 }}
 
 #workspace_panel_header,

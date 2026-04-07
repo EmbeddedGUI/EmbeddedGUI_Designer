@@ -3,19 +3,21 @@
 import os
 import re
 import json
+from collections import OrderedDict
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLabel,
     QGroupBox, QScrollArea, QHBoxLayout,
     QGridLayout,
     QDialog, QListWidget, QListWidgetItem,
-    QDialogButtonBox, QMessageBox, QFileDialog, QFrame,
+    QDialogButtonBox, QMessageBox, QFileDialog, QFrame, QSpinBox,
+    QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication,
 )
-from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins
+from PyQt5.QtGui import QFont, QColor, QBrush
 
 from qfluentwidgets import (
-    ComboBox, EditableComboBox, SpinBox, LineEdit, CheckBox, ToolButton,
+    ComboBox, EditableComboBox, LineEdit, CheckBox, ToolButton,
     ListWidget, SearchLineEdit,
 )
 
@@ -142,6 +144,114 @@ def _count_label(count, singular, plural=None):
     value = max(int(count or 0), 0)
     noun = singular if value == 1 else (plural or f"{singular}s")
     return f"{value} {noun}"
+
+
+class _PropertyGridLayoutItem:
+    def __init__(self, widget):
+        self._widget = widget
+
+    def widget(self):
+        return self._widget
+
+
+class _PropertyGridSectionHandle:
+    def __init__(self, panel, title, item):
+        self._panel = panel
+        self._title = title
+        self._item = item
+        self._content_frame = QFrame()
+        self._content_frame.setObjectName("inspector_group_body")
+
+    def title(self):
+        return self._title
+
+    def objectName(self):
+        return "inspector_collapsible_group"
+
+    def layout(self):
+        section = self._panel._property_sections.get(self._title, {})
+        return section.get("form")
+
+    def content_frame(self):
+        return self._content_frame
+
+    def content_indent(self):
+        tree = getattr(self._panel, "_property_tree", None)
+        return tree.indentation() if tree is not None else 0
+
+    def isHidden(self):
+        return self._item.isHidden()
+
+    def isChecked(self):
+        return self._item.isExpanded()
+
+    def maximumHeight(self):
+        return 16777215 if self.isChecked() else max(32, self._panel.fontMetrics().height() + 18)
+
+    def findChildren(self, widget_type):
+        section = self._panel._property_sections.get(self._title, {})
+        widgets = []
+        for row in section.get("rows", []):
+            editor = row.get("editor")
+            label_widget = row.get("label_widget")
+            if isinstance(label_widget, widget_type):
+                widgets.append(label_widget)
+            if isinstance(editor, widget_type):
+                widgets.append(editor)
+            if isinstance(editor, QWidget):
+                widgets.extend(editor.findChildren(widget_type))
+        return widgets
+
+
+class _PropertyGridFormAdapter:
+    _VERTICAL_SPACING = 4
+    _HORIZONTAL_SPACING = 0
+
+    def __init__(self, panel, section_handle):
+        self._panel = panel
+        self._section_handle = section_handle
+
+    def addRow(self, label_or_widget, field_widget=None):
+        if field_widget is None:
+            label_text = ""
+            editor = label_or_widget
+        else:
+            label_text = str(label_or_widget or "")
+            editor = field_widget
+        self._panel._add_property_grid_row(self._section_handle, label_text, editor)
+
+    def rowCount(self):
+        section = self._panel._property_sections.get(self._section_handle.title(), {})
+        return len(section.get("rows", []))
+
+    def itemAt(self, row, role):
+        section = self._panel._property_sections.get(self._section_handle.title(), {})
+        rows = section.get("rows", [])
+        if row < 0 or row >= len(rows):
+            return None
+        row_data = rows[row]
+        if role == QFormLayout.LabelRole:
+            return _PropertyGridLayoutItem(row_data.get("label_widget"))
+        if role == QFormLayout.FieldRole:
+            return _PropertyGridLayoutItem(row_data.get("editor"))
+        return None
+
+    def contentsMargins(self):
+        return QMargins(0, 0, 0, 0)
+
+    def verticalSpacing(self):
+        return self._VERTICAL_SPACING
+
+    def horizontalSpacing(self):
+        return self._HORIZONTAL_SPACING
+
+
+def _create_property_panel_spin_box():
+    """Use a standard Qt spin box so arrows and layout stay stable under stylesheet changes."""
+    editor = QSpinBox()
+    editor.setProperty("propertyPanelSpin", True)
+    editor.setMinimumHeight(24)
+    return editor
 
 
 def _inspector_form():
@@ -435,6 +545,24 @@ class PropertyPanel(QWidget):
         self._layout.setSpacing(4)
         scroll.setWidget(self._container)
 
+        self._property_tree = QTreeWidget()
+        self._property_tree.setObjectName("property_panel_tree")
+        self._property_tree.setColumnCount(2)
+        self._property_tree.setHeaderLabels(["Property", "Value"])
+        self._property_tree.setRootIsDecorated(True)
+        self._property_tree.setIndentation(18)
+        self._property_tree.setUniformRowHeights(False)
+        self._property_tree.setSelectionMode(QTreeWidget.NoSelection)
+        self._property_tree.setFocusPolicy(Qt.NoFocus)
+        self._property_tree.header().setStretchLastSection(True)
+        self._property_tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self._property_tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
+        self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
+        self._property_tree.itemCollapsed.connect(self._on_property_tree_item_collapsed)
+        self._property_sections = OrderedDict()
+        self._property_tree_items = {}
+        self._property_tree.hide()
+
         self._no_selection_label = self._create_no_selection_label()
         self._layout.addWidget(self._no_selection_label)
         self._update_panel_metadata()
@@ -442,30 +570,7 @@ class PropertyPanel(QWidget):
     def _on_search_changed(self, text):
         """Filter visible property rows by search text."""
         text = text.strip().lower()
-        for i in range(self._layout.count()):
-            item = self._layout.itemAt(i)
-            w = item.widget()
-            if not isinstance(w, QGroupBox):
-                continue
-            layout = w.layout()
-            if not isinstance(layout, QFormLayout):
-                w.setVisible(not text)
-                continue
-            any_visible = False
-            for row in range(layout.rowCount()):
-                label_item = layout.itemAt(row, QFormLayout.LabelRole)
-                field_item = layout.itemAt(row, QFormLayout.FieldRole)
-                label_text = ""
-                if label_item and label_item.widget():
-                    label_text = label_item.widget().text().lower()
-                visible = not text or text in label_text
-                if label_item and label_item.widget():
-                    label_item.widget().setVisible(visible)
-                if field_item and field_item.widget():
-                    field_item.widget().setVisible(visible)
-                if visible:
-                    any_visible = True
-            w.setVisible(any_visible or not text)
+        self._apply_property_tree_filter(text)
         self._update_panel_metadata()
 
     def set_widget(self, widget):
@@ -534,6 +639,9 @@ class PropertyPanel(QWidget):
             item = layout.takeAt(0)
             if item.widget():
                 widget = item.widget()
+                if widget is self._property_tree:
+                    widget.hide()
+                    continue
                 widget.hide()
                 widget.setParent(None)
                 widget.deleteLater()
@@ -541,8 +649,147 @@ class PropertyPanel(QWidget):
                 self._clear_layout(item.layout())
 
     def _sync_collapsible_group_states(self):
-        for group in self.findChildren(CollapsibleGroupBox):
-            group.apply_expanded_state(group.isChecked())
+        self._apply_property_tree_expanded_state()
+
+    def property_group(self, title):
+        section = self._property_sections.get(str(title or "").strip())
+        if not section:
+            raise AssertionError(f"Group not found: {title}")
+        return section["handle"]
+
+    def _reset_property_tree(self):
+        if not hasattr(self, "_property_tree"):
+            return
+        self._property_tree.blockSignals(True)
+        try:
+            self._property_tree.clear()
+        finally:
+            self._property_tree.blockSignals(False)
+        self._property_sections = OrderedDict()
+        self._property_tree_items = {}
+
+    def _property_tree_section_key(self, title):
+        return self._inspector_group_storage_key(title)
+
+    def _get_or_create_property_section(self, title):
+        title = str(title or "").strip()
+        section = self._property_sections.get(title)
+        if section is not None:
+            return section["handle"]
+
+        item = QTreeWidgetItem([title, ""])
+        item.setFirstColumnSpanned(True)
+        item.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+        item.setFlags(Qt.ItemIsEnabled)
+        section_font = QFont(self._property_tree.font())
+        section_font.setWeight(QFont.DemiBold)
+        item.setFont(0, section_font)
+        item.setForeground(0, QBrush(QColor(self.palette().color(self.foregroundRole()))))
+        self._property_tree.addTopLevelItem(item)
+
+        handle = _PropertyGridSectionHandle(self, title, item)
+        form = _PropertyGridFormAdapter(self, handle)
+        section = {
+            "item": item,
+            "handle": handle,
+            "form": form,
+            "rows": [],
+            "key": self._property_tree_section_key(title),
+        }
+        self._property_sections[title] = section
+        self._property_tree_items[id(item)] = title
+        return handle
+
+    def _add_property_grid_row(self, section_handle, label_text, editor):
+        if section_handle is None or editor is None:
+            return
+        title = section_handle.title()
+        section = self._property_sections.get(title)
+        if section is None:
+            return
+
+        row_item = QTreeWidgetItem(section["item"], [str(label_text or ""), ""])
+        row_item.setFlags(Qt.ItemIsEnabled)
+        self._property_tree.setItemWidget(row_item, 1, editor)
+
+        label_widget = QLabel(str(label_text or ""))
+        row_data = {
+            "item": row_item,
+            "label_text": str(label_text or ""),
+            "label_widget": label_widget,
+            "editor": editor,
+        }
+        section["rows"].append(row_data)
+        editor.setVisible(section["item"].isExpanded())
+
+    def _apply_property_tree_expanded_state(self):
+        for title, section in self._property_sections.items():
+            key = section["key"]
+            default_open = self._inspector_group_default_expanded(title, key)
+            expanded = bool(self._inspector_group_expanded.get(key, default_open))
+            section["item"].setExpanded(expanded)
+            for row in section["rows"]:
+                row["editor"].setVisible(expanded and not row["item"].isHidden())
+
+    def _on_property_tree_item_expanded(self, item):
+        title = self._property_tree_items.get(id(item))
+        if not title:
+            return
+        if not self._updating:
+            self._inspector_group_expanded[self._property_tree_section_key(title)] = True
+        section = self._property_sections.get(title)
+        if section:
+            for row in section["rows"]:
+                if not row["item"].isHidden():
+                    row["editor"].setVisible(True)
+
+    def _on_property_tree_item_collapsed(self, item):
+        title = self._property_tree_items.get(id(item))
+        if not title:
+            return
+        if not self._updating:
+            self._inspector_group_expanded[self._property_tree_section_key(title)] = False
+        section = self._property_sections.get(title)
+        if section:
+            for row in section["rows"]:
+                row["editor"].setVisible(False)
+
+    def _apply_property_tree_filter(self, text):
+        if not hasattr(self, "_property_tree"):
+            return
+        if not self._property_sections:
+            self._property_tree.setVisible(False)
+            return
+
+        any_section_visible = False
+        for title, section in self._property_sections.items():
+            item = section["item"]
+            title_match = bool(text and text in title.lower())
+            any_visible = False
+            for row in section["rows"]:
+                row_match = not text or title_match or text in row["label_text"].lower()
+                row["item"].setHidden(not row_match)
+                row["editor"].setVisible(row_match and item.isExpanded())
+                any_visible = any_visible or row_match
+            item.setHidden(not any_visible)
+            any_section_visible = any_section_visible or any_visible
+            if text and any_visible:
+                item.setExpanded(True)
+            elif not text:
+                key = section["key"]
+                default_open = self._inspector_group_default_expanded(title, key)
+                item.setExpanded(bool(self._inspector_group_expanded.get(key, default_open)))
+
+        self._property_tree.setVisible(any_section_visible)
+
+    def _refresh_property_tree_theme_patches(self):
+        try:
+            from .theme import _ensure_fluent_engineering_style_manager
+        except Exception:
+            return
+        manager = _ensure_fluent_engineering_style_manager(QApplication.instance())
+        if manager is not None:
+            manager.refresh_all()
 
     def _make_status_chip(self, text, tone=None):
         chip = QLabel(text)
@@ -1038,10 +1285,8 @@ class PropertyPanel(QWidget):
         return header
 
     def _build_inspector_group(self, title):
-        group = CollapsibleGroupBox(title)
-        form = _inspector_form()
-        group.setLayout(form)
-        self._wire_inspector_collapsible_group(group, title)
+        group = self._get_or_create_property_section(title)
+        form = self._property_sections[group.title()]["form"]
         return group, form
 
     def _build_selection_feedback_strip(self, messages):
@@ -1084,6 +1329,7 @@ class PropertyPanel(QWidget):
 
     def _rebuild_form(self):
         self._clear_layout(self._layout)
+        self._reset_property_tree()
         self._editors = {}
         self._callback_open_buttons = {}
         self._header_size_chip = None
@@ -1092,6 +1338,7 @@ class PropertyPanel(QWidget):
             self._context_frame.setVisible(False)
             self._search_shell.setVisible(False)
             self._search_edit.setVisible(False)
+            self._property_tree.hide()
             self._no_selection_label = self._create_no_selection_label()
             self._layout.addWidget(self._no_selection_label)
             self._update_panel_metadata()
@@ -1100,13 +1347,16 @@ class PropertyPanel(QWidget):
         self._context_frame.setVisible(False)
         self._search_shell.setVisible(True)
         self._search_edit.setVisible(True)
+        self._property_tree.show()
         if len(self._selection) > 1:
             header = self._build_multi_selection_header(self._collect_multi_callback_entries())
             header.hide()
             self._layout.addWidget(header)
             self._build_multi_selection_form()
+            self._layout.addWidget(self._property_tree)
             self._sync_collapsible_group_states()
             self._on_search_changed(self._search_edit.text())
+            self._refresh_property_tree_theme_patches()
             return
 
         w = self._primary_widget
@@ -1115,24 +1365,17 @@ class PropertyPanel(QWidget):
         self._layout.addWidget(header)
 
         # Layout group
-        layout_group = CollapsibleGroupBox("Layout")
-        layout_form = _inspector_form()
-        layout_group.setLayout(layout_form)
-        self._wire_inspector_collapsible_group(layout_group, "Layout")
+        layout_group, layout_form = self._build_inspector_group("Layout")
         for field, label in [("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")]:
-            spin = SpinBox()
+            spin = _create_property_panel_spin_box()
             spin.setRange(-9999, 9999)
             spin.setValue(getattr(w, field))
             spin.valueChanged.connect(lambda val, f=field: self._on_common_changed(f, val))
             layout_form.addRow(label, spin)
             self._editors[field] = spin
-        self._layout.addWidget(layout_group)
 
         # Basic group
-        basic_group = CollapsibleGroupBox("Basic")
-        basic_form = _inspector_form()
-        basic_group.setLayout(basic_form)
-        self._wire_inspector_collapsible_group(basic_group, "Basic")
+        _basic_group, basic_form = self._build_inspector_group("Basic")
 
         name_edit = LineEdit()
         name_edit.setText(w.name)
@@ -1140,7 +1383,6 @@ class PropertyPanel(QWidget):
         basic_form.addRow("Name:", name_edit)
         self._editors["name"] = name_edit
         self._update_name_editor_metadata(name_edit)
-        self._layout.addWidget(basic_group)
 
         # Type-specific properties - grouped by data vs other
         type_info = WidgetRegistry.instance().get(w.widget_type)
@@ -1159,10 +1401,7 @@ class PropertyPanel(QWidget):
                 self._build_data_group(w, data_props)
 
         # Style properties
-        bg_group = CollapsibleGroupBox("Appearance")
-        bg_form = _inspector_form()
-        bg_group.setLayout(bg_form)
-        self._wire_inspector_collapsible_group(bg_group, "Appearance")
+        _bg_group, bg_form = self._build_inspector_group("Appearance")
 
         bg = w.background or BackgroundModel()
 
@@ -1189,7 +1428,7 @@ class PropertyPanel(QWidget):
 
             # Radius (for round_rectangle and circle)
             if bg.bg_type in ("round_rectangle", "circle"):
-                radius_spin = SpinBox()
+                radius_spin = _create_property_panel_spin_box()
                 radius_spin.setRange(0, 999)
                 radius_spin.setValue(bg.radius)
                 radius_spin.valueChanged.connect(lambda val: self._on_bg_changed("radius", val))
@@ -1198,7 +1437,7 @@ class PropertyPanel(QWidget):
             # Corner radii (for round_rectangle_corners)
             if bg.bg_type == "round_rectangle_corners":
                 for corner in ["radius_left_top", "radius_left_bottom", "radius_right_top", "radius_right_bottom"]:
-                    spin = SpinBox()
+                    spin = _create_property_panel_spin_box()
                     spin.setRange(0, 999)
                     spin.setValue(getattr(bg, corner))
                     spin.valueChanged.connect(lambda val, c=corner: self._on_bg_changed(c, val))
@@ -1206,7 +1445,7 @@ class PropertyPanel(QWidget):
                     bg_form.addRow(label, spin)
 
             # Stroke
-            stroke_spin = SpinBox()
+            stroke_spin = _create_property_panel_spin_box()
             stroke_spin.setRange(0, 50)
             stroke_spin.setValue(bg.stroke_width)
             stroke_spin.valueChanged.connect(lambda val: self._on_bg_changed("stroke_width", val))
@@ -1236,26 +1475,23 @@ class PropertyPanel(QWidget):
                 pressed_color.color_changed.connect(lambda val: self._on_bg_changed("pressed_color", val))
                 bg_form.addRow(self._appearance_row_label("pressed_color", "Pressed Color:"), pressed_color)
 
-        self._layout.addWidget(bg_group)
-
-        callbacks_group = self._build_callbacks_group(w)
-        if callbacks_group is not None:
-            self._layout.addWidget(callbacks_group)
-
-        self._layout.addWidget(self._build_designer_state_group())
+        self._build_callbacks_group(w)
+        self._build_designer_state_group()
+        self._layout.addWidget(self._property_tree)
         feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
         self._layout.addStretch()
         self._sync_collapsible_group_states()
         self._on_search_changed(self._search_edit.text())
+        self._refresh_property_tree_theme_patches()
 
     def _build_multi_selection_form(self):
         callback_entries = self._collect_multi_callback_entries()
 
-        geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
+        _geometry_group, geometry_form = self._build_inspector_group("Batch Geometry")
         for field, label in (("x", "X:"), ("y", "Y:"), ("width", "Width:"), ("height", "Height:")):
-            spin = SpinBox()
+            spin = _create_property_panel_spin_box()
             spin.setRange(-9999, 9999)
             spin.setValue(getattr(self._primary_widget, field))
             is_mixed = self._is_mixed_values(getattr(widget, field) for widget in self._selection)
@@ -1265,13 +1501,11 @@ class PropertyPanel(QWidget):
             # UIX-005: mixed-state hint is centralized; avoid repeating "(Mixed)" on every row.
             geometry_form.addRow(label, spin)
             self._editors[f"multi_{field}"] = spin
-        self._layout.addWidget(geometry_group)
 
         self._build_multi_common_properties_group()
-        callbacks_group = self._build_multi_callbacks_group(callback_entries)
-        if callbacks_group is not None:
-            self._layout.addWidget(callbacks_group)
-        self._layout.addWidget(self._build_designer_state_group())
+        self._build_multi_callbacks_group(callback_entries)
+        self._build_designer_state_group()
+        self._layout.addWidget(self._property_tree)
         feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
@@ -1378,9 +1612,6 @@ class PropertyPanel(QWidget):
                 label += " (Missing)"
             label += ":"
             form.addRow(label, editor)
-
-        if form.rowCount() > 0:
-            self._layout.addWidget(group)
 
     def _normalize_mixed_value(self, value):
         if isinstance(value, dict):
@@ -1625,10 +1856,7 @@ class PropertyPanel(QWidget):
             group_label = _UI_GROUP_LABELS.get(group_key, group_key.replace("_", " ").title())
             if group_label in {"Properties", "Main"}:
                 group_label = "Behavior"
-            group_box = CollapsibleGroupBox(group_label)
-            form = _inspector_form()
-            group_box.setLayout(form)
-            self._wire_inspector_collapsible_group(group_box, group_label)
+            group_box, form = self._build_inspector_group(group_label)
 
             for prop_name, prop_info in group_props:
                 editor = self._create_property_editor(prop_name, prop_info, w.properties.get(prop_name))
@@ -1641,13 +1869,8 @@ class PropertyPanel(QWidget):
                     label += ":"
                     form.addRow(label, editor)
 
-            self._layout.addWidget(group_box)
-
     def _build_data_group(self, w, props):
-        group_box = CollapsibleGroupBox("Data")
-        form = _inspector_form()
-        group_box.setLayout(form)
-        self._wire_inspector_collapsible_group(group_box, "Data")
+        group_box, form = self._build_inspector_group("Data")
 
         for prop_name, prop_info in props.items():
             vis = prop_info.get("ui_visible_when")
@@ -1661,9 +1884,6 @@ class PropertyPanel(QWidget):
                 label += " (Missing)"
                 self._apply_missing_file_editor_state(editor, prop_name, prop_info, w.properties.get(prop_name))
             form.addRow(f"{label}:", editor)
-
-        if form.rowCount() > 0:
-            self._layout.addWidget(group_box)
 
     def _humanize_callback_name(self, event_name):
         name = str(event_name or "").strip()
@@ -1791,10 +2011,7 @@ class PropertyPanel(QWidget):
         if not entries:
             return None
 
-        group = CollapsibleGroupBox("Callbacks")
-        form = _inspector_form()
-        group.setLayout(form)
-        self._wire_inspector_collapsible_group(group, "Callbacks")
+        group, form = self._build_inspector_group("Callbacks")
 
         for entry in entries:
             event_name = entry["event_name"]
@@ -1891,10 +2108,7 @@ class PropertyPanel(QWidget):
         if not entries:
             return None
 
-        group = CollapsibleGroupBox("Callbacks")
-        form = _inspector_form()
-        group.setLayout(form)
-        self._wire_inspector_collapsible_group(group, "Callbacks")
+        group, form = self._build_inspector_group("Callbacks")
 
         for entry in entries:
             event_name = entry["event_name"]
@@ -2016,7 +2230,7 @@ class PropertyPanel(QWidget):
                 return editor
 
         elif ptype == "int":
-            editor = SpinBox()
+            editor = _create_property_panel_spin_box()
             editor.setRange(prop_info.get("min", 0), prop_info.get("max", 9999))
             editor.setValue(int(current_value or 0))
             editor.valueChanged.connect(lambda val: prop_changed_handler(prop_name, val))

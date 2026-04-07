@@ -26,15 +26,11 @@ def qapp():
 
 
 def _find_group(panel, title):
-    for group in panel.findChildren(QGroupBox):
-        if group.title() == title:
-            return group
-    raise AssertionError(f"Group not found: {title}")
+    return panel.property_group(title)
 
 
 def _form_labels(group):
     form = group.layout()
-    assert isinstance(form, QFormLayout)
     labels = []
     for row in range(form.rowCount()):
         item = form.itemAt(row, QFormLayout.LabelRole)
@@ -45,7 +41,6 @@ def _form_labels(group):
 
 def _form_value_text(group, label_text):
     form = group.layout()
-    assert isinstance(form, QFormLayout)
     for row in range(form.rowCount()):
         label_item = form.itemAt(row, QFormLayout.LabelRole)
         field_item = form.itemAt(row, QFormLayout.FieldRole)
@@ -78,10 +73,10 @@ class TestPropertyPanelFileFlow:
 
         panel = PropertyPanel()
         panel.set_widget(first)
-        first_group_count = len(panel.findChildren(QGroupBox))
+        first_group_count = len(panel._property_sections)
 
         panel.set_widget(second)
-        second_group_count = len(panel.findChildren(QGroupBox))
+        second_group_count = len(panel._property_sections)
 
         assert first_group_count > 0
         assert second_group_count == first_group_count
@@ -219,8 +214,11 @@ class TestPropertyPanelFileFlow:
             group = _find_group(panel, title)
             form = group.layout()
             margins = form.contentsMargins()
+            body = group.content_frame()
 
             assert group.objectName() == "inspector_collapsible_group"
+            assert body.objectName() == "inspector_group_body"
+            assert group.content_indent() > 0
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
             assert form.verticalSpacing() == 4
             assert form.horizontalSpacing() == 0
@@ -809,8 +807,11 @@ class TestPropertyPanelFileFlow:
             group = _find_group(panel, title)
             form = group.layout()
             margins = form.contentsMargins()
+            body = group.content_frame()
 
             assert group.objectName() == "inspector_collapsible_group"
+            assert body.objectName() == "inspector_group_body"
+            assert group.content_indent() > 0
             assert (margins.left(), margins.top(), margins.right(), margins.bottom()) == (0, 0, 0, 0)
             assert form.verticalSpacing() == 4
             assert form.horizontalSpacing() == 0
