@@ -928,7 +928,7 @@ QTreeWidget#property_panel_tree {{
 
 QTreeWidget#property_panel_tree::item {{
     border-bottom: 1px solid {t['border']};
-    padding: 3px 6px;
+    padding: 0px;
     min-height: 24px;
 }}
 
@@ -945,6 +945,22 @@ QTreeWidget#property_panel_tree QHeaderView::section {{
     padding: 3px 6px;
     font-size: {t['fs_caption']}px;
     font-weight: {t['fw_medium']};
+}}
+
+QFrame#property_grid_label_cell {{
+    background-color: transparent;
+    border: none;
+    border-right: 1px solid {t['border']};
+}}
+
+#property_grid_label_text {{
+    color: {t['text_muted']};
+    font-size: {t['fs_body_sm']}px;
+}}
+
+QFrame#property_grid_editor_cell {{
+    background-color: transparent;
+    border: none;
 }}
 
 #property_panel_eyebrow,

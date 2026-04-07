@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox, QMessageBox, QFileDialog, QFrame, QSpinBox,
     QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication,
 )
-from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins
+from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize
 from PyQt5.QtGui import QFont, QColor, QBrush
 
 from qfluentwidgets import (
@@ -555,8 +555,10 @@ class PropertyPanel(QWidget):
         self._property_tree.setSelectionMode(QTreeWidget.NoSelection)
         self._property_tree.setFocusPolicy(Qt.NoFocus)
         self._property_tree.header().setStretchLastSection(True)
-        self._property_tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self._property_tree.header().setSectionResizeMode(0, QHeaderView.Interactive)
         self._property_tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
+        self._property_tree.header().setMinimumSectionSize(120)
+        self._property_tree.setColumnWidth(0, 176)
         self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
         self._property_tree.itemCollapsed.connect(self._on_property_tree_item_collapsed)
         self._property_sections = OrderedDict()
@@ -685,6 +687,10 @@ class PropertyPanel(QWidget):
         section_font.setWeight(QFont.DemiBold)
         item.setFont(0, section_font)
         item.setForeground(0, QBrush(QColor(self.palette().color(self.foregroundRole()))))
+        section_brush = QBrush(self.palette().alternateBase())
+        item.setBackground(0, section_brush)
+        item.setBackground(1, section_brush)
+        item.setSizeHint(0, QSize(0, 26))
         self._property_tree.addTopLevelItem(item)
 
         handle = _PropertyGridSectionHandle(self, title, item)
@@ -710,17 +716,39 @@ class PropertyPanel(QWidget):
 
         row_item = QTreeWidgetItem(section["item"], [str(label_text or ""), ""])
         row_item.setFlags(Qt.ItemIsEnabled)
-        self._property_tree.setItemWidget(row_item, 1, editor)
+        row_item.setSizeHint(0, QSize(0, 26))
 
+        label_frame = QFrame()
+        label_frame.setObjectName("property_grid_label_cell")
+        label_layout = QHBoxLayout(label_frame)
+        label_layout.setContentsMargins(6, 1, 6, 1)
+        label_layout.setSpacing(0)
         label_widget = QLabel(str(label_text or ""))
+        label_widget.setObjectName("property_grid_label_text")
+        label_layout.addWidget(label_widget)
+        self._property_tree.setItemWidget(row_item, 0, label_frame)
+
+        editor_host = QFrame()
+        editor_host.setObjectName("property_grid_editor_cell")
+        editor_layout = QHBoxLayout(editor_host)
+        editor_layout.setContentsMargins(4, 1, 4, 1)
+        editor_layout.setSpacing(0)
+        editor_layout.addWidget(editor)
+        self._property_tree.setItemWidget(row_item, 1, editor_host)
+
         row_data = {
             "item": row_item,
             "label_text": str(label_text or ""),
             "label_widget": label_widget,
+            "label_frame": label_frame,
             "editor": editor,
+            "editor_host": editor_host,
         }
         section["rows"].append(row_data)
-        editor.setVisible(section["item"].isExpanded())
+        row_visible = section["item"].isExpanded()
+        label_frame.setVisible(row_visible)
+        editor_host.setVisible(row_visible)
+        editor.setVisible(row_visible)
 
     def _apply_property_tree_expanded_state(self):
         for title, section in self._property_sections.items():
@@ -729,7 +757,10 @@ class PropertyPanel(QWidget):
             expanded = bool(self._inspector_group_expanded.get(key, default_open))
             section["item"].setExpanded(expanded)
             for row in section["rows"]:
-                row["editor"].setVisible(expanded and not row["item"].isHidden())
+                row_visible = expanded and not row["item"].isHidden()
+                row["label_frame"].setVisible(row_visible)
+                row["editor_host"].setVisible(row_visible)
+                row["editor"].setVisible(row_visible)
 
     def _on_property_tree_item_expanded(self, item):
         title = self._property_tree_items.get(id(item))
@@ -741,6 +772,8 @@ class PropertyPanel(QWidget):
         if section:
             for row in section["rows"]:
                 if not row["item"].isHidden():
+                    row["label_frame"].setVisible(True)
+                    row["editor_host"].setVisible(True)
                     row["editor"].setVisible(True)
 
     def _on_property_tree_item_collapsed(self, item):
@@ -752,6 +785,8 @@ class PropertyPanel(QWidget):
         section = self._property_sections.get(title)
         if section:
             for row in section["rows"]:
+                row["label_frame"].setVisible(False)
+                row["editor_host"].setVisible(False)
                 row["editor"].setVisible(False)
 
     def _apply_property_tree_filter(self, text):
@@ -769,7 +804,10 @@ class PropertyPanel(QWidget):
             for row in section["rows"]:
                 row_match = not text or title_match or text in row["label_text"].lower()
                 row["item"].setHidden(not row_match)
-                row["editor"].setVisible(row_match and item.isExpanded())
+                row_visible = row_match and item.isExpanded()
+                row["label_frame"].setVisible(row_visible)
+                row["editor_host"].setVisible(row_visible)
+                row["editor"].setVisible(row_visible)
                 any_visible = any_visible or row_match
             item.setHidden(not any_visible)
             any_section_visible = any_section_visible or any_visible
