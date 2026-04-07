@@ -20,3 +20,9 @@ output/
 ui_designer/.config/
 ui_designer/__pycache__/
 ui_designer_preview_smoke_*/
+**/.eguiproject/backup/
+
+examples/DesignerSandbox/
+examples/HelloSimpleDemo/
+/examples/DesignerSandbox/app_egui_config.h
+/examples/HelloSimpleDemo/app_egui_config.h
