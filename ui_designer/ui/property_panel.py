@@ -1317,6 +1317,52 @@ class PropertyPanel(QWidget):
             accessible_name=f"{self._property_label(prop_name)} selector: {value_text}",
         )
 
+    def _generate_charset_context(self, prop_name, combo):
+        if prop_name != "font_text_file":
+            return "", "", ""
+
+        initial_filename = str(combo.currentText() or "").strip()
+        resource_type = ""
+        source_name = ""
+        if self._primary_widget is not None:
+            source_name = str(self._primary_widget.properties.get("font_file", "") or "").strip()
+            if source_name:
+                resource_type = "font"
+        if not resource_type and initial_filename:
+            resource_type = "text"
+            source_name = initial_filename
+        return resource_type, source_name, initial_filename
+
+    def _update_generate_charset_button_metadata(self, prop_name, combo, button):
+        if prop_name != "font_text_file" or button is None:
+            return
+
+        resource_type, source_name, initial_filename = self._generate_charset_context(prop_name, combo)
+        if not self._source_resource_dir:
+            button.setEnabled(False)
+            _set_widget_metadata(
+                button,
+                tooltip="Save the project first so Designer has a resource directory for charset generation.",
+                accessible_name="Generate charset unavailable",
+            )
+            return
+
+        button.setEnabled(True)
+        if resource_type == "font" and source_name:
+            if initial_filename:
+                tooltip = f"Generate charset for font resource {source_name}. Current text file: {initial_filename}."
+                accessible_name = f"Generate charset for font {source_name} with current text file {initial_filename}"
+            else:
+                tooltip = f"Generate charset for font resource {source_name}."
+                accessible_name = f"Generate charset for font {source_name}"
+        elif resource_type == "text" and initial_filename:
+            tooltip = f"Generate charset using current text resource {initial_filename}."
+            accessible_name = f"Generate charset for text resource {initial_filename}"
+        else:
+            tooltip = "Open the charset generator to create a text resource."
+            accessible_name = "Generate charset"
+        _set_widget_metadata(button, tooltip=tooltip, accessible_name=accessible_name)
+
     def _update_callback_editor_metadata(self, editor, event_name, tooltip):
         callback_label = self._humanize_callback_name(event_name)
         _set_widget_metadata(
@@ -2652,13 +2698,12 @@ class PropertyPanel(QWidget):
         if prop_name == "font_text_file":
             generate_btn = ToolButton()
             generate_btn.setText("Gen")
-            _set_widget_metadata(
-                generate_btn,
-                tooltip="Open the charset generator using the current font and text resource context.",
-                accessible_name="Generate charset for Text",
-            )
             generate_btn.clicked.connect(lambda: self._request_generate_charset_for_file_property(prop_name, combo))
+            combo.currentTextChanged.connect(
+                lambda _val, name=prop_name, target=combo, button=generate_btn: self._update_generate_charset_button_metadata(name, target, button)
+            )
             h_layout.addWidget(generate_btn)
+            self._update_generate_charset_button_metadata(prop_name, combo, generate_btn)
 
         self._editors[f"prop_{prop_name}"] = combo
         self._update_file_selector_metadata(prop_name, combo)

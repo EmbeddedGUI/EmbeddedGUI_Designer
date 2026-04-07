@@ -538,20 +538,48 @@ class TestPropertyPanelFileFlow:
         assert len(buttons) == 2
         assert buttons[0].text() == "Pick"
         assert buttons[1].text() == "Gen"
-        assert buttons[1].toolTip() == "Open the charset generator using the current font and text resource context."
-        assert buttons[1].accessibleName() == "Generate charset for Text"
+        assert buttons[1].isEnabled() is False
+        assert buttons[1].toolTip() == "Save the project first so Designer has a resource directory for charset generation."
+        assert buttons[1].accessibleName() == "Generate charset unavailable"
         panel.deleteLater()
 
-    def test_generate_charset_button_emits_signal_with_font_context(self, qapp):
+    def test_font_text_file_selector_generate_button_uses_font_context_metadata(self, qapp, tmp_path):
         from qfluentwidgets import ToolButton
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
 
         widget = WidgetModel("label", name="title")
         widget.properties["font_file"] = "demo_font.ttf"
         widget.properties["font_text_file"] = "chars.txt"
 
         panel = PropertyPanel()
+        panel.set_source_resource_dir(str(resource_dir))
+        panel.set_widget(widget)
+        selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
+        buttons = selector.findChildren(ToolButton)
+
+        assert len(buttons) == 2
+        assert buttons[1].isEnabled() is True
+        assert buttons[1].toolTip() == "Generate charset for font resource demo_font.ttf. Current text file: chars.txt."
+        assert buttons[1].accessibleName() == "Generate charset for font demo_font.ttf with current text file chars.txt"
+        panel.deleteLater()
+
+    def test_generate_charset_button_emits_signal_with_font_context(self, qapp, tmp_path):
+        from qfluentwidgets import ToolButton
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        widget = WidgetModel("label", name="title")
+        widget.properties["font_file"] = "demo_font.ttf"
+        widget.properties["font_text_file"] = "chars.txt"
+
+        panel = PropertyPanel()
+        panel.set_source_resource_dir(str(resource_dir))
         panel.set_widget(widget)
         selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
         buttons = selector.findChildren(ToolButton)
