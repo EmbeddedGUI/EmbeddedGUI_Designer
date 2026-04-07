@@ -527,6 +527,42 @@ class TestPropertyPanelFileFlow:
         assert browse_btn.accessibleName() == "Pick Font File"
         panel.deleteLater()
 
+    def test_font_text_file_selector_exposes_generate_charset_button(self, qapp):
+        from qfluentwidgets import ToolButton
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        panel = PropertyPanel()
+        selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
+        buttons = selector.findChildren(ToolButton)
+
+        assert len(buttons) == 2
+        assert buttons[0].text() == "Pick"
+        assert buttons[1].text() == "Gen"
+        assert buttons[1].toolTip() == "Open the charset generator using the current font and text resource context."
+        assert buttons[1].accessibleName() == "Generate charset for Text"
+        panel.deleteLater()
+
+    def test_generate_charset_button_emits_signal_with_font_context(self, qapp):
+        from qfluentwidgets import ToolButton
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title")
+        widget.properties["font_file"] = "demo_font.ttf"
+        widget.properties["font_text_file"] = "chars.txt"
+
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+        selector = panel._create_file_selector("font_text_file", "chars.txt", ["chars.txt"], "Text files (*.txt)")
+        buttons = selector.findChildren(ToolButton)
+        generated = []
+        panel.generate_charset_requested.connect(lambda resource_type, source_name, initial_filename: generated.append((resource_type, source_name, initial_filename)))
+
+        buttons[1].click()
+
+        assert generated == [("font", "demo_font.ttf", "chars.txt")]
+        panel.deleteLater()
+
     def test_browse_file_warns_when_project_resource_dir_is_missing(self, qapp, monkeypatch):
         from ui_designer.ui.property_panel import PropertyPanel
 

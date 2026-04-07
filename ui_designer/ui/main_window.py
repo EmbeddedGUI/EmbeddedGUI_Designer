@@ -664,6 +664,7 @@ class MainWindow(QMainWindow):
         # Property panel
         self.property_panel.property_changed.connect(self._on_property_changed)
         self.property_panel.resource_imported.connect(self._on_resource_imported)
+        self.property_panel.generate_charset_requested.connect(self._on_property_panel_generate_charset_requested)
         self.property_panel.validation_message.connect(self._on_property_validation_message)
         self.property_panel.user_code_requested.connect(self._on_user_code_requested)
 
@@ -5962,6 +5963,14 @@ class MainWindow(QMainWindow):
     def _on_resource_feedback_message(self, message):
         if message:
             self.statusBar().showMessage(message, 5000)
+
+    def _on_property_panel_generate_charset_requested(self, resource_type, source_name, initial_filename):
+        self._select_left_panel("assets")
+        self.res_panel.open_generate_charset_dialog_for_resource(
+            resource_type,
+            source_name,
+            initial_filename=initial_filename,
+        )
 
     def _on_resource_usage_activated(self, page_name, widget_name):
         if not self.project or not page_name or not widget_name:

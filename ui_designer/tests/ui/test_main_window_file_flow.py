@@ -6020,8 +6020,13 @@ class TestMainWindowFileFlow:
         expected_resource_dir = os.path.join(str(project_dir), ".eguiproject", "resources")
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, parent=None):
+            _source_label = "demo_font.ttf"
+
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 assert os.path.normpath(resource_dir_arg) == os.path.normpath(expected_resource_dir)
+                assert initial_filename == ""
+                assert source_label == ""
+                assert initial_preset_ids == ()
 
             def exec_(self):
                 return 1
@@ -6034,6 +6039,9 @@ class TestMainWindowFileFlow:
 
             def generated_text(self):
                 return "A\nB\n&#x4E2D;\n"
+
+            def generated_chars(self):
+                return ("A", "B", "\u4E2D")
 
             def overwrite_diff(self):
                 return type(
@@ -6062,6 +6070,40 @@ class TestMainWindowFileFlow:
         assert window.res_panel._text_list.currentItem().data(Qt.UserRole + 1) == "charset_combo.txt"
         assert window._undo_manager.get_stack("main_page").is_dirty() is True
         window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_property_panel_generate_charset_signal_switches_to_assets_and_opens_generator(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PropertyCharsetDemo"
+        project = _create_project(project_dir, "PropertyCharsetDemo", sdk_root)
+        label = WidgetModel("label", name="title")
+        label.properties["font_file"] = "demo_font.ttf"
+        label.properties["font_text_file"] = "chars.txt"
+        project.get_page_by_name("main_page").root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selected_widget = label
+        window.property_panel.set_widget(label)
+        captured = []
+        monkeypatch.setattr(
+            window.res_panel,
+            "open_generate_charset_dialog_for_resource",
+            lambda resource_type, source_name, initial_filename="": captured.append((resource_type, source_name, initial_filename)),
+        )
+
+        window.property_panel.generate_charset_requested.emit("font", "demo_font.ttf", "chars.txt")
+
+        assert window._left_panel_stack.currentWidget() is window.res_panel
+        assert captured == [("font", "demo_font.ttf", "chars.txt")]
         _close_window(window)
 
     def test_resource_rename_updates_text_references_across_pages(self, qapp, isolated_config, tmp_path, monkeypatch):

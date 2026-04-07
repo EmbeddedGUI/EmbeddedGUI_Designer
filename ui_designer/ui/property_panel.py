@@ -271,6 +271,7 @@ class PropertyPanel(QWidget):
 
     property_changed = pyqtSignal()  # emits when any property changes
     resource_imported = pyqtSignal()  # emits when browse auto-import adds a new resource
+    generate_charset_requested = pyqtSignal(str, str, str)  # emits resource_type, source_name, initial_filename
     validation_message = pyqtSignal(str)  # emits lightweight validation/normalization feedback
     user_code_requested = pyqtSignal(str, str)  # emits callback_name, signature
 
@@ -2648,9 +2649,38 @@ class PropertyPanel(QWidget):
         browse_btn.clicked.connect(lambda: self._browse_file(combo, file_filter))
         h_layout.addWidget(browse_btn)
 
+        if prop_name == "font_text_file":
+            generate_btn = ToolButton()
+            generate_btn.setText("Gen")
+            _set_widget_metadata(
+                generate_btn,
+                tooltip="Open the charset generator using the current font and text resource context.",
+                accessible_name="Generate charset for Text",
+            )
+            generate_btn.clicked.connect(lambda: self._request_generate_charset_for_file_property(prop_name, combo))
+            h_layout.addWidget(generate_btn)
+
         self._editors[f"prop_{prop_name}"] = combo
         self._update_file_selector_metadata(prop_name, combo)
         return container
+
+    def _request_generate_charset_for_file_property(self, prop_name, combo):
+        if prop_name != "font_text_file":
+            return
+
+        initial_filename = str(combo.currentText() or "").strip()
+        source_name = ""
+        resource_type = ""
+        if self._primary_widget is not None:
+            source_name = str(self._primary_widget.properties.get("font_file", "") or "").strip()
+            if source_name:
+                resource_type = "font"
+
+        if not resource_type and initial_filename:
+            resource_type = "text"
+            source_name = initial_filename
+
+        self.generate_charset_requested.emit(resource_type, source_name, initial_filename)
 
     def _browse_file(self, combo, file_filter):
         """Open a file dialog to select a file."""

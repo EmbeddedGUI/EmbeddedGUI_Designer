@@ -3438,9 +3438,25 @@ class ResourcePanel(QWidget):
         initial_filename = _suggest_charset_filename_for_resource(active_type, active_name)
         source_label = active_name if active_type in {"font", "text"} else ""
         initial_preset_ids = _suggest_charset_presets_for_resource(active_type, active_name)
-        self._open_generate_charset_dialog(
+        self.open_generate_charset_dialog_for_resource(
+            active_type,
+            active_name,
             initial_filename=initial_filename,
-            source_label=source_label,
+            initial_preset_ids=initial_preset_ids,
+        )
+
+    def open_generate_charset_dialog_for_resource(self, resource_type="", source_name="", initial_filename="", initial_preset_ids=()):
+        if not self._ensure_src_dir():
+            return
+        normalized_initial = str(initial_filename or "").strip()
+        source_name = str(source_name or "").strip()
+        if not normalized_initial:
+            normalized_initial = _suggest_charset_filename_for_resource(resource_type, source_name)
+        if not initial_preset_ids:
+            initial_preset_ids = _suggest_charset_presets_for_resource(resource_type, source_name)
+        self._open_generate_charset_dialog(
+            initial_filename=normalized_initial,
+            source_label=source_name if resource_type in {"font", "text"} else "",
             initial_preset_ids=initial_preset_ids,
         )
 
