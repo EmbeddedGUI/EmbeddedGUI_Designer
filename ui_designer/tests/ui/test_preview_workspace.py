@@ -402,6 +402,21 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_overlay_limits_paint_candidates_during_drag(self, qapp):
+        overlay, _root, first, second, third = self._make_overlay()
+        overlay.set_selection([first, second], primary=first)
+
+        try:
+            assert overlay._paint_candidate_widgets() == overlay._visible_widgets
+
+            overlay._dragging = True
+            candidates = overlay._paint_candidate_widgets()
+            assert first in candidates
+            assert second in candidates
+            assert third not in candidates
+        finally:
+            _dispose_widget(overlay)
+
     def test_overlay_caches_visible_and_interactive_widgets(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

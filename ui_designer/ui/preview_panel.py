@@ -186,6 +186,23 @@ class WidgetOverlay(QWidget):
     def _show_full_label_overlay(self):
         return not (self._dragging or self._resizing or self._rubber_band)
 
+    def _show_full_bounds_overlay(self):
+        return not (self._dragging or self._resizing or self._rubber_band)
+
+    def _paint_candidate_widgets(self):
+        if self._show_full_bounds_overlay():
+            return self._visible_widgets
+
+        candidates = []
+        selected_parent = self._selected.parent if (self._reorder_mode and self._selected is not None) else None
+        for widget in self._visible_widgets:
+            if widget is self._selected or widget is self._hovered or widget in self._multi_selected:
+                candidates.append(widget)
+                continue
+            if selected_parent is not None and widget.parent is selected_parent:
+                candidates.append(widget)
+        return candidates
+
     def _widget_edge_triplets(self, widget, *, axis="x"):
         if axis == "y":
             start = widget.display_y
@@ -638,8 +655,9 @@ class WidgetOverlay(QWidget):
             for y in range(0, bh, eff_grid):
                 painter.drawLine(0, y, bw, y)
 
-        # Draw all widget bounds (rects + fills only)
-        for w in self._visible_widgets:
+        # Draw active widget bounds; during drag keep the overlay focused on the
+        # current interaction instead of repainting the whole model every frame.
+        for w in self._paint_candidate_widgets():
             rect = QRect(w.display_x, w.display_y, w.width, w.height)
             if not visible_logical_rect.intersects(QRectF(rect)):
                 continue
