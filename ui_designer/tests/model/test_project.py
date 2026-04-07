@@ -6,6 +6,7 @@ import pytest
 
 from ui_designer.model.project import Project
 from ui_designer.model.page import Page
+from ui_designer.model.release import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
 
@@ -200,6 +201,63 @@ class TestGetAllWidgets:
 
 class TestSaveLoad:
     """Tests for save/load file I/O."""
+
+    @pytest.mark.integration
+    def test_save_load_round_trip_preserves_sdk_version_metadata(self, tmp_path, monkeypatch):
+        proj = Project(screen_width=320, screen_height=480, app_name="VersionedApp")
+        proj.sdk_root = str(tmp_path / "sdk")
+        proj.create_new_page("main_page")
+
+        monkeypatch.setattr(
+            "ui_designer.model.project.collect_sdk_fingerprint",
+            lambda sdk_root: SdkFingerprint(
+                source_kind="submodule",
+                revision="sdk-main-123",
+                commit="abcdef1234567890",
+                commit_short="abcdef1",
+            ),
+        )
+
+        project_dir = str(tmp_path / "VersionedApp")
+        proj.save(project_dir)
+
+        loaded = Project.load(project_dir)
+
+        assert loaded.sdk_fingerprint.source_kind == "submodule"
+        assert loaded.sdk_fingerprint.revision == "sdk-main-123"
+        assert loaded.sdk_fingerprint.commit == "abcdef1234567890"
+        assert loaded.sdk_fingerprint.commit_short == "abcdef1"
+
+    @pytest.mark.integration
+    def test_save_preserves_existing_sdk_version_metadata(self, tmp_path, monkeypatch):
+        proj = Project(app_name="PinnedSdkApp")
+        proj.sdk_root = str(tmp_path / "sdk")
+        proj.sdk_fingerprint = SdkFingerprint(
+            source_kind="submodule",
+            revision="sdk-old-111",
+            commit="1111111111111111",
+            commit_short="1111111",
+        )
+        proj.create_new_page("main_page")
+
+        monkeypatch.setattr(
+            "ui_designer.model.project.collect_sdk_fingerprint",
+            lambda sdk_root: SdkFingerprint(
+                source_kind="submodule",
+                revision="sdk-new-222",
+                commit="2222222222222222",
+                commit_short="2222222",
+            ),
+        )
+
+        project_dir = str(tmp_path / "PinnedSdkApp")
+        proj.save(project_dir)
+
+        loaded = Project.load(project_dir)
+
+        assert loaded.sdk_fingerprint.revision == "sdk-old-111"
+        assert loaded.sdk_fingerprint.commit == "1111111111111111"
+        assert loaded.sdk_fingerprint.commit_short == "1111111"
 
     @pytest.mark.integration
     def test_save_load_round_trip(self, tmp_path):

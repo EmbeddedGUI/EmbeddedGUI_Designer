@@ -196,6 +196,87 @@ class TestMainWindowFileFlow:
         }
         _close_window(window)
 
+    def test_open_loaded_project_prompts_and_resets_on_sdk_version_mismatch(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.project import Project
+        from ui_designer.model.release import SdkFingerprint
+        from ui_designer.ui import main_window as main_window_module
+        from ui_designer.ui.main_window import MainWindow
+
+        class _FakeCompiler(_DisabledCompiler):
+            def __init__(self, project_root, app_dir, app_name="HelloDesigner"):
+                self.project_root = project_root
+                self.app_dir = app_dir
+                self.app_name = app_name
+                self.app_root_arg = "example"
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MismatchDemo"
+        project = _create_project(project_dir, "MismatchDemo", sdk_root)
+        project.sdk_fingerprint = SdkFingerprint(
+            source_kind="submodule",
+            revision="sdk-old-123",
+            commit="old1234567890",
+            commit_short="old1234",
+        )
+        project.save(str(project_dir))
+
+        (project_dir / "build.mk").write_text("# legacy build\n", encoding="utf-8")
+        (project_dir / "app_egui_config.h").write_text("#define LEGACY_CONFIG 1\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / "app_resource_config.json").write_text(
+            json.dumps({"img": ["legacy"], "font": []}, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+
+        monkeypatch.setattr(main_window_module, "CompilerEngine", _FakeCompiler)
+        monkeypatch.setattr(
+            main_window_module,
+            "collect_sdk_fingerprint",
+            lambda sdk_root, designer_repo_root=None: SdkFingerprint(
+                source_kind="submodule",
+                revision="sdk-new-456",
+                commit="new4567890abcd",
+                commit_short="new4567",
+            ),
+        )
+
+        prompts = []
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_start_precompile", lambda: None)
+        monkeypatch.setattr(
+            main_window_module.QMessageBox,
+            "question",
+            lambda *args, **kwargs: prompts.append({"title": args[1], "text": args[2]}) or QMessageBox.Yes,
+        )
+
+        compile_calls = []
+        monkeypatch.setattr(window, "_trigger_compile", lambda: compile_calls.append("compile"))
+
+        loaded = Project.load(str(project_dir))
+        window._open_loaded_project(loaded, str(project_dir), preferred_sdk_root=str(sdk_root), silent=False)
+
+        reloaded = Project.load(str(project_dir))
+        assert prompts
+        assert prompts[0]["title"] == "SDK Version Mismatch"
+        assert "sdk-old-123" in prompts[0]["text"]
+        assert "sdk-new-456" in prompts[0]["text"]
+        assert reloaded.sdk_fingerprint.revision == "sdk-new-456"
+        assert "EGUI_CODE_SRC" in (project_dir / "build.mk").read_text(encoding="utf-8")
+        assert "EGUI_CONFIG_SCEEN_WIDTH" in (project_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert json.loads((project_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
+            "img": [],
+            "font": [],
+        }
+        assert compile_calls
+        assert "Project scaffold reset" in window.statusBar().currentMessage()
+        _close_window(window)
+
     def test_open_project_uses_recovered_cached_sdk_example_as_default_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

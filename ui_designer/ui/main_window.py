@@ -62,7 +62,7 @@ from .status_center_panel import StatusCenterPanel
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
-from ..model.build_metadata import format_sdk_binding_label
+from ..model.build_metadata import collect_sdk_fingerprint, format_sdk_binding_label
 from ..model.config import get_config
 from ..model.release import ReleaseRequest
 from ..model.sdk_bootstrap import (
@@ -2723,6 +2723,69 @@ class MainWindow(QMainWindow):
             return f"{prefix}: {sdk_root}"
         return prefix
 
+    @staticmethod
+    def _sdk_revision_text(fingerprint) -> str:
+        if fingerprint is None:
+            return ""
+        for attr in ("revision", "commit_short", "commit"):
+            text = str(getattr(fingerprint, attr, "") or "").strip()
+            if text:
+                return text
+        return ""
+
+    def _reset_project_scaffold_for_sdk(self, sdk_fingerprint) -> bool:
+        if self.project is None or not self._project_dir:
+            return False
+
+        try:
+            self.project.project_dir = self._project_dir
+            self.project.sdk_root = self.project_root
+            self.project.sdk_fingerprint = copy.deepcopy(sdk_fingerprint)
+            self._save_project_files(self._project_dir, reset_scaffold=True)
+        except Exception as exc:
+            QMessageBox.warning(
+                self,
+                "Project Reset Failed",
+                f"Failed to reset the project scaffold for the current SDK:\n{exc}",
+            )
+            return False
+
+        self._refresh_project_watch_snapshot()
+        self._update_compile_availability()
+        return True
+
+    def _maybe_prompt_sdk_version_reset(self, project, resolved_sdk_root, *, silent=False) -> bool:
+        if silent or project is None or not resolved_sdk_root:
+            return False
+
+        recorded_revision = self._sdk_revision_text(getattr(project, "sdk_fingerprint", None))
+        if not recorded_revision:
+            return False
+
+        current_fingerprint = collect_sdk_fingerprint(
+            resolved_sdk_root,
+            designer_repo_root=_DESIGNER_REPO_ROOT,
+        )
+        current_revision = self._sdk_revision_text(current_fingerprint)
+        if not current_revision or current_revision == recorded_revision:
+            return False
+
+        reply = QMessageBox.question(
+            self,
+            "SDK Version Mismatch",
+            "The project was created or last reset against a different SDK revision.\n\n"
+            f"Recorded SDK revision:\n{recorded_revision}\n\n"
+            f"Current SDK revision:\n{current_revision}\n\n"
+            "Reset the project scaffold now? This rewrites build.mk, app_egui_config.h, "
+            "resource/src/app_resource_config.json, and updates the .egui SDK version metadata.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return False
+
+        return self._reset_project_scaffold_for_sdk(current_fingerprint)
+
     def _apply_sdk_root(self, path, status_message=""):
         path = normalize_path(path)
         if not path:
@@ -3101,23 +3164,23 @@ class MainWindow(QMainWindow):
         project.create_new_page("main_page")
         return project
 
-    def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height):
+    def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
         os.makedirs(project_dir, exist_ok=True)
         resource_src_dir = os.path.join(project_dir, "resource", "src")
         os.makedirs(resource_src_dir, exist_ok=True)
 
         build_mk = os.path.join(project_dir, "build.mk")
-        if not os.path.exists(build_mk):
+        if overwrite or not os.path.exists(build_mk):
             with open(build_mk, "w", encoding="utf-8") as f:
                 f.write(make_app_build_mk_content(app_name))
 
         config_h = os.path.join(project_dir, "app_egui_config.h")
-        if not os.path.exists(config_h):
+        if overwrite or not os.path.exists(config_h):
             with open(config_h, "w", encoding="utf-8") as f:
                 f.write(make_app_config_h_content(app_name, screen_width, screen_height))
 
         resource_cfg = os.path.join(resource_src_dir, "app_resource_config.json")
-        if not os.path.exists(resource_cfg):
+        if overwrite or not os.path.exists(resource_cfg):
             with open(resource_cfg, "w", encoding="utf-8") as f:
                 f.write(make_empty_resource_config_content())
 
@@ -3368,6 +3431,12 @@ class MainWindow(QMainWindow):
         elif project.pages:
             self._switch_page(project.pages[0].name)
 
+        project_reset = self._maybe_prompt_sdk_version_reset(
+            project,
+            project.sdk_root,
+            silent=silent,
+        )
+
         if self.compiler is None or not self.compiler.can_build():
             reason = "SDK unavailable, compile preview disabled"
             if self.compiler is not None and self.compiler.get_build_error():
@@ -3378,9 +3447,11 @@ class MainWindow(QMainWindow):
             self._trigger_compile()
             sdk_source = self._describe_sdk_source(project.sdk_root)
             if sdk_source:
-                self.statusBar().showMessage(f"Opened: {project_dir} | SDK: {sdk_source}")
+                suffix = " | Project scaffold reset" if project_reset else ""
+                self.statusBar().showMessage(f"Opened: {project_dir} | SDK: {sdk_source}{suffix}")
             else:
-                self.statusBar().showMessage(f"Opened: {project_dir}")
+                suffix = " | Project scaffold reset" if project_reset else ""
+                self.statusBar().showMessage(f"Opened: {project_dir}{suffix}")
 
         if not project.sdk_root and not silent:
             QMessageBox.information(
@@ -5355,10 +5426,16 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{e}")
 
-    def _save_project_files(self, project_dir):
+    def _save_project_files(self, project_dir, *, reset_scaffold=False):
         self.project.project_dir = project_dir
         self.project.sdk_root = self.project_root
-        self._scaffold_project_directory(project_dir, self.project.app_name, self.project.screen_width, self.project.screen_height)
+        self._scaffold_project_directory(
+            project_dir,
+            self.project.app_name,
+            self.project.screen_width,
+            self.project.screen_height,
+            overwrite=reset_scaffold,
+        )
         self.project.save(project_dir)
 
         files = generate_all_files_preserved(self.project, project_dir, backup=True)

@@ -26,12 +26,58 @@ import os
 import shutil
 import xml.etree.ElementTree as ET
 
+from .build_metadata import collect_sdk_fingerprint
 from .widget_model import WidgetModel
 from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
-from .release import ReleaseConfig
+from .release import ReleaseConfig, SdkFingerprint
+
+
+_SDK_VERSION_ELEMENT = "SdkVersion"
+
+
+def _sdk_revision_text(fingerprint) -> str:
+    if not isinstance(fingerprint, SdkFingerprint):
+        return ""
+    for value in (fingerprint.revision, fingerprint.commit_short, fingerprint.commit):
+        text = str(value or "").strip()
+        if text:
+            return text
+    return ""
+
+
+def _serialize_sdk_fingerprint(root, fingerprint) -> None:
+    if not _sdk_revision_text(fingerprint):
+        return
+
+    sdk_elem = ET.SubElement(root, _SDK_VERSION_ELEMENT)
+    if fingerprint.source_kind:
+        sdk_elem.set("source_kind", str(fingerprint.source_kind))
+    if fingerprint.revision:
+        sdk_elem.set("revision", str(fingerprint.revision))
+    if fingerprint.commit:
+        sdk_elem.set("commit", str(fingerprint.commit))
+    if fingerprint.commit_short:
+        sdk_elem.set("commit_short", str(fingerprint.commit_short))
+    if fingerprint.dirty:
+        sdk_elem.set("dirty", "1")
+
+
+def _parse_sdk_fingerprint(root) -> SdkFingerprint:
+    sdk_elem = root.find(_SDK_VERSION_ELEMENT)
+    if sdk_elem is None:
+        return SdkFingerprint()
+
+    dirty_value = str(sdk_elem.get("dirty", "")).strip().lower()
+    return SdkFingerprint(
+        source_kind=str(sdk_elem.get("source_kind", "") or "").strip(),
+        revision=str(sdk_elem.get("revision", "") or "").strip(),
+        commit=str(sdk_elem.get("commit", "") or "").strip(),
+        commit_short=str(sdk_elem.get("commit_short", "") or "").strip(),
+        dirty=dirty_value in {"1", "true", "yes", "on"},
+    )
 
 
 class Project:
@@ -45,6 +91,7 @@ class Project:
         self.screen_height = screen_height
         self.app_name = app_name
         self.sdk_root = ""  # Path to EmbeddedGUI SDK root directory
+        self.sdk_fingerprint = SdkFingerprint()  # Project scaffold SDK baseline
         self.project_dir = ""  # Path to the app/project directory
         self.page_mode = "easy_page"  # "easy_page" or "activity"
         self.startup_page = "main_page"  # filename without extension
@@ -225,6 +272,11 @@ class Project:
         self.sync_resources_to_src(project_dir)
 
         # Build {app_name}.egui
+        if self.sdk_root and not _sdk_revision_text(self.sdk_fingerprint):
+            fingerprint = collect_sdk_fingerprint(self.sdk_root)
+            if _sdk_revision_text(fingerprint):
+                self.sdk_fingerprint = fingerprint
+
         root = ET.Element("Project")
         root.set("app_name", self.app_name)
         root.set("screen_width", str(self.screen_width))
@@ -235,6 +287,7 @@ class Project:
             sdk_value = serialize_sdk_root(project_dir, self.sdk_root)
             root.set("sdk_root", sdk_value)
             root.set("egui_root", sdk_value)
+        _serialize_sdk_fingerprint(root, self.sdk_fingerprint)
 
         pages_elem = ET.SubElement(root, "Pages")
         for page in self.pages:
@@ -289,6 +342,7 @@ class Project:
         )
         proj.project_dir = project_dir
         proj.sdk_root = resolve_project_sdk_root(project_dir, root.get("sdk_root", root.get("egui_root", "")))
+        proj.sdk_fingerprint = _parse_sdk_fingerprint(root)
         proj.page_mode = root.get("page_mode", "easy_page")
         proj.startup_page = root.get("startup", "main_page")
         proj.release_config = ReleaseConfig.load(project_dir)
