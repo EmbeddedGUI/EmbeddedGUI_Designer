@@ -15,7 +15,6 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixm
 from .theme import designer_font_scale, scaled_point_size, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
-from ..model.config import get_config
 from ..engine.python_renderer import render_page
 
 
@@ -115,21 +114,23 @@ class WidgetOverlay(QWidget):
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
         self._solid_background = False
-        self._config = get_config()
 
         self._widgets = []  # list of WidgetModel
         self._visible_widgets = []
         self._interactive_widgets = []
         self._visible_non_root_widgets = False
+        self._root_widget = None
         self._snap_target_edges = []
         self._snap_edges_x = []
         self._snap_edges_x_values = []
         self._snap_edges_y = []
         self._snap_edges_y_values = []
+        self._snap_owner_ids_by_parent = {}
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
         self._passive_bounds_cache = None
+        self._passive_bounds_cache_key = None
 
         # Zoom state
         self._zoom = 1.0
@@ -188,19 +189,15 @@ class WidgetOverlay(QWidget):
         return self._scaled_font_point_size(7, minimum=6)
 
     def _is_lightweight_interaction_active(self):
-        return bool(getattr(self._config, "lightweight_drag", True)) and (
-            self._dragging or self._resizing or self._rubber_band
-        )
+        return self._dragging or self._resizing or self._rubber_band
 
     def _show_full_label_overlay(self):
-        return not self._is_lightweight_interaction_active()
+        return True
 
     def _show_full_bounds_overlay(self):
-        return not self._is_lightweight_interaction_active()
+        return True
 
     def _show_snap_guides(self):
-        if bool(getattr(self._config, "lightweight_drag", True)):
-            return not (self._dragging or self._resizing)
         return True
 
     def _dynamic_paint_widgets(self):
@@ -283,6 +280,29 @@ class WidgetOverlay(QWidget):
 
     def _invalidate_passive_bounds_cache(self):
         self._passive_bounds_cache = None
+        self._passive_bounds_cache_key = None
+
+    def _passive_bounds_cache_state_key(self):
+        size = self.size()
+        bg_cache_key = 0
+        if self._bg_image is not None:
+            cache_key_getter = getattr(self._bg_image, "cacheKey", None)
+            if callable(cache_key_getter):
+                bg_cache_key = int(cache_key_getter())
+            else:
+                bg_cache_key = id(self._bg_image)
+        return (
+            size.width(),
+            size.height(),
+            round(float(self._zoom), 4),
+            bool(self._solid_background),
+            bool(self._show_grid),
+            int(self._grid_size),
+            bool(self._bg_image is not None and self._bg_image_visible),
+            round(float(self._bg_image_opacity), 3),
+            bg_cache_key,
+            self._widget_label_font_point_size(),
+        )
 
     def _widget_bounds_style(self, widget, z, *, passive_only=False):
         if not passive_only:
@@ -322,13 +342,79 @@ class WidgetOverlay(QWidget):
             painter.setBrush(fill)
             painter.drawRect(rect)
 
+    def _draw_background_and_grid(self, painter, z, bw, bh):
+        if self._bg_image is not None and self._bg_image_visible:
+            painter.save()
+            painter.setOpacity(self._bg_image_opacity)
+            painter.drawPixmap(0, 0, self._bg_image)
+            painter.restore()
+
+        eff_grid = self._effective_grid_size()
+        if self._show_grid and eff_grid >= 1 and self._solid_background:
+            painter.setPen(QPen(QColor(60, 60, 60, 100), 1.0 / z, Qt.DotLine))
+            for x in range(0, bw, eff_grid):
+                painter.drawLine(x, 0, x, bh)
+            for y in range(0, bh, eff_grid):
+                painter.drawLine(0, y, bw, y)
+
+    def _draw_widget_labels(
+        self,
+        painter,
+        widgets,
+        z,
+        *,
+        event_rect,
+        visible_logical_rect=None,
+        show_full_labels=None,
+    ):
+        label_font = QFont("Segoe UI", self._widget_label_font_point_size())
+        painter.setFont(label_font)
+        fm = painter.fontMetrics()
+        lh = fm.height() + 2
+        show_full = self._show_full_label_overlay() if show_full_labels is None else bool(show_full_labels)
+
+        for w in widgets:
+            if visible_logical_rect is not None:
+                logical_rect = QRectF(w.display_x, w.display_y, w.width, w.height)
+                if not visible_logical_rect.intersects(logical_rect):
+                    continue
+            if not show_full and w not in {self._selected, self._hovered} and w not in self._multi_selected:
+                continue
+            sx = int(w.display_x * z)
+            sy = int(w.display_y * z)
+            sw = int(w.width * z)
+            sh = int(w.height * z)
+            label_text = f"{w.widget_type} : {w.name}"
+            if self._is_locked(w):
+                label_text += " [L]"
+
+            if self._solid_background and show_full:
+                if sh < lh:
+                    continue
+                label_rect = QRect(sx, sy, sw, lh)
+                if not event_rect.intersects(label_rect):
+                    continue
+                painter.fillRect(label_rect, QColor(30, 30, 30, 180))
+                painter.setPen(QColor(220, 220, 220))
+                text_rect = QRect(sx + 3, sy, max(sw - 6, 0), lh)
+                painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter, label_text)
+            elif w == self._selected or w == self._hovered:
+                lw = max(sw, fm.horizontalAdvance(label_text) + 8)
+                label_rect = QRect(sx, sy - lh, lw, lh)
+                if not event_rect.intersects(label_rect):
+                    continue
+                painter.fillRect(label_rect, QColor(50, 50, 50, 200))
+                painter.setPen(QColor(255, 255, 255, 240))
+                painter.drawText(label_rect, Qt.AlignCenter, label_text)
+
     def _ensure_passive_bounds_cache(self):
         if not self._should_use_passive_bounds_cache():
             return None
         size = self.size()
         if size.width() <= 0 or size.height() <= 0:
             return None
-        if self._passive_bounds_cache is not None and self._passive_bounds_cache.size() == size:
+        cache_key = self._passive_bounds_cache_state_key()
+        if self._passive_bounds_cache is not None and self._passive_bounds_cache_key == cache_key:
             return self._passive_bounds_cache
 
         pixmap = QPixmap(size)
@@ -336,6 +422,7 @@ class WidgetOverlay(QWidget):
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing, False)
         painter.scale(self._zoom, self._zoom)
+        self._draw_background_and_grid(painter, self._zoom, self._base_width, self._base_height)
         self._draw_widget_bounds(
             painter,
             self._passive_cache_widgets(),
@@ -343,11 +430,21 @@ class WidgetOverlay(QWidget):
             visible_logical_rect=QRectF(0, 0, self._base_width, self._base_height),
             passive_only=True,
         )
+        painter.resetTransform()
+        self._draw_widget_labels(
+            painter,
+            self._passive_cache_widgets(),
+            self._zoom,
+            event_rect=pixmap.rect(),
+            visible_logical_rect=QRectF(0, 0, self._base_width, self._base_height),
+            show_full_labels=True,
+        )
         painter.end()
         self._passive_bounds_cache = pixmap
+        self._passive_bounds_cache_key = cache_key
         return self._passive_bounds_cache
 
-    def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
+    def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id, allowed_owner_ids=None):
         if not edge_values:
             return None
         low = target_edge - (threshold - 1)
@@ -360,6 +457,8 @@ class WidgetOverlay(QWidget):
             edge, owner_id = edge_entries[idx]
             if owner_id == widget_id:
                 continue
+            if allowed_owner_ids is not None and owner_id not in allowed_owner_ids:
+                continue
             delta = abs(target_edge - edge)
             if delta >= threshold:
                 continue
@@ -367,6 +466,96 @@ class WidgetOverlay(QWidget):
                 best_edge = edge
                 best_delta = delta
         return best_edge
+
+    def _allowed_snap_owner_ids(self, widget):
+        if widget is None or widget.parent is None:
+            return None
+        owner_ids = set(self._snap_owner_ids_by_parent.get(id(widget.parent), ()))
+        if self._root_widget is not None:
+            owner_ids.add(id(self._root_widget))
+        return owner_ids
+
+    def _parent_display_origin(self, widget):
+        parent = getattr(widget, "parent", None)
+        if parent is None:
+            return 0, 0
+        return int(getattr(parent, "display_x", parent.x)), int(getattr(parent, "display_y", parent.y))
+
+    def _snap_drag_axis(
+        self,
+        widget,
+        proposed_pos,
+        size,
+        *,
+        edge_values,
+        edge_entries,
+        eff_grid,
+        min_pos,
+        max_pos,
+    ):
+        snap_threshold = 5
+        widget_id = id(widget) if widget is not None else 0
+        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
+        max_pos = max(min_pos, max_pos)
+        best_hit = None
+        best_offset = 0
+        best_delta = None
+
+        for offset in (0, size // 2, size):
+            target_edge = proposed_pos + offset
+            hit = self._nearest_snap_hit(
+                edge_values,
+                edge_entries,
+                target_edge,
+                snap_threshold,
+                widget_id,
+                allowed_owner_ids=allowed_owner_ids,
+            )
+            if hit is None:
+                continue
+            snapped_pos = hit - offset
+            if snapped_pos < min_pos or snapped_pos > max_pos:
+                continue
+            delta = abs(target_edge - hit)
+            if best_delta is None or delta < best_delta:
+                best_hit = hit
+                best_offset = offset
+                best_delta = delta
+
+        if best_hit is not None:
+            return best_hit - best_offset, best_hit
+        if eff_grid >= 1:
+            return max(min_pos, min(max_pos, _snap_to_grid(proposed_pos, eff_grid))), None
+        return max(min_pos, min(max_pos, proposed_pos)), None
+
+    def _snap_resize_edge(
+        self,
+        widget,
+        proposed_edge,
+        *,
+        edge_values,
+        edge_entries,
+        eff_grid,
+        min_pos,
+        max_pos,
+    ):
+        snap_threshold = 5
+        widget_id = id(widget) if widget is not None else 0
+        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
+        max_pos = max(min_pos, max_pos)
+        hit = self._nearest_snap_hit(
+            edge_values,
+            edge_entries,
+            proposed_edge,
+            snap_threshold,
+            widget_id,
+            allowed_owner_ids=allowed_owner_ids,
+        )
+        if hit is not None and min_pos <= hit <= max_pos:
+            return hit, hit
+        if eff_grid >= 1:
+            return max(min_pos, min(max_pos, _snap_to_grid(proposed_edge, eff_grid))), None
+        return max(min_pos, min(max_pos, proposed_edge)), None
 
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
@@ -426,6 +615,7 @@ class WidgetOverlay(QWidget):
     def set_grid_size(self, size):
         """Set base grid snap size (0 to disable)."""
         self._grid_size = max(0, size)
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def _effective_grid_size(self):
@@ -437,6 +627,7 @@ class WidgetOverlay(QWidget):
     def set_show_grid(self, show):
         """Toggle grid visibility."""
         self._show_grid = show
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def show_grid(self):
@@ -457,21 +648,25 @@ class WidgetOverlay(QWidget):
     def set_background_image(self, pixmap):
         """Set the background mockup image (QPixmap). None to clear."""
         self._bg_image = pixmap
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def set_background_image_visible(self, visible):
         """Toggle background image visibility."""
         self._bg_image_visible = visible
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def set_background_image_opacity(self, opacity):
         """Set background image opacity (0.0 to 1.0)."""
         self._bg_image_opacity = max(0.0, min(1.0, opacity))
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def clear_background_image(self):
         """Remove the background image."""
         self._bg_image = None
+        self._invalidate_passive_bounds_cache()
         self.update()
 
     def set_widgets(self, widgets):
@@ -480,10 +675,15 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
+        self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
         self._snap_target_edges = [
             (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
             for widget in self._visible_widgets
         ]
+        self._snap_owner_ids_by_parent = {}
+        for widget in self._visible_widgets:
+            if widget.parent is not None:
+                self._snap_owner_ids_by_parent.setdefault(id(widget.parent), set()).add(id(widget))
         self._snap_edges_x = sorted(
             (edge, id(widget))
             for widget, x_edges, _ in self._snap_target_edges
@@ -694,6 +894,7 @@ class WidgetOverlay(QWidget):
             return []
         snap_threshold = 5
         widget_id = id(widget) if widget is not None else 0
+        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
         vertical_guides = set()
         horizontal_guides = set()
 
@@ -707,6 +908,7 @@ class WidgetOverlay(QWidget):
                 ex,
                 snap_threshold,
                 widget_id,
+                allowed_owner_ids=allowed_owner_ids,
             )
             if hit is not None:
                 vertical_guides.add(hit)
@@ -717,6 +919,7 @@ class WidgetOverlay(QWidget):
                 ey,
                 snap_threshold,
                 widget_id,
+                allowed_owner_ids=allowed_owner_ids,
             )
             if hit is not None:
                 horizontal_guides.add(hit)
@@ -738,22 +941,6 @@ class WidgetOverlay(QWidget):
         # ── Phase 1: Scaled space (geometry) ──────────────────────
         painter.scale(z, z)
 
-        # Draw background mockup image (at 1:1 logical pixel scale)
-        if self._bg_image is not None and self._bg_image_visible:
-            painter.save()
-            painter.setOpacity(self._bg_image_opacity)
-            painter.drawPixmap(0, 0, self._bg_image)
-            painter.restore()
-
-        # Draw grid if enabled (grid size adapts to zoom level)
-        eff_grid = self._effective_grid_size()
-        if self._show_grid and eff_grid >= 1 and self._solid_background:
-            painter.setPen(QPen(QColor(60, 60, 60, 100), 1.0 / z, Qt.DotLine))
-            for x in range(0, bw, eff_grid):
-                painter.drawLine(x, 0, x, bh)
-            for y in range(0, bh, eff_grid):
-                painter.drawLine(0, y, bw, y)
-
         if use_passive_bounds_cache:
             painter.resetTransform()
             passive_cache = self._ensure_passive_bounds_cache()
@@ -762,6 +949,8 @@ class WidgetOverlay(QWidget):
                 if not source_rect.isNull():
                     painter.drawPixmap(source_rect, passive_cache, source_rect)
             painter.scale(z, z)
+        else:
+            self._draw_background_and_grid(painter, z, bw, bh)
 
         self._draw_widget_bounds(
             painter,
@@ -798,43 +987,14 @@ class WidgetOverlay(QWidget):
         def _s(v):
             return int(v * z)
 
-        # Draw widget labels in screen space (constant font size)
-        label_font = QFont("Segoe UI", self._widget_label_font_point_size())
-        painter.setFont(label_font)
-        fm = painter.fontMetrics()
-        lh = fm.height() + 2
-        event_rect = event.rect()
-
-        show_full_labels = self._show_full_label_overlay()
-        for w in self._visible_widgets:
-            if not show_full_labels and w not in {self._selected, self._hovered} and w not in self._multi_selected:
-                continue
-            sx, sy = _s(w.display_x), _s(w.display_y)
-            sw, sh = _s(w.width), _s(w.height)
-            label_text = f"{w.widget_type} : {w.name}"
-            if self._is_locked(w):
-                label_text += " [L]"
-
-            if self._solid_background and show_full_labels:
-                # Skip label if widget is too small on screen to fit it
-                if sh < lh:
-                    continue
-                label_rect = QRect(sx, sy, sw, lh)
-                if not event_rect.intersects(label_rect):
-                    continue
-                painter.fillRect(label_rect, QColor(30, 30, 30, 180))
-                painter.setPen(QColor(220, 220, 220))
-                # Clip text within the widget width
-                text_rect = QRect(sx + 3, sy, max(sw - 6, 0), lh)
-                painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter, label_text)
-            elif w == self._selected or w == self._hovered:
-                lw = max(sw, fm.horizontalAdvance(label_text) + 8)
-                label_rect = QRect(sx, sy - lh, lw, lh)
-                if not event_rect.intersects(label_rect):
-                    continue
-                painter.fillRect(label_rect, QColor(50, 50, 50, 200))
-                painter.setPen(QColor(255, 255, 255, 240))
-                painter.drawText(label_rect, Qt.AlignCenter, label_text)
+        label_widgets = self._paint_candidate_widgets() if use_passive_bounds_cache else self._visible_widgets
+        self._draw_widget_labels(
+            painter,
+            label_widgets,
+            z,
+            event_rect=event.rect(),
+            visible_logical_rect=visible_logical_rect,
+        )
 
         # Draw resize handles in screen space (constant pixel size)
         if self._selected and not _parent_has_layout(self._selected) and not self._is_locked(self._selected):
@@ -895,7 +1055,7 @@ class WidgetOverlay(QWidget):
             self._resizing = True
             self._resize_handle = handle
             self._resize_start_rect = QRect(
-                self._selected.x, self._selected.y,
+                self._selected.display_x, self._selected.display_y,
                 self._selected.width, self._selected.height
             )
             self._resize_start_pos = pos
@@ -1026,40 +1186,56 @@ class WidgetOverlay(QWidget):
                 )
 
     def _do_free_drag(self, pos):
-        """Handle free drag movement with grid snap."""
-        old_x = self._selected.x
-        old_y = self._selected.y
+        """Handle free drag movement with object/page snap and grid fallback."""
+        old_display_x = self._selected.display_x
+        old_display_y = self._selected.display_y
         old_guides = list(self._snap_guides)
         new_pos = pos - self._drag_offset
-        new_x = new_pos.x()
-        new_y = new_pos.y()
-
-        # Apply grid snap (grid size adapts to zoom level)
         eff_grid = self._effective_grid_size()
-        if eff_grid >= 1:
-            new_x = _snap_to_grid(new_x, eff_grid)
-            new_y = _snap_to_grid(new_y, eff_grid)
-
-        # Clamp to logical bounds
-        new_x = max(0, min(new_x, self._base_width - self._selected.width))
-        new_y = max(0, min(new_y, self._base_height - self._selected.height))
-
-        # Find snap guides
-        new_guides = self._find_snap_guides(
-            self._selected, new_x, new_y,
-            self._selected.width, self._selected.height
+        new_display_x, guide_x = self._snap_drag_axis(
+            self._selected,
+            new_pos.x(),
+            self._selected.width,
+            edge_values=self._snap_edges_x_values,
+            edge_entries=self._snap_edges_x,
+            eff_grid=eff_grid,
+            min_pos=0,
+            max_pos=self._base_width - self._selected.width,
         )
+        new_display_y, guide_y = self._snap_drag_axis(
+            self._selected,
+            new_pos.y(),
+            self._selected.height,
+            edge_values=self._snap_edges_y_values,
+            edge_entries=self._snap_edges_y,
+            eff_grid=eff_grid,
+            min_pos=0,
+            max_pos=self._base_height - self._selected.height,
+        )
+        new_guides = []
+        if guide_x is not None:
+            new_guides.append(("v", guide_x))
+        if guide_y is not None:
+            new_guides.append(("h", guide_y))
         self._snap_guides = new_guides
 
-        if new_x != old_x or new_y != old_y:
+        parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
+        new_x = new_display_x - parent_display_x
+        new_y = new_display_y - parent_display_y
+
+        if new_display_x != old_display_x or new_display_y != old_display_y:
             self._selected.x = new_x
             self._selected.y = new_y
-            self._selected.display_x = new_x
-            self._selected.display_y = new_y
+            self._selected.display_x = new_display_x
+            self._selected.display_y = new_display_y
             self.widget_moved.emit(self._selected, new_x, new_y)
             self._update_regions(
-                self._screen_rect_for_logical_bounds(old_x, old_y, self._selected.width, self._selected.height),
-                self._screen_rect_for_logical_bounds(new_x, new_y, self._selected.width, self._selected.height),
+                self._screen_rect_for_logical_bounds(
+                    old_display_x, old_display_y, self._selected.width, self._selected.height
+                ),
+                self._screen_rect_for_logical_bounds(
+                    new_display_x, new_display_y, self._selected.width, self._selected.height
+                ),
             )
             self._update_regions_for_guides(old_guides)
             self._update_regions_for_guides(new_guides)
@@ -1068,60 +1244,84 @@ class WidgetOverlay(QWidget):
             self._update_regions_for_guides(new_guides)
 
     def _do_resize(self, pos):
-        """Handle resize with grid snap."""
+        """Handle resize with object/page snap and grid fallback."""
         dx = pos.x() - self._resize_start_pos.x()
         dy = pos.y() - self._resize_start_pos.y()
         r = self._resize_start_rect
         h = self._resize_handle
         old_guides = list(self._snap_guides)
 
-        new_x, new_y = r.x(), r.y()
-        new_w, new_h = r.width(), r.height()
         min_size = 10  # Minimum widget size
-
-        # Calculate new dimensions based on handle
-        if h in (HANDLE_LEFT, HANDLE_TOP_LEFT, HANDLE_BOTTOM_LEFT):
-            new_x = r.x() + dx
-            new_w = r.width() - dx
-        if h in (HANDLE_RIGHT, HANDLE_TOP_RIGHT, HANDLE_BOTTOM_RIGHT):
-            new_w = r.width() + dx
-        if h in (HANDLE_TOP, HANDLE_TOP_LEFT, HANDLE_TOP_RIGHT):
-            new_y = r.y() + dy
-            new_h = r.height() - dy
-        if h in (HANDLE_BOTTOM, HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_RIGHT):
-            new_h = r.height() + dy
-
-        # Apply grid snap (grid size adapts to zoom level)
         eff_grid = self._effective_grid_size()
-        if eff_grid >= 1:
-            new_x = _snap_to_grid(new_x, eff_grid)
-            new_y = _snap_to_grid(new_y, eff_grid)
-            new_w = _snap_to_grid(new_w, eff_grid)
-            new_h = _snap_to_grid(new_h, eff_grid)
+        left = r.x()
+        right = r.x() + r.width()
+        top = r.y()
+        bottom = r.y() + r.height()
+        guide_x = None
+        guide_y = None
 
-        # Enforce minimum size
-        new_w = max(min_size, new_w)
-        new_h = max(min_size, new_h)
+        if h in (HANDLE_LEFT, HANDLE_TOP_LEFT, HANDLE_BOTTOM_LEFT):
+            left, guide_x = self._snap_resize_edge(
+                self._selected,
+                r.x() + dx,
+                edge_values=self._snap_edges_x_values,
+                edge_entries=self._snap_edges_x,
+                eff_grid=eff_grid,
+                min_pos=0,
+                max_pos=min(right - min_size, self._base_width - min_size),
+            )
+        elif h in (HANDLE_RIGHT, HANDLE_TOP_RIGHT, HANDLE_BOTTOM_RIGHT):
+            right, guide_x = self._snap_resize_edge(
+                self._selected,
+                r.x() + r.width() + dx,
+                edge_values=self._snap_edges_x_values,
+                edge_entries=self._snap_edges_x,
+                eff_grid=eff_grid,
+                min_pos=max(left + min_size, min_size),
+                max_pos=self._base_width,
+            )
+        if h in (HANDLE_TOP, HANDLE_TOP_LEFT, HANDLE_TOP_RIGHT):
+            top, guide_y = self._snap_resize_edge(
+                self._selected,
+                r.y() + dy,
+                edge_values=self._snap_edges_y_values,
+                edge_entries=self._snap_edges_y,
+                eff_grid=eff_grid,
+                min_pos=0,
+                max_pos=min(bottom - min_size, self._base_height - min_size),
+            )
+        elif h in (HANDLE_BOTTOM, HANDLE_BOTTOM_LEFT, HANDLE_BOTTOM_RIGHT):
+            bottom, guide_y = self._snap_resize_edge(
+                self._selected,
+                r.y() + r.height() + dy,
+                edge_values=self._snap_edges_y_values,
+                edge_entries=self._snap_edges_y,
+                eff_grid=eff_grid,
+                min_pos=max(top + min_size, min_size),
+                max_pos=self._base_height,
+            )
 
-        # Clamp to logical canvas bounds
-        new_x = max(0, new_x)
-        new_y = max(0, new_y)
-        if new_x + new_w > self._base_width:
-            new_w = self._base_width - new_x
-        if new_y + new_h > self._base_height:
-            new_h = self._base_height - new_y
+        new_display_x = left
+        new_display_y = top
+        new_w = max(min_size, right - left)
+        new_h = max(min_size, bottom - top)
 
-        # Find snap guides
-        new_guides = self._find_snap_guides(self._selected, new_x, new_y, new_w, new_h)
+        new_guides = []
+        if guide_x is not None:
+            new_guides.append(("v", guide_x))
+        if guide_y is not None:
+            new_guides.append(("h", guide_y))
         self._snap_guides = new_guides
 
-        # Update widget
+        parent_display_x, parent_display_y = self._parent_display_origin(self._selected)
+        new_x = new_display_x - parent_display_x
+        new_y = new_display_y - parent_display_y
         changed = False
-        if new_x != self._selected.x or new_y != self._selected.y:
+        if new_display_x != self._selected.display_x or new_display_y != self._selected.display_y:
             self._selected.x = new_x
             self._selected.y = new_y
-            self._selected.display_x = new_x
-            self._selected.display_y = new_y
+            self._selected.display_x = new_display_x
+            self._selected.display_y = new_display_y
             changed = True
         if new_w != self._selected.width or new_h != self._selected.height:
             self._selected.width = new_w
@@ -1133,7 +1333,7 @@ class WidgetOverlay(QWidget):
             self.widget_resized.emit(self._selected, new_w, new_h)
             self._update_regions(
                 self._screen_rect_for_logical_bounds(r.x(), r.y(), r.width(), r.height()),
-                self._screen_rect_for_logical_bounds(new_x, new_y, new_w, new_h),
+                self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
             )
             self._update_regions_for_guides(old_guides)
             self._update_regions_for_guides(new_guides)
@@ -1831,10 +2031,7 @@ class PreviewPanel(QWidget):
 
     def _update_status_label(self, x, y, widget):
         """Update status bar with mouse position and widget info."""
-        if (
-            bool(getattr(self.overlay._config, "lightweight_drag", True))
-            and (self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band)
-        ):
+        if self.overlay._dragging or self.overlay._resizing or self.overlay._rubber_band:
             now = time.monotonic()
             if self._last_pointer_status_ts >= 0.0 and (now - self._last_pointer_status_ts) < (1.0 / 30.0):
                 return

@@ -4123,7 +4123,6 @@ class TestMainWindowFileFlow:
                 "Dark",
                 "Light",
                 "Font Size...",
-                "Lightweight Drag",
                 "Vertical",
                 "Horizontal",
                 "Overlay Only",
@@ -4140,10 +4139,6 @@ class TestMainWindowFileFlow:
         assert actions["Light"].statusTip() == actions["Light"].toolTip()
         assert actions["Font Size..."].toolTip() == "Adjust the Designer font size. Current size: app default."
         assert actions["Font Size..."].statusTip() == actions["Font Size..."].toolTip()
-        assert actions["Lightweight Drag"].toolTip() == (
-            "Reduce overlay work while dragging by hiding snap guides and passive bounds."
-        )
-        assert actions["Lightweight Drag"].isChecked() is True
         current_zoom = window.preview_panel._zoom_label.text()
         assert actions["Vertical"].toolTip() == (
             f"Show preview and overlay stacked vertically (Ctrl+1). Current layout: Horizontal, overlay first. Zoom: {current_zoom}."
@@ -4229,9 +4224,6 @@ class TestMainWindowFileFlow:
         assert window.editor_tabs.split_editor.font().pointSize() == 11
         assert font_selector._preview.styleSheet() != initial_preview_style
         assert f"font-size: {font_selector._preview_font_floor_px()}px;" in font_selector._preview.styleSheet()
-        actions["Lightweight Drag"].trigger()
-        assert window._config.lightweight_drag is False
-        assert actions["Lightweight Drag"].toolTip() == "Show full snap guides and passive bounds while dragging."
         _close_window(window)
 
     def test_view_appearance_refreshes_tree_typography_helpers(self, qapp, isolated_config, monkeypatch):

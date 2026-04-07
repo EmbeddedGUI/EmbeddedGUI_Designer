@@ -4066,16 +4066,6 @@ class MainWindow(QMainWindow):
         self._font_size_action.triggered.connect(self._set_font_sizes)
         view_menu.addAction(self._font_size_action)
 
-        self._lightweight_drag_action = QAction("Lightweight Drag", self)
-        self._lightweight_drag_action.setCheckable(True)
-        self._lightweight_drag_action.setChecked(bool(getattr(self._config, "lightweight_drag", True)))
-        self._apply_action_hint(
-            self._lightweight_drag_action,
-            "Reduce overlay work while dragging by hiding snap guides and passive bounds.",
-        )
-        self._lightweight_drag_action.toggled.connect(self._set_lightweight_drag)
-        view_menu.addAction(self._lightweight_drag_action)
-
         view_menu.addSeparator()
 
         workspace_menu = view_menu.addMenu("Workspace")
@@ -8207,21 +8197,6 @@ class MainWindow(QMainWindow):
         if action is not None:
             action.setChecked(True)
         self._update_preview_grid_and_mockup_action_metadata()
-
-    def _set_lightweight_drag(self, enabled):
-        self._config.lightweight_drag = bool(enabled)
-        self._config.save()
-        if hasattr(self, "_lightweight_drag_action"):
-            self._apply_action_hint(
-                self._lightweight_drag_action,
-                (
-                    "Currently using lightweight drag to reduce overlay work while dragging."
-                    if enabled
-                    else "Show full snap guides and passive bounds while dragging."
-                ),
-            )
-        if hasattr(self, "preview_panel"):
-            self.preview_panel.overlay.update()
 
     def _set_preview_engine(self, engine_name: str) -> None:
         """Preview engine selection is fixed to v1 after v2 removal."""

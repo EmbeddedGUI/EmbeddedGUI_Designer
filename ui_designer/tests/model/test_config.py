@@ -68,7 +68,6 @@ class TestDefaults:
         assert config.overlay_flipped is True
         assert config.show_grid is True
         assert config.grid_size == 8
-        assert config.lightweight_drag is True
         assert config.font_size_px == 0
         assert config.show_all_examples is False
         assert config.window_geometry == ""
@@ -95,7 +94,6 @@ class TestSaveLoad:
         config.auto_compile = False
         config.show_grid = False
         config.grid_size = 12
-        config.lightweight_drag = False
         config.font_size_px = 14
         config.widget_browser_active_category = "layout"
         config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
@@ -139,7 +137,6 @@ class TestSaveLoad:
         assert loaded.auto_compile is False
         assert loaded.show_grid is False
         assert loaded.grid_size == 12
-        assert loaded.lightweight_drag is False
         assert loaded.font_size_px == 14
         assert loaded.widget_browser_active_category == "layout"
         assert loaded.widget_browser_active_scenario == "all"
@@ -214,6 +211,25 @@ class TestSaveLoad:
             with patch("ui_designer.model.config._get_config_dir", return_value=str(nested)):
                 config.save()
         assert config_path.is_file()
+
+    def test_save_omits_legacy_lightweight_drag_key(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
+                config.save()
+
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+        assert "lightweight_drag" not in data
+
+    def test_load_ignores_legacy_lightweight_drag_key(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(json.dumps({"lightweight_drag": False, "grid_size": 12}), encoding="utf-8")
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            config.load()
+
+        assert config.grid_size == 12
+        assert not hasattr(config, "lightweight_drag")
 
 
 class TestRecentApps:

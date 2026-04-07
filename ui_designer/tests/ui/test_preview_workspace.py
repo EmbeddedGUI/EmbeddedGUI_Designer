@@ -7,7 +7,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtCore import QEvent, QPoint, QPointF, Qt
+    from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, Qt
     from PyQt5.QtGui import QContextMenuEvent, QMouseEvent
     from PyQt5.QtWidgets import QApplication
     _has_pyqt5 = True
@@ -220,12 +220,11 @@ class TestPreviewPanelFallback:
         )
         _dispose_widget(panel)
 
-    def test_pointer_status_updates_are_throttled_during_lightweight_drag(self, qapp, monkeypatch):
+    def test_pointer_status_updates_are_throttled_during_drag(self, qapp, monkeypatch):
         from ui_designer.ui import preview_panel as preview_panel_module
         from ui_designer.ui.preview_panel import PreviewPanel
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
-        panel.overlay._config.lightweight_drag = True
         panel.overlay._dragging = True
         ticks = iter([0.0, 0.01, 0.05])
         monkeypatch.setattr(preview_panel_module.time, "monotonic", lambda: next(ticks))
@@ -402,21 +401,25 @@ class TestWidgetOverlaySelection:
             _dispose_widget(overlay)
             qapp.setProperty("designer_font_size_pt", 0)
 
-    def test_overlay_hides_nonessential_labels_during_drag_states(self, qapp):
+    def test_overlay_keeps_full_feedback_during_drag_states(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
 
         try:
             assert overlay._show_full_label_overlay() is True
+            assert overlay._show_full_bounds_overlay() is True
             overlay._dragging = True
-            assert overlay._show_full_label_overlay() is False
+            assert overlay._show_full_label_overlay() is True
+            assert overlay._show_full_bounds_overlay() is True
             overlay._dragging = False
             overlay._resizing = True
-            assert overlay._show_full_label_overlay() is False
+            assert overlay._show_full_label_overlay() is True
+            assert overlay._show_full_bounds_overlay() is True
             overlay._resizing = False
             overlay._rubber_band = True
-            assert overlay._show_full_label_overlay() is False
+            assert overlay._show_full_label_overlay() is True
+            assert overlay._show_full_bounds_overlay() is True
         finally:
             _dispose_widget(overlay)
 
@@ -449,32 +452,32 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
-    def test_overlay_hides_snap_guides_during_drag_and_resize(self, qapp):
-        from ui_designer.ui.preview_panel import WidgetOverlay
-
-        overlay = WidgetOverlay()
+    def test_overlay_invalidates_passive_bounds_cache_when_grid_state_changes(self, qapp):
+        overlay, _root, first, _second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+        overlay._dragging = True
+        overlay.set_solid_background(True)
 
         try:
-            assert overlay._show_snap_guides() is True
-            overlay._dragging = True
-            assert overlay._show_snap_guides() is False
-            overlay._dragging = False
-            overlay._resizing = True
-            assert overlay._show_snap_guides() is False
+            overlay._ensure_passive_bounds_cache()
+            assert overlay._passive_bounds_cache is not None
+            overlay.set_grid_size(12)
+            assert overlay._passive_bounds_cache is None
         finally:
             _dispose_widget(overlay)
 
-    def test_overlay_full_drag_feedback_can_be_reenabled_by_config(self, qapp):
+    def test_overlay_keeps_snap_guides_visible_during_drag_and_resize(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        overlay._config.lightweight_drag = False
 
         try:
+            assert overlay._show_snap_guides() is True
             overlay._dragging = True
             assert overlay._show_snap_guides() is True
-            assert overlay._show_full_bounds_overlay() is True
-            assert overlay._show_full_label_overlay() is True
+            overlay._dragging = False
+            overlay._resizing = True
+            assert overlay._show_snap_guides() is True
         finally:
             _dispose_widget(overlay)
 
@@ -526,6 +529,128 @@ class TestWidgetOverlaySelection:
             horizontal = [pos for axis, pos in guides if axis == "h"]
             assert len(vertical) <= 1
             assert len(horizontal) <= 1
+        finally:
+            _dispose_widget(overlay)
+
+    def test_drag_snap_prefers_widget_guides_over_grid_and_grids_unmatched_axis(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
+        target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
+        root.add_child(moving)
+        root.add_child(target)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+
+            overlay._do_free_drag(QPoint(57, 14))
+
+            assert moving.x == 58
+            assert moving.y == 16
+            assert moving.display_x == 58
+            assert moving.display_y == 16
+            assert overlay._snap_guides == [("v", 58)]
+        finally:
+            _dispose_widget(overlay)
+
+    def test_drag_snap_uses_page_center_when_grid_is_disabled(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        overlay.set_grid_size(0)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
+        root.add_child(moving)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+
+            overlay._do_free_drag(QPoint(108, 148))
+
+            assert moving.x == 110
+            assert moving.y == 150
+            assert moving.display_x == 110
+            assert moving.display_y == 150
+            assert ("v", 120) in overlay._snap_guides
+            assert ("h", 160) in overlay._snap_guides
+        finally:
+            _dispose_widget(overlay)
+
+    def test_resize_snap_preserves_anchor_and_uses_guides_before_grid(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import HANDLE_RIGHT, WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        moving = WidgetModel("label", name="moving", x=20, y=20, width=20, height=20)
+        target = WidgetModel("label", name="target", x=60, y=80, width=24, height=20)
+        root.add_child(moving)
+        root.add_child(target)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._resizing = True
+            overlay._resize_handle = HANDLE_RIGHT
+            overlay._resize_start_rect = QRect(moving.display_x, moving.display_y, moving.width, moving.height)
+            overlay._resize_start_pos = QPoint()
+
+            overlay._do_resize(QPoint(18, 0))
+
+            assert moving.x == 20
+            assert moving.y == 20
+            assert moving.width == 40
+            assert moving.height == 20
+            assert moving.display_x == 20
+            assert moving.display_y == 20
+            assert overlay._snap_guides == [("v", 60)]
+        finally:
+            _dispose_widget(overlay)
+
+    def test_drag_updates_nested_widget_relative_and_display_positions(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        overlay.set_grid_size(0)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        container = WidgetModel("group", name="container", x=40, y=50, width=120, height=120)
+        child = WidgetModel("label", name="child", x=10, y=10, width=20, height=20)
+        root.add_child(container)
+        container.add_child(child)
+        root.display_x = root.x
+        root.display_y = root.y
+        container.display_x = container.x
+        container.display_y = container.y
+        child.display_x = container.display_x + child.x
+        child.display_y = container.display_y + child.y
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([child], primary=child)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+
+            overlay._do_free_drag(QPoint(63, 74))
+
+            assert child.x == 23
+            assert child.y == 24
+            assert child.display_x == 63
+            assert child.display_y == 74
         finally:
             _dispose_widget(overlay)
 
