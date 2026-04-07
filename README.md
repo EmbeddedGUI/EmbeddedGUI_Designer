@@ -96,6 +96,16 @@ Run these commands from the repository root:
 
 The SDK is resolved from `--sdk-root`, `EMBEDDEDGUI_SDK_ROOT`, the bundled `sdk/EmbeddedGUI` submodule, or a sibling `../EmbeddedGUI` checkout.
 
+## Font charset resources
+
+The resource panel now includes `Fonts -> Generate Charset...` for creating project-local font text resources without hand-maintaining `.txt` files.
+
+- Built-in presets include printable ASCII, `GB2312` symbol/level-1/level-2 sets, full `GB2312`, and full `GBK`.
+- Generated files are written to `.eguiproject/resources/*.txt`, then flow through the existing resource sync and `app_resource_config.json` generation path.
+- `Save and Bind Current Widget` also assigns the generated text file to the selected widget's `font_text_file`.
+
+More detail: [`docs/FONT_CHARSET_GENERATOR.md`](docs/FONT_CHARSET_GENERATOR.md)
+
 ## Updating the SDK pin
 
 - Move the submodule to the SDK revision you want to verify:
