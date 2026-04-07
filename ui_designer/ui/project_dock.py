@@ -20,6 +20,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QEvent, pyqtSignal, Qt
 
+from .theme import app_theme_tokens
+
 # Page names that collide with egui internal module names.
 # A page named "test" generates egui_test_init() which conflicts with
 # src/test/egui_test.h's egui_test_init(void).
@@ -82,18 +84,26 @@ class ProjectExplorerDock(QDockWidget):
         self._project = None
         self._current_page_name = None
         self._dirty_pages = set()
+        self._compact_mode = False
         self._init_ui()
 
     def set_compact_mode(self, compact=True):
         compact = bool(compact)
+        self._compact_mode = compact
         if hasattr(self, "_header_frame"):
             self._header_frame.setVisible(not compact)
         if hasattr(self, "_settings_group"):
             self._settings_group.setVisible(not compact)
+        if hasattr(self, "_page_tree"):
+            self._apply_page_tree_font(compact=compact)
+            self.refresh_tree_typography()
 
     def changeEvent(self, event):
         super().changeEvent(event)
-        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._apply_page_tree_font(compact=self._compact_mode)
+            self.refresh_tree_typography()
+        elif event.type() == QEvent.FontChange:
             self.refresh_tree_typography()
 
     def _init_ui(self):
@@ -178,6 +188,7 @@ class ProjectExplorerDock(QDockWidget):
         self._page_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._page_tree.customContextMenuRequested.connect(self._on_page_context_menu)
         self._page_tree.currentItemChanged.connect(self._on_page_item_changed)
+        self._apply_page_tree_font(compact=self._compact_mode)
         layout.addWidget(self._page_tree, 1)
 
         # Add page button
@@ -277,6 +288,19 @@ class ProjectExplorerDock(QDockWidget):
         font = self._page_tree.font()
         font.setBold(bool(is_current))
         return font
+
+    def _apply_page_tree_font(self, compact=False):
+        tokens = app_theme_tokens()
+        key = "fs_body_sm" if compact else "fs_body"
+        fallback = 12 if compact else 13
+        try:
+            px = max(int(tokens.get(key, fallback)), 1)
+        except (TypeError, ValueError):
+            px = fallback
+        font = self._page_tree.font()
+        font.setPixelSize(px)
+        font.setBold(False)
+        self._page_tree.setFont(font)
 
     def _page_context_action_hint(self, action_key, page_name=""):
         page_label = str(page_name or "").strip() or "current page"

@@ -91,6 +91,26 @@ def _menu_target_labels(menu):
 
 @_skip_no_qt
 class TestWidgetTreePanel:
+    def test_structure_tree_uses_dense_item_font_by_default(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.theme import app_theme_tokens
+        from ui_designer.ui.widget_tree import WidgetTreePanel
+
+        project, root = _build_project_with_root()
+        leaf = WidgetModel("label", name="field_label")
+        root.add_child(leaf)
+
+        panel = WidgetTreePanel()
+        panel.set_project(project)
+
+        tokens = app_theme_tokens()
+        expected_px = int(tokens["fs_body_sm"])
+        leaf_item = panel._item_map[id(leaf)]
+
+        assert panel.tree.font().pixelSize() == expected_px
+        assert leaf_item.font(0).pixelSize() == expected_px
+        panel.deleteLater()
+
     def test_refresh_tree_typography_reuses_current_tree_font(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel

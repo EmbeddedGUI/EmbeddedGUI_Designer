@@ -32,6 +32,7 @@ from ..model.structure_ops import (
 from ..model.widget_model import WidgetModel
 from ..model.widget_registry import WidgetRegistry
 from .iconography import make_icon, widget_icon_key
+from .theme import app_theme_tokens
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -194,7 +195,10 @@ class WidgetTreePanel(QWidget):
 
     def changeEvent(self, event):
         super().changeEvent(event)
-        if event.type() in (QEvent.StyleChange, QEvent.FontChange, QEvent.PaletteChange):
+        if event.type() in (QEvent.StyleChange, QEvent.PaletteChange):
+            self._apply_tree_base_font()
+            self.refresh_tree_typography()
+        elif event.type() == QEvent.FontChange:
             self.refresh_tree_typography()
 
     def _init_ui(self):
@@ -467,6 +471,7 @@ class WidgetTreePanel(QWidget):
         self.tree.itemSelectionChanged.connect(self._on_selection_changed)
         self.tree.itemExpanded.connect(self._on_item_expanded)
         self.tree.itemCollapsed.connect(self._on_item_collapsed)
+        self._apply_tree_base_font()
         layout.addWidget(self.tree)
         self.add_btn.setAccessibleName("Insert component")
         self.rename_btn.setAccessibleName("Rename selected widget")
@@ -3605,6 +3610,17 @@ class WidgetTreePanel(QWidget):
     def _set_item_match_state(self, item, matched):
         for column in range(self.tree.columnCount()):
             item.setFont(column, self._tree_item_font(item, matched))
+
+    def _apply_tree_base_font(self):
+        tokens = app_theme_tokens()
+        try:
+            px = max(int(tokens.get("fs_body_sm", 12)), 1)
+        except (TypeError, ValueError):
+            px = 12
+        font = self.tree.font()
+        font.setPixelSize(px)
+        font.setBold(False)
+        self.tree.setFont(font)
 
     def refresh_tree_typography(self):
         """Re-apply match emphasis using the current tree font."""

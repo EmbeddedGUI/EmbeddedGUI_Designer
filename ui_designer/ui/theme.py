@@ -981,7 +981,7 @@ QFrame#property_grid_section_fill[sectionHovered="true"] {{
 #property_grid_section_text {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #property_grid_section_text[sectionExpanded="true"] {{
@@ -1092,7 +1092,7 @@ QFrame#property_grid_editor_cell[focusActive="true"] {{
 #property_panel_header_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #property_panel_title {{
@@ -1126,7 +1126,7 @@ QGroupBox#inspector_collapsible_group {{
     margin-top: 14px;
     padding-top: 4px;
     font-size: {t['fs_panel_title']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 QGroupBox#inspector_collapsible_group::title {{
@@ -1180,7 +1180,7 @@ QFrame#inspector_group_body {{
 #workspace_command_context_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #workspace_command_title {{
@@ -1238,7 +1238,7 @@ QFrame#inspector_group_body {{
 #widget_browser_header_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #widget_browser_header_meta {{
@@ -1445,7 +1445,7 @@ QPushButton#workspace_insert_button:focus {{
 #editor_tabs_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #editor_tabs_meta,
@@ -1500,7 +1500,7 @@ QToolButton[workspaceNav="true"] {{
     color: {t['text_muted']};
     border: 1px solid transparent;
     border-radius: 0px;
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_micro']}px;
     font-weight: {t['fw_medium']};
     padding: 2px 0;
     min-width: 56px;
@@ -1728,7 +1728,12 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #workspace_section_title {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
+}}
+
+QWidget#project_workspace_panel QLabel#workspace_section_title,
+QWidget#widget_tree_dock QLabel#workspace_section_title {{
+    font-size: {t['fs_body_sm']}px;
 }}
 
 #workspace_section_subtitle {{
@@ -1756,7 +1761,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #project_workspace_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #project_workspace_metrics_strip {{
@@ -1801,7 +1806,7 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #resource_panel_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #resource_panel_title {{
@@ -1833,13 +1838,13 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 #resource_panel_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #resource_panel_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 QListWidget#resource_panel_list,
@@ -1892,7 +1897,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
     border-bottom: 1px solid {t['border']};
     padding: 8px;
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #resource_panel_preview {{
@@ -1914,7 +1919,7 @@ QTableWidget#resource_panel_table QHeaderView::section {{
 #project_dock_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #project_dock_title {{
@@ -1967,13 +1972,13 @@ QPushButton#project_dock_add_page_button:disabled {{
 #project_dock_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #project_dock_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 QTreeWidget#project_dock_tree {{
@@ -1990,7 +1995,7 @@ QTreeWidget#project_dock_tree {{
 #structure_header_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #structure_header_meta,
@@ -2001,7 +2006,7 @@ QTreeWidget#project_dock_tree {{
 
 #structure_panel_label {{
     color: {t['text']};
-    font-size: {t['fs_panel_title']}px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
 }}
 
@@ -2071,7 +2076,7 @@ QTreeWidget#project_dock_tree {{
 #diagnostics_header_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #diagnostics_header_meta {{
@@ -2133,7 +2138,7 @@ QListWidget#diagnostics_list {{
 #debug_panel_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #debug_panel_header_meta {{
@@ -2188,7 +2193,7 @@ QPlainTextEdit#debug_output_surface {{
 #history_panel_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #history_panel_meta {{
@@ -2217,7 +2222,7 @@ QListWidget#history_panel_list {{
 #animations_panel_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #animations_panel_meta {{
@@ -2288,7 +2293,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_fields_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #page_fields_meta {{
@@ -2311,7 +2316,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_timers_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #page_timers_meta {{
@@ -2328,7 +2333,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_editor_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #page_editor_meta {{
@@ -2391,7 +2396,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_navigator_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #page_navigator_meta,
@@ -2480,8 +2485,8 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 
 #page_navigator_page_name {{
     color: {t['text']};
-    font-size: {t['fs_body']}px;
-    font-weight: {t['fw_semibold']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
 }}
 
 #page_navigator_page_name[dirty="true"] {{
@@ -2497,7 +2502,7 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 #app_selector_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #app_selector_title {{
@@ -2531,7 +2536,7 @@ QLabel#page_navigator_thumb_label[selected="true"] {{
 #app_selector_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #app_selector_metric_value,
@@ -2573,7 +2578,7 @@ QListWidget#app_selector_list::item:hover {{
 #app_selector_item_title {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #app_selector_item_meta {{
@@ -2587,7 +2592,7 @@ QListWidget#app_selector_list::item:hover {{
     border-radius: {t['r_md']}px;
     color: {t['text_muted']};
     font-size: {t['fs_micro']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
     padding: {t['space_xxs']}px {t['space_sm']}px;
 }}
 
@@ -2610,7 +2615,7 @@ QListWidget#app_selector_list::item:hover {{
 #resource_dialog_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #resource_dialog_title {{
@@ -2640,13 +2645,13 @@ QListWidget#app_selector_list::item:hover {{
 #resource_dialog_metric_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #resource_dialog_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #resource_dialog_summary {{
@@ -2668,7 +2673,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
     border-bottom: 1px solid {t['border']};
     padding: 8px;
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #repo_health_header {{
@@ -2680,7 +2685,7 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 #repo_health_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #repo_health_title {{
@@ -2712,13 +2717,13 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
 #repo_health_metric_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #repo_health_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 QTextEdit#repo_health_details {{
@@ -2750,7 +2755,7 @@ QTextEdit#repo_health_details {{
 #release_history_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #release_build_title,
@@ -2811,7 +2816,7 @@ QTextEdit#repo_health_details {{
 #release_history_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #release_build_metric_value,
@@ -2824,7 +2829,7 @@ QTextEdit#repo_health_details {{
 #release_history_preview_label {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 QListWidget#release_profiles_list,
@@ -2856,7 +2861,7 @@ QTextEdit#release_history_preview {{
 #new_project_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #new_project_title {{
@@ -2890,14 +2895,14 @@ QTextEdit#release_history_preview {{
 #new_project_field_label {{
     color: {t['text_soft']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #new_project_metric_value,
 #new_project_summary_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #welcome_shell,
@@ -2915,7 +2920,7 @@ QTextEdit#release_history_preview {{
 #welcome_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #welcome_hero_title {{
@@ -2958,13 +2963,13 @@ QTextEdit#release_history_preview {{
 #welcome_metric_label {{
     color: {t['text_soft']};
     font-size: {t['fs_micro']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_regular']};
 }}
 
 #welcome_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #welcome_recent_item {{
@@ -2991,7 +2996,7 @@ QTextEdit#release_history_preview {{
 #welcome_recent_name {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #welcome_recent_path {{
@@ -3054,7 +3059,7 @@ QTextEdit#release_history_preview {{
 
 #widget_browser_card_title {{
     font-size: {t['fs_body']}px;
-    font-weight: 600;
+    font-weight: {t['fw_medium']};
     color: {t['text']};
 }}
 
@@ -3109,7 +3114,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #status_center_header_metrics_strip {{
@@ -3150,7 +3155,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #status_center_metric_value {{
     color: {t['text']};
     font-size: {t['fs_body']}px;
-    font-weight: 600;
+    font-weight: {t['fw_medium']};
 }}
 
 #preview_header {{
@@ -3162,7 +3167,7 @@ QPushButton#widget_browser_insert_button:pressed {{
 #preview_eyebrow {{
     color: {t['accent_hover']};
     font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_semibold']};
+    font-weight: {t['fw_medium']};
 }}
 
 #preview_meta {{
@@ -3263,7 +3268,7 @@ QPushButton#preview_status_button:hover {{
 #status_center_health_value {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
-    font-weight: 600;
+    font-weight: {t['fw_medium']};
 }}
 
 QProgressBar#status_center_health_error_bar,

@@ -47,6 +47,24 @@ def _build_project():
 
 @_skip_no_qt
 class TestProjectExplorerDock:
+    def test_compact_mode_uses_dense_page_tree_font(self, qapp):
+        from ui_designer.ui.project_dock import ProjectExplorerDock
+        from ui_designer.ui.theme import app_theme_tokens
+
+        dock = ProjectExplorerDock()
+        dock.set_compact_mode(True)
+        dock.set_project(_build_project())
+
+        tokens = app_theme_tokens()
+        expected_px = int(tokens["fs_body_sm"])
+        first = dock._page_tree.topLevelItem(0)
+        second = dock._page_tree.topLevelItem(1)
+
+        assert dock._page_tree.font().pixelSize() == expected_px
+        assert first.font(0).pixelSize() == expected_px
+        assert second.font(0).pixelSize() == expected_px
+        dock.deleteLater()
+
     def test_change_event_refreshes_tree_typography(self, qapp):
         from ui_designer.ui.project_dock import ProjectExplorerDock
 

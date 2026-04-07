@@ -65,7 +65,11 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "QTabBar::tab:selected" in css
         assert t["panel_raised"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
         nav = css.split("#workspace_nav_rail", 1)[1].split("}", 1)[0]
+        nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
+        assert f"font-size: {t['fs_micro']}px;" in nav_button
+        assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         assert str(t["space_xs"]) in indicator
 
@@ -172,8 +176,43 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-size: {t['fs_h1']}px;" in welcome_title
 
         assert f"font-size: {t['fs_body']}px;" in repo_health_metric_value
+        assert f"font-weight: {t['fw_medium']};" in repo_health_metric_value
         assert f"font-size: {t['fs_body']}px;" in welcome_subtitle
         assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
+
+
+def test_secondary_typography_uses_lighter_weights_for_dense_views():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        property_grid_section = css.split("\n#property_grid_section_text {", 1)[1].split("}", 1)[0]
+        resource_metric_label = css.split("#resource_panel_metric_label,", 1)[1].split("}", 1)[0]
+        resource_metric_value = css.split("#resource_panel_metric_value {", 1)[1].split("}", 1)[0]
+        resource_table_header = css.split("QTableWidget#resource_panel_table QHeaderView::section {", 1)[1].split("}", 1)[0]
+        app_selector_label = css.split("#app_selector_metric_label,", 1)[1].split("}", 1)[0]
+        app_selector_item_title = css.split("#app_selector_item_title {", 1)[1].split("}", 1)[0]
+        app_selector_item_kind = css.split("#app_selector_item_kind {", 1)[1].split("}", 1)[0]
+        welcome_eyebrow = css.split("#welcome_eyebrow {", 1)[1].split("}", 1)[0]
+        welcome_metric_label = css.split("#welcome_metric_label {", 1)[1].split("}", 1)[0]
+        welcome_metric_value = css.split("#welcome_metric_value {", 1)[1].split("}", 1)[0]
+        welcome_recent_name = css.split("#welcome_recent_name {", 1)[1].split("}", 1)[0]
+        status_center_metric_value = css.split("#status_center_metric_value {", 1)[1].split("}", 1)[0]
+        status_center_health_value = css.split("#status_center_health_value {", 1)[1].split("}", 1)[0]
+
+        assert f"font-weight: {t['fw_medium']};" in property_grid_section
+        assert f"font-weight: {t['fw_regular']};" in resource_metric_label
+        assert f"font-weight: {t['fw_medium']};" in resource_metric_value
+        assert f"font-weight: {t['fw_medium']};" in resource_table_header
+        assert f"font-weight: {t['fw_regular']};" in app_selector_label
+        assert f"font-weight: {t['fw_medium']};" in app_selector_item_title
+        assert f"font-weight: {t['fw_medium']};" in app_selector_item_kind
+        assert f"font-weight: {t['fw_medium']};" in welcome_eyebrow
+        assert f"font-weight: {t['fw_regular']};" in welcome_metric_label
+        assert f"font-weight: {t['fw_medium']};" in welcome_metric_value
+        assert f"font-weight: {t['fw_medium']};" in welcome_recent_name
+        assert f"font-weight: {t['fw_medium']};" in status_center_metric_value
+        assert f"font-weight: {t['fw_medium']};" in status_center_health_value
 
 
 def test_font_preference_scales_typography_tokens_consistently():
@@ -271,6 +310,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         selected = css.split('#page_navigator_thumbnail[selected="true"] {', 1)[1].split("}", 1)[0]
         empty = css.split("#page_navigator_empty_state {", 1)[1].split("}", 1)[0]
         thumb_label = css.split("QLabel#page_navigator_thumb_label {", 1)[1].split("}", 1)[0]
+        page_name = css.split("#page_navigator_page_name {", 1)[1].split("}", 1)[0]
 
         _assert_panel_surface(header, t)
         assert "border-radius: 0px;" in header
@@ -289,6 +329,7 @@ def test_page_navigator_styles_use_token_driven_cards():
         assert "padding: 12px;" in empty
         assert "border-radius: 0px;" in thumb_label
         assert "padding: 2px;" in thumb_label
+        assert f"font-size: {t['fs_body_sm']}px;" in page_name
 
 
 def test_page_fields_panel_styles_use_engineering_surface_tokens():
@@ -944,6 +985,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         metrics = css.split("#structure_metrics_strip {", 1)[1].split("}", 1)[0]
         strips = css.split("#structure_primary_strip,", 1)[1].split("}", 1)[0]
         drag_hint = css.split("#structure_drag_hint_strip {", 1)[1].split("}", 1)[0]
+        structure_label = css.split("#structure_panel_label {", 1)[1].split("}", 1)[0]
         buttons = css.split("#structure_primary_strip QPushButton,", 1)[1].split("}", 1)[0]
         tree = css.split("QTreeWidget#widget_tree_panel_tree {", 1)[1].split("}", 1)[0]
 
@@ -962,6 +1004,7 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in drag_hint
         assert "border: none;" in drag_hint
         assert "border-radius: 0px;" in drag_hint
+        assert f"font-size: {t['fs_body_sm']}px;" in structure_label
         assert "border-radius: 0px;" in buttons
         assert "min-height: 28px;" in buttons
         assert f"padding: 3px {t['space_sm']}px;" in buttons
