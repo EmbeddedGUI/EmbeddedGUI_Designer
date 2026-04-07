@@ -606,6 +606,36 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_drag_does_not_reinvalidate_unchanged_guides(self, qapp, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
+        target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
+        root.add_child(moving)
+        root.add_child(target)
+
+        guide_updates = []
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+            monkeypatch.setattr(overlay, "_update_regions_for_guides", lambda guides: guide_updates.append(list(guides)))
+
+            overlay._do_free_drag(QPoint(57, 14))
+            assert guide_updates
+            guide_updates.clear()
+
+            overlay._do_free_drag(QPoint(57, 18))
+            assert guide_updates == []
+        finally:
+            _dispose_widget(overlay)
+
     def test_drag_snap_uses_page_center_when_grid_is_disabled(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

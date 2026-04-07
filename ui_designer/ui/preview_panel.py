@@ -645,22 +645,44 @@ class WidgetOverlay(QWidget):
     def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
         if not edge_values:
             return None
-        low = target_edge - (threshold - 1)
-        high = target_edge + (threshold - 1)
-        left = bisect.bisect_left(edge_values, low)
-        right = bisect.bisect_right(edge_values, high)
         best_edge = None
         best_delta = None
-        for idx in range(left, right):
+        right = bisect.bisect_left(edge_values, target_edge)
+        left = right - 1
+
+        while left >= 0 or right < len(edge_values):
+            left_delta = None
+            if left >= 0:
+                left_delta = target_edge - edge_values[left]
+            right_delta = None
+            if right < len(edge_values):
+                right_delta = edge_values[right] - target_edge
+
+            use_left = right_delta is None or (left_delta is not None and left_delta <= right_delta)
+            if use_left:
+                delta = left_delta
+                idx = left
+                left -= 1
+            else:
+                delta = right_delta
+                idx = right
+                right += 1
+
+            if delta is None or delta >= threshold:
+                if best_delta is not None:
+                    break
+                if (left_delta is None or left_delta >= threshold) and (right_delta is None or right_delta >= threshold):
+                    break
+                continue
+
             edge, owner_id = edge_entries[idx]
             if owner_id == widget_id:
-                continue
-            delta = abs(target_edge - edge)
-            if delta >= threshold:
                 continue
             if best_delta is None or delta < best_delta:
                 best_edge = edge
                 best_delta = delta
+                if best_delta == 0:
+                    break
         return best_edge
 
     def _snap_lookup_for_widget(self, widget, axis):
@@ -1475,8 +1497,9 @@ class WidgetOverlay(QWidget):
                     new_display_x, new_display_y, self._selected.width, self._selected.height
                 ),
             )
-            self._update_regions_for_guides(old_guides)
-            self._update_regions_for_guides(new_guides)
+            if new_guides != old_guides:
+                self._update_regions_for_guides(old_guides)
+                self._update_regions_for_guides(new_guides)
         elif new_guides != old_guides:
             self._update_regions_for_guides(old_guides)
             self._update_regions_for_guides(new_guides)
@@ -1569,8 +1592,9 @@ class WidgetOverlay(QWidget):
                 self._screen_rect_for_logical_bounds(r.x(), r.y(), r.width(), r.height()),
                 self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
             )
-            self._update_regions_for_guides(old_guides)
-            self._update_regions_for_guides(new_guides)
+            if new_guides != old_guides:
+                self._update_regions_for_guides(old_guides)
+                self._update_regions_for_guides(new_guides)
         elif new_guides != old_guides:
             self._update_regions_for_guides(old_guides)
             self._update_regions_for_guides(new_guides)
