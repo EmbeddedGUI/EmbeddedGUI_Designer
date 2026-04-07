@@ -179,6 +179,9 @@ class WidgetOverlay(QWidget):
 
         # Coordinate display
         self._show_coords = False  # True while dragging/resizing
+        self._last_geometry_signal_ts = -1.0
+        self._pending_move_signal = None
+        self._pending_resize_signal = None
 
         # Background mockup image
         self._bg_image = None       # QPixmap or None
@@ -235,6 +238,38 @@ class WidgetOverlay(QWidget):
         if self._should_use_passive_bounds_cache():
             return self._active_paint_widgets
         return self._visible_widgets
+
+    def _reset_geometry_signal_state(self):
+        self._last_geometry_signal_ts = -1.0
+        self._pending_move_signal = None
+        self._pending_resize_signal = None
+
+    def _flush_pending_geometry_signals(self):
+        if self._pending_move_signal is not None:
+            widget, new_x, new_y = self._pending_move_signal
+            self.widget_moved.emit(widget, new_x, new_y)
+        if self._pending_resize_signal is not None:
+            widget, new_w, new_h = self._pending_resize_signal
+            self.widget_resized.emit(widget, new_w, new_h)
+        self._reset_geometry_signal_state()
+
+    def _emit_geometry_signals(self, widget, new_x, new_y, *, new_w=None, new_h=None):
+        if widget is None:
+            return
+        now = time.monotonic()
+        move_payload = (widget, new_x, new_y)
+        resize_payload = (widget, new_w, new_h) if new_w is not None and new_h is not None else None
+        if self._last_geometry_signal_ts >= 0.0 and (now - self._last_geometry_signal_ts) < (1.0 / 60.0):
+            self._pending_move_signal = move_payload
+            if resize_payload is not None:
+                self._pending_resize_signal = resize_payload
+            return
+        self.widget_moved.emit(widget, new_x, new_y)
+        if resize_payload is not None:
+            self.widget_resized.emit(widget, new_w, new_h)
+        self._pending_move_signal = None
+        self._pending_resize_signal = None
+        self._last_geometry_signal_ts = now
 
     def _refresh_paint_widget_cache(self):
         active_ids = set()
@@ -1351,6 +1386,7 @@ class WidgetOverlay(QWidget):
             )
             self._resize_start_pos = pos
             self._show_coords = True
+            self._reset_geometry_signal_state()
             self.drag_started.emit()
             self.update()
             return
@@ -1389,6 +1425,7 @@ class WidgetOverlay(QWidget):
             self._insert_index = -1
             self._insert_line_rect = None
             self._show_coords = not self._reorder_mode
+            self._reset_geometry_signal_state()
             if self._reorder_mode:
                 self.setCursor(Qt.ClosedHandCursor)
             else:
@@ -1522,7 +1559,7 @@ class WidgetOverlay(QWidget):
             self._selected.y = new_y
             self._selected.display_x = new_display_x
             self._selected.display_y = new_display_y
-            self.widget_moved.emit(self._selected, new_x, new_y)
+            self._emit_geometry_signals(self._selected, new_x, new_y)
             geometry_rects = [
                 self._screen_rect_for_logical_bounds(
                     old_display_x, old_display_y, self._selected.width, self._selected.height
@@ -1623,8 +1660,7 @@ class WidgetOverlay(QWidget):
             changed = True
 
         if changed:
-            self.widget_moved.emit(self._selected, new_x, new_y)
-            self.widget_resized.emit(self._selected, new_w, new_h)
+            self._emit_geometry_signals(self._selected, new_x, new_y, new_w=new_w, new_h=new_h)
             geometry_rects = [
                 self._screen_rect_for_logical_bounds(r.x(), r.y(), r.width(), r.height()),
                 self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
@@ -1668,6 +1704,7 @@ class WidgetOverlay(QWidget):
                 self._selected.width if self._selected is not None else 0,
                 self._selected.height if self._selected is not None else 0,
             )
+            self._flush_pending_geometry_signals()
             self._resizing = False
             self._resize_handle = HANDLE_NONE
             self._resize_start_rect = None
@@ -1690,6 +1727,8 @@ class WidgetOverlay(QWidget):
                 self._selected.width if self._selected is not None else 0,
                 self._selected.height if self._selected is not None else 0,
             )
+            if not self._reorder_mode:
+                self._flush_pending_geometry_signals()
             if self._reorder_mode and self._selected:
                 if self._insert_index >= 0 and self._selected.parent:
                     parent = self._selected.parent

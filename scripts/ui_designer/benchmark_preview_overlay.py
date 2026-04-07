@@ -37,6 +37,7 @@ def _parse_args():
     parser.add_argument("--drag-iterations", type=int, default=2000, help="Drag loop count.")
     parser.add_argument("--resize-iterations", type=int, default=2000, help="Resize loop count.")
     parser.add_argument("--with-background", action="store_true", help="Include a full-size background mockup pixmap.")
+    parser.add_argument("--connect-noop-slots", action="store_true", help="Connect no-op listeners to geometry signals.")
     parser.add_argument(
         "--profile",
         choices=("none", "drag", "resize"),
@@ -106,6 +107,9 @@ def main():
     overlay.set_solid_background(True)
     scroll.setWidget(overlay)
     scroll.show()
+    if args.connect_noop_slots:
+        overlay.widget_moved.connect(lambda *args: None)
+        overlay.widget_resized.connect(lambda *args: None)
 
     if args.with_background:
         bg = QPixmap(args.canvas_width, args.canvas_height)
@@ -169,6 +173,7 @@ def main():
         "drag_total_ms": round(drag_ms, 2),
         "resize_total_ms": round(resize_ms, 2),
         "with_background": bool(args.with_background),
+        "connect_noop_slots": bool(args.connect_noop_slots),
     }
     if args.profile == "drag":
         result["profile"] = _profile_call("drag", drag_call, args.profile_limit)

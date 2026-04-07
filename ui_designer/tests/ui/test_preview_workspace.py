@@ -608,6 +608,7 @@ class TestWidgetOverlaySelection:
 
     def test_drag_does_not_reinvalidate_unchanged_guides(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui import preview_panel as preview_panel_module
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
@@ -640,6 +641,32 @@ class TestWidgetOverlaySelection:
 
             overlay._do_free_drag(QPoint(57, 18))
             assert guide_updates == []
+        finally:
+            _dispose_widget(overlay)
+
+    def test_drag_geometry_signals_are_throttled_but_flush_on_release(self, qapp, monkeypatch):
+        from ui_designer.ui import preview_panel as preview_panel_module
+
+        overlay, _root, first, _second, _third = self._make_overlay()
+        overlay.set_selection([first], primary=first)
+        overlay.set_grid_size(0)
+        overlay._dragging = True
+        overlay._drag_offset = QPoint()
+        moved = []
+        overlay.widget_moved.connect(lambda widget, x, y: moved.append((widget, x, y)))
+        ticks = iter([0.0, 0.005])
+        monkeypatch.setattr(preview_panel_module.time, "monotonic", lambda: next(ticks))
+
+        try:
+            overlay._do_free_drag(QPoint(20, 20))
+            overlay._do_free_drag(QPoint(25, 25))
+            assert len(moved) == 1
+
+            overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(25, 25), buttons=Qt.NoButton))
+            qapp.processEvents()
+
+            assert len(moved) == 2
+            assert moved[-1][1:] == (25, 25)
         finally:
             _dispose_widget(overlay)
 
