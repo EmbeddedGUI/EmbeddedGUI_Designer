@@ -951,6 +951,7 @@ QFrame#property_grid_label_cell {{
     background-color: transparent;
     border: none;
     border-right: 1px solid {t['border']};
+    border-bottom: 1px solid {t['border']};
 }}
 
 #property_grid_label_text {{
@@ -961,6 +962,34 @@ QFrame#property_grid_label_cell {{
 QFrame#property_grid_editor_cell {{
     background-color: transparent;
     border: none;
+    border-bottom: 1px solid {t['border']};
+}}
+
+QFrame#property_grid_label_cell[rowTone="accent"],
+QFrame#property_grid_editor_cell[rowTone="accent"] {{
+    background-color: {t['accent_soft']};
+}}
+
+QFrame#property_grid_label_cell[rowTone="warning"],
+QFrame#property_grid_editor_cell[rowTone="warning"] {{
+    background-color: {t['panel_soft']};
+}}
+
+QFrame#property_grid_label_cell[rowTone="danger"],
+QFrame#property_grid_editor_cell[rowTone="danger"] {{
+    background-color: {t['selection_soft']};
+}}
+
+#property_grid_label_text[rowTone="accent"] {{
+    color: {t['accent_hover']};
+}}
+
+#property_grid_label_text[rowTone="warning"] {{
+    color: {t['warning']};
+}}
+
+#property_grid_label_text[rowTone="danger"] {{
+    color: {t['danger']};
 }}
 
 #property_panel_eyebrow,

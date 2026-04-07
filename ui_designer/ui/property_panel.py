@@ -558,11 +558,13 @@ class PropertyPanel(QWidget):
         self._property_tree.header().setSectionResizeMode(0, QHeaderView.Interactive)
         self._property_tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
         self._property_tree.header().setMinimumSectionSize(120)
+        self._property_tree.header().hide()
         self._property_tree.setColumnWidth(0, 176)
         self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
         self._property_tree.itemCollapsed.connect(self._on_property_tree_item_collapsed)
         self._property_sections = OrderedDict()
         self._property_tree_items = {}
+        self._property_grid_rows_by_widget = {}
         self._property_tree.hide()
 
         self._no_selection_label = self._create_no_selection_label()
@@ -669,6 +671,7 @@ class PropertyPanel(QWidget):
             self._property_tree.blockSignals(False)
         self._property_sections = OrderedDict()
         self._property_tree_items = {}
+        self._property_grid_rows_by_widget = {}
 
     def _property_tree_section_key(self, title):
         return self._inspector_group_storage_key(title)
@@ -745,10 +748,47 @@ class PropertyPanel(QWidget):
             "editor_host": editor_host,
         }
         section["rows"].append(row_data)
+        self._register_property_grid_row_widget(row_data, label_widget)
+        self._register_property_grid_row_widget(row_data, label_frame)
+        self._register_property_grid_row_widget(row_data, editor)
+        self._register_property_grid_row_widget(row_data, editor_host)
+        for child in label_frame.findChildren(QWidget):
+            self._register_property_grid_row_widget(row_data, child)
+        for child in editor.findChildren(QWidget):
+            self._register_property_grid_row_widget(row_data, child)
+        self._set_property_grid_row_tone(editor, None)
         row_visible = section["item"].isExpanded()
         label_frame.setVisible(row_visible)
         editor_host.setVisible(row_visible)
         editor.setVisible(row_visible)
+
+    def _register_property_grid_row_widget(self, row_data, widget):
+        if isinstance(widget, QWidget):
+            self._property_grid_rows_by_widget[id(widget)] = row_data
+
+    def _property_grid_row_data(self, widget):
+        current = widget if isinstance(widget, QWidget) else None
+        while current is not None:
+            row_data = self._property_grid_rows_by_widget.get(id(current))
+            if row_data is not None:
+                return row_data
+            current = current.parentWidget()
+        return None
+
+    def _set_property_grid_row_tone(self, widget, tone=None):
+        row_data = self._property_grid_row_data(widget)
+        if row_data is None:
+            return
+        tone_value = str(tone or "")
+        for key in ("label_frame", "editor_host", "label_widget"):
+            target = row_data.get(key)
+            if not isinstance(target, QWidget):
+                continue
+            target.setProperty("rowTone", tone_value)
+            style = target.style()
+            style.unpolish(target)
+            style.polish(target)
+            target.update()
 
     def _apply_property_tree_expanded_state(self):
         for title, section in self._property_sections.items():
@@ -993,6 +1033,7 @@ class PropertyPanel(QWidget):
             tooltip=tooltip or self._mixed_value_tooltip(),
             accessible_name=f"{label}: mixed values",
         )
+        self._set_property_grid_row_tone(editor, "warning")
 
     def _update_panel_metadata(self):
         search_summary = self._current_search_summary()
@@ -1094,6 +1135,7 @@ class PropertyPanel(QWidget):
             tooltip=tooltip,
             accessible_name=f"{callback_label} callback: {self._editor_value_summary(editor)}",
         )
+        self._set_property_grid_row_tone(editor, "accent")
 
     def _update_callback_button_metadata(self, button, event_name, enabled, tooltip):
         callback_label = self._humanize_callback_name(event_name)
@@ -1804,6 +1846,7 @@ class PropertyPanel(QWidget):
             self._update_file_selector_metadata(prop_name, target, tooltip=message)
         else:
             _set_widget_metadata(target, tooltip=message)
+        self._set_property_grid_row_tone(target, "danger")
 
     def _collect_multi_common_properties(self):
         if not self._selection:
