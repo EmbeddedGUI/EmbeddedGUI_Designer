@@ -598,6 +598,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['panel_soft']};" in property_grid_section_expanded
         assert f"border-bottom: 1px solid {t['accent']};" in property_grid_section_expanded
         assert f"background-color: {t['panel_raised']};" in property_grid_section_fill
+        assert f"border-left: 1px solid {t['border_strong']};" in property_grid_section_fill
         assert f"background-color: {t['panel_soft']};" in property_grid_section_fill_expanded
         assert f"background-color: {t['surface_hover']};" in property_grid_section_hover
         assert f"color: {t['text']};" in property_grid_section_text

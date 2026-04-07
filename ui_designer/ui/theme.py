@@ -962,12 +962,14 @@ QFrame#property_grid_section_cell[sectionExpanded="true"] {{
 QFrame#property_grid_section_fill {{
     background-color: {t['panel_raised']};
     border: none;
+    border-left: 1px solid {t['border_strong']};
     border-top: 1px solid {t['border_strong']};
     border-bottom: 1px solid {t['border']};
 }}
 
 QFrame#property_grid_section_fill[sectionExpanded="true"] {{
     background-color: {t['panel_soft']};
+    border-left: 1px solid {t['border_strong']};
     border-bottom: 1px solid {t['accent']};
 }}
 
