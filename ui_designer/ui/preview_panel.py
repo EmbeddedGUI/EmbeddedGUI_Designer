@@ -431,12 +431,20 @@ class WidgetOverlay(QWidget):
         self._snap_guide_rects = self._screen_rect_for_guides(self._snap_guides)
 
     def _update_regions(self, *rects):
-        dirty_region = QRegion()
+        first_rect = None
+        dirty_region = None
         for rect in rects:
             if isinstance(rect, QRect) and not rect.isNull():
-                dirty_region = dirty_region.united(QRegion(rect))
-        if not dirty_region.isEmpty():
+                if first_rect is None:
+                    first_rect = rect
+                elif dirty_region is None:
+                    dirty_region = QRegion(first_rect).united(QRegion(rect))
+                else:
+                    dirty_region = dirty_region.united(QRegion(rect))
+        if dirty_region is not None and not dirty_region.isEmpty():
             self.update(dirty_region)
+        elif first_rect is not None:
+            self.update(first_rect)
 
     def _update_regions_for_guides(self, guides):
         self._update_regions(*self._screen_rect_for_guides(guides))
