@@ -809,3 +809,22 @@ class TestWidgetOverlaySelection:
 
         assert overlay.selected_widgets() == [first]
         _dispose_widget(overlay)
+
+    def test_rubber_band_selects_widget_spanning_multiple_selection_buckets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(320, 320)
+        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
+        wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
+        root.add_child(wide)
+        overlay.set_widgets(root.get_all_widgets_flat())
+
+        overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(160, 60)))
+        overlay.mouseMoveEvent(_mouse_event(QEvent.MouseMove, QPoint(200, 120), button=Qt.NoButton, buttons=Qt.LeftButton))
+        overlay.mouseReleaseEvent(_mouse_event(QEvent.MouseButtonRelease, QPoint(200, 120), buttons=Qt.NoButton))
+        qapp.processEvents()
+
+        assert overlay.selected_widgets() == [wide]
+        _dispose_widget(overlay)

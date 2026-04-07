@@ -121,6 +121,7 @@ class WidgetOverlay(QWidget):
         self._interactive_widgets = []
         self._interactive_widgets_reversed = []
         self._hit_test_buckets = {}
+        self._selection_buckets = {}
         self._visible_non_root_widgets = False
         self._root_widget = None
         self._snap_target_edges = []
@@ -283,9 +284,37 @@ class WidgetOverlay(QWidget):
                 for by in range(top, bottom + 1):
                     self._hit_test_buckets.setdefault((bx, by), []).append(widget)
 
+    def _rebuild_selection_buckets(self):
+        self._selection_buckets = {}
+        for widget in self._visible_widgets:
+            left, right, top, bottom = self._bucket_range_for_widget(widget)
+            for bx in range(left, right + 1):
+                for by in range(top, bottom + 1):
+                    self._selection_buckets.setdefault((bx, by), []).append(widget)
+
     def _hit_test_candidates(self, pos):
         cell_size = HIT_TEST_BUCKET_SIZE
         return self._hit_test_buckets.get((int(pos.x() // cell_size), int(pos.y() // cell_size)), [])
+
+    def _selection_candidates_for_rect(self, rect):
+        if rect is None or rect.isNull():
+            return []
+        cell_size = HIT_TEST_BUCKET_SIZE
+        left = int(rect.left() // cell_size)
+        right = int(rect.right() // cell_size)
+        top = int(rect.top() // cell_size)
+        bottom = int(rect.bottom() // cell_size)
+        seen = set()
+        candidates = []
+        for bx in range(left, right + 1):
+            for by in range(top, bottom + 1):
+                for widget in self._selection_buckets.get((bx, by), ()):
+                    widget_id = id(widget)
+                    if widget_id in seen:
+                        continue
+                    seen.add(widget_id)
+                    candidates.append(widget)
+        return candidates
 
     @staticmethod
     def _point_hits_widget(pos, widget):
@@ -777,6 +806,7 @@ class WidgetOverlay(QWidget):
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
         self._interactive_widgets_reversed = list(reversed(self._interactive_widgets))
         self._rebuild_hit_test_buckets()
+        self._rebuild_selection_buckets()
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
         self._widget_label_text_by_id = {}
@@ -1480,9 +1510,7 @@ class WidgetOverlay(QWidget):
             self._rubber_band = False
             rect = self._rubber_rect
             matched = []
-            for w in self._widgets:
-                if self._is_hidden(w):
-                    continue
+            for w in self._selection_candidates_for_rect(rect):
                 if self._rect_intersects_widget(rect, w):
                     matched.append(w)
             widgets, primary = self._selection_after_rubber_band(matched)
