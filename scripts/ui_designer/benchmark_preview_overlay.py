@@ -1,7 +1,9 @@
 import argparse
+import cProfile
 import json
 import os
 from pathlib import Path
+import pstats
 import sys
 import time
 
@@ -35,6 +37,13 @@ def _parse_args():
     parser.add_argument("--drag-iterations", type=int, default=2000, help="Drag loop count.")
     parser.add_argument("--resize-iterations", type=int, default=2000, help="Resize loop count.")
     parser.add_argument("--with-background", action="store_true", help="Include a full-size background mockup pixmap.")
+    parser.add_argument(
+        "--profile",
+        choices=("none", "drag", "resize"),
+        default="none",
+        help="Emit cProfile top functions for the selected hot path.",
+    )
+    parser.add_argument("--profile-limit", type=int, default=12, help="Number of cProfile rows to print.")
     return parser.parse_args()
 
 
@@ -61,6 +70,29 @@ def _measure_ms(fn):
     result = fn()
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     return result, elapsed_ms
+
+
+def _profile_call(label, fn, limit):
+    profiler = cProfile.Profile()
+    profiler.enable()
+    fn()
+    profiler.disable()
+    stats = pstats.Stats(profiler)
+    stats.sort_stats("cumtime")
+    rows = []
+    for func, func_stats in stats.stats.items():
+        cc, nc, tt, ct, callers = func_stats
+        filename, lineno, func_name = func
+        rows.append(
+            {
+                "function": f"{Path(filename).name}:{lineno}({func_name})",
+                "calls": nc,
+                "cum_ms": round(ct * 1000.0, 3),
+                "self_ms": round(tt * 1000.0, 3),
+            }
+        )
+    rows.sort(key=lambda item: item["cum_ms"], reverse=True)
+    return {"label": label, "top_functions": rows[: max(1, int(limit))]}
 
 
 def main():
@@ -109,7 +141,8 @@ def main():
         for i in range(args.drag_iterations)
     ]
     overlay._drag_offset = QPoint()
-    _, drag_ms = _measure_ms(lambda: [overlay._do_free_drag(point) for point in drag_positions])
+    drag_call = lambda: [overlay._do_free_drag(point) for point in drag_positions]
+    _, drag_ms = _measure_ms(drag_call)
 
     overlay._dragging = False
     overlay._resizing = True
@@ -117,7 +150,8 @@ def main():
     overlay._resize_start_rect = QRect(widgets[0].display_x, widgets[0].display_y, widgets[0].width, widgets[0].height)
     overlay._resize_start_pos = QPoint()
     resize_positions = [QPoint((i * 7) % 200, 0) for i in range(args.resize_iterations)]
-    _, resize_ms = _measure_ms(lambda: [overlay._do_resize(point) for point in resize_positions])
+    resize_call = lambda: [overlay._do_resize(point) for point in resize_positions]
+    _, resize_ms = _measure_ms(resize_call)
 
     result = {
         "widget_count": len(root.get_all_widgets_flat()),
@@ -136,6 +170,10 @@ def main():
         "resize_total_ms": round(resize_ms, 2),
         "with_background": bool(args.with_background),
     }
+    if args.profile == "drag":
+        result["profile"] = _profile_call("drag", drag_call, args.profile_limit)
+    elif args.profile == "resize":
+        result["profile"] = _profile_call("resize", resize_call, args.profile_limit)
     print(json.dumps(result, indent=2))
 
     scroll.close()

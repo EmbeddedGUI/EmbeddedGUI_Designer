@@ -452,6 +452,14 @@ class WidgetOverlay(QWidget):
     def _update_regions_for_guide_rects(self, rects):
         self._update_regions(*(rects or ()))
 
+    def _update_regions_for_geometry_and_guides(self, geometry_rects, old_guide_rects=None, new_guide_rects=None):
+        rects = list(geometry_rects or ())
+        if old_guide_rects:
+            rects.extend(old_guide_rects)
+        if new_guide_rects:
+            rects.extend(new_guide_rects)
+        self._update_regions(*rects)
+
     def _invalidate_passive_bounds_cache(self):
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
@@ -1515,17 +1523,18 @@ class WidgetOverlay(QWidget):
             self._selected.display_x = new_display_x
             self._selected.display_y = new_display_y
             self.widget_moved.emit(self._selected, new_x, new_y)
-            self._update_regions(
+            geometry_rects = [
                 self._screen_rect_for_logical_bounds(
                     old_display_x, old_display_y, self._selected.width, self._selected.height
                 ),
                 self._screen_rect_for_logical_bounds(
                     new_display_x, new_display_y, self._selected.width, self._selected.height
                 ),
-            )
+            ]
             if new_guides != old_guides:
-                self._update_regions_for_guide_rects(old_guide_rects)
-                self._update_regions_for_guide_rects(new_guide_rects)
+                self._update_regions_for_geometry_and_guides(geometry_rects, old_guide_rects, new_guide_rects)
+            else:
+                self._update_regions(*geometry_rects)
         elif new_guides != old_guides:
             self._update_regions_for_guide_rects(old_guide_rects)
             self._update_regions_for_guide_rects(new_guide_rects)
@@ -1616,13 +1625,14 @@ class WidgetOverlay(QWidget):
         if changed:
             self.widget_moved.emit(self._selected, new_x, new_y)
             self.widget_resized.emit(self._selected, new_w, new_h)
-            self._update_regions(
+            geometry_rects = [
                 self._screen_rect_for_logical_bounds(r.x(), r.y(), r.width(), r.height()),
                 self._screen_rect_for_logical_bounds(new_display_x, new_display_y, new_w, new_h),
-            )
+            ]
             if new_guides != old_guides:
-                self._update_regions_for_guide_rects(old_guide_rects)
-                self._update_regions_for_guide_rects(new_guide_rects)
+                self._update_regions_for_geometry_and_guides(geometry_rects, old_guide_rects, new_guide_rects)
+            else:
+                self._update_regions(*geometry_rects)
         elif new_guides != old_guides:
             self._update_regions_for_guide_rects(old_guide_rects)
             self._update_regions_for_guide_rects(new_guide_rects)
