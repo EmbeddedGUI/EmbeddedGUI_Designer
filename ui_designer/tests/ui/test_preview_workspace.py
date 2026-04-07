@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, Qt
     from PyQt5.QtGui import QContextMenuEvent, QMouseEvent
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QScrollArea
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -465,6 +465,37 @@ class TestWidgetOverlaySelection:
             assert overlay._passive_bounds_cache is None
         finally:
             _dispose_widget(overlay)
+
+    def test_overlay_passive_cache_uses_visible_scroll_viewport(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        scroll = QScrollArea()
+        scroll.resize(320, 240)
+        overlay = WidgetOverlay()
+        overlay.set_base_size(1200, 1200)
+        overlay.set_solid_background(True)
+        scroll.setWidget(overlay)
+        scroll.show()
+
+        root = WidgetModel("group", name="root", x=0, y=0, width=1200, height=1200)
+        moving = WidgetModel("label", name="moving", x=10, y=10, width=80, height=24)
+        other = WidgetModel("button", name="other", x=300, y=300, width=90, height=28)
+        root.add_child(moving)
+        root.add_child(other)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            qapp.processEvents()
+
+            overlay._ensure_passive_bounds_cache()
+
+            assert overlay._passive_bounds_cache_rect.width() < overlay.width()
+            assert overlay._passive_bounds_cache_rect.height() < overlay.height()
+        finally:
+            _dispose_widget(scroll)
 
     def test_overlay_batches_dirty_rect_updates_into_single_update_call(self, qapp, monkeypatch):
         from PyQt5.QtCore import QRect

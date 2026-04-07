@@ -140,6 +140,7 @@ class WidgetOverlay(QWidget):
         self._passive_cache_widget_list = []
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
+        self._passive_bounds_cache_rect = QRect()
         self._label_font_cache = None
         self._label_font_cache_pt = None
         self._coord_font_cache = None
@@ -413,9 +414,19 @@ class WidgetOverlay(QWidget):
     def _invalidate_passive_bounds_cache(self):
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
+        self._passive_bounds_cache_rect = QRect()
+
+    def _visible_screen_rect_for_cache(self):
+        visible_region = self.visibleRegion()
+        if visible_region.isEmpty():
+            return self.rect()
+        rect = visible_region.boundingRect().intersected(self.rect())
+        if rect.isNull():
+            return self.rect()
+        return rect
 
     def _passive_bounds_cache_state_key(self):
-        size = self.size()
+        cache_rect = self._visible_screen_rect_for_cache()
         bg_cache_key = 0
         if self._bg_image is not None:
             cache_key_getter = getattr(self._bg_image, "cacheKey", None)
@@ -424,8 +435,10 @@ class WidgetOverlay(QWidget):
             else:
                 bg_cache_key = id(self._bg_image)
         return (
-            size.width(),
-            size.height(),
+            cache_rect.x(),
+            cache_rect.y(),
+            cache_rect.width(),
+            cache_rect.height(),
             round(float(self._zoom), 4),
             bool(self._solid_background),
             bool(self._show_grid),
@@ -537,38 +550,41 @@ class WidgetOverlay(QWidget):
     def _ensure_passive_bounds_cache(self):
         if not self._should_use_passive_bounds_cache():
             return None
-        size = self.size()
-        if size.width() <= 0 or size.height() <= 0:
+        cache_rect = self._visible_screen_rect_for_cache()
+        if cache_rect.width() <= 0 or cache_rect.height() <= 0:
             return None
         cache_key = self._passive_bounds_cache_state_key()
         if self._passive_bounds_cache is not None and self._passive_bounds_cache_key == cache_key:
             return self._passive_bounds_cache
 
-        pixmap = QPixmap(size)
+        pixmap = QPixmap(cache_rect.size())
         pixmap.fill(Qt.transparent)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing, False)
         painter.scale(self._zoom, self._zoom)
+        painter.translate(-(cache_rect.x() / self._zoom), -(cache_rect.y() / self._zoom))
         self._draw_background_and_grid(painter, self._zoom, self._base_width, self._base_height)
         self._draw_widget_bounds(
             painter,
             self._passive_cache_widgets(),
             self._zoom,
-            visible_logical_rect=QRectF(0, 0, self._base_width, self._base_height),
+            visible_logical_rect=self._logical_visible_rect(cache_rect, self._zoom),
             passive_only=True,
         )
         painter.resetTransform()
+        painter.translate(-cache_rect.x(), -cache_rect.y())
         self._draw_widget_labels(
             painter,
             self._passive_cache_widgets(),
             self._zoom,
-            event_rect=pixmap.rect(),
-            visible_logical_rect=QRectF(0, 0, self._base_width, self._base_height),
+            event_rect=cache_rect,
+            visible_logical_rect=self._logical_visible_rect(cache_rect, self._zoom),
             show_full_labels=True,
         )
         painter.end()
         self._passive_bounds_cache = pixmap
         self._passive_bounds_cache_key = cache_key
+        self._passive_bounds_cache_rect = cache_rect
         return self._passive_bounds_cache
 
     def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
@@ -1108,9 +1124,11 @@ class WidgetOverlay(QWidget):
             painter.resetTransform()
             passive_cache = self._ensure_passive_bounds_cache()
             if passive_cache is not None:
-                source_rect = event.rect().intersected(passive_cache.rect())
-                if not source_rect.isNull():
-                    painter.drawPixmap(source_rect, passive_cache, source_rect)
+                cache_rect = self._passive_bounds_cache_rect
+                target_rect = event.rect().intersected(cache_rect)
+                if not target_rect.isNull():
+                    source_rect = target_rect.translated(-cache_rect.x(), -cache_rect.y())
+                    painter.drawPixmap(target_rect, passive_cache, source_rect)
             painter.scale(z, z)
         else:
             self._draw_background_and_grid(painter, z, bw, bh)
