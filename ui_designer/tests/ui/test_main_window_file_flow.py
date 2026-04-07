@@ -5996,6 +5996,74 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_generate_charset_from_resource_panel_binds_text_file_to_selected_widget(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "GenerateCharsetDemo"
+        project = _create_project(project_dir, "GenerateCharsetDemo", sdk_root)
+        label = WidgetModel("label", name="title")
+        label.properties["font_file"] = "demo.ttf"
+        project.get_page_by_name("main_page").root_widget.add_child(label)
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._selected_widget = label
+        window.property_panel.set_widget(label)
+
+        expected_resource_dir = os.path.join(str(project_dir), ".eguiproject", "resources")
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, parent=None):
+                assert os.path.normpath(resource_dir_arg) == os.path.normpath(expected_resource_dir)
+
+            def exec_(self):
+                return 1
+
+            def filename(self):
+                return "charset_combo.txt"
+
+            def generated_chars(self):
+                return tuple("AB中")
+
+            def generated_text(self):
+                return "A\nB\n&#x4E2D;\n"
+
+            def overwrite_diff(self):
+                return type(
+                    "_Diff",
+                    (),
+                    {
+                        "existing_count": 0,
+                        "new_count": 3,
+                        "added_count": 3,
+                        "removed_count": 0,
+                    },
+                )()
+
+            def save_and_assign(self):
+                return True
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        window.res_panel._on_generate_charset()
+
+        generated_path = project_dir / ".eguiproject" / "resources" / "charset_combo.txt"
+        assert generated_path.read_text(encoding="utf-8") == "A\nB\n&#x4E2D;\n"
+        assert label.properties["font_text_file"] == "charset_combo.txt"
+        assert window.project.resource_catalog.has_text_file("charset_combo.txt")
+        assert window.res_panel._tabs.currentIndex() == 2
+        assert window.res_panel._text_list.currentItem().data(Qt.UserRole + 1) == "charset_combo.txt"
+        assert window._undo_manager.get_stack("main_page").is_dirty() is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_resource_rename_updates_text_references_across_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
