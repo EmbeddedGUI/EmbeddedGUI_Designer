@@ -730,6 +730,7 @@ class PropertyPanel(QWidget):
         section = self._property_sections.get(title)
         if section is None:
             return
+        stripe = "odd" if len(section["rows"]) % 2 else "even"
 
         row_item = QTreeWidgetItem(section["item"], [str(label_text or ""), ""])
         row_item.setFlags(Qt.ItemIsEnabled)
@@ -737,16 +738,19 @@ class PropertyPanel(QWidget):
 
         label_frame = QFrame()
         label_frame.setObjectName("property_grid_label_cell")
+        label_frame.setProperty("rowStripe", stripe)
         label_layout = QHBoxLayout(label_frame)
         label_layout.setContentsMargins(6, 1, 6, 1)
         label_layout.setSpacing(0)
         label_widget = QLabel(str(label_text or ""))
         label_widget.setObjectName("property_grid_label_text")
+        label_widget.setProperty("rowStripe", stripe)
         label_layout.addWidget(label_widget)
         self._property_tree.setItemWidget(row_item, 0, label_frame)
 
         editor_host = QFrame()
         editor_host.setObjectName("property_grid_editor_cell")
+        editor_host.setProperty("rowStripe", stripe)
         editor_layout = QHBoxLayout(editor_host)
         editor_layout.setContentsMargins(4, 1, 4, 1)
         editor_layout.setSpacing(0)

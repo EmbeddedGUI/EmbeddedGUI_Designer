@@ -967,6 +967,11 @@ QFrame#property_grid_label_cell {{
     border-bottom: 1px solid {t['border']};
 }}
 
+QFrame#property_grid_label_cell[rowStripe="odd"],
+QFrame#property_grid_editor_cell[rowStripe="odd"] {{
+    background-color: {t['panel_alt']};
+}}
+
 #property_grid_label_text {{
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;

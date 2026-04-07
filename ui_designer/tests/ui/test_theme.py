@@ -560,6 +560,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         property_grid_section = css.split("QFrame#property_grid_section_cell {", 1)[1].split("}", 1)[0]
         property_grid_section_text = css.split("#property_grid_section_text {", 1)[1].split("}", 1)[0]
         property_grid_label = css.split("QFrame#property_grid_label_cell {", 1)[1].split("}", 1)[0]
+        property_grid_odd = css.split('QFrame#property_grid_label_cell[rowStripe="odd"],', 1)[1].split("}", 1)[0]
         property_grid_label_text = css.split("#property_grid_label_text {", 1)[1].split("}", 1)[0]
         property_grid_accent = css.split('QFrame#property_grid_label_cell[rowTone="accent"],', 1)[1].split("}", 1)[0]
         property_grid_warning = css.split('QFrame#property_grid_label_cell[rowTone="warning"],', 1)[1].split("}", 1)[0]
@@ -587,6 +588,7 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"color: {t['text']};" in property_grid_section_text
         assert f"border-right: 1px solid {t['border']};" in property_grid_label
         assert f"border-bottom: 1px solid {t['border']};" in property_grid_label
+        assert f"background-color: {t['panel_alt']};" in property_grid_odd
         assert f"color: {t['text_muted']};" in property_grid_label_text
         assert f"background-color: {t['accent_soft']};" in property_grid_accent
         assert f"background-color: {t['panel_soft']};" in property_grid_warning
