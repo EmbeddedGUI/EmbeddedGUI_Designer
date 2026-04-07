@@ -263,6 +263,18 @@ def _compact_resource_title(title):
     return compact_map.get(text, text)
 
 
+def _suggest_charset_filename_for_resource(resource_type, filename):
+    name = str(filename or "").strip()
+    if resource_type == "text" and name.lower().endswith(".txt"):
+        return name
+    if resource_type == "font":
+        stem = os.path.splitext(os.path.basename(name))[0]
+        safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "_", stem).strip("_")
+        if safe_stem:
+            return f"{safe_stem}_charset.txt"
+    return ""
+
+
 # -- Lazy-loading image list --------------------------------------------
 
 class _LazyImageList(QListWidget):
@@ -3356,7 +3368,7 @@ class ResourcePanel(QWidget):
             return
 
         active_type, active_name = self._selected_resource_for_active_tab()
-        initial_filename = active_name if active_type == "text" else ""
+        initial_filename = _suggest_charset_filename_for_resource(active_type, active_name)
         self._open_generate_charset_dialog(initial_filename=initial_filename)
 
     def _open_generate_charset_dialog(self, initial_filename=""):
@@ -3708,11 +3720,13 @@ class ResourcePanel(QWidget):
         copy_act = menu.addAction("Copy Name")
         copy_act.triggered.connect(lambda: QApplication.clipboard().setText(filename))
 
-        if resource_type == "text":
+        if resource_type in {"font", "text"}:
             menu.addSeparator()
             generate_charset_act = menu.addAction("Generate Charset...")
             generate_charset_act.triggered.connect(
-                lambda: self._open_generate_charset_dialog(initial_filename=filename)
+                lambda: self._open_generate_charset_dialog(
+                    initial_filename=_suggest_charset_filename_for_resource(resource_type, filename)
+                )
             )
 
         menu.addSeparator()

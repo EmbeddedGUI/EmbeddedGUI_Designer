@@ -430,6 +430,48 @@ class TestResourcePanelFileFlow:
         assert captured["filename"] == "charset_existing.txt"
         panel.deleteLater()
 
+    def test_font_resource_context_menu_can_open_generate_charset_with_suggested_filename(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        font_path = resource_dir / "demo_font.ttf"
+        font_path.write_bytes(b"FONT")
+
+        catalog = ResourceCatalog()
+        catalog.add_font("demo_font.ttf")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel.resize(480, 320)
+        panel.show()
+        qapp.processEvents()
+
+        item = panel._font_list.item(0)
+        pos = panel._font_list.visualItemRect(item).center()
+        captured = {}
+
+        monkeypatch.setattr(panel, "_open_generate_charset_dialog", lambda initial_filename="": captured.setdefault("filename", initial_filename))
+
+        def fake_exec(menu, *args, **kwargs):
+            actions = [action.text() for action in menu.actions() if not action.isSeparator()]
+            captured["actions"] = actions
+            for action in menu.actions():
+                if action.text() == "Generate Charset...":
+                    action.trigger()
+                    break
+            return None
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel.QMenu.exec_", fake_exec)
+
+        panel._show_context_menu(pos, "font")
+
+        assert "Generate Charset..." in captured["actions"]
+        assert captured["filename"] == "demo_font_charset.txt"
+        panel.deleteLater()
+
     def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
@@ -2272,5 +2314,42 @@ class TestResourcePanelFileFlow:
         assert captured == {
             "resource_dir": str(resource_dir),
             "initial_filename": "charset_existing.txt",
+        }
+        panel.deleteLater()
+
+    def test_generate_charset_prefills_suggested_filename_from_selected_font_tab(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        font_path = resource_dir / "demo_font.ttf"
+        font_path.write_bytes(b"FONT")
+
+        catalog = ResourceCatalog()
+        catalog.add_font("demo_font.ttf")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("font", "demo_font.ttf")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "demo_font_charset.txt",
         }
         panel.deleteLater()
