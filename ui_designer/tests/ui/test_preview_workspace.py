@@ -466,6 +466,21 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_overlay_batches_dirty_rect_updates_into_single_update_call(self, qapp, monkeypatch):
+        from PyQt5.QtCore import QRect
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        calls = []
+
+        monkeypatch.setattr(overlay, "update", lambda *args: calls.append(args))
+
+        try:
+            overlay._update_regions(QRect(0, 0, 10, 10), QRect(20, 20, 10, 10))
+            assert len(calls) == 1
+        finally:
+            _dispose_widget(overlay)
+
     def test_overlay_keeps_snap_guides_visible_during_drag_and_resize(self, qapp):
         from ui_designer.ui.preview_panel import WidgetOverlay
 

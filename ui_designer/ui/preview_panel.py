@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QScrollArea, QSizePolicy, QPushButton, QSplitter,
 )
 from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF, QEvent
-from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage
+from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
 
 
 from .theme import designer_font_scale, scaled_point_size, theme_tokens
@@ -305,13 +305,15 @@ class WidgetOverlay(QWidget):
         return rects
 
     def _update_regions(self, *rects):
+        dirty_region = QRegion()
         for rect in rects:
             if isinstance(rect, QRect) and not rect.isNull():
-                self.update(rect)
+                dirty_region = dirty_region.united(QRegion(rect))
+        if not dirty_region.isEmpty():
+            self.update(dirty_region)
 
     def _update_regions_for_guides(self, guides):
-        for rect in self._screen_rect_for_guides(guides):
-            self.update(rect)
+        self._update_regions(*self._screen_rect_for_guides(guides))
 
     def _invalidate_passive_bounds_cache(self):
         self._passive_bounds_cache = None
