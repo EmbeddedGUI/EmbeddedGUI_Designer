@@ -2214,6 +2214,9 @@ class TestResourcePanelFileFlow:
                 "Font charset generator title: Generate Charset for demo_font.ttf."
             )
             assert "Source: demo_font.ttf." in dialog.accessibleName()
+            assert dialog._recommendation_label.text() == (
+                "No default preset selected for demo_font.ttf. Choose a preset or enter custom characters."
+            )
         finally:
             dialog.deleteLater()
 
@@ -2232,6 +2235,27 @@ class TestResourcePanelFileFlow:
         try:
             assert dialog._preset_checks["gb2312_all"].isChecked() is True
             assert dialog._char_metric.text() == "7540 chars"
+            assert dialog._recommendation_label.text() == "Suggested for simhei.ttf: GB2312 全部字符."
+        finally:
+            dialog.deleteLater()
+
+    def test_generate_charset_dialog_shows_no_default_recommendation_for_icon_font(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        dialog = _GenerateCharsetDialog(
+            str(resource_dir),
+            initial_filename="MaterialSymbolsOutlined-Regular_charset.txt",
+            source_label="MaterialSymbolsOutlined-Regular.ttf",
+            initial_preset_ids=(),
+        )
+        try:
+            assert dialog._recommendation_label.text() == (
+                "No default preset selected for MaterialSymbolsOutlined-Regular.ttf. "
+                "Choose a preset or enter custom characters."
+            )
         finally:
             dialog.deleteLater()
 
@@ -2371,10 +2395,11 @@ class TestResourcePanelFileFlow:
         class FakeDialog:
             _source_label = "charset_existing.txt"
 
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == "charset_existing.txt"
                 assert source_label == "charset_existing.txt"
+                assert initial_preset_ids == ()
 
             def exec_(self):
                 return 1
@@ -2525,5 +2550,46 @@ class TestResourcePanelFileFlow:
             "initial_filename": "simhei_charset.txt",
             "source_label": "simhei.ttf",
             "initial_preset_ids": ("gb2312_all",),
+        }
+        panel.deleteLater()
+
+    def test_generate_charset_does_not_prefill_preset_for_icon_font(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        font_path = resource_dir / "MaterialSymbolsOutlined-Regular.ttf"
+        font_path.write_bytes(b"FONT")
+
+        catalog = ResourceCatalog()
+        catalog.add_font("MaterialSymbolsOutlined-Regular.ttf")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("font", "MaterialSymbolsOutlined-Regular.ttf")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "MaterialSymbolsOutlined-Regular_charset.txt",
+            "source_label": "MaterialSymbolsOutlined-Regular.ttf",
+            "initial_preset_ids": (),
         }
         panel.deleteLater()

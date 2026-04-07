@@ -656,6 +656,17 @@ class _GenerateCharsetDialog(QDialog):
             accessible_name=self._subtitle_label.text(),
         )
         hero_copy.addWidget(self._subtitle_label)
+
+        self._recommendation_label = QLabel(self._initial_recommendation_text())
+        self._recommendation_label.setObjectName("resource_dialog_summary")
+        self._recommendation_label.setWordWrap(True)
+        _set_widget_metadata(
+            self._recommendation_label,
+            tooltip=self._recommendation_label.text(),
+            accessible_name=self._recommendation_label.text(),
+        )
+        self._recommendation_label.setVisible(bool(self._recommendation_label.text().strip()))
+        hero_copy.addWidget(self._recommendation_label)
         header_layout.addLayout(hero_copy, 3)
 
         metrics_layout = QVBoxLayout()
@@ -866,6 +877,15 @@ class _GenerateCharsetDialog(QDialog):
         if name and "." not in name:
             name += ".txt"
         return name
+
+    def _initial_recommendation_text(self):
+        if not self._source_label:
+            return ""
+        if self._initial_preset_ids:
+            label_map = {preset.preset_id: preset.label for preset in self._presets}
+            labels = [label_map.get(preset_id, preset_id) for preset_id in self._initial_preset_ids]
+            return f"Suggested for {self._source_label}: {', '.join(labels)}."
+        return f"No default preset selected for {self._source_label}. Choose a preset or enter custom characters."
 
     def _filename_error(self):
         filename = self._normalized_filename()
