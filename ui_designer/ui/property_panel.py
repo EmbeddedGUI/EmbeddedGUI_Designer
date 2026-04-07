@@ -812,6 +812,21 @@ class PropertyPanel(QWidget):
         row_data["focusActive"] = bool(active)
         self._refresh_property_grid_row_style(row_data)
 
+    def _set_property_grid_row_hover(self, widget, active):
+        row_data = self._property_grid_row_data(widget)
+        if row_data is None:
+            return
+        row_data["hoverActive"] = bool(active)
+        self._refresh_property_grid_row_style(row_data)
+
+    def _refresh_property_grid_row_hover_from_app(self, row_data):
+        hovered = any(
+            isinstance(row_data.get(key), QWidget) and row_data[key].underMouse()
+            for key in ("label_frame", "editor_host", "editor")
+        )
+        row_data["hoverActive"] = hovered
+        self._refresh_property_grid_row_style(row_data)
+
     def _refresh_property_grid_row_focus_from_app(self, row_data):
         focus_widget = QApplication.focusWidget()
         active_row = self._property_grid_row_data(focus_widget)
@@ -821,12 +836,14 @@ class PropertyPanel(QWidget):
     def _refresh_property_grid_row_style(self, row_data):
         tone_value = str(row_data.get("rowTone", "") or "")
         focus_active = bool(row_data.get("focusActive"))
+        hover_active = bool(row_data.get("hoverActive"))
         for key in ("label_frame", "editor_host", "label_widget"):
             target = row_data.get(key)
             if not isinstance(target, QWidget):
                 continue
             target.setProperty("rowTone", tone_value)
             target.setProperty("focusActive", focus_active)
+            target.setProperty("hoverActive", hover_active)
             style = target.style()
             style.unpolish(target)
             style.polish(target)
@@ -924,6 +941,12 @@ class PropertyPanel(QWidget):
                 row_data = self._property_grid_row_data(watched)
                 if row_data is not None:
                     QTimer.singleShot(0, lambda row_data=row_data: self._refresh_property_grid_row_focus_from_app(row_data))
+            elif event.type() == QEvent.Enter:
+                self._set_property_grid_row_hover(watched, True)
+            elif event.type() == QEvent.Leave:
+                row_data = self._property_grid_row_data(watched)
+                if row_data is not None:
+                    QTimer.singleShot(0, lambda row_data=row_data: self._refresh_property_grid_row_hover_from_app(row_data))
         return super().eventFilter(watched, event)
 
     def _make_status_chip(self, text, tone=None):

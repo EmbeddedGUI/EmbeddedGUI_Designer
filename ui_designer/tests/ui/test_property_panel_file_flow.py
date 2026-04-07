@@ -354,6 +354,21 @@ class TestPropertyPanelFileFlow:
         assert x_row["label_frame"].property("focusActive") is False
         panel.deleteLater()
 
+    def test_property_grid_hover_highlights_row(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+        panel = PropertyPanel()
+        panel.set_widget(widget)
+
+        x_row = panel._property_grid_row_data(panel._editors["x"])
+        panel._set_property_grid_row_hover(panel._editors["x"], True)
+        assert x_row["label_frame"].property("hoverActive") is True
+        panel._set_property_grid_row_hover(panel._editors["x"], False)
+        assert x_row["label_frame"].property("hoverActive") is False
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

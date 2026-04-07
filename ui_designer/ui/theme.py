@@ -998,6 +998,11 @@ QFrame#property_grid_editor_cell[rowTone="danger"] {{
     background-color: {t['selection_soft']};
 }}
 
+QFrame#property_grid_label_cell[hoverActive="true"],
+QFrame#property_grid_editor_cell[hoverActive="true"] {{
+    background-color: {t['surface_hover']};
+}}
+
 QFrame#property_grid_label_cell[focusActive="true"] {{
     background-color: {t['panel_soft']};
     border-left: 2px solid {t['focus_ring']};
