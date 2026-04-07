@@ -132,8 +132,14 @@ class WidgetOverlay(QWidget):
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
+        self._active_paint_widgets = []
+        self._passive_cache_widget_list = []
         self._passive_bounds_cache = None
         self._passive_bounds_cache_key = None
+        self._label_font_cache = None
+        self._label_font_cache_pt = None
+        self._coord_font_cache = None
+        self._coord_font_cache_pt = None
 
         # Zoom state
         self._zoom = 1.0
@@ -204,15 +210,7 @@ class WidgetOverlay(QWidget):
         return True
 
     def _dynamic_paint_widgets(self):
-        if self._selected is None and self._hovered is None and not self._multi_selected:
-            return []
-        active_ids = set()
-        if self._selected is not None:
-            active_ids.add(id(self._selected))
-        if self._hovered is not None:
-            active_ids.add(id(self._hovered))
-        active_ids.update(id(widget) for widget in self._multi_selected)
-        return [widget for widget in self._visible_widgets if id(widget) in active_ids]
+        return self._active_paint_widgets
 
     def _should_use_passive_bounds_cache(self):
         return self._is_lightweight_interaction_active() and bool(self._visible_widgets)
@@ -220,13 +218,47 @@ class WidgetOverlay(QWidget):
     def _passive_cache_widgets(self):
         if not self._should_use_passive_bounds_cache():
             return []
-        dynamic_ids = {id(widget) for widget in self._dynamic_paint_widgets()}
-        return [widget for widget in self._visible_widgets if id(widget) not in dynamic_ids]
+        return self._passive_cache_widget_list
 
     def _paint_candidate_widgets(self):
         if self._should_use_passive_bounds_cache():
-            return self._dynamic_paint_widgets()
+            return self._active_paint_widgets
         return self._visible_widgets
+
+    def _refresh_paint_widget_cache(self):
+        active_ids = set()
+        if self._selected is not None:
+            active_ids.add(id(self._selected))
+        if self._hovered is not None:
+            active_ids.add(id(self._hovered))
+        active_ids.update(id(widget) for widget in self._multi_selected)
+        if not active_ids:
+            self._active_paint_widgets = []
+            self._passive_cache_widget_list = list(self._visible_widgets)
+            return
+        self._active_paint_widgets = [widget for widget in self._visible_widgets if id(widget) in active_ids]
+        self._passive_cache_widget_list = [widget for widget in self._visible_widgets if id(widget) not in active_ids]
+
+    def _set_hovered_widget(self, widget):
+        if widget is self._hovered:
+            return False
+        self._hovered = widget
+        self._refresh_paint_widget_cache()
+        return True
+
+    def _widget_label_font(self):
+        point_size = self._widget_label_font_point_size()
+        if self._label_font_cache is None or self._label_font_cache_pt != point_size:
+            self._label_font_cache = QFont("Segoe UI", point_size)
+            self._label_font_cache_pt = point_size
+        return self._label_font_cache
+
+    def _coord_tooltip_font(self):
+        point_size = self._coord_tooltip_font_point_size()
+        if self._coord_font_cache is None or self._coord_font_cache_pt != point_size:
+            self._coord_font_cache = QFont("Consolas", point_size)
+            self._coord_font_cache_pt = point_size
+        return self._coord_font_cache
 
     def _widget_edge_triplets(self, widget, *, axis="x"):
         if axis == "y":
@@ -370,8 +402,7 @@ class WidgetOverlay(QWidget):
         visible_logical_rect=None,
         show_full_labels=None,
     ):
-        label_font = QFont("Segoe UI", self._widget_label_font_point_size())
-        painter.setFont(label_font)
+        painter.setFont(self._widget_label_font())
         fm = painter.fontMetrics()
         lh = fm.height() + 2
         show_full = self._show_full_label_overlay() if show_full_labels is None else bool(show_full_labels)
@@ -731,6 +762,9 @@ class WidgetOverlay(QWidget):
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
             self._selected = None
+        if self._hovered is not None and id(self._hovered) not in valid_ids:
+            self._hovered = None
+        self._refresh_paint_widget_cache()
         self._invalidate_passive_bounds_cache()
         self.update()
 
@@ -743,6 +777,7 @@ class WidgetOverlay(QWidget):
         if not widgets:
             self._selected = None
             self._multi_selected.clear()
+            self._refresh_paint_widget_cache()
             self._invalidate_passive_bounds_cache()
             self.update()
             return
@@ -750,6 +785,7 @@ class WidgetOverlay(QWidget):
             primary = widgets[-1]
         self._selected = primary
         self._multi_selected = {widget for widget in widgets if widget is not primary}
+        self._refresh_paint_widget_cache()
         self._invalidate_passive_bounds_cache()
         self.update()
 
@@ -1111,6 +1147,7 @@ class WidgetOverlay(QWidget):
                     if self._selected is not None:
                         self._multi_selected.add(self._selected)
                     self._selected = w
+                self._refresh_paint_widget_cache()
                 self._invalidate_passive_bounds_cache()
                 self._emit_selection_changed()
                 self.update()
@@ -1119,6 +1156,7 @@ class WidgetOverlay(QWidget):
             # Normal click: single select + start drag
             self._selected = w
             self._multi_selected.clear()
+            self._refresh_paint_widget_cache()
             self._invalidate_passive_bounds_cache()
             self._dragging = True
             self._drag_offset = pos - QPoint(w.display_x, w.display_y)
@@ -1145,6 +1183,7 @@ class WidgetOverlay(QWidget):
         if self._rubber_mode == "replace":
             self._selected = None
             self._multi_selected.clear()
+            self._refresh_paint_widget_cache()
             self._invalidate_passive_bounds_cache()
             self._emit_selection_changed()
         self.update()
@@ -1207,7 +1246,7 @@ class WidgetOverlay(QWidget):
                 self.setCursor(Qt.ArrowCursor)
             if w != self._hovered:
                 old_hover = self._hovered
-                self._hovered = w
+                self._set_hovered_widget(w)
                 self._update_regions(
                     self._screen_rect_for_logical_bounds(
                         old_hover.display_x, old_hover.display_y, old_hover.width, old_hover.height
@@ -1447,7 +1486,7 @@ class WidgetOverlay(QWidget):
 
     def leaveEvent(self, event):
         old_hover = self._hovered
-        self._hovered = None
+        self._set_hovered_widget(None)
         self.setCursor(Qt.ArrowCursor)
         self.mouse_position_changed.emit(-1, -1, None)  # Clear position display
         if old_hover is not None:
@@ -1529,8 +1568,7 @@ class WidgetOverlay(QWidget):
             # Highlight widget under cursor
             pos = self._to_logical(event.pos())
             w = self._widget_at(pos, allow_root=False)
-            if w != self._hovered:
-                self._hovered = w
+            if self._set_hovered_widget(w):
                 self.update()
             event.acceptProposedAction()
         else:
@@ -1551,7 +1589,7 @@ class WidgetOverlay(QWidget):
             pos = self._to_logical(event.pos())
             target = self._widget_at(pos, allow_root=False)
             self.widget_type_dropped.emit(widget_type, pos.x(), pos.y(), target)
-            self._hovered = None
+            self._set_hovered_widget(None)
             self.update()
             event.acceptProposedAction()
             return
@@ -1582,13 +1620,15 @@ class WidgetOverlay(QWidget):
         if assigned:
             self._selected = target
             self._multi_selected.clear()
+            self._refresh_paint_widget_cache()
             self._emit_selection_changed()
-            self.resource_dropped.emit(target, res_type, filename)
-            self._hovered = None
-            self.update()
-            event.acceptProposedAction()
         else:
             event.ignore()
+            return
+        self.resource_dropped.emit(target, res_type, filename)
+        self._set_hovered_widget(None)
+        self.update()
+        event.acceptProposedAction()
 
 
 class PreviewPanel(QWidget):
