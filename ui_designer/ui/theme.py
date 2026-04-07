@@ -947,6 +947,19 @@ QTreeWidget#property_panel_tree QHeaderView::section {{
     font-weight: {t['fw_medium']};
 }}
 
+QFrame#property_grid_section_cell {{
+    background-color: {t['panel_alt']};
+    border: none;
+    border-top: 1px solid {t['border']};
+    border-bottom: 1px solid {t['border_strong']};
+}}
+
+#property_grid_section_text {{
+    color: {t['text']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_semibold']};
+}}
+
 QFrame#property_grid_label_cell {{
     background-color: transparent;
     border: none;

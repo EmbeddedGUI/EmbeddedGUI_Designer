@@ -557,6 +557,8 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         property_tree = css.split("QTreeWidget#property_panel_tree {", 1)[1].split("}", 1)[0]
         property_tree_item = css.split("QTreeWidget#property_panel_tree::item {", 1)[1].split("}", 1)[0]
         property_tree_header = css.split("QTreeWidget#property_panel_tree QHeaderView::section {", 1)[1].split("}", 1)[0]
+        property_grid_section = css.split("QFrame#property_grid_section_cell {", 1)[1].split("}", 1)[0]
+        property_grid_section_text = css.split("#property_grid_section_text {", 1)[1].split("}", 1)[0]
         property_grid_label = css.split("QFrame#property_grid_label_cell {", 1)[1].split("}", 1)[0]
         property_grid_label_text = css.split("#property_grid_label_text {", 1)[1].split("}", 1)[0]
         property_grid_accent = css.split('QFrame#property_grid_label_cell[rowTone="accent"],', 1)[1].split("}", 1)[0]
@@ -580,6 +582,9 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert "min-height: 24px;" in property_tree_item
         assert f"background-color: {t['panel_alt']};" in property_tree_header
         assert f"color: {t['text_muted']};" in property_tree_header
+        assert f"background-color: {t['panel_alt']};" in property_grid_section
+        assert f"border-bottom: 1px solid {t['border_strong']};" in property_grid_section
+        assert f"color: {t['text']};" in property_grid_section_text
         assert f"border-right: 1px solid {t['border']};" in property_grid_label
         assert f"border-bottom: 1px solid {t['border']};" in property_grid_label
         assert f"color: {t['text_muted']};" in property_grid_label_text

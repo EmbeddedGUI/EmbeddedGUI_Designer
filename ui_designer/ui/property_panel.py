@@ -693,8 +693,20 @@ class PropertyPanel(QWidget):
         section_brush = QBrush(self.palette().alternateBase())
         item.setBackground(0, section_brush)
         item.setBackground(1, section_brush)
-        item.setSizeHint(0, QSize(0, 26))
+        item.setSizeHint(0, QSize(0, 28))
         self._property_tree.addTopLevelItem(item)
+
+        header_frame = QFrame()
+        header_frame.setObjectName("property_grid_section_cell")
+        header_frame.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        header_layout = QHBoxLayout(header_frame)
+        header_layout.setContentsMargins(6, 2, 6, 2)
+        header_layout.setSpacing(0)
+        title_label = QLabel(title)
+        title_label.setObjectName("property_grid_section_text")
+        title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        header_layout.addWidget(title_label)
+        self._property_tree.setItemWidget(item, 0, header_frame)
 
         handle = _PropertyGridSectionHandle(self, title, item)
         form = _PropertyGridFormAdapter(self, handle)
@@ -704,6 +716,8 @@ class PropertyPanel(QWidget):
             "form": form,
             "rows": [],
             "key": self._property_tree_section_key(title),
+            "header_frame": header_frame,
+            "title_label": title_label,
         }
         self._property_sections[title] = section
         self._property_tree_items[id(item)] = title
