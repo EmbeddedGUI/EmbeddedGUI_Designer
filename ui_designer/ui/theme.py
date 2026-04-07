@@ -959,6 +959,18 @@ QFrame#property_grid_section_cell[sectionExpanded="true"] {{
     border-bottom: 1px solid {t['accent']};
 }}
 
+QFrame#property_grid_section_fill {{
+    background-color: {t['panel_raised']};
+    border: none;
+    border-top: 1px solid {t['border_strong']};
+    border-bottom: 1px solid {t['border']};
+}}
+
+QFrame#property_grid_section_fill[sectionExpanded="true"] {{
+    background-color: {t['panel_soft']};
+    border-bottom: 1px solid {t['accent']};
+}}
+
 #property_grid_section_text {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;

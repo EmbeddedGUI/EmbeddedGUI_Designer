@@ -720,8 +720,14 @@ class PropertyPanel(QWidget):
         title_label = QLabel(title)
         title_label.setObjectName("property_grid_section_text")
         title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        header_layout.addWidget(title_label)
+        title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        header_layout.addWidget(title_label, 1)
         self._property_tree.setItemWidget(item, 0, header_frame)
+
+        header_fill = QFrame()
+        header_fill.setObjectName("property_grid_section_fill")
+        header_fill.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._property_tree.setItemWidget(item, 1, header_fill)
 
         handle = _PropertyGridSectionHandle(self, title, item)
         form = _PropertyGridFormAdapter(self, handle)
@@ -732,6 +738,7 @@ class PropertyPanel(QWidget):
             "rows": [],
             "key": self._property_tree_section_key(title),
             "header_frame": header_frame,
+            "header_fill": header_fill,
             "arrow_label": arrow_label,
             "title_label": title_label,
         }
@@ -953,6 +960,7 @@ class PropertyPanel(QWidget):
 
     def _refresh_property_section_style(self, section, expanded):
         header_frame = section.get("header_frame")
+        header_fill = section.get("header_fill")
         arrow_label = section.get("arrow_label")
         title_label = section.get("title_label")
         if isinstance(header_frame, QWidget):
@@ -961,6 +969,12 @@ class PropertyPanel(QWidget):
             style.unpolish(header_frame)
             style.polish(header_frame)
             header_frame.update()
+        if isinstance(header_fill, QWidget):
+            header_fill.setProperty("sectionExpanded", bool(expanded))
+            style = header_fill.style()
+            style.unpolish(header_fill)
+            style.polish(header_fill)
+            header_fill.update()
         if isinstance(arrow_label, QLabel):
             arrow_label.setText("▼" if expanded else "▶")
             arrow_label.setProperty("sectionExpanded", bool(expanded))
