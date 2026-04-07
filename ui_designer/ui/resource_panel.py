@@ -3393,6 +3393,7 @@ class ResourcePanel(QWidget):
         target_path = os.path.join(self._src_dir, filename)
         chars = dialog.generated_chars()
         diff = dialog.overwrite_diff()
+        existed_before = bool(target_path and os.path.isfile(target_path))
 
         if os.path.isfile(target_path):
             confirm_text = (
@@ -3422,8 +3423,14 @@ class ResourcePanel(QWidget):
         if dialog.save_and_assign():
             self.resource_selected.emit("text", filename)
 
-        action = "Generated and assigned" if dialog.save_and_assign() else "Generated"
-        self.feedback_message.emit(f"{action} text resource '{filename}' with {len(chars)} chars.")
+        action = "Updated" if existed_before else "Created"
+        if dialog.save_and_assign():
+            action += " and assigned"
+        message = f"{action} text resource '{filename}' with {len(chars)} chars."
+        source_label = str(getattr(dialog, "_source_label", "") or "").strip()
+        if source_label:
+            message += f" Source: {source_label}."
+        self.feedback_message.emit(message)
 
     def _restore_missing_resources_from_paths(self, resource_type, source_paths):
         target_dir = self._target_dir_for_resource_type(resource_type)

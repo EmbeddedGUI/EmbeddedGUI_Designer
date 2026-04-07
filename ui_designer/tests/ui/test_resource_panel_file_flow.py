@@ -2262,7 +2262,7 @@ class TestResourcePanelFileFlow:
         assert panel._text_list.currentItem().data(Qt.UserRole + 1) == "charset_combo.txt"
         assert imported == [True]
         assert selected == [("text", "charset_combo.txt")]
-        assert messages == ["Generated and assigned text resource 'charset_combo.txt' with 3 chars."]
+        assert messages == ["Created and assigned text resource 'charset_combo.txt' with 3 chars."]
         panel.deleteLater()
 
     def test_generate_charset_requires_confirmation_before_overwriting_existing_file(self, qapp, tmp_path, monkeypatch):
@@ -2315,6 +2315,64 @@ class TestResourcePanelFileFlow:
 
         assert existing_path.read_text(encoding="utf-8") == "A\n"
         assert imported == []
+        panel.deleteLater()
+
+    def test_generate_charset_feedback_mentions_update_and_source_for_existing_text_resource(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        existing_path = resource_dir / "charset_existing.txt"
+        existing_path.write_text("A\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("charset_existing.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+
+        imported = []
+        messages = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+        panel.feedback_message.connect(messages.append)
+
+        class FakeDialog:
+            _source_label = "charset_existing.txt"
+
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", parent=None):
+                assert resource_dir_arg == str(resource_dir)
+                assert initial_filename == "charset_existing.txt"
+                assert source_label == "charset_existing.txt"
+
+            def exec_(self):
+                return 1
+
+            def filename(self):
+                return "charset_existing.txt"
+
+            def generated_chars(self):
+                return ("A", "B")
+
+            def generated_text(self):
+                return "A\nB\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=1, new_count=2, added_count=1, removed_count=0)
+
+            def save_and_assign(self):
+                return False
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+        monkeypatch.setattr("ui_designer.ui.resource_panel.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        panel._select_resource_item("text", "charset_existing.txt")
+        panel._on_generate_charset()
+
+        assert existing_path.read_text(encoding="utf-8") == "A\nB\n"
+        assert imported == [True]
+        assert messages == ["Updated text resource 'charset_existing.txt' with 2 chars. Source: charset_existing.txt."]
         panel.deleteLater()
 
     def test_generate_charset_prefills_selected_text_filename_from_text_tab(self, qapp, tmp_path, monkeypatch):
