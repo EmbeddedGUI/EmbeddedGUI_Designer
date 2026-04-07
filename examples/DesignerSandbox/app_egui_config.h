@@ -1,0 +1,16 @@
+#ifndef _APP_EGUI_CONFIG_H_
+#define _APP_EGUI_CONFIG_H_
+
+/* Configuration for DesignerSandbox */
+
+#define EGUI_CONFIG_SCEEN_WIDTH  320
+#define EGUI_CONFIG_SCEEN_HEIGHT 240
+
+#define EGUI_CONFIG_PFB_WIDTH  (320 / 8)
+#define EGUI_CONFIG_PFB_HEIGHT (240 / 8)
+
+#define EGUI_CONFIG_COLOR_DEPTH 16
+
+#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1
+
+#endif /* _APP_EGUI_CONFIG_H_ */

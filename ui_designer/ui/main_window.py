@@ -73,6 +73,7 @@ from ..model.sdk_bootstrap import (
     ensure_sdk_downloaded,
 )
 from ..model.workspace import (
+    designer_runtime_root,
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
     normalize_path,
@@ -1210,7 +1211,7 @@ class MainWindow(QMainWindow):
             default_sdk_root = self._active_sdk_root() or "none"
             self._apply_action_hint(
                 open_app_action,
-                f"Open an SDK example project or legacy example. Current binding: {label}. Default SDK root: {default_sdk_root}.",
+                f"Open a bundled example, SDK example project, or legacy example. Current binding: {label}. Default SDK root: {default_sdk_root}.",
             )
         open_project_action = getattr(self, "_open_project_action", None)
         if open_project_action is not None:
@@ -3461,7 +3462,7 @@ class MainWindow(QMainWindow):
 
         self._open_app_action = QAction("Open Example...", self)
         self._open_app_action.setShortcut("Ctrl+Shift+O")
-        self._apply_action_hint(self._open_app_action, "Open an SDK example project or legacy example.")
+        self._apply_action_hint(self._open_app_action, "Open a bundled example, SDK example project, or legacy example.")
         self._open_app_action.triggered.connect(self._open_app_dialog)
         file_menu.addAction(self._open_app_action)
 
@@ -4750,7 +4751,7 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, "Release Build Failed", "\n".join(summary_lines))
 
     def _open_app_dialog(self):
-        """Show dialog to select and open an SDK example."""
+        """Show dialog to select and open a bundled or SDK example."""
         dialog = AppSelectorDialog(self, self._active_sdk_root(), on_download_sdk=self._download_sdk)
         if dialog.exec_() != QDialog.Accepted:
             return
@@ -4760,16 +4761,19 @@ class MainWindow(QMainWindow):
         if not entry:
             return
 
-        self.project_root = sdk_root
-        self._config.sdk_root = sdk_root
-        self._config.egui_root = sdk_root
-        self._config.save()
+        entry_source = str(entry.get("source") or "sdk")
+        if entry_source == "sdk":
+            self.project_root = sdk_root
+            self._config.sdk_root = sdk_root
+            self._config.egui_root = sdk_root
+            self._config.save()
 
         if entry.get("has_project"):
             try:
-                self._open_project_path(entry.get("project_path", ""), preferred_sdk_root=sdk_root)
+                preferred_sdk_root = sdk_root if entry_source == "sdk" else ""
+                self._open_project_path(entry.get("project_path", ""), preferred_sdk_root=preferred_sdk_root)
             except Exception as exc:
-                QMessageBox.critical(self, "Error", f"Failed to open SDK example:\n{exc}")
+                QMessageBox.critical(self, "Error", f"Failed to open example:\n{exc}")
             return
 
         try:
@@ -5234,9 +5238,9 @@ class MainWindow(QMainWindow):
             if existing_dir:
                 return existing_dir
 
-        sdk_root = self._resolve_ui_sdk_root(sdk_root)
-        if is_valid_sdk_root(sdk_root):
-            return os.path.join(sdk_root, "example")
+        runtime_root = designer_runtime_root(_DESIGNER_REPO_ROOT)
+        if runtime_root:
+            return runtime_root
 
         return normalize_path(os.getcwd())
 
@@ -5252,9 +5256,9 @@ class MainWindow(QMainWindow):
             if existing_dir:
                 return existing_dir
 
-        sdk_root = self._active_sdk_root()
-        if sdk_root:
-            return os.path.join(sdk_root, "example")
+        runtime_root = designer_runtime_root(_DESIGNER_REPO_ROOT)
+        if runtime_root:
+            return runtime_root
 
         return normalize_path(os.getcwd())
 

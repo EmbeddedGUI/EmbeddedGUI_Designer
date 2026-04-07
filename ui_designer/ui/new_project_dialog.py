@@ -20,7 +20,13 @@ from qfluentwidgets import LineEdit, PrimaryPushButton, PushButton
 
 from ..model.config import get_config
 from ..model.sdk_bootstrap import default_sdk_install_dir
-from ..model.workspace import is_valid_sdk_root, normalize_path, resolve_configured_sdk_root, resolve_sdk_root_candidate
+from ..model.workspace import (
+    designer_runtime_root,
+    is_valid_sdk_root,
+    normalize_path,
+    resolve_configured_sdk_root,
+    resolve_sdk_root_candidate,
+)
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -69,10 +75,8 @@ class NewProjectDialog(QDialog):
         self._init_ui()
 
     def _default_parent_dir_for_sdk(self, sdk_root):
-        sdk_root = normalize_path(sdk_root)
-        if not is_valid_sdk_root(sdk_root):
-            return ""
-        return os.path.join(sdk_root, "example")
+        del sdk_root
+        return designer_runtime_root()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)

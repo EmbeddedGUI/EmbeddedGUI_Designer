@@ -46,13 +46,17 @@ def isolated_config(tmp_path, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def bind_ui_config(isolated_config, monkeypatch):
+def bind_ui_config(isolated_config, monkeypatch, tmp_path):
     import ui_designer.ui.app_selector as app_selector_module
     import ui_designer.ui.new_project_dialog as new_project_dialog_module
     import ui_designer.ui.welcome_page as welcome_page_module
 
+    designer_root = tmp_path / "designer_runtime"
+    designer_root.mkdir()
     monkeypatch.setattr(app_selector_module, "get_config", lambda: isolated_config)
+    monkeypatch.setattr(app_selector_module, "list_designer_example_entries", lambda repo_root=None: [])
     monkeypatch.setattr(new_project_dialog_module, "get_config", lambda: isolated_config)
+    monkeypatch.setattr(new_project_dialog_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
     monkeypatch.setattr(welcome_page_module, "get_config", lambda: isolated_config)
 
 
@@ -108,15 +112,15 @@ class TestAppSelectorDialog:
         dialog = AppSelectorDialog(egui_root="")
 
         assert dialog._header_frame.accessibleName() == (
-            "SDK example header. Open SDK Example dialog: SDK root none. Search none. "
+            "Example header. Open Example dialog: SDK root none. Search none. "
             "Legacy examples off. Examples list: 1 entry. Selection: none."
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
         assert dialog._metrics_frame.isHidden()
-        assert dialog._eyebrow_label.accessibleName() == "SDK example browser workspace."
+        assert dialog._eyebrow_label.accessibleName() == "Example browser workspace."
         assert dialog._title_label.text() == "Open Example"
-        assert dialog._title_label.accessibleName() == "SDK example browser title: Open EmbeddedGUI SDK Example."
+        assert dialog._title_label.accessibleName() == "Example browser title: Open EmbeddedGUI Example."
         assert dialog._subtitle_label.accessibleName() == dialog._subtitle_label.text()
         assert dialog._root_metric_value.accessibleName() == (
             f"App selector metric: SDK Status. {dialog._root_metric_value.text()}."
@@ -134,15 +138,15 @@ class TestAppSelectorDialog:
         )
         assert _find_label_by_text(
             dialog,
-            "Examples come from the current SDK workspace. Switch roots here when you need a different application catalog.",
+            "Bundled examples live beside the Designer. SDK examples come from the current SDK workspace when a root is available.",
         ).isHidden()
         assert _find_label_by_text(
             dialog,
-            "Keep the browser focused on Designer-ready projects, or widen the list to include legacy apps that still need import.",
+            "Keep the browser focused on ready-to-open projects, or widen the SDK section to include legacy apps that still need import.",
         ).isHidden()
         assert _find_label_by_text(
             dialog,
-            "Search by app name and use the list below as the single entry point into existing SDK projects.",
+            "Search by app name and use the list below as the single entry point into bundled examples and existing SDK projects.",
         ).isHidden()
         assert _find_label_by_text(
             dialog,
@@ -165,14 +169,14 @@ class TestAppSelectorDialog:
         dialog = AppSelectorDialog(egui_root="")
 
         assert dialog.accessibleName() == (
-            "Open SDK Example dialog: SDK root none. Search none. "
+            "Open Example dialog: SDK root none. Search none. "
             "Legacy examples off. Examples list: 1 entry. Selection: none."
         )
-        assert dialog._search_edit.toolTip() == "Filter SDK examples by name. Current search: none."
-        assert dialog._app_list.accessibleName() == "SDK examples list: 1 entry. Current selection: none."
-        assert dialog._open_btn.toolTip() == "Select an SDK example to open it."
+        assert dialog._search_edit.toolTip() == "Filter examples by name. Current search: none."
+        assert dialog._app_list.accessibleName() == "Examples list: 1 entry. Current selection: none."
+        assert dialog._open_btn.toolTip() == "Select an example to open it."
         assert dialog._open_btn.accessibleName() == (
-            "Open action unavailable: Open. Select an SDK example to open it."
+            "Open action unavailable: Open. Select an example to open it."
         )
         assert dialog._browse_btn.icon().isNull()
         assert dialog._download_btn.toolTip() == (
@@ -187,7 +191,7 @@ class TestAppSelectorDialog:
         assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
-            "SDK examples list item: Set or download an SDK root first."
+            "Examples list item: Set or download an SDK root first."
         )
         dialog.deleteLater()
 
@@ -285,7 +289,7 @@ class TestAppSelectorDialog:
         assert modern_path_label.isHidden()
         assert "ModernApp.egui" in modern_path_label.accessibleName()
         assert modern_kind_label.isHidden()
-        assert modern_kind_label.accessibleName() == "SDK example kind: Designer Project"
+        assert modern_kind_label.accessibleName() == "Example kind: SDK Project"
         dialog.deleteLater()
 
     def test_shows_placeholder_when_sdk_root_missing(self, qapp, isolated_config):
@@ -302,6 +306,39 @@ class TestAppSelectorDialog:
         assert dialog._open_btn.isEnabled() is False
         dialog.deleteLater()
 
+    def test_lists_bundled_designer_examples_without_sdk_root(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        project_dir = tmp_path / "examples" / "DesignerSandbox"
+        project_dir.mkdir(parents=True)
+        project_path = project_dir / "DesignerSandbox.egui"
+        project_path.write_text("<Project />", encoding="utf-8")
+        monkeypatch.setattr(
+            "ui_designer.ui.app_selector.list_designer_example_entries",
+            lambda repo_root=None: [
+                {
+                    "app_name": "DesignerSandbox",
+                    "app_dir": str(project_dir),
+                    "project_path": str(project_path),
+                    "has_project": True,
+                    "is_legacy": False,
+                    "source": "designer",
+                }
+            ],
+        )
+
+        dialog = AppSelectorDialog(egui_root="")
+
+        assert dialog._app_list.count() == 1
+        assert dialog._app_list.item(0).text() == "DesignerSandbox"
+        assert dialog.selected_entry["source"] == "designer"
+        assert dialog._open_btn.isEnabled() is True
+        assert dialog._open_btn.toolTip() == "Open the selected example project."
+        assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
+            f"Example: DesignerSandbox. Project path: {project_path}"
+        )
+        dialog.deleteLater()
+
     def test_shows_invalid_placeholder_when_sdk_root_is_invalid(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.app_selector import AppSelectorDialog
 
@@ -314,7 +351,7 @@ class TestAppSelectorDialog:
         assert "Invalid" in dialog._root_status_label.text()
         assert dialog._open_btn.isEnabled() is False
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
-            "SDK examples list item: Current SDK root is invalid."
+            "Examples list item: Current SDK root is invalid."
         )
         dialog.deleteLater()
 
@@ -353,7 +390,7 @@ class TestAppSelectorDialog:
             if dialog._app_list.item(i).text() == "LegacyApp [Legacy]"
         )
         assert legacy_item.data(Qt.AccessibleTextRole) == (
-            f"SDK example: LegacyApp [Legacy]. Legacy example path: {legacy}. "
+            f"Example: LegacyApp [Legacy]. Legacy example path: {legacy}. "
             "Opening it will initialize a Designer project."
         )
         legacy_widget = dialog._app_list.itemWidget(legacy_item)
@@ -361,10 +398,10 @@ class TestAppSelectorDialog:
         legacy_kind_label = legacy_widget.findChild(QLabel, "app_selector_item_kind")
         assert legacy_widget.findChild(QFrame, "app_selector_item_icon_shell") is None
         assert legacy_path_label.isHidden()
-        assert legacy_path_label.accessibleName().startswith("SDK example path: ")
+        assert legacy_path_label.accessibleName().startswith("Example path: ")
         assert "LegacyApp" in legacy_path_label.accessibleName()
         assert legacy_kind_label.isHidden()
-        assert legacy_kind_label.accessibleName() == "SDK example kind: Legacy Import"
+        assert legacy_kind_label.accessibleName() == "Example kind: Legacy Import"
         dialog.deleteLater()
 
     def test_selection_updates_selected_entry_and_enables_open(self, qapp, isolated_config, tmp_path):
@@ -465,7 +502,7 @@ class TestAppSelectorDialog:
 
         dialog._on_item_double_clicked(placeholder_item)
 
-        assert placeholder_item.text() == "(No SDK examples found)"
+        assert placeholder_item.text() == "(No examples found)"
         assert accepted == []
         assert dialog.selected_entry is None
         dialog.deleteLater()
@@ -480,7 +517,7 @@ class TestAppSelectorDialog:
         dialog = AppSelectorDialog(egui_root=str(sdk_root))
 
         assert dialog._app_list.count() == 1
-        assert dialog._app_list.item(0).text() == "(No SDK examples found)"
+        assert dialog._app_list.item(0).text() == "(No examples found)"
         assert dialog._open_btn.isEnabled() is False
         dialog.deleteLater()
 
@@ -544,7 +581,7 @@ class TestAppSelectorDialog:
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "HelloVirtual"
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
-            f"SDK example: HelloVirtual. Project path: {app_dir / 'HelloVirtual.egui'}"
+            f"Example: HelloVirtual. Project path: {app_dir / 'HelloVirtual.egui'}"
         )
         assert "Ready" in dialog._root_status_label.text()
         dialog.deleteLater()
@@ -750,6 +787,9 @@ class TestNewProjectDialog:
             mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
             dialog = NewProjectDialog(sdk_root="", default_parent_dir="")
 
+        dialog._parent_dir = ""
+        dialog._parent_edit.setText("")
+        dialog._update_accessibility_summary()
         assert dialog._create_btn.toolTip() == "Select a parent directory before creating the project."
         assert dialog._create_btn.accessibleName() == (
             "Create project unavailable. Select a parent directory before creating the project."
@@ -790,6 +830,9 @@ class TestNewProjectDialog:
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: "")
             dialog = NewProjectDialog(sdk_root="", default_parent_dir="")
+        dialog._parent_dir = ""
+        dialog._parent_edit.setText("")
+        dialog._update_accessibility_summary()
         dialog._app_name_edit.setText("DemoApp")
 
         with pytest.MonkeyPatch.context() as mp:
@@ -881,7 +924,7 @@ class TestNewProjectDialog:
         assert dialog._sdk_edit.text() == os.path.normpath(os.path.abspath(sdk_root))
         dialog.deleteLater()
 
-    def test_defaults_parent_dir_to_sdk_example_when_sdk_root_is_set(self, qapp, isolated_config, tmp_path):
+    def test_defaults_parent_dir_to_designer_runtime_when_sdk_root_is_set(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.new_project_dialog import NewProjectDialog
 
         sdk_root = tmp_path / "sdk"
@@ -889,7 +932,7 @@ class TestNewProjectDialog:
 
         dialog = NewProjectDialog(sdk_root=str(sdk_root), default_parent_dir="")
 
-        assert dialog.parent_dir == os.path.join(os.path.normpath(os.path.abspath(sdk_root)), "example")
+        assert dialog.parent_dir == os.path.normpath(os.path.abspath(tmp_path / "designer_runtime"))
         dialog.deleteLater()
 
     def test_browse_sdk_root_updates_auto_managed_parent_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -900,13 +943,16 @@ class TestNewProjectDialog:
         _create_sdk_root(old_sdk_root)
         _create_sdk_root(new_sdk_root)
 
-        dialog = NewProjectDialog(sdk_root=str(old_sdk_root), default_parent_dir=os.path.join(str(old_sdk_root), "example"))
+        dialog = NewProjectDialog(
+            sdk_root=str(old_sdk_root),
+            default_parent_dir=str(tmp_path / "designer_runtime"),
+        )
         monkeypatch.setattr("ui_designer.ui.new_project_dialog.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(new_sdk_root))
 
         dialog._browse_sdk_root()
 
         assert dialog.sdk_root == os.path.normpath(os.path.abspath(new_sdk_root))
-        assert dialog.parent_dir == os.path.join(os.path.normpath(os.path.abspath(new_sdk_root)), "example")
+        assert dialog.parent_dir == os.path.normpath(os.path.abspath(tmp_path / "designer_runtime"))
         dialog.deleteLater()
 
     def test_browse_sdk_root_keeps_manual_parent_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -919,7 +965,10 @@ class TestNewProjectDialog:
         _create_sdk_root(new_sdk_root)
         custom_parent.mkdir()
 
-        dialog = NewProjectDialog(sdk_root=str(old_sdk_root), default_parent_dir=os.path.join(str(old_sdk_root), "example"))
+        dialog = NewProjectDialog(
+            sdk_root=str(old_sdk_root),
+            default_parent_dir=str(tmp_path / "designer_runtime"),
+        )
         monkeypatch.setattr("ui_designer.ui.new_project_dialog.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(custom_parent))
         dialog._browse_parent_dir()
 
@@ -993,10 +1042,10 @@ class TestWelcomePage:
             "Open project file action. Open an existing .egui project file."
         )
         assert page._open_app_btn.text() == "Open Example..."
-        assert page._open_app_btn.toolTip() == "Open an SDK example project or legacy example."
+        assert page._open_app_btn.toolTip() == "Open a bundled example, SDK example project, or legacy example."
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
         assert page._open_app_btn.accessibleName() == (
-            "Open SDK example action. Open an SDK example project or legacy example."
+            "Open example action. Open a bundled example, SDK example project, or legacy example."
         )
         assert page._set_sdk_root_btn.text() == "Set SDK..."
         assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."
@@ -1265,9 +1314,9 @@ class TestWelcomePage:
         assert "Missing" in page._sdk_status_label.text()
         assert str(cache_dir) in page._sdk_hint_label.text()
         assert "GitHub archive" in page._sdk_hint_label.text()
-        assert page._open_app_btn.toolTip() == "Set or download an SDK before browsing SDK examples."
+        assert page._open_app_btn.toolTip() == "Open a bundled example, or set or download an SDK before browsing SDK examples."
         assert page._open_app_btn.accessibleName() == (
-            "Open SDK example action. Set or download an SDK before browsing SDK examples."
+            "Open example action. Open a bundled example, or set or download an SDK before browsing SDK examples."
         )
         assert page._set_sdk_root_btn.toolTip() == "Choose the EmbeddedGUI SDK root used for compile preview."
         assert page._set_sdk_root_btn.accessibleName() == (

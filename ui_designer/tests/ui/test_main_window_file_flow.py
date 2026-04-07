@@ -72,6 +72,20 @@ def isolated_config(tmp_path, monkeypatch):
     DesignerConfig._instance = None
 
 
+@pytest.fixture(autouse=True)
+def bind_designer_runtime(monkeypatch, tmp_path):
+    designer_root = tmp_path / "designer_runtime"
+    designer_root.mkdir()
+
+    import ui_designer.ui.app_selector as app_selector_module
+    import ui_designer.ui.main_window as main_window_module
+    import ui_designer.ui.new_project_dialog as new_project_dialog_module
+    monkeypatch.setattr(app_selector_module, "list_designer_example_entries", lambda repo_root=None: [])
+    monkeypatch.setattr(main_window_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
+    monkeypatch.setattr(new_project_dialog_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
+    yield designer_root
+
+
 def _create_sdk_root(root):
     (root / "src").mkdir(parents=True)
     (root / "porting" / "designer").mkdir(parents=True)
@@ -204,7 +218,7 @@ class TestMainWindowFileFlow:
         window._open_project()
 
         assert captured["title"] == "Open Project"
-        assert captured["directory"] == os.path.join(os.path.normpath(os.path.abspath(cached_sdk)), "example")
+        assert captured["directory"] == window._default_open_project_dir()
         assert "EmbeddedGUI Projects" in captured["filters"]
         _close_window(window)
 
@@ -2256,7 +2270,7 @@ class TestMainWindowFileFlow:
         window._new_project()
 
         assert captured["sdk_root"] == os.path.normpath(os.path.abspath(cached_sdk))
-        assert captured["default_parent_dir"] == os.path.join(os.path.normpath(os.path.abspath(cached_sdk)), "example")
+        assert captured["default_parent_dir"] == window._default_new_project_parent_dir(captured["sdk_root"])
         _close_window(window)
 
     def test_save_project_as_copies_sidecar_files_and_updates_project_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -2565,6 +2579,68 @@ class TestMainWindowFileFlow:
 
         assert captured["egui_root"] == os.path.normpath(os.path.abspath(cached_sdk))
         assert captured["has_download_handler"] is True
+        _close_window(window)
+
+    def test_open_app_dialog_opens_bundled_example_without_rebinding_sdk(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
+        isolated_config.egui_root = str(sdk_root)
+        project_dir = tmp_path / "examples" / "DesignerSandbox"
+        project_dir.mkdir(parents=True)
+        project_path = project_dir / "DesignerSandbox.egui"
+        project_path.write_text("<Project />", encoding="utf-8")
+        captured = {}
+
+        class FakeDialog:
+            Accepted = 1
+
+            def __init__(self, parent=None, egui_root=None, on_download_sdk=None):
+                self._selected_entry = {
+                    "app_name": "DesignerSandbox",
+                    "project_path": str(project_path),
+                    "has_project": True,
+                    "is_legacy": False,
+                    "source": "designer",
+                }
+                self._egui_root = ""
+
+            def exec_(self):
+                return self.Accepted
+
+            @property
+            def selected_entry(self):
+                return self._selected_entry
+
+            @property
+            def egui_root(self):
+                return self._egui_root
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.AppSelectorDialog", FakeDialog)
+        monkeypatch.setattr(
+            window,
+            "_open_project_path",
+            lambda path, preferred_sdk_root="", silent=False: captured.update(
+                {
+                    "path": path,
+                    "preferred_sdk_root": preferred_sdk_root,
+                    "silent": silent,
+                }
+            ),
+        )
+
+        window._open_app_dialog()
+
+        assert captured == {
+            "path": os.path.normpath(os.path.abspath(project_path)),
+            "preferred_sdk_root": "",
+            "silent": False,
+        }
+        assert isolated_config.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
+        assert isolated_config.egui_root == os.path.normpath(os.path.abspath(sdk_root))
         _close_window(window)
 
     def test_open_loaded_project_discovers_default_sdk_cache_when_config_is_empty(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -4500,7 +4576,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
         assert actions["Open Example..."].toolTip() == (
-            "Open an SDK example project or legacy example. "
+            "Open a bundled example, SDK example project, or legacy example. "
             f"Current binding: SDK: missing. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
@@ -4561,7 +4637,7 @@ class TestMainWindowFileFlow:
             if action.text() in {"Open Example...", "Open Project..."}
         }
         assert actions["Open Example..."].toolTip() == (
-            "Open an SDK example project or legacy example. "
+            "Open a bundled example, SDK example project, or legacy example. "
             f"Current binding: SDK: cached. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
@@ -4586,7 +4662,7 @@ class TestMainWindowFileFlow:
             if action.text() == "Open Example..."
         )
         assert action.toolTip() == (
-            "Open an SDK example project or legacy example. "
+            "Open a bundled example, SDK example project, or legacy example. "
             f"Current binding: SDK: sdk-example. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert action.statusTip() == action.toolTip()

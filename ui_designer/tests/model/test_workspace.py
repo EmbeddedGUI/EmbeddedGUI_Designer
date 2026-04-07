@@ -10,12 +10,15 @@ from ui_designer.model.workspace import (
     SDK_ROOT_ENV_VAR,
     compute_make_app_root_arg,
     default_designer_sdk_root,
+    designer_examples_root,
+    designer_runtime_root,
     fallback_designer_sdk_root,
     describe_designer_sdk_root_help,
     describe_sdk_root,
     find_sdk_root,
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
+    list_designer_example_entries,
     normalize_path,
     require_designer_sdk_root,
     resolve_available_sdk_root,
@@ -189,6 +192,42 @@ class TestWorkspaceHelpers:
         repo_root.mkdir()
 
         assert default_designer_sdk_root(str(repo_root)) == normalize_path(str(repo_root / "sdk" / "EmbeddedGUI"))
+
+    def test_designer_runtime_root_uses_repo_root_for_source_runs(self, tmp_path, monkeypatch):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        repo_root.mkdir()
+        monkeypatch.delattr(workspace_module.sys, "frozen", raising=False)
+
+        assert designer_runtime_root(str(repo_root)) == normalize_path(str(repo_root))
+        assert designer_examples_root(str(repo_root)) == normalize_path(str(repo_root / "examples"))
+
+    def test_designer_runtime_root_uses_executable_dir_for_frozen_runs(self, tmp_path, monkeypatch):
+        runtime_dir = tmp_path / "EmbeddedGUI-Designer"
+        runtime_dir.mkdir()
+        monkeypatch.setattr(workspace_module.sys, "frozen", True, raising=False)
+        monkeypatch.setattr(workspace_module.sys, "executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))
+
+        assert designer_runtime_root(str(tmp_path / "ignored_repo")) == normalize_path(str(runtime_dir))
+        assert designer_examples_root(str(tmp_path / "ignored_repo")) == normalize_path(str(runtime_dir / "examples"))
+
+    def test_list_designer_example_entries_scans_examples_root(self, tmp_path, monkeypatch):
+        repo_root = tmp_path / "EmbeddedGUI_Designer"
+        examples_root = repo_root / "examples"
+        app_dir = examples_root / "HelloSimpleDemo"
+        app_dir.mkdir(parents=True)
+        (app_dir / "HelloSimpleDemo.egui").write_text("<Project />", encoding="utf-8")
+        monkeypatch.delattr(workspace_module.sys, "frozen", raising=False)
+
+        assert list_designer_example_entries(str(repo_root)) == [
+            {
+                "app_name": "HelloSimpleDemo",
+                "app_dir": normalize_path(str(app_dir)),
+                "project_path": normalize_path(str(app_dir / "HelloSimpleDemo.egui")),
+                "has_project": True,
+                "is_legacy": False,
+                "source": "designer",
+            }
+        ]
 
     def test_fallback_designer_sdk_root_points_to_embeddedgui_sibling(self, tmp_path):
         repo_root = tmp_path / "EmbeddedGUI_Designer"

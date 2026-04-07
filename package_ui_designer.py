@@ -22,6 +22,7 @@ PROJECT_ROOT = SCRIPT_DIR
 SPEC_PATH = SCRIPT_DIR / "ui_designer" / "ui_designer.spec"
 PREFLIGHT_SMOKE_SCRIPT_PATH = SCRIPT_DIR / "ui_designer_preview_smoke.py"
 DIST_APP_NAME = "EmbeddedGUI-Designer"
+EXAMPLES_BUNDLE_DIR_NAME = "examples"
 SUPPRESSED_LOG_SNIPPETS = (
     "QFluentWidgets Pro is now released",
     "qfluentwidgets.com/pages/pro",
@@ -221,6 +222,23 @@ def copy_sdk_bundle(app_dir: Path, sdk_root: str | Path | None = None) -> Path:
         shutil.rmtree(target_root)
     shutil.copytree(source_root, target_root, ignore=build_sdk_bundle_ignore(source_root))
     write_sdk_bundle_metadata(target_root, source_root)
+    return target_root
+
+
+def copy_designer_examples(app_dir: Path, examples_root: str | Path | None = None) -> Path:
+    """Copy bundled Designer examples into ``app_dir/examples`` when present."""
+    source_root = Path(examples_root or (PROJECT_ROOT / EXAMPLES_BUNDLE_DIR_NAME)).resolve()
+    if not source_root.is_dir():
+        return Path()
+
+    target_root = app_dir / EXAMPLES_BUNDLE_DIR_NAME
+    if target_root.exists():
+        shutil.rmtree(target_root)
+    shutil.copytree(
+        source_root,
+        target_root,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
     return target_root
 
 
@@ -461,6 +479,7 @@ def package_ui_designer(
     if bundle_sdk:
         bundled_sdk_dir = copy_sdk_bundle(app_dir, sdk_root=sdk_root)
         bundled_sdk_metadata = load_sdk_bundle_metadata(bundled_sdk_dir)
+    bundled_examples_dir = copy_designer_examples(app_dir)
 
     archive_format = resolve_archive_format(archive_mode)
     archive_path = None
@@ -484,6 +503,7 @@ def package_ui_designer(
         ),
         "bundled_sdk_source": str(bundled_sdk_metadata.get("source_root", "")),
         "bundled_sdk_total_size_bytes": int(bundled_sdk_metadata.get("total_size_bytes", 0)),
+        "bundled_examples_dir": str(bundled_examples_dir) if bundled_examples_dir else "",
     }
 
 
@@ -560,6 +580,8 @@ def main():
         sys.exit(1)
 
     print(f"[OK] app_dir: {result['app_dir']}")
+    if result["bundled_examples_dir"]:
+        print(f"[OK] bundled_examples: {result['bundled_examples_dir']}")
     if result["bundled_sdk_dir"]:
         print(f"[OK] bundled_sdk: {result['bundled_sdk_dir']}")
         print(f"[OK] bundled_sdk_source: {result['bundled_sdk_source'] or 'unknown'}")

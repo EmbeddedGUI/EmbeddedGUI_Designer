@@ -365,6 +365,22 @@ def test_copy_sdk_bundle_copies_sdk_tree_into_app_dir(tmp_path):
     assert metadata["total_size_bytes"] > 0
 
 
+def test_copy_designer_examples_copies_examples_tree_into_app_dir(tmp_path):
+    module = _load_module()
+
+    source_examples = tmp_path / "examples"
+    app_dir = tmp_path / "dist" / module.DIST_APP_NAME
+    project_dir = source_examples / "HelloSimpleDemo"
+    project_dir.mkdir(parents=True)
+    (project_dir / "HelloSimpleDemo.egui").write_text("<Project />", encoding="utf-8")
+    app_dir.mkdir(parents=True)
+
+    bundled_examples = module.copy_designer_examples(app_dir, examples_root=source_examples)
+
+    assert bundled_examples == app_dir / module.EXAMPLES_BUNDLE_DIR_NAME
+    assert (bundled_examples / "HelloSimpleDemo" / "HelloSimpleDemo.egui").is_file()
+
+
 def test_copy_sdk_bundle_ignores_designer_test_tree(tmp_path):
     module = _load_module()
 
@@ -424,6 +440,7 @@ def test_package_ui_designer_can_bundle_sdk(tmp_path, monkeypatch):
 
     bundled_dir = app_dir / "sdk" / module.SDK_BUNDLE_DIR_NAME
     assert result["bundled_sdk_dir"] == str(bundled_dir)
+    assert result["bundled_examples_dir"] == str(app_dir / module.EXAMPLES_BUNDLE_DIR_NAME)
     assert (bundled_dir / "Makefile").is_file()
     assert result["bundled_sdk_source"] == str(sdk_root.resolve())
     assert result["bundled_sdk_git_commit"] == "416d5766100ab935e7d5197ce296370a6ad966a7"

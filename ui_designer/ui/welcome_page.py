@@ -310,7 +310,7 @@ class WelcomePage(QWidget):
 
         center_layout.addLayout(content_layout, 1)
 
-        self._footer_label = QLabel("Press Ctrl+Shift+O to open an SDK example, Ctrl+O to open a .egui project, or Ctrl+N to create a new project")
+        self._footer_label = QLabel("Press Ctrl+Shift+O to open an example, Ctrl+O to open a .egui project, or Ctrl+N to create a new project")
         self._footer_label.setObjectName("workspace_section_subtitle")
         self._footer_label.setAlignment(Qt.AlignCenter)
         center_layout.addWidget(self._footer_label)
@@ -322,7 +322,7 @@ class WelcomePage(QWidget):
         main_layout.addStretch()
         self._new_project_btn.setAccessibleName("Create new project action")
         self._open_project_btn.setAccessibleName("Open project file action")
-        self._open_app_btn.setAccessibleName("Open SDK example")
+        self._open_app_btn.setAccessibleName("Open example")
         self._set_sdk_root_btn.setAccessibleName("Set SDK root")
         self._download_sdk_btn.setAccessibleName("Download SDK")
         _set_widget_metadata(
@@ -335,7 +335,11 @@ class WelcomePage(QWidget):
             tooltip="Open an existing .egui project file.",
             accessible_name="Open project file action. Open an existing .egui project file.",
         )
-        _set_widget_metadata(self._open_app_btn, tooltip="Open an SDK example project or legacy example.", accessible_name="Open SDK example")
+        _set_widget_metadata(
+            self._open_app_btn,
+            tooltip="Open a bundled example, SDK example project, or legacy example.",
+            accessible_name="Open example",
+        )
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
 
         self._overview_metrics_frame.hide()
@@ -551,18 +555,18 @@ class WelcomePage(QWidget):
             accessible_name=f"SDK hint: {self._sdk_hint_label.text()}",
         )
         if sdk_status.startswith("Ready:"):
-            open_app_hint = "Open an SDK example project or legacy example."
+            open_app_hint = "Open a bundled example, SDK example project, or legacy example."
             set_sdk_hint = "Change the EmbeddedGUI SDK root used for compile preview."
         elif sdk_status.startswith("Invalid:"):
-            open_app_hint = "SDK root needs attention before browsing SDK examples."
+            open_app_hint = "Open a bundled example, or fix the SDK root before browsing SDK examples."
             set_sdk_hint = "Choose a valid EmbeddedGUI SDK root used for compile preview."
         else:
-            open_app_hint = "Set or download an SDK before browsing SDK examples."
+            open_app_hint = "Open a bundled example, or set or download an SDK before browsing SDK examples."
             set_sdk_hint = "Choose the EmbeddedGUI SDK root used for compile preview."
         _set_widget_metadata(
             self._open_app_btn,
             tooltip=open_app_hint,
-            accessible_name=f"Open SDK example action. {open_app_hint}",
+            accessible_name=f"Open example action. {open_app_hint}",
         )
         _set_widget_metadata(
             self._set_sdk_root_btn,

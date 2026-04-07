@@ -11,6 +11,7 @@ _COMMON_SDK_CONTAINER_NAMES = ("sdk", "SDK")
 SDK_ROOT_ENV_VAR = "EMBEDDEDGUI_SDK_ROOT"
 DEFAULT_DESIGNER_SDK_CONTAINER = "sdk"
 DEFAULT_DESIGNER_SDK_DIRNAME = "EmbeddedGUI"
+DEFAULT_DESIGNER_EXAMPLES_DIRNAME = "examples"
 
 
 def normalize_path(path: str | None) -> str:
@@ -309,6 +310,69 @@ def describe_sdk_root(path: str | None) -> str:
     if is_valid_sdk_root(root):
         return "ready"
     return "invalid"
+
+
+def designer_runtime_root(repo_root: str | None = None) -> str:
+    """Return the Designer runtime root directory.
+
+    Source runs use the repository root by default. Frozen builds use the
+    directory containing the executable so local projects/examples live beside
+    the packaged app.
+    """
+    if getattr(sys, "frozen", False):
+        return normalize_path(os.path.dirname(sys.executable))
+
+    resolved_repo_root = normalize_path(repo_root)
+    if resolved_repo_root:
+        return resolved_repo_root
+
+    return normalize_path(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def designer_examples_root(
+    repo_root: str | None = None,
+    dirname: str = DEFAULT_DESIGNER_EXAMPLES_DIRNAME,
+) -> str:
+    """Return the root directory for bundled Designer examples."""
+    runtime_root = designer_runtime_root(repo_root)
+    if not runtime_root:
+        return ""
+    return normalize_path(os.path.join(runtime_root, dirname))
+
+
+def list_designer_example_entries(repo_root: str | None = None) -> list[dict[str, object]]:
+    """List bundled Designer example projects under ``examples/``."""
+    examples_root = designer_examples_root(repo_root)
+    if not examples_root or not os.path.isdir(examples_root):
+        return []
+
+    entries: list[dict[str, object]] = []
+    for entry_name in sorted(os.listdir(examples_root)):
+        app_dir = normalize_path(os.path.join(examples_root, entry_name))
+        if not os.path.isdir(app_dir):
+            continue
+
+        project_files = sorted(
+            filename
+            for filename in os.listdir(app_dir)
+            if filename.lower().endswith(".egui") and os.path.isfile(os.path.join(app_dir, filename))
+        )
+        if len(project_files) != 1:
+            continue
+
+        project_name = os.path.splitext(project_files[0])[0]
+        entries.append(
+            {
+                "app_name": project_name,
+                "app_dir": app_dir,
+                "project_path": normalize_path(os.path.join(app_dir, project_files[0])),
+                "has_project": True,
+                "is_legacy": False,
+                "source": "designer",
+            }
+        )
+
+    return sorted(entries, key=lambda item: str(item.get("app_name", "")).lower())
 
 
 def default_designer_sdk_root(

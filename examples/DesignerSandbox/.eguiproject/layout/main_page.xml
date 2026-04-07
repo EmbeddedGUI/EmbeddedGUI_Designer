@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page>
+    <Group id="root_group" x="0" y="0" width="320" height="240">
+        <Label id="title" x="16" y="16" width="200" height="28" text="Designer Sandbox" />
+        <Button id="action_btn" x="16" y="60" width="144" height="40" text="Click Me" />
+        <Label id="status_label" x="16" y="120" width="240" height="24" text="Use this project for daily checks." />
+    </Group>
+</Page>
