@@ -286,6 +286,16 @@ _ICON_FONT_KEYWORDS = (
 
 
 def _suggest_charset_presets_for_resource(resource_type, filename):
+    if resource_type == "text":
+        text_name = os.path.basename(str(filename or "")).strip().lower()
+        for preset in charset_presets():
+            default_name = preset.default_filename.lower()
+            if text_name == default_name:
+                return (preset.preset_id,)
+            if default_name.endswith(".txt") and text_name == f"{default_name[:-4]}_custom.txt":
+                return (preset.preset_id,)
+        return ()
+
     if resource_type != "font":
         return ()
 
