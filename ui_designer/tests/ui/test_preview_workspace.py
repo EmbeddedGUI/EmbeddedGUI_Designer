@@ -432,6 +432,20 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_overlay_full_drag_feedback_can_be_reenabled_by_config(self, qapp):
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay._config.lightweight_drag = False
+
+        try:
+            overlay._dragging = True
+            assert overlay._show_snap_guides() is True
+            assert overlay._show_full_bounds_overlay() is True
+            assert overlay._show_full_label_overlay() is True
+        finally:
+            _dispose_widget(overlay)
+
     def test_overlay_caches_visible_and_interactive_widgets(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

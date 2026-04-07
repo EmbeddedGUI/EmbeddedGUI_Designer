@@ -81,6 +81,7 @@ class DesignerConfig:
         self.preview_engine = "v1"
         self.show_grid = True
         self.grid_size = 8
+        self.lightweight_drag = True
         self.font_size_px = 0
         self.ui_density = "standard"
         self.show_all_examples = False
@@ -233,6 +234,7 @@ class DesignerConfig:
             self.preview_engine = str(data.get("preview_engine", "v1") or "v1")
             self.show_grid = data.get("show_grid", True)
             self.grid_size = int(data.get("grid_size", 8))
+            self.lightweight_drag = bool(data.get("lightweight_drag", True))
             self.font_size_px = data.get("font_size_px", 0)
             ui_density = str(data.get("ui_density", "standard") or "standard").strip().lower()
             self.ui_density = ui_density if ui_density in {"standard", "roomy"} else "standard"
@@ -294,6 +296,7 @@ class DesignerConfig:
                 "preview_engine": self.preview_engine,
                 "show_grid": self.show_grid,
                 "grid_size": self.grid_size,
+                "lightweight_drag": self.lightweight_drag,
                 "font_size_px": self.font_size_px,
                 "ui_density": self.ui_density,
                 "show_all_examples": self.show_all_examples,

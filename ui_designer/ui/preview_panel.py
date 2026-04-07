@@ -14,6 +14,7 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixm
 from .theme import designer_font_scale, scaled_point_size, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
+from ..model.config import get_config
 from ..engine.python_renderer import render_page
 
 
@@ -113,6 +114,7 @@ class WidgetOverlay(QWidget):
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
         self._solid_background = False
+        self._config = get_config()
 
         self._widgets = []  # list of WidgetModel
         self._visible_widgets = []
@@ -184,13 +186,19 @@ class WidgetOverlay(QWidget):
         return self._scaled_font_point_size(7, minimum=6)
 
     def _show_full_label_overlay(self):
-        return not (self._dragging or self._resizing or self._rubber_band)
+        if bool(getattr(self._config, "lightweight_drag", True)):
+            return not (self._dragging or self._resizing or self._rubber_band)
+        return True
 
     def _show_full_bounds_overlay(self):
-        return not (self._dragging or self._resizing or self._rubber_band)
+        if bool(getattr(self._config, "lightweight_drag", True)):
+            return not (self._dragging or self._resizing or self._rubber_band)
+        return True
 
     def _show_snap_guides(self):
-        return not (self._dragging or self._resizing)
+        if bool(getattr(self._config, "lightweight_drag", True)):
+            return not (self._dragging or self._resizing)
+        return True
 
     def _paint_candidate_widgets(self):
         if self._show_full_bounds_overlay():
