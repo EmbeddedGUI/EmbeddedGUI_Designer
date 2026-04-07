@@ -42,6 +42,8 @@ PAGE_NAME = "main_page"
 STATUS_REGION = (20, 62, 200, 28)
 ANIM_REGION = (20, 170, 180, 40)
 BUTTON_CENTER = (120, 130)
+BG_SAMPLE = (20, 20)
+CHIP_SAMPLE = (40, 180)
 DEFAULT_WORK_ROOT = REPO_ROOT / "temp" / "preview_smoke"
 
 
@@ -87,6 +89,16 @@ def extract_region(frame: bytes, width: int, x: int, y: int, region_width: int, 
             break
         rows.append(frame[row_start:row_end])
     return b"".join(rows)
+
+
+def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int]:
+    """Return one RGB888 pixel from the frame."""
+    if x < 0 or y < 0:
+        raise ValueError(f"pixel out of bounds: ({x}, {y})")
+    offset = (y * width + x) * 3
+    if offset + 3 > len(frame):
+        raise ValueError(f"pixel out of bounds: ({x}, {y})")
+    return (frame[offset], frame[offset + 1], frame[offset + 2])
 
 
 def _write_text(path: Path, content: str) -> None:
@@ -176,6 +188,8 @@ def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple
         "status_region": STATUS_REGION,
         "anim_region": ANIM_REGION,
         "button_center": BUTTON_CENTER,
+        "bg_sample": BG_SAMPLE,
+        "chip_sample": CHIP_SAMPLE,
     }
     return project, meta
 
@@ -333,6 +347,14 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
         frame0 = _assert_frame(compiler.get_frame(), "initial frame")
         print_status(True, "fetched initial frame")
 
+        bg_pixel = frame_pixel(frame0, SCREEN_WIDTH, *meta["bg_sample"])
+        if bg_pixel != (255, 255, 255):
+            raise RuntimeError(f"unexpected background color at {meta['bg_sample']}: {bg_pixel} != (255, 255, 255)")
+        chip_pixel = frame_pixel(frame0, SCREEN_WIDTH, *meta["chip_sample"])
+        if chip_pixel != (255, 0, 0):
+            raise RuntimeError(f"unexpected chip color at {meta['chip_sample']}: {chip_pixel} != (255, 0, 0)")
+        print_status(True, "validated rendered colors")
+
         anim_region = extract_region(frame0, SCREEN_WIDTH, *meta["anim_region"])
         _wait_for_region_change(
             compiler,
@@ -377,4 +399,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
