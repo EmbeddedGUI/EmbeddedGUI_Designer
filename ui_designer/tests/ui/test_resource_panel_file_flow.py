@@ -2107,8 +2107,9 @@ class TestResourcePanelFileFlow:
         panel.feedback_message.connect(messages.append)
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
+                assert initial_filename == ""
 
             def exec_(self):
                 return 1
@@ -2121,6 +2122,9 @@ class TestResourcePanelFileFlow:
 
             def generated_text(self):
                 return "A\nB\n&#x4E2D;\n"
+
+            def generated_chars(self):
+                return ("A", "B", "\u4E2D")
 
             def overwrite_diff(self):
                 return SimpleNamespace(existing_count=0, new_count=3, added_count=3, removed_count=0)
@@ -2161,8 +2165,9 @@ class TestResourcePanelFileFlow:
         panel.resource_imported.connect(lambda: imported.append(True))
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
+                assert initial_filename == ""
 
             def exec_(self):
                 return 1
@@ -2189,4 +2194,41 @@ class TestResourcePanelFileFlow:
 
         assert existing_path.read_text(encoding="utf-8") == "A\n"
         assert imported == []
+        panel.deleteLater()
+
+    def test_generate_charset_prefills_selected_text_filename_from_text_tab(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        text_path = resource_dir / "charset_existing.txt"
+        text_path.write_text("A\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("charset_existing.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("text", "charset_existing.txt")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "charset_existing.txt",
+        }
         panel.deleteLater()

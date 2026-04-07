@@ -556,10 +556,11 @@ class _PreviewWidget(QWidget):
 class _GenerateCharsetDialog(QDialog):
     """Create or overwrite a text resource from built-in charset presets."""
 
-    def __init__(self, resource_dir, parent=None):
+    def __init__(self, resource_dir, initial_filename="", parent=None):
         super().__init__(parent)
         self.setObjectName("resource_dialog_shell")
         self._resource_dir = resource_dir or ""
+        self._initial_filename = str(initial_filename or "").strip()
         self._presets = charset_presets()
         self._preset_checks = {}
         self._filename_manual = False
@@ -749,6 +750,11 @@ class _GenerateCharsetDialog(QDialog):
         self._save_assign_button.clicked.connect(self._accept_save_and_assign)
         self._cancel_button.clicked.connect(self.reject)
         layout.addWidget(button_box)
+
+        if self._initial_filename:
+            self._filename_edit.setText(self._initial_filename)
+            self._filename_manual = True
+            self._suggested_filename = self._initial_filename
 
         self._refresh_preview()
 
@@ -3349,7 +3355,9 @@ class ResourcePanel(QWidget):
         if not self._ensure_src_dir():
             return
 
-        dialog = _GenerateCharsetDialog(self._src_dir, self)
+        active_type, active_name = self._selected_resource_for_active_tab()
+        initial_filename = active_name if active_type == "text" else ""
+        dialog = _GenerateCharsetDialog(self._src_dir, initial_filename=initial_filename, parent=self)
         if dialog.exec_() != QDialog.Accepted:
             return
 
