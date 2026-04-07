@@ -969,6 +969,16 @@ QFrame#property_grid_section_cell[sectionExpanded="true"] {{
     color: {t['accent_hover']};
 }}
 
+#property_grid_section_indicator {{
+    color: {t['text_soft']};
+    font-size: {t['fs_body_sm']}px;
+    font-weight: {t['fw_medium']};
+}}
+
+#property_grid_section_indicator[sectionExpanded="true"] {{
+    color: {t['accent_hover']};
+}}
+
 QFrame#property_grid_label_cell {{
     background-color: transparent;
     border: none;

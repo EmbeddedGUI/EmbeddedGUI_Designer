@@ -379,8 +379,10 @@ class TestPropertyPanelFileFlow:
 
         text_section = panel._property_sections["Text"]
         assert text_section["header_frame"].property("sectionExpanded") is False
+        assert text_section["arrow_label"].text() == "▶"
         panel._on_property_tree_item_clicked(text_section["item"], 0)
         assert text_section["header_frame"].property("sectionExpanded") is True
+        assert text_section["arrow_label"].text() == "▼"
         panel.deleteLater()
 
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):

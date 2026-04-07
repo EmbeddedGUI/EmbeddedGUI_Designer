@@ -549,7 +549,7 @@ class PropertyPanel(QWidget):
         self._property_tree.setObjectName("property_panel_tree")
         self._property_tree.setColumnCount(2)
         self._property_tree.setHeaderLabels(["Property", "Value"])
-        self._property_tree.setRootIsDecorated(True)
+        self._property_tree.setRootIsDecorated(False)
         self._property_tree.setIndentation(18)
         self._property_tree.setUniformRowHeights(False)
         self._property_tree.setSelectionMode(QTreeWidget.NoSelection)
@@ -703,7 +703,11 @@ class PropertyPanel(QWidget):
         header_frame.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(6, 2, 6, 2)
-        header_layout.setSpacing(0)
+        header_layout.setSpacing(6)
+        arrow_label = QLabel("▶")
+        arrow_label.setObjectName("property_grid_section_indicator")
+        arrow_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        header_layout.addWidget(arrow_label)
         title_label = QLabel(title)
         title_label.setObjectName("property_grid_section_text")
         title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -719,6 +723,7 @@ class PropertyPanel(QWidget):
             "rows": [],
             "key": self._property_tree_section_key(title),
             "header_frame": header_frame,
+            "arrow_label": arrow_label,
             "title_label": title_label,
         }
         self._property_sections[title] = section
@@ -939,6 +944,7 @@ class PropertyPanel(QWidget):
 
     def _refresh_property_section_style(self, section, expanded):
         header_frame = section.get("header_frame")
+        arrow_label = section.get("arrow_label")
         title_label = section.get("title_label")
         if isinstance(header_frame, QWidget):
             header_frame.setProperty("sectionExpanded", bool(expanded))
@@ -946,6 +952,13 @@ class PropertyPanel(QWidget):
             style.unpolish(header_frame)
             style.polish(header_frame)
             header_frame.update()
+        if isinstance(arrow_label, QLabel):
+            arrow_label.setText("▼" if expanded else "▶")
+            arrow_label.setProperty("sectionExpanded", bool(expanded))
+            style = arrow_label.style()
+            style.unpolish(arrow_label)
+            style.polish(arrow_label)
+            arrow_label.update()
         if isinstance(title_label, QWidget):
             title_label.setProperty("sectionExpanded", bool(expanded))
             style = title_label.style()
