@@ -36,6 +36,7 @@ HANDLE_LEFT = 8
 
 # Handle size in pixels
 HANDLE_SIZE = 8
+HIT_TEST_BUCKET_SIZE = 64
 
 
 def _parent_has_layout(widget):
@@ -119,6 +120,7 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = []
         self._interactive_widgets = []
         self._interactive_widgets_reversed = []
+        self._hit_test_buckets = {}
         self._visible_non_root_widgets = False
         self._root_widget = None
         self._snap_target_edges = []
@@ -264,6 +266,26 @@ class WidgetOverlay(QWidget):
 
     def _widget_label_text(self, widget):
         return self._widget_label_text_by_id.get(id(widget), f"{widget.widget_type} : {widget.name}")
+
+    def _bucket_range_for_widget(self, widget):
+        cell_size = HIT_TEST_BUCKET_SIZE
+        left = int(widget.display_x // cell_size)
+        right = int((max(widget.display_x + widget.width - 1, widget.display_x)) // cell_size)
+        top = int(widget.display_y // cell_size)
+        bottom = int((max(widget.display_y + widget.height - 1, widget.display_y)) // cell_size)
+        return left, right, top, bottom
+
+    def _rebuild_hit_test_buckets(self):
+        self._hit_test_buckets = {}
+        for widget in self._interactive_widgets_reversed:
+            left, right, top, bottom = self._bucket_range_for_widget(widget)
+            for bx in range(left, right + 1):
+                for by in range(top, bottom + 1):
+                    self._hit_test_buckets.setdefault((bx, by), []).append(widget)
+
+    def _hit_test_candidates(self, pos):
+        cell_size = HIT_TEST_BUCKET_SIZE
+        return self._hit_test_buckets.get((int(pos.x() // cell_size), int(pos.y() // cell_size)), [])
 
     @staticmethod
     def _point_hits_widget(pos, widget):
@@ -754,6 +776,7 @@ class WidgetOverlay(QWidget):
         self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
         self._interactive_widgets_reversed = list(reversed(self._interactive_widgets))
+        self._rebuild_hit_test_buckets()
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
         self._widget_label_text_by_id = {}
@@ -860,7 +883,7 @@ class WidgetOverlay(QWidget):
     def _widget_at(self, pos, *, allow_root=True):
         """Find widget at given position using display coordinates."""
         hide_root = not allow_root and self._has_visible_non_root_widgets()
-        for w in self._interactive_widgets_reversed:
+        for w in self._hit_test_candidates(pos):
             if hide_root and w.parent is None:
                 continue
             if self._point_hits_widget(pos, w):

@@ -711,6 +711,38 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_widget_hit_test_prefers_topmost_overlapping_widget(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        bottom = WidgetModel("label", name="bottom", x=20, y=20, width=80, height=40)
+        top = WidgetModel("button", name="top", x=30, y=30, width=80, height=40)
+        root.add_child(bottom)
+        root.add_child(top)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            assert overlay._widget_at(QPoint(40, 40), allow_root=False) is top
+        finally:
+            _dispose_widget(overlay)
+
+    def test_widget_hit_test_finds_widget_spanning_multiple_buckets(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
+        wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
+        root.add_child(wide)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            assert overlay._widget_at(QPoint(170, 80), allow_root=False) is wide
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay
