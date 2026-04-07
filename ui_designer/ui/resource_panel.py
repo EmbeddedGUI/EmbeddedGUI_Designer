@@ -3357,6 +3357,9 @@ class ResourcePanel(QWidget):
 
         active_type, active_name = self._selected_resource_for_active_tab()
         initial_filename = active_name if active_type == "text" else ""
+        self._open_generate_charset_dialog(initial_filename=initial_filename)
+
+    def _open_generate_charset_dialog(self, initial_filename=""):
         dialog = _GenerateCharsetDialog(self._src_dir, initial_filename=initial_filename, parent=self)
         if dialog.exec_() != QDialog.Accepted:
             return
@@ -3704,6 +3707,13 @@ class ResourcePanel(QWidget):
 
         copy_act = menu.addAction("Copy Name")
         copy_act.triggered.connect(lambda: QApplication.clipboard().setText(filename))
+
+        if resource_type == "text":
+            menu.addSeparator()
+            generate_charset_act = menu.addAction("Generate Charset...")
+            generate_charset_act.triggered.connect(
+                lambda: self._open_generate_charset_dialog(initial_filename=filename)
+            )
 
         menu.addSeparator()
 

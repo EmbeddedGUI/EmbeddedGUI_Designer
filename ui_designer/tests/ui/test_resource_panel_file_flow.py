@@ -388,6 +388,48 @@ class TestResourcePanelFileFlow:
         assert panel._generate_charset_text_btn.toolTip() == panel._generate_charset_btn.toolTip()
         panel.deleteLater()
 
+    def test_text_resource_context_menu_can_open_generate_charset_for_selected_file(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        text_path = resource_dir / "charset_existing.txt"
+        text_path.write_text("A\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("charset_existing.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel.resize(480, 320)
+        panel.show()
+        qapp.processEvents()
+
+        item = panel._text_list.item(0)
+        pos = panel._text_list.visualItemRect(item).center()
+        captured = {}
+
+        monkeypatch.setattr(panel, "_open_generate_charset_dialog", lambda initial_filename="": captured.setdefault("filename", initial_filename))
+
+        def fake_exec(menu, *args, **kwargs):
+            actions = [action.text() for action in menu.actions() if not action.isSeparator()]
+            captured["actions"] = actions
+            for action in menu.actions():
+                if action.text() == "Generate Charset...":
+                    action.trigger()
+                    break
+            return None
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel.QMenu.exec_", fake_exec)
+
+        panel._show_context_menu(pos, "text")
+
+        assert "Generate Charset..." in captured["actions"]
+        assert captured["filename"] == "charset_existing.txt"
+        panel.deleteLater()
+
     def test_resource_action_buttons_update_accessibility_metadata_with_missing_resources(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
