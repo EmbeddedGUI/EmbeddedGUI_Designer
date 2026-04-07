@@ -1,5 +1,6 @@
 """Preview panel that embeds the exe window with draggable widget overlays."""
 
+import bisect
 import sys
 import json
 from PyQt5.QtWidgets import (
@@ -118,6 +119,10 @@ class WidgetOverlay(QWidget):
         self._interactive_widgets = []
         self._visible_non_root_widgets = False
         self._snap_target_edges = []
+        self._snap_edges_x = []
+        self._snap_edges_x_values = []
+        self._snap_edges_y = []
+        self._snap_edges_y_values = []
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
@@ -200,6 +205,20 @@ class WidgetOverlay(QWidget):
             (screen_rect.width() / zoom) + margin * 2,
             (screen_rect.height() / zoom) + margin * 2,
         )
+
+    def _collect_snap_hits(self, edge_values, edge_entries, target_edge, threshold, widget_id, out_set):
+        if not edge_values:
+            return
+        low = target_edge - (threshold - 1)
+        high = target_edge + (threshold - 1)
+        left = bisect.bisect_left(edge_values, low)
+        right = bisect.bisect_right(edge_values, high)
+        for idx in range(left, right):
+            edge, owner_id = edge_entries[idx]
+            if owner_id == widget_id:
+                continue
+            if abs(target_edge - edge) < threshold:
+                out_set.add(edge)
 
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
@@ -315,6 +334,18 @@ class WidgetOverlay(QWidget):
             (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
             for widget in self._visible_widgets
         ]
+        self._snap_edges_x = sorted(
+            (edge, id(widget))
+            for widget, x_edges, _ in self._snap_target_edges
+            for edge in x_edges
+        )
+        self._snap_edges_y = sorted(
+            (edge, id(widget))
+            for widget, _, y_edges in self._snap_target_edges
+            for edge in y_edges
+        )
+        self._snap_edges_x_values = [edge for edge, _ in self._snap_edges_x]
+        self._snap_edges_y_values = [edge for edge, _ in self._snap_edges_y]
         valid_ids = {id(widget) for widget in self._widgets}
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
@@ -506,25 +537,35 @@ class WidgetOverlay(QWidget):
 
     def _find_snap_guides(self, widget, new_x, new_y, new_w, new_h):
         """Find snap guide lines based on other widgets' edges."""
-        guides = []
         snap_threshold = 5
+        widget_id = id(widget) if widget is not None else 0
+        vertical_guides = set()
+        horizontal_guides = set()
 
         edges_x = [new_x, new_x + new_w // 2, new_x + new_w]  # left, center, right
         edges_y = [new_y, new_y + new_h // 2, new_y + new_h]  # top, center, bottom
 
-        for w, other_x, other_y in self._snap_target_edges:
-            if w == widget:
-                continue
+        for ex in edges_x:
+            self._collect_snap_hits(
+                self._snap_edges_x_values,
+                self._snap_edges_x,
+                ex,
+                snap_threshold,
+                widget_id,
+                vertical_guides,
+            )
+        for ey in edges_y:
+            self._collect_snap_hits(
+                self._snap_edges_y_values,
+                self._snap_edges_y,
+                ey,
+                snap_threshold,
+                widget_id,
+                horizontal_guides,
+            )
 
-            for ex in edges_x:
-                for ox in other_x:
-                    if abs(ex - ox) < snap_threshold:
-                        guides.append(('v', ox))  # vertical line
-            for ey in edges_y:
-                for oy in other_y:
-                    if abs(ey - oy) < snap_threshold:
-                        guides.append(('h', oy))  # horizontal line
-
+        guides = [('v', pos) for pos in sorted(vertical_guides)]
+        guides.extend(('h', pos) for pos in sorted(horizontal_guides))
         return guides
 
     def paintEvent(self, event):

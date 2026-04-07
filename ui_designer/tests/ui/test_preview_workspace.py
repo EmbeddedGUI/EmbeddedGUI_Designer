@@ -425,6 +425,8 @@ class TestWidgetOverlaySelection:
             assert visible_child in overlay._interactive_widgets
             assert locked_child not in overlay._interactive_widgets
             assert len(overlay._snap_target_edges) == len(overlay._visible_widgets)
+            assert len(overlay._snap_edges_x) == len(overlay._visible_widgets) * 3
+            assert len(overlay._snap_edges_y) == len(overlay._visible_widgets) * 3
         finally:
             _dispose_widget(overlay)
 
