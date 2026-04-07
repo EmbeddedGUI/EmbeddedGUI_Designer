@@ -321,6 +321,20 @@ def infer_charset_presets_from_text(text: str) -> tuple[str, ...]:
     return ()
 
 
+def charset_custom_chars_after_presets(text: str, preset_ids) -> tuple[str, ...]:
+    """Return chars from ``text`` that are not covered by the given presets."""
+
+    chars = custom_chars_from_text(text)
+    if not chars:
+        return ()
+
+    covered = set()
+    for preset_id in preset_ids or ():
+        covered.update(charset_chars_for_preset(preset_id))
+
+    return tuple(ch for ch in chars if ch not in covered)
+
+
 def summarize_charset_diff(existing_text: str, new_chars) -> CharsetDiff:
     """Compare an existing text file body with a newly generated charset."""
 

@@ -2,6 +2,7 @@
 
 from ui_designer.services.font_charset_presets import (
     build_charset,
+    charset_custom_chars_after_presets,
     charset_count_for_preset,
     infer_charset_presets_from_text,
     charset_presets,
@@ -76,6 +77,13 @@ def test_infer_charset_presets_from_text_matches_exact_builtin_content():
     assert infer_charset_presets_from_text(serialize_charset_chars(build_charset(("ascii_printable",)).chars)) == (
         "ascii_printable",
     )
+
+
+def test_charset_custom_chars_after_presets_returns_only_uncovered_chars():
+    text = serialize_charset_chars(build_charset(("ascii_printable",), custom_text="中").chars)
+
+    assert charset_custom_chars_after_presets(text, ("ascii_printable",)) == ("中",)
+    assert charset_custom_chars_after_presets(text, ())[-1] == "中"
 
 
 def test_summarize_charset_diff_tracks_added_and_removed_chars():

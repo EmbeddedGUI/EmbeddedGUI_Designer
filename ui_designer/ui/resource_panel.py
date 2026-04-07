@@ -46,6 +46,7 @@ from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXT
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
 from ..services.font_charset_presets import (
     build_charset,
+    charset_custom_chars_after_presets,
     charset_presets,
     infer_charset_presets_from_text,
     preview_charset_chars,
@@ -603,13 +604,14 @@ class _PreviewWidget(QWidget):
 class _GenerateCharsetDialog(QDialog):
     """Create or overwrite a text resource from built-in charset presets."""
 
-    def __init__(self, resource_dir, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+    def __init__(self, resource_dir, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
         super().__init__(parent)
         self.setObjectName("resource_dialog_shell")
         self._resource_dir = resource_dir or ""
         self._initial_filename = str(initial_filename or "").strip()
         self._source_label = str(source_label or "").strip()
         self._initial_preset_ids = tuple(initial_preset_ids or ())
+        self._initial_custom_text = str(initial_custom_text or "")
         self._presets = charset_presets()
         self._preset_checks = {}
         self._filename_manual = False
@@ -819,10 +821,17 @@ class _GenerateCharsetDialog(QDialog):
             self._filename_manual = True
             self._suggested_filename = self._initial_filename
 
+        if self._initial_custom_text:
+            self._custom_input.blockSignals(True)
+            self._custom_input.setPlainText(self._initial_custom_text)
+            self._custom_input.blockSignals(False)
+
         for preset_id in self._initial_preset_ids:
             checkbox = self._preset_checks.get(preset_id)
             if checkbox is not None:
+                checkbox.blockSignals(True)
                 checkbox.setChecked(True)
+                checkbox.blockSignals(False)
 
         self._refresh_preview()
 
@@ -3451,32 +3460,45 @@ class ResourcePanel(QWidget):
             return
         normalized_initial = str(initial_filename or "").strip()
         source_name = str(source_name or "").strip()
+        existing_text = ""
         if not normalized_initial:
             normalized_initial = _suggest_charset_filename_for_resource(resource_type, source_name)
+        if normalized_initial:
+            existing_text_path = os.path.join(self._src_dir, normalized_initial)
+            if os.path.isfile(existing_text_path):
+                try:
+                    with open(existing_text_path, "r", encoding="utf-8", errors="replace") as handle:
+                        existing_text = handle.read()
+                except OSError:
+                    existing_text = ""
         if not initial_preset_ids:
             initial_preset_ids = _suggest_charset_presets_for_resource("text", normalized_initial)
-            if not initial_preset_ids and normalized_initial:
-                existing_text_path = os.path.join(self._src_dir, normalized_initial)
-                if os.path.isfile(existing_text_path):
-                    try:
-                        with open(existing_text_path, "r", encoding="utf-8", errors="replace") as handle:
-                            initial_preset_ids = infer_charset_presets_from_text(handle.read())
-                    except OSError:
-                        initial_preset_ids = ()
+            if not initial_preset_ids and existing_text:
+                initial_preset_ids = infer_charset_presets_from_text(existing_text)
             if not initial_preset_ids:
                 initial_preset_ids = _suggest_charset_presets_for_resource(resource_type, source_name)
+        initial_custom_text = ""
+        if existing_text:
+            if initial_preset_ids:
+                initial_custom_text = serialize_charset_chars(
+                    charset_custom_chars_after_presets(existing_text, initial_preset_ids)
+                ).rstrip()
+            else:
+                initial_custom_text = existing_text.rstrip()
         self._open_generate_charset_dialog(
             initial_filename=normalized_initial,
             source_label=source_name if resource_type in {"font", "text"} else "",
             initial_preset_ids=initial_preset_ids,
+            initial_custom_text=initial_custom_text,
         )
 
-    def _open_generate_charset_dialog(self, initial_filename="", source_label="", initial_preset_ids=()):
+    def _open_generate_charset_dialog(self, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text=""):
         dialog = _GenerateCharsetDialog(
             self._src_dir,
             initial_filename=initial_filename,
             source_label=source_label,
             initial_preset_ids=initial_preset_ids,
+            initial_custom_text=initial_custom_text,
             parent=self,
         )
         if dialog.exec_() != QDialog.Accepted:

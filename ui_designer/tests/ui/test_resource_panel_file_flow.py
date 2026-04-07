@@ -2239,6 +2239,26 @@ class TestResourcePanelFileFlow:
         finally:
             dialog.deleteLater()
 
+    def test_generate_charset_dialog_can_apply_initial_custom_text(self, qapp, tmp_path):
+        from ui_designer.ui.resource_panel import _GenerateCharsetDialog
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        dialog = _GenerateCharsetDialog(
+            str(resource_dir),
+            initial_filename="charset_ascii_printable_custom.txt",
+            source_label="demo_font.ttf",
+            initial_preset_ids=("ascii_printable",),
+            initial_custom_text="&#x4E2D;",
+        )
+        try:
+            assert dialog._preset_checks["ascii_printable"].isChecked() is True
+            assert dialog._custom_input.toPlainText() == "&#x4E2D;"
+            assert dialog._char_metric.text() == "96 chars"
+        finally:
+            dialog.deleteLater()
+
     def test_generate_charset_dialog_shows_no_default_recommendation_for_icon_font(self, qapp, tmp_path):
         from ui_designer.ui.resource_panel import _GenerateCharsetDialog
 
@@ -2591,6 +2611,92 @@ class TestResourcePanelFileFlow:
             "initial_filename": "charset_gb2312_all_custom.txt",
             "source_label": "charset_gb2312_all_custom.txt",
             "initial_preset_ids": ("gb2312_all",),
+        }
+        panel.deleteLater()
+
+    def test_generate_charset_prefills_custom_text_from_existing_file_beyond_inferred_preset(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        text_path = resource_dir / "charset_ascii_printable_custom.txt"
+        text_path.write_text("&#x0020;\n!\n\"\n#\n$\n%\n&\n'\n(\n)\n*\n+\n,\n-\n.\n/\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n:\n;\n<\n=\n>\n?\n@\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nN\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ\n[\n\\\n]\n^\n_\n`\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n{\n|\n}\n~\n&#x4E2D;\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("charset_ascii_printable_custom.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("text", "charset_ascii_printable_custom.txt")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "charset_ascii_printable_custom.txt",
+            "source_label": "charset_ascii_printable_custom.txt",
+            "initial_preset_ids": ("ascii_printable",),
+            "initial_custom_text": "&#x4E2D;",
+        }
+        panel.deleteLater()
+
+    def test_generate_charset_prefills_entire_custom_text_when_no_preset_matches(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        text_path = resource_dir / "runtime_chars.txt"
+        text_path.write_text("&#x4E2D;\n&#x6587;\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("runtime_chars.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._select_resource_item("text", "runtime_chars.txt")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
+                captured["resource_dir"] = resource_dir_arg
+                captured["initial_filename"] = initial_filename
+                captured["source_label"] = source_label
+                captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+
+        panel._on_generate_charset()
+
+        assert captured == {
+            "resource_dir": str(resource_dir),
+            "initial_filename": "runtime_chars.txt",
+            "source_label": "runtime_chars.txt",
+            "initial_preset_ids": (),
+            "initial_custom_text": "&#x4E2D;\n&#x6587;",
         }
         panel.deleteLater()
 
