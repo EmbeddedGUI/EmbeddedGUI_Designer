@@ -385,6 +385,23 @@ class TestPropertyPanelFileFlow:
         assert text_section["arrow_label"].text() == "▼"
         panel.deleteLater()
 
+    def test_property_grid_preserves_name_column_width_across_rebuilds(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        panel = PropertyPanel()
+        panel.set_widget(first)
+        panel._property_tree.setColumnWidth(0, 214)
+        panel._on_property_tree_section_resized(0, 176, 214)
+
+        panel.set_widget(second)
+
+        assert panel._property_tree.columnWidth(0) == 214
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel

@@ -290,6 +290,7 @@ class PropertyPanel(QWidget):
         self._string_keys = []        # list of i18n string keys for @string/ completions
         self._inspector_group_expanded = {}
         self._header_size_chip = None
+        self._property_tree_name_column_width = 176
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -559,7 +560,8 @@ class PropertyPanel(QWidget):
         self._property_tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
         self._property_tree.header().setMinimumSectionSize(120)
         self._property_tree.header().hide()
-        self._property_tree.setColumnWidth(0, 176)
+        self._property_tree.setColumnWidth(0, self._property_tree_name_column_width)
+        self._property_tree.header().sectionResized.connect(self._on_property_tree_section_resized)
         self._property_tree.setExpandsOnDoubleClick(False)
         self._property_tree.itemClicked.connect(self._on_property_tree_item_clicked)
         self._property_tree.itemExpanded.connect(self._on_property_tree_item_expanded)
@@ -666,6 +668,7 @@ class PropertyPanel(QWidget):
     def _reset_property_tree(self):
         if not hasattr(self, "_property_tree"):
             return
+        self._property_tree_name_column_width = max(self._property_tree.columnWidth(0), 120)
         self._property_tree.blockSignals(True)
         try:
             self._property_tree.clear()
@@ -674,6 +677,11 @@ class PropertyPanel(QWidget):
         self._property_sections = OrderedDict()
         self._property_tree_items = {}
         self._property_grid_rows_by_widget = {}
+
+    def _on_property_tree_section_resized(self, logical_index, _old_size, new_size):
+        if logical_index != 0:
+            return
+        self._property_tree_name_column_width = max(int(new_size or 0), 120)
 
     def _property_tree_section_key(self, title):
         return self._inspector_group_storage_key(title)
