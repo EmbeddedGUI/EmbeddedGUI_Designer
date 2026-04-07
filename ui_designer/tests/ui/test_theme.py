@@ -562,9 +562,10 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         property_grid_section_fill = css.split("QFrame#property_grid_section_fill {", 1)[1].split("}", 1)[0]
         property_grid_section_fill_expanded = css.split('QFrame#property_grid_section_fill[sectionExpanded="true"] {', 1)[1].split("}", 1)[0]
         property_grid_section_hover = css.split('QFrame#property_grid_section_cell[sectionHovered="true"],', 1)[1].split("}", 1)[0]
-        property_grid_section_text = css.split("#property_grid_section_text {", 1)[1].split("}", 1)[0]
-        property_grid_section_text_expanded = css.split('#property_grid_section_text[sectionExpanded="true"] {', 1)[1].split("}", 1)[0]
-        property_grid_section_indicator = css.split("#property_grid_section_indicator {", 1)[1].split("}", 1)[0]
+        property_grid_section_text = css.split("\n#property_grid_section_text {", 1)[1].split("}", 1)[0]
+        property_grid_section_text_expanded = css.split('\n#property_grid_section_text[sectionExpanded="true"] {', 1)[1].split("}", 1)[0]
+        property_grid_section_indicator_button = css.split("QToolButton#property_grid_section_indicator {", 1)[1].split("}", 1)[0]
+        property_grid_section_indicator = css.split("\n#property_grid_section_indicator {", 1)[1].split("}", 1)[0]
         property_grid_section_indicator_expanded = css.split('#property_grid_section_indicator[sectionExpanded="true"] {', 1)[1].split("}", 1)[0]
         property_grid_section_indicator_hover = css.split('#property_grid_section_text[sectionHovered="true"],', 1)[1].split("}", 1)[0]
         property_grid_label = css.split("QFrame#property_grid_label_cell {", 1)[1].split("}", 1)[0]
@@ -603,6 +604,8 @@ def test_property_panel_styles_use_engineering_surface_tokens():
         assert f"background-color: {t['surface_hover']};" in property_grid_section_hover
         assert f"color: {t['text']};" in property_grid_section_text
         assert f"color: {t['accent_hover']};" in property_grid_section_text_expanded
+        assert "background-color: transparent;" in property_grid_section_indicator_button
+        assert "border: none;" in property_grid_section_indicator_button
         assert f"color: {t['text_soft']};" in property_grid_section_indicator
         assert f"color: {t['accent_hover']};" in property_grid_section_indicator_expanded
         assert f"color: {t['text']};" in property_grid_section_indicator_hover

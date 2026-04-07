@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QDialog, QListWidget, QListWidgetItem,
     QDialogButtonBox, QMessageBox, QFileDialog, QFrame, QSpinBox,
-    QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication,
+    QTreeWidget, QTreeWidgetItem, QHeaderView, QApplication, QToolButton,
 )
 from PyQt5.QtCore import pyqtSignal, Qt, QSignalBlocker, QMargins, QSize, QEvent, QTimer
 from PyQt5.QtGui import QFont, QColor, QBrush
@@ -729,11 +729,13 @@ class PropertyPanel(QWidget):
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(6, 2, 6, 2)
         header_layout.setSpacing(3)
-        arrow_label = QLabel("▶")
-        arrow_label.setObjectName("property_grid_section_indicator")
-        arrow_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        arrow_label.setFixedWidth(8)
-        header_layout.addWidget(arrow_label)
+        arrow_button = QToolButton()
+        arrow_button.setObjectName("property_grid_section_indicator")
+        arrow_button.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        arrow_button.setAutoRaise(True)
+        arrow_button.setArrowType(Qt.RightArrow)
+        arrow_button.setFixedSize(10, 10)
+        header_layout.addWidget(arrow_button)
         title_label = QLabel(title)
         title_label.setObjectName("property_grid_section_text")
         title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -756,7 +758,7 @@ class PropertyPanel(QWidget):
             "key": self._property_tree_section_key(title),
             "header_frame": header_frame,
             "header_fill": header_fill,
-            "arrow_label": arrow_label,
+            "arrow_label": arrow_button,
             "title_label": title_label,
         }
         self._property_sections[title] = section
@@ -1006,8 +1008,8 @@ class PropertyPanel(QWidget):
             style.unpolish(header_fill)
             style.polish(header_fill)
             header_fill.update()
-        if isinstance(arrow_label, QLabel):
-            arrow_label.setText("▼" if expanded else "▶")
+        if isinstance(arrow_label, QToolButton):
+            arrow_label.setArrowType(Qt.DownArrow if expanded else Qt.RightArrow)
             arrow_label.setProperty("sectionExpanded", bool(expanded))
             style = arrow_label.style()
             style.unpolish(arrow_label)

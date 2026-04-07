@@ -7,7 +7,8 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget, QToolButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -379,10 +380,11 @@ class TestPropertyPanelFileFlow:
 
         text_section = panel._property_sections["Text"]
         assert text_section["header_frame"].property("sectionExpanded") is False
-        assert text_section["arrow_label"].text() == "▶"
+        assert isinstance(text_section["arrow_label"], QToolButton)
+        assert text_section["arrow_label"].arrowType() == Qt.RightArrow
         panel._on_property_tree_item_clicked(text_section["item"], 0)
         assert text_section["header_frame"].property("sectionExpanded") is True
-        assert text_section["arrow_label"].text() == "▼"
+        assert text_section["arrow_label"].arrowType() == Qt.DownArrow
         panel.deleteLater()
 
     def test_property_grid_section_hover_tracks_state(self, qapp):

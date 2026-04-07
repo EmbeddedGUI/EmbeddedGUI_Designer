@@ -988,6 +988,16 @@ QFrame#property_grid_section_fill[sectionHovered="true"] {{
     color: {t['accent_hover']};
 }}
 
+QToolButton#property_grid_section_indicator {{
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}}
+
+QToolButton#property_grid_section_indicator::menu-indicator {{
+    image: none;
+}}
+
 #property_grid_section_indicator {{
     color: {t['text_soft']};
     font-size: {t['fs_body_sm']}px;
