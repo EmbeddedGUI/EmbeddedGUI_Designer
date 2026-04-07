@@ -125,7 +125,10 @@ class WidgetOverlay(QWidget):
         self._snap_edges_x_values = []
         self._snap_edges_y = []
         self._snap_edges_y_values = []
-        self._snap_owner_ids_by_parent = {}
+        self._snap_edges_x_lookup_by_parent = {}
+        self._snap_edges_x_values_lookup_by_parent = {}
+        self._snap_edges_y_lookup_by_parent = {}
+        self._snap_edges_y_values_lookup_by_parent = {}
         self._selected = None
         self._hovered = None
         self._multi_selected = set()  # secondary selected WidgetModel values
@@ -444,7 +447,7 @@ class WidgetOverlay(QWidget):
         self._passive_bounds_cache_key = cache_key
         return self._passive_bounds_cache
 
-    def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id, allowed_owner_ids=None):
+    def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
         if not edge_values:
             return None
         low = target_edge - (threshold - 1)
@@ -457,8 +460,6 @@ class WidgetOverlay(QWidget):
             edge, owner_id = edge_entries[idx]
             if owner_id == widget_id:
                 continue
-            if allowed_owner_ids is not None and owner_id not in allowed_owner_ids:
-                continue
             delta = abs(target_edge - edge)
             if delta >= threshold:
                 continue
@@ -467,13 +468,22 @@ class WidgetOverlay(QWidget):
                 best_delta = delta
         return best_edge
 
-    def _allowed_snap_owner_ids(self, widget):
+    def _snap_lookup_for_widget(self, widget, axis):
         if widget is None or widget.parent is None:
-            return None
-        owner_ids = set(self._snap_owner_ids_by_parent.get(id(widget.parent), ()))
-        if self._root_widget is not None:
-            owner_ids.add(id(self._root_widget))
-        return owner_ids
+            if axis == "y":
+                return self._snap_edges_y_values, self._snap_edges_y
+            return self._snap_edges_x_values, self._snap_edges_x
+
+        parent_id = id(widget.parent)
+        if axis == "y":
+            return (
+                self._snap_edges_y_values_lookup_by_parent.get(parent_id, self._snap_edges_y_values),
+                self._snap_edges_y_lookup_by_parent.get(parent_id, self._snap_edges_y),
+            )
+        return (
+            self._snap_edges_x_values_lookup_by_parent.get(parent_id, self._snap_edges_x_values),
+            self._snap_edges_x_lookup_by_parent.get(parent_id, self._snap_edges_x),
+        )
 
     def _parent_display_origin(self, widget):
         parent = getattr(widget, "parent", None)
@@ -487,15 +497,14 @@ class WidgetOverlay(QWidget):
         proposed_pos,
         size,
         *,
-        edge_values,
-        edge_entries,
+        axis,
         eff_grid,
         min_pos,
         max_pos,
     ):
         snap_threshold = 5
         widget_id = id(widget) if widget is not None else 0
-        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
+        edge_values, edge_entries = self._snap_lookup_for_widget(widget, axis)
         max_pos = max(min_pos, max_pos)
         best_hit = None
         best_offset = 0
@@ -509,7 +518,6 @@ class WidgetOverlay(QWidget):
                 target_edge,
                 snap_threshold,
                 widget_id,
-                allowed_owner_ids=allowed_owner_ids,
             )
             if hit is None:
                 continue
@@ -533,15 +541,14 @@ class WidgetOverlay(QWidget):
         widget,
         proposed_edge,
         *,
-        edge_values,
-        edge_entries,
+        axis,
         eff_grid,
         min_pos,
         max_pos,
     ):
         snap_threshold = 5
         widget_id = id(widget) if widget is not None else 0
-        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
+        edge_values, edge_entries = self._snap_lookup_for_widget(widget, axis)
         max_pos = max(min_pos, max_pos)
         hit = self._nearest_snap_hit(
             edge_values,
@@ -549,7 +556,6 @@ class WidgetOverlay(QWidget):
             proposed_edge,
             snap_threshold,
             widget_id,
-            allowed_owner_ids=allowed_owner_ids,
         )
         if hit is not None and min_pos <= hit <= max_pos:
             return hit, hit
@@ -696,6 +702,31 @@ class WidgetOverlay(QWidget):
         )
         self._snap_edges_x_values = [edge for edge, _ in self._snap_edges_x]
         self._snap_edges_y_values = [edge for edge, _ in self._snap_edges_y]
+        root_entries_x = []
+        root_entries_y = []
+        if self._root_widget is not None:
+            root_id = id(self._root_widget)
+            root_entries_x = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="x")]
+            root_entries_y = [(edge, root_id) for edge in self._widget_edge_triplets(self._root_widget, axis="y")]
+        self._snap_edges_x_lookup_by_parent = {}
+        self._snap_edges_x_values_lookup_by_parent = {}
+        self._snap_edges_y_lookup_by_parent = {}
+        self._snap_edges_y_values_lookup_by_parent = {}
+        widgets_by_parent = {}
+        for widget in self._visible_widgets:
+            if widget.parent is not None:
+                widgets_by_parent.setdefault(id(widget.parent), []).append(widget)
+        for parent_id, widgets in widgets_by_parent.items():
+            entries_x = sorted(
+                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="x")] + root_entries_x
+            )
+            entries_y = sorted(
+                [(edge, id(widget)) for widget in widgets for edge in self._widget_edge_triplets(widget, axis="y")] + root_entries_y
+            )
+            self._snap_edges_x_lookup_by_parent[parent_id] = entries_x
+            self._snap_edges_x_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_x]
+            self._snap_edges_y_lookup_by_parent[parent_id] = entries_y
+            self._snap_edges_y_values_lookup_by_parent[parent_id] = [edge for edge, _ in entries_y]
         valid_ids = {id(widget) for widget in self._widgets}
         self._multi_selected = {widget for widget in self._multi_selected if id(widget) in valid_ids}
         if self._selected is not None and id(self._selected) not in valid_ids:
@@ -894,7 +925,8 @@ class WidgetOverlay(QWidget):
             return []
         snap_threshold = 5
         widget_id = id(widget) if widget is not None else 0
-        allowed_owner_ids = self._allowed_snap_owner_ids(widget)
+        edge_values_x, edge_entries_x = self._snap_lookup_for_widget(widget, "x")
+        edge_values_y, edge_entries_y = self._snap_lookup_for_widget(widget, "y")
         vertical_guides = set()
         horizontal_guides = set()
 
@@ -903,23 +935,21 @@ class WidgetOverlay(QWidget):
 
         for ex in edges_x:
             hit = self._nearest_snap_hit(
-                self._snap_edges_x_values,
-                self._snap_edges_x,
+                edge_values_x,
+                edge_entries_x,
                 ex,
                 snap_threshold,
                 widget_id,
-                allowed_owner_ids=allowed_owner_ids,
             )
             if hit is not None:
                 vertical_guides.add(hit)
         for ey in edges_y:
             hit = self._nearest_snap_hit(
-                self._snap_edges_y_values,
-                self._snap_edges_y,
+                edge_values_y,
+                edge_entries_y,
                 ey,
                 snap_threshold,
                 widget_id,
-                allowed_owner_ids=allowed_owner_ids,
             )
             if hit is not None:
                 horizontal_guides.add(hit)
@@ -1196,8 +1226,7 @@ class WidgetOverlay(QWidget):
             self._selected,
             new_pos.x(),
             self._selected.width,
-            edge_values=self._snap_edges_x_values,
-            edge_entries=self._snap_edges_x,
+            axis="x",
             eff_grid=eff_grid,
             min_pos=0,
             max_pos=self._base_width - self._selected.width,
@@ -1206,8 +1235,7 @@ class WidgetOverlay(QWidget):
             self._selected,
             new_pos.y(),
             self._selected.height,
-            edge_values=self._snap_edges_y_values,
-            edge_entries=self._snap_edges_y,
+            axis="y",
             eff_grid=eff_grid,
             min_pos=0,
             max_pos=self._base_height - self._selected.height,
@@ -1264,8 +1292,7 @@ class WidgetOverlay(QWidget):
             left, guide_x = self._snap_resize_edge(
                 self._selected,
                 r.x() + dx,
-                edge_values=self._snap_edges_x_values,
-                edge_entries=self._snap_edges_x,
+                axis="x",
                 eff_grid=eff_grid,
                 min_pos=0,
                 max_pos=min(right - min_size, self._base_width - min_size),
@@ -1274,8 +1301,7 @@ class WidgetOverlay(QWidget):
             right, guide_x = self._snap_resize_edge(
                 self._selected,
                 r.x() + r.width() + dx,
-                edge_values=self._snap_edges_x_values,
-                edge_entries=self._snap_edges_x,
+                axis="x",
                 eff_grid=eff_grid,
                 min_pos=max(left + min_size, min_size),
                 max_pos=self._base_width,
@@ -1284,8 +1310,7 @@ class WidgetOverlay(QWidget):
             top, guide_y = self._snap_resize_edge(
                 self._selected,
                 r.y() + dy,
-                edge_values=self._snap_edges_y_values,
-                edge_entries=self._snap_edges_y,
+                axis="y",
                 eff_grid=eff_grid,
                 min_pos=0,
                 max_pos=min(bottom - min_size, self._base_height - min_size),
@@ -1294,8 +1319,7 @@ class WidgetOverlay(QWidget):
             bottom, guide_y = self._snap_resize_edge(
                 self._selected,
                 r.y() + r.height() + dy,
-                edge_values=self._snap_edges_y_values,
-                edge_entries=self._snap_edges_y,
+                axis="y",
                 eff_grid=eff_grid,
                 min_pos=max(top + min_size, min_size),
                 max_pos=self._base_height,

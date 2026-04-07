@@ -654,6 +654,48 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_nested_drag_ignores_snap_targets_from_other_parent_branches(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        overlay.set_base_size(240, 320)
+        overlay.set_grid_size(0)
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        left_branch = WidgetModel("group", name="left_branch", x=20, y=20, width=80, height=80)
+        right_branch = WidgetModel("group", name="right_branch", x=130, y=20, width=80, height=80)
+        moving = WidgetModel("label", name="moving", x=8, y=8, width=20, height=20)
+        cousin = WidgetModel("label", name="cousin", x=0, y=0, width=20, height=20)
+        root.add_child(left_branch)
+        root.add_child(right_branch)
+        left_branch.add_child(moving)
+        right_branch.add_child(cousin)
+
+        root.display_x = root.x
+        root.display_y = root.y
+        left_branch.display_x = left_branch.x
+        left_branch.display_y = left_branch.y
+        right_branch.display_x = right_branch.x
+        right_branch.display_y = right_branch.y
+        moving.display_x = left_branch.display_x + moving.x
+        moving.display_y = left_branch.display_y + moving.y
+        cousin.display_x = right_branch.display_x + cousin.x
+        cousin.display_y = right_branch.display_y + cousin.y
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            overlay.set_selection([moving], primary=moving)
+            overlay._dragging = True
+            overlay._drag_offset = QPoint()
+
+            overlay._do_free_drag(QPoint(128, 31))
+
+            assert moving.display_x == 128
+            assert moving.x == 108
+            assert overlay._snap_guides == []
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay
