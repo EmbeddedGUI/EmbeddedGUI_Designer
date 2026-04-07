@@ -118,6 +118,7 @@ class WidgetOverlay(QWidget):
         self._widgets = []  # list of WidgetModel
         self._visible_widgets = []
         self._interactive_widgets = []
+        self._interactive_widgets_reversed = []
         self._visible_non_root_widgets = False
         self._root_widget = None
         self._snap_target_edges = []
@@ -140,6 +141,7 @@ class WidgetOverlay(QWidget):
         self._label_font_cache_pt = None
         self._coord_font_cache = None
         self._coord_font_cache_pt = None
+        self._widget_label_text_by_id = {}
 
         # Zoom state
         self._zoom = 1.0
@@ -260,6 +262,48 @@ class WidgetOverlay(QWidget):
             self._coord_font_cache_pt = point_size
         return self._coord_font_cache
 
+    def _widget_label_text(self, widget):
+        return self._widget_label_text_by_id.get(id(widget), f"{widget.widget_type} : {widget.name}")
+
+    @staticmethod
+    def _point_hits_widget(pos, widget):
+        x = pos.x()
+        y = pos.y()
+        return (
+            widget.display_x <= x < (widget.display_x + widget.width)
+            and widget.display_y <= y < (widget.display_y + widget.height)
+        )
+
+    @staticmethod
+    def _rect_intersects_widget(rect, widget):
+        if rect is None or rect.isNull():
+            return False
+        left = widget.display_x
+        top = widget.display_y
+        right = left + widget.width
+        bottom = top + widget.height
+        return not (
+            rect.right() < left
+            or rect.left() >= right
+            or rect.bottom() < top
+            or rect.top() >= bottom
+        )
+
+    @staticmethod
+    def _widget_intersects_visible_rect(widget, visible_logical_rect):
+        if visible_logical_rect is None or visible_logical_rect.isNull():
+            return True
+        left = widget.display_x
+        top = widget.display_y
+        right = left + widget.width
+        bottom = top + widget.height
+        return not (
+            visible_logical_rect.right() < left
+            or visible_logical_rect.left() >= right
+            or visible_logical_rect.bottom() < top
+            or visible_logical_rect.top() >= bottom
+        )
+
     def _widget_edge_triplets(self, widget, *, axis="x"):
         if axis == "y":
             start = widget.display_y
@@ -371,9 +415,9 @@ class WidgetOverlay(QWidget):
 
     def _draw_widget_bounds(self, painter, widgets, z, *, visible_logical_rect=None, passive_only=False):
         for widget in widgets:
-            rect = QRect(widget.display_x, widget.display_y, widget.width, widget.height)
-            if visible_logical_rect is not None and not visible_logical_rect.intersects(QRectF(rect)):
+            if not self._widget_intersects_visible_rect(widget, visible_logical_rect):
                 continue
+            rect = QRect(widget.display_x, widget.display_y, widget.width, widget.height)
             pen, fill = self._widget_bounds_style(widget, z, passive_only=passive_only)
             painter.setPen(pen)
             painter.setBrush(fill)
@@ -410,19 +454,15 @@ class WidgetOverlay(QWidget):
         show_full = self._show_full_label_overlay() if show_full_labels is None else bool(show_full_labels)
 
         for w in widgets:
-            if visible_logical_rect is not None:
-                logical_rect = QRectF(w.display_x, w.display_y, w.width, w.height)
-                if not visible_logical_rect.intersects(logical_rect):
-                    continue
+            if not self._widget_intersects_visible_rect(w, visible_logical_rect):
+                continue
             if not show_full and w not in {self._selected, self._hovered} and w not in self._multi_selected:
                 continue
             sx = int(w.display_x * z)
             sy = int(w.display_y * z)
             sw = int(w.width * z)
             sh = int(w.height * z)
-            label_text = f"{w.widget_type} : {w.name}"
-            if self._is_locked(w):
-                label_text += " [L]"
+            label_text = self._widget_label_text(w)
 
             if self._solid_background and show_full:
                 if sh < lh:
@@ -713,16 +753,19 @@ class WidgetOverlay(QWidget):
         self._widgets = widgets or []
         self._visible_widgets = [widget for widget in self._widgets if not self._is_hidden(widget)]
         self._interactive_widgets = [widget for widget in self._visible_widgets if not self._is_locked(widget)]
+        self._interactive_widgets_reversed = list(reversed(self._interactive_widgets))
         self._visible_non_root_widgets = any(widget.parent is not None for widget in self._visible_widgets)
         self._root_widget = next((widget for widget in self._visible_widgets if widget.parent is None), None)
+        self._widget_label_text_by_id = {}
+        for widget in self._visible_widgets:
+            label_text = f"{widget.widget_type} : {widget.name}"
+            if self._is_locked(widget):
+                label_text += " [L]"
+            self._widget_label_text_by_id[id(widget)] = label_text
         self._snap_target_edges = [
             (widget, self._widget_edge_triplets(widget, axis="x"), self._widget_edge_triplets(widget, axis="y"))
             for widget in self._visible_widgets
         ]
-        self._snap_owner_ids_by_parent = {}
-        for widget in self._visible_widgets:
-            if widget.parent is not None:
-                self._snap_owner_ids_by_parent.setdefault(id(widget.parent), set()).add(id(widget))
         self._snap_edges_x = sorted(
             (edge, id(widget))
             for widget, x_edges, _ in self._snap_target_edges
@@ -817,11 +860,10 @@ class WidgetOverlay(QWidget):
     def _widget_at(self, pos, *, allow_root=True):
         """Find widget at given position using display coordinates."""
         hide_root = not allow_root and self._has_visible_non_root_widgets()
-        for w in reversed(self._interactive_widgets):
+        for w in self._interactive_widgets_reversed:
             if hide_root and w.parent is None:
                 continue
-            rect = QRect(w.display_x, w.display_y, w.width, w.height)
-            if rect.contains(pos):
+            if self._point_hits_widget(pos, w):
                 return w
         return None
 
@@ -1090,7 +1132,7 @@ class WidgetOverlay(QWidget):
         if self._show_coords and self._selected:
             w = self._selected
             coord_text = f"({w.x}, {w.y})  {w.width}\u00d7{w.height}"
-            painter.setFont(QFont("Consolas", self._coord_tooltip_font_point_size()))
+            painter.setFont(self._coord_tooltip_font())
             fm2 = painter.fontMetrics()
             tw = fm2.horizontalAdvance(coord_text) + 8
             th = fm2.height() + 4
@@ -1418,8 +1460,7 @@ class WidgetOverlay(QWidget):
             for w in self._widgets:
                 if self._is_hidden(w):
                     continue
-                wr = QRect(w.display_x, w.display_y, w.width, w.height)
-                if rect.intersects(wr):
+                if self._rect_intersects_widget(rect, w):
                     matched.append(w)
             widgets, primary = self._selection_after_rubber_band(matched)
             self.set_selection(widgets, primary=primary)
