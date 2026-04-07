@@ -430,6 +430,29 @@ class TestWidgetOverlaySelection:
         finally:
             _dispose_widget(overlay)
 
+    def test_snap_guides_keep_only_nearest_hit_per_axis(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.preview_panel import WidgetOverlay
+
+        overlay = WidgetOverlay()
+        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
+        near_a = WidgetModel("label", name="near_a", x=39, y=40, width=20, height=20)
+        near_b = WidgetModel("label", name="near_b", x=42, y=43, width=20, height=20)
+        root.add_child(moving)
+        root.add_child(near_a)
+        root.add_child(near_b)
+
+        try:
+            overlay.set_widgets(root.get_all_widgets_flat())
+            guides = overlay._find_snap_guides(moving, 20, 20, moving.width, moving.height)
+            vertical = [pos for axis, pos in guides if axis == "v"]
+            horizontal = [pos for axis, pos in guides if axis == "h"]
+            assert len(vertical) <= 1
+            assert len(horizontal) <= 1
+        finally:
+            _dispose_widget(overlay)
+
     def _make_overlay(self):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import WidgetOverlay

@@ -239,19 +239,26 @@ class WidgetOverlay(QWidget):
         for rect in self._screen_rect_for_guides(guides):
             self.update(rect)
 
-    def _collect_snap_hits(self, edge_values, edge_entries, target_edge, threshold, widget_id, out_set):
+    def _nearest_snap_hit(self, edge_values, edge_entries, target_edge, threshold, widget_id):
         if not edge_values:
-            return
+            return None
         low = target_edge - (threshold - 1)
         high = target_edge + (threshold - 1)
         left = bisect.bisect_left(edge_values, low)
         right = bisect.bisect_right(edge_values, high)
+        best_edge = None
+        best_delta = None
         for idx in range(left, right):
             edge, owner_id = edge_entries[idx]
             if owner_id == widget_id:
                 continue
-            if abs(target_edge - edge) < threshold:
-                out_set.add(edge)
+            delta = abs(target_edge - edge)
+            if delta >= threshold:
+                continue
+            if best_delta is None or delta < best_delta:
+                best_edge = edge
+                best_delta = delta
+        return best_edge
 
     def _refresh_surface_style(self):
         self.setProperty("solidBackground", bool(self._solid_background))
@@ -579,23 +586,25 @@ class WidgetOverlay(QWidget):
         edges_y = [new_y, new_y + new_h // 2, new_y + new_h]  # top, center, bottom
 
         for ex in edges_x:
-            self._collect_snap_hits(
+            hit = self._nearest_snap_hit(
                 self._snap_edges_x_values,
                 self._snap_edges_x,
                 ex,
                 snap_threshold,
                 widget_id,
-                vertical_guides,
             )
+            if hit is not None:
+                vertical_guides.add(hit)
         for ey in edges_y:
-            self._collect_snap_hits(
+            hit = self._nearest_snap_hit(
                 self._snap_edges_y_values,
                 self._snap_edges_y,
                 ey,
                 snap_threshold,
                 widget_id,
-                horizontal_guides,
             )
+            if hit is not None:
+                horizontal_guides.add(hit)
 
         guides = [('v', pos) for pos in sorted(vertical_guides)]
         guides.extend(('h', pos) for pos in sorted(horizontal_guides))
@@ -847,7 +856,12 @@ class WidgetOverlay(QWidget):
         pos = self._to_logical(event.pos())
 
         # Emit mouse position for status bar (always, even when not dragging)
-        widget_under = self._widget_at(pos, allow_root=False)
+        if self._dragging or self._resizing:
+            widget_under = self._selected
+        elif self._rubber_band:
+            widget_under = None
+        else:
+            widget_under = self._widget_at(pos, allow_root=False)
         self.mouse_position_changed.emit(pos.x(), pos.y(), widget_under)
 
         if self._rubber_band:
