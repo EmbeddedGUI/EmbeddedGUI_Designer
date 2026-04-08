@@ -807,6 +807,9 @@ class TestResourcePanelFileFlow:
             "Showing 3 of 3 image resources. Missing: 1. Unused: 1. Search: none. Status: All."
         )
         assert reset_button.isEnabled() is False
+        assert panel._resource_action_buttons["image"]["restore"].isEnabled() is True
+        assert panel._resource_action_buttons["image"]["replace"].isEnabled() is True
+        assert panel._resource_action_buttons["image"]["next_missing"].isEnabled() is True
 
         search_edit.setText("sp")
         status_combo.setCurrentIndex(status_combo.findData("unused"))
@@ -818,6 +821,10 @@ class TestResourcePanelFileFlow:
         assert summary_label.accessibleName() == (
             "Resource filter summary: Showing 1 of 3 image resources. Missing: 1. Unused: 1. Search: sp. Status: Unused."
         )
+        assert panel._resource_action_buttons["image"]["restore"].isEnabled() is False
+        assert panel._resource_action_buttons["image"]["restore"].toolTip() == "No missing image resources match the current filters."
+        assert panel._resource_action_buttons["image"]["replace"].isEnabled() is False
+        assert panel._resource_action_buttons["image"]["next_missing"].isEnabled() is False
 
         reset_button.click()
 
@@ -1025,6 +1032,89 @@ class TestResourcePanelFileFlow:
         assert panel.get_resource_catalog().images == ["spare.png"]
         assert deleted == []
         assert imported == []
+        panel.deleteLater()
+
+    def test_restore_missing_resources_batch_respects_current_filtered_missing_names(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        external_dir = tmp_path / "external_images"
+        external_dir.mkdir()
+        filtered_out_match = external_dir / "missing_b.png"
+        filtered_out_match.write_bytes(b"B")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("missing_a.png")
+        catalog.add_image("missing_b.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._resource_search_inputs["image"].setText("a")
+
+        warnings = []
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileNames",
+            lambda *args, **kwargs: ([str(filtered_out_match)], "Images (*.png *.bmp *.jpg *.jpeg)"),
+        )
+        monkeypatch.setattr("ui_designer.ui.resource_panel.QMessageBox.warning", lambda *args: warnings.append(args[1:]))
+
+        panel._restore_missing_resources("image")
+
+        assert not (images_dir / "missing_b.png").exists()
+        assert warnings
+        assert warnings[0][0] == "Restore Missing Resources"
+        assert "Current filters limited the target missing resources to: missing_a.png" in warnings[0][1]
+        panel.deleteLater()
+
+    def test_replace_missing_resources_uses_filtered_missing_names_for_dialog(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        external_dir = tmp_path / "external_images"
+        external_dir.mkdir()
+        source_a = external_dir / "missing_a.png"
+        source_b = external_dir / "missing_b.png"
+        source_a.write_bytes(b"A")
+        source_b.write_bytes(b"B")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("missing_a.png")
+        catalog.add_image("missing_b.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._resource_search_inputs["image"].setText("a")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, missing_names, source_paths, parent=None):
+                captured["missing_names"] = list(missing_names)
+                captured["source_paths"] = list(source_paths)
+
+            def exec_(self):
+                return 0
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileNames",
+            lambda *args, **kwargs: ([str(source_a), str(source_b)], "Images (*.png *.bmp *.jpg *.jpeg)"),
+        )
+        monkeypatch.setattr("ui_designer.ui.resource_panel._MissingResourceReplaceDialog", FakeDialog)
+
+        panel._replace_missing_resources("image")
+
+        assert captured == {
+            "missing_names": ["missing_a.png"],
+            "source_paths": [str(source_a), str(source_b)],
+        }
         panel.deleteLater()
 
     def test_clean_unused_string_keys_removes_only_visible_filtered_matches(self, qapp, monkeypatch):

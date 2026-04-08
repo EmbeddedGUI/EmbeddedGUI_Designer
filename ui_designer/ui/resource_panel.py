@@ -3054,9 +3054,11 @@ class ResourcePanel(QWidget):
         for resource_type, buttons in self._resource_action_buttons.items():
             total_count = len(self._resource_names_for_type(resource_type))
             missing_count = len(self._missing_resource_names(resource_type))
+            visible_missing_count = len(self._visible_missing_resource_names(resource_type))
             visible_unused_count = len(self._visible_unused_names(resource_type))
             total_label = self._resource_count_label(resource_type, total_count)
             missing_label = self._resource_count_label(resource_type, missing_count, missing=True)
+            visible_missing_label = self._resource_count_label(resource_type, visible_missing_count, missing=True)
 
             import_tooltip = self._resource_action_unavailable_tooltip("import", resource_type)
             import_accessible_name = f"Import {resource_type} resources unavailable"
@@ -3071,11 +3073,16 @@ class ResourcePanel(QWidget):
 
             for action in ("restore", "replace", "next_missing"):
                 action_label = self._resource_action_label(action, resource_type)
-                if self._resource_dir and missing_count > 0:
-                    tooltip = f"{self._resource_action_base_tooltip(action, resource_type)} {missing_label.capitalize()}."
-                    accessible_name = f"{action_label}. {missing_label.capitalize()}."
+                buttons[action].setEnabled(bool(self._resource_dir and visible_missing_count > 0))
+                if self._resource_dir and visible_missing_count > 0:
+                    tooltip = f"{self._resource_action_base_tooltip(action, resource_type)} {visible_missing_label.capitalize()}."
+                    if visible_missing_count != missing_count:
+                        tooltip += f" {missing_label.capitalize()} total."
+                    accessible_name = f"{action_label}. {visible_missing_label.capitalize()}."
                 else:
                     tooltip = self._resource_action_unavailable_tooltip(action, resource_type)
+                    if self._resource_dir and missing_count > 0 and self._has_active_resource_filter(resource_type):
+                        tooltip = f"No missing {resource_type} resources match the current filters."
                     accessible_name = f"{action_label} unavailable"
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
 
@@ -3457,6 +3464,10 @@ class ResourcePanel(QWidget):
             return []
         return [name for name in names if not os.path.isfile(os.path.join(target_dir, name))]
 
+    def _visible_missing_resource_names(self, resource_type):
+        missing_names = set(self._missing_resource_names(resource_type))
+        return [name for name in self._filtered_resource_names(resource_type) if name in missing_names]
+
     def _select_resource_item(self, resource_type, filename, emit_signal=False):
         if resource_type == "image":
             self._tabs.setCurrentIndex(0)
@@ -3495,11 +3506,7 @@ class ResourcePanel(QWidget):
         if lst is None:
             return ""
 
-        missing_names = [
-            name
-            for name in self._filtered_resource_names(resource_type)
-            if name in set(self._missing_resource_names(resource_type))
-        ]
+        missing_names = self._visible_missing_resource_names(resource_type)
         if not missing_names:
             self.feedback_message.emit(f"No missing {resource_type} resources were found.")
             return ""
@@ -3931,9 +3938,11 @@ class ResourcePanel(QWidget):
             message += f" Source: {source_label}."
         self.feedback_message.emit(message)
 
-    def _restore_missing_resources_from_paths(self, resource_type, source_paths):
+    def _restore_missing_resources_from_paths(self, resource_type, source_paths, target_names=None):
         target_dir = self._target_dir_for_resource_type(resource_type)
-        missing_map = {name.lower(): name for name in self._missing_resource_names(resource_type)}
+        if target_names is None:
+            target_names = self._missing_resource_names(resource_type)
+        missing_map = {name.lower(): name for name in target_names}
         restored = []
         unmatched = []
         failures = []
@@ -3976,12 +3985,15 @@ class ResourcePanel(QWidget):
         if not self._ensure_src_dir():
             return
 
-        missing_names = self._missing_resource_names(resource_type)
+        missing_names = self._visible_missing_resource_names(resource_type)
         if not missing_names:
+            message = f"No missing {resource_type} resources were found."
+            if self._has_active_resource_filter(resource_type):
+                message = f"No missing {resource_type} resources match the current filters."
             QMessageBox.information(
                 self,
                 "Restore Missing Resources",
-                f"No missing {resource_type} resources were found.",
+                message,
             )
             return
 
@@ -3995,11 +4007,13 @@ class ResourcePanel(QWidget):
             return
 
         self._remember_external_import_paths(source_paths)
-        restored, unmatched, failures = self._restore_missing_resources_from_paths(resource_type, source_paths)
+        restored, unmatched, failures = self._restore_missing_resources_from_paths(resource_type, source_paths, target_names=missing_names)
         if restored:
             return
 
         message = f"No matching missing {resource_type} resources were found in the selected files."
+        if self._has_active_resource_filter(resource_type):
+            message = f"{message}\n\nCurrent filters limited the target missing resources to: {', '.join(missing_names)}"
         if failures:
             details = "\n".join(f"{name}: {error}" for name, error in failures)
             message = f"{message}\n\nFailed copies:\n{details}"
@@ -4053,12 +4067,15 @@ class ResourcePanel(QWidget):
         if not self._ensure_src_dir():
             return
 
-        missing_names = self._missing_resource_names(resource_type)
+        missing_names = self._visible_missing_resource_names(resource_type)
         if not missing_names:
+            message = f"No missing {resource_type} resources were found."
+            if self._has_active_resource_filter(resource_type):
+                message = f"No missing {resource_type} resources match the current filters."
             QMessageBox.information(
                 self,
                 "Replace Missing Resources",
-                f"No missing {resource_type} resources were found.",
+                message,
             )
             return
 
