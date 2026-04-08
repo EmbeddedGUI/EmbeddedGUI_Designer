@@ -1,0 +1,5 @@
+# Sphinx documentation dependencies
+
+sphinx
+furo
+myst-parser

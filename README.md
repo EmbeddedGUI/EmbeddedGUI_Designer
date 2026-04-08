@@ -40,6 +40,13 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
   `python scripts/ui_designer/repo_doctor.py --blocked-only`
   `python scripts/ui_designer/repo_doctor.py --summary`
 
+## Documentation
+
+Detailed Chinese usage guide with real UI screenshots:
+
+- `doc/README.md`
+- `doc/source/ui_designer/README.md`
+
 ## Release workflow
 
 ### From the GUI
