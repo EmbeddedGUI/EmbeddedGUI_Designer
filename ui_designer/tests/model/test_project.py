@@ -7,7 +7,7 @@ import pytest
 
 from ui_designer.model.project import Project
 from ui_designer.model.page import Page
-from ui_designer.model.release import SdkFingerprint
+from ui_designer.model.sdk_fingerprint import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
 

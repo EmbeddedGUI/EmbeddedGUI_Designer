@@ -15,16 +15,25 @@ def _load_module():
     return module
 
 
+def _payload(*, initialized: bool, stale_temp_dirs: list[dict[str, object]] | None = None, suggestions: list[str] | None = None):
+    return {
+        "repo_root": "D:/repo",
+        "sdk_submodule": {
+            "path": "D:/repo/sdk/EmbeddedGUI",
+            "present": True,
+            "initialized": initialized,
+            "status": "416d576 sdk/EmbeddedGUI" if initialized else "-416d576 sdk/EmbeddedGUI",
+        },
+        "runtime_paths": {},
+        "stale_temp_dirs": stale_temp_dirs or [],
+        "git_status_show_untracked": "default",
+        "suggestions": suggestions or [],
+    }
+
+
 def test_repo_doctor_main_emits_json(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": True, "status": " 416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": True},
-        "stale_temp_dirs": [],
-        "git_status_show_untracked": "no",
-        "suggestions": [],
-    }
+    payload = _payload(initialized=True)
 
     monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"json": True, "summary": False, "critical_only": False, "blocked_only": False, "strict": False})())
     monkeypatch.setattr(module, "collect_repo_health", lambda: payload)
@@ -41,14 +50,7 @@ def test_repo_doctor_main_emits_json(monkeypatch, capsys):
 
 def test_repo_doctor_main_emits_human_text(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": False},
-        "stale_temp_dirs": [],
-        "git_status_show_untracked": "default",
-        "suggestions": ["Run: git submodule update --init --recursive"],
-    }
+    payload = _payload(initialized=False, suggestions=["Run: git submodule update --init --recursive"])
 
     monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"json": False, "summary": False, "critical_only": False, "blocked_only": False, "strict": False})())
     monkeypatch.setattr(module, "collect_repo_health", lambda: payload)
@@ -65,14 +67,7 @@ def test_repo_doctor_main_emits_human_text(monkeypatch, capsys):
 
 def test_repo_doctor_main_strict_returns_nonzero(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": False},
-        "stale_temp_dirs": [],
-        "git_status_show_untracked": "default",
-        "suggestions": [],
-    }
+    payload = _payload(initialized=False)
 
     monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"json": True, "summary": False, "critical_only": False, "blocked_only": False, "strict": True})())
     monkeypatch.setattr(module, "collect_repo_health", lambda: payload)
@@ -89,22 +84,15 @@ def test_repo_doctor_main_strict_returns_nonzero(monkeypatch, capsys):
 
 def test_repo_doctor_main_can_focus_critical_output(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": False},
-        "stale_temp_dirs": [{"path": "D:/repo/.pytest-tmp-codex", "accessible": False, "issue": "permission_denied"}],
-        "git_status_show_untracked": "default",
-        "suggestions": [],
-    }
+    payload = _payload(
+        initialized=False,
+        stale_temp_dirs=[{"path": "D:/repo/.pytest-tmp-codex", "accessible": False, "issue": "permission_denied"}],
+    )
     focused = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": False},
+        **payload,
         "stale_temp_dirs": [],
-        "git_status_show_untracked": "default",
         "suggestions": ["Run: git submodule update --init --recursive"],
-        "critical_issues": ["SDK submodule is not initialized", "release smoke sample is missing"],
+        "critical_issues": ["SDK submodule is not initialized"],
     }
 
     monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"json": False, "summary": False, "critical_only": True, "blocked_only": False, "strict": False})())
@@ -123,23 +111,16 @@ def test_repo_doctor_main_can_focus_critical_output(monkeypatch, capsys):
 
 def test_repo_doctor_main_can_focus_blocked_output(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": True},
-        "stale_temp_dirs": [
+    payload = _payload(
+        initialized=True,
+        stale_temp_dirs=[
             {"path": "D:/repo/.pytest-tmp-codex", "accessible": True, "issue": ""},
             {"path": "D:/repo/tmpxtayw0f6", "accessible": False, "issue": "permission_denied"},
         ],
-        "git_status_show_untracked": "default",
-        "suggestions": [],
-    }
+    )
     focused = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": True, "status": "416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": True},
+        **payload,
         "stale_temp_dirs": [{"path": "D:/repo/tmpxtayw0f6", "accessible": False, "issue": "permission_denied"}],
-        "git_status_show_untracked": "default",
         "suggestions": ["If git status is noisy, use: git status -uno"],
     }
 
@@ -159,14 +140,7 @@ def test_repo_doctor_main_can_focus_blocked_output(monkeypatch, capsys):
 
 def test_repo_doctor_main_can_emit_summary(monkeypatch, capsys):
     module = _load_module()
-    payload = {
-        "repo_root": "D:/repo",
-        "sdk_submodule": {"path": "D:/repo/sdk/EmbeddedGUI", "present": True, "initialized": False, "status": "-416d576 sdk/EmbeddedGUI"},
-        "release_smoke_project": {"path": "D:/repo/samples/release_smoke/ReleaseSmokeApp", "present": False},
-        "stale_temp_dirs": [],
-        "git_status_show_untracked": "default",
-        "suggestions": [],
-    }
+    payload = _payload(initialized=False)
 
     monkeypatch.setattr(module, "_parse_args", lambda: type("Args", (), {"json": False, "summary": True, "critical_only": True, "blocked_only": False, "strict": False})())
     monkeypatch.setattr(module, "collect_repo_health", lambda: payload)

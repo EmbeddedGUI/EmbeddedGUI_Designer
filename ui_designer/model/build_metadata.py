@@ -10,7 +10,7 @@ import sys
 import time
 from pathlib import Path
 
-from .release import SdkFingerprint
+from .sdk_fingerprint import SdkFingerprint
 from .sdk_bootstrap import (
     BUNDLED_SDK_METADATA_NAME,
     is_bundled_sdk_root,

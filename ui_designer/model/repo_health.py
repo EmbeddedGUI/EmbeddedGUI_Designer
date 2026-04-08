@@ -12,11 +12,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SDK_SUBMODULE_PATH = Path("sdk") / "EmbeddedGUI"
-RELEASE_SMOKE_PROJECT = Path("samples") / "release_smoke" / "ReleaseSmokeApp"
 LEGACY_STALE_DIR_NAMES = (
     ".pytest-tmp-codex",
     "tmpxtayw0f6",
-    "verify_pytest_release",
 )
 TEMP_WORK_ROOT = Path("temp")
 TEMP_SCAN_MAX_DEPTH = 3
@@ -255,8 +253,6 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
         suggestions.append("Set EMBEDDEDGUI_DESIGNER_CONFIG_DIR to a writable folder, or fix permissions on the default config directory")
     if pytest_temp_root and not bool(pytest_temp_root.get("writable", False)):
         suggestions.append("Pass --basetemp-root <writable-folder> to scripts/ui_designer/run_pytest.py, or fix permissions on the default pytest temp root")
-    if not (resolved_repo_root / RELEASE_SMOKE_PROJECT).is_dir():
-        suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
 
     return {
         "repo_root": str(resolved_repo_root),
@@ -265,10 +261,6 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
             "present": sdk_root.exists(),
             "initialized": sdk_is_initialized(submodule_status_line),
             "status": submodule_status_line,
-        },
-        "release_smoke_project": {
-            "path": str(resolved_repo_root / RELEASE_SMOKE_PROJECT),
-            "present": (resolved_repo_root / RELEASE_SMOKE_PROJECT).is_dir(),
         },
         "runtime_paths": runtime_paths,
         "stale_temp_dirs": stale_dirs,
@@ -279,14 +271,11 @@ def collect_repo_health(repo_root: str | Path = REPO_ROOT) -> dict[str, object]:
 
 def summarize_repo_health(payload: dict[str, object]) -> str:
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
-    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
     stale_dirs = payload.get("stale_temp_dirs") if isinstance(payload.get("stale_temp_dirs"), list) else []
 
     issues = []
     if not sdk.get("initialized", False):
         issues.append("SDK submodule is not initialized")
-    if not smoke.get("present", False):
-        issues.append("release smoke sample is missing")
     issues.extend(runtime_path_issues(payload))
     if stale_dirs:
         issues.append(f"{len(stale_dirs)} stale temp dir(s) detected")
@@ -297,13 +286,10 @@ def summarize_repo_health(payload: dict[str, object]) -> str:
 
 def critical_repo_health_issues(payload: dict[str, object]) -> list[str]:
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
-    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
 
     issues = []
     if not sdk.get("initialized", False):
         issues.append("SDK submodule is not initialized")
-    if not smoke.get("present", False):
-        issues.append("release smoke sample is missing")
     return issues
 
 
@@ -326,7 +312,6 @@ def repo_health_view_suggestions(
     stale_dirs: list[dict[str, object]],
 ) -> list[str]:
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
-    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
 
     suggestions: list[str] = []
     if include_critical and not sdk.get("initialized", False):
@@ -336,8 +321,6 @@ def repo_health_view_suggestions(
         suggestions.append("To hide untracked noise locally, use: git config status.showUntrackedFiles no")
         if any(not bool(entry.get("accessible", False)) for entry in stale_dirs):
             suggestions.append("Remove stale ACL-broken temp dirs from an elevated shell if they keep reappearing")
-    if include_critical and not smoke.get("present", False):
-        suggestions.append("Restore samples/release_smoke/ReleaseSmokeApp before running release smoke checks")
     return suggestions
 
 
@@ -351,7 +334,6 @@ def repo_health_view_payload(
         return payload
 
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
-    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
     critical_issues = critical_repo_health_issues(payload)
     blocked_stale_dirs = blocked_repo_health_stale_dirs(payload)
 
@@ -372,10 +354,6 @@ def repo_health_view_payload(
             "present": bool(sdk.get("present", False)),
             "initialized": bool(sdk.get("initialized", False)),
             "status": str(sdk.get("status") or ""),
-        },
-        "release_smoke_project": {
-            "path": str(smoke.get("path") or ""),
-            "present": bool(smoke.get("present", False)),
         },
         "runtime_paths": payload.get("runtime_paths") if isinstance(payload.get("runtime_paths"), dict) else {},
         "stale_temp_dirs": blocked_stale_dirs if blocked_only else [],
@@ -445,12 +423,10 @@ def format_repo_health_text(
         f"[repo] {payload.get('repo_root', '')}",
     ]
     sdk = payload.get("sdk_submodule") if isinstance(payload.get("sdk_submodule"), dict) else {}
-    smoke = payload.get("release_smoke_project") if isinstance(payload.get("release_smoke_project"), dict) else {}
     lines.append(f"sdk_submodule.initialized: {str(bool(sdk.get('initialized', False))).lower()}")
     sdk_status = str(sdk.get("status") or "")
     if sdk_status:
         lines.append(f"sdk_submodule.status: {sdk_status}")
-    lines.append(f"release_smoke.present: {str(bool(smoke.get('present', False))).lower()}")
     lines.append(f"git_status_show_untracked: {payload.get('git_status_show_untracked', 'default')}")
     runtime_paths = payload.get("runtime_paths") if isinstance(payload.get("runtime_paths"), dict) else {}
     for key in ("config_dir", "pytest_temp_root"):

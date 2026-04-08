@@ -98,7 +98,6 @@ class DesignerConfig:
         self.widget_browser_complexity_filter = "all"
         self.workspace_status_panel_state = {}
         self.sdk_setup_prompted = False
-        self.release_history_view = {}
         self.repo_health_view = {}
         self.diagnostics_view = {}
 
@@ -267,7 +266,6 @@ class DesignerConfig:
             status_state = data.get("workspace_status_panel_state", {})
             self.workspace_status_panel_state = status_state if isinstance(status_state, dict) else {}
             self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
-            self.release_history_view = data.get("release_history_view", {}) if isinstance(data.get("release_history_view", {}), dict) else {}
             self.repo_health_view = data.get("repo_health_view", {}) if isinstance(data.get("repo_health_view", {}), dict) else {}
             self.diagnostics_view = data.get("diagnostics_view", {}) if isinstance(data.get("diagnostics_view", {}), dict) else {}
         except Exception as e:
@@ -307,7 +305,6 @@ class DesignerConfig:
                 "widget_browser_active_category": self.widget_browser_active_category,
                 "workspace_status_panel_state": self.workspace_status_panel_state,
                 "sdk_setup_prompted": self.sdk_setup_prompted,
-                "release_history_view": self.release_history_view,
                 "repo_health_view": self.repo_health_view,
                 "diagnostics_view": self.diagnostics_view,
             }

@@ -144,7 +144,6 @@ def test_compact_typography_scale_stays_consistent():
         resource_dialog_title = css.split("#resource_dialog_title {", 1)[1].split("}", 1)[0]
         repo_health_title = css.split("#repo_health_title {", 1)[1].split("}", 1)[0]
         repo_health_metric_value = css.split("#repo_health_metric_value {", 1)[1].split("}", 1)[0]
-        release_title = css.split("#release_build_title,", 1)[1].split("}", 1)[0]
         new_project_title = css.split("#new_project_title {", 1)[1].split("}", 1)[0]
         welcome_title = css.split("#welcome_hero_title {", 1)[1].split("}", 1)[0]
         welcome_subtitle = css.split("#welcome_hero_subtitle {", 1)[1].split("}", 1)[0]
@@ -171,7 +170,6 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-size: {t['fs_h1']}px;" in resource_dialog_title
         assert f"font-weight: {t['fw_semibold']};" in resource_dialog_title
         assert f"font-size: {t['fs_h1']}px;" in repo_health_title
-        assert f"font-size: {t['fs_h1']}px;" in release_title
         assert f"font-size: {t['fs_h1']}px;" in new_project_title
         assert f"font-size: {t['fs_h1']}px;" in welcome_title
 
@@ -869,69 +867,6 @@ def test_repository_health_dialog_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
         assert "border-radius: 0px;" in metric_card
-        assert f"background-color: {t['panel_alt']};" in details
-        assert "border-radius: 0px;" in details
-
-
-def test_release_build_dialog_styles_use_engineering_surface_tokens():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-
-        header = css.split("#release_build_header {", 1)[1].split("}", 1)[0]
-        card = css.split("#release_build_card {", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#release_build_metric_card {", 1)[1].split("}", 1)[0]
-
-        _assert_panel_surface(header, t)
-        assert "border-radius: 0px;" in header
-        assert "background-color: transparent;" in card
-        assert "border: none;" in card
-        assert "border-radius: 0px;" in card
-        assert "background-color: transparent;" in metric_card
-        assert "border: none;" in metric_card
-        assert "border-radius: 0px;" in metric_card
-
-
-def test_release_profiles_dialog_styles_use_engineering_surface_tokens():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-
-        header = css.split("#release_profiles_header {", 1)[1].split("}", 1)[0]
-        card = css.split("#release_profiles_card {", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#release_profiles_metric_card {", 1)[1].split("}", 1)[0]
-
-        _assert_panel_surface(header, t)
-        assert "border-radius: 0px;" in header
-        assert "background-color: transparent;" in card
-        assert "border: none;" in card
-        assert "border-radius: 0px;" in card
-        assert "background-color: transparent;" in metric_card
-        assert "border: none;" in metric_card
-        assert "border-radius: 0px;" in metric_card
-
-
-def test_release_history_dialog_styles_use_engineering_surface_tokens():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-
-        header = css.split("#release_history_header {", 1)[1].split("}", 1)[0]
-        card = css.split("#release_history_card {", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#release_history_metric_card {", 1)[1].split("}", 1)[0]
-        history_list = css.split("QListWidget#release_history_list {", 1)[1].split("}", 1)[0]
-        details = css.split("QTextEdit#release_history_details,", 1)[1].split("}", 1)[0]
-
-        _assert_panel_surface(header, t)
-        assert "border-radius: 0px;" in header
-        assert "background-color: transparent;" in card
-        assert "border: none;" in card
-        assert "border-radius: 0px;" in card
-        assert "background-color: transparent;" in metric_card
-        assert "border: none;" in metric_card
-        assert "border-radius: 0px;" in metric_card
-        assert f"background-color: {t['panel_alt']};" in history_list
-        assert "border-radius: 0px;" in history_list
         assert f"background-color: {t['panel_alt']};" in details
         assert "border-radius: 0px;" in details
 

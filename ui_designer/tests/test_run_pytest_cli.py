@@ -57,7 +57,7 @@ def test_run_pytest_sets_safe_temp_env_and_cleans_directory(tmp_path, monkeypatc
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
     rc = module.run_pytest(
-        test_paths=["ui_designer/tests/test_release.py"],
+        test_paths=["ui_designer/tests/model/test_project.py"],
         basetemp_root=tmp_path / "baseroot",
         extra_args=["-q"],
         keep_basetemp=False,

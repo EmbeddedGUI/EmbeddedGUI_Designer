@@ -79,7 +79,6 @@ class TestDefaults:
         assert config.widget_browser_complexity_filter == "all"
         assert config.workspace_status_panel_state == {}
         assert config.sdk_setup_prompted is False
-        assert config.release_history_view == {}
         assert config.repo_health_view == {}
         assert config.diagnostics_view == {}
 
@@ -98,26 +97,6 @@ class TestSaveLoad:
         config.widget_browser_active_category = "layout"
         config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
         config.sdk_setup_prompted = True
-        config.release_history_view = {
-            "status_filter": "failed",
-            "artifact_filter": "package",
-            "search_text": "sdk-fail",
-            "preview_mode": "log",
-            "selected_build_id": "20260326T000000Z",
-            "projects": {
-                "project-a": {
-                    "range_filter": "7d",
-                    "status_filter": "failed",
-                    "profile_filter": "esp32",
-                    "artifact_filter": "package",
-                    "diagnostics_filter": "errors",
-                    "sort_mode": "status",
-                    "search_text": "sdk-fail",
-                    "preview_mode": "log",
-                    "selected_build_id": "20260326T000000Z",
-                }
-            },
-        }
         config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
         config.diagnostics_view = {"severity_filter": "warning"}
 
@@ -145,26 +124,6 @@ class TestSaveLoad:
         assert loaded.widget_browser_complexity_filter == "all"
         assert loaded.workspace_status_panel_state == {"last_action": "open_diagnostics"}
         assert loaded.sdk_setup_prompted is True
-        assert loaded.release_history_view == {
-            "status_filter": "failed",
-            "artifact_filter": "package",
-            "search_text": "sdk-fail",
-            "preview_mode": "log",
-            "selected_build_id": "20260326T000000Z",
-            "projects": {
-                "project-a": {
-                    "range_filter": "7d",
-                    "status_filter": "failed",
-                    "profile_filter": "esp32",
-                    "artifact_filter": "package",
-                    "diagnostics_filter": "errors",
-                    "sort_mode": "status",
-                    "search_text": "sdk-fail",
-                    "preview_mode": "log",
-                    "selected_build_id": "20260326T000000Z",
-                }
-            },
-        }
         assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
         assert loaded.diagnostics_view == {"severity_filter": "warning"}
 

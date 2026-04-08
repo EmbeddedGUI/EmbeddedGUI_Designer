@@ -49,31 +49,10 @@ jobs:
         working-directory: EmbeddedGUI_Designer
         run: python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI
 
-      - name: Run UI Designer release smoke
-        working-directory: EmbeddedGUI_Designer
-        run: >
-          python scripts/ui_designer/release_project.py
-          --project samples/release_smoke/ReleaseSmokeApp
-          --sdk-root sdk/EmbeddedGUI
-          --output-dir build/release-smoke
-          --json
-          > build/release-smoke-result.json
-
-      - name: Inspect UI Designer release smoke metadata
-        working-directory: EmbeddedGUI_Designer
-        run: >
-          python scripts/ui_designer/inspect_release.py
-          build/release-smoke/windows-pc
-          --json
-          > build/release-smoke-metadata.json
-
-      - name: Upload UI Designer release smoke artifact
+      - name: Upload UI Designer CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: designer-release-smoke
+          name: designer-ci-health
           path: |
             EmbeddedGUI_Designer/build/repo-health.json
-            EmbeddedGUI_Designer/build/release-smoke/**
-            EmbeddedGUI_Designer/build/release-smoke-result.json
-            EmbeddedGUI_Designer/build/release-smoke-metadata.json
           retention-days: 7

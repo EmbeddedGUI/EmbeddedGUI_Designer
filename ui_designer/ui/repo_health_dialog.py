@@ -96,7 +96,7 @@ class RepositoryHealthDialog(QDialog):
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
-            "Inspect repository readiness, stale temp artifacts, and SDK workspace wiring before builds, smoke checks, or release packaging."
+            "Inspect repository readiness, stale temp artifacts, and SDK workspace wiring before builds or package publication."
         )
         self._subtitle_label.setObjectName("repo_health_subtitle")
         self._subtitle_label.setWordWrap(True)
@@ -195,8 +195,6 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button = QPushButton("Open Repo")
         self._copy_sdk_button = QPushButton("Copy SDK")
         self._open_sdk_button = QPushButton("Open SDK")
-        self._copy_smoke_button = QPushButton("Copy Smoke")
-        self._open_smoke_button = QPushButton("Open Smoke")
         self._stale_dir_combo = QComboBox()
         self._copy_stale_path_button = QPushButton("Stale Path")
         self._open_stale_button = QPushButton("Open Stale")
@@ -217,8 +215,6 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.clicked.connect(lambda: self._open_payload_path("repo_root", "Repository Root"))
         self._copy_sdk_button.clicked.connect(lambda: self._copy_nested_payload_path("sdk_submodule", "path"))
         self._open_sdk_button.clicked.connect(lambda: self._open_nested_payload_path("sdk_submodule", "path", "SDK Folder"))
-        self._copy_smoke_button.clicked.connect(lambda: self._copy_nested_payload_path("release_smoke_project", "path"))
-        self._open_smoke_button.clicked.connect(lambda: self._open_nested_payload_path("release_smoke_project", "path", "Smoke Project"))
         self._copy_stale_path_button.clicked.connect(self._copy_selected_stale_path)
         self._open_stale_button.clicked.connect(self._open_selected_stale_dir)
 
@@ -274,7 +270,7 @@ class RepositoryHealthDialog(QDialog):
         paths_title.setObjectName("workspace_section_title")
         paths_layout.addWidget(paths_title)
 
-        paths_hint = QLabel("Jump directly to repository, SDK, and smoke-sample locations without leaving the diagnostics context.")
+        paths_hint = QLabel("Jump directly to repository and SDK locations without leaving the diagnostics context.")
         paths_hint.setObjectName("workspace_section_subtitle")
         paths_hint.setWordWrap(True)
         paths_layout.addWidget(paths_hint)
@@ -287,8 +283,6 @@ class RepositoryHealthDialog(QDialog):
         paths_grid.addWidget(self._open_repo_button, 0, 1)
         paths_grid.addWidget(self._copy_sdk_button, 1, 0)
         paths_grid.addWidget(self._open_sdk_button, 1, 1)
-        paths_grid.addWidget(self._copy_smoke_button, 2, 0)
-        paths_grid.addWidget(self._open_smoke_button, 2, 1)
         paths_layout.addLayout(paths_grid)
         sidebar.addWidget(paths_card)
 
@@ -339,8 +333,6 @@ class RepositoryHealthDialog(QDialog):
         self._open_repo_button.setAccessibleName("Open repository root")
         self._copy_sdk_button.setAccessibleName("Copy SDK folder path")
         self._open_sdk_button.setAccessibleName("Open SDK folder")
-        self._copy_smoke_button.setAccessibleName("Copy release smoke sample path")
-        self._open_smoke_button.setAccessibleName("Open release smoke sample")
         self._stale_dir_combo.setAccessibleName("Stale temp directories")
         self._copy_stale_path_button.setAccessibleName("Copy selected stale temp directory path")
         self._open_stale_button.setAccessibleName("Open selected stale temp directory")
@@ -502,16 +494,12 @@ class RepositoryHealthDialog(QDialog):
         stale_summary = self._stale_dir_hint()
         repo_root = str(self._payload.get("repo_root") or "").strip()
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
-        smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         sdk_path = str(sdk.get("path") or "").strip()
-        smoke_path = str(smoke.get("path") or "").strip()
         reset_available = self._has_custom_view_state()
         can_copy_repo = bool(repo_root)
         can_open_repo = bool(repo_root and os.path.isdir(repo_root))
         can_copy_sdk = bool(sdk_path)
         can_open_sdk = bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path))
-        can_copy_smoke = bool(smoke_path)
-        can_open_smoke = bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path))
         can_copy_stale = bool(self._selected_stale_path())
         can_open_stale = bool(self._selected_stale_path() and os.path.exists(self._selected_stale_path()))
         report_mode = self._view_mode_label()
@@ -612,20 +600,6 @@ class RepositoryHealthDialog(QDialog):
             accessible_name="Open SDK folder" if can_open_sdk else "Open SDK folder unavailable",
         )
         _set_widget_metadata(
-            self._copy_smoke_button,
-            tooltip=self._copy_path_hint("release smoke sample", smoke_path),
-            accessible_name=(
-                "Copy release smoke sample path"
-                if can_copy_smoke
-                else "Copy release smoke sample path unavailable"
-            ),
-        )
-        _set_widget_metadata(
-            self._open_smoke_button,
-            tooltip=self._open_path_hint("release smoke sample", smoke_path),
-            accessible_name="Open release smoke sample" if can_open_smoke else "Open release smoke sample unavailable",
-        )
-        _set_widget_metadata(
             self._stale_dir_combo,
             tooltip=stale_summary,
             accessible_name=f"Stale temp directories: {stale_summary.removesuffix('.')}.",
@@ -683,21 +657,17 @@ class RepositoryHealthDialog(QDialog):
             )
         )
         sdk = self._payload.get("sdk_submodule") if isinstance(self._payload.get("sdk_submodule"), dict) else {}
-        smoke = self._payload.get("release_smoke_project") if isinstance(self._payload.get("release_smoke_project"), dict) else {}
         stale_dirs = view_payload.get("stale_temp_dirs") if isinstance(view_payload.get("stale_temp_dirs"), list) else []
         selected_stale_path = self._selected_stale_path() or self._preferred_stale_path
         self._sync_stale_dir_combo(stale_dirs, selected_stale_path)
         self._preferred_stale_path = self._selected_stale_path()
         repo_root = str(self._payload.get("repo_root") or "").strip()
         sdk_path = str(sdk.get("path") or "").strip()
-        smoke_path = str(smoke.get("path") or "").strip()
         stale_path = self._selected_stale_path()
         self._copy_repo_button.setEnabled(bool(repo_root))
         self._copy_sdk_button.setEnabled(bool(sdk_path))
-        self._copy_smoke_button.setEnabled(bool(smoke_path))
         self._open_repo_button.setEnabled(bool(repo_root and os.path.isdir(repo_root)))
         self._open_sdk_button.setEnabled(bool(sdk.get("present")) and bool(sdk_path and os.path.isdir(sdk_path)))
-        self._open_smoke_button.setEnabled(bool(smoke.get("present")) and bool(smoke_path and os.path.isdir(smoke_path)))
         self._copy_stale_path_button.setEnabled(bool(stale_path))
         self._open_stale_button.setEnabled(bool(stale_path and os.path.exists(stale_path)))
         details_text = format_repo_health_text(view_payload, **view_options)

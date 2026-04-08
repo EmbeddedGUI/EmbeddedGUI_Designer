@@ -32,7 +32,7 @@ from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
-from .release import ReleaseConfig, SdkFingerprint
+from .sdk_fingerprint import SdkFingerprint
 
 
 _SDK_VERSION_ELEMENT = "SdkVersion"
@@ -98,7 +98,6 @@ class Project:
         self.resource_config = ""  # relative path to resource config (legacy)
         self.resource_catalog = ResourceCatalog()  # project resource catalog
         self.string_catalog = StringResourceCatalog()  # i18n string resources
-        self.release_config = ReleaseConfig.default()  # release build profiles
         self.pages = []  # list[Page]
 
     @property
@@ -220,13 +219,6 @@ class Project:
             return ""
         return os.path.join(res_dir, "images")
 
-    def get_release_config_path(self):
-        """Get the .eguiproject/release.json path."""
-        eguiproject_dir = self.get_eguiproject_dir()
-        if not eguiproject_dir:
-            return ""
-        return os.path.join(eguiproject_dir, "release.json")
-
     # 鈹€鈹€ Widgets 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
     def get_all_widgets(self):
@@ -264,9 +256,6 @@ class Project:
         # Save i18n string resources to .eguiproject/resources/values*/strings.xml
         if self.string_catalog.has_strings:
             self.string_catalog.save(resources_dir)
-
-        # Save release profiles to .eguiproject/release.json
-        self.release_config.save(eguiproject_dir)
 
         # Sync .eguiproject/resources/ -> resource/src/ for generation pipeline
         self.sync_resources_to_src(project_dir)
@@ -348,8 +337,6 @@ class Project:
         proj.sdk_fingerprint = _parse_sdk_fingerprint(root)
         proj.page_mode = root.get("page_mode", "easy_page")
         proj.startup_page = root.get("startup", "main_page")
-        proj.release_config = ReleaseConfig.load(project_dir)
-
         # Resource config
         res_elem = root.find("Resources")
         if res_elem is not None:

@@ -55,7 +55,6 @@ from .welcome_page import WelcomePage
 from .debug_panel import DebugPanel
 from .iconography import make_icon
 from .project_workspace import ProjectWorkspacePanel
-from .release_dialogs import ReleaseBuildDialog, ReleaseHistoryDialog, ReleaseProfilesDialog
 from .repo_health_dialog import RepositoryHealthDialog
 from .widget_browser import WidgetBrowserPanel
 from .status_center_panel import StatusCenterPanel
@@ -64,7 +63,6 @@ from ..model.project import Project
 from ..model.page import Page
 from ..model.build_metadata import collect_sdk_fingerprint, format_sdk_binding_label
 from ..model.config import get_config
-from ..model.release import ReleaseRequest
 from ..model.sdk_bootstrap import (
     AUTO_DOWNLOAD_STRATEGY_TEXT,
     default_sdk_install_dir,
@@ -119,7 +117,6 @@ from ..generator.code_generator import (
 from ..generator.user_code_preserver import compute_source_hash, embed_source_hash, read_existing_file
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
-from ..engine.release_engine import collect_release_diagnostics, latest_release_entry, load_release_history, release_history_path, release_project
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
 from .theme import apply_theme, theme_tokens
@@ -165,58 +162,12 @@ _DETACHED_WORKERS = set()
 _DESIGNER_REPO_ROOT = normalize_path(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
-def _release_detached_worker(worker):
+def _discard_detached_worker(worker):
     _DETACHED_WORKERS.discard(worker)
     try:
         worker.deleteLater()
     except Exception:
         pass
-
-
-def _release_sdk_summary(sdk) -> str:
-    if not isinstance(sdk, dict):
-        return "unknown"
-    source_kind = str(sdk.get("source_kind") or "").strip()
-    revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
-    if sdk.get("dirty") and revision:
-        revision += " (dirty)"
-    if source_kind and revision:
-        return f"{source_kind} {revision}"
-    if source_kind:
-        return source_kind
-    if revision:
-        return revision
-    return "unknown"
-
-
-def _latest_release_summary(entry, profile_label=""):
-    if not isinstance(entry, dict) or not entry:
-        return "No release history available"
-    build_id = str(entry.get("build_id") or entry.get("created_at_utc") or "unknown-build").strip()
-    profile_id = str(entry.get("profile_id") or "unknown-profile").strip()
-    profile_label = str(profile_label or profile_id).strip() or profile_id
-    status = str(entry.get("status") or "").strip()
-    if not status:
-        if "success" in entry:
-            status = "success" if bool(entry.get("success")) else "failed"
-        else:
-            status = "unknown"
-    return f"Latest release: {build_id} | {profile_label} | {status} | sdk {_release_sdk_summary(entry.get('sdk'))}"
-
-
-def _release_action_tooltip(action_label, latest_entry, *, path="", unavailable_label="", fallback_hint="", profile_label="") -> str:
-    lines = [action_label, "", _latest_release_summary(latest_entry, profile_label=profile_label)]
-    if path:
-        lines.extend(["", path])
-    else:
-        detail_lines = []
-        if unavailable_label:
-            detail_lines.append(unavailable_label)
-        if fallback_hint:
-            detail_lines.append(fallback_hint)
-        if detail_lines:
-            lines.extend(["", *detail_lines])
-    return "\n".join(lines)
 
 
 def delete_page_generated_files(project_dir, page_name):
@@ -1071,36 +1022,20 @@ class MainWindow(QMainWindow):
     def _update_build_menu_metadata(self, latest_entry=None, history_entries=None, history_file_path=""):
         if not hasattr(self, "_build_menu"):
             return
-        if not history_file_path and getattr(self, "_project_dir", ""):
-            history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
         preview_state = "running" if preview_running else "stopped"
-        release_build_state = "available" if getattr(getattr(self, "_release_build_action", None), "isEnabled", lambda: False)() else "unavailable"
-        release_state = "available" if getattr(getattr(self, "_release_history_action", None), "isEnabled", lambda: False)() else "unavailable"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
-        output_root = self._release_output_root()
-        profiles_summary = self._release_profiles_build_summary()
-        output_root_state_summary = self._release_output_root_state_summary(output_root)
-        history_file_state_summary = self._release_history_file_state_summary(history_file_path)
-        history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
-        latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
-        latest_release_sdk_summary = self._latest_release_sdk_summary(latest_entry=latest_entry)
-        release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
         self._apply_action_hint(
             self._build_menu.menuAction(),
             (
-                "Compile previews, generate resources, and manage release builds. "
+                "Compile previews, generate resources, and inspect repository health. "
                 f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
-                f"Preview: {preview_state}. Release build: {release_build_state}. Release history: {release_state}. "
-                f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
-                f"{profiles_summary} Output root: {output_root or 'none'}. History file: {history_file_path or 'none'}. "
-                f"{output_root_state_summary} {history_file_state_summary} "
-                f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
+                f"Preview: {preview_state}. Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
         )
 
@@ -1302,198 +1237,6 @@ class MainWindow(QMainWindow):
             f"Project: {project_state}. SDK: {sdk_state}. Source resources: {resources_state}. Resource directory: {resource_dir_label}."
         )
         self._apply_action_hint(self._generate_resources_action, hint)
-
-    def _release_profiles_summary_suffix(self):
-        if getattr(self, "project", None) is None:
-            return "Profiles: unavailable."
-        release_config = getattr(self.project, "release_config", None)
-        profiles = list(getattr(release_config, "profiles", []) or [])
-        profile_count = len(profiles)
-        profile_label = f"{profile_count} profile" if profile_count == 1 else f"{profile_count} profiles"
-        return f"Profiles: {profile_label}. Default: {self._default_release_profile_label()}."
-
-    def _release_profiles_build_summary(self):
-        if getattr(self, "project", None) is None:
-            return "Release profiles: unavailable."
-        return f"Release profiles: {self._release_profiles_summary_suffix().replace('Profiles: ', '')}"
-
-    def _build_menu_latest_release_summary(self, latest_entry=None):
-        if latest_entry is None and (getattr(self, "project", None) is None or not self._project_dir):
-            return "Latest release: none."
-        if latest_entry is None:
-            latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        if not isinstance(latest_entry, dict) or not latest_entry:
-            return "Latest release: none."
-        build_id = str(latest_entry.get("build_id") or latest_entry.get("created_at_utc") or "unknown-build").strip()
-        profile_id = str(latest_entry.get("profile_id") or "unknown-profile").strip()
-        profile_label = self._release_profile_label(profile_id)
-        status = str(latest_entry.get("status") or "").strip()
-        if not status:
-            if "success" in latest_entry:
-                status = "success" if bool(latest_entry.get("success")) else "failed"
-            else:
-                status = "unknown"
-        return f"Latest release: {build_id} ({profile_label}, {status})."
-
-    def _latest_release_sdk_summary(self, latest_entry=None):
-        if latest_entry is None and (getattr(self, "project", None) is None or not self._project_dir):
-            return "Latest release SDK: none."
-        if latest_entry is None:
-            latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        if not isinstance(latest_entry, dict) or not latest_entry:
-            return "Latest release SDK: none."
-        return f"Latest release SDK: {_release_sdk_summary(latest_entry.get('sdk'))}."
-
-    def _release_history_records_summary(self, history_entries=None, latest_entry=None):
-        if getattr(self, "project", None) is None or not self._project_dir:
-            return "Release records: unavailable."
-        if history_entries is None:
-            history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root())
-        entry_count = len(history_entries) if isinstance(history_entries, list) else 0
-        if entry_count == 0 and isinstance(latest_entry, dict) and latest_entry:
-            entry_count = 1
-        noun = "entry" if entry_count == 1 else "entries"
-        return f"Release records: {entry_count} {noun}."
-
-    def _release_history_file_state_summary(self, history_file_path=""):
-        if getattr(self, "project", None) is None or not self._project_dir:
-            return "History file state: unavailable."
-        normalized_path = normalize_path(history_file_path) if history_file_path else ""
-        return f"History file state: {'available' if normalized_path and os.path.isfile(normalized_path) else 'missing'}."
-
-    def _release_output_root_state_summary(self, output_root=""):
-        if getattr(self, "project", None) is None or not self._project_dir:
-            return "Output root state: unavailable."
-        normalized_path = normalize_path(output_root) if output_root else ""
-        return f"Output root state: {'available' if normalized_path and os.path.isdir(normalized_path) else 'missing'}."
-
-    def _release_open_targets_summary(self, latest_entry=None, history_file_path=""):
-        has_project_context = getattr(self, "project", None) is not None and bool(self._project_dir)
-        if not has_project_context and (not isinstance(latest_entry, dict) or not latest_entry) and not history_file_path:
-            return "Release open targets: unavailable."
-        if latest_entry is None:
-            latest_entry = (
-                latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-                if getattr(self, "project", None) is not None and self._project_dir
-                else {}
-            )
-        if not history_file_path:
-            history_file_path = (
-                normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
-                if self._project_dir
-                else ""
-            )
-        release_root = normalize_path(latest_entry.get("release_root", "")) if isinstance(latest_entry, dict) else ""
-        dist_dir = normalize_path(latest_entry.get("dist_dir", "")) if isinstance(latest_entry, dict) else ""
-        manifest_path = normalize_path(latest_entry.get("manifest_path", "")) if isinstance(latest_entry, dict) else ""
-        zip_path = normalize_path(latest_entry.get("zip_path", "")) if isinstance(latest_entry, dict) else ""
-        log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
-        version_path = self._latest_release_version_path(latest_entry)
-        available_count = sum(
-            1
-            for path, path_exists in (
-                (release_root, os.path.isdir),
-                (dist_dir, os.path.isdir),
-                (manifest_path, os.path.isfile),
-                (version_path, os.path.isfile),
-                (zip_path, os.path.isfile),
-                (log_path, os.path.isfile),
-                (history_file_path, os.path.isfile),
-            )
-            if path and path_exists(path)
-        )
-        return f"Release open targets: {available_count} of 7 available."
-
-    def _default_release_profile_label(self):
-        if getattr(self, "project", None) is None:
-            return "none"
-        release_config = getattr(self.project, "release_config", None)
-        profiles = list(getattr(release_config, "profiles", []) or [])
-        default_profile = str(getattr(release_config, "default_profile", "") or "").strip()
-        selected_profile = None
-        for profile in profiles:
-            profile_id = str(getattr(profile, "id", "") or "").strip()
-            if profile_id == default_profile:
-                selected_profile = profile
-                break
-        if selected_profile is None and profiles:
-            selected_profile = profiles[0]
-        if selected_profile is None:
-            return default_profile or "none"
-        return self._release_profile_label(str(getattr(selected_profile, "id", "") or "").strip() or default_profile or "none")
-
-    def _release_profile_label(self, profile_id):
-        normalized_profile_id = str(profile_id or "").strip() or "none"
-        if getattr(self, "project", None) is None:
-            return normalized_profile_id
-        release_config = getattr(self.project, "release_config", None)
-        profiles = list(getattr(release_config, "profiles", []) or [])
-        for profile in profiles:
-            current_id = str(getattr(profile, "id", "") or "").strip()
-            if current_id != normalized_profile_id:
-                continue
-            profile_name = str(getattr(profile, "name", "") or "").strip()
-            if profile_name and profile_name != current_id:
-                return f"{current_id} ({profile_name})"
-            return current_id or normalized_profile_id
-        return normalized_profile_id
-
-    def _update_release_profiles_action_metadata(
-        self,
-        sdk_state="",
-        output_root_state_summary="",
-        release_targets_summary="",
-        history_file_path="",
-        resources_state="",
-        resource_dir="",
-        history_file_state_summary="",
-        history_summary="",
-        latest_release_summary="",
-        latest_release_sdk_summary="",
-    ):
-        action = getattr(self, "_release_profiles_action", None)
-        if action is None:
-            return
-        no_project = getattr(self, "project", None) is None
-        sdk_state = str(sdk_state or ("valid" if self._has_valid_sdk_root() else "invalid"))
-        output_root_state_summary = str(output_root_state_summary or self._release_output_root_state_summary())
-        release_targets_summary = str(release_targets_summary or self._release_open_targets_summary())
-        history_file_path = str(history_file_path or "")
-        resources_state = str(resources_state or ("available" if (self._get_eguiproject_resource_dir() and os.path.isdir(self._get_eguiproject_resource_dir())) else "missing"))
-        resource_dir = str(resource_dir or self._get_eguiproject_resource_dir() or "none")
-        history_file_state_summary = str(history_file_state_summary or self._release_history_file_state_summary())
-        history_summary = str(history_summary or self._release_history_records_summary())
-        latest_release_summary = str(latest_release_summary or self._build_menu_latest_release_summary())
-        latest_release_sdk_summary = str(latest_release_sdk_summary or self._latest_release_sdk_summary())
-        output_root_label = self._release_output_root() or "none"
-        history_file_label = history_file_path or ("none" if no_project else "not created yet")
-        profiles_suffix = self._release_profiles_summary_suffix()
-        profiles_segment = f"{profiles_suffix} " if profiles_suffix else ""
-        if getattr(self, "project", None) is None:
-            self._apply_action_hint(
-                action,
-                (
-                    "Edit release profiles for the current project. "
-                    f"SDK: {sdk_state}. Output root: {output_root_label}. {profiles_segment}"
-                    f"History file: {history_file_label}. "
-                    f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
-                    f"{output_root_state_summary} {history_file_state_summary} "
-                    f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
-                    "Unavailable: open a project first."
-                ),
-            )
-            return
-        self._apply_action_hint(
-            action,
-            (
-                "Edit release profiles for the current project. "
-                f"SDK: {sdk_state}. Output root: {output_root_label}. {profiles_segment}"
-                f"History file: {history_file_label}. "
-                f"Source resources: {resources_state}. Resource directory: {resource_dir}. "
-                f"{output_root_state_summary} {history_file_state_summary} "
-                f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
-            ),
-        )
 
     def _update_preview_grid_and_mockup_action_metadata(self):
         if not hasattr(self, "preview_panel"):
@@ -2697,9 +2440,9 @@ class MainWindow(QMainWindow):
         self._disconnect_worker_signals(worker)
         _DETACHED_WORKERS.add(worker)
         try:
-            worker.finished.connect(lambda *args, _worker=worker: _release_detached_worker(_worker))
+            worker.finished.connect(lambda *args, _worker=worker: _discard_detached_worker(_worker))
         except Exception:
-            _release_detached_worker(worker)
+            _discard_detached_worker(worker)
 
     def _cleanup_worker_ref(self, worker, attr_name):
         if worker is None:
@@ -2707,7 +2450,7 @@ class MainWindow(QMainWindow):
         if getattr(self, attr_name, None) is worker:
             setattr(self, attr_name, None)
         if worker in _DETACHED_WORKERS:
-            _release_detached_worker(worker)
+            _discard_detached_worker(worker)
             return
         try:
             worker.deleteLater()
@@ -2887,36 +2630,8 @@ class MainWindow(QMainWindow):
             and self._has_valid_sdk_root()
             and self.compiler.can_build()
         )
-        can_release = self.project is not None and bool(self._project_dir) and self._has_valid_sdk_root()
-        latest_entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root()) if self.project is not None and self._project_dir else {}
-        history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root()) if self.project is not None and self._project_dir else []
-        release_root = normalize_path(latest_entry.get("release_root", "")) if isinstance(latest_entry, dict) else ""
-        dist_dir = normalize_path(latest_entry.get("dist_dir", "")) if isinstance(latest_entry, dict) else ""
-        manifest_path = normalize_path(latest_entry.get("manifest_path", "")) if isinstance(latest_entry, dict) else ""
-        zip_path = normalize_path(latest_entry.get("zip_path", "")) if isinstance(latest_entry, dict) else ""
-        log_path = normalize_path(latest_entry.get("log_path", "")) if isinstance(latest_entry, dict) else ""
-        version_path = self._latest_release_version_path(latest_entry)
-        version_expected_path = self._latest_release_version_path(latest_entry, require_exists=False)
-        latest_release_profile_label = self._release_profile_label(latest_entry.get("profile_id")) if isinstance(latest_entry, dict) else ""
-        history_file_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root())) if self._project_dir else ""
-        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        output_root_state_detail = output_root_state_summary.split(": ", 1)[1] if ": " in output_root_state_summary else output_root_state_summary
-        history_file_state_summary = self._release_history_file_state_summary(history_file_path)
-        history_summary = self._release_history_records_summary(history_entries=history_entries, latest_entry=latest_entry)
-        latest_release_summary = self._build_menu_latest_release_summary(latest_entry=latest_entry)
-        latest_release_sdk_summary = self._latest_release_sdk_summary(latest_entry=latest_entry)
-        release_targets_summary = self._release_open_targets_summary(latest_entry=latest_entry, history_file_path=history_file_path)
-        profiles_summary = self._release_profiles_build_summary()
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
-        can_browse_release_history = self.project is not None and bool(self._project_dir)
-        release_root_exists = bool(release_root and os.path.isdir(release_root))
-        dist_dir_exists = bool(dist_dir and os.path.isdir(dist_dir))
-        manifest_exists = bool(manifest_path and os.path.isfile(manifest_path))
-        version_exists = bool(version_path and os.path.isfile(version_path))
-        zip_exists = bool(zip_path and os.path.isfile(zip_path))
-        log_exists = bool(log_path and os.path.isfile(log_path))
         self._compile_action.setEnabled(can_compile)
         self._rebuild_action.setEnabled(can_compile)
         self.auto_compile_action.setEnabled(can_compile)
@@ -2944,204 +2659,17 @@ class MainWindow(QMainWindow):
                 )
             ),
         )
-        if hasattr(self, "_release_build_action"):
-            self._release_build_action.setEnabled(can_release)
-            self._release_profiles_action.setEnabled(self.project is not None)
-            self._release_history_action.setEnabled(can_browse_release_history)
-            release_build_blocked_reason = (
-                "open a project first"
-                if self.project is None
-                else "save the project to disk first"
-                if not self._project_dir
-                else "set a valid SDK root first"
-            )
-            self._apply_action_hint(
-                self._release_build_action,
-                (
-                    "Build a release package for the current project. "
-                    f"SDK: {sdk_state}. Output root: {self._release_output_root()}. Default profile: {self._default_release_profile_label()}. "
-                    f"History file: {history_file_path or 'not created yet'}. "
-                    f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
-                    f"{profiles_summary} "
-                    f"{output_root_state_summary} {history_file_state_summary} {history_summary} "
-                    f"{latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
-                    if self._release_build_action.isEnabled()
-                    else (
-                        "Build a release package for the current project. "
-                        f"SDK: {sdk_state}. Output root: {self._release_output_root() or 'none'}. "
-                        f"History file: {history_file_path or ('none' if self.project is None else 'not created yet')}. "
-                        f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}. "
-                        f"{profiles_summary} {output_root_state_summary} {history_file_state_summary} "
-                        f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
-                        f"Unavailable: {release_build_blocked_reason}."
-                        if release_build_blocked_reason in {
-                            "open a project first",
-                            "set a valid SDK root first",
-                            "save the project to disk first",
-                        }
-                        else self._action_hint(
-                            "Build a release package for the current project.",
-                            False,
-                            release_build_blocked_reason,
-                        )
-                    )
-                ),
-            )
-            self._update_release_profiles_action_metadata(
-                sdk_state=sdk_state,
-                output_root_state_summary=output_root_state_summary,
-                release_targets_summary=release_targets_summary,
-                history_file_path=history_file_path,
-                resources_state=resources_state,
-                resource_dir=resources_dir or "none",
-                history_file_state_summary=history_file_state_summary,
-                history_summary=history_summary,
-                latest_release_summary=latest_release_summary,
-                latest_release_sdk_summary=latest_release_sdk_summary,
-            )
-            self._apply_action_hint(
-                self._release_history_action,
-                (
-                    "Browse recorded release builds for the current project. "
-                    f"SDK: {sdk_state}. History file: {history_file_path or 'not created yet'}. {history_file_state_summary} "
-                    f"Output root: {self._release_output_root()}. Source resources: {resources_state}. "
-                    f"Resource directory: {resources_dir or 'none'}. {profiles_summary} {output_root_state_summary} "
-                    f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
-                    if self._release_history_action.isEnabled()
-                    else (
-                        "Browse recorded release builds for the current project. "
-                        f"SDK: {sdk_state}. History file: {history_file_path or ('none' if self.project is None else 'not created yet')}. {history_file_state_summary} "
-                        f"Output root: {self._release_output_root() or 'none'}. Source resources: {resources_state}. "
-                        f"Resource directory: {resources_dir or 'none'}. {profiles_summary} {output_root_state_summary} "
-                        f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary} "
-                        f"Unavailable: {'save the project to disk first' if self.project is not None else 'open a project first'}."
-                    )
-                ),
-            )
-            repo_project_state = "open" if self.project is not None else "none"
-            repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
-            repo_release_root = self._release_output_root() if self.project is not None and self._project_dir else "none"
-            self._apply_action_hint(
-                self._repo_health_action,
-                (
-                    "Inspect the Designer repository health summary. "
-                    f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
-                    f"Release output root: {repo_release_root}. {output_root_state_summary} Source resources: {resources_state}. "
-                    f"Resource directory: {resources_dir or 'none'}. "
-                    f"{profiles_summary} History file: {history_file_path or 'none'}. "
-                    f"{history_file_state_summary} "
-                    f"{history_summary} {latest_release_summary} {latest_release_sdk_summary} {release_targets_summary}"
-                ),
-            )
-            self._open_last_release_dir_action.setEnabled(release_root_exists)
-            self._open_last_release_dist_action.setEnabled(dist_dir_exists)
-            self._open_last_release_manifest_action.setEnabled(manifest_exists)
-            self._open_last_release_version_action.setEnabled(version_exists)
-            self._open_last_release_package_action.setEnabled(zip_exists)
-            self._open_last_release_log_action.setEnabled(log_exists)
-            self._open_release_history_file_action.setEnabled(bool(history_file_path and os.path.isfile(history_file_path)))
-            self._apply_action_hint(
-                self._open_last_release_dir_action,
-                _release_action_tooltip(
-                    "Open last release folder",
-                    latest_entry,
-                    path=release_root if release_root_exists else "",
-                    unavailable_label="Release folder unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected folder: {release_root}"
-                        if release_root
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_last_release_dist_action,
-                _release_action_tooltip(
-                    "Open last release dist",
-                    latest_entry,
-                    path=dist_dir if dist_dir_exists else "",
-                    unavailable_label="Release dist unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected folder: {dist_dir}"
-                        if dist_dir
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_last_release_manifest_action,
-                _release_action_tooltip(
-                    "Open last release manifest",
-                    latest_entry,
-                    path=manifest_path if manifest_exists else "",
-                    unavailable_label="Release manifest unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected file: {manifest_path}"
-                        if manifest_path
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_last_release_version_action,
-                _release_action_tooltip(
-                    "Open last release version",
-                    latest_entry,
-                    path=version_path if version_exists else "",
-                    unavailable_label="Release version unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected file: {version_expected_path}"
-                        if version_expected_path
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_last_release_package_action,
-                _release_action_tooltip(
-                    "Open last release package",
-                    latest_entry,
-                    path=zip_path if zip_exists else "",
-                    unavailable_label="Release package unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected file: {zip_path}"
-                        if zip_path
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_last_release_log_action,
-                _release_action_tooltip(
-                    "Open last release log",
-                    latest_entry,
-                    path=log_path if log_exists else "",
-                    unavailable_label="Release log unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=(
-                        f"Output root state: {output_root_state_detail}\nExpected file: {log_path}"
-                        if log_path
-                        else f"{output_root_state_summary}\nOutput root: {self._release_output_root() or 'none'}"
-                    ),
-                ),
-            )
-            self._apply_action_hint(
-                self._open_release_history_file_action,
-                _release_action_tooltip(
-                    "Open release history file",
-                    latest_entry,
-                    path=history_file_path if history_file_path and os.path.isfile(history_file_path) else "",
-                    unavailable_label="Release history file unavailable",
-                    profile_label=latest_release_profile_label,
-                    fallback_hint=f"{history_file_state_summary}\nExpected file: {history_file_path or 'none'}",
-                ),
-            )
-        self._update_build_menu_metadata(latest_entry=latest_entry, history_entries=history_entries, history_file_path=history_file_path)
+        repo_project_state = "open" if self.project is not None else "none"
+        repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+        self._apply_action_hint(
+            self._repo_health_action,
+            (
+                "Inspect the Designer repository health summary. "
+                f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
+                f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
+            ),
+        )
+        self._update_build_menu_metadata()
         self._update_file_menu_metadata()
         self._update_file_project_action_metadata()
         self._update_generate_resources_action_metadata()
@@ -3927,7 +3455,7 @@ class MainWindow(QMainWindow):
         self._build_menu = build_menu
         self._apply_action_hint(
             build_menu.menuAction(),
-            "Build EXE previews by default, generate resources, and manage release builds with Python fallback when needed.",
+            "Build EXE previews by default, generate resources, and inspect repository health when needed.",
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
@@ -3954,49 +3482,6 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._stop_action)
 
         build_menu.addSeparator()
-
-        self._release_build_action = QAction("Release Build (EXE)...", self)
-        self._apply_action_hint(self._release_build_action, "Build an EXE release package for the current project.")
-        self._release_build_action.triggered.connect(self._release_build)
-        build_menu.addAction(self._release_build_action)
-
-        self._release_profiles_action = QAction("Release Profiles...", self)
-        self._apply_action_hint(self._release_profiles_action, "Edit release profiles for the current project.")
-        self._release_profiles_action.triggered.connect(self._edit_release_profiles)
-        build_menu.addAction(self._release_profiles_action)
-
-        self._open_last_release_dir_action = QAction("Open Last Release Folder", self)
-        self._open_last_release_dir_action.triggered.connect(self._open_last_release_folder)
-        build_menu.addAction(self._open_last_release_dir_action)
-
-        self._open_last_release_dist_action = QAction("Open Last Release Dist", self)
-        self._open_last_release_dist_action.triggered.connect(self._open_last_release_dist)
-        build_menu.addAction(self._open_last_release_dist_action)
-
-        self._open_last_release_manifest_action = QAction("Open Last Release Manifest", self)
-        self._open_last_release_manifest_action.triggered.connect(self._open_last_release_manifest)
-        build_menu.addAction(self._open_last_release_manifest_action)
-
-        self._open_last_release_version_action = QAction("Open Last Release Version", self)
-        self._open_last_release_version_action.triggered.connect(self._open_last_release_version)
-        build_menu.addAction(self._open_last_release_version_action)
-
-        self._open_last_release_package_action = QAction("Open Last Release Package", self)
-        self._open_last_release_package_action.triggered.connect(self._open_last_release_package)
-        build_menu.addAction(self._open_last_release_package_action)
-
-        self._open_last_release_log_action = QAction("Open Last Release Log", self)
-        self._open_last_release_log_action.triggered.connect(self._open_last_release_log)
-        build_menu.addAction(self._open_last_release_log_action)
-
-        self._open_release_history_file_action = QAction("Open Release History File", self)
-        self._open_release_history_file_action.triggered.connect(self._open_release_history_file)
-        build_menu.addAction(self._open_release_history_file_action)
-
-        self._release_history_action = QAction("Release History...", self)
-        self._apply_action_hint(self._release_history_action, "Browse recorded release builds for the current project.")
-        self._release_history_action.triggered.connect(self._show_release_history)
-        build_menu.addAction(self._release_history_action)
 
         self._repo_health_action = QAction("Repository Health...", self)
         self._apply_action_hint(self._repo_health_action, "Inspect the Designer repository health summary.")
@@ -4565,24 +4050,6 @@ class MainWindow(QMainWindow):
         self._update_file_open_action_metadata()
         self._update_file_menu_metadata()
 
-    def _release_output_root(self):
-        if not self._project_dir:
-            return ""
-        return os.path.join(self._project_dir, "output", "ui_designer_release")
-
-    def _latest_release_version_path(self, entry, require_exists=True):
-        if not isinstance(entry, dict):
-            return ""
-        dist_dir = normalize_path(entry.get("dist_dir", ""))
-        release_root = normalize_path(entry.get("release_root", ""))
-        for base_dir in (dist_dir, release_root):
-            if not base_dir:
-                continue
-            candidate = normalize_path(os.path.join(base_dir, "VERSION.txt"))
-            if candidate and (not require_exists or os.path.isfile(candidate)):
-                return candidate
-        return ""
-
     def _update_sdk_status_label(self):
         if not hasattr(self, "_sdk_status_label"):
             return
@@ -4601,19 +4068,6 @@ class MainWindow(QMainWindow):
         self._update_sdk_root_action_metadata(binding_label)
         self._update_workspace_chips()
 
-    def _edit_release_profiles(self):
-        if self.project is None:
-            return
-        dialog = ReleaseProfilesDialog(self.project.release_config, self)
-        if dialog.exec_() != QDialog.Accepted:
-            return
-        self.project.release_config = dialog.release_config
-        if self._project_dir:
-            self.project.release_config.save(self._project_dir)
-            self._refresh_project_watch_snapshot()
-        self.statusBar().showMessage("Release profiles updated", 4000)
-        self._update_compile_availability()
-
     def _open_path_in_shell(self, path):
         path = normalize_path(path)
         if not path or not os.path.exists(path):
@@ -4624,265 +4078,9 @@ class MainWindow(QMainWindow):
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.Popen([opener, path])
 
-    def _open_last_release_folder(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        release_root = normalize_path(entry.get("release_root", "")) if isinstance(entry, dict) else ""
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not release_root or not os.path.isdir(release_root):
-            self.statusBar().showMessage(
-                (
-                    f"No release folder available. {output_root_state_summary} Expected folder: {release_root}."
-                    if release_root
-                    else f"No release folder available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(release_root)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Folder Failed", str(exc))
-
-    def _open_last_release_dist(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        dist_dir = normalize_path(entry.get("dist_dir", "")) if isinstance(entry, dict) else ""
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not dist_dir or not os.path.isdir(dist_dir):
-            self.statusBar().showMessage(
-                (
-                    f"No release dist directory available. {output_root_state_summary} Expected folder: {dist_dir}."
-                    if dist_dir
-                    else f"No release dist directory available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(dist_dir)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Dist Failed", str(exc))
-
-    def _open_last_release_manifest(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        manifest_path = normalize_path(entry.get("manifest_path", "")) if isinstance(entry, dict) else ""
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not manifest_path or not os.path.isfile(manifest_path):
-            self.statusBar().showMessage(
-                (
-                    f"No release manifest available. {output_root_state_summary} Expected file: {manifest_path}."
-                    if manifest_path
-                    else f"No release manifest available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(manifest_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Manifest Failed", str(exc))
-
-    def _open_last_release_version(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        version_path = self._latest_release_version_path(entry)
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not version_path:
-            version_expected_path = self._latest_release_version_path(entry, require_exists=False)
-            self.statusBar().showMessage(
-                (
-                    f"No release version file available. {output_root_state_summary} Expected file: {version_expected_path}."
-                    if version_expected_path
-                    else f"No release version file available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(version_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Version Failed", str(exc))
-
-    def _open_last_release_package(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        zip_path = normalize_path(entry.get("zip_path", "")) if isinstance(entry, dict) else ""
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not zip_path or not os.path.isfile(zip_path):
-            self.statusBar().showMessage(
-                (
-                    f"No release package available. {output_root_state_summary} Expected file: {zip_path}."
-                    if zip_path
-                    else f"No release package available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(zip_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Package Failed", str(exc))
-
-    def _open_last_release_log(self):
-        if not self._project_dir:
-            return
-        entry = latest_release_entry(self._project_dir, output_dir=self._release_output_root())
-        log_path = normalize_path(entry.get("log_path", "")) if isinstance(entry, dict) else ""
-        output_root = self._release_output_root() or "none"
-        output_root_state_summary = self._release_output_root_state_summary(self._release_output_root())
-        if not log_path or not os.path.isfile(log_path):
-            self.statusBar().showMessage(
-                (
-                    f"No release log available. {output_root_state_summary} Expected file: {log_path}."
-                    if log_path
-                    else f"No release log available. {output_root_state_summary} Output root: {output_root}."
-                ),
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(log_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release Log Failed", str(exc))
-
-    def _open_release_history_file(self):
-        if not self._project_dir:
-            return
-        history_path = normalize_path(release_history_path(self._project_dir, output_dir=self._release_output_root()))
-        history_file_state_summary = self._release_history_file_state_summary(history_path)
-        if not history_path or not os.path.isfile(history_path):
-            self.statusBar().showMessage(
-                f"No release history file available. {history_file_state_summary} Expected file: {history_path or 'none'}.",
-                4000,
-            )
-            return
-        try:
-            self._open_path_in_shell(history_path)
-        except Exception as exc:
-            QMessageBox.warning(self, "Open Release History File Failed", str(exc))
-
-    def _show_release_history(self):
-        if not self._project_dir:
-            return
-        history_entries = load_release_history(self._project_dir, output_dir=self._release_output_root())
-        dialog = ReleaseHistoryDialog(
-            history_entries,
-            open_path_callback=self._open_path_in_shell,
-            history_path=release_history_path(self._project_dir, output_dir=self._release_output_root()),
-            refresh_history_callback=lambda: load_release_history(self._project_dir, output_dir=self._release_output_root()),
-            project_key=self._project_dir,
-            parent=self,
-        )
-        dialog.exec_()
-
     def _show_repository_health(self):
         dialog = RepositoryHealthDialog(_DESIGNER_REPO_ROOT, open_path_callback=self._open_path_in_shell, parent=self)
         dialog.exec_()
-
-    def _release_build(self):
-        if self.project is None or not self._project_dir:
-            return
-        if not self._has_valid_sdk_root():
-            QMessageBox.warning(self, "SDK Root Missing", "A valid EmbeddedGUI SDK root is required to build a release.")
-            return
-
-        self._flush_pending_xml()
-        diagnostics = collect_release_diagnostics(self.project)
-        warning_count = len(diagnostics["warnings"])
-        dialog = ReleaseBuildDialog(
-            self.project.release_config,
-            format_sdk_binding_label(self.project_root, _DESIGNER_REPO_ROOT),
-            self._release_output_root(),
-            warning_count,
-            self,
-        )
-        if dialog.exec_() != QDialog.Accepted:
-            return
-
-        self._save_project()
-        if not self._project_dir:
-            return
-
-        profile = self.project.release_config.get_profile(dialog.selected_profile_id)
-        result = release_project(
-            ReleaseRequest(
-                project=self.project,
-                project_dir=self._project_dir,
-                sdk_root=self.project_root,
-                profile=profile,
-                designer_root=_DESIGNER_REPO_ROOT,
-                output_dir=self._release_output_root(),
-                warnings_as_errors=dialog.warnings_as_errors,
-                package_release=dialog.package_release,
-            )
-        )
-        self._update_compile_availability()
-        designer_revision = str(getattr(result, "designer_revision", "") or "").strip()
-        sdk = getattr(result, "sdk", {})
-        sdk_source_kind = ""
-        sdk_revision = ""
-        if isinstance(sdk, dict):
-            sdk_source_kind = str(sdk.get("source_kind") or "").strip()
-            sdk_revision = str(sdk.get("revision") or sdk.get("commit_short") or sdk.get("commit") or "").strip()
-        if result.success:
-            self.statusBar().showMessage(result.message, 5000)
-            summary_lines = [result.message]
-            if result.build_id:
-                summary_lines.extend(["", "Build ID:", result.build_id])
-            if result.profile_id:
-                summary_lines.extend(["", "Profile:", result.profile_id])
-            summary_lines.extend(["", "Manifest:", result.manifest_path])
-            if result.history_path:
-                summary_lines.extend(["", "History:", result.history_path])
-            if result.zip_path:
-                summary_lines.extend(["", "Package:", result.zip_path])
-            if designer_revision:
-                summary_lines.extend(["", "Designer Revision:", designer_revision])
-            if sdk_source_kind:
-                summary_lines.extend(["", "SDK Source:", sdk_source_kind])
-            if sdk_revision:
-                summary_lines.extend(["", "SDK Revision:", sdk_revision])
-            QMessageBox.information(
-                self,
-                "Release Build Succeeded",
-                "\n".join(summary_lines),
-            )
-            return
-
-        self.debug_panel.log_error(result.message)
-        self.debug_panel.log_error(f"Release log: {result.log_path}")
-        self._show_bottom_panel("Debug Output")
-        self.statusBar().showMessage(result.message, 5000)
-        summary_lines = [result.message]
-        if result.build_id:
-            summary_lines.extend(["", "Build ID:", result.build_id])
-        if result.profile_id:
-            summary_lines.extend(["", "Profile:", result.profile_id])
-        if result.manifest_path:
-            summary_lines.extend(["", "Manifest:", result.manifest_path])
-        if result.history_path:
-            summary_lines.extend(["", "History:", result.history_path])
-        if result.log_path:
-            summary_lines.extend(["", "Log:", result.log_path])
-        if designer_revision:
-            summary_lines.extend(["", "Designer Revision:", designer_revision])
-        if sdk_source_kind:
-            summary_lines.extend(["", "SDK Source:", sdk_source_kind])
-        if sdk_revision:
-            summary_lines.extend(["", "SDK Revision:", sdk_revision])
-        QMessageBox.warning(self, "Release Build Failed", "\n".join(summary_lines))
 
     def _open_app_dialog(self):
         """Show dialog to select and open a bundled or SDK example."""

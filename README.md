@@ -31,8 +31,6 @@ If you do not want to use the submodule checkout locally, `EMBEDDEDGUI_SDK_ROOT`
   `python ui_designer_preview_smoke.py --sdk-root sdk/EmbeddedGUI`
 - Build package:
   `python package_ui_designer.py --sdk-root sdk/EmbeddedGUI`
-- Run a real release smoke on the sample project:
-  `python scripts/ui_designer/release_project.py --project samples/release_smoke/ReleaseSmokeApp --sdk-root sdk/EmbeddedGUI --output-dir build/release-smoke --json`
 - Inspect local repo health:
   `python scripts/ui_designer/repo_doctor.py`
   `python scripts/ui_designer/repo_doctor.py --strict`
@@ -49,41 +47,35 @@ Detailed Chinese usage guide with real UI screenshots:
 
 ## Release workflow
 
+### GitHub release tags
+
+Repository distribution releases are handled outside the Designer UI through GitHub Actions.
+Push a version tag such as `v0.1.0`, and the `Designer Release` workflow will:
+
+- build the Windows package on `windows-latest`
+- run the existing package preflight while generating `dist/EmbeddedGUI-Designer/EmbeddedGUI-Designer.exe`
+- archive the full runtime folder as `EmbeddedGUI-Designer-windows-x64-<tag>.zip`
+- create or reuse the matching GitHub Release and upload the zip, `designer-package-metadata.json`, `repo-health.json`, and `SHA256SUMS.txt`
+
+The published asset is a zip package that contains the runnable `EmbeddedGUI-Designer.exe` together with its required runtime files and bundled SDK.
+
 ### From the GUI
 
-Use `Build -> Release Build...` to create a reproducible release for the current project.
-Use `Build -> Release Profiles...` to maintain project-local release profiles in `.eguiproject/release.json`.
-Use `Build -> Release History...` to inspect, time-filter, artifact-filter, diagnostics-filter, sort, refresh, copy, or export prior release summaries as text or JSON, copy or export the currently selected entry summary, details, preview, or JSON, switch between auto, manifest, version, or log previews directly inside the Designer, copy, open, or export the currently active preview target, copy release roots, dist folders, package paths, copy or export the raw `history.json` ledger JSON, and reopen with the last-used filters still applied per project.
-Use `Build -> Repository Health...` to inspect SDK submodule state, release smoke sample presence, stale workspace temp directories, filter to critical issues or blocked stale directories, reset back to the default view, switch between text or JSON reports with embedded summary/count metadata, copy or export short summaries, copy or export full reports, copy repo, SDK, smoke-sample, or selected stale-directory paths for issue reports, choose and open the currently filtered stale temp directory directly, and reopen with the previous view settings intact.
-The latest successful build can be reopened from `Build -> Open Last Release Folder`, `Build -> Open Last Release Dist`, `Build -> Open Last Release Manifest`, `Build -> Open Last Release Version`, `Build -> Open Last Release Package`, or `Build -> Open Last Release Log`.
-The project-wide release history ledger can be reopened from `Build -> Open Release History File`.
+The Designer no longer includes an in-editor project release flow.
+Use `Build -> Repository Health...` to inspect SDK submodule state, runtime path permissions, stale workspace temp directories, filter to critical issues or blocked stale directories, reset back to the default view, switch between text or JSON reports with embedded summary/count metadata, copy or export short summaries, copy or export full reports, copy repo, SDK, or selected stale-directory paths for issue reports, choose and open the currently filtered stale temp directory directly, and reopen with the previous view settings intact.
 
 ### From the CLI
 
-- Create a release package for a project:
-  `python scripts/ui_designer/release_project.py --project path/to/Demo.egui --sdk-root sdk/EmbeddedGUI`
-- Emit release result as JSON for CI or wrappers:
-  `python scripts/ui_designer/release_project.py --project path/to/Demo.egui --sdk-root sdk/EmbeddedGUI --json`
-- Inspect a release root, manifest, packaged app, or bundled SDK directory:
-  `python scripts/ui_designer/inspect_release.py path/to/output/ui_designer_release/windows-pc/<build_id>`
+- Inspect a packaged app or bundled SDK directory:
   `python scripts/ui_designer/inspect_release.py dist/EmbeddedGUI-Designer --json`
 
 ### Release output
-
-A project release is written under `output/ui_designer_release/<profile>/<build_id>/` and includes:
-
-- `release-manifest.json`: build result, Designer revision, SDK revision, warnings/errors, artifacts.
-- `VERSION.txt`: compact human-readable version stamp.
-- `logs/build.log`: resource generation and build output.
-- `dist/`: copied executable, resources, `VERSION.txt`, and a manifest copy.
-- `history.json`: rolling release history for the project, including SDK/Designer revisions, diagnostics counts, and artifact paths.
 
 Packaged Designer builds also include:
 
 - `.designer_build_info.json` in the app root.
 - `sdk/EmbeddedGUI/.designer_sdk_bundle.json` when SDK bundling is enabled.
 - CI package builds also upload `dist/designer-package-metadata.json` for quick SDK/version inspection.
-- CI release smoke builds also upload `build/release-smoke/` plus JSON summaries for manifest and SDK traceability.
 - CI jobs also upload `build/repo-health.json` so submodule and workspace health are inspectable from artifacts.
 
 ## Figma and HTML conversion tools
