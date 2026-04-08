@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page>
+    <Group id="root_group" x="0" y="0" width="240" height="320">
+        <Label id="title_label" x="24" y="86" width="192" height="34" text="Python descriptor fallback" />
+        <FallbackPill id="status_badge" x="44" y="148" width="152" height="36" text="Manual widget active" emphasis="true" />
+    </Group>
+</Page>

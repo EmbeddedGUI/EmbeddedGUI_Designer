@@ -1,6 +1,7 @@
 """Tests for ui_designer.model.project.Project."""
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -313,3 +314,20 @@ class TestSaveLoad:
         # Verify layout XML was created
         layout_xml = os.path.join(project_dir, ".eguiproject", "layout", "main_page.xml")
         assert os.path.isfile(layout_xml)
+
+    @pytest.mark.integration
+    def test_load_bundled_example_with_manual_widget_descriptor_fallback(self):
+        repo_root = Path(__file__).resolve().parents[3]
+        project_dir = repo_root / "examples" / "HelloWidgetFallbackDemo"
+
+        loaded = Project.load(str(project_dir))
+
+        assert loaded.app_name == "HelloWidgetFallbackDemo"
+        page = loaded.get_page_by_name("main_page")
+        assert page is not None
+        assert page.root_widget is not None
+        assert len(page.root_widget.children) == 2
+        pill = page.root_widget.children[1]
+        assert pill.widget_type == "fallback_pill"
+        assert pill.properties["text"] == "Manual widget active"
+        assert pill.properties["emphasis"] is True

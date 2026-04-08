@@ -1,0 +1,24 @@
+// GENERATED_HASH: 65572836a0ae46fb
+#ifndef _APP_EGUI_CONFIG_H_
+#define _APP_EGUI_CONFIG_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define EGUI_CONFIG_SCEEN_WIDTH  240
+#define EGUI_CONFIG_SCEEN_HEIGHT 320
+#define EGUI_CONFIG_PFB_WIDTH    30
+#define EGUI_CONFIG_PFB_HEIGHT   40
+
+#define EGUI_CONFIG_COLOR_DEPTH 16
+
+#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1
+
+#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE 20
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _APP_EGUI_CONFIG_H_ */

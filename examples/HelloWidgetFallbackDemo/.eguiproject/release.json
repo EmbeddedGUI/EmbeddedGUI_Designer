@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "default_profile": "windows-pc",
+  "profiles": [
+    {
+      "id": "windows-pc",
+      "name": "Windows PC",
+      "port": "pc",
+      "make_target": "all",
+      "package_format": "dir+zip",
+      "extra_make_args": [],
+      "copy_resource_dir": true
+    }
+  ]
+}
