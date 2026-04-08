@@ -768,6 +768,89 @@ class TestResourcePanelFileFlow:
         assert [panel._string_table.item(row, 0).text() for row in range(panel._string_table.rowCount())] == ["debug", "notes"]
         panel.deleteLater()
 
+    def test_copy_visible_image_names_uses_current_filters_and_updates_clipboard(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "hero.png").write_bytes(b"PNG")
+        (images_dir / "spare.png").write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("ghost.png")
+        catalog.add_image("hero.png")
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_usage_index(
+            {
+                ("image", "hero.png"): [
+                    ResourceUsageEntry("image", "hero.png", "main_page", "hero", "image_file", "image"),
+                ],
+                ("image", "ghost.png"): [
+                    ResourceUsageEntry("image", "ghost.png", "detail_page", "badge", "image_file", "image"),
+                ],
+            }
+        )
+
+        copy_button = panel._resource_action_buttons["image"]["copy_visible"]
+        messages = []
+        panel.feedback_message.connect(messages.append)
+        QApplication.clipboard().clear()
+
+        panel._resource_search_inputs["image"].setText("sp")
+        copy_button.click()
+
+        assert QApplication.clipboard().text() == "spare.png"
+        assert messages == ["Copied 1 visible image resource name."]
+        assert copy_button.toolTip() == "Copy the currently visible image resource names. 1 item will be copied."
+
+        panel._resource_search_inputs["image"].setText("zzz")
+        assert copy_button.isEnabled() is False
+        assert copy_button.toolTip() == "No image resources match the current filters."
+        panel.deleteLater()
+
+    def test_copy_visible_string_keys_uses_current_filters_and_updates_clipboard(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("debug", "Trace", DEFAULT_LOCALE)
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        string_catalog.set("notes", "Spare", DEFAULT_LOCALE)
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel.set_resource_usage_index(
+            {
+                ("string", "greeting"): [
+                    ResourceUsageEntry("string", "greeting", "main_page", "title", "text", "label"),
+                ]
+            }
+        )
+        panel._tabs.setCurrentIndex(3)
+
+        copy_button = panel._copy_visible_string_btn
+        messages = []
+        panel.feedback_message.connect(messages.append)
+        QApplication.clipboard().clear()
+
+        panel._resource_status_filters["string"].setCurrentIndex(
+            panel._resource_status_filters["string"].findData("unused")
+        )
+        copy_button.click()
+
+        assert QApplication.clipboard().text() == "debug\nnotes"
+        assert messages == ["Copied 2 visible string keys."]
+        assert copy_button.toolTip() == "Copy the currently visible string keys. 2 items will be copied."
+        panel.deleteLater()
+
     def test_image_filter_summary_and_reset_button_follow_current_filters(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.model.resource_usage import ResourceUsageEntry

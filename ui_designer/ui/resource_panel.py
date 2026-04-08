@@ -2198,6 +2198,9 @@ class ResourcePanel(QWidget):
         import_img_btn = PushButton("Import...")
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
+        copy_img_btn = PushButton("Copy Names")
+        copy_img_btn.clicked.connect(lambda: self._copy_visible_names("image"))
+        img_btn_layout.addWidget(copy_img_btn)
         restore_img_btn = PushButton("Restore Missing...")
         restore_img_btn.clicked.connect(lambda: self._restore_missing_resources("image"))
         img_btn_layout.addWidget(restore_img_btn)
@@ -2226,6 +2229,7 @@ class ResourcePanel(QWidget):
         img_tab_layout.addLayout(img_btn_layout)
         self._resource_action_buttons["image"] = {
             "import": import_img_btn,
+            "copy_visible": copy_img_btn,
             "restore": restore_img_btn,
             "replace": replace_img_btn,
             "next_missing": next_missing_img_btn,
@@ -2265,6 +2269,9 @@ class ResourcePanel(QWidget):
         import_font_btn = PushButton("Import...")
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
+        copy_font_btn = PushButton("Copy Names")
+        copy_font_btn.clicked.connect(lambda: self._copy_visible_names("font"))
+        font_btn_layout.addWidget(copy_font_btn)
         self._generate_charset_btn = PushButton("Generate Charset...")
         self._generate_charset_btn.clicked.connect(self._on_generate_charset)
         font_btn_layout.addWidget(self._generate_charset_btn)
@@ -2296,6 +2303,7 @@ class ResourcePanel(QWidget):
         font_tab_layout.addLayout(font_btn_layout)
         self._resource_action_buttons["font"] = {
             "import": import_font_btn,
+            "copy_visible": copy_font_btn,
             "restore": restore_font_btn,
             "replace": replace_font_btn,
             "next_missing": next_missing_font_btn,
@@ -2335,6 +2343,9 @@ class ResourcePanel(QWidget):
         import_text_btn = PushButton("Import...")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
+        copy_text_btn = PushButton("Copy Names")
+        copy_text_btn.clicked.connect(lambda: self._copy_visible_names("text"))
+        text_btn_layout.addWidget(copy_text_btn)
         self._generate_charset_text_btn = PushButton("Generate Charset...")
         self._generate_charset_text_btn.clicked.connect(self._on_generate_charset)
         text_btn_layout.addWidget(self._generate_charset_text_btn)
@@ -2366,6 +2377,7 @@ class ResourcePanel(QWidget):
         text_tab_layout.addLayout(text_btn_layout)
         self._resource_action_buttons["text"] = {
             "import": import_text_btn,
+            "copy_visible": copy_text_btn,
             "restore": restore_text_btn,
             "replace": replace_text_btn,
             "next_missing": next_missing_text_btn,
@@ -2436,6 +2448,9 @@ class ResourcePanel(QWidget):
         self._remove_key_btn = PushButton("Remove")
         self._remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(self._remove_key_btn)
+        self._copy_visible_string_btn = PushButton("Copy Keys")
+        self._copy_visible_string_btn.clicked.connect(self._copy_visible_string_keys)
+        str_btn_layout.addWidget(self._copy_visible_string_btn)
         self._clean_unused_string_btn = PushButton("Clean Unused...")
         self._clean_unused_string_btn.clicked.connect(self._clean_unused_string_keys)
         str_btn_layout.addWidget(self._clean_unused_string_btn)
@@ -3055,6 +3070,7 @@ class ResourcePanel(QWidget):
             total_count = len(self._resource_names_for_type(resource_type))
             missing_count = len(self._missing_resource_names(resource_type))
             visible_missing_count = len(self._visible_missing_resource_names(resource_type))
+            visible_count = len(self._visible_names_for_type(resource_type))
             visible_unused_count = len(self._visible_unused_names(resource_type))
             total_label = self._resource_count_label(resource_type, total_count)
             missing_label = self._resource_count_label(resource_type, missing_count, missing=True)
@@ -3070,6 +3086,20 @@ class ResourcePanel(QWidget):
                 if missing_count:
                     import_accessible_name += f" {missing_label.capitalize()}."
             _set_widget_metadata(buttons["import"], tooltip=import_tooltip, accessible_name=import_accessible_name)
+
+            copy_visible_button = buttons.get("copy_visible")
+            if copy_visible_button is not None:
+                copy_visible_button.setEnabled(visible_count > 0)
+                if visible_count > 0:
+                    tooltip = (
+                        f"Copy the currently visible {resource_type} resource names. "
+                        f"{visible_count} item{'s' if visible_count != 1 else ''} will be copied."
+                    )
+                    accessible_name = f"Copy visible {resource_type} resource names. {visible_count} visible items."
+                else:
+                    tooltip = f"No {resource_type} resources match the current filters."
+                    accessible_name = f"Copy visible {resource_type} resource names unavailable"
+                _set_widget_metadata(copy_visible_button, tooltip=tooltip, accessible_name=accessible_name)
 
             for action in ("restore", "replace", "next_missing"):
                 action_label = self._resource_action_label(action, resource_type)
@@ -3254,6 +3284,23 @@ class ResourcePanel(QWidget):
             _set_widget_metadata(status_combo, tooltip=tooltip, accessible_name=tooltip)
 
         clean_unused_count = len(self._visible_unused_names("string"))
+        visible_string_count = len(self._visible_names_for_type("string"))
+        if hasattr(self, "_copy_visible_string_btn"):
+            self._copy_visible_string_btn.setEnabled(visible_string_count > 0)
+            if visible_string_count > 0:
+                tooltip = (
+                    f"Copy the currently visible string keys. {visible_string_count} "
+                    f"item{'s' if visible_string_count != 1 else ''} will be copied."
+                )
+                accessible_name = f"Copy visible string keys. {visible_string_count} visible items."
+            else:
+                tooltip = "No string keys match the current filters."
+                accessible_name = "Copy visible string keys unavailable"
+            _set_widget_metadata(
+                self._copy_visible_string_btn,
+                tooltip=tooltip,
+                accessible_name=accessible_name,
+            )
         if hasattr(self, "_clean_unused_string_btn"):
             if clean_unused_count > 0:
                 tooltip = (
@@ -3468,6 +3515,11 @@ class ResourcePanel(QWidget):
         missing_names = set(self._missing_resource_names(resource_type))
         return [name for name in self._filtered_resource_names(resource_type) if name in missing_names]
 
+    def _visible_names_for_type(self, resource_type):
+        if resource_type == "string":
+            return self._filtered_string_keys()
+        return self._filtered_resource_names(resource_type)
+
     def _is_resource_visible_under_filters(self, resource_type, filename):
         if not resource_type or not filename:
             return False
@@ -3558,6 +3610,24 @@ class ResourcePanel(QWidget):
         if not parts:
             return
         self.feedback_message.emit(f"{action} {resource_type} resources: {', '.join(parts)}.")
+
+    def _copy_visible_names(self, resource_type):
+        names = self._visible_names_for_type(resource_type)
+        if not names:
+            return
+        QApplication.clipboard().setText("\n".join(names))
+        self.feedback_message.emit(
+            f"Copied {len(names)} visible {resource_type} resource name{'s' if len(names) != 1 else ''}."
+        )
+
+    def _copy_visible_string_keys(self):
+        keys = self._visible_names_for_type("string")
+        if not keys:
+            return
+        QApplication.clipboard().setText("\n".join(keys))
+        self.feedback_message.emit(
+            f"Copied {len(keys)} visible string key{'s' if len(keys) != 1 else ''}."
+        )
 
     def _confirm_reference_impact(self, title, resource_name, usages, unused_prompt, impact_text, confirm_text):
         if not usages:
