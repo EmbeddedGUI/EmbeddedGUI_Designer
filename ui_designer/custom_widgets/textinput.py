@@ -50,7 +50,7 @@ WidgetRegistry.instance().register(
             "align_type": {
                 "type": "align", "default": "EGUI_ALIGN_LEFT",
                 "ui_group": "main",
-                "code_gen": {"kind": "setter", "func": "egui_view_textinput_set_align_type"},
+                "code_gen": {"kind": "field_setter", "func": "", "cast_type": "egui_view_textinput_t", "field": "align_type"},
             },
             "max_length": {
                 "type": "int", "default": 32, "min": 1, "max": 255,

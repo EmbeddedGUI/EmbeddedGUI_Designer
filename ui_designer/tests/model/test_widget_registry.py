@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+from pathlib import Path
 import pytest
 
 from ui_designer.model.widget_registry import WidgetRegistry
@@ -121,6 +122,44 @@ class TestWidgetRegistryBuiltins:
         assert "Layout & Containers" in scenarios
         assert "Input & Forms" in scenarios
         assert "Navigation & Flow" in scenarios
+
+    def test_registered_sdk_symbols_exist_when_sdk_checkout_present(self):
+        reg = WidgetRegistry.instance()
+        repo_root = Path(__file__).resolve().parents[3]
+        sdk_src_root = repo_root / "sdk" / "EmbeddedGUI" / "src"
+        if not sdk_src_root.is_dir():
+            pytest.skip("EmbeddedGUI SDK checkout not available")
+
+        header_text = []
+        for path in sdk_src_root.rglob("*.h"):
+            header_text.append(path.read_text(encoding="utf-8", errors="replace"))
+        sdk_headers = "\n".join(header_text)
+
+        missing = {}
+        for type_name, descriptor in reg.all_types().items():
+            missing_symbols = []
+            for key in ("c_type", "init_func", "params_macro", "params_type"):
+                value = descriptor.get(key, "")
+                if value and value not in sdk_headers:
+                    missing_symbols.append(f"{key}:{value}")
+
+            for prop_name, prop in descriptor.get("properties", {}).items():
+                code_gen = prop.get("code_gen") or {}
+                if code_gen.get("kind") == "field_setter":
+                    continue
+                func_name = code_gen.get("func", "")
+                if func_name and func_name not in sdk_headers:
+                    missing_symbols.append(f"prop:{prop_name}:{func_name}")
+
+            for event_name, event in descriptor.get("events", {}).items():
+                setter = event.get("setter", "")
+                if setter and setter not in sdk_headers:
+                    missing_symbols.append(f"event:{event_name}:{setter}")
+
+            if missing_symbols:
+                missing[type_name] = missing_symbols
+
+        assert missing == {}
 
 
 class TestWidgetRegistryCustom:
@@ -263,6 +302,146 @@ class TestLoadCustomWidgets:
 
             reg.load_custom_widgets(tmpdir)
             # Should not raise, just log the error
+
+
+class TestLoadAppLocalWidgets:
+    """Test scanning app-local widget headers from project directories."""
+
+    def setup_method(self):
+        WidgetRegistry.reset()
+
+    def test_loads_app_local_headers_recursively(self, tmp_path):
+        reg = WidgetRegistry.instance()
+        app_dir = tmp_path / "DemoApp"
+        header_dir = app_dir / "widgets" / "status"
+        header_dir.mkdir(parents=True)
+        (header_dir / "egui_view_status_pill.h").write_text(
+            (
+                '#include "egui_view.h"\n'
+                "typedef struct egui_view_status_pill egui_view_status_pill_t;\n"
+                "void egui_view_status_pill_init(egui_view_t *self);\n"
+                "void egui_view_status_pill_set_text(egui_view_t *self, const char *text);\n"
+            ),
+            encoding="utf-8",
+        )
+
+        issues = reg.load_app_local_widgets(app_dir)
+
+        assert issues == []
+        assert reg.has("status_pill")
+        assert reg.origin("status_pill") == "app_local"
+        assert reg.type_to_tag("status_pill") == "StatusPill"
+        assert reg.get("status_pill")["header_include"] == "widgets/status/egui_view_status_pill.h"
+        assert reg.get("status_pill")["properties"]["text"]["code_gen"]["func"] == "egui_view_status_pill_set_text"
+
+    def test_loading_new_project_clears_previous_app_local_widgets(self, tmp_path):
+        reg = WidgetRegistry.instance()
+        app_one = tmp_path / "AppOne"
+        app_two = tmp_path / "AppTwo"
+        app_one.mkdir()
+        app_two.mkdir()
+        (app_one / "egui_view_alpha_badge.h").write_text(
+            (
+                '#include "egui_view.h"\n'
+                "typedef struct egui_view_alpha_badge egui_view_alpha_badge_t;\n"
+                "void egui_view_alpha_badge_init(egui_view_t *self);\n"
+            ),
+            encoding="utf-8",
+        )
+
+        reg.load_app_local_widgets(app_one)
+        assert reg.has("alpha_badge")
+
+        reg.load_app_local_widgets(app_two)
+
+        assert not reg.has("alpha_badge")
+        assert reg.app_local_project_dir() == str(app_two.resolve())
+
+    def test_builtin_name_conflicts_are_skipped(self, tmp_path):
+        reg = WidgetRegistry.instance()
+        app_dir = tmp_path / "ConflictApp"
+        app_dir.mkdir()
+        (app_dir / "egui_view_button.h").write_text(
+            (
+                '#include "egui_view.h"\n'
+                "typedef struct egui_view_button egui_view_button_t;\n"
+                "void egui_view_button_init(egui_view_t *self);\n"
+            ),
+            encoding="utf-8",
+        )
+
+        issues = reg.load_app_local_widgets(app_dir)
+
+        assert reg.origin("button") == "builtin"
+        assert any(issue["code"] == "app_local_widget_type_conflict" for issue in issues)
+
+    def test_loads_manual_python_descriptor_from_app_local_custom_widgets_dir(self, tmp_path):
+        reg = WidgetRegistry.instance()
+        app_dir = tmp_path / "PyWidgetApp"
+        plugin_dir = app_dir / "custom_widgets"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / "fancy_chip.py").write_text(
+            (
+                "from ui_designer.model.widget_registry import WidgetRegistry\n"
+                "WidgetRegistry.instance().register(\n"
+                "    'fancy_chip',\n"
+                "    {\n"
+                "        'c_type': 'egui_view_fancy_chip_t',\n"
+                "        'init_func': 'egui_view_fancy_chip_init',\n"
+                "        'is_container': False,\n"
+                "        'header_include': 'widgets/egui_view_fancy_chip.h',\n"
+                "        'properties': {\n"
+                "            'text': {'type': 'string', 'default': '', 'code_gen': {'kind': 'text_setter', 'func': 'egui_view_fancy_chip_set_text'}},\n"
+                "        },\n"
+                "    },\n"
+                "    xml_tag='FancyChip',\n"
+                "    display_name='FancyChip',\n"
+                ")\n"
+            ),
+            encoding="utf-8",
+        )
+
+        issues = reg.load_app_local_widgets(app_dir)
+
+        assert reg.has("fancy_chip")
+        assert reg.origin("fancy_chip") == "app_local"
+        assert reg.get("fancy_chip")["header_include"] == "widgets/egui_view_fancy_chip.h"
+        assert issues == []
+
+    def test_manual_python_descriptor_can_cover_unrecognized_header(self, tmp_path):
+        reg = WidgetRegistry.instance()
+        app_dir = tmp_path / "FallbackApp"
+        app_dir.mkdir()
+        (app_dir / "egui_view_broken_widget.h").write_text(
+            "#ifndef X\n#define X\n#endif\n",
+            encoding="utf-8",
+        )
+        plugin_dir = app_dir / "custom_widgets"
+        plugin_dir.mkdir()
+        (plugin_dir / "broken_widget.py").write_text(
+            (
+                "from ui_designer.model.widget_registry import WidgetRegistry\n"
+                "WidgetRegistry.instance().register(\n"
+                "    'broken_widget',\n"
+                "    {\n"
+                "        'c_type': 'egui_view_broken_widget_t',\n"
+                "        'init_func': 'egui_view_broken_widget_init',\n"
+                "        'is_container': False,\n"
+                "        'header_include': 'widgets/egui_view_broken_widget.h',\n"
+                "        'properties': {},\n"
+                "    },\n"
+                "    xml_tag='BrokenWidget',\n"
+                "    display_name='BrokenWidget',\n"
+                ")\n"
+            ),
+            encoding="utf-8",
+        )
+
+        issues = reg.load_app_local_widgets(app_dir)
+
+        assert reg.has("broken_widget")
+        assert any(issue["code"] == "app_local_widget_unrecognized" for issue in issues)
+        assert "custom_widgets" in issues[0]["message"]
 
 
 class TestCustomWidgetCodeGen:

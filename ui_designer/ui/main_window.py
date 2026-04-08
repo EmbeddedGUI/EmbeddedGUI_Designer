@@ -99,6 +99,7 @@ from ..model.structure_ops import (
 )
 from ..model.selection_state import SelectionState
 from ..model.diagnostics import (
+    analyze_app_local_widget_issues,
     analyze_page,
     analyze_project_callback_conflicts,
     analyze_selection,
@@ -3240,6 +3241,25 @@ class MainWindow(QMainWindow):
             if os.path.isdir(src_path):
                 shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
 
+    def _load_project_app_local_widgets(self, project_dir):
+        project_dir = normalize_path(project_dir)
+        registry = WidgetRegistry.instance()
+        if project_dir and registry.app_local_project_dir() == project_dir:
+            issues = registry.app_local_issues()
+        else:
+            issues = registry.load_app_local_widgets(project_dir)
+        if not hasattr(self, "debug_panel"):
+            return issues
+        for issue in issues:
+            message = str(issue.get("message", "") or "").strip()
+            if not message:
+                continue
+            if str(issue.get("severity", "warning") or "warning").lower() == "error":
+                self.debug_panel.log_error(message)
+            else:
+                self.debug_panel.log_info(message)
+        return issues
+
     def _build_project_watch_snapshot(self):
         snapshot = {}
         if not self._project_dir or not self.app_name:
@@ -3279,10 +3299,14 @@ class MainWindow(QMainWindow):
             os.path.join(eguiproject_dir, "layout"),
             os.path.join(eguiproject_dir, "resources"),
             os.path.join(eguiproject_dir, "mockup"),
-            os.path.join(eguiproject_dir, "custom_widgets"),
+            WidgetRegistry.instance().app_local_plugin_dir(self._project_dir),
         ]
         for root in watch_roots:
             _add_path(root)
+        from ..utils.header_parser import discover_widget_headers
+
+        for header_path in discover_widget_headers(self._project_dir):
+            _add_path(header_path)
         return snapshot
 
     @staticmethod
@@ -3439,6 +3463,7 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._last_runtime_error_text = ""
+        self._load_project_app_local_widgets(project_dir)
         resolved_sdk_root = self._resolve_ui_sdk_root(
             preferred_sdk_root or project.sdk_root,
             infer_sdk_root_from_project_dir(project_dir),
@@ -3502,6 +3527,8 @@ class MainWindow(QMainWindow):
 
     def _show_welcome_page(self):
         """Show the welcome page (hide editor)."""
+        if self.project is None:
+            WidgetRegistry.instance().clear_app_local_widgets()
         self._central_stack.setCurrentIndex(0)
         self._welcome_page.refresh()
         self.setWindowTitle("EmbeddedGUI Designer")
@@ -5067,6 +5094,7 @@ class MainWindow(QMainWindow):
             string_catalog=string_catalog,
             source_resource_dir=resource_dir,
         )
+        entries.extend(analyze_app_local_widget_issues())
         entries.extend(analyze_project_callback_conflicts(self.project))
         entries.extend(analyze_selection(self._selection_state.widgets))
         self.diagnostics_panel.set_entries(sort_diagnostic_entries(entries))
@@ -5465,6 +5493,7 @@ class MainWindow(QMainWindow):
     def _save_project_files(self, project_dir, *, reset_scaffold=False):
         self.project.project_dir = project_dir
         self.project.sdk_root = self.project_root
+        self._load_project_app_local_widgets(project_dir)
         self._scaffold_project_directory(
             project_dir,
             self.project.app_name,
@@ -5493,7 +5522,15 @@ class MainWindow(QMainWindow):
             return
 
         os.makedirs(self._project_dir, exist_ok=True)
-        files = self._save_project_files(self._project_dir)
+        try:
+            files = self._save_project_files(self._project_dir)
+        except Exception as exc:
+            self._update_diagnostics_panel()
+            self.debug_panel.log_error(f"Save failed: {exc}")
+            self._show_bottom_panel("Diagnostics")
+            QMessageBox.warning(self, "Save Failed", f"Failed to save generated code:\n{exc}")
+            self.statusBar().showMessage(f"Save failed: {exc}", 5000)
+            return
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
@@ -5521,7 +5558,15 @@ class MainWindow(QMainWindow):
         old_project_dir = self._project_dir
         os.makedirs(path, exist_ok=True)
         self._copy_project_sidecar_files(old_project_dir, path)
-        files = self._save_project_files(path)
+        try:
+            files = self._save_project_files(path)
+        except Exception as exc:
+            self._update_diagnostics_panel()
+            self.debug_panel.log_error(f"Save As failed: {exc}")
+            self._show_bottom_panel("Diagnostics")
+            QMessageBox.warning(self, "Save As Failed", f"Failed to save generated code:\n{exc}")
+            self.statusBar().showMessage(f"Save As failed: {exc}", 5000)
+            return
         self._project_dir = path
         self.project.project_dir = path
         self._bump_async_generation()
@@ -5561,6 +5606,7 @@ class MainWindow(QMainWindow):
         self._external_reload_pending = False
         self.project = None
         self._project_dir = None
+        WidgetRegistry.instance().clear_app_local_widgets()
         self._undo_manager = UndoManager()
         self._clear_editor_state()
         self._show_welcome_page()
@@ -5751,12 +5797,6 @@ class MainWindow(QMainWindow):
         """Refresh all panels from the current project."""
         if not self.project:
             return
-
-        # Load project-level custom widget plugins
-        if self._project_dir:
-            from ..model.widget_registry import WidgetRegistry
-            custom_dir = os.path.join(self._project_dir, ".eguiproject", "custom_widgets")
-            WidgetRegistry.instance().load_custom_widgets(custom_dir)
 
         self.project_dock.set_project(self.project)
         self.preview_panel.update_screen_size(self.project.screen_width, self.project.screen_height)

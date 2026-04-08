@@ -5,6 +5,7 @@ import pytest
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel, AnimationModel
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
+from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.generator.code_generator import (
     _simple_init_func,
     _bg_macro_name,
@@ -161,6 +162,14 @@ class TestGenWidgetInitLines:
         assert "set_text" in text
         assert '"Click"' in text
 
+    def test_textinput_align_type_uses_field_assignment(self):
+        w = WidgetModel("textinput", name="ti", x=0, y=0, width=160, height=32)
+        w.properties["align_type"] = "EGUI_ALIGN_RIGHT"
+        lines = _gen_widget_init_lines(w)
+        text = "\n".join(lines)
+        assert "egui_view_textinput_set_align_type" not in text
+        assert "((egui_view_textinput_t *)&local->ti)->align_type = EGUI_ALIGN_RIGHT;" in text
+
     def test_image_init_lines(self):
         w = WidgetModel("image", name="img", x=0, y=0, width=64, height=64)
         w.properties["image_file"] = "star.png"
@@ -234,6 +243,12 @@ class TestGenWidgetInitLines:
 class TestGeneratePageHeader:
     """Tests for generate_page_header."""
 
+    def setup_method(self):
+        WidgetRegistry.instance().clear_app_local_widgets()
+
+    def teardown_method(self):
+        WidgetRegistry.instance().clear_app_local_widgets()
+
     def _make_simple_page_and_project(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
         label = WidgetModel("label", name="my_label", x=10, y=10, width=100, height=30)
@@ -277,6 +292,31 @@ class TestGeneratePageHeader:
         output = generate_page_header(page, proj)
         assert "#ifdef __cplusplus" in output
         assert 'extern "C" {' in output
+
+    def test_header_includes_app_local_widget_headers(self):
+        reg = WidgetRegistry.instance()
+        reg.register(
+            "status_pill",
+            {
+                "c_type": "egui_view_status_pill_t",
+                "init_func": "egui_view_status_pill_init",
+                "is_container": False,
+                "properties": {},
+                "header_include": "widgets/status/egui_view_status_pill.h",
+            },
+            xml_tag="StatusPill",
+            display_name="StatusPill",
+            origin="app_local",
+        )
+
+        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        root.add_child(WidgetModel("status_pill", name="status_1", x=10, y=10, width=100, height=24))
+        page = _make_page("main_page", root)
+        proj = _make_project([page])
+
+        output = generate_page_header(page, proj)
+
+        assert '#include "widgets/status/egui_view_status_pill.h"' in output
 
     def test_header_includes_generated_page_fields_before_user_code_region(self):
         page, proj = self._make_simple_page_and_project()

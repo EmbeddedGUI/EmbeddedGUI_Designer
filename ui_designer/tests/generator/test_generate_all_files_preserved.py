@@ -91,6 +91,16 @@ class TestUserOwnedFiles:
                      or "Your includes" in content or "Your callback" in content)
         assert has_hooks, "User-owned skeleton must contain customisation guidance comments"
 
+    def test_generation_raises_for_unknown_widget_types(self, tmp_path):
+        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        root.add_child(WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24))
+        page = Page(file_path="layout/main_page.xml", root_widget=root)
+        proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
+        proj.add_page(page)
+
+        with pytest.raises(ValueError, match="unresolved widget types"):
+            generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
     def test_designer_managed_user_source_is_migrated_with_preserved_code(self, tmp_path):
         proj = _make_project_with_page("main_page")
         proj.get_page_by_name("main_page").timers = [

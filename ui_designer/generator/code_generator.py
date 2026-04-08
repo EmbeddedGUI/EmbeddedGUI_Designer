@@ -39,6 +39,33 @@ def _get_type_info(widget_type):
     return WidgetRegistry.instance().get(widget_type)
 
 
+def _collect_project_widget_registry_errors(project):
+    registry = WidgetRegistry.instance()
+    errors = []
+
+    for page in getattr(project, "pages", []) or []:
+        for widget in page.get_all_widgets():
+            if registry.has(widget.widget_type):
+                continue
+            errors.append(
+                f"{page.name}/{widget.name}: unknown widget type '{widget.widget_type}'"
+            )
+
+    return errors
+
+
+def _page_custom_header_includes(page):
+    includes = []
+    seen = set()
+    for widget in page.get_all_widgets():
+        header_include = str(_get_type_info(widget.widget_type).get("header_include", "") or "").strip()
+        if not header_include or header_include in seen:
+            continue
+        seen.add(header_include)
+        includes.append(header_include.replace("\\", "/"))
+    return sorted(includes)
+
+
 # ── Helpers ────────────────────────────────────────────────────────
 
 def _simple_init_func(widget_type):
@@ -242,23 +269,35 @@ def _emit_property_code(widget, prop_name, prop_def, cg, cast, indent):
     func = cg["func"]
     value = widget.properties.get(prop_name, prop_def.get("default"))
 
-    if kind == "setter":
-        # Skip default values by default (explicit skip_default: False to override)
+    def _resolve_scalar_value():
         skip = cg.get("skip_default", True)
         if skip and value == prop_def.get("default"):
             return None
         skip_values = cg.get("skip_values", [])
         if value in skip_values:
             return None
-        # Value mapping
         value_map = cg.get("value_map")
         if value_map and value in value_map:
-            c_value = value_map[value]
-        elif cg.get("bool_to_int"):
-            c_value = "1" if value else "0"
-        else:
-            c_value = str(value)
+            return value_map[value]
+        if cg.get("bool_to_int"):
+            return "1" if value else "0"
+        return str(value)
+
+    if kind == "setter":
+        c_value = _resolve_scalar_value()
+        if c_value is None:
+            return None
         return f"{indent}{func}({cast}, {c_value});"
+
+    elif kind == "field_setter":
+        c_value = _resolve_scalar_value()
+        if c_value is None:
+            return None
+        cast_type = cg.get("cast_type", "")
+        field_name = cg.get("field", "")
+        if not cast_type or not field_name:
+            return None
+        return f"{indent}(({cast_type} *)&local->{widget.name})->{field_name} = {c_value};"
 
     elif kind == "text_setter":
         text = str(value or "")
@@ -651,6 +690,8 @@ def generate_page_header(page, project):
     lines.append("// Only the USER CODE regions are preserved.")
     lines.append("")
     lines.append('#include "egui.h"')
+    for header_include in _page_custom_header_includes(page):
+        lines.append(f'#include "{header_include}"')
     lines.append("")
     lines.append("// USER CODE BEGIN includes")
     lines.append("// USER CODE END includes")
@@ -1732,6 +1773,13 @@ def generate_all_files_preserved(project, output_dir, backup=True):
         should_skip_generation,
         compute_source_hash,
     )
+
+    registry_errors = _collect_project_widget_registry_errors(project)
+    if registry_errors:
+        summary = "\n".join(f"- {line}" for line in registry_errors[:10])
+        if len(registry_errors) > 10:
+            summary += f"\n- ... and {len(registry_errors) - 10} more issue(s)"
+        raise ValueError(f"Code generation blocked by unresolved widget types:\n{summary}")
 
     all_files = generate_all_files(project)
     result = {}

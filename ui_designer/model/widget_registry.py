@@ -4,8 +4,9 @@ Provides a single source of truth for widget type descriptors, replacing
 scattered hardcoded lists across widget_tree.py, code_generator.py, and
 property_panel.py.
 
-Built-in widgets are loaded from WIDGET_TYPES on first access.
-Custom widgets can be registered at runtime via .py plugin files.
+Built-in widgets are loaded from ``ui_designer/custom_widgets/*.py`` on first
+access. App-local custom widgets are discovered from ``egui_view_*.h`` headers
+under the current app directory and registered at runtime.
 """
 
 import os
@@ -13,6 +14,8 @@ import importlib.util
 import logging
 
 logger = logging.getLogger(__name__)
+
+_APP_LOCAL_WIDGET_PLUGIN_DIRNAME = "custom_widgets"
 
 
 _CATEGORY_ORDER = (
@@ -183,6 +186,10 @@ class WidgetRegistry:
         self._rev_tag_map = {}  # type_name -> XML tag
         self._addable = []      # [(display_name, type_name), ...]
         self._display_names = {}  # type_name -> display name
+        self._origins = {}      # type_name -> origin
+        self._active_origin = None
+        self._app_local_issues = []
+        self._app_local_project_dir = ""
 
     @classmethod
     def instance(cls):
@@ -202,9 +209,9 @@ class WidgetRegistry:
         # custom_widgets/ is a sibling package of model/
         pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         widgets_dir = os.path.join(pkg_dir, "custom_widgets")
-        self.load_custom_widgets(widgets_dir)
+        self.load_custom_widgets(widgets_dir, origin="builtin")
 
-    def register(self, type_name, descriptor, xml_tag=None, display_name=None):
+    def register(self, type_name, descriptor, xml_tag=None, display_name=None, origin=None):
         """Register a widget type.
 
         Args:
@@ -213,7 +220,20 @@ class WidgetRegistry:
             xml_tag:      XML tag for serialization (default: TitleCase of type_name).
             display_name: Human-readable name for UI menus (default: same as xml_tag).
         """
+        type_name = str(type_name or "").strip()
+        if not type_name:
+            raise ValueError("type_name is required")
+
+        origin = str(origin or self._active_origin or "runtime")
+
+        existing_tag = self._rev_tag_map.get(type_name)
+        if existing_tag and self._tag_map.get(existing_tag) == type_name:
+            del self._tag_map[existing_tag]
+
+        descriptor = dict(descriptor or {})
+        descriptor.setdefault("origin", origin)
         self._types[type_name] = descriptor
+        self._origins[type_name] = origin
 
         # Derive XML tag if not provided
         if xml_tag is None:
@@ -232,6 +252,159 @@ class WidgetRegistry:
         self._addable = [(dn, tn) for dn, tn in self._addable if tn != type_name]
         if addable:
             self._addable.append((display_name, type_name))
+
+    def origin(self, type_name):
+        """Return the registration origin for a widget type."""
+        return self._origins.get(type_name, "")
+
+    def _remove_type(self, type_name):
+        xml_tag = self._rev_tag_map.pop(type_name, "")
+        if xml_tag and self._tag_map.get(xml_tag) == type_name:
+            del self._tag_map[xml_tag]
+        self._types.pop(type_name, None)
+        self._display_names.pop(type_name, None)
+        self._origins.pop(type_name, None)
+        self._addable = [(dn, tn) for dn, tn in self._addable if tn != type_name]
+
+    def clear_origin(self, origin):
+        """Remove all widget types registered from the given origin."""
+        origin = str(origin or "").strip()
+        if not origin:
+            return
+        for type_name in [tn for tn, current_origin in self._origins.items() if current_origin == origin]:
+            self._remove_type(type_name)
+
+    def clear_app_local_widgets(self):
+        """Remove all app-local widget registrations and scan issues."""
+        self.clear_origin("app_local")
+        self._app_local_issues = []
+        self._app_local_project_dir = ""
+
+    def app_local_issues(self):
+        """Return diagnostics captured during the last app-local widget scan."""
+        return list(self._app_local_issues)
+
+    def app_local_project_dir(self):
+        """Return the project directory used for the last app-local widget scan."""
+        return self._app_local_project_dir
+
+    def app_local_plugin_dir(self, project_dir=None):
+        """Return the app-local Python widget descriptor directory."""
+        base_dir = project_dir or self._app_local_project_dir
+        if not base_dir:
+            return ""
+        return os.path.join(base_dir, _APP_LOCAL_WIDGET_PLUGIN_DIRNAME)
+
+    def load_app_local_widgets(self, project_dir):
+        """Scan the app directory for ``egui_view_*.h`` and register them."""
+        from ..utils.header_parser import (
+            build_runtime_widget_registration,
+            discover_widget_headers,
+            parse_header,
+        )
+
+        self.clear_origin("app_local")
+        self._app_local_issues = []
+        self._app_local_project_dir = os.path.normpath(os.path.abspath(project_dir)) if project_dir else ""
+
+        if not self._app_local_project_dir or not os.path.isdir(self._app_local_project_dir):
+            return []
+
+        plugin_dir = self.app_local_plugin_dir(self._app_local_project_dir)
+
+        for header_path in discover_widget_headers(self._app_local_project_dir):
+            try:
+                info = parse_header(header_path)
+            except Exception as exc:
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_parse_failed",
+                        "message": (
+                            f"Failed to parse app-local widget header '{os.path.basename(header_path)}': {exc}. "
+                            f"You can add a manual widget descriptor under '{plugin_dir}'."
+                        ),
+                        "widget_name": os.path.basename(header_path),
+                    }
+                )
+                continue
+
+            if info is None:
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_unrecognized",
+                        "message": (
+                            f"Skipped '{os.path.basename(header_path)}' because it does not expose a recognized EmbeddedGUI widget API. "
+                            f"You can add a manual widget descriptor under '{plugin_dir}'."
+                        ),
+                        "widget_name": os.path.basename(header_path),
+                    }
+                )
+                continue
+
+            try:
+                registration = build_runtime_widget_registration(info, self._app_local_project_dir)
+            except ValueError as exc:
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_invalid",
+                        "message": f"{exc}. You can add a manual widget descriptor under '{plugin_dir}'.",
+                        "widget_name": info.widget_name or os.path.basename(header_path),
+                    }
+                )
+                continue
+
+            type_name = registration["type_name"]
+            xml_tag = registration["xml_tag"]
+            display_name = registration["display_name"]
+            descriptor = registration["descriptor"]
+
+            existing_type_origin = self.origin(type_name)
+            if self.has(type_name) and existing_type_origin == "app_local":
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_duplicate_type",
+                        "message": f"Skipped duplicate app-local widget '{type_name}' because another header in this project already registered that type.",
+                        "widget_name": type_name,
+                    }
+                )
+                continue
+            if self.has(type_name) and existing_type_origin != "app_local":
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_type_conflict",
+                        "message": f"Skipped app-local widget '{type_name}' because that type name is already registered by {existing_type_origin or 'another source'}.",
+                        "widget_name": type_name,
+                    }
+                )
+                continue
+
+            existing_tag_type = self._tag_map.get(xml_tag)
+            if existing_tag_type and existing_tag_type != type_name:
+                self._app_local_issues.append(
+                    {
+                        "severity": "warning",
+                        "code": "app_local_widget_tag_conflict",
+                        "message": f"Skipped app-local widget '{type_name}' because XML tag '{xml_tag}' is already used by '{existing_tag_type}'.",
+                        "widget_name": type_name,
+                    }
+                )
+                continue
+
+            self.register(
+                type_name,
+                descriptor,
+                xml_tag=xml_tag,
+                display_name=display_name,
+                origin="app_local",
+            )
+
+        self.load_custom_widgets(plugin_dir, origin="app_local")
+        return self.app_local_issues()
 
     def get(self, type_name):
         """Get descriptor for a widget type. Returns empty dict if unknown."""
@@ -331,7 +504,7 @@ class WidgetRegistry:
         extras = [scenario for scenario in scenarios if scenario not in ordered]
         return ordered + extras
 
-    def load_custom_widgets(self, *dirs):
+    def load_custom_widgets(self, *dirs, origin=None):
         """Scan directories for custom widget .py plugin files and execute them.
 
         Each .py file is expected to call ``WidgetRegistry.instance().register(...)``
@@ -342,19 +515,24 @@ class WidgetRegistry:
         Args:
             *dirs: Directory paths to scan for .py files.
         """
-        for d in dirs:
-            if not d or not os.path.isdir(d):
-                continue
-            for fname in sorted(os.listdir(d)):
-                if not fname.endswith(".py") or fname.startswith("_"):
+        previous_origin = self._active_origin
+        self._active_origin = origin or previous_origin or "runtime"
+        try:
+            for d in dirs:
+                if not d or not os.path.isdir(d):
                     continue
-                path = os.path.join(d, fname)
-                try:
-                    mod_name = f"custom_widget_{fname[:-3]}"
-                    spec = importlib.util.spec_from_file_location(mod_name, path)
-                    if spec and spec.loader:
-                        mod = importlib.util.module_from_spec(spec)
-                        spec.loader.exec_module(mod)
-                        logger.info("Loaded custom widget plugin: %s", path)
-                except Exception:
-                    logger.exception("Failed to load custom widget plugin: %s", path)
+                for fname in sorted(os.listdir(d)):
+                    if not fname.endswith(".py") or fname.startswith("_"):
+                        continue
+                    path = os.path.join(d, fname)
+                    try:
+                        mod_name = f"custom_widget_{fname[:-3]}"
+                        spec = importlib.util.spec_from_file_location(mod_name, path)
+                        if spec and spec.loader:
+                            mod = importlib.util.module_from_spec(spec)
+                            spec.loader.exec_module(mod)
+                            logger.info("Loaded custom widget plugin: %s", path)
+                    except Exception:
+                        logger.exception("Failed to load custom widget plugin: %s", path)
+        finally:
+            self._active_origin = previous_origin

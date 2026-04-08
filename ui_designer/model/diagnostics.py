@@ -207,6 +207,28 @@ def _duplicate_name_entries(page):
     return entries
 
 
+def _unknown_widget_entries(page):
+    registry = WidgetRegistry.instance()
+    entries = []
+
+    for widget in page.get_all_widgets():
+        if registry.has(widget.widget_type):
+            continue
+        entries.append(
+            DiagnosticEntry(
+                "error",
+                "unknown_widget_type",
+                f"Widget '{widget.name}' uses unknown type '{widget.widget_type}'. Restore or fix the app-local widget header before generating code.",
+                page_name=page.name,
+                widget_name=widget.name,
+                target_page_name=page.name,
+                target_widget_name=widget.name,
+            )
+        )
+
+    return entries
+
+
 def _invalid_name_entries(page):
     entries = []
     for widget in page.get_all_widgets():
@@ -508,6 +530,29 @@ def analyze_project_callback_conflicts(project):
     return sort_diagnostic_entries(entries)
 
 
+def analyze_app_local_widget_issues():
+    """Return registry-level diagnostics from the last app-local widget scan."""
+    registry = WidgetRegistry.instance()
+    entries = []
+    for issue in registry.app_local_issues():
+        severity = str(issue.get("severity", "warning") or "warning")
+        code = str(issue.get("code", "app_local_widget_issue") or "app_local_widget_issue")
+        message = str(issue.get("message", "") or "").strip()
+        widget_name = str(issue.get("widget_name", "") or "").strip()
+        if not message:
+            continue
+        entries.append(
+            DiagnosticEntry(
+                severity,
+                code,
+                message,
+                page_name="project",
+                widget_name=widget_name,
+            )
+        )
+    return sort_diagnostic_entries(entries)
+
+
 def analyze_page(page, resource_catalog=None, string_catalog=None, source_resource_dir=""):
     """Analyze a single page and return sorted diagnostics."""
     if page is None or page.root_widget is None:
@@ -517,6 +562,7 @@ def analyze_page(page, resource_catalog=None, string_catalog=None, source_resour
     entries.extend(_page_field_entries(page))
     entries.extend(_page_timer_entries(page))
     entries.extend(_callback_conflict_entries(page))
+    entries.extend(_unknown_widget_entries(page))
     entries.extend(_invalid_name_entries(page))
     entries.extend(_duplicate_name_entries(page))
     entries.extend(_bounds_entries(page))

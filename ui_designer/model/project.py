@@ -332,6 +332,9 @@ class Project:
         project_dir = os.path.dirname(os.path.abspath(project_file))
         config_dir = os.path.join(project_dir, ".eguiproject")
 
+        from .widget_registry import WidgetRegistry
+        WidgetRegistry.instance().load_app_local_widgets(project_dir)
+
         tree = ET.parse(project_file)
         root = tree.getroot()
 

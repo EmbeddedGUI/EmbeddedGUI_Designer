@@ -196,6 +196,63 @@ class TestMainWindowFileFlow:
         }
         _close_window(window)
 
+    def test_open_project_path_registers_app_local_widgets_before_loading_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_registry import WidgetRegistry
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CustomWidgetDemo"
+        _create_project(project_dir, "CustomWidgetDemo", sdk_root)
+
+        widget_dir = project_dir / "widgets"
+        widget_dir.mkdir()
+        (widget_dir / "egui_view_fancy_label.h").write_text(
+            (
+                "#ifndef _EGUI_VIEW_FANCY_LABEL_H_\n"
+                "#define _EGUI_VIEW_FANCY_LABEL_H_\n"
+                '#include "egui_view.h"\n'
+                "typedef struct egui_view_fancy_label egui_view_fancy_label_t;\n"
+                "void egui_view_fancy_label_init(egui_view_t *self);\n"
+                "void egui_view_fancy_label_set_text(egui_view_t *self, const char *text);\n"
+                "#endif\n"
+            ),
+            encoding="utf-8",
+        )
+        (project_dir / ".eguiproject" / "layout" / "main_page.xml").write_text(
+            (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                "<Page>\n"
+                '    <Group id="root_group" x="0" y="0" width="240" height="320">\n'
+                '        <FancyLabel id="fancy_1" x="10" y="20" width="120" height="24" text="Hello" />\n'
+                "    </Group>\n"
+                "</Page>\n"
+            ),
+            encoding="utf-8",
+        )
+
+        window = MainWindow(str(sdk_root))
+        captured = {}
+
+        def fake_open_loaded_project(project, project_root, preferred_sdk_root="", silent=False):
+            root = project.get_startup_page().root_widget
+            child = root.children[0]
+            captured["widget_type"] = child.widget_type
+            captured["text"] = child.properties["text"]
+            captured["project_dir"] = project_root
+
+        monkeypatch.setattr(window, "_open_loaded_project", fake_open_loaded_project)
+
+        window._open_project_path(str(project_dir / "CustomWidgetDemo.egui"), preferred_sdk_root=str(sdk_root), silent=True)
+
+        assert WidgetRegistry.instance().has("fancy_label")
+        assert WidgetRegistry.instance().get("fancy_label")["header_include"] == "widgets/egui_view_fancy_label.h"
+        assert captured["widget_type"] == "fancy_label"
+        assert captured["text"] == "Hello"
+        assert captured["project_dir"] == os.path.normpath(os.path.abspath(project_dir))
+        WidgetRegistry.instance().clear_app_local_widgets()
+        _close_window(window)
+
     def test_open_loaded_project_prompts_and_resets_on_sdk_version_mismatch(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.model.release import SdkFingerprint

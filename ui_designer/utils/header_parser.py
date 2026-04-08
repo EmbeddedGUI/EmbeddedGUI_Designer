@@ -5,6 +5,7 @@ setter functions, params macros, and listener callbacks. Generates
 widget registration templates for custom_widgets/*.py.
 """
 
+import os
 import re
 from pathlib import Path
 
@@ -154,6 +155,48 @@ class WidgetHeaderInfo:
         return self.struct_name
 
 
+_APP_WIDGET_SCAN_IGNORE_DIRS = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".eguiproject",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    ".idea",
+    ".vscode",
+    "resource",
+    "output",
+    "dist",
+}
+
+
+def _should_ignore_widget_scan_dir(name):
+    name = str(name or "").strip()
+    if not name:
+        return False
+    if name in _APP_WIDGET_SCAN_IGNORE_DIRS:
+        return True
+    return name.startswith("build")
+
+
+def discover_widget_headers(app_dir):
+    """Recursively discover app-local ``egui_view_*.h`` headers."""
+    app_dir = Path(app_dir)
+    if not app_dir.is_dir():
+        return []
+
+    results = []
+    for current_dir, dirnames, filenames in os.walk(str(app_dir)):
+        dirnames[:] = sorted(d for d in dirnames if not _should_ignore_widget_scan_dir(d))
+        for filename in sorted(filenames):
+            if not filename.startswith("egui_view_") or not filename.endswith(".h"):
+                continue
+            results.append(str(Path(current_dir) / filename))
+    return results
+
+
 def parse_header(header_path):
     """Parse a single C header file and extract widget API info.
 
@@ -228,6 +271,104 @@ def parse_widget_dir(widget_dir):
     return results
 
 
+def _build_properties(info):
+    props = {}
+    for func_name, params_str in info.setters:
+        prefix = f"egui_view_{info.widget_name}_set_"
+        if not func_name.startswith(prefix):
+            continue
+        prop_name = func_name[len(prefix):]
+        cg = _infer_code_gen(func_name, params_str)
+        if cg is None:
+            continue
+
+        if params_str:
+            parts = [p.strip() for p in params_str.split(",")]
+            ptype, _ = _split_type_name(parts[0])
+            prop_type = _infer_property_type(ptype)
+        else:
+            prop_type = "int"
+
+        props[prop_name] = {
+            "type": prop_type,
+            "default": _default_for_type(prop_type),
+            "code_gen": cg,
+        }
+    return props
+
+
+def _build_events(info):
+    events = {}
+    for set_func, listener_type in info.set_listeners:
+        prefix = f"egui_view_{info.widget_name}_set_on_"
+        if not set_func.startswith(prefix):
+            continue
+        suffix = set_func[len(prefix):]
+        if suffix.endswith("_listener"):
+            suffix = suffix[:-len("_listener")]
+        event_name = "on" + _snake_to_camel(suffix)
+
+        listener_params = info.listener_typedefs.get(listener_type, "")
+        if listener_params:
+            sig = f"void {{func_name}}(egui_view_t *self, {listener_params})"
+        else:
+            sig = "void {func_name}(egui_view_t *self)"
+
+        events[event_name] = {
+            "setter": set_func,
+            "signature": sig,
+        }
+    return events
+
+
+def build_runtime_widget_registration(info, app_root):
+    """Build an app-local widget registration payload from parsed header info."""
+    if info is None:
+        raise ValueError("missing widget header info")
+
+    app_root_path = Path(app_root).resolve()
+    header_path = Path(info.header_path).resolve()
+    widget_name = info.widget_name
+    c_type = info.c_type
+    init_func = info.init_with_params or info.init_func
+    if not widget_name or not c_type or not init_func:
+        raise ValueError(f"{header_path.name} does not expose a usable widget init API")
+
+    try:
+        header_include = header_path.relative_to(app_root_path).as_posix()
+    except ValueError:
+        header_include = header_path.name
+
+    descriptor = {
+        "c_type": c_type,
+        "init_func": init_func,
+        "params_macro": info.params_macros[0] if info.params_macros else "",
+        "params_type": info.params_type,
+        "is_container": False,
+        "add_child_func": None,
+        "layout_func": None,
+        "properties": _build_properties(info),
+        "header_include": header_include,
+        "source_header_path": str(header_path),
+        "addable": True,
+        "browser": {
+            "keywords": [widget_name.replace("_", " "), "custom", header_path.stem],
+            "browse_priority": 900,
+        },
+    }
+    events = _build_events(info)
+    if events:
+        descriptor["events"] = events
+
+    xml_tag = _snake_to_pascal(widget_name)
+    return {
+        "type_name": widget_name,
+        "xml_tag": xml_tag,
+        "display_name": xml_tag,
+        "descriptor": descriptor,
+    }
+
+
 # ── Template generation ──────────────────────────────────────────
 
 def generate_registration_template(info):
@@ -245,56 +386,8 @@ def generate_registration_template(info):
     params_macro = info.params_macros[0] if info.params_macros else ""
     params_type = info.params_type
 
-    # Build properties dict
-    props = {}
-    for func_name, params_str in info.setters:
-        # Extract property name from setter: egui_view_xxx_set_yyy -> yyy
-        prefix = f"egui_view_{wname}_set_"
-        if not func_name.startswith(prefix):
-            continue
-        prop_name = func_name[len(prefix):]
-        cg = _infer_code_gen(func_name, params_str)
-        if cg is None:
-            continue
-
-        # Infer type and default
-        if params_str:
-            parts = [p.strip() for p in params_str.split(",")]
-            ptype, _ = _split_type_name(parts[0])
-            prop_type = _infer_property_type(ptype)
-        else:
-            prop_type = "int"
-
-        default = _default_for_type(prop_type)
-        props[prop_name] = {
-            "type": prop_type,
-            "default": default,
-            "code_gen": cg,
-        }
-
-    # Build events dict
-    events = {}
-    for set_func, listener_type in info.set_listeners:
-        # Derive event name: egui_view_xxx_set_on_yyy_listener -> onYyy
-        prefix = f"egui_view_{wname}_set_on_"
-        if not set_func.startswith(prefix):
-            continue
-        suffix = set_func[len(prefix):]
-        if suffix.endswith("_listener"):
-            suffix = suffix[:-len("_listener")]
-        event_name = "on" + _snake_to_camel(suffix)
-
-        # Build signature from listener typedef
-        listener_params = info.listener_typedefs.get(listener_type, "")
-        if listener_params:
-            sig = f"void {{func_name}}(egui_view_t *self, {listener_params})"
-        else:
-            sig = "void {func_name}(egui_view_t *self)"
-
-        events[event_name] = {
-            "setter": set_func,
-            "signature": sig,
-        }
+    props = _build_properties(info)
+    events = _build_events(info)
 
     # Format XML tag
     xml_tag = _snake_to_pascal(wname)
