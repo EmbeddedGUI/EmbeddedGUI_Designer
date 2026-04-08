@@ -2,12 +2,17 @@
 
 from ui_designer.model.project import Project
 from ui_designer.model.resource_usage import (
+    collect_unused_resource_names,
+    collect_unused_string_keys,
     collect_page_resource_usages,
     collect_project_resource_usages,
+    filter_resource_names,
+    filter_string_keys,
     find_resource_usages,
     rewrite_project_resource_references,
     rewrite_project_string_references,
 )
+from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
 from ui_designer.model.widget_model import WidgetModel
 
 
@@ -62,6 +67,71 @@ class TestResourceUsage:
         assert [(entry.page_name, entry.widget_name, entry.property_name) for entry in image_usages] == [
             ("detail_page", "hero", "image_file"),
         ]
+
+    def test_collect_unused_resource_names_and_filter_resource_names(self):
+        usage_index = {
+            ("image", "hero.png"): ["used"],
+            ("image", "missing_used.png"): ["used"],
+        }
+        names = ["hero.png", "missing_used.png", "spare.png", "ghost.png"]
+
+        assert collect_unused_resource_names(names, usage_index, "image") == ["spare.png", "ghost.png"]
+        assert filter_resource_names(
+            names,
+            usage_index,
+            "image",
+            search_text="sp",
+            status="all",
+            missing_names={"ghost.png", "missing_used.png"},
+        ) == ["spare.png"]
+        assert filter_resource_names(
+            names,
+            usage_index,
+            "image",
+            status="missing",
+            missing_names={"ghost.png", "missing_used.png"},
+        ) == ["missing_used.png", "ghost.png"]
+        assert filter_resource_names(
+            names,
+            usage_index,
+            "image",
+            status="unused",
+            missing_names={"ghost.png", "missing_used.png"},
+        ) == ["spare.png", "ghost.png"]
+
+    def test_collect_unused_string_keys_and_filter_string_keys(self):
+        catalog = StringResourceCatalog()
+        catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        catalog.set("greeting", "Ni Hao", "zh")
+        catalog.set("notes", "Spare", DEFAULT_LOCALE)
+        catalog.set("notes", "Bei Yong", "zh")
+        catalog.set("debug", "Trace", DEFAULT_LOCALE)
+
+        usage_index = {
+            ("string", "greeting"): ["used"],
+        }
+
+        assert collect_unused_string_keys(catalog, usage_index) == ["debug", "notes"]
+        assert filter_string_keys(
+            catalog,
+            usage_index,
+            locale=DEFAULT_LOCALE,
+            search_text="spare",
+            status="all",
+        ) == ["notes"]
+        assert filter_string_keys(
+            catalog,
+            usage_index,
+            locale="zh",
+            search_text="bei",
+            status="all",
+        ) == ["notes"]
+        assert filter_string_keys(
+            catalog,
+            usage_index,
+            locale=DEFAULT_LOCALE,
+            status="unused",
+        ) == ["debug", "notes"]
 
     def test_rewrite_project_resource_references_updates_all_matching_widgets(self):
         project = Project(app_name="RewriteDemo")

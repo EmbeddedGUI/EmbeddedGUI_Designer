@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .resource_binding import RESOURCE_PROPERTY_TYPES
-from .string_resource import make_string_ref, parse_string_ref
+from .string_resource import DEFAULT_LOCALE, make_string_ref, parse_string_ref
 from .widget_registry import WidgetRegistry
 
 
@@ -100,6 +100,68 @@ def find_resource_usages(project, resource_type, resource_name):
     if not project or not resource_type or not resource_name:
         return []
     return list(collect_project_resource_usages(project).get((resource_type, resource_name), []))
+
+
+def collect_unused_resource_names(resource_names, usage_index, resource_type):
+    """Return resource names that have no recorded usages."""
+    names = list(resource_names or [])
+    if not resource_type:
+        return []
+    return [name for name in names if not usage_index.get((resource_type, name))]
+
+
+def filter_resource_names(resource_names, usage_index, resource_type, *, search_text="", status="all", missing_names=None):
+    """Filter resource names by search text and status."""
+    names = list(resource_names or [])
+    search_text = str(search_text or "").strip().casefold()
+    status = str(status or "all").strip().lower()
+    missing_name_set = set(missing_names or ())
+    unused_name_set = set(collect_unused_resource_names(names, usage_index, resource_type))
+
+    filtered = []
+    for name in names:
+        if search_text and search_text not in str(name or "").casefold():
+            continue
+        if status == "missing" and name not in missing_name_set:
+            continue
+        if status == "unused" and name not in unused_name_set:
+            continue
+        filtered.append(name)
+    return filtered
+
+
+def collect_unused_string_keys(string_catalog, usage_index):
+    """Return string resource keys that have no recorded usages."""
+    if string_catalog is None:
+        return []
+    return [
+        key
+        for key in getattr(string_catalog, "all_keys", [])
+        if not usage_index.get(("string", key))
+    ]
+
+
+def filter_string_keys(string_catalog, usage_index, *, locale=DEFAULT_LOCALE, search_text="", status="all"):
+    """Filter string keys by search text and usage status."""
+    if string_catalog is None:
+        return []
+
+    keys = list(getattr(string_catalog, "all_keys", []))
+    search_text = str(search_text or "").strip().casefold()
+    status = str(status or "all").strip().lower()
+    unused_key_set = set(collect_unused_string_keys(string_catalog, usage_index))
+
+    filtered = []
+    for key in keys:
+        value = string_catalog.get(key, locale)
+        if search_text:
+            haystack = f"{key}\n{value}".casefold()
+            if search_text not in haystack:
+                continue
+        if status == "unused" and key not in unused_key_set:
+            continue
+        filtered.append(key)
+    return filtered
 
 
 def rewrite_project_resource_references(project, resource_type, old_name, new_name):

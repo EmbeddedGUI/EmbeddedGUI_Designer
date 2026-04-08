@@ -6022,11 +6022,12 @@ class TestMainWindowFileFlow:
         class FakeDialog:
             _source_label = "demo_font.ttf"
 
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 assert os.path.normpath(resource_dir_arg) == os.path.normpath(expected_resource_dir)
                 assert initial_filename == ""
                 assert source_label == ""
                 assert initial_preset_ids == ()
+                assert initial_custom_text == ""
 
             def exec_(self):
                 return 1
@@ -6606,7 +6607,7 @@ class TestMainWindowFileFlow:
 
         assert window.res_panel._usage_table.rowCount() == 1
         assert window.res_panel._usage_table.item(0, 0).text() == "detail_page"
-        assert window.res_panel._usage_summary.text() == "'star.png' is used by 1 widget on the current page (2 total across 2 pages)."
+        assert window.res_panel._usage_summary.text() == "1 widget on this page | 2 total across 2 pages | star.png"
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -7781,7 +7782,7 @@ class TestMainWindowFileFlow:
 
         copied = QApplication.clipboard().text()
         assert copied.startswith("Diagnostics: ")
-        assert "Filter: warnings (1 item(s))" in copied
+        assert "Filter: warning (1 item(s))" in copied
         assert "missing_image" in copied
         assert "bad-name" not in copied
         assert window.statusBar().currentMessage() == "Copied diagnostics summary."
@@ -8436,7 +8437,7 @@ class TestMainWindowFileFlow:
                 assert window.res_panel._current_resource_type == "image"
                 assert window.res_panel._current_resource_name == "ghost.png"
                 assert window.res_panel._tabs.currentIndex() == 0
-                assert window.res_panel._usage_summary.text() == "'ghost.png' is used by 1 widget across 1 page."
+                assert window.res_panel._usage_summary.text() == "1 widget across 1 page | ghost.png"
                 assert window.statusBar().currentMessage() == "Opened diagnostic resource check: image/ghost.png."
 
                 window._undo_manager.mark_all_saved()
@@ -8548,7 +8549,7 @@ class TestMainWindowFileFlow:
                 assert window.res_panel._current_resource_type == "string"
                 assert window.res_panel._current_resource_name == "missing_key"
                 assert window.res_panel._tabs.currentIndex() == 3
-                assert window.res_panel._usage_summary.text() == "'missing_key' is used by 1 widget across 1 page."
+                assert window.res_panel._usage_summary.text() == "1 widget across 1 page | missing_key"
                 assert window.statusBar().currentMessage() == "Opened diagnostic resource check: string/missing_key."
 
                 window._undo_manager.mark_all_saved()
@@ -9523,7 +9524,7 @@ class TestMainWindowFileFlow:
         window = MainWindow("")
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
-        assert window._mode_buttons[MODE_DESIGN].width() == 56
+        assert window._mode_buttons[MODE_DESIGN].width() == 52
         assert window._mode_buttons[MODE_DESIGN].height() == 26
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."

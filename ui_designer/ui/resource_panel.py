@@ -43,6 +43,12 @@ from qfluentwidgets import (
 )
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
+from ..model.resource_usage import (
+    collect_unused_resource_names,
+    collect_unused_string_keys,
+    filter_resource_names,
+    filter_string_keys,
+)
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
 from ..services.font_charset_presets import (
     build_charset,
@@ -1956,6 +1962,63 @@ class _BatchReplaceImpactDialog(QDialog):
         self.done(self.NAVIGATE_RESULT)
 
 
+class _CleanupUnusedDialog(QDialog):
+    """Preview unused resources that will be removed from the current tab."""
+
+    def __init__(self, parent, title, scope_label, names, *, search_text="", status_label="All"):
+        super().__init__(parent)
+        self._names = list(names)
+        self._scope_label = str(scope_label or "")
+        self._search_text = str(search_text or "").strip()
+        self._status_label = str(status_label or "All")
+        self.setWindowTitle(title or "Clean Unused")
+        self.setMinimumSize(640, 420)
+        self.resize(720, 480)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+
+        self._title_label = QLabel(title or "Clean Unused")
+        self._title_label.setObjectName("resource_dialog_title")
+        layout.addWidget(self._title_label)
+
+        search_label = self._search_text or "none"
+        self._summary_label = QLabel(
+            f"Remove {_count_label(len(self._names), 'unused item')} from {self._scope_label}. "
+            f"Search: {search_label}. Status: {self._status_label}."
+        )
+        self._summary_label.setWordWrap(True)
+        layout.addWidget(self._summary_label)
+
+        self._table = QTableWidget(len(self._names), 1, self)
+        _prepare_dialog_table(self._table)
+        self._table.setHorizontalHeaderLabels(["Name"])
+        self._table.horizontalHeader().setStretchLastSection(True)
+        self._table.verticalHeader().setVisible(False)
+        self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        for row, name in enumerate(self._names):
+            item = QTableWidgetItem(name)
+            _set_item_metadata(item, name)
+            self._table.setItem(row, 0, item)
+        if self._names:
+            self._table.selectRow(0)
+        layout.addWidget(self._table, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
+        ok_button = buttons.button(QDialogButtonBox.Ok)
+        cancel_button = buttons.button(QDialogButtonBox.Cancel)
+        if ok_button is not None:
+            ok_button.setText("Clean")
+        if cancel_button is not None:
+            cancel_button.setText("Cancel")
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
 # -- Main ResourcePanel --------------------------------------------------
 
 class ResourcePanel(QWidget):
@@ -2002,6 +2065,9 @@ class ResourcePanel(QWidget):
         self._usage_page_name = ""
         self._resource_action_buttons = {}
         self._resource_more_menus = {}
+        self._resource_search_inputs = {}
+        self._resource_status_filters = {}
+        self._cleanup_unused_buttons = {}
         self.setAcceptDrops(True)
         self._init_ui()
 
@@ -2105,6 +2171,16 @@ class ResourcePanel(QWidget):
         img_tab_layout.setContentsMargins(0, 0, 0, 0)
         img_tab_layout.setSpacing(2)
 
+        self._add_resource_filter_row(
+            img_tab_layout,
+            "image",
+            (
+                ("All", "all"),
+                ("Missing", "missing"),
+                ("Unused", "unused"),
+            ),
+        )
+
         self._image_list = _LazyImageList()
         _prepare_resource_panel_list(self._image_list, "resource_panel_image_list")
         self._image_list.itemClicked.connect(self._on_image_clicked)
@@ -2129,6 +2205,9 @@ class ResourcePanel(QWidget):
         next_missing_img_btn = PushButton("Next Missing")
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
+        clean_unused_img_btn = PushButton("Clean Unused...")
+        clean_unused_img_btn.clicked.connect(lambda: self._clean_unused_resources("image"))
+        img_btn_layout.addWidget(clean_unused_img_btn)
         image_more_btn = self._create_resource_more_button(
             "image",
             {
@@ -2148,7 +2227,9 @@ class ResourcePanel(QWidget):
             "restore": restore_img_btn,
             "replace": replace_img_btn,
             "next_missing": next_missing_img_btn,
+            "clean_unused": clean_unused_img_btn,
         }
+        self._cleanup_unused_buttons["image"] = clean_unused_img_btn
         self._tabs.addTab(img_tab, "Images")
 
         # Fonts tab
@@ -2156,6 +2237,16 @@ class ResourcePanel(QWidget):
         font_tab_layout = QVBoxLayout(font_tab)
         font_tab_layout.setContentsMargins(0, 0, 0, 0)
         font_tab_layout.setSpacing(2)
+
+        self._add_resource_filter_row(
+            font_tab_layout,
+            "font",
+            (
+                ("All", "all"),
+                ("Missing", "missing"),
+                ("Unused", "unused"),
+            ),
+        )
 
         self._font_list = _DragResourceList("font")
         _prepare_resource_panel_list(self._font_list)
@@ -2184,6 +2275,9 @@ class ResourcePanel(QWidget):
         next_missing_font_btn = PushButton("Next Missing")
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
+        clean_unused_font_btn = PushButton("Clean Unused...")
+        clean_unused_font_btn.clicked.connect(lambda: self._clean_unused_resources("font"))
+        font_btn_layout.addWidget(clean_unused_font_btn)
         font_more_btn = self._create_resource_more_button(
             "font",
             {
@@ -2203,7 +2297,9 @@ class ResourcePanel(QWidget):
             "restore": restore_font_btn,
             "replace": replace_font_btn,
             "next_missing": next_missing_font_btn,
+            "clean_unused": clean_unused_font_btn,
         }
+        self._cleanup_unused_buttons["font"] = clean_unused_font_btn
         self._tabs.addTab(font_tab, "Fonts")
 
         # Text tab
@@ -2211,6 +2307,16 @@ class ResourcePanel(QWidget):
         text_tab_layout = QVBoxLayout(text_tab)
         text_tab_layout.setContentsMargins(0, 0, 0, 0)
         text_tab_layout.setSpacing(2)
+
+        self._add_resource_filter_row(
+            text_tab_layout,
+            "text",
+            (
+                ("All", "all"),
+                ("Missing", "missing"),
+                ("Unused", "unused"),
+            ),
+        )
 
         self._text_list = _DragResourceList("text")
         _prepare_resource_panel_list(self._text_list)
@@ -2239,6 +2345,9 @@ class ResourcePanel(QWidget):
         next_missing_text_btn = PushButton("Next Missing")
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
+        clean_unused_text_btn = PushButton("Clean Unused...")
+        clean_unused_text_btn.clicked.connect(lambda: self._clean_unused_resources("text"))
+        text_btn_layout.addWidget(clean_unused_text_btn)
         text_more_btn = self._create_resource_more_button(
             "text",
             {
@@ -2258,7 +2367,9 @@ class ResourcePanel(QWidget):
             "restore": restore_text_btn,
             "replace": replace_text_btn,
             "next_missing": next_missing_text_btn,
+            "clean_unused": clean_unused_text_btn,
         }
+        self._cleanup_unused_buttons["text"] = clean_unused_text_btn
         self._tabs.addTab(text_tab, "Text")
 
         # Strings (i18n) tab
@@ -2285,6 +2396,15 @@ class ResourcePanel(QWidget):
         locale_row.addWidget(self._remove_locale_btn)
         locale_row.addStretch()
         strings_tab_layout.addLayout(locale_row)
+
+        self._add_resource_filter_row(
+            strings_tab_layout,
+            "string",
+            (
+                ("All", "all"),
+                ("Unused", "unused"),
+            ),
+        )
 
         # String table
         self._string_table = QTableWidget()
@@ -2314,8 +2434,12 @@ class ResourcePanel(QWidget):
         self._remove_key_btn = PushButton("Remove")
         self._remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(self._remove_key_btn)
+        self._clean_unused_string_btn = PushButton("Clean Unused...")
+        self._clean_unused_string_btn.clicked.connect(self._clean_unused_string_keys)
+        str_btn_layout.addWidget(self._clean_unused_string_btn)
         str_btn_layout.addStretch()
         strings_tab_layout.addLayout(str_btn_layout)
+        self._cleanup_unused_buttons["string"] = self._clean_unused_string_btn
 
         self._tabs.addTab(strings_tab, "Strings")
 
@@ -2409,6 +2533,39 @@ class ResourcePanel(QWidget):
             card = getattr(metric_value, "_resource_panel_metric_card", None)
             if card is not None:
                 card.hide()
+
+    def _add_resource_filter_row(self, parent_layout, resource_type, statuses):
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(2)
+
+        search_edit = QLineEdit()
+        search_edit.setObjectName(f"resource_panel_{resource_type}_search")
+        search_edit.setPlaceholderText("Search")
+        search_edit.textChanged.connect(lambda _text, kind=resource_type: self._on_resource_filter_changed(kind))
+        row.addWidget(search_edit, 1)
+
+        status_combo = QComboBox()
+        status_combo.setObjectName(f"resource_panel_{resource_type}_status")
+        for label, value in statuses:
+            status_combo.addItem(label, value)
+        status_combo.currentIndexChanged.connect(lambda _index, kind=resource_type: self._on_resource_filter_changed(kind))
+        row.addWidget(status_combo)
+
+        parent_layout.addLayout(row)
+        self._resource_search_inputs[resource_type] = search_edit
+        self._resource_status_filters[resource_type] = status_combo
+
+    def _resource_search_text(self, resource_type):
+        widget = self._resource_search_inputs.get(resource_type)
+        return widget.text().strip() if widget is not None else ""
+
+    def _resource_status_value(self, resource_type):
+        widget = self._resource_status_filters.get(resource_type)
+        if widget is None:
+            return "all"
+        value = widget.currentData()
+        return str(value or "all")
 
     def _create_resource_more_button(self, resource_type, buttons):
         button = QToolButton()
@@ -2524,6 +2681,88 @@ class ResourcePanel(QWidget):
         self._refresh_usage_view()
         self._update_panel_overview()
 
+    def _on_resource_filter_changed(self, resource_type):
+        if resource_type == "string":
+            self._refresh_string_table(selection_fallback="keep")
+            self._update_string_action_metadata()
+            return
+        self._refresh_resource_list(resource_type, selection_fallback="keep")
+
+    def _build_resource_list_item(self, resource_type, fname):
+        if resource_type == "image":
+            full_path = os.path.join(self._images_dir, fname)
+            item = QListWidgetItem(fname)
+            item.setData(Qt.UserRole + 10, False)
+        else:
+            full_path = os.path.join(self._src_dir, fname)
+            item = QListWidgetItem(fname)
+
+        item.setData(Qt.UserRole, full_path)
+        item.setData(Qt.UserRole + 1, fname)
+        tooltip = fname
+        if resource_type == "font":
+            family = self._load_font(full_path) if os.path.isfile(full_path) else ""
+            if family:
+                tooltip += f"\nFamily: {family}"
+        if not os.path.isfile(full_path):
+            tooltip += "\n\u26a0 File not found!"
+            item.setForeground(QColor(255, 100, 100))
+        _set_item_metadata(item, tooltip)
+        return item
+
+    def _apply_resource_item_selection(self, resource_type, item, *, emit_signal=False):
+        if item is None:
+            self._preview.clear_preview()
+            self._update_current_resource("", "")
+            return
+
+        path = item.data(Qt.UserRole)
+        filename = item.data(Qt.UserRole + 1)
+        if resource_type == "image" and path and os.path.isfile(path):
+            self._preview.show_image(path)
+        elif resource_type == "font" and path and os.path.isfile(path):
+            self._preview.show_font(path, self._font_family_cache.get(path, ""))
+        elif resource_type == "text" and path and os.path.isfile(path):
+            self._preview.show_text(path)
+        else:
+            self._preview.clear_preview()
+        self._update_current_resource(resource_type, filename)
+        if emit_signal:
+            self.resource_selected.emit(resource_type, filename)
+
+    def _refresh_resource_list(self, resource_type, selection_fallback="keep"):
+        list_widget = self._list_widget_for_resource_type(resource_type)
+        if list_widget is None:
+            return
+
+        if selection_fallback == "clear":
+            selected_name = ""
+        else:
+            current_item = list_widget.currentItem()
+            selected_name = current_item.data(Qt.UserRole + 1) if current_item is not None else ""
+            if not selected_name and self._current_resource_type == resource_type:
+                selected_name = self._current_resource_name
+
+        visible_names = self._filtered_resource_names(resource_type)
+        list_widget.clear()
+        for fname in visible_names:
+            list_widget.addItem(self._build_resource_list_item(resource_type, fname))
+
+        if selected_name:
+            matches = list_widget.findItems(selected_name, Qt.MatchExactly)
+            if matches:
+                list_widget.setCurrentItem(matches[0])
+                self._apply_resource_item_selection(resource_type, matches[0], emit_signal=False)
+            elif self._current_resource_type == resource_type:
+                self._preview.clear_preview()
+                self._update_current_resource("", "")
+        elif self._current_resource_type == resource_type:
+            self._preview.clear_preview()
+            self._update_current_resource("", "")
+
+        self._update_tab_titles()
+        self._refresh_usage_view()
+
     # -- Public API --
 
     def set_resource_dir(self, resource_dir):
@@ -2549,53 +2788,9 @@ class ResourcePanel(QWidget):
             self._refresh_usage_view()
             return
 
-        # Populate image list from catalog (images live in images/ subfolder)
-        for fname in self._catalog.images:
-            full_path = os.path.join(self._images_dir, fname)
-            item = QListWidgetItem(fname)
-            item.setData(Qt.UserRole, full_path)
-            item.setData(Qt.UserRole + 1, fname)  # filename for drag
-            item.setData(Qt.UserRole + 10, False)  # not yet loaded
-            exists = os.path.isfile(full_path)
-            tooltip = fname
-            if not exists:
-                tooltip += "\n\u26a0 File not found!"
-                item.setForeground(QColor(255, 100, 100))
-            _set_item_metadata(item, tooltip)
-            self._image_list.addItem(item)
-
-        # Populate font list from catalog
-        for fname in self._catalog.fonts:
-            full_path = os.path.join(self._src_dir, fname)
-            family = self._load_font(full_path) if os.path.isfile(full_path) else ""
-
-            item = QListWidgetItem(fname)
-            item.setData(Qt.UserRole, full_path)
-            item.setData(Qt.UserRole + 1, fname)  # filename for drag
-            tooltip = fname
-            if family:
-                tooltip += f"\nFamily: {family}"
-            if not os.path.isfile(full_path):
-                tooltip += "\n\u26a0 File not found!"
-                item.setForeground(QColor(255, 100, 100))
-            _set_item_metadata(item, tooltip)
-            self._font_list.addItem(item)
-
-        # Populate text file list from catalog
-        for fname in self._catalog.text_files:
-            full_path = os.path.join(self._src_dir, fname)
-
-            item = QListWidgetItem(fname)
-            item.setData(Qt.UserRole, full_path)
-            item.setData(Qt.UserRole + 1, fname)
-            tooltip = fname
-            if not os.path.isfile(full_path):
-                tooltip += "\n\u26a0 File not found!"
-                item.setForeground(QColor(255, 100, 100))
-            _set_item_metadata(item, tooltip)
-            self._text_list.addItem(item)
-
-        self._update_tab_titles()
+        self._refresh_resource_list("image")
+        self._refresh_resource_list("font")
+        self._refresh_resource_list("text")
         if selected_type and selected_name:
             self._select_resource_item(selected_type, selected_name)
         self._refresh_usage_view()
@@ -2655,6 +2850,42 @@ class ResourcePanel(QWidget):
         if resource_type == "text":
             return list(self._catalog.text_files)
         return []
+
+    def _unused_resource_names(self, resource_type):
+        return collect_unused_resource_names(
+            self._resource_names_for_type(resource_type),
+            self._resource_usage_index,
+            resource_type,
+        )
+
+    def _unused_string_keys(self):
+        return collect_unused_string_keys(self._string_catalog, self._resource_usage_index)
+
+    def _filtered_resource_names(self, resource_type):
+        return filter_resource_names(
+            self._resource_names_for_type(resource_type),
+            self._resource_usage_index,
+            resource_type,
+            search_text=self._resource_search_text(resource_type),
+            status=self._resource_status_value(resource_type),
+            missing_names=self._missing_resource_names(resource_type),
+        )
+
+    def _filtered_string_keys(self):
+        return filter_string_keys(
+            self._string_catalog,
+            self._resource_usage_index,
+            locale=self._get_selected_locale(),
+            search_text=self._resource_search_text("string"),
+            status=self._resource_status_value("string"),
+        )
+
+    def _visible_unused_names(self, resource_type):
+        if resource_type == "string":
+            unused_names = set(self._unused_string_keys())
+            return [name for name in self._filtered_string_keys() if name in unused_names]
+        unused_names = set(self._unused_resource_names(resource_type))
+        return [name for name in self._filtered_resource_names(resource_type) if name in unused_names]
 
     def _resource_count_label(self, resource_type, count, *, missing=False):
         singular = {
@@ -2723,6 +2954,7 @@ class ResourcePanel(QWidget):
         for resource_type, buttons in self._resource_action_buttons.items():
             total_count = len(self._resource_names_for_type(resource_type))
             missing_count = len(self._missing_resource_names(resource_type))
+            visible_unused_count = len(self._visible_unused_names(resource_type))
             total_label = self._resource_count_label(resource_type, total_count)
             missing_label = self._resource_count_label(resource_type, missing_count, missing=True)
 
@@ -2746,6 +2978,34 @@ class ResourcePanel(QWidget):
                     tooltip = self._resource_action_unavailable_tooltip(action, resource_type)
                     accessible_name = f"{action_label} unavailable"
                 _set_widget_metadata(buttons[action], tooltip=tooltip, accessible_name=accessible_name)
+
+            clean_unused_button = buttons.get("clean_unused")
+            if clean_unused_button is not None:
+                if self._resource_dir and visible_unused_count > 0:
+                    tooltip = (
+                        f"Preview and remove unused {resource_type} resources visible in the current filters. "
+                        f"{visible_unused_count} unused item{'s' if visible_unused_count != 1 else ''} will be affected."
+                    )
+                    accessible_name = f"Clean unused {resource_type} resources. {visible_unused_count} visible unused items."
+                elif self._resource_dir:
+                    tooltip = f"No unused {resource_type} resources match the current filters."
+                    accessible_name = f"Clean unused {resource_type} resources unavailable"
+                else:
+                    tooltip = f"Save or open a project first to clean unused {resource_type} resources."
+                    accessible_name = f"Clean unused {resource_type} resources unavailable"
+                clean_unused_button.setEnabled(bool(self._resource_dir and visible_unused_count > 0))
+                _set_widget_metadata(clean_unused_button, tooltip=tooltip, accessible_name=accessible_name)
+
+            search_edit = self._resource_search_inputs.get(resource_type)
+            status_combo = self._resource_status_filters.get(resource_type)
+            if search_edit is not None:
+                search_text = self._resource_search_text(resource_type) or "none"
+                tooltip = f"Search {resource_type} resources by filename. Current search: {search_text}."
+                _set_widget_metadata(search_edit, tooltip=tooltip, accessible_name=tooltip)
+            if status_combo is not None:
+                status_label = status_combo.currentText() or "All"
+                tooltip = f"Filter {resource_type} resources by status. Current filter: {status_label}."
+                _set_widget_metadata(status_combo, tooltip=tooltip, accessible_name=tooltip)
             self._sync_resource_more_menu(resource_type)
 
         charset_buttons = []
@@ -2872,6 +3132,36 @@ class ResourcePanel(QWidget):
             tooltip=remove_key_tooltip,
             accessible_name=remove_key_name,
         )
+
+        search_edit = self._resource_search_inputs.get("string")
+        if search_edit is not None:
+            search_text = self._resource_search_text("string") or "none"
+            tooltip = f"Search string keys or values. Current locale: {locale_label}. Current search: {search_text}."
+            _set_widget_metadata(search_edit, tooltip=tooltip, accessible_name=tooltip)
+
+        status_combo = self._resource_status_filters.get("string")
+        if status_combo is not None:
+            status_label = status_combo.currentText() or "All"
+            tooltip = f"Filter string keys by status. Current filter: {status_label}."
+            _set_widget_metadata(status_combo, tooltip=tooltip, accessible_name=tooltip)
+
+        clean_unused_count = len(self._visible_unused_names("string"))
+        if hasattr(self, "_clean_unused_string_btn"):
+            if clean_unused_count > 0:
+                tooltip = (
+                    "Preview and remove unused string keys visible in the current filters. "
+                    f"{clean_unused_count} unused item{'s' if clean_unused_count != 1 else ''} will be affected."
+                )
+                accessible_name = f"Clean unused string keys. {clean_unused_count} visible unused items."
+            else:
+                tooltip = "No unused string keys match the current filters."
+                accessible_name = "Clean unused string keys unavailable"
+            self._clean_unused_string_btn.setEnabled(clean_unused_count > 0)
+            _set_widget_metadata(
+                self._clean_unused_string_btn,
+                tooltip=tooltip,
+                accessible_name=accessible_name,
+            )
 
     def _current_usage_selection_label(self):
         if not hasattr(self, "_usage_table"):
@@ -3065,7 +3355,7 @@ class ResourcePanel(QWidget):
             return []
         return [name for name in names if not os.path.isfile(os.path.join(target_dir, name))]
 
-    def _select_resource_item(self, resource_type, filename):
+    def _select_resource_item(self, resource_type, filename, emit_signal=False):
         if resource_type == "image":
             self._tabs.setCurrentIndex(0)
         elif resource_type == "font":
@@ -3075,9 +3365,16 @@ class ResourcePanel(QWidget):
         elif resource_type == "string":
             self._tabs.setCurrentIndex(3)
             matches = self._string_table.findItems(filename, Qt.MatchExactly)
-            if matches:
-                self._string_table.setCurrentItem(matches[0])
-            self._update_current_resource(resource_type, filename)
+            key_match = next((item for item in matches if item.column() == 0), None)
+            if key_match is not None:
+                self._string_table.setCurrentItem(key_match)
+                self._update_current_resource(resource_type, filename)
+                if emit_signal:
+                    self.resource_selected.emit(resource_type, filename)
+            else:
+                self._string_table.clearSelection()
+                self._string_table.setCurrentCell(-1, -1)
+                self._update_current_resource(resource_type, filename)
             return
         lst = self._list_widget_for_resource_type(resource_type)
         if lst is None:
@@ -3085,14 +3382,22 @@ class ResourcePanel(QWidget):
         matches = lst.findItems(filename, Qt.MatchExactly)
         if matches:
             lst.setCurrentItem(matches[0])
-        self._update_current_resource(resource_type, filename)
+            self._apply_resource_item_selection(resource_type, matches[0], emit_signal=emit_signal)
+        else:
+            lst.clearSelection()
+            self._preview.clear_preview()
+            self._update_current_resource(resource_type, filename)
 
     def _focus_missing_resource(self, resource_type):
         lst = self._list_widget_for_resource_type(resource_type)
         if lst is None:
             return ""
 
-        missing_names = self._missing_resource_names(resource_type)
+        missing_names = [
+            name
+            for name in self._filtered_resource_names(resource_type)
+            if name in set(self._missing_resource_names(resource_type))
+        ]
         if not missing_names:
             self.feedback_message.emit(f"No missing {resource_type} resources were found.")
             return ""
@@ -3109,8 +3414,7 @@ class ResourcePanel(QWidget):
         if matches:
             lst.setCurrentItem(matches[0])
             lst.scrollToItem(matches[0])
-
-        self._preview.clear_preview()
+            self._apply_resource_item_selection(resource_type, matches[0], emit_signal=False)
         self.feedback_message.emit(
             f"Focused missing {resource_type} resource {target_index + 1}/{len(missing_names)}: {target_name}."
         )
@@ -3360,35 +3664,13 @@ class ResourcePanel(QWidget):
     # -- Selection / double-click --
 
     def _on_image_clicked(self, item):
-        path = item.data(Qt.UserRole)
-        filename = item.data(Qt.UserRole + 1)
-        if path and os.path.isfile(path):
-            self._preview.show_image(path)
-        else:
-            self._preview.clear_preview()
-        self._update_current_resource("image", filename)
-        self.resource_selected.emit("image", filename)
+        self._apply_resource_item_selection("image", item, emit_signal=True)
 
     def _on_font_clicked(self, item):
-        path = item.data(Qt.UserRole)
-        filename = item.data(Qt.UserRole + 1)
-        family = self._font_family_cache.get(path, "")
-        if path and os.path.isfile(path):
-            self._preview.show_font(path, family)
-        else:
-            self._preview.clear_preview()
-        self._update_current_resource("font", filename)
-        self.resource_selected.emit("font", filename)
+        self._apply_resource_item_selection("font", item, emit_signal=True)
 
     def _on_text_clicked(self, item):
-        path = item.data(Qt.UserRole)
-        filename = item.data(Qt.UserRole + 1)
-        if path and os.path.isfile(path):
-            self._preview.show_text(path)
-        else:
-            self._preview.clear_preview()
-        self._update_current_resource("text", filename)
-        self.resource_selected.emit("text", filename)
+        self._apply_resource_item_selection("text", item, emit_signal=True)
 
     def _on_image_double_clicked(self, item):
         filename = item.data(Qt.UserRole + 1)
@@ -3965,6 +4247,89 @@ class ResourcePanel(QWidget):
         self.resource_deleted.emit(resource_type, filename)
         self.resource_imported.emit()
 
+    def _confirm_cleanup_unused(self, resource_type, names):
+        dialog = _CleanupUnusedDialog(
+            self,
+            f"Clean Unused {self._active_panel_tab_label()}",
+            self._active_panel_tab_label(),
+            names,
+            search_text=self._resource_search_text(resource_type),
+            status_label=self._resource_status_filters.get(resource_type).currentText() if self._resource_status_filters.get(resource_type) is not None else "All",
+        )
+        return dialog.exec_() == QDialog.Accepted
+
+    def _clean_unused_resources(self, resource_type):
+        if not self._ensure_src_dir():
+            return
+
+        names = self._visible_unused_names(resource_type)
+        if not names:
+            QMessageBox.information(
+                self,
+                "Clean Unused Resources",
+                f"No unused {resource_type} resources match the current filters.",
+            )
+            return
+
+        if not self._confirm_cleanup_unused(resource_type, names):
+            return
+
+        target_dir = self._target_dir_for_resource_type(resource_type)
+        removed = []
+        failures = []
+        for name in names:
+            file_path = os.path.join(target_dir, name)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError as exc:
+                    failures.append((name, str(exc)))
+                    continue
+            self._catalog.remove_file(name)
+            removed.append(name)
+
+        if removed:
+            self.set_resource_dir(self._resource_dir)
+            for name in removed:
+                self.resource_deleted.emit(resource_type, name)
+            self.resource_imported.emit()
+            message = f"Cleaned unused {resource_type} resources: {len(removed)} removed."
+            if failures:
+                message += f" {len(failures)} failed."
+            self.feedback_message.emit(message)
+
+        if failures:
+            details = "\n".join(f"{name}: {error}" for name, error in failures)
+            QMessageBox.warning(self, "Clean Unused Resources", details)
+
+    def _clean_unused_string_keys(self):
+        names = self._visible_unused_names("string")
+        if not names:
+            QMessageBox.information(
+                self,
+                "Clean Unused String Keys",
+                "No unused string keys match the current filters.",
+            )
+            return
+
+        if not self._confirm_cleanup_unused("string", names):
+            return
+
+        removed = []
+        for key in names:
+            replacement_text = self._string_catalog.get(key, DEFAULT_LOCALE)
+            self._string_catalog.remove_key(key)
+            removed.append((key, replacement_text))
+
+        if not removed:
+            return
+
+        self._refresh_string_tab()
+        for key, replacement_text in removed:
+            self.string_key_deleted.emit(key, replacement_text)
+        self.resource_imported.emit()
+        self.feedback_message.emit(f"Cleaned unused string keys: {len(removed)} removed.")
+
     # -- Strings tab methods --
 
     def _refresh_string_tab(self):
@@ -3999,17 +4364,20 @@ class ResourcePanel(QWidget):
             return DEFAULT_LOCALE
         return self._locale_combo.itemData(idx) or DEFAULT_LOCALE
 
-    def _refresh_string_table(self):
+    def _refresh_string_table(self, selection_fallback="keep"):
         """Repopulate the table for the selected locale."""
         self._string_table_updating = True
         try:
             locale = self._get_selected_locale()
-            keys = self._string_catalog.all_keys
+            keys = self._filtered_string_keys()
             prev_key = ""
-            current_row = self._string_table.currentRow()
-            current_key_item = self._string_table.item(current_row, 0) if current_row >= 0 else None
-            if current_key_item is not None:
-                prev_key = current_key_item.text()
+            if selection_fallback != "clear":
+                current_row = self._string_table.currentRow()
+                current_key_item = self._string_table.item(current_row, 0) if current_row >= 0 else None
+                if current_key_item is not None:
+                    prev_key = current_key_item.text()
+                elif self._current_resource_type == "string":
+                    prev_key = self._current_resource_name
 
             self._string_table.setRowCount(len(keys))
             for row, key in enumerate(keys):
@@ -4023,11 +4391,16 @@ class ResourcePanel(QWidget):
                 val_item = QTableWidgetItem(value)
                 self._string_table.setItem(row, 1, val_item)
 
-            if keys:
-                target_key = prev_key if prev_key in keys else keys[0]
-                target_row = keys.index(target_key)
+            if prev_key and prev_key in keys:
+                target_row = keys.index(prev_key)
                 self._string_table.setCurrentCell(target_row, 0)
+                self._update_current_resource("string", prev_key)
+            elif selection_fallback == "first" and keys:
+                self._string_table.setCurrentCell(0, 0)
+                self._update_current_resource("string", keys[0])
             else:
+                self._string_table.clearSelection()
+                self._string_table.setCurrentCell(-1, -1)
                 self._update_current_resource("", "")
         finally:
             self._string_table_updating = False
@@ -4035,7 +4408,7 @@ class ResourcePanel(QWidget):
     def _on_locale_changed(self, index):
         """Locale combo selection changed."""
         if not self._string_table_updating:
-            self._refresh_string_table()
+            self._refresh_string_table(selection_fallback="keep")
         self._update_string_action_metadata()
 
     def _on_string_current_cell_changed(self, current_row, current_column, previous_row, previous_column):
@@ -4061,6 +4434,7 @@ class ResourcePanel(QWidget):
             key = key_item.text()
             value = val_item.text()
             self._string_catalog.set(key, value, locale)
+            self._refresh_string_table(selection_fallback="keep")
             self.resource_imported.emit()
 
     def _on_add_string_key(self):

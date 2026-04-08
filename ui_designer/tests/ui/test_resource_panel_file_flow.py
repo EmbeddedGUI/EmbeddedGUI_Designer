@@ -680,6 +680,261 @@ class TestResourcePanelFileFlow:
         assert activated == [("main_page", "title")]
         panel.deleteLater()
 
+    def test_image_filters_search_missing_and_unused_clear_hidden_selection(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "hero.png").write_bytes(b"PNG")
+        (images_dir / "spare.png").write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("ghost.png")
+        catalog.add_image("hero.png")
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_usage_index(
+            {
+                ("image", "hero.png"): [
+                    ResourceUsageEntry("image", "hero.png", "main_page", "hero", "image_file", "image"),
+                ],
+                ("image", "ghost.png"): [
+                    ResourceUsageEntry("image", "ghost.png", "detail_page", "badge", "image_file", "image"),
+                ],
+            }
+        )
+
+        search_edit = panel._resource_search_inputs["image"]
+        status_combo = panel._resource_status_filters["image"]
+        panel._select_resource_item("image", "hero.png")
+
+        search_edit.setText("hero")
+        assert panel._image_list.count() == 1
+        assert panel._image_list.item(0).data(Qt.UserRole + 1) == "hero.png"
+        assert panel._image_list.currentItem().data(Qt.UserRole + 1) == "hero.png"
+        assert panel._current_resource_name == "hero.png"
+
+        search_edit.setText("spare")
+        assert panel._image_list.count() == 1
+        assert panel._image_list.item(0).data(Qt.UserRole + 1) == "spare.png"
+        assert panel._image_list.currentItem() is None
+        assert panel._current_resource_name == ""
+        assert panel._usage_summary.text() == "Select an image, font, text resource, or string key to inspect references."
+
+        search_edit.setText("")
+        status_combo.setCurrentIndex(status_combo.findData("missing"))
+        assert [panel._image_list.item(row).data(Qt.UserRole + 1) for row in range(panel._image_list.count())] == ["ghost.png"]
+
+        status_combo.setCurrentIndex(status_combo.findData("unused"))
+        assert [panel._image_list.item(row).data(Qt.UserRole + 1) for row in range(panel._image_list.count())] == ["spare.png"]
+        panel.deleteLater()
+
+    def test_string_filters_can_search_by_value_and_unused_status(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("debug", "Trace", DEFAULT_LOCALE)
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        string_catalog.set("notes", "Spare", DEFAULT_LOCALE)
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel.set_resource_usage_index(
+            {
+                ("string", "greeting"): [
+                    ResourceUsageEntry("string", "greeting", "main_page", "title", "text", "label"),
+                ]
+            }
+        )
+        panel._tabs.setCurrentIndex(3)
+
+        search_edit = panel._resource_search_inputs["string"]
+        status_combo = panel._resource_status_filters["string"]
+
+        search_edit.setText("hello")
+        assert panel._string_table.rowCount() == 1
+        assert panel._string_table.item(0, 0).text() == "greeting"
+
+        search_edit.setText("")
+        status_combo.setCurrentIndex(status_combo.findData("unused"))
+        assert [panel._string_table.item(row, 0).text() for row in range(panel._string_table.rowCount())] == ["debug", "notes"]
+        panel.deleteLater()
+
+    def test_clean_unused_resources_removes_only_visible_filtered_matches(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        hero_path = images_dir / "hero.png"
+        spare_path = images_dir / "spare.png"
+        hero_path.write_bytes(b"PNG")
+        spare_path.write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("hero.png")
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_usage_index(
+            {
+                ("image", "hero.png"): [
+                    ResourceUsageEntry("image", "hero.png", "main_page", "hero", "image_file", "image"),
+                ]
+            }
+        )
+
+        search_edit = panel._resource_search_inputs["image"]
+        search_edit.setText("sp")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, parent, title, scope_label, names, search_text="", status_label="All"):
+                captured["title"] = title
+                captured["scope_label"] = scope_label
+                captured["names"] = list(names)
+                captured["search_text"] = search_text
+                captured["status_label"] = status_label
+
+            def exec_(self):
+                return 1
+
+        deleted = []
+        imported = []
+        messages = []
+        panel.resource_deleted.connect(lambda res_type, filename: deleted.append((res_type, filename)))
+        panel.resource_imported.connect(lambda: imported.append(True))
+        panel.feedback_message.connect(messages.append)
+        monkeypatch.setattr("ui_designer.ui.resource_panel._CleanupUnusedDialog", FakeDialog)
+
+        panel._clean_unused_resources("image")
+
+        assert captured == {
+            "title": "Clean Unused Images",
+            "scope_label": "Images",
+            "names": ["spare.png"],
+            "search_text": "sp",
+            "status_label": "All",
+        }
+        assert hero_path.exists() is True
+        assert spare_path.exists() is False
+        assert panel.get_resource_catalog().images == ["hero.png"]
+        assert deleted == [("image", "spare.png")]
+        assert imported == [True]
+        assert messages == ["Cleaned unused image resources: 1 removed."]
+        panel.deleteLater()
+
+    def test_clean_unused_resources_cancel_keeps_files_and_catalog(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        spare_path = images_dir / "spare.png"
+        spare_path.write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+
+        class FakeDialog:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def exec_(self):
+                return 0
+
+        deleted = []
+        imported = []
+        panel.resource_deleted.connect(lambda res_type, filename: deleted.append((res_type, filename)))
+        panel.resource_imported.connect(lambda: imported.append(True))
+        monkeypatch.setattr("ui_designer.ui.resource_panel._CleanupUnusedDialog", FakeDialog)
+
+        panel._clean_unused_resources("image")
+
+        assert spare_path.exists() is True
+        assert panel.get_resource_catalog().images == ["spare.png"]
+        assert deleted == []
+        assert imported == []
+        panel.deleteLater()
+
+    def test_clean_unused_string_keys_removes_only_visible_filtered_matches(self, qapp, monkeypatch):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("debug", "Trace", DEFAULT_LOCALE)
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        string_catalog.set("notes", "Spare", DEFAULT_LOCALE)
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel.set_resource_usage_index(
+            {
+                ("string", "greeting"): [
+                    ResourceUsageEntry("string", "greeting", "main_page", "title", "text", "label"),
+                ]
+            }
+        )
+        panel._tabs.setCurrentIndex(3)
+
+        search_edit = panel._resource_search_inputs["string"]
+        search_edit.setText("sp")
+
+        captured = {}
+
+        class FakeDialog:
+            def __init__(self, parent, title, scope_label, names, search_text="", status_label="All"):
+                captured["title"] = title
+                captured["scope_label"] = scope_label
+                captured["names"] = list(names)
+                captured["search_text"] = search_text
+                captured["status_label"] = status_label
+
+            def exec_(self):
+                return 1
+
+        deleted = []
+        imported = []
+        messages = []
+        panel.string_key_deleted.connect(lambda key, replacement: deleted.append((key, replacement)))
+        panel.resource_imported.connect(lambda: imported.append(True))
+        panel.feedback_message.connect(messages.append)
+        monkeypatch.setattr("ui_designer.ui.resource_panel._CleanupUnusedDialog", FakeDialog)
+
+        panel._clean_unused_string_keys()
+
+        assert captured == {
+            "title": "Clean Unused Strings",
+            "scope_label": "Strings",
+            "names": ["notes"],
+            "search_text": "sp",
+            "status_label": "All",
+        }
+        assert panel.get_string_catalog().all_keys == ["debug", "greeting"]
+        assert deleted == [("notes", "Spare")]
+        assert imported == [True]
+        assert messages == ["Cleaned unused string keys: 1 removed."]
+        panel.deleteLater()
+
     def test_string_usage_table_updates_for_selected_key(self, qapp):
         from ui_designer.model.resource_usage import ResourceUsageEntry
         from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
@@ -2298,11 +2553,12 @@ class TestResourcePanelFileFlow:
         panel.feedback_message.connect(messages.append)
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
                 assert source_label == ""
                 assert initial_preset_ids == ()
+                assert initial_custom_text == ""
 
             def exec_(self):
                 return 1
@@ -2358,11 +2614,12 @@ class TestResourcePanelFileFlow:
         panel.resource_imported.connect(lambda: imported.append(True))
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == ""
                 assert source_label == ""
                 assert initial_preset_ids == ()
+                assert initial_custom_text == ""
 
             def exec_(self):
                 return 1
@@ -2415,11 +2672,12 @@ class TestResourcePanelFileFlow:
         class FakeDialog:
             _source_label = "charset_existing.txt"
 
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 assert resource_dir_arg == str(resource_dir)
                 assert initial_filename == "charset_existing.txt"
                 assert source_label == "charset_existing.txt"
                 assert initial_preset_ids == ()
+                assert initial_custom_text == "A"
 
             def exec_(self):
                 return 1
@@ -2470,11 +2728,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2488,6 +2747,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "charset_existing.txt",
             "source_label": "charset_existing.txt",
             "initial_preset_ids": (),
+            "initial_custom_text": "A",
         }
         panel.deleteLater()
 
@@ -2511,11 +2771,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2529,6 +2790,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "charset_ascii_printable.txt",
             "source_label": "charset_ascii_printable.txt",
             "initial_preset_ids": ("ascii_printable",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2552,11 +2814,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2570,6 +2833,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "supported_text.txt",
             "source_label": "supported_text.txt",
             "initial_preset_ids": ("ascii_printable",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2593,11 +2857,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2611,6 +2876,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "charset_gb2312_all_custom.txt",
             "source_label": "charset_gb2312_all_custom.txt",
             "initial_preset_ids": ("gb2312_all",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2720,11 +2986,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2738,6 +3005,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "demo_font_charset.txt",
             "source_label": "demo_font.ttf",
             "initial_preset_ids": ("ascii_printable",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2761,11 +3029,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2779,6 +3048,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "simhei_charset.txt",
             "source_label": "simhei.ttf",
             "initial_preset_ids": ("gb2312_all",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2796,11 +3066,12 @@ class TestResourcePanelFileFlow:
         monkeypatch.setattr(
             panel,
             "_open_generate_charset_dialog",
-            lambda initial_filename="", source_label="", initial_preset_ids=(): captured.update(
+            lambda initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="": captured.update(
                 {
                     "initial_filename": initial_filename,
                     "source_label": source_label,
                     "initial_preset_ids": initial_preset_ids,
+                    "initial_custom_text": initial_custom_text,
                 }
             ),
         )
@@ -2815,6 +3086,7 @@ class TestResourcePanelFileFlow:
             "initial_filename": "charset_ascii_printable.txt",
             "source_label": "simhei.ttf",
             "initial_preset_ids": ("ascii_printable",),
+            "initial_custom_text": "",
         }
         panel.deleteLater()
 
@@ -2838,11 +3110,12 @@ class TestResourcePanelFileFlow:
         captured = {}
 
         class FakeDialog:
-            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), parent=None):
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
                 captured["resource_dir"] = resource_dir_arg
                 captured["initial_filename"] = initial_filename
                 captured["source_label"] = source_label
                 captured["initial_preset_ids"] = initial_preset_ids
+                captured["initial_custom_text"] = initial_custom_text
 
             def exec_(self):
                 return 0
@@ -2856,5 +3129,6 @@ class TestResourcePanelFileFlow:
             "initial_filename": "MaterialSymbolsOutlined-Regular_charset.txt",
             "source_label": "MaterialSymbolsOutlined-Regular.ttf",
             "initial_preset_ids": (),
+            "initial_custom_text": "",
         }
         panel.deleteLater()

@@ -1049,7 +1049,13 @@ class PropertyPanel(QWidget):
                 row_data = self._property_grid_row_data(watched)
                 if row_data is not None:
                     QTimer.singleShot(0, lambda row_data=row_data: self._refresh_property_grid_row_hover_from_app(row_data))
-        viewport = getattr(getattr(self, "_property_tree", None), "viewport", lambda: None)()
+        viewport = None
+        property_tree = getattr(self, "_property_tree", None)
+        if property_tree is not None:
+            try:
+                viewport = property_tree.viewport()
+            except RuntimeError:
+                viewport = None
         if watched is viewport and event.type() == QEvent.Leave:
             if self._hovered_property_section_title:
                 previous = self._property_sections.get(self._hovered_property_section_title)

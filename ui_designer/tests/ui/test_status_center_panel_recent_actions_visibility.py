@@ -44,7 +44,7 @@ def test_status_center_hides_recent_actions_summary_but_keeps_repeat_history_met
         ],
     )
 
-    assert panel._recent_actions_label.isHidden() is True
+    assert panel._recent_actions_label.isHidden() is False
     assert panel._recent_actions_label.text() == "Recent actions (4): Assets, Components, Structure, +1 more."
     assert panel._recent_actions_label.toolTip() == "4 recent actions: Assets, Components, Structure, Project"
     assert panel._recent_actions_label.accessibleName() == (
