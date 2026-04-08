@@ -1278,6 +1278,31 @@ class TestResourcePanelFileFlow:
         assert panel._string_table.item(panel._string_table.currentRow(), 0).text() == "salutation"
         panel.deleteLater()
 
+    def test_rename_string_key_hidden_by_search_resets_filters_and_selects_new_key(self, qapp, monkeypatch):
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel._tabs.setCurrentIndex(3)
+        panel._resource_search_inputs["string"].setText("greet")
+        panel._select_resource_item("string", "greeting")
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QInputDialog.getText",
+            lambda *args, **kwargs: ("salutation", True),
+        )
+
+        panel._on_rename_string_key()
+
+        assert panel._resource_search_inputs["string"].text() == ""
+        assert panel._resource_status_filters["string"].currentData() == "all"
+        assert panel._string_table.item(panel._string_table.currentRow(), 0).text() == "salutation"
+        panel.deleteLater()
+
     def test_rename_string_key_with_usages_uses_shared_impact_confirmation(self, qapp, monkeypatch):
         from ui_designer.model.resource_usage import ResourceUsageEntry
         from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
@@ -1491,6 +1516,38 @@ class TestResourcePanelFileFlow:
         assert imported == [True]
         panel.deleteLater()
 
+    def test_import_text_hidden_by_active_filter_resets_filters_and_selects_imported_item(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        external_dir = tmp_path / "external_text"
+        external_dir.mkdir()
+        text_path = external_dir / "demo.txt"
+        text_path.write_text("abc\n123\n", encoding="utf-8")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel._tabs.setCurrentIndex(2)
+        panel._resource_search_inputs["text"].setText("zzz")
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileNames",
+            lambda *args, **kwargs: ([str(text_path)], ""),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QInputDialog.getText",
+            lambda *args, **kwargs: ("demo.txt", True),
+        )
+
+        panel._on_import_text()
+
+        assert panel._resource_search_inputs["text"].text() == ""
+        assert panel._resource_status_filters["text"].currentData() == "all"
+        assert panel._text_list.count() == 1
+        assert panel._text_list.currentItem().data(Qt.UserRole + 1) == "demo.txt"
+        panel.deleteLater()
+
     def test_restore_missing_image_copies_file_and_clears_missing_state(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.ui.resource_panel import ResourcePanel
@@ -1527,6 +1584,40 @@ class TestResourcePanelFileFlow:
         assert "File not found!" not in item.toolTip()
         assert item.statusTip() == item.toolTip()
         assert item.data(Qt.AccessibleTextRole) == item.toolTip()
+        panel.deleteLater()
+
+    def test_restore_missing_resource_hidden_by_missing_filter_resets_filters_and_selects_restored_item(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        external_dir = tmp_path / "external_images"
+        external_dir.mkdir()
+        source_path = external_dir / "external.png"
+        source_path.write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("missing.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._resource_status_filters["image"].setCurrentIndex(
+            panel._resource_status_filters["image"].findData("missing")
+        )
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(source_path), "Images (*.png *.bmp *.jpg *.jpeg)"),
+        )
+
+        panel._restore_missing_resource("missing.png", "image")
+
+        assert panel._resource_search_inputs["image"].text() == ""
+        assert panel._resource_status_filters["image"].currentData() == "all"
+        assert panel._image_list.currentItem().data(Qt.UserRole + 1) == "missing.png"
         panel.deleteLater()
 
     def test_restore_missing_font_rejects_extension_mismatch(self, qapp, tmp_path, monkeypatch):
@@ -1679,6 +1770,41 @@ class TestResourcePanelFileFlow:
         assert renamed == [("image", "missing.png", "replacement.png")]
         assert feedback == ["Replaced image resources: 1 renamed."]
         assert panel._tabs.tabText(0) == "Images (1)"
+        panel.deleteLater()
+
+    def test_replace_missing_resource_hidden_by_missing_filter_resets_filters_and_selects_replacement(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        external_dir = tmp_path / "external_images"
+        external_dir.mkdir()
+        source_path = external_dir / "replacement.png"
+        source_path.write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("missing.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        panel._resource_status_filters["image"].setCurrentIndex(
+            panel._resource_status_filters["image"].findData("missing")
+        )
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QFileDialog.getOpenFileName",
+            lambda *args, **kwargs: (str(source_path), "Images (*.png *.bmp *.jpg *.jpeg)"),
+        )
+
+        panel._replace_missing_resource("missing.png", "image")
+
+        assert panel._resource_search_inputs["image"].text() == ""
+        assert panel._resource_status_filters["image"].currentData() == "all"
+        assert panel._image_list.currentItem().data(Qt.UserRole + 1) == "replacement.png"
+        assert (images_dir / "replacement.png").is_file()
         panel.deleteLater()
 
     def test_replace_missing_resources_from_mapping_supports_restore_and_rename(self, qapp, tmp_path):

@@ -3468,6 +3468,20 @@ class ResourcePanel(QWidget):
         missing_names = set(self._missing_resource_names(resource_type))
         return [name for name in self._filtered_resource_names(resource_type) if name in missing_names]
 
+    def _is_resource_visible_under_filters(self, resource_type, filename):
+        if not resource_type or not filename:
+            return False
+        if resource_type == "string":
+            return filename in self._filtered_string_keys()
+        return filename in self._filtered_resource_names(resource_type)
+
+    def _ensure_resource_visible(self, resource_type, filename):
+        if not resource_type or not filename:
+            return
+        if not self._is_resource_visible_under_filters(resource_type, filename):
+            self._reset_resource_filter(resource_type)
+        self._select_resource_item(resource_type, filename)
+
     def _select_resource_item(self, resource_type, filename, emit_signal=False):
         if resource_type == "image":
             self._tabs.setCurrentIndex(0)
@@ -3708,7 +3722,7 @@ class ResourcePanel(QWidget):
         if restored or renamed:
             self.set_resource_dir(self._resource_dir)
             if first_selected_name:
-                self._select_resource_item(resource_type, first_selected_name)
+                self._ensure_resource_visible(resource_type, first_selected_name)
             self.resource_imported.emit()
             for old_name, new_name in renamed:
                 self.resource_renamed.emit(resource_type, old_name, new_name)
@@ -3923,7 +3937,7 @@ class ResourcePanel(QWidget):
 
         self._catalog.add_file(filename)
         self.set_resource_dir(self._resource_dir)
-        self._select_resource_item("text", filename)
+        self._ensure_resource_visible("text", filename)
         self.resource_imported.emit()
 
         if dialog.save_and_assign():
@@ -3967,7 +3981,7 @@ class ResourcePanel(QWidget):
 
         if restored:
             self.set_resource_dir(self._resource_dir)
-            self._select_resource_item(resource_type, restored[0])
+            self._ensure_resource_visible(resource_type, restored[0])
             self.resource_imported.emit()
             remaining_missing = len(self._missing_resource_names(resource_type))
             self._emit_operation_summary(
@@ -4058,8 +4072,7 @@ class ResourcePanel(QWidget):
 
         self._catalog.add_file(filename)
         self.set_resource_dir(self._resource_dir)
-
-        self._select_resource_item(resource_type, filename)
+        self._ensure_resource_visible(resource_type, filename)
 
         self.resource_imported.emit()
 
@@ -4150,6 +4163,7 @@ class ResourcePanel(QWidget):
             return
         self._remember_external_import_paths(source_paths)
         imported = 0
+        first_imported_name = ""
         target_dir = self._target_dir_for_resource_type(resource_type)
         for src in source_paths:
             fname = os.path.basename(src)
@@ -4176,9 +4190,13 @@ class ResourcePanel(QWidget):
             shutil.copy2(src, dst)
             # Add to catalog
             self._catalog.add_file(fname)
+            if not first_imported_name:
+                first_imported_name = fname
             imported += 1
         if imported > 0:
             self.set_resource_dir(self._resource_dir)
+            if first_imported_name:
+                self._ensure_resource_visible(resource_type, first_imported_name)
             self.resource_imported.emit()
 
     # -- Drag-drop import from OS --
@@ -4337,6 +4355,7 @@ class ResourcePanel(QWidget):
             self._catalog.remove_file(old_name)
             self._catalog.add_file(new_name)
             self.set_resource_dir(self._resource_dir)
+            self._ensure_resource_visible(resource_type, new_name)
             self.resource_renamed.emit(resource_type, old_name, new_name)
             self.resource_imported.emit()
         except OSError as e:
@@ -4578,6 +4597,7 @@ class ResourcePanel(QWidget):
             return
 
         self._refresh_string_tab()
+        self._ensure_resource_visible("string", key)
         self.resource_imported.emit()
 
     def _on_rename_string_key(self):
@@ -4622,7 +4642,7 @@ class ResourcePanel(QWidget):
             return
 
         self._refresh_string_tab()
-        self._select_resource_item("string", new_key)
+        self._ensure_resource_visible("string", new_key)
         self.string_key_renamed.emit(old_key, new_key)
         self.resource_imported.emit()
 
