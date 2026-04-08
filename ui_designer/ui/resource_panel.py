@@ -2067,6 +2067,8 @@ class ResourcePanel(QWidget):
         self._resource_more_menus = {}
         self._resource_search_inputs = {}
         self._resource_status_filters = {}
+        self._resource_filter_summaries = {}
+        self._resource_filter_reset_buttons = {}
         self._cleanup_unused_buttons = {}
         self.setAcceptDrops(True)
         self._init_ui()
@@ -2552,9 +2554,20 @@ class ResourcePanel(QWidget):
         status_combo.currentIndexChanged.connect(lambda _index, kind=resource_type: self._on_resource_filter_changed(kind))
         row.addWidget(status_combo)
 
+        reset_button = PushButton("Reset")
+        reset_button.clicked.connect(lambda checked=False, kind=resource_type: self._reset_resource_filter(kind))
+        row.addWidget(reset_button)
+
         parent_layout.addLayout(row)
+        summary_label = QLabel("")
+        summary_label.setObjectName("workspace_section_subtitle")
+        summary_label.setWordWrap(True)
+        parent_layout.addWidget(summary_label)
+
         self._resource_search_inputs[resource_type] = search_edit
         self._resource_status_filters[resource_type] = status_combo
+        self._resource_filter_summaries[resource_type] = summary_label
+        self._resource_filter_reset_buttons[resource_type] = reset_button
 
     def _resource_search_text(self, resource_type):
         widget = self._resource_search_inputs.get(resource_type)
@@ -2566,6 +2579,87 @@ class ResourcePanel(QWidget):
             return "all"
         value = widget.currentData()
         return str(value or "all")
+
+    def _has_active_resource_filter(self, resource_type):
+        return bool(self._resource_search_text(resource_type)) or self._resource_status_value(resource_type) != "all"
+
+    def _resource_filter_summary_text(self, resource_type):
+        search_label = self._resource_search_text(resource_type) or "none"
+        status_widget = self._resource_status_filters.get(resource_type)
+        status_label = status_widget.currentText() if status_widget is not None else "All"
+
+        if resource_type == "string":
+            total_count = len(self._string_catalog.all_keys)
+            visible_count = len(self._filtered_string_keys())
+            unused_count = len(self._unused_string_keys())
+            locale_label = self._selected_locale_label()
+            return (
+                f"Showing {visible_count} of {total_count} string keys. "
+                f"Unused: {unused_count}. Locale: {locale_label}. "
+                f"Search: {search_label}. Status: {status_label}."
+            )
+
+        total_count = len(self._resource_names_for_type(resource_type))
+        visible_count = len(self._filtered_resource_names(resource_type))
+        missing_count = len(self._missing_resource_names(resource_type))
+        unused_count = len(self._unused_resource_names(resource_type))
+        resource_label = {
+            "image": "image resources",
+            "font": "font resources",
+            "text": "text resources",
+        }.get(resource_type, "resources")
+        return (
+            f"Showing {visible_count} of {total_count} {resource_label}. "
+            f"Missing: {missing_count}. Unused: {unused_count}. "
+            f"Search: {search_label}. Status: {status_label}."
+        )
+
+    def _update_resource_filter_metadata(self, resource_type):
+        summary_label = self._resource_filter_summaries.get(resource_type)
+        reset_button = self._resource_filter_reset_buttons.get(resource_type)
+        summary_text = self._resource_filter_summary_text(resource_type)
+
+        if summary_label is not None:
+            summary_label.setText(summary_text)
+            _set_widget_metadata(
+                summary_label,
+                tooltip=summary_text,
+                accessible_name=f"Resource filter summary: {summary_text}",
+            )
+
+        if reset_button is not None:
+            is_active = self._has_active_resource_filter(resource_type)
+            reset_button.setEnabled(is_active)
+            if resource_type == "string":
+                noun = "string filters"
+            else:
+                noun = f"{resource_type} resource filters"
+            if is_active:
+                tooltip = f"Reset {noun} to the default view."
+                accessible_name = f"Reset {noun}"
+            else:
+                tooltip = f"{noun.capitalize()} are already at the default view."
+                accessible_name = f"Reset {noun} unavailable"
+            _set_widget_metadata(
+                reset_button,
+                tooltip=tooltip,
+                accessible_name=accessible_name,
+            )
+
+    def _reset_resource_filter(self, resource_type):
+        search_edit = self._resource_search_inputs.get(resource_type)
+        status_combo = self._resource_status_filters.get(resource_type)
+        if search_edit is not None:
+            search_edit.setText("")
+        if status_combo is not None:
+            default_index = status_combo.findData("all")
+            if default_index >= 0:
+                status_combo.setCurrentIndex(default_index)
+        if resource_type == "string":
+            self._refresh_string_table(selection_fallback="keep")
+            self._update_string_action_metadata()
+            return
+        self._refresh_resource_list(resource_type, selection_fallback="keep")
 
     def _create_resource_more_button(self, resource_type, buttons):
         button = QToolButton()
@@ -2827,7 +2921,13 @@ class ResourcePanel(QWidget):
     def set_resource_usage_index(self, usage_index):
         """Set the current project resource usage map."""
         self._resource_usage_index = usage_index or {}
+        if self._resource_dir:
+            for resource_type in ("image", "font", "text"):
+                self._refresh_resource_list(resource_type, selection_fallback="keep")
+        if hasattr(self, "_string_table"):
+            self._refresh_string_table(selection_fallback="keep")
         self._refresh_usage_view()
+        self._update_resource_action_metadata()
         self._update_string_action_metadata()
 
     def set_usage_page_context(self, page_name):
@@ -3006,6 +3106,7 @@ class ResourcePanel(QWidget):
                 status_label = status_combo.currentText() or "All"
                 tooltip = f"Filter {resource_type} resources by status. Current filter: {status_label}."
                 _set_widget_metadata(status_combo, tooltip=tooltip, accessible_name=tooltip)
+            self._update_resource_filter_metadata(resource_type)
             self._sync_resource_more_menu(resource_type)
 
         charset_buttons = []
@@ -3162,6 +3263,7 @@ class ResourcePanel(QWidget):
                 tooltip=tooltip,
                 accessible_name=accessible_name,
             )
+        self._update_resource_filter_metadata("string")
 
     def _current_usage_selection_label(self):
         if not hasattr(self, "_usage_table"):

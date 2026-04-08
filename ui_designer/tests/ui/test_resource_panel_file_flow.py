@@ -768,6 +768,158 @@ class TestResourcePanelFileFlow:
         assert [panel._string_table.item(row, 0).text() for row in range(panel._string_table.rowCount())] == ["debug", "notes"]
         panel.deleteLater()
 
+    def test_image_filter_summary_and_reset_button_follow_current_filters(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "hero.png").write_bytes(b"PNG")
+        (images_dir / "spare.png").write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("ghost.png")
+        catalog.add_image("hero.png")
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_usage_index(
+            {
+                ("image", "hero.png"): [
+                    ResourceUsageEntry("image", "hero.png", "main_page", "hero", "image_file", "image"),
+                ],
+                ("image", "ghost.png"): [
+                    ResourceUsageEntry("image", "ghost.png", "detail_page", "badge", "image_file", "image"),
+                ],
+            }
+        )
+
+        search_edit = panel._resource_search_inputs["image"]
+        status_combo = panel._resource_status_filters["image"]
+        summary_label = panel._resource_filter_summaries["image"]
+        reset_button = panel._resource_filter_reset_buttons["image"]
+
+        assert summary_label.text() == (
+            "Showing 3 of 3 image resources. Missing: 1. Unused: 1. Search: none. Status: All."
+        )
+        assert reset_button.isEnabled() is False
+
+        search_edit.setText("sp")
+        status_combo.setCurrentIndex(status_combo.findData("unused"))
+
+        assert summary_label.text() == (
+            "Showing 1 of 3 image resources. Missing: 1. Unused: 1. Search: sp. Status: Unused."
+        )
+        assert reset_button.isEnabled() is True
+        assert summary_label.accessibleName() == (
+            "Resource filter summary: Showing 1 of 3 image resources. Missing: 1. Unused: 1. Search: sp. Status: Unused."
+        )
+
+        reset_button.click()
+
+        assert search_edit.text() == ""
+        assert status_combo.currentData() == "all"
+        assert panel._image_list.count() == 3
+        assert summary_label.text() == (
+            "Showing 3 of 3 image resources. Missing: 1. Unused: 1. Search: none. Status: All."
+        )
+        assert reset_button.isEnabled() is False
+        panel.deleteLater()
+
+    def test_string_filter_summary_tracks_locale_and_reset_button(self, qapp):
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        string_catalog = StringResourceCatalog()
+        string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+        string_catalog.set("greeting", "你好", "zh")
+        string_catalog.set("notes", "Spare", DEFAULT_LOCALE)
+        string_catalog.set("notes", "备用", "zh")
+
+        panel = ResourcePanel()
+        panel.set_string_catalog(string_catalog)
+        panel.set_resource_usage_index(
+            {
+                ("string", "greeting"): [
+                    ResourceUsageEntry("string", "greeting", "main_page", "title", "text", "label"),
+                ]
+            }
+        )
+        panel._tabs.setCurrentIndex(3)
+
+        locale_combo = panel._locale_combo
+        search_edit = panel._resource_search_inputs["string"]
+        status_combo = panel._resource_status_filters["string"]
+        summary_label = panel._resource_filter_summaries["string"]
+        reset_button = panel._resource_filter_reset_buttons["string"]
+
+        locale_combo.setCurrentIndex(locale_combo.findData("zh"))
+        search_edit.setText("备")
+        status_combo.setCurrentIndex(status_combo.findData("unused"))
+
+        assert summary_label.text() == (
+            "Showing 1 of 2 string keys. Unused: 1. Locale: zh. Search: 备. Status: Unused."
+        )
+        assert reset_button.isEnabled() is True
+
+        reset_button.click()
+
+        assert search_edit.text() == ""
+        assert status_combo.currentData() == "all"
+        assert summary_label.text() == (
+            "Showing 2 of 2 string keys. Unused: 1. Locale: zh. Search: none. Status: All."
+        )
+        assert reset_button.isEnabled() is False
+        panel.deleteLater()
+
+    def test_unused_resource_filter_refreshes_when_usage_index_changes(self, qapp, tmp_path):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.model.resource_usage import ResourceUsageEntry
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "spare.png").write_bytes(b"PNG")
+
+        catalog = ResourceCatalog()
+        catalog.add_image("spare.png")
+
+        panel = ResourcePanel()
+        panel.set_resource_catalog(catalog)
+        panel.set_resource_dir(str(resource_dir))
+
+        status_combo = panel._resource_status_filters["image"]
+        summary_label = panel._resource_filter_summaries["image"]
+        clean_button = panel._cleanup_unused_buttons["image"]
+
+        status_combo.setCurrentIndex(status_combo.findData("unused"))
+        assert panel._image_list.count() == 1
+        assert clean_button.isEnabled() is True
+        assert summary_label.text() == (
+            "Showing 1 of 1 image resources. Missing: 0. Unused: 1. Search: none. Status: Unused."
+        )
+
+        panel.set_resource_usage_index(
+            {
+                ("image", "spare.png"): [
+                    ResourceUsageEntry("image", "spare.png", "main_page", "hero", "image_file", "image"),
+                ]
+            }
+        )
+
+        assert panel._image_list.count() == 0
+        assert clean_button.isEnabled() is False
+        assert summary_label.text() == (
+            "Showing 0 of 1 image resources. Missing: 0. Unused: 0. Search: none. Status: Unused."
+        )
+        panel.deleteLater()
+
     def test_clean_unused_resources_removes_only_visible_filtered_matches(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.model.resource_usage import ResourceUsageEntry

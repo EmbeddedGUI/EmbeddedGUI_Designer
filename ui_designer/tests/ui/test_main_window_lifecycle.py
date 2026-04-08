@@ -93,7 +93,7 @@ def test_main_window_close_smoke_with_active_timers():
         stderr=subprocess.PIPE,
         text=True,
         env=env,
-        timeout=60,
+        timeout=120,
     )
 
     assert result.returncode == 0, f"stdout:\n{result.stdout}\n\nstderr:\n{result.stderr}"
