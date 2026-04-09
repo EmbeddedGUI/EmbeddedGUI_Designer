@@ -483,8 +483,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "max-height: 20px;" in bottom_toggle_button
         assert "border-radius: 0px;" in nav_button
         assert "padding: 0px 4px;" in nav_button
-        assert "min-width: 112px;" in nav_button
-        assert "max-width: 112px;" in nav_button
+        assert "min-width: 108px;" in nav_button
+        assert "max-width: 108px;" in nav_button
         assert "min-height: 24px;" in nav_button
         assert "max-height: 24px;" in nav_button
         assert "border-radius: 0px;" in status_chip

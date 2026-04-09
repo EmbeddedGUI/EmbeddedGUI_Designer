@@ -1681,8 +1681,8 @@ QPushButton[workspaceNav="true"] {{
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
     padding: 0px 4px;
-    min-width: 112px;
-    max-width: 112px;
+    min-width: 108px;
+    max-width: 108px;
     min-height: 24px;
     max-height: 24px;
 }}

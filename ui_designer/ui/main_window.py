@@ -137,7 +137,7 @@ INSPECTOR_SCROLL_MIN_WIDTH = 264
 
 # UIX-004: workspace shell proportions (top-level frame balance)
 WORKSPACE_NAV_RAIL_WIDTH = 116
-WORKSPACE_NAV_BUTTON_WIDTH = 112
+WORKSPACE_NAV_BUTTON_WIDTH = 108
 WORKSPACE_NAV_BUTTON_HEIGHT = 24
 LEFT_PANEL_STACK_MIN_WIDTH = 256
 LEFT_PANEL_DEFAULT_WIDTH = 376
@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
         ):
             button = self._create_workspace_nav_button(label, short_label, key)
             self._workspace_nav_buttons[key] = button
-            nav_layout.addWidget(button)
+            nav_layout.addWidget(button, 0, Qt.AlignLeft)
         nav_layout.addStretch()
 
         self._left_shell = QWidget()
