@@ -1700,7 +1700,10 @@ QPushButton[workspaceNav="true"]:pressed {{
 QPushButton[workspaceNav="true"]:checked {{
     background-color: {t['accent_soft']};
     color: {t['accent_hover']};
-    border: 1px solid {t['accent']};
+    border-top: 1px solid {t['accent']};
+    border-right: none;
+    border-bottom: 1px solid {t['accent']};
+    border-left: 1px solid {t['accent']};
 }}
 
 QTabWidget#workspace_inspector_tabs::pane {{

@@ -456,6 +456,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
         bottom_toggle_button = css.split("QPushButton#workspace_bottom_toggle_button {", 1)[1].split("}", 1)[0]
         nav_button = css.split('QPushButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        nav_button_checked = css.split('QPushButton[workspaceNav="true"]:checked {', 1)[1].split("}", 1)[0]
         status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
         empty_state = css.split("#property_panel_empty_state {", 1)[1].split("}", 1)[0]
@@ -487,6 +488,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "max-width: 108px;" in nav_button
         assert "min-height: 24px;" in nav_button
         assert "max-height: 24px;" in nav_button
+        assert "border-right: none;" in nav_button_checked
+        assert "border-left: 1px solid" in nav_button_checked
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
         assert "border-top: 1px solid" in empty_state
