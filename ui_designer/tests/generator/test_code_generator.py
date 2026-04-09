@@ -13,6 +13,7 @@ from ui_designer.generator.code_generator import (
     _upper_guard,
     _gen_widget_init_lines,
     generate_page_header,
+    generate_page_ext_header,
     generate_page_layout_source,
     generate_page_user_source,
     generate_uicode_header,
@@ -364,6 +365,40 @@ class TestGeneratePageHeader:
         assert "void egui_main_page_timers_init(egui_page_base_t *self);" in output
         assert "void egui_main_page_timers_start_auto(egui_page_base_t *self);" in output
         assert "void egui_main_page_timers_stop(egui_page_base_t *self);" in output
+
+
+class TestGeneratePageExtHeader:
+    """Tests for generate_page_ext_header."""
+
+    def _make_simple_page_and_project(self):
+        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        page = _make_page("main_page", root)
+        proj = _make_project([page])
+        return page, proj
+
+    def test_ext_header_formats_multi_line_fields_and_preserves_user_sections(self):
+        page, proj = self._make_simple_page_and_project()
+
+        output = generate_page_ext_header(
+            page,
+            proj,
+            include_text='#include "my_custom.h"\n#include "feature_flags.h"\n',
+            declaration_text=(
+                "void main_page_attach_logic(void);\n"
+                "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_attach_logic()\n"
+            ),
+            fields_text="    int custom_state;\n    bool is_ready;",
+        )
+
+        assert "#ifndef _MAIN_PAGE_EXT_H_" in output
+        assert '#include "my_custom.h"' in output
+        assert '#include "feature_flags.h"' in output
+        assert "void main_page_attach_logic(void);" in output
+        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_attach_logic()" in output
+        assert "#define EGUI_MAIN_PAGE_EXT_FIELDS \\" in output
+        assert "    int custom_state; \\" in output
+        assert "    bool is_ready;" in output
+        assert "Optional hook overrides" in output
 
 
 # ======================================================================

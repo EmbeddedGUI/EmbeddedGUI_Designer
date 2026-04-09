@@ -64,6 +64,17 @@ class TestUserOwnedFiles:
         # The file must NOT be in the result (not to be overwritten)
         assert "settings.c" not in result
 
+    def test_user_owned_ext_header_not_overwritten_when_exists(self, tmp_path):
+        proj = _make_project_with_page("settings")
+        output_dir = str(tmp_path)
+
+        user_ext = tmp_path / "settings_ext.h"
+        user_ext.write_text("#define SETTINGS_EXT 1\n", encoding="utf-8")
+
+        result = generate_all_files_preserved(proj, output_dir, backup=False)
+
+        assert "settings_ext.h" not in result
+
     def test_user_owned_content_is_not_empty(self, tmp_path):
         """The generated skeleton must be non-empty."""
         proj = _make_project_with_page("main_page")
@@ -195,6 +206,44 @@ class TestUserOwnedFiles:
         assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result["main_page_layout.c"]
         assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result["main_page_layout.c"]
         assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result["main_page_layout.c"]
+
+    def test_legacy_user_code_callbacks_migrate_without_duplicate_stub_regeneration(self, tmp_path):
+        proj = _make_project_with_page("main_page")
+        page = proj.get_page_by_name("main_page")
+        button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
+        button.on_click = "on_confirm_button_click"
+        page.root_widget.add_child(button)
+
+        user_file = tmp_path / "main_page.c"
+        user_file.write_text(
+            (
+                "// main_page.c - User implementation for main_page\n"
+                "// Layout/widget init is in main_page_layout.c (auto-generated).\n"
+                '#include "egui.h"\n'
+                '#include "uicode.h"\n'
+                '#include "main_page.h"\n'
+                "\n"
+                "// USER CODE BEGIN callbacks\n"
+                "void on_confirm_button_click(egui_view_t *self)\n"
+                "{\n"
+                "    EGUI_UNUSED(self);\n"
+                "    custom_logic();\n"
+                "}\n"
+                "// USER CODE END callbacks\n"
+                "\n"
+                "// USER CODE BEGIN init\n"
+                "    init_logic();\n"
+                "// USER CODE END init\n"
+            ),
+            encoding="utf-8",
+        )
+
+        result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
+        assert "main_page.c" in result
+        assert result["main_page.c"].count("void on_confirm_button_click(egui_view_t *self)") == 1
+        assert "custom_logic();" in result["main_page.c"]
+        assert "init_logic();" in result["main_page.c"]
 
 
 # ======================================================================

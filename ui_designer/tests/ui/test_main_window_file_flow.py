@@ -5202,6 +5202,44 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_user_code_request_does_not_duplicate_existing_callback_stub(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.generator.code_generator import generate_page_user_source
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "UserCodeDuplicateDemo"
+        project = _create_project(project_dir, "UserCodeDuplicateDemo", sdk_root)
+        page = project.get_startup_page()
+        slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
+        slider.events["onValueChanged"] = "on_volume_changed"
+        page.root_widget.add_child(slider)
+        project.save(str(project_dir))
+
+        source_path = project_dir / "main_page.c"
+        source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        refresh_calls = []
+        monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: refresh_calls.append("refreshed"))
+        monkeypatch.setattr(window, "_open_path_in_default_app", lambda path: True)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        refresh_calls.clear()
+        window._on_user_code_requested("on_volume_changed", "void {func_name}(egui_view_t *self, uint8_t value)")
+
+        content = source_path.read_text(encoding="utf-8")
+        assert content.count("void on_volume_changed(egui_view_t *self, uint8_t value)") == 1
+        assert not refresh_calls
+        assert window.statusBar().currentMessage() == "Opened user code: main_page.c (on_volume_changed)."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_property_panel_multi_selection_callback_edit_updates_widgets_and_dirty_state(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):

@@ -130,3 +130,21 @@ class TestDeletePageGeneratedFiles:
         assert not (tmp_path / "detail_ext.h").exists()
         assert (tmp_path / ".eguiproject" / "orphaned_user_code" / "detail" / "detail.c").is_file()
         assert (tmp_path / ".eguiproject" / "orphaned_user_code" / "detail" / "detail_ext.h").is_file()
+
+    def test_archives_user_owned_files_with_unique_suffix_when_archive_exists(self, tmp_path, delete_fn):
+        archive_dir = tmp_path / ".eguiproject" / "orphaned_user_code" / "detail"
+        archive_dir.mkdir(parents=True)
+        (archive_dir / "detail.c").write_text("/* older */\n", encoding="utf-8")
+        (archive_dir / "detail_ext.h").write_text("#define OLD_DETAIL_EXT 1\n", encoding="utf-8")
+
+        (tmp_path / "detail.h").write_text("", encoding="utf-8")
+        (tmp_path / "detail_layout.c").write_text("", encoding="utf-8")
+        (tmp_path / "detail.c").write_text("/* current */\n", encoding="utf-8")
+        (tmp_path / "detail_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
+
+        delete_fn(str(tmp_path), "detail")
+
+        assert (archive_dir / "detail.c").read_text(encoding="utf-8") == "/* older */\n"
+        assert (archive_dir / "detail_ext.h").read_text(encoding="utf-8") == "#define OLD_DETAIL_EXT 1\n"
+        assert (archive_dir / "detail_1.c").read_text(encoding="utf-8") == "/* current */\n"
+        assert (archive_dir / "detail_ext_1.h").read_text(encoding="utf-8") == "#define DETAIL_EXT 1\n"
