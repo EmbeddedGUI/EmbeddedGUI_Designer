@@ -1478,7 +1478,6 @@ QPushButton#project_workspace_view_button:checked {{
 #workspace_nav_rail {{
     background-color: transparent;
     border: none;
-    border-right: 1px solid {t['border']};
     padding: {t['space_xxs']}px {t['space_xs']}px;
 }}
 
@@ -1700,10 +1699,7 @@ QPushButton[workspaceNav="true"]:pressed {{
 QPushButton[workspaceNav="true"]:checked {{
     background-color: {t['accent_soft']};
     color: {t['accent_hover']};
-    border-top: 1px solid {t['accent']};
-    border-right: none;
-    border-bottom: 1px solid {t['accent']};
-    border-left: 1px solid {t['accent']};
+    border: 1px solid {t['accent']};
 }}
 
 QTabWidget#workspace_inspector_tabs::pane {{
