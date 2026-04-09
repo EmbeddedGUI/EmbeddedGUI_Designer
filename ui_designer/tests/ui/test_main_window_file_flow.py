@@ -7130,6 +7130,46 @@ class TestMainWindowFileFlow:
         window._compile_worker = None
         _close_window(window)
 
+    def test_poll_project_files_reports_precompile_wait_with_changed_file_summary(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PrecompileWaitWatchDemo"
+        project = _create_project(project_dir, "PrecompileWaitWatchDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._precompile_worker = _BusyWorker()
+
+        reload_calls = []
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- precompile wait external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+        assert window.statusBar().currentMessage() == (
+            "External project changes detected: main_page.xml. Reload will resume after background compile."
+        )
+        window._precompile_worker = None
+        _close_window(window)
+
     def test_pending_external_reload_preserves_changed_paths_until_dirty_clears(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -7207,6 +7247,51 @@ class TestMainWindowFileFlow:
         assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
 
         window._compile_worker = None
+        window._poll_project_files()
+
+        assert len(reload_calls) == 1
+        assert reload_calls[0]["auto"] is True
+        assert reload_calls[0]["changed_paths"] == [os.path.normpath(os.path.abspath(layout_file))]
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        _close_window(window)
+
+    def test_pending_external_reload_preserves_changed_paths_until_precompile_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingPrecompileReloadResumeDemo"
+        project = _create_project(project_dir, "PendingPrecompileReloadResumeDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._precompile_worker = _BusyWorker()
+
+        reload_calls = []
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- resume precompile external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert reload_calls == []
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        window._precompile_worker = None
         window._poll_project_files()
 
         assert len(reload_calls) == 1
