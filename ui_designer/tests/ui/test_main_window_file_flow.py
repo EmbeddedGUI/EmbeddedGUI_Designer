@@ -526,6 +526,83 @@ class TestMainWindowFileFlow:
         assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
         _close_window(window)
 
+    def test_save_project_files_renames_existing_page_codegen_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.project import Project
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RenameSaveDemo"
+        project = _create_project(project_dir, "RenameSaveDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._save_project_files(str(project_dir))
+        (project_dir / "main_page.c").write_text("/* rename me */\n", encoding="utf-8")
+        (project_dir / "main_page_ext.h").write_text("#define KEEP_MAIN_PAGE_EXT 1\n", encoding="utf-8")
+
+        window._on_page_renamed("main_page", "dashboard_page")
+        files = window._save_project_files(str(project_dir))
+
+        assert "dashboard_page.h" in files
+        assert "dashboard_page_layout.c" in files
+        assert window._current_page is not None
+        assert window._current_page.name == "dashboard_page"
+        assert window.project.startup_page == "dashboard_page"
+        assert not (project_dir / "main_page.h").exists()
+        assert not (project_dir / "main_page_layout.c").exists()
+        assert not (project_dir / "main_page.c").exists()
+        assert not (project_dir / "main_page_ext.h").exists()
+        assert (project_dir / "dashboard_page.c").is_file()
+        assert (project_dir / "dashboard_page_ext.h").is_file()
+        assert (project_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* rename me */\n"
+        assert (project_dir / "dashboard_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_MAIN_PAGE_EXT 1\n"
+        reloaded = Project.load(str(project_dir))
+        assert reloaded.startup_page == "dashboard_page"
+        assert reloaded.get_page_by_name("dashboard_page") is not None
+        assert reloaded.get_page_by_name("main_page") is None
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_save_project_files_rename_archives_old_user_files_when_target_exists(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "RenameConflictDemo"
+        project = _create_project(project_dir, "RenameConflictDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._save_project_files(str(project_dir))
+        (project_dir / "main_page.c").write_text("/* old renamed source */\n", encoding="utf-8")
+        (project_dir / "main_page_ext.h").write_text("#define OLD_MAIN_PAGE_EXT 1\n", encoding="utf-8")
+        (project_dir / "dashboard_page.c").write_text("/* keep new source */\n", encoding="utf-8")
+        (project_dir / "dashboard_page_ext.h").write_text("#define KEEP_DASHBOARD_EXT 1\n", encoding="utf-8")
+
+        window._on_page_renamed("main_page", "dashboard_page")
+        window._save_project_files(str(project_dir))
+
+        archive_dir = project_dir / ".eguiproject" / "orphaned_user_code" / "main_page"
+        assert not (project_dir / "main_page.c").exists()
+        assert not (project_dir / "main_page_ext.h").exists()
+        assert (project_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* keep new source */\n"
+        assert (project_dir / "dashboard_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_DASHBOARD_EXT 1\n"
+        assert (archive_dir / "main_page.c").read_text(encoding="utf-8") == "/* old renamed source */\n"
+        assert (archive_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define OLD_MAIN_PAGE_EXT 1\n"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_new_project_can_be_created_without_sdk_root(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -2923,6 +3000,41 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_export_code_after_page_rename_replaces_previous_page_file_set(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ExportRenameDemo"
+        export_dir = tmp_path / "export_rename_out"
+        export_dir.mkdir()
+        project = _create_project(project_dir, "ExportRenameDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._export_code()
+        (export_dir / "main_page.c").write_text("/* exported rename me */\n", encoding="utf-8")
+        (export_dir / "main_page_ext.h").write_text("#define EXPORT_KEEP_MAIN_EXT 1\n", encoding="utf-8")
+
+        window._on_page_renamed("main_page", "dashboard_page")
+        window._export_code()
+
+        assert not (export_dir / "main_page.h").exists()
+        assert not (export_dir / "main_page_layout.c").exists()
+        assert not (export_dir / "main_page.c").exists()
+        assert not (export_dir / "main_page_ext.h").exists()
+        assert (export_dir / "dashboard_page.h").is_file()
+        assert (export_dir / "dashboard_page_layout.c").is_file()
+        assert (export_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* exported rename me */\n"
+        assert (export_dir / "dashboard_page_ext.h").read_text(encoding="utf-8") == "#define EXPORT_KEEP_MAIN_EXT 1\n"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_set_sdk_root_updates_current_project_and_rebuilds_compiler(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
@@ -5168,6 +5280,44 @@ class TestMainWindowFileFlow:
         assert window.project.get_page_by_name("detail_page") is None
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").is_file()
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page_ext.h").is_file()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_delete_renamed_page_cleans_pre_rename_codegen_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DeleteRenamedPageDemo"
+        project = _create_project(project_dir, "DeleteRenamedPageDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+        monkeypatch.setattr(window, "_remove_page_tab", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._save_project_files(str(project_dir))
+        (project_dir / "detail_page.c").write_text("/* detail renamed user */\n", encoding="utf-8")
+        (project_dir / "detail_page_ext.h").write_text("#define DETAIL_RENAMED_EXT 1\n", encoding="utf-8")
+
+        window._on_page_renamed("detail_page", "dashboard_page")
+        window._on_page_removed("dashboard_page")
+
+        assert window.project.get_page_by_name("dashboard_page") is None
+        assert not (project_dir / "detail_page.h").exists()
+        assert not (project_dir / "detail_page_layout.c").exists()
+        assert not (project_dir / "detail_page.c").exists()
+        assert not (project_dir / "detail_page_ext.h").exists()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").read_text(
+            encoding="utf-8"
+        ) == "/* detail renamed user */\n"
+        assert (
+            project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page_ext.h"
+        ).read_text(encoding="utf-8") == "#define DETAIL_RENAMED_EXT 1\n"
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

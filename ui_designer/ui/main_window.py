@@ -164,6 +164,46 @@ def _discard_detached_worker(worker):
         pass
 
 
+def _project_child_realpath(project_dir, *parts):
+    if not project_dir:
+        return None
+    project_real = os.path.realpath(project_dir)
+    path = os.path.realpath(os.path.join(project_dir, *parts))
+    if not path.startswith(project_real + os.sep):
+        return None
+    return path
+
+
+def _archive_page_user_file(project_dir, page_name, src_path):
+    """Move a user-owned page file into .eguiproject/orphaned_user_code/{page_name}/."""
+    if not project_dir or not page_name or not src_path:
+        return None
+    project_real = os.path.realpath(project_dir)
+    src = os.path.realpath(src_path)
+    if not src.startswith(project_real + os.sep):
+        return None
+    if not os.path.isfile(src):
+        return None
+
+    orphan_root = _project_child_realpath(project_dir, ".eguiproject", "orphaned_user_code", page_name)
+    if orphan_root is None:
+        return None
+
+    try:
+        os.makedirs(orphan_root, exist_ok=True)
+        base_name = os.path.basename(src)
+        stem, ext = os.path.splitext(base_name)
+        dest = os.path.join(orphan_root, base_name)
+        index = 1
+        while os.path.exists(dest):
+            dest = os.path.join(orphan_root, f"{stem}_{index}{ext}")
+            index += 1
+        shutil.move(src, dest)
+        return dest
+    except OSError:
+        return None
+
+
 def delete_page_generated_files(project_dir, page_name):
     """Delete generated page files and archive user-owned ones.
 
@@ -177,11 +217,10 @@ def delete_page_generated_files(project_dir, page_name):
     """
     if not page_name or not project_dir:
         return
-    project_real = os.path.realpath(project_dir)
 
     for suffix in (f"{page_name}.h", f"{page_name}_layout.c"):
-        fpath = os.path.realpath(os.path.join(project_dir, suffix))
-        if not fpath.startswith(project_real + os.sep):
+        fpath = _project_child_realpath(project_dir, suffix)
+        if fpath is None:
             continue
         try:
             if os.path.isfile(fpath):
@@ -189,30 +228,11 @@ def delete_page_generated_files(project_dir, page_name):
         except OSError:
             pass
 
-    orphan_root = os.path.realpath(
-        os.path.join(project_dir, ".eguiproject", "orphaned_user_code", page_name)
-    )
-    if not orphan_root.startswith(project_real + os.sep):
-        return
-
     for suffix in (f"{page_name}.c", f"{page_name}_ext.h"):
-        src = os.path.realpath(os.path.join(project_dir, suffix))
-        if not src.startswith(project_real + os.sep):
+        src = _project_child_realpath(project_dir, suffix)
+        if src is None:
             continue
-        if not os.path.isfile(src):
-            continue
-        try:
-            os.makedirs(orphan_root, exist_ok=True)
-            base_name = os.path.basename(src)
-            stem, ext = os.path.splitext(base_name)
-            dest = os.path.join(orphan_root, base_name)
-            index = 1
-            while os.path.exists(dest):
-                dest = os.path.join(orphan_root, f"{stem}_{index}{ext}")
-                index += 1
-            shutil.move(src, dest)
-        except OSError:
-            pass
+        _archive_page_user_file(project_dir, page_name, src)
 
 
 def _callback_definition_exists(content, callback_name):
@@ -289,6 +309,7 @@ class MainWindow(QMainWindow):
         self._last_drag_geometry_refresh_ts = 0.0
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
+        self._pending_page_renames = {}
         self._last_runtime_error_text = ""
 
         self._project_watch_timer = QTimer(self)
@@ -2727,6 +2748,7 @@ class MainWindow(QMainWindow):
         self._last_runtime_error_text = ""
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
+        self._pending_page_renames = {}
         self._active_batch_source = ""
         self._selected_widget = None
         self._selection_state.clear()
@@ -2773,6 +2795,7 @@ class MainWindow(QMainWindow):
         self.project_root = project.sdk_root
         self.app_name = project.app_name
         self._undo_manager = UndoManager()
+        self._pending_page_renames = {}
         self._recreate_compiler()
         self._show_editor()
         self._clear_editor_state()
@@ -4344,6 +4367,7 @@ class MainWindow(QMainWindow):
             overwrite=reset_scaffold,
         )
         self.project.save(project_dir)
+        self._apply_pending_page_rename_outputs(project_dir)
 
         files = generate_all_files_preserved(self.project, project_dir, backup=True)
         for filename, content in files.items():
@@ -4468,6 +4492,7 @@ class MainWindow(QMainWindow):
         self._update_diagnostics_panel()
         if not self._ensure_codegen_preflight("Export", show_dialog=True, switch_to_python_preview=False):
             return
+        self._apply_pending_page_rename_outputs(path)
         files = generate_all_files_preserved(
             self.project, path, backup=True,
         )
@@ -5373,7 +5398,10 @@ class MainWindow(QMainWindow):
             # Delete generated files for the removed page so they are not
             # picked up by EGUI_CODE_SRC on the next build.
             if self._project_dir:
-                delete_page_generated_files(self._project_dir, page_name)
+                disk_page_names = [page_name]
+                disk_page_names.extend(self._consume_pending_page_rename_sources(page_name))
+                for disk_page_name in dict.fromkeys(disk_page_names):
+                    delete_page_generated_files(self._project_dir, disk_page_name)
             if was_current and self.project.pages:
                 self._switch_page(self.project.pages[0].name)
             elif not self.project.pages:
@@ -5399,6 +5427,7 @@ class MainWindow(QMainWindow):
         if page:
             was_current = self._current_page is not None and self._current_page.name == old_name
             page.file_path = f"layout/{new_name}.xml"
+            self._record_pending_page_rename(old_name, new_name)
             # Update startup_page reference if needed
             if self.project.startup_page == old_name:
                 self.project.startup_page = new_name
@@ -5413,6 +5442,71 @@ class MainWindow(QMainWindow):
                 self.page_navigator.set_current_page(self._current_page.name)
                 self._trigger_compile()
                 self._update_edit_actions()
+
+    def _record_pending_page_rename(self, old_name, new_name):
+        if not old_name or not new_name or old_name == new_name:
+            return
+
+        updated = {}
+        remapped_existing = False
+        for source_name, current_name in self._pending_page_renames.items():
+            if current_name == old_name:
+                current_name = new_name
+                remapped_existing = True
+            updated[source_name] = current_name
+
+        if not remapped_existing:
+            updated[old_name] = new_name
+
+        self._pending_page_renames = {
+            source_name: current_name
+            for source_name, current_name in updated.items()
+            if source_name and current_name and source_name != current_name
+        }
+
+    def _consume_pending_page_rename_sources(self, page_name):
+        sources = [
+            source_name
+            for source_name, current_name in self._pending_page_renames.items()
+            if current_name == page_name
+        ]
+        for source_name in sources:
+            self._pending_page_renames.pop(source_name, None)
+        return sources
+
+    def _apply_pending_page_rename_outputs(self, output_dir):
+        if not output_dir or not self._pending_page_renames:
+            return
+
+        for old_name, new_name in self._pending_page_renames.items():
+            if not old_name or not new_name or old_name == new_name:
+                continue
+
+            for suffix in (f"{old_name}.h", f"{old_name}_layout.c"):
+                src = _project_child_realpath(output_dir, suffix)
+                if src is None:
+                    continue
+                try:
+                    if os.path.isfile(src):
+                        os.remove(src)
+                except OSError:
+                    pass
+
+            for old_suffix, new_suffix in (
+                (f"{old_name}.c", f"{new_name}.c"),
+                (f"{old_name}_ext.h", f"{new_name}_ext.h"),
+            ):
+                src = _project_child_realpath(output_dir, old_suffix)
+                dest = _project_child_realpath(output_dir, new_suffix)
+                if src is None or dest is None or not os.path.isfile(src):
+                    continue
+                try:
+                    if os.path.exists(dest):
+                        _archive_page_user_file(output_dir, old_name, src)
+                    else:
+                        shutil.move(src, dest)
+                except OSError:
+                    _archive_page_user_file(output_dir, old_name, src)
 
     def _duplicate_page_from_navigator(self, page_name):
         if not self.project or not page_name:
