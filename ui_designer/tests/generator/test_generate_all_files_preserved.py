@@ -329,6 +329,27 @@ class TestLegacyHeaderMigration:
         assert "void my_extra_func(void);" in result["main_page_ext.h"]
         assert "custom_state" in result["main_page_ext.h"]
 
+    def test_header_user_code_migrates_hook_override_defines_to_ext_header(self, tmp_path):
+        proj = _make_project_with_page("main_page")
+        output_dir = str(tmp_path)
+
+        header_path = tmp_path / "main_page.h"
+        existing_header = (
+            "#ifndef _MAIN_PAGE_H_\n"
+            "#define _MAIN_PAGE_H_\n"
+            "// USER CODE BEGIN declarations\n"
+            "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)\n"
+            "void main_page_after_open(egui_main_page_t *page);\n"
+            "// USER CODE END declarations\n"
+            "#endif\n"
+        )
+        header_path.write_text(existing_header, encoding="utf-8")
+
+        result = generate_all_files_preserved(proj, output_dir, backup=False)
+
+        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in result["main_page_ext.h"]
+        assert "void main_page_after_open(egui_main_page_t *page);" in result["main_page_ext.h"]
+
     def test_header_produced_fresh_when_not_on_disk(self, tmp_path):
         """If no existing header, fresh output must be produced."""
         proj = _make_project_with_page("main_page")

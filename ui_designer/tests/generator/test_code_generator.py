@@ -280,6 +280,13 @@ class TestGeneratePageHeader:
         assert "void egui_main_page_user_init(egui_main_page_t *page);" in output
         assert "void egui_main_page_user_on_open(egui_main_page_t *page);" in output
 
+    def test_header_includes_ext_before_default_hook_macros(self):
+        page, proj = self._make_simple_page_and_project()
+        output = generate_page_header(page, proj)
+
+        assert output.index('#include "main_page_ext.h"') < output.index("#ifndef EGUI_MAIN_PAGE_EXT_FIELDS")
+        assert output.index('#include "main_page_ext.h"') < output.index("#ifndef EGUI_MAIN_PAGE_HOOK_INIT")
+
     def test_header_function_declarations(self):
         page, proj = self._make_simple_page_and_project()
         output = generate_page_header(page, proj)
@@ -511,6 +518,16 @@ class TestGeneratePageLayoutSource:
         assert "egui_timer_start_timer(&local->refresh_timer, 500, 1000);" in output
         assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in output
         assert "egui_timer_stop_timer(&local->refresh_timer);" in output
+
+    def test_layout_source_lifecycle_wrappers_call_page_hook_macros(self):
+        page, proj = self._make_page_with_children()
+
+        output = generate_page_layout_source(page, proj)
+
+        assert "EGUI_MAIN_PAGE_HOOK_ON_OPEN(local);" in output
+        assert "EGUI_MAIN_PAGE_HOOK_ON_CLOSE(local);" in output
+        assert "EGUI_MAIN_PAGE_HOOK_ON_KEY(local, keycode);" in output
+        assert "EGUI_MAIN_PAGE_HOOK_INIT(local);" in output
 
 
 # ======================================================================

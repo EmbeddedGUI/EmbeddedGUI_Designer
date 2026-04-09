@@ -423,6 +423,109 @@ class TestMainWindowFileFlow:
         assert "Saved:" in window.statusBar().currentMessage()
         _close_window(window)
 
+    def test_save_project_files_writes_split_page_outputs_on_disk(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveSplitDemo"
+        project = _create_project(project_dir, "SaveSplitDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(project_dir)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        files = window._save_project_files(str(project_dir))
+
+        assert "main_page.h" in files
+        assert "main_page_layout.c" in files
+        assert "main_page.c" in files
+        assert "main_page_ext.h" in files
+        assert (project_dir / "main_page.h").is_file()
+        assert (project_dir / "main_page_layout.c").is_file()
+        assert (project_dir / "main_page.c").is_file()
+        assert (project_dir / "main_page_ext.h").is_file()
+        assert '#include "main_page_ext.h"' in (project_dir / "main_page.h").read_text(encoding="utf-8")
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in (project_dir / "main_page.c").read_text(encoding="utf-8")
+        assert "#define EGUI_MAIN_PAGE_EXT_FIELDS" in (project_dir / "main_page_ext.h").read_text(encoding="utf-8")
+        _close_window(window)
+
+    def test_save_project_files_migrates_legacy_page_files_and_creates_backups(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveMigrationDemo"
+        project = _create_project(project_dir, "SaveMigrationDemo", sdk_root)
+
+        (project_dir / "main_page.h").write_text(
+            (
+                "#ifndef _MAIN_PAGE_H_\n"
+                "#define _MAIN_PAGE_H_\n"
+                "// USER CODE BEGIN includes\n"
+                '#include "legacy_logic.h"\n'
+                "// USER CODE END includes\n"
+                "// USER CODE BEGIN declarations\n"
+                "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)\n"
+                "void main_page_after_open(egui_main_page_t *page);\n"
+                "// USER CODE END declarations\n"
+                "#endif\n"
+            ),
+            encoding="utf-8",
+        )
+        (project_dir / "main_page.c").write_text(
+            (
+                "// main_page.c - User implementation for main_page\n"
+                "// Layout/widget init is in main_page_layout.c (auto-generated).\n"
+                '#include "egui.h"\n'
+                '#include "uicode.h"\n'
+                '#include "main_page.h"\n'
+                "\n"
+                "// USER CODE BEGIN callbacks\n"
+                "void on_confirm(egui_view_t *self)\n"
+                "{\n"
+                "    EGUI_UNUSED(self);\n"
+                "    custom_confirm();\n"
+                "}\n"
+                "// USER CODE END callbacks\n"
+                "\n"
+                "// USER CODE BEGIN on_open\n"
+                "    main_page_after_open(local);\n"
+                "// USER CODE END on_open\n"
+            ),
+            encoding="utf-8",
+        )
+
+        page = project.get_startup_page()
+        from ui_designer.model.widget_model import WidgetModel
+        button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
+        button.on_click = "on_confirm"
+        page.root_widget.add_child(button)
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(project_dir)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        files = window._save_project_files(str(project_dir))
+
+        assert "main_page_ext.h" in files
+        assert '#include "legacy_logic.h"' in (project_dir / "main_page_ext.h").read_text(encoding="utf-8")
+        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in (
+            project_dir / "main_page_ext.h"
+        ).read_text(encoding="utf-8")
+        saved_source = (project_dir / "main_page.c").read_text(encoding="utf-8")
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in saved_source
+        assert saved_source.count("void on_confirm(egui_view_t *self)") == 1
+        assert "custom_confirm();" in saved_source
+        backup_root = project_dir / ".eguiproject" / "backup"
+        assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
+        assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
+        _close_window(window)
+
     def test_new_project_can_be_created_without_sdk_root(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
