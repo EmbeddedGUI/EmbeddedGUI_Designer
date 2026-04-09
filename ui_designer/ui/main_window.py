@@ -1077,7 +1077,16 @@ class MainWindow(QMainWindow):
             return
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         dirty_state = self._unsaved_changes_summary_text()
-        reload_state = "available" if getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)() else "unavailable"
+        reload_enabled = getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)()
+        if self._external_reload_pending:
+            pending_summary = self._summarize_changed_paths(getattr(self, "_external_reload_changed_paths", []) or [])
+            reload_state = (
+                f"pending external changes ({pending_summary})"
+                if pending_summary
+                else "pending external changes"
+            )
+        else:
+            reload_state = "available" if reload_enabled else "unavailable"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
         recent_count = min(len(recent), 10)
@@ -1177,7 +1186,34 @@ class MainWindow(QMainWindow):
             else:
                 hint = self._action_hint(base_text, False, "open a project first")
             self._apply_action_hint(action, hint)
+        self._update_reload_project_action_metadata()
         self._update_quit_action_metadata()
+
+    def _update_reload_project_action_metadata(self):
+        action = getattr(self, "_reload_project_action", None)
+        if action is None:
+            return
+        enabled = self.project is not None and bool(self._project_dir)
+        action.setEnabled(enabled)
+        if not enabled:
+            self._apply_action_hint(
+                action,
+                self._action_hint("Reload the current project from disk (Ctrl+Shift+R).", False, "open a project first"),
+            )
+            return
+        parts = [
+            "Reload the current project from disk (Ctrl+Shift+R).",
+            f"Current project directory: {normalize_path(self._project_dir)}.",
+        ]
+        if self._has_unsaved_changes():
+            parts.append(f"Current unsaved changes: {self._unsaved_changes_summary_text()}.")
+        if self._external_reload_pending:
+            pending_summary = self._summarize_changed_paths(getattr(self, "_external_reload_changed_paths", []) or [])
+            if pending_summary:
+                parts.append(f"Pending external changes: {pending_summary}.")
+            else:
+                parts.append("Pending external changes detected.")
+        self._apply_action_hint(action, " ".join(parts))
 
     def _update_quit_action_metadata(self):
         action = getattr(self, "_quit_action", None)
@@ -2524,19 +2560,7 @@ class MainWindow(QMainWindow):
             ),
         )
         self._stop_action.setEnabled(self.compiler is not None and self.compiler.is_preview_running())
-        self._reload_project_action.setEnabled(self.project is not None and bool(self._project_dir))
-        self._apply_action_hint(
-            self._reload_project_action,
-            (
-                f"Reload the current project from disk (Ctrl+Shift+R). Current project directory: {normalize_path(self._project_dir)}."
-                if self._reload_project_action.isEnabled()
-                else self._action_hint(
-                    "Reload the current project from disk (Ctrl+Shift+R).",
-                    False,
-                    "open a project first",
-                )
-            ),
-        )
+        self._update_reload_project_action_metadata()
         self._update_build_menu_metadata()
         self._update_file_menu_metadata()
         self._update_file_project_action_metadata()
@@ -2729,10 +2753,14 @@ class MainWindow(QMainWindow):
     def _set_external_reload_pending(self, changed_paths=None):
         self._external_reload_pending = True
         self._external_reload_changed_paths = list(changed_paths or [])
+        self._update_reload_project_action_metadata()
+        self._update_file_menu_metadata()
 
     def _clear_external_reload_pending(self):
         self._external_reload_pending = False
         self._external_reload_changed_paths = []
+        self._update_reload_project_action_metadata()
+        self._update_file_menu_metadata()
 
     def _pending_external_reload_changed_paths(self):
         if self.project is None or not self._project_dir:

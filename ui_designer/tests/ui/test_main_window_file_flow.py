@@ -4815,6 +4815,32 @@ class TestMainWindowFileFlow:
         assert file_action.statusTip() == file_action.toolTip()
         _close_window(window)
 
+    def test_file_menu_reports_pending_external_change_summary(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "FileCategoryPendingReloadDemo"
+        project = _create_project(project_dir, "FileCategoryPendingReloadDemo", sdk_root)
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: open. SDK: valid. Unsaved changes: none. "
+            "Reload: pending external changes (main_page.xml). Recent projects: 1 project."
+        )
+        assert file_action.statusTip() == file_action.toolTip()
+        _close_window(window)
+
     def test_arrange_menu_category_exposes_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -5206,6 +5232,47 @@ class TestMainWindowFileFlow:
         assert reloaded_actions["Export C Code..."].isEnabled() is True
         assert reloaded_actions["Quit"].toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q). Project: open. Unsaved pages: none."
         assert reloaded_actions["Quit"].statusTip() == reloaded_actions["Quit"].toolTip()
+        _close_window(window)
+
+    def test_reload_project_action_exposes_unsaved_and_pending_external_change_context(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReloadActionContextDemo"
+        project = _create_project(project_dir, "ReloadActionContextDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._on_startup_changed("detail_page")
+
+        reload_calls = []
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- reload action context external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._reload_project_action.toolTip() == (
+            "Reload the current project from disk (Ctrl+Shift+R). "
+            f"Current project directory: {window._project_dir}. "
+            "Current unsaved changes: project changes (startup page). "
+            "Pending external changes: main_page.xml."
+        )
+        assert window._reload_project_action.statusTip() == window._reload_project_action.toolTip()
         _close_window(window)
 
     def test_close_project_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
