@@ -12,7 +12,6 @@ from qfluentwidgets import PrimaryPushButton, PushButton
 from ..model.config import get_config
 from ..model.sdk_bootstrap import (
     default_sdk_install_dir,
-    describe_auto_download_plan,
     describe_sdk_source,
     describe_sdk_source_hint,
     sdk_root_source_kind,
@@ -126,7 +125,6 @@ class WelcomePage(QWidget):
     open_project = pyqtSignal()
     open_app = pyqtSignal()
     set_sdk_root = pyqtSignal()
-    download_sdk = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -249,12 +247,6 @@ class WelcomePage(QWidget):
         self._set_sdk_root_btn.clicked.connect(self.set_sdk_root.emit)
         left_col.addWidget(self._set_sdk_root_btn)
 
-        self._download_sdk_btn = PushButton("Download...")
-        self._download_sdk_btn.clicked.connect(self.download_sdk.emit)
-        self._download_sdk_btn.setToolTip(describe_auto_download_plan())
-        self._download_sdk_btn.setStatusTip(self._download_sdk_btn.toolTip())
-        left_col.addWidget(self._download_sdk_btn)
-
         self._sdk_card = QFrame()
         self._sdk_card.setObjectName("welcome_sdk_panel")
         sdk_layout = QVBoxLayout(self._sdk_card)
@@ -324,7 +316,6 @@ class WelcomePage(QWidget):
         self._open_project_btn.setAccessibleName("Open project file action")
         self._open_app_btn.setAccessibleName("Open example")
         self._set_sdk_root_btn.setAccessibleName("Set SDK root")
-        self._download_sdk_btn.setAccessibleName("Download SDK")
         _set_widget_metadata(
             self._new_project_btn,
             tooltip="Create a new EmbeddedGUI Designer project.",
@@ -414,8 +405,6 @@ class WelcomePage(QWidget):
             preserve_invalid=True,
         )
         sdk_status = describe_sdk_root(sdk_root)
-        default_cache_dir = default_sdk_install_dir()
-        auto_download_plan = describe_auto_download_plan(default_cache_dir)
         if sdk_status == "ready":
             source_kind = sdk_root_source_kind(sdk_root)
             if source_kind == "bundled":
@@ -423,7 +412,7 @@ class WelcomePage(QWidget):
             elif source_kind == "runtime_local":
                 self._sdk_status_label.setText("Ready: using SDK stored beside the application")
             elif source_kind == "cached":
-                self._sdk_status_label.setText("Ready: using auto-downloaded SDK cache")
+                self._sdk_status_label.setText("Ready: using default SDK cache")
             else:
                 self._sdk_status_label.setText("Ready: using selected SDK root")
             self._sdk_hint_label.setText(describe_sdk_source_hint(sdk_root))
@@ -431,16 +420,12 @@ class WelcomePage(QWidget):
         elif sdk_status == "invalid":
             self._sdk_status_label.setText("Invalid: SDK path needs attention")
             self._set_sdk_chip_tone("warning")
-            self._sdk_hint_label.setText(
-                "Select a valid SDK root, or download one automatically to restore compile preview.\n"
-                f"{auto_download_plan}"
-            )
+            self._sdk_hint_label.setText("Select a valid SDK root to restore compile preview.")
         else:
             self._sdk_status_label.setText("Missing: editing only, Python preview fallback")
             self._set_sdk_chip_tone("danger")
             self._sdk_hint_label.setText(
-                "You can still edit projects, but compile preview stays disabled until you set or download an SDK.\n"
-                f"{auto_download_plan}"
+                "You can still edit projects, but compile preview stays disabled until you set an SDK root."
             )
 
         self._sdk_path_label.setText(sdk_root or "No SDK root configured")
@@ -561,7 +546,7 @@ class WelcomePage(QWidget):
             open_app_hint = "Open a bundled example, or fix the SDK root before browsing SDK examples."
             set_sdk_hint = "Choose a valid EmbeddedGUI SDK root used for compile preview."
         else:
-            open_app_hint = "Open a bundled example, or set or download an SDK before browsing SDK examples."
+            open_app_hint = "Open a bundled example, or set an SDK before browsing SDK examples."
             set_sdk_hint = "Choose the EmbeddedGUI SDK root used for compile preview."
         _set_widget_metadata(
             self._open_app_btn,
@@ -572,12 +557,6 @@ class WelcomePage(QWidget):
             self._set_sdk_root_btn,
             tooltip=set_sdk_hint,
             accessible_name=f"Set SDK root action. {set_sdk_hint}",
-        )
-        download_hint = describe_auto_download_plan(default_sdk_install_dir())
-        _set_widget_metadata(
-            self._download_sdk_btn,
-            tooltip=download_hint,
-            accessible_name=f"Download SDK action. {download_hint}",
         )
         recent_label_summary = f"Recent Projects: {recent_text}."
         _set_widget_metadata(

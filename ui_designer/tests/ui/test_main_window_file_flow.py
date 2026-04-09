@@ -573,6 +573,7 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_selection_feedback_status_mentions_repeat_move_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -625,11 +626,10 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([locked], primary=locked, sync_tree=False, sync_preview=False)
 
-        deleted_count, skipped_locked, removed_targets = window._delete_selection()
+        deleted_count, skipped_locked = window._delete_selection()
 
         assert deleted_count == 0
         assert skipped_locked == 1
-        assert removed_targets == 0
         assert locked in project.get_startup_page().root_widget.children
         assert window.statusBar().currentMessage() == "Cannot delete selection: 1 locked widget."
         _close_window(window)
@@ -659,11 +659,10 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._set_selection([removable, locked], primary=removable, sync_tree=False, sync_preview=False)
 
-        deleted_count, skipped_locked, removed_targets = window._delete_selection()
+        deleted_count, skipped_locked = window._delete_selection()
 
         assert deleted_count == 1
         assert skipped_locked == 1
-        assert removed_targets == 0
         assert removable not in root.children
         assert locked in root.children
         assert window.statusBar().currentMessage() == "Deleted 1 widget(s); skipped 1 locked widget"
@@ -703,6 +702,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_delete_selection_clears_removed_recent_move_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1160,6 +1160,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_move_selection_into_container_dialog_prefers_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1215,6 +1216,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_move_selection_into_container_dialog_prioritizes_recent_target_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1277,6 +1279,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_structure_actions_follow_precise_selection_constraints(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1342,6 +1345,7 @@ class TestMainWindowFileFlow:
 
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_structure_actions_disable_root_ungroup_and_noop_move_into(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1398,6 +1402,7 @@ class TestMainWindowFileFlow:
 
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_moves_selection_into_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1435,6 +1440,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_move_into_last_target_action_reuses_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1482,6 +1488,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_clear_move_target_history_action_clears_recent_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1528,6 +1535,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_clear_move_target_history_reports_plural_count(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1575,6 +1583,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_move_into_last_target_is_scoped_per_page(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1645,6 +1654,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_repeat_move_target_hint_follows_target_rename(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1686,6 +1696,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_prioritizes_remembered_target(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1732,6 +1743,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_follows_recent_target_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1787,6 +1799,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_shows_recent_placeholder_without_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1827,6 +1840,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_reuses_last_target_and_clears_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1883,6 +1897,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_into_menu_stays_available_for_history_only(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -1999,6 +2014,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_structure_actions_expose_keyboard_shortcuts(self, qapp):
         from ui_designer.ui.main_window import MainWindow
 
@@ -2694,7 +2710,6 @@ class TestMainWindowFileFlow:
 
             def __init__(self, parent=None, egui_root=None, on_download_sdk=None):
                 captured["egui_root"] = egui_root
-                captured["has_download_handler"] = callable(on_download_sdk)
                 self._selected_entry = None
                 self._egui_root = egui_root
 
@@ -2716,7 +2731,6 @@ class TestMainWindowFileFlow:
         window._open_app_dialog()
 
         assert captured["egui_root"] == os.path.normpath(os.path.abspath(cached_sdk))
-        assert captured["has_download_handler"] is True
         _close_window(window)
 
     def test_open_app_dialog_opens_bundled_example_without_rebinding_sdk(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -2802,6 +2816,7 @@ class TestMainWindowFileFlow:
         assert isolated_config.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_download_sdk_updates_config_and_project_root(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -3037,6 +3052,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_download_sdk_failure_mentions_target_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -3061,6 +3077,7 @@ class TestMainWindowFileFlow:
         assert "install git for clone fallback" in warnings[0][1]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_initial_sdk_prompt_shows_target_dir_and_dispatches_download(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -3424,7 +3441,6 @@ class TestMainWindowFileFlow:
                 "Rebuild EGUI Project",
                 "Auto Compile",
                 "Stop Exe",
-                "Repository Health...",
                 "Generate Resources",
             }
         }
@@ -3446,17 +3462,13 @@ class TestMainWindowFileFlow:
             "Stop the running preview executable. Project: none. Preview: stopped. "
             "Unavailable: preview is not running."
         )
-        assert actions["Repository Health..."].toolTip() == (
-            "Inspect the Designer repository health summary. "
-            "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
-        )
         assert actions["Generate Resources"].toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
             "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
         assert build_action.toolTip() == (
-            "Compile previews, generate resources, and inspect repository health. "
+            "Compile previews and generate resources. "
             "Project: none. SDK: invalid. Compile: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
@@ -3480,12 +3492,8 @@ class TestMainWindowFileFlow:
             "Automatically compile and rerun the preview after changes. "
             "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
         )
-        assert actions["Repository Health..."].toolTip() == (
-            "Inspect the Designer repository health summary. "
-            "Project: open. SDK: valid. Source resources: missing. Resource directory: none."
-        )
         assert build_action.toolTip() == (
-            "Compile previews, generate resources, and inspect repository health. "
+            "Compile previews and generate resources. "
             "Project: open. SDK: valid. Compile: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
@@ -3523,17 +3531,13 @@ class TestMainWindowFileFlow:
             "Stop the running preview executable. Project: open. Preview: stopped. "
             "Unavailable: preview is not running."
         )
-        assert actions["Repository Health..."].toolTip() == (
-            "Inspect the Designer repository health summary. "
-            f"Project: open. SDK: valid. Source resources: available. Resource directory: {resources_dir}."
-        )
         assert actions["Generate Resources"].toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
             "C source files from .eguiproject/resources/ assets and widget config. "
             f"Project: open. SDK: valid. Source resources: available. Resource directory: {resources_dir}."
         )
         assert build_action.toolTip() == (
-            "Compile previews, generate resources, and inspect repository health. "
+            "Compile previews and generate resources. "
             "Project: open. SDK: valid. Compile: available. Auto compile: on. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
@@ -3541,7 +3545,7 @@ class TestMainWindowFileFlow:
         window.auto_compile_action.setChecked(False)
 
         assert build_action.toolTip() == (
-            "Compile previews, generate resources, and inspect repository health. "
+            "Compile previews and generate resources. "
             "Project: open. SDK: valid. Compile: available. Auto compile: off. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
@@ -4200,14 +4204,12 @@ class TestMainWindowFileFlow:
         assert actions["Arrange"].statusTip() == actions["Arrange"].toolTip()
         assert actions["Structure"].toolTip() == (
             "Group, move, and reorder widgets in the page hierarchy. "
-            "Selection: none. Group/Ungroup: unavailable. Move Into: unavailable. Reorder/Lift: unavailable. Quick Move: unavailable."
+            "Selection: none. Group/Ungroup: unavailable. Move Into: unavailable. Reorder/Lift: unavailable."
         )
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
         assert actions["Build"].toolTip() == (
-            "Compile previews, generate resources, and manage release builds. "
-            "Project: none. SDK: invalid. Compile: unavailable. Auto compile: on. Preview: stopped. Release build: unavailable. Release history: unavailable. "
-            "Source resources: missing. Resource directory: none. Release profiles: unavailable. Output root: none. History file: none. Output root state: unavailable. History file state: unavailable. Release records: unavailable. "
-            "Latest release: none. Latest release SDK: none. Release open targets: unavailable."
+            "Compile previews and generate resources. "
+            "Project: none. SDK: invalid. Compile: unavailable. Auto compile: on. Preview: stopped. Source resources: missing. Resource directory: none."
         )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (
@@ -4381,7 +4383,7 @@ class TestMainWindowFileFlow:
         structure_action = next(action for action in window.menuBar().actions() if action.text() == "Structure")
         assert structure_action.toolTip() == (
             "Group, move, and reorder widgets in the page hierarchy. "
-            "Selection: none. Group/Ungroup: unavailable. Move Into: unavailable. Reorder/Lift: unavailable. Quick Move: unavailable."
+            "Selection: none. Group/Ungroup: unavailable. Move Into: unavailable. Reorder/Lift: unavailable."
         )
         assert structure_action.statusTip() == structure_action.toolTip()
 
@@ -4391,11 +4393,12 @@ class TestMainWindowFileFlow:
         window._set_selection([loaded_first, loaded_second], primary=loaded_first, sync_tree=True, sync_preview=True)
         assert structure_action.toolTip() == (
             "Group, move, and reorder widgets in the page hierarchy. "
-            "Selection: 2 widgets. Group/Ungroup: available. Move Into: available. Reorder/Lift: available. Quick Move: available."
+            "Selection: 2 widgets. Group/Ungroup: available. Move Into: available. Reorder/Lift: available."
         )
         assert structure_action.statusTip() == structure_action.toolTip()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_quick_move_submenu_exposes_available_and_history_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -4449,7 +4452,6 @@ class TestMainWindowFileFlow:
                 "New Project",
                 "Open Example...",
                 "Open Project...",
-                "Download SDK...",
                 "Set SDK...",
             }
         }
@@ -4469,10 +4471,6 @@ class TestMainWindowFileFlow:
             f"Recent projects: none. Default directory: {window._default_open_project_dir()}."
         )
         assert actions["Open Project..."].statusTip() == actions["Open Project..."].toolTip()
-        assert "GitHub archive" in actions["Download SDK..."].toolTip()
-        assert "Current binding: SDK: missing." in actions["Download SDK..."].toolTip()
-        assert f"Install target: {main_window_module.default_sdk_install_dir()}." in actions["Download SDK..."].toolTip()
-        assert actions["Download SDK..."].statusTip() == actions["Download SDK..."].toolTip()
         assert actions["Set SDK..."].toolTip() == (
             "Choose the EmbeddedGUI SDK root used for compile preview. "
             f"Current binding: SDK: missing. Default selection: {window._active_sdk_root() or 'none'}."
@@ -4574,6 +4572,7 @@ class TestMainWindowFileFlow:
         assert action.statusTip() == action.toolTip()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_download_sdk_action_tracks_current_binding_label(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui import main_window as main_window_module
         from ui_designer.ui.main_window import MainWindow
@@ -6373,8 +6372,6 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: NavigatorDemo. Current page: main_page. Project contains 2 pages."
         )
-        assert window._workspace_health_chip.text() == "Workspace Stable"
-        assert window._runtime_chip.text() == "Python Preview"
         editor_layout = window._editor_container.layout()
         editor_margins = editor_layout.contentsMargins()
         toolbar_host_margins = window._toolbar_host_layout.contentsMargins()
@@ -8604,7 +8601,6 @@ class TestMainWindowFileFlow:
 
         isolated_config.workspace_left_panel = "widgets"
         isolated_config.workspace_state = {"project_workspace_view": ProjectWorkspacePanel.VIEW_THUMBNAILS}
-        isolated_config.workspace_status_panel_state = {"last_action": "open_page_fields"}
         isolated_config.workspace_layout_version = 1
 
         window = MainWindow("")
@@ -8639,9 +8635,9 @@ class TestMainWindowFileFlow:
         assert window._left_shell.accessibleName() == (
             "Workspace left shell: Components panel visible. Current page: none. Insert target: unavailable."
         )
-        assert window.status_center_panel._last_action_label.text() == "Last action: Fields"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed workspace indicator chips")
     def test_workspace_chips_use_sentence_case_and_humanized_counts(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -8743,6 +8739,7 @@ class TestMainWindowFileFlow:
         assert window._workspace_health_chip.toolTip() == "Open Diagnostics. Current issues: 1 errors and 0 warnings."
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed workspace indicator chips")
     def test_workspace_chips_skip_no_op_toolbar_refreshes(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -8820,10 +8817,6 @@ class TestMainWindowFileFlow:
         assert window._sdk_status_label.accessibleName() == "SDK binding: SDK: missing."
         assert window._workspace_context_label.text() == "No project open"
         assert window._workspace_context_label.toolTip() == "Open or create a project to start editing."
-        assert window._workspace_health_chip.text() == "Open Project"
-        assert window._workspace_health_chip.accessibleName() == "Workspace health indicator: Open Project."
-        assert window._runtime_chip.text() == "Preview Idle"
-        assert window._runtime_chip.accessibleName() == "Preview runtime indicator: Preview Idle."
         assert window._insert_widget_button.toolTip() == "Open or create a project to insert a component."
         assert window._insert_widget_button.statusTip() == window._insert_widget_button.toolTip()
         assert window._insert_widget_button.accessibleName() == "Insert component unavailable."
@@ -8950,10 +8943,6 @@ class TestMainWindowFileFlow:
         assert separator.minimumHeight() == 22
         assert separator.maximumHeight() == 22
         assert window._workspace_context_label.text() == "No project open"
-        assert window._workspace_health_chip.text() == "Open Project"
-        assert window._runtime_chip.text() == "Preview Idle"
-        assert window._workspace_health_chip.height() == 26
-        assert window._runtime_chip.height() == 26
         assert all(
             action.icon().isNull()
             for action in (
@@ -9026,8 +9015,6 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: ToolbarHintDemo. Current page: main_page. Project contains 1 page."
         )
-        assert window._workspace_health_chip.text() == "Workspace Stable"
-        assert window._runtime_chip.text() == "Python Preview"
         assert window._save_action.toolTip() == (
             "Save the current project (Ctrl+S). "
             f"Unsaved pages: none. Target: {window._project_dir}."
@@ -9054,7 +9041,6 @@ class TestMainWindowFileFlow:
 
         window._set_selection([label], primary=label, sync_tree=False, sync_preview=False)
 
-        assert window._workspace_health_chip.text() == "1 Selected"
         assert window._copy_action.toolTip() == "Copy the current selection (Ctrl+C)."
         assert window._copy_action.statusTip() == window._copy_action.toolTip()
 
@@ -9773,6 +9759,7 @@ class TestMainWindowFileFlow:
         assert window._inspector_tabs.currentIndex() == 1
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_workspace_actions_switch_left_panel(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9788,6 +9775,7 @@ class TestMainWindowFileFlow:
         assert window._current_left_panel == "assets"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_inspector_actions_switch_inspector_tabs(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9805,6 +9793,7 @@ class TestMainWindowFileFlow:
         assert window._page_tools_section_focus == "fields"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_tool_actions_switch_bottom_tabs(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9819,6 +9808,7 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.currentIndex() == 0
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_diagnostic_mix_actions_apply_severity_filter(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9834,6 +9824,7 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_first_error_action_opens_diagnostics_entry(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9848,6 +9839,7 @@ class TestMainWindowFileFlow:
         assert opened == ["error"]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_first_warning_action_opens_diagnostics_entry(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9862,6 +9854,7 @@ class TestMainWindowFileFlow:
         assert opened == ["warning"]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_suggested_action_button_routes_contextually(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9891,6 +9884,7 @@ class TestMainWindowFileFlow:
         assert opened == ["error"]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_workspace_chip_routes_contextually(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9909,6 +9903,7 @@ class TestMainWindowFileFlow:
         assert opened == ["error"]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_suggested_action_routes_runtime_and_info_context(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9927,6 +9922,7 @@ class TestMainWindowFileFlow:
         assert window.diagnostics_panel._severity_filter_combo.currentData() == "info"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_repeat_action_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9943,6 +9939,7 @@ class TestMainWindowFileFlow:
         assert window._left_panel_stack.currentWidget() is window.res_panel
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_recent_action_menu_replays_restored_action(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -9968,6 +9965,7 @@ class TestMainWindowFileFlow:
         assert window.status_center_panel._repeat_action_button.text() == "Repeat Project"
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed status center panel")
     def test_status_center_recent_action_menu_can_clear_restored_history(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
@@ -10222,7 +10220,6 @@ class TestMainWindowCanvasActions:
         assert structure_actions["Group Selection"].shortcut().toString() == "Ctrl+G"
         assert structure_actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
         assert structure_actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
-        assert structure_actions["Move Into Last Target"].shortcut().toString() == "Ctrl+Alt+I"
         assert structure_actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
         assert structure_actions["Move Up"].shortcut().toString() == "Alt+Up"
         assert structure_actions["Move Down"].shortcut().toString() == "Alt+Down"
@@ -10232,6 +10229,7 @@ class TestMainWindowCanvasActions:
         menu.deleteLater()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_structure_actions_appear_in_expected_order(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -10275,6 +10273,7 @@ class TestMainWindowCanvasActions:
         ]
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_structure_actions_reflect_selection_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -10356,6 +10355,7 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -10845,20 +10845,11 @@ class TestMainWindowCanvasActions:
         assert structure_actions["Group Selection"].isEnabled() is False
         assert structure_actions["Ungroup"].isEnabled() is False
         assert structure_actions["Move Into..."].isEnabled() is False
-        assert structure_actions["Move Into Last Target"].isEnabled() is False
-        assert structure_actions["Clear Move Target History"].isEnabled() is False
         assert structure_actions["Lift To Parent"].isEnabled() is False
         assert structure_actions["Move Up"].isEnabled() is False
         assert structure_actions["Move Down"].isEnabled() is False
         assert structure_actions["Move To Top"].isEnabled() is False
         assert structure_actions["Move To Bottom"].isEnabled() is False
-        quick_move_menu = next(action.menu() for action in structure_menu.actions() if action.text() == "Quick Move Into")
-        quick_move_texts = [action.text() for action in quick_move_menu.actions() if action.text()]
-        quick_move_action = next(action for action in structure_menu.actions() if action.text() == "Quick Move Into")
-        assert quick_move_action.isEnabled() is window._quick_move_into_menu.menuAction().isEnabled()
-        assert quick_move_action.toolTip() == window._quick_move_into_menu.menuAction().toolTip()
-        assert "(No eligible target containers)" in quick_move_texts
-        assert "History" in quick_move_texts
         menu.deleteLater()
 
         window._clipboard_payload = {"widgets": []}
@@ -10870,6 +10861,7 @@ class TestMainWindowCanvasActions:
 
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_quick_move_into_shows_recent_placeholder_without_history(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
@@ -10912,6 +10904,7 @@ class TestMainWindowCanvasActions:
         menu.deleteLater()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_quick_move_into_shows_history_without_targets(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -10965,6 +10958,7 @@ class TestMainWindowCanvasActions:
         menu.deleteLater()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_quick_move_into_follows_recent_target_history(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -11024,6 +11018,7 @@ class TestMainWindowCanvasActions:
         menu.deleteLater()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_build_preview_context_menu_quick_move_labels_follow_target_rename(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -11072,6 +11067,7 @@ class TestMainWindowCanvasActions:
         menu.deleteLater()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_preview_context_menu_move_into_last_target_is_scoped_per_page(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -11150,6 +11146,7 @@ class TestMainWindowCanvasActions:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_preview_context_menu_quick_move_actions_update_selection_and_history(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -11238,6 +11235,7 @@ class TestMainWindowCanvasActions:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_preview_context_menu_quick_move_submenu_history_actions_update_selection_and_history(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -11312,6 +11310,7 @@ class TestMainWindowCanvasActions:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed quick-move history feature")
     def test_preview_context_menu_clear_move_target_history_reports_plural_count(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -12384,7 +12383,7 @@ class TestMainWindowCanvasActions:
         assert window.statusBar().currentMessage() == "Selected 3 widgets at depth 2."
         _close_window(window)
 
-    def test_preview_failure_restores_v1_and_syncs_config_and_state_store(self, qapp, isolated_config, monkeypatch):
+    def test_preview_failure_switches_back_to_v1_renderer(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         class CompilerWithStopCount:
@@ -12400,8 +12399,6 @@ class TestMainWindowCanvasActions:
         window = MainWindow("")
         compiler = CompilerWithStopCount()
         window.compiler = compiler
-        window._config.preview_engine = "legacy"
-        window._state_store.set_preview_engine("legacy")
 
         switch_calls = []
         monkeypatch.setattr(window._renderer_manager, "switch", lambda engine, fallback="v1": switch_calls.append((engine, fallback)) or "v1")
@@ -12412,12 +12409,11 @@ class TestMainWindowCanvasActions:
 
         assert compiler.stop_calls == 1
         assert switch_calls == [("v1", "v1")]
-        assert window._config.preview_engine == "v1"
-        assert window._state_store.state.preview_engine == "v1"
         assert window._last_runtime_error_text == "forced failure"
 
         _close_window(window)
 
+    @pytest.mark.skip(reason="removed preview-engine selection feature")
     def test_preview_engine_invalid_name_is_ignored(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

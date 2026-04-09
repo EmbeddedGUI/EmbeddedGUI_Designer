@@ -38,7 +38,6 @@ python ui_designer/main.py --sdk-root sdk/EmbeddedGUI --project examples/Designe
 - `Build EXE && Run`
 - `Rebuild EGUI Project`
 - `Auto Compile`
-- `Repository Health...`
 - `Generate Resources`
 
 ?????????

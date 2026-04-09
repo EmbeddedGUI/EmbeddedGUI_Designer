@@ -51,8 +51,8 @@ def test_build_stylesheet_uses_surface_hover_tokens_for_light_theme():
 
     assert tokens["surface_hover"] in stylesheet
     assert tokens["surface_hover"] == "#DCE8F6"
-    assert tokens["surface_hover"] in stylesheet.split("#status_center_metric_card:hover", 1)[1]
-    assert tokens["surface_hover"] in stylesheet.split("#status_center_health_row:hover", 1)[1]
+    assert tokens["surface_hover"] in stylesheet.split("#welcome_recent_item:hover", 1)[1]
+    assert tokens["surface_hover"] in stylesheet.split("QPushButton#widget_browser_insert_button:hover", 1)[1]
 
 
 def test_stylesheet_shell_and_dialog_hint_tokens():
@@ -71,54 +71,10 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert f"font-size: {t['fs_micro']}px;" in nav_button
         assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
+        metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
         assert str(t["space_xs"]) in indicator
 
 
-def test_status_center_styles_reduce_resting_container_weight():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-        metrics = css.split("#status_center_metrics", 1)[1].split("}", 1)[0]
-        actions = css.split("#status_center_actions", 1)[1].split("}", 1)[0]
-        sections = css.split("#status_center_health,", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
-        health_row = css.split("#status_center_health_row {", 1)[1].split("}", 1)[0]
-        health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
-        health_chunk = css.split("QProgressBar#status_center_health_error_bar::chunk {", 1)[1].split("}", 1)[0]
-
-        assert "background-color: transparent;" in metrics
-        assert "border: none;" in metrics
-        assert "background-color: transparent;" in actions
-        assert "border: none;" in actions
-        assert "background-color: transparent;" in sections
-        assert "border: none;" in sections
-        assert "border-radius: 0px;" in sections
-        assert "background-color: transparent;" in metric_card
-        assert "border: 1px solid transparent;" in metric_card
-        assert "border-radius: 0px;" in metric_card
-        assert "background-color: transparent;" in health_row
-        assert "border: 1px solid transparent;" in health_row
-        assert "border-radius: 0px;" in health_row
-        assert f"background-color: {t['panel_alt']};" in health_bar
-        assert "border-radius: 0px;" in health_bar
-        assert "border-radius: 0px;" in health_chunk
-
-
-def test_status_center_header_styles_use_engineering_surface_tokens():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-
-        header = css.split('#status_center_header[panelTone="status"] {', 1)[1].split("}", 1)[0]
-        eyebrow = css.split("#status_center_eyebrow {", 1)[1].split("}", 1)[0]
-        metrics = css.split("#status_center_header_metrics_strip {", 1)[1].split("}", 1)[0]
-
-        _assert_panel_surface(header, t)
-        _assert_default_border(header, t)
-        assert "border-radius: 0px;" in header
-        assert f"color: {t['accent_hover']};" in eyebrow
-        assert "background-color: transparent;" in metrics
-        assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
 
 
@@ -142,8 +98,6 @@ def test_compact_typography_scale_stays_consistent():
         project_title = css.split("#project_dock_title {", 1)[1].split("}", 1)[0]
         app_selector_title = css.split("#app_selector_title {", 1)[1].split("}", 1)[0]
         resource_dialog_title = css.split("#resource_dialog_title {", 1)[1].split("}", 1)[0]
-        repo_health_title = css.split("#repo_health_title {", 1)[1].split("}", 1)[0]
-        repo_health_metric_value = css.split("#repo_health_metric_value {", 1)[1].split("}", 1)[0]
         new_project_title = css.split("#new_project_title {", 1)[1].split("}", 1)[0]
         welcome_title = css.split("#welcome_hero_title {", 1)[1].split("}", 1)[0]
         welcome_subtitle = css.split("#welcome_hero_subtitle {", 1)[1].split("}", 1)[0]
@@ -169,12 +123,9 @@ def test_compact_typography_scale_stays_consistent():
         assert f"font-weight: {t['fw_semibold']};" in app_selector_title
         assert f"font-size: {t['fs_h1']}px;" in resource_dialog_title
         assert f"font-weight: {t['fw_semibold']};" in resource_dialog_title
-        assert f"font-size: {t['fs_h1']}px;" in repo_health_title
         assert f"font-size: {t['fs_h1']}px;" in new_project_title
         assert f"font-size: {t['fs_h1']}px;" in welcome_title
 
-        assert f"font-size: {t['fs_body']}px;" in repo_health_metric_value
-        assert f"font-weight: {t['fw_medium']};" in repo_health_metric_value
         assert f"font-size: {t['fs_body']}px;" in welcome_subtitle
         assert f"font-weight: {t['fw_regular']};" in welcome_subtitle
 
@@ -195,8 +146,6 @@ def test_secondary_typography_uses_lighter_weights_for_dense_views():
         welcome_metric_label = css.split("#welcome_metric_label {", 1)[1].split("}", 1)[0]
         welcome_metric_value = css.split("#welcome_metric_value {", 1)[1].split("}", 1)[0]
         welcome_recent_name = css.split("#welcome_recent_name {", 1)[1].split("}", 1)[0]
-        status_center_metric_value = css.split("#status_center_metric_value {", 1)[1].split("}", 1)[0]
-        status_center_health_value = css.split("#status_center_health_value {", 1)[1].split("}", 1)[0]
 
         assert f"font-weight: {t['fw_medium']};" in property_grid_section
         assert f"font-weight: {t['fw_regular']};" in resource_metric_label
@@ -209,8 +158,6 @@ def test_secondary_typography_uses_lighter_weights_for_dense_views():
         assert f"font-weight: {t['fw_regular']};" in welcome_metric_label
         assert f"font-weight: {t['fw_medium']};" in welcome_metric_value
         assert f"font-weight: {t['fw_medium']};" in welcome_recent_name
-        assert f"font-weight: {t['fw_medium']};" in status_center_metric_value
-        assert f"font-weight: {t['fw_medium']};" in status_center_health_value
 
 
 def test_font_preference_scales_typography_tokens_consistently():
@@ -283,17 +230,15 @@ def test_engineering_theme_radii_remove_pill_shapes():
 
         chip = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         browser_card = css.split("#widget_browser_card {", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#status_center_metric_card {", 1)[1].split("}", 1)[0]
-        health_row = css.split("#status_center_health_row {", 1)[1].split("}", 1)[0]
-        health_bar = css.split("QProgressBar#status_center_health_error_bar,", 1)[1].split("}", 1)[0]
+        insert_button = css.split("QPushButton#widget_browser_insert_button {", 1)[1].split("}", 1)[0]
+        status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in chip
         assert "padding: 2px 4px;" in chip
         assert "min-height: 26px;" in chip
         assert "border-radius: 0px;" in browser_card
-        assert "border-radius: 0px;" in metric_card
-        assert "border-radius: 0px;" in health_row
-        assert "border-radius: 0px;" in health_bar
+        assert "border-radius: 0px;" in insert_button
+        assert "border-radius: 0px;" in status_button
 
 
 def test_page_navigator_styles_use_token_driven_cards():
@@ -849,26 +794,6 @@ def test_new_project_dialog_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in metric_card
 
 
-def test_repository_health_dialog_styles_use_engineering_surface_tokens():
-    for mode in ("light", "dark"):
-        t = theme_tokens(mode)
-        css = _build_stylesheet(mode)
-
-        header = css.split("#repo_health_header {", 1)[1].split("}", 1)[0]
-        card = css.split("#repo_health_details_card,", 1)[1].split("}", 1)[0]
-        metric_card = css.split("#repo_health_metric_card {", 1)[1].split("}", 1)[0]
-        details = css.split("QTextEdit#repo_health_details {", 1)[1].split("}", 1)[0]
-
-        _assert_panel_surface(header, t)
-        assert "border-radius: 0px;" in header
-        assert "background-color: transparent;" in card
-        assert "border: none;" in card
-        assert "border-radius: 0px;" in card
-        assert "background-color: transparent;" in metric_card
-        assert "border: none;" in metric_card
-        assert "border-radius: 0px;" in metric_card
-        assert f"background-color: {t['panel_alt']};" in details
-        assert "border-radius: 0px;" in details
 
 
 def test_widget_browser_styles_use_engineering_panel_tokens():

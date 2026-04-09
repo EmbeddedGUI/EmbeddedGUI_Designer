@@ -23,14 +23,13 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import time
 
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QTabWidget, QToolButton, QPushButton, QFrame,
     QAction, QActionGroup, QFileDialog, QStatusBar,
     QMessageBox, QScrollArea, QDockWidget, QMenu,
-    QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QProgressDialog, QLabel,
+    QApplication, QDialog, QStackedWidget, QToolBar, QInputDialog, QLabel,
     QLineEdit, QPlainTextEdit, QTextEdit, QSizePolicy,
 )
 from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker
@@ -55,21 +54,13 @@ from .welcome_page import WelcomePage
 from .debug_panel import DebugPanel
 from .iconography import make_icon
 from .project_workspace import ProjectWorkspacePanel
-from .repo_health_dialog import RepositoryHealthDialog
 from .widget_browser import WidgetBrowserPanel
-from .status_center_panel import StatusCenterPanel
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
 from ..model.page import Page
 from ..model.build_metadata import collect_sdk_fingerprint, format_sdk_binding_label
 from ..model.config import get_config
-from ..model.sdk_bootstrap import (
-    AUTO_DOWNLOAD_STRATEGY_TEXT,
-    default_sdk_install_dir,
-    describe_auto_download_plan,
-    describe_sdk_source,
-    ensure_sdk_downloaded,
-)
+from ..model.sdk_bootstrap import default_sdk_install_dir, describe_sdk_source
 from ..model.workspace import (
     designer_runtime_root,
     infer_sdk_root_from_project_dir,
@@ -326,7 +317,6 @@ class MainWindow(QMainWindow):
         self._welcome_page.open_project.connect(self._open_project)
         self._welcome_page.open_app.connect(self._open_app_dialog)
         self._welcome_page.set_sdk_root.connect(self._set_sdk_root)
-        self._welcome_page.download_sdk.connect(self._download_sdk)
         self._central_stack.addWidget(self._welcome_page)
 
         editor_container = QWidget()
@@ -364,15 +354,6 @@ class MainWindow(QMainWindow):
         self._workspace_context_label = QLabel("No project open", self._workspace_context_card)
         self._workspace_context_label.setObjectName("workspace_command_context_value")
         self._workspace_context_label.hide()
-
-        self._workspace_health_chip = QToolButton(self)
-        self._workspace_health_chip.setObjectName("workspace_summary_indicator")
-        self._workspace_health_chip.setFixedHeight(26)
-        self._workspace_health_chip.hide()
-        self._runtime_chip = QToolButton(self)
-        self._runtime_chip.setObjectName("workspace_summary_indicator")
-        self._runtime_chip.setFixedHeight(26)
-        self._runtime_chip.hide()
 
         self._toolbar_command_row = QWidget()
         self._toolbar_command_row.setObjectName("workspace_command_body")
@@ -433,9 +414,6 @@ class MainWindow(QMainWindow):
 
         self.widget_browser = WidgetBrowserPanel()
         self.widget_browser.setObjectName("widgets_browser_panel")
-        self.status_center_panel = StatusCenterPanel()
-        self.status_center_panel.setObjectName("workspace_status_center_panel")
-        self.status_center_panel.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
 
         self._project_workspace = ProjectWorkspacePanel(self.project_dock, self.page_navigator)
         self._project_workspace.setObjectName("project_workspace_panel")
@@ -622,7 +600,6 @@ class MainWindow(QMainWindow):
 
         self.widget_browser.insert_requested.connect(self._insert_widget_from_browser)
         self.widget_browser.reveal_requested.connect(self._reveal_widget_type_in_structure)
-        self.status_center_panel.action_requested.connect(self._on_status_center_action_requested)
         self._project_workspace.view_changed.connect(self._on_project_workspace_view_changed)
 
         # Preview panel
@@ -684,7 +661,6 @@ class MainWindow(QMainWindow):
         self._on_bottom_tab_changed(self._bottom_tabs.currentIndex())
         self._set_bottom_panel_visible(False)
         self._update_workspace_tab_metadata()
-        self.status_center_panel.restore_view_state(getattr(self._config, "workspace_status_panel_state", {}))
 
     def _apply_stylesheet(self):
         pass  # Rely entirely on the global Fusion / Fluent theme
@@ -696,11 +672,7 @@ class MainWindow(QMainWindow):
     def _init_renderer_manager(self):
         """Register preview renderer and sync initial state."""
         self._renderer_manager.register(V1PythonRenderer(lambda: self._current_page))
-
-        active_engine = self._renderer_manager.switch("v1", fallback="v1")
-        self._config.preview_engine = "v1"
-        if hasattr(self, "_state_store"):
-            self._state_store.set_preview_engine(active_engine)
+        self._renderer_manager.switch("v1", fallback="v1")
 
     def _prepare_workspace_dock(self, dock_widget):
         if dock_widget is None or not isinstance(dock_widget, QDockWidget):
@@ -1033,7 +1005,7 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(
             self._build_menu.menuAction(),
             (
-                "Compile previews, generate resources, and inspect repository health. "
+                "Compile previews and generate resources. "
                 f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
@@ -1110,19 +1082,13 @@ class MainWindow(QMainWindow):
             )
             if action is not None
         ) else "unavailable"
-        quick_move_menu = getattr(self, "_quick_move_into_menu", None)
-        quick_move_state = (
-            "available"
-            if quick_move_menu is not None and quick_move_menu.menuAction().isEnabled()
-            else "unavailable"
-        )
         self._apply_action_hint(
             self._structure_menu.menuAction(),
             (
                 "Group, move, and reorder widgets in the page hierarchy. "
                 f"{self._selection_accessibility_text()} "
                 f"Group/Ungroup: {group_state}. Move Into: {move_into_state}. "
-                f"Reorder/Lift: {reorder_lift_state}. Quick Move: {quick_move_state}."
+                f"Reorder/Lift: {reorder_lift_state}."
             ),
         )
 
@@ -1199,17 +1165,6 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(
             action,
             f"Create a new EmbeddedGUI Designer project. Current binding: {label}. Default parent: {default_parent}.",
-        )
-
-    def _update_download_sdk_action_metadata(self, binding_label=""):
-        action = getattr(self, "_download_sdk_action", None)
-        if action is None:
-            return
-        label = str(binding_label or format_sdk_binding_label(self.project_root or self._active_sdk_root(), _DESIGNER_REPO_ROOT))
-        target_dir = normalize_path(default_sdk_install_dir()) or "default location"
-        self._apply_action_hint(
-            action,
-            f"{describe_auto_download_plan()} Current binding: {label}. Install target: {target_dir}.",
         )
 
     def _update_sdk_root_action_metadata(self, binding_label=""):
@@ -1856,27 +1811,6 @@ class MainWindow(QMainWindow):
                 accessible_name = f"Editor mode button: {label}."
             self._set_metadata_summary(button, tooltip, accessible_name)
 
-    def _set_summary_indicator_state(self, chip, *, text, tone="", accessible_name=None, tool_tip=None):
-        if chip is None:
-            return False
-        resolved_text = str(text or "")
-        resolved_accessible_name = str(accessible_name or resolved_text)
-        resolved_tool_tip = str(tool_tip or "")
-        resolved_tone = str(tone or "")
-        snapshot = (resolved_text, resolved_tone, resolved_accessible_name, resolved_tool_tip)
-        if getattr(chip, "_workspace_indicator_snapshot", None) == snapshot:
-            return False
-        chip.setText(resolved_text)
-        chip.setToolTip(resolved_tool_tip)
-        chip.setStatusTip(resolved_tool_tip)
-        chip.setAccessibleName(resolved_accessible_name)
-        chip.setProperty("indicatorTone", resolved_tone)
-        chip.style().unpolish(chip)
-        chip.style().polish(chip)
-        chip.update()
-        chip._workspace_indicator_snapshot = snapshot
-        return True
-
     def _set_metadata_summary(self, widget, tooltip, accessible_name=None):
         if widget is None:
             return False
@@ -2005,43 +1939,16 @@ class MainWindow(QMainWindow):
             self._toolbar_meta_label.setText(summary)
             self._set_metadata_summary(self._toolbar_meta_label, summary, summary)
 
-    def _open_workspace_health_surface(self):
-        diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0}
-        error_count = int(diagnostics_counts.get("error", 0) or 0)
-        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
-        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
-        selection_count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
-        if getattr(self, "project", None) is None or not self._has_valid_sdk_root():
-            self._select_left_panel("project")
-            return
-        if error_count or warning_count:
-            self._show_bottom_panel("Diagnostics")
-            return
-        if dirty_count:
-            self._show_bottom_panel("History")
-            return
-        if selection_count:
-            self._select_left_panel("structure")
-            return
-        self._select_left_panel("project")
-
     def _update_workspace_chips(self):
         diagnostics_counts = self.diagnostics_panel.severity_counts() if hasattr(self, "diagnostics_panel") else {"error": 0, "warning": 0, "info": 0}
         preview_text = "Preview Ready"
-        preview_tone = ""
         if self.preview_panel.is_python_preview_active():
             preview_text = "Python Preview"
-            preview_tone = "warning"
         elif self.compiler is not None and self.compiler.is_preview_running():
             preview_text = "Live Preview"
-            preview_tone = "success"
-
-        sdk_ready = self._has_valid_sdk_root()
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         dirty_count = len(dirty_pages)
         selection_count = len(self._selection_state.widgets) if hasattr(self, "_selection_state") else 0
-        error_count = int(diagnostics_counts.get("error", 0) or 0)
-        warning_count = int(diagnostics_counts.get("warning", 0) or 0)
 
         page_count = len(getattr(self.project, "pages", [])) if getattr(self, "project", None) is not None else 0
         active_page_name = str(getattr(getattr(self, "_current_page", None), "name", "") or "")
@@ -2058,176 +1965,10 @@ class MainWindow(QMainWindow):
                 dirty_pages=dirty_count,
             )
         self._update_workspace_context_label(page_count=page_count)
-
-        runtime_error = str(self._last_runtime_error_text or "").strip()
-        if not runtime_error and self.compiler is not None:
-            try:
-                runtime_error = str(self.compiler.get_last_runtime_error() or "").strip()
-            except Exception:
-                runtime_error = ""
-
-        if hasattr(self, "_workspace_health_chip"):
-            if getattr(self, "project", None) is None:
-                health_text = "Open Project"
-                health_tone = "warning"
-                health_tip = "Open or create a project to start editing."
-            elif not sdk_ready:
-                health_text = "SDK Setup"
-                health_tone = "warning"
-                health_tip = "SDK root is missing or invalid. Open Pages to rebind the project workspace."
-            elif error_count > 0:
-                health_text = f"{error_count} Error" if error_count == 1 else f"{error_count} Errors"
-                health_tone = "danger"
-                health_tip = f"Open Diagnostics. Current issues: {error_count} errors and {warning_count} warnings."
-            elif warning_count > 0:
-                health_text = f"{warning_count} Warning" if warning_count == 1 else f"{warning_count} Warnings"
-                health_tone = "warning"
-                health_tip = f"Open Diagnostics. Current warnings: {warning_count}. Dirty pages: {dirty_count}."
-            elif dirty_count > 0:
-                health_text = f"Dirty {dirty_count}"
-                health_tone = "warning"
-                health_tip = "Open History to review unsaved changes."
-            elif selection_count > 0:
-                health_text = f"{selection_count} Selected"
-                health_tone = "success"
-                health_tip = "Open Structure to inspect the current selection."
-            else:
-                health_text = "Workspace Stable"
-                health_tone = "success"
-                health_tip = "Pages, inspector, and diagnostics are clear."
-            self._set_summary_indicator_state(
-                self._workspace_health_chip,
-                text=health_text,
-                tone=health_tone,
-                accessible_name=f"Workspace health indicator: {health_text}.",
-                tool_tip=health_tip,
-            )
-
-        if hasattr(self, "_runtime_chip"):
-            if runtime_error:
-                runtime_text = "Runtime Issue"
-                runtime_tone = "danger"
-                runtime_tip = f"Open Debug Output. Runtime issue: {runtime_error}"
-            elif self.preview_panel.is_python_preview_active():
-                runtime_text = "Python Preview"
-                runtime_tone = "warning"
-                runtime_tip = "Open Debug Output. Python preview is active."
-            elif self.compiler is not None and self.compiler.is_preview_running():
-                runtime_text = "Live Preview"
-                runtime_tone = "success"
-                runtime_tip = "Open Debug Output. The executable preview is running."
-            elif getattr(self, "project", None) is None:
-                runtime_text = "Preview Idle"
-                runtime_tone = ""
-                runtime_tip = "Open a project to start compile-backed preview."
-            elif getattr(self, "_compile_action", None) is not None and not self._compile_action.isEnabled():
-                runtime_text = "Build Unavailable"
-                runtime_tone = "warning"
-                runtime_tip = f"Open Debug Output. {self._compile_action_blocked_reason()}."
-            else:
-                runtime_text = "Preview Ready"
-                runtime_tone = ""
-                runtime_tip = "Compile and run the preview to inspect runtime output."
-            self._set_summary_indicator_state(
-                self._runtime_chip,
-                text=runtime_text,
-                tone=runtime_tone,
-                accessible_name=f"Preview runtime indicator: {runtime_text}.",
-                tool_tip=runtime_tip,
-            )
-
-        self._update_status_center(
-            dirty_pages=dirty_count,
-            selection_count=selection_count,
-            preview_text=preview_text,
-            diagnostics_counts=diagnostics_counts,
-        )
         self._update_status_bar_summary()
         self._update_workspace_tab_metadata()
         self._update_workspace_nav_button_metadata(getattr(self, "_current_left_panel", "project"))
         self._update_view_panel_navigation_action_metadata()
-
-    def _on_status_center_action_requested(self, action_key):
-        action = str(action_key or "").strip().lower()
-        if action == "open_project_panel":
-            self._select_left_panel("project")
-            return
-        if action == "open_structure_panel":
-            self._select_left_panel("structure")
-            return
-        if action == "open_components_panel":
-            self._select_left_panel("widgets")
-            return
-        if action == "open_assets_panel":
-            self._select_left_panel("assets")
-            return
-        if action == "open_properties_inspector":
-            self._show_inspector_tab("properties")
-            return
-        if action == "open_animations_inspector":
-            self._show_inspector_tab("animations")
-            return
-        if action == "open_page_fields":
-            self._show_inspector_tab("page", "fields")
-            return
-        if action == "open_page_timers":
-            self._show_inspector_tab("page", "timers")
-            return
-        if action == "open_diagnostics":
-            self._show_bottom_panel("Diagnostics")
-            return
-        if action == "open_error_diagnostics":
-            self._show_bottom_panel("Diagnostics")
-            if hasattr(self, "diagnostics_panel"):
-                self.diagnostics_panel.set_severity_filter("error")
-            return
-        if action == "open_warning_diagnostics":
-            self._show_bottom_panel("Diagnostics")
-            if hasattr(self, "diagnostics_panel"):
-                self.diagnostics_panel.set_severity_filter("warning")
-            return
-        if action == "open_info_diagnostics":
-            self._show_bottom_panel("Diagnostics")
-            if hasattr(self, "diagnostics_panel"):
-                self.diagnostics_panel.set_severity_filter("info")
-            return
-        if action == "open_history":
-            self._show_bottom_panel("History")
-            return
-        if action == "open_debug":
-            self._show_bottom_panel("Debug Output")
-            return
-        if action == "open_first_error":
-            self._show_bottom_panel("Diagnostics")
-            if hasattr(self, "diagnostics_panel"):
-                self.diagnostics_panel.open_first_error()
-            return
-        if action == "open_first_warning":
-            self._show_bottom_panel("Diagnostics")
-            if hasattr(self, "diagnostics_panel"):
-                self.diagnostics_panel.open_first_warning()
-
-    def _update_status_center(self, *, dirty_pages=0, selection_count=0, preview_text="Preview idle", diagnostics_counts=None):
-        if not hasattr(self, "status_center_panel"):
-            return
-        counts = diagnostics_counts or {"error": 0, "warning": 0, "info": 0}
-        runtime_error = str(self._last_runtime_error_text or "").strip()
-        if not runtime_error and self.compiler is not None:
-            try:
-                runtime_error = str(self.compiler.get_last_runtime_error() or "").strip()
-            except Exception:
-                runtime_error = ""
-        self.status_center_panel.set_status(
-            sdk_ready=self._has_valid_sdk_root(),
-            can_compile=bool(getattr(self, "_compile_action", None) and self._compile_action.isEnabled()),
-            dirty_pages=int(dirty_pages or 0),
-            selection_count=int(selection_count or 0),
-            preview_label=preview_text,
-            diagnostics_errors=int(counts.get("error", 0) or 0),
-            diagnostics_warnings=int(counts.get("warning", 0) or 0),
-            diagnostics_infos=int(counts.get("info", 0) or 0),
-            runtime_error=runtime_error,
-        )
 
     def _apply_saved_window_state(self):
         geometry = (self._config.window_geometry or "").strip()
@@ -2386,14 +2127,10 @@ class MainWindow(QMainWindow):
                 ),
             )
             self._config.workspace_state = ui_prefs.to_workspace_state()
-            self._config.workspace_status_panel_state = (
-                self.status_center_panel.view_state() if hasattr(self, "status_center_panel") else {}
-            )
         except Exception:
             self._config.window_geometry = ""
             self._config.window_state = ""
             self._config.workspace_state = {}
-            self._config.workspace_status_panel_state = {}
 
     def _restore_diagnostics_view_state(self):
         if not hasattr(self, "diagnostics_panel"):
@@ -2574,7 +2311,6 @@ class MainWindow(QMainWindow):
         self.project_root = path
         self._config.sdk_root = path
         self._config.egui_root = path
-        self._config.sdk_setup_prompted = True
         self._config.save()
 
         if self.project is not None:
@@ -2657,16 +2393,6 @@ class MainWindow(QMainWindow):
                     False,
                     "open a project first",
                 )
-            ),
-        )
-        repo_project_state = "open" if self.project is not None else "none"
-        repo_sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
-        self._apply_action_hint(
-            self._repo_health_action,
-            (
-                "Inspect the Designer repository health summary. "
-                f"Project: {repo_project_state}. SDK: {repo_sdk_state}. "
-                f"Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
         )
         self._update_build_menu_metadata()
@@ -3137,11 +2863,6 @@ class MainWindow(QMainWindow):
         self._open_project_action.triggered.connect(self._open_project)
         file_menu.addAction(self._open_project_action)
 
-        self._download_sdk_action = QAction("Download SDK...", self)
-        self._apply_action_hint(self._download_sdk_action, describe_auto_download_plan())
-        self._download_sdk_action.triggered.connect(self._download_sdk)
-        file_menu.addAction(self._download_sdk_action)
-
         self._set_sdk_root_action = QAction("Set SDK...", self)
         self._apply_action_hint(self._set_sdk_root_action, "Choose the EmbeddedGUI SDK root used for compile preview.")
         self._set_sdk_root_action.triggered.connect(self._set_sdk_root)
@@ -3320,15 +3041,6 @@ class MainWindow(QMainWindow):
         self._distribute_v_action.triggered.connect(lambda: self._distribute_selection("vertical"))
         arrange_menu.addAction(self._distribute_v_action)
 
-        self._rotate_selection_action = QAction("Rotate 90°", self)
-        self._rotate_selection_action.setIcon(make_icon("canvas.rotate"))
-        self._rotate_selection_action.setEnabled(False)
-        self._apply_action_hint(
-            self._rotate_selection_action,
-            "Rotate action entry is reserved for upcoming canvas transform rollout.",
-        )
-        arrange_menu.addAction(self._rotate_selection_action)
-
         arrange_menu.addSeparator()
 
         self._bring_front_action = QAction("Bring to Front", self)
@@ -3393,19 +3105,6 @@ class MainWindow(QMainWindow):
         self._move_into_container_action.triggered.connect(self._move_selection_into_container)
         structure_menu.addAction(self._move_into_container_action)
 
-        self._move_into_last_target_action = QAction("Move Into Last Target", self)
-        self._move_into_last_target_action.setShortcut("Ctrl+Alt+I")
-        self._move_into_last_target_action.triggered.connect(self._move_selection_into_last_target)
-        structure_menu.addAction(self._move_into_last_target_action)
-
-        self._clear_move_target_history_action = QAction("Clear Move Target History", self)
-        self._clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
-        structure_menu.addAction(self._clear_move_target_history_action)
-
-        self._quick_move_into_menu = structure_menu.addMenu("Quick Move Into")
-        self._quick_move_into_menu.setToolTipsVisible(True)
-        self._quick_move_into_menu.aboutToShow.connect(self._refresh_quick_move_into_menu)
-
         self._lift_to_parent_action = QAction("Lift To Parent", self)
         self._lift_to_parent_action.setShortcut("Ctrl+Shift+L")
         self._lift_to_parent_action.triggered.connect(self._lift_selection_to_parent)
@@ -3448,14 +3147,13 @@ class MainWindow(QMainWindow):
         }
         for action, (hint, _reason_attr) in self._structure_action_hints.items():
             self._apply_action_hint(action, hint)
-        self._apply_action_hint(self._quick_move_into_menu.menuAction(), self._quick_move_into_menu_hint())
 
         # 鈹€鈹€ Build menu 鈹€鈹€
         build_menu = menubar.addMenu("Build")
         self._build_menu = build_menu
         self._apply_action_hint(
             build_menu.menuAction(),
-            "Build EXE previews by default, generate resources, and inspect repository health when needed.",
+            "Build EXE previews by default and generate resources when needed.",
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
@@ -3480,13 +3178,6 @@ class MainWindow(QMainWindow):
         self._stop_action = QAction("Stop Exe", self)
         self._stop_action.triggered.connect(self._stop_exe)
         build_menu.addAction(self._stop_action)
-
-        build_menu.addSeparator()
-
-        self._repo_health_action = QAction("Repository Health...", self)
-        self._apply_action_hint(self._repo_health_action, "Inspect the Designer repository health summary.")
-        self._repo_health_action.triggered.connect(self._show_repository_health)
-        build_menu.addAction(self._repo_health_action)
 
         build_menu.addSeparator()
 
@@ -3673,19 +3364,6 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(self._swap_overlay_action, "Swap the preview and overlay positions (Ctrl+4).")
         self._swap_overlay_action.triggered.connect(self._flip_overlay_layout)
         view_menu.addAction(self._swap_overlay_action)
-
-        self._preview_engine_menu = view_menu.addMenu("Preview Engine")
-        self._apply_action_hint(self._preview_engine_menu.menuAction(), "Choose the preview renderer engine.")
-        self._preview_engine_group = QActionGroup(self)
-        self._preview_engine_group.setExclusive(True)
-        self._preview_engine_actions = {}
-        action = QAction("V1 (Python)", self)
-        action.setCheckable(True)
-        action.triggered.connect(lambda checked=False: self._set_preview_engine("v1"))
-        self._preview_engine_group.addAction(action)
-        self._preview_engine_actions["v1"] = action
-        self._preview_engine_menu.addAction(action)
-        self._update_preview_engine_actions()
 
         view_menu.addSeparator()
 
@@ -4064,27 +3742,12 @@ class MainWindow(QMainWindow):
             self._sdk_status_label._sdk_status_label_snapshot = snapshot
         self._update_new_project_action_metadata(binding_label)
         self._update_file_open_action_metadata(binding_label)
-        self._update_download_sdk_action_metadata(binding_label)
         self._update_sdk_root_action_metadata(binding_label)
         self._update_workspace_chips()
 
-    def _open_path_in_shell(self, path):
-        path = normalize_path(path)
-        if not path or not os.path.exists(path):
-            raise FileNotFoundError(path or "")
-        if sys.platform == "win32":
-            os.startfile(path)
-            return
-        opener = "open" if sys.platform == "darwin" else "xdg-open"
-        subprocess.Popen([opener, path])
-
-    def _show_repository_health(self):
-        dialog = RepositoryHealthDialog(_DESIGNER_REPO_ROOT, open_path_callback=self._open_path_in_shell, parent=self)
-        dialog.exec_()
-
     def _open_app_dialog(self):
         """Show dialog to select and open a bundled or SDK example."""
-        dialog = AppSelectorDialog(self, self._active_sdk_root(), on_download_sdk=self._download_sdk)
+        dialog = AppSelectorDialog(self, self._active_sdk_root())
         if dialog.exec_() != QDialog.Accepted:
             return
 
@@ -4128,72 +3791,6 @@ class MainWindow(QMainWindow):
             return
 
         self._apply_sdk_root(path, status_message=self._format_sdk_status_message("SDK root set to", path))
-
-    def _download_sdk(self):
-        target_dir = default_sdk_install_dir()
-        progress = QProgressDialog(f"Preparing SDK download...\nTarget: {target_dir}", "Cancel", 0, 100, self)
-        progress.setWindowTitle("Download EmbeddedGUI SDK")
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.setAutoClose(False)
-        progress.setValue(0)
-
-        def on_progress(message, percent):
-            if progress.wasCanceled():
-                raise RuntimeError("SDK download canceled by user")
-            progress.setLabelText(message)
-            if percent is not None:
-                progress.setValue(max(0, min(100, percent)))
-            QApplication.processEvents()
-
-        try:
-            sdk_root = ensure_sdk_downloaded(target_dir, progress_callback=on_progress)
-        except Exception as exc:
-            progress.close()
-            QMessageBox.warning(
-                self,
-                "Download SDK Failed",
-                "Failed to prepare an EmbeddedGUI SDK automatically.\n\n"
-                f"Target location:\n{target_dir}\n\n"
-                f"Automatic setup order: {AUTO_DOWNLOAD_STRATEGY_TEXT}\n\n"
-                f"{exc}\n\n"
-                "You can try again later, install git for clone fallback, or select an existing SDK root manually.",
-            )
-            return ""
-
-        progress.setValue(100)
-        progress.close()
-        self._apply_sdk_root(sdk_root, status_message=self._format_sdk_status_message("SDK downloaded to", sdk_root))
-        return sdk_root
-
-    def maybe_prompt_initial_sdk_setup(self):
-        if self._has_valid_sdk_root() or self._config.sdk_setup_prompted:
-            return
-
-        self._config.sdk_setup_prompted = True
-        self._config.save()
-
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle("Prepare EmbeddedGUI SDK")
-        dialog.setIcon(QMessageBox.Information)
-        dialog.setText("No EmbeddedGUI SDK was detected.")
-        target_dir = default_sdk_install_dir()
-        dialog.setInformativeText(
-            "Designer can download a local SDK copy automatically.\n"
-            f"Target location:\n{target_dir}\n\n"
-            f"Automatic setup order: {AUTO_DOWNLOAD_STRATEGY_TEXT}\n"
-            "You can also point Designer to an existing SDK root."
-        )
-        download_btn = dialog.addButton("Download SDK Automatically", QMessageBox.AcceptRole)
-        select_btn = dialog.addButton("Select SDK Root...", QMessageBox.ActionRole)
-        dialog.addButton("Skip for Now", QMessageBox.RejectRole)
-        dialog.exec_()
-
-        clicked = dialog.clickedButton()
-        if clicked == download_btn:
-            self._download_sdk()
-        elif clicked == select_btn:
-            self._set_sdk_root()
 
     def _open_recent_project(self, project_path, sdk_root=""):
         if not project_path:
@@ -6059,19 +5656,8 @@ class MainWindow(QMainWindow):
             self._group_selection_action,
             self._ungroup_selection_action,
             self._move_into_container_action,
-            self._move_into_last_target_action,
-            self._clear_move_target_history_action,
         ):
             structure_menu.addAction(action)
-        quick_move_menu = structure_menu.addMenu("Quick Move Into")
-        quick_move_menu.setToolTipsVisible(True)
-        self._populate_quick_move_into_menu(quick_move_menu)
-        if hasattr(self, "_quick_move_into_menu"):
-            source_quick_move_action = self._quick_move_into_menu.menuAction()
-            preview_quick_move_action = quick_move_menu.menuAction()
-            preview_quick_move_action.setEnabled(source_quick_move_action.isEnabled())
-            preview_quick_move_action.setToolTip(source_quick_move_action.toolTip())
-            preview_quick_move_action.setStatusTip(source_quick_move_action.statusTip())
         structure_menu.addSeparator()
         for action in (
             self._lift_to_parent_action,
@@ -6087,9 +5673,6 @@ class MainWindow(QMainWindow):
                 self._group_selection_action,
                 self._ungroup_selection_action,
                 self._move_into_container_action,
-                self._move_into_last_target_action,
-                self._clear_move_target_history_action,
-                quick_move_menu.menuAction(),
                 self._lift_to_parent_action,
                 self._move_up_action,
                 self._move_down_action,
@@ -6157,7 +5740,6 @@ class MainWindow(QMainWindow):
         structure_reason = self._structure_action_state(widgets).blocked_reason
         if structure_reason:
             structure_reason = structure_reason.rstrip(".")
-        repeat_target = self._repeat_move_target_summary(widgets)
         if len(widgets) == 1:
             widget = widgets[0]
             parts = []
@@ -6170,8 +5752,6 @@ class MainWindow(QMainWindow):
             if not parts:
                 if structure_reason:
                     return f"Selection note: {structure_reason}."
-                if repeat_target:
-                    return f"Selection note: Ctrl+Alt+I repeats move into {repeat_target}."
                 return ""
             return f"Selection note: {widget.name} is " + ", ".join(parts) + "."
 
@@ -6191,8 +5771,6 @@ class MainWindow(QMainWindow):
         if not issues:
             if structure_reason:
                 return f"Selection note: {structure_reason}."
-            if repeat_target:
-                return f"Selection note: Ctrl+Alt+I repeats move into {repeat_target}."
             return ""
         return "Selection note: current selection includes " + ", ".join(issues) + "."
 
@@ -6287,248 +5865,11 @@ class MainWindow(QMainWindow):
                 return reason
         return state.blocked_reason
 
-    def _remembered_move_target_label(self):
-        if not hasattr(self, "widget_tree") or self.widget_tree is None:
-            return ""
-        return self.widget_tree.remembered_move_target_label()
-
-    def _recent_move_target_labels(self):
-        if not hasattr(self, "widget_tree") or self.widget_tree is None:
-            return []
-        return self.widget_tree.recent_move_target_labels()
-
-    def _set_remembered_move_target_label(self, label):
-        if hasattr(self, "widget_tree") and self.widget_tree is not None:
-            self.widget_tree.set_remembered_move_target_label(label)
-
-    def _remember_move_target_label(self, label):
-        if hasattr(self, "widget_tree") and self.widget_tree is not None:
-            self.widget_tree.remember_move_target_label(label)
-
-    def _remember_move_target(self, target_widget=None, label=""):
-        if hasattr(self, "widget_tree") and self.widget_tree is not None:
-            self.widget_tree.remember_move_target(target_widget, label)
-
     def _move_into_choices(self, widgets=None):
         return available_move_targets(self._structure_project_context(), widgets or self._top_level_selected_widgets())
 
-    def _quick_move_into_choices(self, widgets=None):
-        choices = self._move_into_choices(widgets)
-        recent_labels = self._recent_move_target_labels()
-        if not recent_labels:
-            return choices
-
-        choice_by_label = {choice.label: choice for choice in choices}
-        prioritized = [choice_by_label[label] for label in recent_labels if label in choice_by_label]
-        if not prioritized:
-            return choices
-        prioritized_labels = {choice.label for choice in prioritized}
-        return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
-
-    def _recent_move_into_choices(self, widgets=None):
-        choices = self._move_into_choices(widgets)
-        if not choices:
-            return []
-        choice_by_label = {choice.label: choice for choice in choices}
-        return [choice_by_label[label] for label in self._recent_move_target_labels() if label in choice_by_label]
-
-    def _remaining_move_into_choices(self, widgets=None):
-        choices = self._move_into_choices(widgets)
-        recent_labels = {choice.label for choice in self._recent_move_into_choices(widgets)}
-        return [choice for choice in choices if choice.label not in recent_labels]
-
-    def _move_into_target_default_index(self, choices):
-        remembered_label = self._remembered_move_target_label()
-        if not remembered_label:
-            return 0
-        for index, choice in enumerate(choices):
-            if choice.label == remembered_label:
-                return index
-        return 0
-
-    def _resolve_move_target_label(self, widgets, target_widget):
-        for choice in self._move_into_choices(widgets):
-            if choice.widget is target_widget:
-                return choice.label
-        return ""
-
-    def _remembered_move_target_choice(self, widgets=None):
-        remembered_label = self._remembered_move_target_label()
-        if not remembered_label:
-            return None
-        for choice in self._move_into_choices(widgets):
-            if choice.label == remembered_label:
-                return choice
-        return None
-
-    def _move_into_last_target_reason(self, widgets=None):
-        if not self._remembered_move_target_label():
-            return "move something into a container first."
-        if self._remembered_move_target_choice(widgets) is None:
-            return "the last target is not available for the current selection."
-        return ""
-
-    def _move_into_last_target_hint(self, widgets=None):
-        shortcut = ""
-        if hasattr(self, "_move_into_last_target_action"):
-            shortcut = self._move_into_last_target_action.shortcut().toString()
-        choice = self._remembered_move_target_choice(widgets)
-        label = choice.label if choice is not None else self._remembered_move_target_label()
-        suffix = f" ({shortcut})" if shortcut else ""
-        if label:
-            return f"Move the current selection into {label} again{suffix}"
-        return f"Move the current selection into the last remembered container target{suffix}"
-
-    def _clear_move_target_history_hint(self):
-        count = len(self._recent_move_target_labels())
-        if count:
-            noun = "target" if count == 1 else "targets"
-            return f"Forget {count} recent move-into {noun} for the current page"
-        return "Forget recent move-into targets for the current page"
-
-    def _quick_move_into_menu_hint(self):
-        available_count = len(self._quick_move_into_choices())
-        available_label = "none" if available_count == 0 else f"{available_count} available"
-        remembered_target = self._repeat_move_target_summary() or "none"
-        recent_count = len(self._recent_move_target_labels())
-        recent_label = (
-            "none"
-            if recent_count == 0
-            else f"{recent_count} target" if recent_count == 1 else f"{recent_count} targets"
-        )
-        return (
-            "Move directly into an available container target, or manage move-target history. "
-            f"Targets: {available_label}. Remembered target: {remembered_target}. Recent history: {recent_label}."
-        )
-
-    def _repeat_move_target_summary(self, widgets=None):
-        choice = self._remembered_move_target_choice(widgets)
-        if choice is None:
-            return ""
-        return getattr(choice.widget, "name", "") or choice.label
-
-    def _refresh_quick_move_into_menu(self):
-        if not hasattr(self, "_quick_move_into_menu"):
-            return
-
-        self._populate_quick_move_into_menu(self._quick_move_into_menu)
-
-    def _add_quick_move_into_action(self, menu, choice):
-        action = QAction(choice.label, self)
-        action.setToolTip(f"Move the current selection into {choice.label}.")
-        action.setStatusTip(f"Move the current selection into {choice.label}.")
-        action.triggered.connect(
-            lambda checked=False, target=choice.widget, target_label=choice.label: self._move_selection_into_target(
-                target,
-                target_label=target_label,
-            )
-        )
-        menu.addAction(action)
-
-    def _add_quick_move_into_section(self, menu, title):
-        section_action = QAction(title, menu)
-        section_action.setEnabled(False)
-        menu.addAction(section_action)
-
-    def _add_quick_move_into_note(self, menu, text, tooltip=""):
-        note_action = QAction(text, menu)
-        note_action.setEnabled(False)
-        if tooltip:
-            note_action.setToolTip(tooltip)
-            note_action.setStatusTip(tooltip)
-        menu.addAction(note_action)
-
-    def _add_quick_move_history_actions(self, menu):
-        widgets = self._top_level_selected_widgets()
-
-        move_into_last_target_action = QAction("Move Into Last Target", self)
-        move_into_last_target_choice = self._remembered_move_target_choice(widgets)
-        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
-        move_into_last_target_action.setToolTip(
-            self._structure_action_hint(
-                self._move_into_last_target_hint(widgets),
-                move_into_last_target_choice is not None,
-                self._move_into_last_target_reason(widgets),
-            )
-        )
-        move_into_last_target_action.setStatusTip(move_into_last_target_action.toolTip())
-        move_into_last_target_action.triggered.connect(self._move_selection_into_last_target)
-        menu.addAction(move_into_last_target_action)
-
-        clear_move_target_history_action = QAction("Clear Move Target History", self)
-        has_recent_move_targets = bool(self._recent_move_target_labels())
-        clear_move_target_history_action.setEnabled(has_recent_move_targets)
-        clear_move_target_history_action.setToolTip(
-            self._structure_action_hint(
-                self._clear_move_target_history_hint(),
-                has_recent_move_targets,
-                "no recent move targets are saved.",
-            )
-        )
-        clear_move_target_history_action.setStatusTip(clear_move_target_history_action.toolTip())
-        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
-        menu.addAction(clear_move_target_history_action)
-
-    def _populate_quick_move_into_menu(self, menu):
-        menu.clear()
-        recent_choices = self._recent_move_into_choices()
-        remaining_choices = self._remaining_move_into_choices()
-
-        if recent_choices:
-            self._add_quick_move_into_section(menu, "Recent Targets")
-            for choice in recent_choices:
-                self._add_quick_move_into_action(menu, choice)
-            if remaining_choices:
-                menu.addSeparator()
-                self._add_quick_move_into_section(menu, "Other Targets")
-        elif remaining_choices:
-            self._add_quick_move_into_section(menu, "Recent Targets")
-            self._add_quick_move_into_note(
-                menu,
-                "(No recent targets yet)",
-                "Move something into a container first to build recent targets for this page.",
-            )
-            menu.addSeparator()
-            self._add_quick_move_into_section(menu, "Other Targets")
-        for choice in remaining_choices:
-            self._add_quick_move_into_action(menu, choice)
-        if not recent_choices and not remaining_choices:
-            self._add_quick_move_into_note(menu, "(No eligible target containers)")
-        if menu.actions():
-            menu.addSeparator()
-        self._add_quick_move_into_section(menu, "History")
-        self._add_quick_move_history_actions(menu)
-
-    def _move_selection_into_target(self, target, target_label=""):
-        if target is None:
-            return
-        widgets = self._top_level_selected_widgets()
-        if not target_label:
-            target_label = self._resolve_move_target_label(widgets, target)
-        if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target)) and target_label:
-            self._remember_move_target(target, target_label)
-
-    def _move_selection_into_last_target(self):
-        widgets = self._top_level_selected_widgets()
-        target_choice = self._remembered_move_target_choice(widgets)
-        if target_choice is None:
-            reason = self._move_into_last_target_reason(widgets).rstrip(".")
-            if reason:
-                self._show_selection_action_blocked("move into last target", reason)
-            return
-        self._move_selection_into_target(target_choice.widget, target_label=target_choice.label)
-
-    def _clear_move_target_history(self):
-        if not self._recent_move_target_labels():
-            self._show_selection_action_blocked("clear move target history", "no recent move targets are saved")
-            return
-        cleared_count = len(self._recent_move_target_labels())
-        self.widget_tree.clear_remembered_move_target_labels()
-        self._update_edit_actions()
-        self.statusBar().showMessage(self._cleared_move_target_history_message(cleared_count), 4000)
-
     def _choose_structure_target_choice(self, widgets):
-        choices = self._quick_move_into_choices(widgets)
+        choices = self._move_into_choices(widgets)
         if not choices:
             self._show_selection_action_blocked("move into container", "no eligible target containers are available")
             return None
@@ -6537,9 +5878,9 @@ class MainWindow(QMainWindow):
         selected_label, ok = QInputDialog.getItem(
             self,
             "Move Into Container",
-            "Target container (recent targets first):",
+            "Target container:",
             labels,
-            self._move_into_target_default_index(choices),
+            0,
             False,
         )
         if not ok or not selected_label:
@@ -6617,14 +5958,6 @@ class MainWindow(QMainWindow):
         noun = "widget" if count == 1 else "widgets"
         return f"{count} locked {noun}"
 
-    def _cleared_move_target_history_text(self, count):
-        noun = "target" if count == 1 else "targets"
-        return f"cleared {count} recent move {noun}"
-
-    def _cleared_move_target_history_message(self, count):
-        noun = "target" if count == 1 else "targets"
-        return f"Cleared {count} recent move {noun}."
-
     def _show_selection_action_blocked(self, action, reason):
         self.statusBar().showMessage(f"Cannot {action}: {reason}.", 4000)
 
@@ -6691,11 +6024,9 @@ class MainWindow(QMainWindow):
             return
         self._clipboard_payload = payload
         self._paste_serial = 0
-        deleted_count, skipped_locked, removed_targets = self._delete_selection()
+        deleted_count, skipped_locked = self._delete_selection()
         if deleted_count:
             message = f"Cut {deleted_count} widget(s)"
-            if removed_targets:
-                message += f"; {self._cleared_move_target_history_text(removed_targets)}"
             if skipped_locked:
                 message += f"; skipped {self._locked_widget_summary(skipped_locked)}"
             self.statusBar().showMessage(message, 3000)
@@ -6718,9 +6049,7 @@ class MainWindow(QMainWindow):
         if not widgets:
             if locked_count:
                 self.statusBar().showMessage(f"Cannot delete selection: {self._locked_widget_summary(locked_count)}.", 4000)
-            return 0, locked_count, 0
-
-        removed_targets = self.widget_tree.forget_move_targets_for_widgets(widgets)
+            return 0, locked_count
 
         for widget in widgets:
             if widget.parent is not None:
@@ -6730,12 +6059,10 @@ class MainWindow(QMainWindow):
         self._clear_selection(sync_tree=True, sync_preview=True)
         self._record_page_state_change(source="widget delete")
         message = f"Deleted {len(widgets)} widget(s)"
-        if removed_targets:
-            message += f"; {self._cleared_move_target_history_text(removed_targets)}"
         if locked_count:
             message += f"; skipped {self._locked_widget_summary(locked_count)}"
         self.statusBar().showMessage(message, 3000)
-        return len(widgets), locked_count, removed_targets
+        return len(widgets), locked_count
 
     def _align_selection(self, mode):
         selected_widgets = self._top_level_selected_widgets()
@@ -6835,8 +6162,7 @@ class MainWindow(QMainWindow):
         target_choice = self._choose_structure_target_choice(widgets)
         if target_choice is None:
             return
-        if self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target_choice.widget)):
-            self._remember_move_target(target_choice.widget, target_choice.label)
+        self._apply_structure_result(move_into_container(self._structure_project_context(), widgets, target_choice.widget))
 
     def _lift_selection_to_parent(self):
         self._apply_structure_result(lift_to_parent(self._structure_project_context(), self._top_level_selected_widgets()))
@@ -7068,10 +6394,6 @@ class MainWindow(QMainWindow):
         self._group_selection_action.setEnabled(structure_state.can_group)
         self._ungroup_selection_action.setEnabled(structure_state.can_ungroup)
         self._move_into_container_action.setEnabled(structure_state.can_move_into)
-        repeat_move_target_choice = self._remembered_move_target_choice(selected_widgets)
-        self._move_into_last_target_action.setEnabled(repeat_move_target_choice is not None)
-        has_recent_move_targets = bool(self._recent_move_target_labels())
-        self._clear_move_target_history_action.setEnabled(has_recent_move_targets)
         self._lift_to_parent_action.setEnabled(structure_state.can_lift)
         self._move_up_action.setEnabled(structure_state.can_move_up)
         self._move_down_action.setEnabled(structure_state.can_move_down)
@@ -7080,28 +6402,6 @@ class MainWindow(QMainWindow):
         for action, (base_text, reason_attr) in self._structure_action_hints.items():
             hint = self._structure_action_hint(base_text, action.isEnabled(), self._structure_action_reason(structure_state, reason_attr))
             self._apply_action_hint(action, hint)
-        repeat_hint = self._structure_action_hint(
-            self._move_into_last_target_hint(selected_widgets),
-            repeat_move_target_choice is not None,
-            self._move_into_last_target_reason(selected_widgets),
-        )
-        self._apply_action_hint(self._move_into_last_target_action, repeat_hint)
-        clear_history_hint = self._structure_action_hint(
-            self._clear_move_target_history_hint(),
-            has_recent_move_targets,
-            "no recent move targets are saved.",
-        )
-        self._apply_action_hint(self._clear_move_target_history_action, clear_history_hint)
-        has_quick_move_history = repeat_move_target_choice is not None or has_recent_move_targets
-        quick_menu_enabled = structure_state.can_move_into or has_quick_move_history
-        quick_hint = self._structure_action_hint(
-            self._quick_move_into_menu_hint(),
-            quick_menu_enabled,
-            self._structure_action_reason(structure_state, "move_into_reason"),
-        )
-        self._quick_move_into_menu.menuAction().setEnabled(quick_menu_enabled)
-        self._apply_action_hint(self._quick_move_into_menu.menuAction(), quick_hint)
-        self._refresh_quick_move_into_menu()
         self._update_toolbar_action_metadata()
         self._update_arrange_menu_metadata()
         self._update_structure_menu_metadata()
@@ -7445,27 +6745,6 @@ class MainWindow(QMainWindow):
             action.setChecked(True)
         self._update_preview_grid_and_mockup_action_metadata()
 
-    def _set_preview_engine(self, engine_name: str) -> None:
-        """Preview engine selection is fixed to v1 after v2 removal."""
-        engine_name = str(engine_name or "").strip().lower()
-        if engine_name != "v1":
-            self._update_preview_engine_actions()
-            return
-        active_engine = self._renderer_manager.switch("v1", fallback="v1")
-        self._config.preview_engine = "v1"
-        self._config.save()
-        if hasattr(self, "_state_store"):
-            self._state_store.set_preview_engine(active_engine)
-        self._update_preview_engine_actions()
-        self.statusBar().showMessage("Preview engine is fixed to V1 (Python).", 3000)
-
-    def _update_preview_engine_actions(self) -> None:
-        active_engine = self._renderer_manager.active_name or "v1"
-        for engine_name, action in (self._preview_engine_actions or {}).items():
-            action.setChecked(engine_name == active_engine)
-            hint = "Use the stable V1 Python renderer."
-            self._apply_action_hint(action, hint)
-
     def _toggle_auto_compile(self, enabled):
         self.auto_compile = enabled
         self._update_build_menu_metadata()
@@ -7675,9 +6954,6 @@ class MainWindow(QMainWindow):
         self._show_bottom_panel("Debug Output")
         self._switch_to_python_preview(reason)
         self._renderer_manager.switch("v1", fallback="v1")
-        self._config.preview_engine = "v1"
-        if hasattr(self, "_state_store"):
-            self._state_store.set_preview_engine("v1")
         self._update_compile_availability()
 
     def _try_embed_exe(self):

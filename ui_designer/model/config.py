@@ -78,7 +78,6 @@ class DesignerConfig:
         self.auto_compile = True
         self.overlay_mode = "horizontal"
         self.overlay_flipped = True
-        self.preview_engine = "v1"
         self.show_grid = True
         self.grid_size = 8
         self.font_size_px = 0
@@ -96,9 +95,6 @@ class DesignerConfig:
         self.widget_browser_active_tags = []
         self.widget_browser_sort_mode = "relevance"
         self.widget_browser_complexity_filter = "all"
-        self.workspace_status_panel_state = {}
-        self.sdk_setup_prompted = False
-        self.repo_health_view = {}
         self.diagnostics_view = {}
 
     @property
@@ -229,7 +225,6 @@ class DesignerConfig:
             self.auto_compile = data.get("auto_compile", True)
             self.overlay_mode = data.get("overlay_mode", "horizontal")
             self.overlay_flipped = data.get("overlay_flipped", True)
-            self.preview_engine = str(data.get("preview_engine", "v1") or "v1")
             self.show_grid = data.get("show_grid", True)
             self.grid_size = int(data.get("grid_size", 8))
             self.font_size_px = data.get("font_size_px", 0)
@@ -263,10 +258,6 @@ class DesignerConfig:
             self.widget_browser_complexity_filter = (
                 complexity_filter if complexity_filter in {"all", "basic", "intermediate", "advanced"} else "all"
             )
-            status_state = data.get("workspace_status_panel_state", {})
-            self.workspace_status_panel_state = status_state if isinstance(status_state, dict) else {}
-            self.sdk_setup_prompted = data.get("sdk_setup_prompted", False)
-            self.repo_health_view = data.get("repo_health_view", {}) if isinstance(data.get("repo_health_view", {}), dict) else {}
             self.diagnostics_view = data.get("diagnostics_view", {}) if isinstance(data.get("diagnostics_view", {}), dict) else {}
         except Exception as e:
             print(f"Warning: Failed to load config: {e}")
@@ -289,7 +280,6 @@ class DesignerConfig:
                 "auto_compile": self.auto_compile,
                 "overlay_mode": self.overlay_mode,
                 "overlay_flipped": self.overlay_flipped,
-                "preview_engine": self.preview_engine,
                 "show_grid": self.show_grid,
                 "grid_size": self.grid_size,
                 "font_size_px": self.font_size_px,
@@ -303,9 +293,6 @@ class DesignerConfig:
                 "widget_browser_recent": self.widget_browser_recent,
                 "widget_browser_favorites": self.widget_browser_favorites,
                 "widget_browser_active_category": self.widget_browser_active_category,
-                "workspace_status_panel_state": self.workspace_status_panel_state,
-                "sdk_setup_prompted": self.sdk_setup_prompted,
-                "repo_health_view": self.repo_health_view,
                 "diagnostics_view": self.diagnostics_view,
             }
             with open(config_path, "w", encoding="utf-8") as f:

@@ -2676,62 +2676,6 @@ QTableWidget#resource_dialog_table QHeaderView::section {{
     font-weight: {t['fw_medium']};
 }}
 
-#repo_health_header {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 0px;
-}}
-
-#repo_health_eyebrow {{
-    color: {t['accent_hover']};
-    font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_medium']};
-}}
-
-#repo_health_title {{
-    color: {t['text']};
-    font-size: {t['fs_h1']}px;
-    font-weight: {t['fw_semibold']};
-}}
-
-#repo_health_subtitle,
-#repo_health_summary_text,
-#repo_health_overview_text {{
-    color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
-}}
-
-#repo_health_details_card,
-#repo_health_tool_card {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0px;
-}}
-
-#repo_health_metric_card {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0px;
-}}
-
-#repo_health_metric_label {{
-    color: {t['text_soft']};
-    font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_regular']};
-}}
-
-#repo_health_metric_value {{
-    color: {t['text']};
-    font-size: {t['fs_body']}px;
-    font-weight: {t['fw_medium']};
-}}
-
-QTextEdit#repo_health_details {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: 0px;
-}}
-
 #new_project_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
@@ -2985,59 +2929,6 @@ QPushButton#widget_browser_insert_button:pressed {{
     color: {t['warning']};
 }}
 
-#status_center_header[panelTone="status"] {{
-    background-color: {t['panel']};
-    border: 1px solid {t['border']};
-    border-radius: 0px;
-}}
-
-#status_center_eyebrow {{
-    color: {t['accent_hover']};
-    font-size: {t['fs_caption']}px;
-    font-weight: {t['fw_medium']};
-}}
-
-#status_center_header_metrics_strip {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0px;
-}}
-
-#status_center_health,
-#status_center_runtime {{
-    background-color: transparent;
-    border: none;
-    border-radius: 0px;
-}}
-
-#status_center_metrics,
-#status_center_actions {{
-    background-color: transparent;
-    border: none;
-}}
-
-#status_center_metric_card {{
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: 0px;
-}}
-
-#status_center_metric_card:hover {{
-    border-color: {t['accent_soft']};
-    background-color: {t['surface_hover']};
-}}
-
-#status_center_metric_card:focus {{
-    border-color: {t['accent']};
-    background-color: {t['surface_hover']};
-}}
-
-#status_center_metric_value {{
-    color: {t['text']};
-    font-size: {t['fs_body']}px;
-    font-weight: {t['fw_medium']};
-}}
-
 #preview_header {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
@@ -3129,62 +3020,6 @@ QPushButton#preview_status_button:hover {{
     background-color: {t['surface_hover']};
 }}
 
-#status_center_health_row {{
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: 0px;
-}}
-
-#status_center_health_row:hover {{
-    border-color: {t['accent_soft']};
-    background-color: {t['surface_hover']};
-}}
-
-#status_center_health_row:focus {{
-    border-color: {t['accent']};
-    background-color: {t['surface_hover']};
-}}
-
-#status_center_health_value {{
-    color: {t['text']};
-    font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_medium']};
-}}
-
-QProgressBar#status_center_health_error_bar,
-QProgressBar#status_center_health_warning_bar,
-QProgressBar#status_center_health_info_bar {{
-    background-color: {t['panel_alt']};
-    border: 1px solid {t['border']};
-    border-radius: 0px;
-    min-height: 8px;
-    max-height: 8px;
-}}
-
-QProgressBar#status_center_health_error_bar::chunk {{
-    background-color: {t['danger']};
-    border-radius: 0px;
-}}
-
-QProgressBar#status_center_health_warning_bar::chunk {{
-    background-color: {t['warning']};
-    border-radius: 0px;
-}}
-
-QProgressBar#status_center_health_info_bar::chunk {{
-    background-color: {t['accent']};
-    border-radius: 0px;
-}}
-
-#status_center_runtime:hover {{
-    border: 1px solid {t['accent_soft']};
-    background-color: {t['panel_soft']};
-}}
-
-#status_center_runtime:focus {{
-    border: 1px solid {t['accent']};
-    background-color: {t['panel_soft']};
-}}
 """
 
 

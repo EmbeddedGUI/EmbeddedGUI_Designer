@@ -26,7 +26,6 @@ from qfluentwidgets import LineEdit, PrimaryPushButton, PushButton
 from ..model.config import get_config
 from ..model.sdk_bootstrap import (
     default_sdk_install_dir,
-    describe_auto_download_plan,
     describe_sdk_source_hint,
     sdk_root_source_kind,
 )
@@ -154,7 +153,7 @@ class AppEntryRowWidget(QWidget):
 class AppSelectorDialog(QDialog):
     """Dialog for opening bundled, Designer-aware, or legacy SDK examples."""
 
-    def __init__(self, parent=None, egui_root=None, on_download_sdk=None):
+    def __init__(self, parent=None, egui_root=None):
         super().__init__(parent)
         self.setWindowTitle("Open Example")
         self.setMinimumSize(860, 620)
@@ -169,7 +168,6 @@ class AppSelectorDialog(QDialog):
             preserve_invalid=True,
         )
         self._selected_entry = None
-        self._on_download_sdk = on_download_sdk
         self._visible_entry_count = 0
 
         self._init_ui()
@@ -278,15 +276,6 @@ class AppSelectorDialog(QDialog):
             accessible_name="Browse SDK root",
         )
         actions_row.addWidget(self._browse_btn)
-
-        self._download_btn = PushButton("Download...")
-        self._download_btn.clicked.connect(self._download_sdk)
-        _set_widget_metadata(
-            self._download_btn,
-            tooltip=describe_auto_download_plan(),
-            accessible_name="Download SDK",
-        )
-        actions_row.addWidget(self._download_btn)
         root_layout.addLayout(actions_row)
 
         self._root_status_label = QLabel("")
@@ -506,24 +495,6 @@ class AppSelectorDialog(QDialog):
         self._root_edit.setText(path)
         self._refresh_app_list()
 
-    def _download_sdk(self):
-        if self._on_download_sdk is None:
-            QMessageBox.warning(
-                self,
-                "Download Unavailable",
-                "This dialog was opened without an SDK download handler.",
-            )
-            return
-
-        path = self._on_download_sdk()
-        path = resolve_sdk_root_candidate(path) or normalize_path(path)
-        if not path:
-            return
-
-        self._egui_root = path
-        self._root_edit.setText(path)
-        self._refresh_app_list()
-
     def _on_toggle_legacy(self, checked):
         self._config.show_all_examples = checked
         self._config.save()
@@ -560,9 +531,9 @@ class AppSelectorDialog(QDialog):
 
         if not bundled_entries and not self._egui_root:
             self._add_placeholder_item(
-                "(Set or download an SDK root first)",
-                tooltip="Set or download an SDK root first.",
-                accessible_text="Examples list item: Set or download an SDK root first.",
+                "(Set an SDK root first)",
+                tooltip="Set an SDK root first.",
+                accessible_text="Examples list item: Set an SDK root first.",
             )
             self._sync_item_card_states()
             self._update_accessibility_summary()
@@ -650,7 +621,7 @@ class AppSelectorDialog(QDialog):
             elif source_kind == "runtime_local":
                 self._root_status_label.setText("Ready: using SDK stored beside the application.")
             elif source_kind == "cached":
-                self._root_status_label.setText("Ready: using auto-downloaded SDK cache.")
+                self._root_status_label.setText("Ready: using default SDK cache.")
             else:
                 self._root_status_label.setText("Ready: using selected SDK root.")
             self._root_status_label.setText(
@@ -661,15 +632,13 @@ class AppSelectorDialog(QDialog):
 
         if status == "invalid":
             self._root_status_label.setText(
-                "Invalid: current SDK root needs attention. Bundled Designer examples remain available below.\n"
-                f"{describe_auto_download_plan()}"
+                "Invalid: current SDK root needs attention. Bundled Designer examples remain available below."
             )
             _set_label_hint_tone(self._root_status_label, "warning")
             return
 
         self._root_status_label.setText(
-            "Missing: no SDK root selected. Bundled Designer examples remain available below.\n"
-            f"{describe_auto_download_plan()}"
+            "Missing: no SDK root selected. Bundled Designer examples remain available below."
         )
         _set_label_hint_tone(self._root_status_label, "danger")
 
@@ -793,16 +762,6 @@ class AppSelectorDialog(QDialog):
             self._show_legacy,
             tooltip=legacy_hint,
             accessible_name=f"Show legacy SDK examples: {'on' if self._show_legacy.isChecked() else 'off'}",
-        )
-        download_hint = describe_auto_download_plan()
-        download_name = "Download SDK"
-        if self._on_download_sdk is None:
-            download_hint = "Download SDK unavailable because this dialog was opened without an SDK download handler."
-            download_name = "Download SDK unavailable"
-        _set_widget_metadata(
-            self._download_btn,
-            tooltip=download_hint,
-            accessible_name=f"{download_name}. {download_hint}",
         )
         if not self._selected_entry:
             open_hint = "Select an example to open it."

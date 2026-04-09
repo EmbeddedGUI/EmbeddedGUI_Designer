@@ -263,7 +263,7 @@ def test_main_starts_without_sdk_root_and_keeps_window_usable(monkeypatch, main_
     assert window.open_calls == []
     assert window.show_called is True
     assert app.application_name == "EmbeddedGUI Designer"
-    assert window.prompt_calls == 1
+    assert window.prompt_calls == 0
     assert exit_codes == [0]
 
 
@@ -294,7 +294,7 @@ def test_main_clears_stale_last_project_path_before_showing_window(monkeypatch, 
     assert config.save_calls == 1
     assert window.open_calls == []
     assert window.show_called is True
-    assert window.prompt_calls == 1
+    assert window.prompt_calls == 0
     assert exit_codes == [0]
 
 
@@ -323,4 +323,4 @@ def test_main_passes_default_sdk_cache_candidate_to_sdk_discovery(monkeypatch, t
     main_module.main()
 
     assert len(find_sdk_root_calls) == 1
-    assert find_sdk_root_calls[0]["extra_candidates"] == [default_cache]
+    assert "extra_candidates" not in find_sdk_root_calls[0]

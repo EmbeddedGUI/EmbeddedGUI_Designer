@@ -67,28 +67,6 @@ def _select_menu_labels(menu):
     return [action.text() for action in select_menu.actions() if action.text()]
 
 
-def _structure_submenu(menu, label):
-    structure_menu = _context_submenu(menu, "Structure")
-
-    for action in structure_menu.actions():
-        if action.text() == label:
-            return action.menu()
-    raise AssertionError(f"{label} submenu not found")
-
-
-def _menu_target_labels(menu):
-    ignored_labels = {"Move Into Last Target", "Clear Move Target History"}
-    return [
-        action.text()
-        for action in menu.actions()
-        if action.text()
-        and action.text() not in ignored_labels
-        and action.isEnabled()
-        and not action.isSeparator()
-        and action.menu() is None
-    ]
-
-
 @_skip_no_qt
 class TestWidgetTreePanel:
     def test_structure_tree_uses_dense_item_font_by_default(self, qapp):
@@ -395,9 +373,6 @@ class TestWidgetTreePanel:
             "Group Selection",
             "Ungroup",
             "Move Into...",
-            "Move Into Last Target",
-            "Clear Move Target History",
-            "Quick Move Into",
             "Lift To Parent",
             "Move Up",
             "Move Down",
@@ -719,7 +694,7 @@ class TestWidgetTreePanel:
         assert feedback == ["Cannot delete widget: locked_widget is locked."]
         panel.deleteLater()
 
-    def test_delete_selection_clears_removed_recent_move_targets(self, qapp):
+    def test_delete_selection_removes_selected_widget(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
@@ -735,14 +710,12 @@ class TestWidgetTreePanel:
         panel.set_project(project)
         feedback = []
         panel.feedback_message.connect(lambda message: feedback.append(message))
-        panel.remember_move_target(target, "root_group / target (group)")
         panel.set_selected_widgets([target], primary=target)
 
         panel._on_delete_clicked()
 
         assert target not in root.children
-        assert panel.recent_move_target_labels() == []
-        assert feedback == ["Deleted 1 widget(s); cleared 1 recent move target"]
+        assert feedback == []
         panel.deleteLater()
 
     def test_group_selected_widgets_emits_tree_change_and_selects_group(self, qapp):
@@ -805,446 +778,6 @@ class TestWidgetTreePanel:
         assert feedback == ["Moved 1 widget(s) into target."]
         panel.deleteLater()
 
-    def test_move_selected_widgets_into_dialog_prefers_remembered_target(self, qapp, monkeypatch):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        captured = {}
-
-        def _fake_get_item(*args, **kwargs):
-            captured["prompt"] = args[2]
-            captured["labels"] = list(args[3])
-            captured["current_index"] = args[4]
-            return "root_group / target_b (group)", True
-
-        monkeypatch.setattr("ui_designer.ui.widget_tree.QInputDialog.getItem", _fake_get_item)
-
-        panel._move_selected_widgets_into()
-
-        assert captured["labels"] == [
-            "root_group / target_b (group)",
-            "root_group / target_a (group)",
-        ]
-        assert captured["prompt"] == "Target container (recent targets first):"
-        assert captured["current_index"] == 0
-        assert second.parent is target_b
-        panel.deleteLater()
-
-    def test_move_selected_widgets_into_dialog_prioritizes_recent_target_history(self, qapp, monkeypatch):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        target_c = WidgetModel("group", name="target_c")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(target_c)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_c,
-            target_label="root_group / target_c (group)",
-        )
-        panel.set_selected_widgets([second], primary=second)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-
-        panel.set_selected_widgets([third], primary=third)
-        captured = {}
-
-        def _fake_get_item(*args, **kwargs):
-            captured["labels"] = list(args[3])
-            captured["current_index"] = args[4]
-            return "root_group / target_b (group)", True
-
-        monkeypatch.setattr("ui_designer.ui.widget_tree.QInputDialog.getItem", _fake_get_item)
-
-        panel._move_selected_widgets_into()
-
-        assert captured["labels"] == [
-            "root_group / target_b (group)",
-            "root_group / target_c (group)",
-            "root_group / target_a (group)",
-        ]
-        assert captured["current_index"] == 0
-        panel.deleteLater()
-
-    def test_into_button_quick_menu_moves_selection_into_target(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target", x=80, y=10, width=100, height=100)
-        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        sources = []
-        feedback = []
-        panel.tree_changed.connect(lambda source: sources.append(source))
-        panel.feedback_message.connect(lambda message: feedback.append(message))
-        panel.set_selected_widgets([child], primary=child)
-
-        target_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "root_group / target (group)")
-        target_action.trigger()
-
-        assert child.parent is target
-        assert panel.selected_widgets() == [child]
-        assert panel._get_selected_widget() is child
-        assert sources == ["move into container"]
-        assert feedback == ["Moved 1 widget(s) into target."]
-        panel.deleteLater()
-
-    def test_quick_move_into_menus_prioritize_remembered_target(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        panel._refresh_into_button_menu()
-
-        button_labels = _menu_target_labels(panel.into_btn.menu())
-        assert button_labels[:2] == [
-            "root_group / target_b (group)",
-            "root_group / target_a (group)",
-        ]
-        assert "Recent Targets" in [action.text() for action in panel.into_btn.menu().actions()]
-        assert "Other Targets" in [action.text() for action in panel.into_btn.menu().actions()]
-
-        menu = panel._build_context_menu(second)
-        quick_menu = _structure_submenu(menu, "Quick Move Into")
-        context_labels = _menu_target_labels(quick_menu)
-        assert context_labels[:2] == [
-            "root_group / target_b (group)",
-            "root_group / target_a (group)",
-        ]
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_quick_move_into_menus_follow_recent_target_history(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        target_c = WidgetModel("group", name="target_c")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(target_c)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_c,
-            target_label="root_group / target_c (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-
-        panel.set_selected_widgets([third], primary=third)
-        panel._refresh_into_button_menu()
-
-        button_labels = _menu_target_labels(panel.into_btn.menu())
-        assert button_labels[:3] == [
-            "root_group / target_b (group)",
-            "root_group / target_c (group)",
-            "root_group / target_a (group)",
-        ]
-
-        menu = panel._build_context_menu(third)
-        quick_menu = _structure_submenu(menu, "Quick Move Into")
-        context_labels = _menu_target_labels(quick_menu)
-        assert context_labels[:3] == [
-            "root_group / target_b (group)",
-            "root_group / target_c (group)",
-            "root_group / target_a (group)",
-        ]
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_quick_move_into_menus_show_recent_placeholder_without_history(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([child], primary=child)
-        panel._refresh_into_button_menu()
-
-        button_actions = panel.into_btn.menu().actions()
-        assert "Recent Targets" in [action.text() for action in button_actions]
-        assert "Other Targets" in [action.text() for action in button_actions]
-        assert "History" in [action.text() for action in button_actions]
-        recent_placeholder = next(action for action in button_actions if action.text() == "(No recent targets yet)")
-        repeat_action = next(action for action in button_actions if action.text() == "Move Into Last Target")
-        clear_action = next(action for action in button_actions if action.text() == "Clear Move Target History")
-        assert recent_placeholder.isEnabled() is False
-        assert repeat_action.isEnabled() is False
-        assert clear_action.isEnabled() is False
-        assert recent_placeholder.statusTip() == recent_placeholder.toolTip()
-        assert repeat_action.statusTip() == repeat_action.toolTip()
-        assert clear_action.statusTip() == clear_action.toolTip()
-        assert _menu_target_labels(panel.into_btn.menu()) == ["root_group / target (group)"]
-
-        menu = panel._build_context_menu(child)
-        quick_menu = _structure_submenu(menu, "Quick Move Into")
-        context_actions = quick_menu.actions()
-        assert "Recent Targets" in [action.text() for action in context_actions]
-        assert "Other Targets" in [action.text() for action in context_actions]
-        recent_placeholder = next(action for action in context_actions if action.text() == "(No recent targets yet)")
-        assert recent_placeholder.isEnabled() is False
-        assert _menu_target_labels(quick_menu) == ["root_group / target (group)"]
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_into_button_menu_reuses_last_target_and_clears_history(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        feedback = []
-        panel.feedback_message.connect(lambda message: feedback.append(message))
-
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        panel._refresh_into_button_menu()
-
-        assert "History" in [action.text() for action in panel.into_btn.menu().actions()]
-        repeat_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Move Into Last Target")
-        clear_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Clear Move Target History")
-        assert repeat_action.isEnabled() is True
-        assert clear_action.isEnabled() is True
-        assert "root_group / target (group)" in repeat_action.toolTip()
-        assert repeat_action.statusTip() == repeat_action.toolTip()
-        assert clear_action.statusTip() == clear_action.toolTip()
-
-        repeat_action.trigger()
-
-        assert second.parent is target
-        assert panel.selected_widgets() == [second]
-
-        panel._refresh_into_button_menu()
-        clear_action = next(action for action in panel.into_btn.menu().actions() if action.text() == "Clear Move Target History")
-        clear_action.trigger()
-
-        assert panel.recent_move_target_labels() == []
-        assert feedback[-1] == "Cleared 1 recent move target."
-        panel.deleteLater()
-
-    def test_into_button_stays_available_for_history_only(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([child], primary=child)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        panel.set_selected_widgets([target], primary=target)
-
-        assert panel.into_btn.isEnabled() is True
-        assert panel.into_btn.popupMode() == QToolButton.InstantPopup
-        assert panel.into_btn.toolTip() == "Open the Into menu to manage move-target history."
-
-        button_actions = panel.into_btn.menu().actions()
-        assert "(No eligible target containers)" in [action.text() for action in button_actions]
-        assert "History" in [action.text() for action in button_actions]
-        repeat_action = next(action for action in button_actions if action.text() == "Move Into Last Target")
-        clear_action = next(action for action in button_actions if action.text() == "Clear Move Target History")
-        assert repeat_action.isEnabled() is False
-        assert clear_action.isEnabled() is True
-
-        panel.deleteLater()
-
-    def test_structure_hint_mentions_history_without_selection(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([child], primary=child)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        panel.set_selected_widgets([], primary=None)
-
-        assert panel.structure_hint_label.text() == (
-            "Structure: select widgets to group, move, or reorder. Into menu can manage move history."
-        )
-        panel.deleteLater()
-
-    def test_context_menu_quick_move_into_target_moves_selection(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target", x=80, y=10, width=100, height=100)
-        child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        sources = []
-        feedback = []
-        panel.tree_changed.connect(lambda source: sources.append(source))
-        panel.feedback_message.connect(lambda message: feedback.append(message))
-        panel.set_selected_widgets([child], primary=child)
-
-        menu = panel._build_context_menu(child)
-        quick_menu = _structure_submenu(menu, "Quick Move Into")
-        target_action = next(action for action in quick_menu.actions() if action.text() == "root_group / target (group)")
-
-        target_action.trigger()
-
-        assert child.parent is target
-        assert panel.selected_widgets() == [child]
-        assert panel._get_selected_widget() is child
-        assert sources == ["move into container"]
-        assert feedback == ["Moved 1 widget(s) into target."]
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_context_menu_quick_move_into_shows_history_without_targets(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([child], primary=child)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        panel.set_selected_widgets([target], primary=target)
-        menu = panel._build_context_menu(target)
-        actions = _structure_menu_actions(menu)
-        quick_menu = _structure_submenu(menu, "Quick Move Into")
-
-        assert actions["Quick Move Into"].menu() is not None
-        quick_action_texts = [action.text() for action in quick_menu.actions()]
-        assert "(No eligible target containers)" in quick_action_texts
-        assert "History" in quick_action_texts
-
-        repeat_action = next(action for action in quick_menu.actions() if action.text() == "Move Into Last Target")
-        clear_action = next(action for action in quick_menu.actions() if action.text() == "Clear Move Target History")
-        assert repeat_action.isEnabled() is False
-        assert clear_action.isEnabled() is True
-        assert _menu_target_labels(quick_menu) == []
-
-        menu.deleteLater()
-        panel.deleteLater()
-
     def test_context_menu_structure_actions_reflect_selection_state(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -1269,21 +802,15 @@ class TestWidgetTreePanel:
         assert actions["Group Selection"].isEnabled() is True
         assert actions["Ungroup"].isEnabled() is False
         assert actions["Move Into..."].isEnabled() is True
-        assert actions["Move Into Last Target"].isEnabled() is False
-        assert actions["Quick Move Into"].menu() is not None
-        assert actions["Quick Move Into"].toolTip() == "Move directly into an available container target, or manage move-target history."
-        assert actions["Quick Move Into"].statusTip() == actions["Quick Move Into"].toolTip()
         assert actions["Lift To Parent"].isEnabled() is False
         assert actions["Move Up"].isEnabled() is False
         assert actions["Move Down"].isEnabled() is True
         assert actions["Move To Top"].isEnabled() is False
         assert actions["Move To Bottom"].isEnabled() is True
         assert "Unavailable: selection must only include groups." in actions["Ungroup"].toolTip()
-        assert "Unavailable: move something into a container first." in actions["Move Into Last Target"].toolTip()
         assert actions["Group Selection"].statusTip() == actions["Group Selection"].toolTip()
         assert actions["Ungroup"].statusTip() == actions["Ungroup"].toolTip()
         assert actions["Move Into..."].statusTip() == actions["Move Into..."].toolTip()
-        assert actions["Move Into Last Target"].statusTip() == actions["Move Into Last Target"].toolTip()
         assert actions["Lift To Parent"].statusTip() == actions["Lift To Parent"].toolTip()
         assert actions["Move Up"].statusTip() == actions["Move Up"].toolTip()
         assert actions["Move Down"].statusTip() == actions["Move Down"].toolTip()
@@ -1295,7 +822,6 @@ class TestWidgetTreePanel:
         assert actions["Group Selection"].shortcut().toString() == "Ctrl+G"
         assert actions["Ungroup"].shortcut().toString() == "Ctrl+Shift+G"
         assert actions["Move Into..."].shortcut().toString() == "Ctrl+Shift+I"
-        assert actions["Move Into Last Target"].shortcut().toString() == "Ctrl+Alt+I"
         assert actions["Lift To Parent"].shortcut().toString() == "Ctrl+Shift+L"
         assert actions["Move Up"].shortcut().toString() == "Alt+Up"
         assert actions["Move Down"].shortcut().toString() == "Alt+Down"
@@ -1953,181 +1479,6 @@ class TestWidgetTreePanel:
         free_leaf_menu.deleteLater()
         panel.deleteLater()
 
-    def test_move_into_last_target_context_action_reuses_remembered_target(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        menu = panel._build_context_menu(second)
-        actions = _structure_menu_actions(menu)
-
-        assert actions["Move Into Last Target"].isEnabled() is True
-        assert "root_group / target_b (group)" in actions["Move Into Last Target"].toolTip()
-        assert actions["Move Into Last Target"].statusTip() == actions["Move Into Last Target"].toolTip()
-
-        actions["Move Into Last Target"].trigger()
-
-        assert second.parent is target_b
-        assert panel.selected_widgets() == [second]
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_clear_move_target_history_context_action_clears_recent_targets(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        feedback = []
-        panel.feedback_message.connect(lambda message: feedback.append(message))
-
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        panel.set_selected_widgets([second], primary=second)
-        menu = panel._build_context_menu(second)
-        actions = _structure_menu_actions(menu)
-
-        assert actions["Clear Move Target History"].isEnabled() is True
-        assert "Forget 1 recent move-into target" in actions["Clear Move Target History"].toolTip()
-        assert actions["Clear Move Target History"].statusTip() == actions["Clear Move Target History"].toolTip()
-
-        actions["Clear Move Target History"].trigger()
-
-        assert panel.recent_move_target_labels() == []
-        assert feedback[-1] == "Cleared 1 recent move target."
-
-        menu.deleteLater()
-        menu = panel._build_context_menu(second)
-        actions = _structure_menu_actions(menu)
-        assert actions["Clear Move Target History"].isEnabled() is False
-        assert "Unavailable: no recent move targets are saved." in actions["Clear Move Target History"].toolTip()
-        assert actions["Clear Move Target History"].statusTip() == actions["Clear Move Target History"].toolTip()
-
-        menu.deleteLater()
-        panel.deleteLater()
-
-    def test_clear_move_target_history_reports_plural_count(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target_a = WidgetModel("group", name="target_a")
-        target_b = WidgetModel("group", name="target_b")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        feedback = []
-        panel.feedback_message.connect(lambda message: feedback.append(message))
-
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target_a,
-            target_label="root_group / target_a (group)",
-        )
-        panel.set_selected_widgets([second], primary=second)
-        panel._move_selected_widgets_into(
-            target_widget=target_b,
-            target_label="root_group / target_b (group)",
-        )
-        panel.set_selected_widgets([third], primary=third)
-
-        panel._clear_move_target_history()
-
-        assert panel.recent_move_target_labels() == []
-        assert feedback[-1] == "Cleared 2 recent move targets."
-        panel.deleteLater()
-
-    def test_remembered_move_target_is_scoped_per_project(self, qapp):
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project_a, _root_a = _build_project_with_root()
-        project_b, _root_b = _build_project_with_root()
-
-        panel = WidgetTreePanel()
-        panel.set_project(project_a)
-        panel.set_remembered_move_target_label("target-a")
-
-        panel.set_project(project_b)
-        assert panel.remembered_move_target_label() == ""
-
-        panel.set_remembered_move_target_label("target-b")
-        assert panel.remembered_move_target_label() == "target-b"
-
-        panel.set_project(project_a)
-        assert panel.remembered_move_target_label() == "target-a"
-
-        panel.set_project(project_b)
-        assert panel.remembered_move_target_label() == "target-b"
-        panel.deleteLater()
-
-    def test_recent_move_target_label_follows_target_rename(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.ui.widget_tree import WidgetTreePanel
-
-        project, root = _build_project_with_root()
-        target = WidgetModel("group", name="target")
-        first = WidgetModel("label", name="first")
-        second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-
-        panel = WidgetTreePanel()
-        panel.set_project(project)
-        panel.set_selected_widgets([first], primary=first)
-        panel._move_selected_widgets_into(
-            target_widget=target,
-            target_label="root_group / target (group)",
-        )
-
-        target.name = "renamed_target"
-        panel.rebuild_tree()
-        panel.set_selected_widgets([second], primary=second)
-
-        assert panel.remembered_move_target_label() == "root_group / renamed_target (group)"
-        assert "Ctrl+Alt+I repeat into renamed_target" in panel.structure_hint_label.text()
-
-        panel.deleteLater()
-
     def test_context_menu_structure_actions_disable_root_and_noop_move_into(self, qapp):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
@@ -2228,10 +1579,6 @@ class TestWidgetTreePanel:
         assert "Alt+Down reorder" in panel.structure_hint_label.text()
         assert "Alt+Shift+Down move to bottom" in panel.structure_hint_label.text()
 
-        panel.remember_move_target_label("root_group / target (group)")
-        panel.set_selected_widgets([second], primary=second)
-        assert "Ctrl+Alt+I repeat into target" in panel.structure_hint_label.text()
-
         panel.set_selected_widgets([second], primary=second)
 
         assert panel.group_btn.isEnabled() is False
@@ -2263,18 +1610,14 @@ class TestWidgetTreePanel:
 
         assert panel.group_btn.isEnabled() is False
         assert panel.ungroup_btn.isEnabled() is False
-        assert panel.into_btn.isEnabled() is True
-        assert panel.into_btn.popupMode() == QToolButton.InstantPopup
+        assert panel.into_btn.popupMode() == QToolButton.DelayedPopup
         assert panel.lift_btn.isEnabled() is False
         assert panel.up_btn.isEnabled() is False
         assert panel.down_btn.isEnabled() is False
         assert panel.top_btn.isEnabled() is False
         assert panel.bottom_btn.isEnabled() is False
-        assert panel.structure_hint_label.text() == (
-            "Structure: root widgets cannot be regrouped or reordered. Into menu can manage move history."
-        )
+        assert panel.structure_hint_label.text() == "Structure: root widgets cannot be regrouped or reordered."
         assert "Unavailable: root widgets cannot be regrouped or reordered." in panel.group_btn.toolTip()
-        assert panel.into_btn.toolTip() == "Open the Into menu to manage move-target history."
 
         panel.deleteLater()
 
@@ -2717,7 +2060,7 @@ class TestWidgetTreePanel:
         assert panel.collapse_btn.accessibleName() == "Collapse all widget tree items"
         assert panel.collapse_btn.icon().isNull()
         assert panel.structure_actions_btn.toolTip() == (
-            "Open structure actions for grouping, moving, history, and tree visibility."
+            "Open structure actions for grouping, moving, and tree visibility."
         )
         assert panel.structure_actions_btn.statusTip() == panel.structure_actions_btn.toolTip()
         assert panel.structure_actions_btn.accessibleName() == "Open structure actions"
@@ -2736,7 +2079,6 @@ class TestWidgetTreePanel:
             "Group Selection",
             "Ungroup",
             "Move Into...",
-            "Quick Move Into",
             "Lift To Parent",
             "Move Up",
             "Move Down",

@@ -53,7 +53,6 @@ def main():
 
     try:
         from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtCore import QTimer
     except ImportError:
         print("Error: PyQt5 is required. Install it with:")
         print("  pip install PyQt5")
@@ -61,7 +60,6 @@ def main():
 
     from ui_designer.model.config import get_config
     from ui_designer.model.widget_registry import WidgetRegistry
-    from ui_designer.model.sdk_bootstrap import default_sdk_install_dir
     from ui_designer.model.workspace import find_sdk_root, normalize_path
     from ui_designer.ui.main_window import MainWindow
     from ui_designer.ui.theme import apply_theme
@@ -72,7 +70,6 @@ def main():
         cli_sdk_root=args.sdk_root,
         configured_sdk_root=config.sdk_root or config.egui_root,
         project_path=cli_project,
-        extra_candidates=[default_sdk_install_dir()],
     )
     app_name = args.app or config.last_app or "HelloDesigner"
 
@@ -119,8 +116,6 @@ def main():
             print(f"Warning: Failed to load project: {exc}")
 
     window.show()
-    if not project_to_open and not sdk_root:
-        QTimer.singleShot(0, window.maybe_prompt_initial_sdk_setup)
     sys.exit(app.exec_())
 
 

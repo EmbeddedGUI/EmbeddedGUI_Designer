@@ -77,9 +77,6 @@ class TestDefaults:
         assert config.widget_browser_active_tags == []
         assert config.widget_browser_sort_mode == "relevance"
         assert config.widget_browser_complexity_filter == "all"
-        assert config.workspace_status_panel_state == {}
-        assert config.sdk_setup_prompted is False
-        assert config.repo_health_view == {}
         assert config.diagnostics_view == {}
 
 
@@ -95,9 +92,6 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.widget_browser_active_category = "layout"
-        config.workspace_status_panel_state = {"last_action": "open_diagnostics"}
-        config.sdk_setup_prompted = True
-        config.repo_health_view = {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
         config.diagnostics_view = {"severity_filter": "warning"}
 
         config_path = tmp_path / "config.json"
@@ -122,9 +116,6 @@ class TestSaveLoad:
         assert loaded.widget_browser_active_tags == []
         assert loaded.widget_browser_sort_mode == "relevance"
         assert loaded.widget_browser_complexity_filter == "all"
-        assert loaded.workspace_status_panel_state == {"last_action": "open_diagnostics"}
-        assert loaded.sdk_setup_prompted is True
-        assert loaded.repo_health_view == {"critical_only": True, "blocked_only": True, "show_json": True, "selected_stale_path": "/tmpxtayw0f6"}
         assert loaded.diagnostics_view == {"severity_filter": "warning"}
 
     def test_load_nonexistent_file(self, config, tmp_path):

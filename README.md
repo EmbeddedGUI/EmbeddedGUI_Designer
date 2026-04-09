@@ -53,16 +53,11 @@ Repository distribution releases are handled outside the Designer UI through Git
 Push a version tag such as `v0.1.0`, and the `Designer Release` workflow will:
 
 - build the Windows package on `windows-latest`
-- run the existing package preflight while generating `dist/EmbeddedGUI-Designer/EmbeddedGUI-Designer.exe`
+- run package preflight checks and build `dist/EmbeddedGUI-Designer/EmbeddedGUI-Designer.exe`
 - archive the full runtime folder as `EmbeddedGUI-Designer-windows-x64-<tag>.zip`
 - create or reuse the matching GitHub Release and upload the zip, `designer-package-metadata.json`, `repo-health.json`, and `SHA256SUMS.txt`
 
 The published asset is a zip package that contains the runnable `EmbeddedGUI-Designer.exe` together with its required runtime files and bundled SDK.
-
-### From the GUI
-
-The Designer no longer includes an in-editor project release flow.
-Use `Build -> Repository Health...` to inspect SDK submodule state, runtime path permissions, stale workspace temp directories, filter to critical issues or blocked stale directories, reset back to the default view, switch between text or JSON reports with embedded summary/count metadata, copy or export short summaries, copy or export full reports, copy repo, SDK, or selected stale-directory paths for issue reports, choose and open the currently filtered stale temp directory directly, and reopen with the previous view settings intact.
 
 ### From the CLI
 

@@ -169,7 +169,6 @@ class WidgetTreePanel(QWidget):
         "valid": "color: #0b5cab; font-weight: 600;",
         "invalid": "color: #a1260d; font-weight: 600;",
     }
-    _MAX_RECENT_MOVE_TARGETS = 5
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -186,7 +185,6 @@ class WidgetTreePanel(QWidget):
         self._drag_hover_item = None
         self._drag_hover_position = None
         self._drag_target_item = None
-        self._remembered_move_target_labels = {}
         self._drag_hover_expand_timer = QTimer(self)
         self._drag_hover_expand_timer.setSingleShot(True)
         self._drag_hover_expand_timer.setInterval(350)
@@ -309,10 +307,6 @@ class WidgetTreePanel(QWidget):
         self.into_btn.setText("Into")
         self.into_btn.setToolTip("Move the current selection into another container (Ctrl+Shift+I)")
         self.into_btn.clicked.connect(self._move_selected_widgets_into)
-        self._into_quick_menu = QMenu(self)
-        self._into_quick_menu.setToolTipsVisible(True)
-        self.into_btn.setPopupMode(QToolButton.MenuButtonPopup)
-        self.into_btn.setMenu(self._into_quick_menu)
         self.lift_btn = QPushButton("Lift")
         self.lift_btn.setToolTip("Lift the current selection to the parent container (Ctrl+Shift+L)")
         self.lift_btn.clicked.connect(self._lift_selected_widgets)
@@ -1964,30 +1958,6 @@ class WidgetTreePanel(QWidget):
             ),
         )
 
-    def _move_target_memory_key(self):
-        if self.project is None:
-            return None
-
-        page = getattr(self.project, "_page", None)
-        if page is not None:
-            return ("page", id(page))
-
-        project_dir = (getattr(self.project, "project_dir", "") or "").strip()
-        get_startup_page = getattr(self.project, "get_startup_page", None)
-        if callable(get_startup_page):
-            page = get_startup_page()
-            page_name = getattr(page, "name", "") if page is not None else ""
-            return ("project", project_dir or id(self.project), page_name)
-
-        root_ids = tuple(id(widget) for widget in (getattr(self.project, "root_widgets", []) or []) if widget is not None)
-        if root_ids:
-            return ("roots", root_ids)
-        return ("project", id(self.project))
-
-    def remembered_move_target_label(self):
-        labels = self.recent_move_target_labels()
-        return labels[0] if labels else ""
-
     def _current_move_target_label(self, widget=None, fallback_label=""):
         if widget is not None:
             current_item = widget
@@ -1998,98 +1968,6 @@ class WidgetTreePanel(QWidget):
             if names:
                 return f"{' / '.join(reversed(names))} ({widget.widget_type})"
         return (fallback_label or "").strip()
-
-    def _move_target_history_entries(self):
-        key = self._move_target_memory_key()
-        if key is None:
-            return []
-        entries = self._remembered_move_target_labels.get(key, [])
-        normalized = []
-        seen = set()
-        valid_widget_ids = {id(widget) for widget in self._iter_widgets() or []}
-        for entry in entries:
-            if isinstance(entry, str):
-                widget = None
-                fallback_label = entry
-                tracked = False
-            else:
-                widget = entry.get("widget")
-                fallback_label = entry.get("label", "")
-                tracked = bool(entry.get("tracked", widget is not None))
-            if widget is not None and id(widget) not in valid_widget_ids:
-                if tracked:
-                    continue
-                widget = None
-            label = self._current_move_target_label(widget, fallback_label)
-            if not label or label in seen:
-                continue
-            seen.add(label)
-            normalized.append({"widget": widget, "label": label, "tracked": tracked})
-        self._remembered_move_target_labels[key] = normalized[: self._MAX_RECENT_MOVE_TARGETS]
-        return list(self._remembered_move_target_labels[key])
-
-    def recent_move_target_labels(self):
-        return [entry["label"] for entry in self._move_target_history_entries()]
-
-    def has_recent_move_targets(self):
-        return bool(self.recent_move_target_labels())
-
-    def set_remembered_move_target_label(self, label):
-        key = self._move_target_memory_key()
-        if key is None:
-            return
-        normalized = (label or "").strip()
-        if normalized:
-            self._remembered_move_target_labels[key] = [{"widget": None, "label": normalized, "tracked": False}]
-        else:
-            self._remembered_move_target_labels.pop(key, None)
-
-    def remember_move_target_label(self, label):
-        self.remember_move_target(None, label)
-
-    def remember_move_target(self, widget=None, label=""):
-        key = self._move_target_memory_key()
-        if key is None:
-            return
-        normalized = self._current_move_target_label(widget, label)
-        if not normalized:
-            return
-        history = [{"widget": widget, "label": normalized, "tracked": widget is not None}]
-        for entry in self._move_target_history_entries():
-            same_widget = widget is not None and entry.get("widget") is widget
-            same_label = entry.get("label") == normalized
-            if same_widget or same_label:
-                continue
-            history.append(entry)
-        self._remembered_move_target_labels[key] = history[: self._MAX_RECENT_MOVE_TARGETS]
-
-    def forget_move_targets_for_widgets(self, widgets):
-        key = self._move_target_memory_key()
-        if key is None:
-            return 0
-        removed_ids = set()
-        for widget in widgets or []:
-            if widget is None:
-                continue
-            removed_ids.update(id(current) for current in widget.get_all_widgets_flat())
-        if not removed_ids:
-            return 0
-        kept = []
-        removed_count = 0
-        for entry in self._move_target_history_entries():
-            widget = entry.get("widget")
-            if widget is not None and id(widget) in removed_ids:
-                removed_count += 1
-                continue
-            kept.append(entry)
-        self._remembered_move_target_labels[key] = kept
-        return removed_count
-
-    def clear_remembered_move_target_labels(self):
-        key = self._move_target_memory_key()
-        if key is None:
-            return
-        self._remembered_move_target_labels.pop(key, None)
 
     def set_selected_widgets(self, widgets, primary=None):
         self._clear_tree_drag_hover()
@@ -2292,112 +2170,15 @@ class WidgetTreePanel(QWidget):
     def _move_target_choices(self, widgets):
         return available_move_targets(self.project, widgets)
 
-    def _quick_move_target_choices(self, widgets):
-        choices = self._move_target_choices(widgets)
-        recent_labels = self.recent_move_target_labels()
-        if not recent_labels:
-            return choices
-
-        choice_by_label = {choice.label: choice for choice in choices}
-        prioritized = [choice_by_label[label] for label in recent_labels if label in choice_by_label]
-        if not prioritized:
-            return choices
-        prioritized_labels = {choice.label for choice in prioritized}
-        return prioritized + [choice for choice in choices if choice.label not in prioritized_labels]
-
-    def _recent_move_target_choices(self, widgets):
-        choices = self._move_target_choices(widgets)
-        if not choices:
-            return []
-        choice_by_label = {choice.label: choice for choice in choices}
-        return [choice_by_label[label] for label in self.recent_move_target_labels() if label in choice_by_label]
-
-    def _remaining_move_target_choices(self, widgets):
-        choices = self._move_target_choices(widgets)
-        recent_labels = {choice.label for choice in self._recent_move_target_choices(widgets)}
-        return [choice for choice in choices if choice.label not in recent_labels]
-
-    def _move_target_default_index(self, choices):
-        remembered_label = self.remembered_move_target_label()
-        if not remembered_label:
-            return 0
-        for index, choice in enumerate(choices):
-            if choice.label == remembered_label:
-                return index
-        return 0
-
-    def _resolve_move_target_label(self, widgets, target_widget):
-        for choice in self._move_target_choices(widgets):
-            if choice.widget is target_widget:
-                return choice.label
-        return ""
-
-    def _remembered_move_target_choice(self, widgets):
-        remembered_label = self.remembered_move_target_label()
-        if not remembered_label:
-            return None
-        for choice in self._move_target_choices(widgets):
-            if choice.label == remembered_label:
-                return choice
-        return None
-
-    def _move_into_last_target_reason(self, widgets):
-        if not self.remembered_move_target_label():
-            return "move something into a container first."
-        if self._remembered_move_target_choice(widgets) is None:
-            return "the last target is not available for the current selection."
-        return ""
-
-    def _move_into_last_target_hint(self, widgets, shortcut_text="Ctrl+Alt+I"):
-        choice = self._remembered_move_target_choice(widgets)
-        label = choice.label if choice is not None else self.remembered_move_target_label()
-        action_suffix = f" ({shortcut_text})" if shortcut_text else ""
-        if label:
-            return f"Move the current selection into {label} again{action_suffix}"
-        return f"Move the current selection into the last remembered container target{action_suffix}"
-
-    def _repeat_move_target_summary(self, widgets):
-        choice = self._remembered_move_target_choice(widgets)
-        if choice is None:
-            return ""
-        return getattr(choice.widget, "name", "") or choice.label
-
-    def _clear_move_target_history_hint(self):
-        count = len(self.recent_move_target_labels())
-        if count:
-            noun = "target" if count == 1 else "targets"
-            return f"Forget {count} recent move-into {noun} for the current page"
-        return "Forget recent move-into targets for the current page"
-
-    def _quick_move_menu_hint(self):
-        return "Move directly into an available container target, or manage move-target history."
-
-    def _into_button_history_hint(self):
-        return "Open the Into menu to manage move-target history."
-
-    def _structure_history_hint_suffix(self):
-        if not self.has_recent_move_targets():
-            return ""
-        return " Into menu can manage move history."
-
-    def _cleared_move_target_history_text(self, count):
-        noun = "target" if count == 1 else "targets"
-        return f"cleared {count} recent move {noun}"
-
-    def _cleared_move_target_history_message(self, count):
-        noun = "target" if count == 1 else "targets"
-        return f"Cleared {count} recent move {noun}."
-
     def _update_structure_controls(self):
         if not hasattr(self, "group_btn"):
             return
         state = self._structure_action_state()
         selected_count = len(state.widgets)
-        has_quick_move_history = self._remembered_move_target_choice(state.widgets) is not None or self.has_recent_move_targets()
         self.group_btn.setEnabled(state.can_group)
         self.ungroup_btn.setEnabled(state.can_ungroup)
-        self.into_btn.setEnabled(state.can_move_into or has_quick_move_history)
-        self.into_btn.setPopupMode(QToolButton.MenuButtonPopup if state.can_move_into else QToolButton.InstantPopup)
+        self.into_btn.setEnabled(state.can_move_into)
+        self.into_btn.setPopupMode(QToolButton.DelayedPopup)
         self.lift_btn.setEnabled(state.can_lift)
         self.up_btn.setEnabled(state.can_move_up)
         self.down_btn.setEnabled(state.can_move_down)
@@ -2406,9 +2187,6 @@ class WidgetTreePanel(QWidget):
         for button, (base_text, reason_attr) in self._structure_button_tooltips.items():
             button.setToolTip(self._structure_tooltip(base_text, button.isEnabled(), self._structure_action_reason(state, reason_attr)))
             button.setStatusTip(button.toolTip())
-        if not state.can_move_into and has_quick_move_history:
-            self.into_btn.setToolTip(self._into_button_history_hint())
-            self.into_btn.setStatusTip(self.into_btn.toolTip())
         if hasattr(self, "_selection_toolbar"):
             self._selection_toolbar.setVisible(selected_count > 0)
         if hasattr(self, "_selection_summary_chip"):
@@ -2423,7 +2201,6 @@ class WidgetTreePanel(QWidget):
                 chip_text = f"{selected_count} selected"
                 chip_tone = "accent"
             self._set_status_chip_state(self._selection_summary_chip, chip_text, chip_tone)
-        self._refresh_into_button_menu(state)
         self._structure_base_hint_text = self._structure_hint_text(state)
         self._apply_structure_status_summary()
         self._refresh_structure_actions_menu(state)
@@ -2490,10 +2267,6 @@ class WidgetTreePanel(QWidget):
             handler=lambda checked=False: self._move_selected_widgets_into(widgets=widgets),
             shortcut="Ctrl+Shift+I",
         )
-        quick_move_menu = menu.addMenu("Quick Move Into")
-        quick_move_menu.setToolTipsVisible(True)
-        _set_action_metadata(quick_move_menu.menuAction(), tooltip=self._quick_move_menu_hint())
-        self._populate_quick_move_menu(quick_move_menu, widgets, max_targets=5, include_management_actions=True)
         self._add_structure_menu_action(
             menu,
             "Lift To Parent",
@@ -2562,7 +2335,6 @@ class WidgetTreePanel(QWidget):
         has_project = self.project is not None
         enabled = bool(
             has_project
-            or self.has_recent_move_targets()
             or state.can_group
             or state.can_ungroup
             or state.can_move_into
@@ -2575,19 +2347,12 @@ class WidgetTreePanel(QWidget):
         )
         self.structure_actions_btn.setEnabled(enabled)
         if enabled:
-            tooltip = "Open structure actions for grouping, moving, history, and tree visibility."
+            tooltip = "Open structure actions for grouping, moving, and tree visibility."
             accessible_name = "Open structure actions"
         else:
             tooltip = "Open a project page to manage structure actions."
             accessible_name = "Structure actions unavailable"
         _set_widget_metadata(self.structure_actions_btn, tooltip=tooltip, accessible_name=accessible_name)
-
-    def _refresh_into_button_menu(self, state=None):
-        if not hasattr(self, "_into_quick_menu"):
-            return
-
-        state = state or self._structure_action_state()
-        self._populate_quick_move_menu(self._into_quick_menu, state.widgets, include_management_actions=True)
 
     def _add_move_target_menu_action(self, menu, choice, widgets):
         action = QAction(choice.label, self)
@@ -2612,70 +2377,6 @@ class WidgetTreePanel(QWidget):
         if tooltip:
             _set_action_metadata(note_action, tooltip=tooltip)
         menu.addAction(note_action)
-
-    def _add_into_button_management_actions(self, menu, widgets):
-        move_into_last_target_action = QAction("Move Into Last Target", self)
-        move_into_last_target_choice = self._remembered_move_target_choice(widgets)
-        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
-        _set_action_metadata(
-            move_into_last_target_action,
-            tooltip=self._structure_tooltip(
-                self._move_into_last_target_hint(widgets),
-                move_into_last_target_choice is not None,
-                self._move_into_last_target_reason(widgets),
-            ),
-        )
-        move_into_last_target_action.triggered.connect(lambda checked=False, selected_widgets=list(widgets): self._move_selected_widgets_into_last_target(selected_widgets))
-        menu.addAction(move_into_last_target_action)
-
-        clear_move_target_history_action = QAction("Clear Move Target History", self)
-        clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
-        _set_action_metadata(
-            clear_move_target_history_action,
-            tooltip=self._structure_tooltip(
-                self._clear_move_target_history_hint(),
-                self.has_recent_move_targets(),
-                "no recent move targets are saved.",
-            ),
-        )
-        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
-        menu.addAction(clear_move_target_history_action)
-
-    def _populate_quick_move_menu(self, menu, widgets, max_targets=None, include_management_actions=False):
-        menu.clear()
-        recent_choices = self._recent_move_target_choices(widgets)
-        remaining_choices = self._remaining_move_target_choices(widgets)
-
-        recent_limit = len(recent_choices) if max_targets is None else max(0, min(len(recent_choices), max_targets))
-        recent_display = recent_choices[:recent_limit]
-        remaining_limit = None if max_targets is None else max(0, max_targets - len(recent_display))
-        remaining_display = remaining_choices if remaining_limit is None else remaining_choices[:remaining_limit]
-
-        if recent_display:
-            self._add_menu_section_label(menu, "Recent Targets")
-            for choice in recent_display:
-                self._add_move_target_menu_action(menu, choice, widgets)
-            if remaining_display:
-                menu.addSeparator()
-                self._add_menu_section_label(menu, "Other Targets")
-        elif remaining_display:
-            self._add_menu_section_label(menu, "Recent Targets")
-            self._add_disabled_menu_note(
-                menu,
-                "(No recent targets yet)",
-                "Move something into a container first to build recent targets for this page.",
-            )
-            menu.addSeparator()
-            self._add_menu_section_label(menu, "Other Targets")
-        for choice in remaining_display:
-            self._add_move_target_menu_action(menu, choice, widgets)
-        if not recent_display and not remaining_display:
-            self._add_disabled_menu_note(menu, "(No eligible target containers)")
-        if include_management_actions:
-            if menu.actions():
-                menu.addSeparator()
-            self._add_menu_section_label(menu, "History")
-            self._add_into_button_management_actions(menu, widgets)
 
     def _default_drag_target_text(self):
         return "Drop target: drag over the tree to preview where the selection will land."
@@ -2816,7 +2517,7 @@ class WidgetTreePanel(QWidget):
         state = state or self._structure_action_state()
         widgets = state.widgets
         if not widgets and not state.blocked_reason:
-            return "Structure: select widgets to group, move, or reorder." + self._structure_history_hint_suffix()
+            return "Structure: select widgets to group, move, or reorder."
 
         hints = []
         if state.can_group:
@@ -2825,9 +2526,6 @@ class WidgetTreePanel(QWidget):
             hints.append("Ctrl+Shift+G ungroup")
         if state.can_move_into:
             hints.append("Ctrl+Shift+I move into container")
-            repeat_target = self._repeat_move_target_summary(widgets)
-            if repeat_target:
-                hints.append(f"Ctrl+Alt+I repeat into {repeat_target}")
         if state.can_lift:
             hints.append("Ctrl+Shift+L lift to parent")
         if state.can_move_up and state.can_move_down:
@@ -2845,8 +2543,8 @@ class WidgetTreePanel(QWidget):
         if hints:
             return "Structure: " + "; ".join(hints) + "."
         if state.blocked_reason:
-            return f"Structure: {state.blocked_reason}" + self._structure_history_hint_suffix()
-        return "Structure: no valid structure actions for the current selection." + self._structure_history_hint_suffix()
+            return f"Structure: {state.blocked_reason}"
+        return "Structure: no valid structure actions for the current selection."
 
     def _emit_tree_changed(self, source):
         self.tree_changed.emit(source or "widget tree change")
@@ -2865,7 +2563,7 @@ class WidgetTreePanel(QWidget):
         return True
 
     def _choose_move_target_choice(self, widgets):
-        choices = self._quick_move_target_choices(widgets)
+        choices = self._move_target_choices(widgets)
         if not choices:
             self.feedback_message.emit("Cannot move into container: no eligible target containers are available.")
             return None
@@ -2874,9 +2572,9 @@ class WidgetTreePanel(QWidget):
         selected_label, ok = QInputDialog.getItem(
             self,
             "Move Into Container",
-            "Target container (recent targets first):",
+            "Target container:",
             labels,
-            self._move_target_default_index(choices),
+            0,
             False,
         )
         if not ok or not selected_label:
@@ -2956,7 +2654,6 @@ class WidgetTreePanel(QWidget):
             return
 
         deleted_widgets = self._top_level_selected_widgets(deletable)
-        removed_targets = self.forget_move_targets_for_widgets(deleted_widgets)
         deleted_count = 0
         for widget in deleted_widgets:
             if widget.parent:
@@ -2969,8 +2666,6 @@ class WidgetTreePanel(QWidget):
         self.set_selected_widgets([], primary=None)
         self._emit_tree_changed("widget delete")
         extras = []
-        if removed_targets:
-            extras.append(self._cleared_move_target_history_text(removed_targets))
         if locked_count:
             extras.append(f"skipped {self._locked_widget_summary(locked_count)}")
         if extras:
@@ -3063,38 +2758,6 @@ class WidgetTreePanel(QWidget):
         )
         move_into_action.triggered.connect(lambda: self._move_selected_widgets_into(widgets=context_widgets))
         structure_menu.addAction(move_into_action)
-        move_into_last_target_action = QAction("Move Into Last Target", self)
-        move_into_last_target_action.setShortcut("Ctrl+Alt+I")
-        move_into_last_target_choice = self._remembered_move_target_choice(context_widgets)
-        move_into_last_target_action.setEnabled(move_into_last_target_choice is not None)
-        _set_action_metadata(
-            move_into_last_target_action,
-            tooltip=self._structure_tooltip(
-                self._move_into_last_target_hint(context_widgets),
-                move_into_last_target_choice is not None,
-                self._move_into_last_target_reason(context_widgets),
-            ),
-        )
-        move_into_last_target_action.triggered.connect(lambda: self._move_selected_widgets_into_last_target(context_widgets))
-        structure_menu.addAction(move_into_last_target_action)
-        clear_move_target_history_action = QAction("Clear Move Target History", self)
-        clear_move_target_history_action.setEnabled(self.has_recent_move_targets())
-        _set_action_metadata(
-            clear_move_target_history_action,
-            tooltip=self._structure_tooltip(
-                self._clear_move_target_history_hint(),
-                self.has_recent_move_targets(),
-                "no recent move targets are saved.",
-            ),
-        )
-        clear_move_target_history_action.triggered.connect(self._clear_move_target_history)
-        structure_menu.addAction(clear_move_target_history_action)
-        quick_targets = self._quick_move_target_choices(context_widgets)
-        if quick_targets or self.remembered_move_target_label() or self.has_recent_move_targets():
-            quick_move_menu = structure_menu.addMenu("Quick Move Into")
-            quick_move_menu.setToolTipsVisible(True)
-            _set_action_metadata(quick_move_menu.menuAction(), tooltip=self._quick_move_menu_hint())
-            self._populate_quick_move_menu(quick_move_menu, context_widgets, max_targets=5, include_management_actions=True)
 
         lift_action = QAction("Lift To Parent", self)
         lift_action.setShortcut("Ctrl+Shift+L")
@@ -3156,7 +2819,6 @@ class WidgetTreePanel(QWidget):
             structure_state.can_move_down,
             structure_state.can_move_top,
             structure_state.can_move_bottom,
-            self.has_recent_move_targets(),
         ])
         structure_menu.setEnabled(structure_enabled)
         if not structure_enabled and structure_state.blocked_reason:
@@ -3241,7 +2903,6 @@ class WidgetTreePanel(QWidget):
         if getattr(widget, "designer_locked", False):
             self.feedback_message.emit(f"Cannot delete widget: {widget.name} is locked.")
             return
-        removed_targets = self.forget_move_targets_for_widgets([widget])
         if widget.parent:
             widget.parent.remove_child(widget)
         elif widget in self.project.root_widgets:
@@ -3249,8 +2910,6 @@ class WidgetTreePanel(QWidget):
         self.rebuild_tree()
         self.set_selected_widgets([], primary=None)
         self._emit_tree_changed("widget delete")
-        if removed_targets:
-            self.feedback_message.emit(f"Deleted widget; {self._cleared_move_target_history_text(removed_targets)}.")
 
     def _group_selected_widgets(self, widgets=None):
         self._apply_structure_result(group_selection(self.project, widgets or self.selected_widgets()))
@@ -3258,43 +2917,16 @@ class WidgetTreePanel(QWidget):
     def _ungroup_selected_widgets(self, widgets=None):
         self._apply_structure_result(ungroup_selection(self.project, widgets or self.selected_widgets()))
 
-    def _move_selected_widgets_into(self, target_widget=None, widgets=None, target_label=""):
+    def _move_selected_widgets_into(self, target_widget=None, widgets=None):
         widgets = widgets or self.selected_widgets()
         if target_widget is None:
             target_choice = self._choose_move_target_choice(widgets)
             if target_choice is None:
                 return
             target_widget = target_choice.widget
-            target_label = target_choice.label
-        elif not target_label:
-            target_label = self._resolve_move_target_label(widgets, target_widget)
         if target_widget is None:
             return
-        if self._apply_structure_result(move_into_container(self.project, widgets, target_widget)) and target_label:
-            self.remember_move_target(target_widget, target_label)
-
-    def _move_selected_widgets_into_last_target(self, widgets=None):
-        widgets = widgets or self.selected_widgets()
-        target_choice = self._remembered_move_target_choice(widgets)
-        if target_choice is None:
-            reason = self._move_into_last_target_reason(widgets).rstrip(".")
-            if reason:
-                self.feedback_message.emit(f"Cannot move into last target: {reason}.")
-            return
-        self._move_selected_widgets_into(
-            target_widget=target_choice.widget,
-            widgets=widgets,
-            target_label=target_choice.label,
-        )
-
-    def _clear_move_target_history(self):
-        if not self.has_recent_move_targets():
-            self.feedback_message.emit("Cannot clear move target history: no recent move targets are saved.")
-            return
-        cleared_count = len(self.recent_move_target_labels())
-        self.clear_remembered_move_target_labels()
-        self._update_structure_controls()
-        self.feedback_message.emit(self._cleared_move_target_history_message(cleared_count))
+        self._apply_structure_result(move_into_container(self.project, widgets, target_widget))
 
     def _lift_selected_widgets(self, widgets=None):
         self._apply_structure_result(lift_to_parent(self.project, widgets or self.selected_widgets()))
@@ -3482,9 +3114,6 @@ class WidgetTreePanel(QWidget):
             return True
         if key == Qt.Key_I and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
             self._move_selected_widgets_into()
-            return True
-        if key == Qt.Key_I and modifiers == (Qt.ControlModifier | Qt.AltModifier):
-            self._move_selected_widgets_into_last_target()
             return True
         if key == Qt.Key_L and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
             self._lift_selected_widgets()

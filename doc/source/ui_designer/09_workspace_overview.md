@@ -34,7 +34,6 @@
 - `Rebuild EGUI Project`
 - `Auto Compile`
 - `Stop Exe`
-- `Repository Health...`
 - `Generate Resources`
 
 ### View

@@ -6,12 +6,11 @@
 - `Rebuild EGUI Project`
 - `Auto Compile`
 - `Stop Exe`
-- `Repository Health...`
 - `Generate Resources`
 
 ## ????
 
 - ?????`File -> Export C Code...`
 - SDK ???`File -> Set SDK...`
-- ?????`Build -> Repository Health...`
+- ????? GitHub Tag + Actions
 - ?????GitHub Tag + Actions
