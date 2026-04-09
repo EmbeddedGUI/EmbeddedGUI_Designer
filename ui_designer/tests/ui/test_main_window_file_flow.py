@@ -7174,6 +7174,45 @@ class TestMainWindowFileFlow:
         )
         _close_window(window)
 
+    def test_save_project_clears_project_dirty_reasons_from_hints_and_workspace(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ProjectDirtyReasonSaveDemo"
+        project = _create_project(project_dir, "ProjectDirtyReasonSaveDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        window._on_startup_changed("detail_page")
+        window._on_page_mode_changed("activity")
+
+        assert window._project_dirty_reason_text() == "startup page, page mode"
+        assert window._has_unsaved_changes() is True
+
+        assert window._save_project() is True
+        assert window._has_unsaved_changes() is False
+        assert window._project_dirty_reason_text() == ""
+        assert window._save_action.toolTip() == (
+            "Save the current project (Ctrl+S). "
+            f"Unsaved pages: none. Target: {window._project_dir}."
+        )
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. No dirty pages."
+        )
+        assert window._project_workspace._dirty_chip.text() == "Clean"
+        assert window._project_workspace._summary_label.text() == "2 pages. Active: detail_page. Clean."
+        _close_window(window)
+
     def test_reload_project_from_disk_preserves_current_page(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow

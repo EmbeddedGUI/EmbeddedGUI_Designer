@@ -279,6 +279,36 @@ class TestProjectWorkspacePanel:
         assert metadata_updates == 2
         panel.deleteLater()
 
+    def test_workspace_snapshot_clears_project_dirty_reason_when_state_returns_clean(self, qapp):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+
+        panel.set_workspace_snapshot(
+            page_count=2,
+            active_page="detail_page",
+            startup_page="detail_page",
+            project_dirty=True,
+            project_dirty_reason="startup page, page mode",
+        )
+        assert panel._dirty_chip.text() == "Project changes pending (startup page, page mode)"
+
+        panel.set_workspace_snapshot(
+            page_count=2,
+            active_page="detail_page",
+            startup_page="detail_page",
+            project_dirty=False,
+            project_dirty_reason="",
+        )
+
+        assert panel._dirty_chip.text() == "Clean"
+        assert panel._summary_label.text() == "2 pages. Active: detail_page. Clean."
+        assert panel.accessibleName() == (
+            "Project workspace: List view. Pages: 2 pages. Active page: detail_page. Startup page: detail_page. "
+            "Dirty state: No dirty pages."
+        )
+        panel.deleteLater()
+
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.project_workspace import ProjectWorkspacePanel
 
