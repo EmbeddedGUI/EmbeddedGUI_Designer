@@ -7291,6 +7291,98 @@ class TestMainWindowFileFlow:
         assert window.statusBar().currentMessage() == "Reloaded external changes: main_page.xml"
         _close_window(window)
 
+    def test_pending_external_reload_recomputes_changed_paths_before_retry(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingReloadRecomputeDemo"
+        project = _create_project(project_dir, "PendingReloadRecomputeDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._compile_worker = _BusyWorker()
+
+        reload_calls = []
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        main_layout = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        detail_layout = project_dir / ".eguiproject" / "layout" / "detail_page.xml"
+        main_layout.write_text(main_layout.read_text(encoding="utf-8") + "\n<!-- recompute main -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(main_layout))]
+
+        detail_layout.write_text(detail_layout.read_text(encoding="utf-8") + "\n<!-- recompute detail -->\n", encoding="utf-8")
+        window._compile_worker = None
+        window._poll_project_files()
+
+        assert len(reload_calls) == 1
+        assert reload_calls[0]["auto"] is True
+        assert reload_calls[0]["changed_paths"] == [
+            os.path.normpath(os.path.abspath(detail_layout)),
+            os.path.normpath(os.path.abspath(main_layout)),
+        ]
+        _close_window(window)
+
+    def test_pending_external_reload_clears_when_files_return_to_original_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingReloadResolvedDemo"
+        project = _create_project(project_dir, "PendingReloadResolvedDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._compile_worker = _BusyWorker()
+
+        reload_calls = []
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- transient external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        monkeypatch.setattr(window, "_build_project_watch_snapshot", lambda: dict(window._project_watch_snapshot))
+        window._compile_worker = None
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        assert window.statusBar().currentMessage() == "External project changes resolved. Reload no longer needed."
+        _close_window(window)
+
     def test_close_project_prompts_when_only_project_state_is_dirty(self, qapp, isolated_config, tmp_path, monkeypatch):
         from PyQt5.QtWidgets import QMessageBox
         from ui_designer.ui.main_window import MainWindow

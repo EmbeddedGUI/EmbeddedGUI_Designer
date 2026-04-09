@@ -2734,6 +2734,16 @@ class MainWindow(QMainWindow):
         self._external_reload_pending = False
         self._external_reload_changed_paths = []
 
+    def _pending_external_reload_changed_paths(self):
+        if self.project is None or not self._project_dir:
+            return []
+        if not self._project_watch_snapshot:
+            return list(getattr(self, "_external_reload_changed_paths", []) or [])
+        latest_snapshot = self._build_project_watch_snapshot()
+        changed_paths = self._diff_project_watch_snapshot(self._project_watch_snapshot, latest_snapshot)
+        self._external_reload_changed_paths = list(changed_paths or [])
+        return changed_paths
+
     def _refresh_project_watch_snapshot(self):
         if self.project is None or not self._project_dir:
             self._project_watch_timer.stop()
@@ -2757,9 +2767,14 @@ class MainWindow(QMainWindow):
                 return
             if self._precompile_worker is not None and self._precompile_worker.isRunning():
                 return
+            changed_paths = self._pending_external_reload_changed_paths()
+            if not changed_paths:
+                self._clear_external_reload_pending()
+                self.statusBar().showMessage("External project changes resolved. Reload no longer needed.", 4000)
+                return
             self._reload_project_from_disk(
                 auto=True,
-                changed_paths=list(getattr(self, "_external_reload_changed_paths", []) or []),
+                changed_paths=changed_paths,
             )
             return
 
@@ -2771,7 +2786,6 @@ class MainWindow(QMainWindow):
             return
 
         changed_paths = self._diff_project_watch_snapshot(self._project_watch_snapshot, new_snapshot)
-        self._project_watch_snapshot = new_snapshot
         summary = self._summarize_changed_paths(changed_paths)
 
         if self._has_unsaved_changes():
