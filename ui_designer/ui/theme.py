@@ -1680,11 +1680,11 @@ QPushButton[workspaceNav="true"] {{
     border-radius: 0px;
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 0px 0;
-    min-width: 56px;
-    max-width: 56px;
-    min-height: 20px;
-    max-height: 20px;
+    padding: 0px 4px;
+    min-width: 112px;
+    max-width: 112px;
+    min-height: 24px;
+    max-height: 24px;
 }}
 
 QPushButton[workspaceNav="true"]:hover {{
@@ -2452,7 +2452,7 @@ QTableWidget#animations_panel_table {{
 
 QTableWidget#animations_panel_table QHeaderView::section,
 QTableWidget#page_editor_table QHeaderView::section {{
-    padding: 4px 6px;
+    padding: 2px 6px;
     font-size: {t['fs_caption']}px;
 }}
 

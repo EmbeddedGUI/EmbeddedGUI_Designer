@@ -81,6 +81,8 @@ class TestAnimationsPanel:
         assert panel._table.toolTip() == panel._summary_label.text()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Animations table: Animations: 1 animation on label title"
+        assert panel._table.horizontalHeader().height() == 20
+        assert panel._table.verticalHeader().defaultSectionSize() == 26
         assert panel._actions_strip.accessibleName() == "Animation actions: add, duplicate, or remove the selected animation."
         assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
@@ -102,6 +104,7 @@ class TestAnimationsPanel:
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
         assert panel._detail_group.accessibleName() == panel._detail_group.toolTip()
         assert panel._table.rowCount() == 1
+        assert panel._table.rowHeight(0) == 26
         assert panel._table.item(0, 0).text() == "alpha"
         assert panel._table.item(0, 2).text() == "linear"
         assert panel._table.item(0, 0).toolTip() == "Animation Type: alpha."

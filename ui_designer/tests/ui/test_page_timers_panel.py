@@ -91,6 +91,8 @@ class TestPageTimersPanel:
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page timers table: Page Timers: 1 timer on main_page. Selected timer: none."
+        assert panel._table.horizontalHeader().height() == 20
+        assert panel._table.verticalHeader().defaultSectionSize() == 26
         assert panel._add_button.toolTip() == "Add a page timer."
         assert panel._add_button.accessibleName() == "Add page timer to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
@@ -105,6 +107,7 @@ class TestPageTimersPanel:
         assert panel._open_code_button.minimumHeight() == 22
         assert panel._open_code_button.maximumHeight() == 22
         assert panel._table.rowCount() == 1
+        assert panel._table.rowHeight(0) == 26
         assert panel._table.item(0, 0).text() == "refresh_timer"
         assert panel._table.item(0, 1).text() == "tick_refresh"
         assert panel._table.item(0, 4).text() == "true"

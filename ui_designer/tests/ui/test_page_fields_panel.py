@@ -100,6 +100,8 @@ class TestPageFieldsPanel:
         assert panel._table.toolTip() == panel.accessibleName()
         assert panel._table.statusTip() == panel._table.toolTip()
         assert panel._table.accessibleName() == "Page fields table: Page Fields: 2 fields on main_page. Selected field: none."
+        assert panel._table.horizontalHeader().height() == 20
+        assert panel._table.verticalHeader().defaultSectionSize() == 26
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
@@ -121,6 +123,7 @@ class TestPageFieldsPanel:
         assert panel._remove_button.minimumHeight() == 22
         assert panel._remove_button.maximumHeight() == 22
         assert panel._table.rowCount() == 2
+        assert panel._table.rowHeight(0) == 26
         assert panel._table.item(0, 0).text() == "counter"
         assert panel._table.item(0, 1).text() == "int"
         assert panel._table.item(0, 2).text() == "0"

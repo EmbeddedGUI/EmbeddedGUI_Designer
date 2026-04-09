@@ -136,7 +136,9 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 264
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-WORKSPACE_NAV_RAIL_WIDTH = 60
+WORKSPACE_NAV_RAIL_WIDTH = 116
+WORKSPACE_NAV_BUTTON_WIDTH = 112
+WORKSPACE_NAV_BUTTON_HEIGHT = 24
 LEFT_PANEL_STACK_MIN_WIDTH = 172
 LEFT_PANEL_DEFAULT_WIDTH = 236
 CENTER_PANEL_DEFAULT_WIDTH = 860
@@ -691,7 +693,7 @@ class MainWindow(QMainWindow):
         button.setCheckable(True)
         button.setText(str(short_label or label or ""))
         button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        button.setFixedSize(56, WORKSPACE_CONTROL_HEIGHT)
+        button.setFixedSize(WORKSPACE_NAV_BUTTON_WIDTH, WORKSPACE_NAV_BUTTON_HEIGHT)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
 
