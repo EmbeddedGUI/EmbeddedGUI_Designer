@@ -62,7 +62,7 @@ def main():
     from ui_designer.model.widget_registry import WidgetRegistry
     from ui_designer.model.workspace import find_sdk_root, normalize_path
     from ui_designer.ui.main_window import MainWindow
-    from ui_designer.ui.theme import apply_theme
+    from ui_designer.ui.theme import apply_theme, configure_platform_font_environment
 
     config = get_config()
     cli_project = normalize_path(args.project)
@@ -80,6 +80,7 @@ def main():
 
     WidgetRegistry.instance()
 
+    configure_platform_font_environment()
     app = QApplication(sys.argv)
     app.setApplicationName("EmbeddedGUI Designer")
     app.setProperty("designer_font_size_pt", int(getattr(config, "font_size_px", 0) or 0))

@@ -10,8 +10,11 @@ Aligned with ``UI_UIX_REDESIGN_MASTER_PLAN.md`` (UIX-001):
 
 from __future__ import annotations
 
+import os
+import sys
+
 from PyQt5.QtCore import QEvent, QObject, QSize
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QWidget
 
 try:
@@ -74,6 +77,7 @@ TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {{
     border-radius: {_ENGINEERING_RADIUS_MD}px;
+    font-size: 13px;
 }}
 """
 
@@ -104,6 +108,8 @@ TextEdit,
 PlainTextEdit,
 TextBrowser {{
     border-radius: {_ENGINEERING_RADIUS_MD}px;
+    padding: 0px 8px;
+    font-size: 13px;
 }}
 
 #lineEditButton {{
@@ -131,6 +137,9 @@ _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
     border-radius: {_ENGINEERING_RADIUS_MD}px;
+    min-height: 24px;
+    padding: 0px 8px;
+    font-size: 13px;
 }}
 """
 
@@ -155,6 +164,9 @@ CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {{
     border-radius: {_ENGINEERING_RADIUS_MD}px;
+    min-height: 24px;
+    padding: 0px 8px;
+    font-size: 13px;
 }}
 
 SpinButton {{
@@ -237,11 +249,11 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 6,
+        "pad_btn_v": 3,
         "pad_btn_h": 10,
-        "pad_input_v": 6,
+        "pad_input_v": 3,
         "pad_input_h": 10,
-        "h_tab_min": 28,
+        "h_tab_min": 24,
         "fs_display": 20,
         "fs_h1": 14,
         "fs_h2": 13,
@@ -299,11 +311,11 @@ _TOKENS = {
         "space_lg": 16,
         "space_xl": 20,
         "space_2xl": 24,
-        "pad_btn_v": 6,
+        "pad_btn_v": 3,
         "pad_btn_h": 10,
-        "pad_input_v": 6,
+        "pad_input_v": 3,
         "pad_input_h": 10,
-        "h_tab_min": 28,
+        "h_tab_min": 24,
         "fs_display": 20,
         "fs_h1": 14,
         "fs_h2": 13,
@@ -334,6 +346,168 @@ _FONT_SIZE_KEYS = (
     "fs_caption",
     "fs_micro",
 )
+
+_WINDOWS_FONTDIR_CANDIDATES = (
+    os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"),
+)
+_MACOS_FONTDIR_CANDIDATES = (
+    "/System/Library/Fonts",
+    "/Library/Fonts",
+)
+_LINUX_FONTDIR_CANDIDATES = (
+    "/usr/share/fonts",
+    "/usr/local/share/fonts",
+    os.path.expanduser("~/.local/share/fonts"),
+    os.path.expanduser("~/.fonts"),
+)
+
+_WINDOWS_UI_FONT_CANDIDATES = (
+    "Segoe UI Variable Text",
+    "Segoe UI",
+    "Microsoft YaHei UI",
+    "Microsoft YaHei",
+    "Arial",
+)
+_MACOS_UI_FONT_CANDIDATES = (
+    "SF Pro Text",
+    "PingFang SC",
+    "Helvetica Neue",
+    "Arial Unicode MS",
+)
+_LINUX_UI_FONT_CANDIDATES = (
+    "Noto Sans CJK SC",
+    "Noto Sans SC",
+    "Noto Sans",
+    "Source Han Sans SC",
+    "WenQuanYi Micro Hei",
+    "DejaVu Sans",
+    "Arial",
+)
+
+_WINDOWS_MONO_FONT_CANDIDATES = (
+    "Consolas",
+    "Cascadia Mono",
+    "Cascadia Code",
+    "Lucida Console",
+)
+_MACOS_MONO_FONT_CANDIDATES = (
+    "SF Mono",
+    "Menlo",
+    "Monaco",
+)
+_LINUX_MONO_FONT_CANDIDATES = (
+    "Noto Sans Mono",
+    "DejaVu Sans Mono",
+    "Liberation Mono",
+    "Monospace",
+)
+
+
+def _fontdir_candidates(platform_name: str | None = None):
+    platform_name = platform_name or sys.platform
+    if platform_name == "win32":
+        return _WINDOWS_FONTDIR_CANDIDATES
+    if platform_name == "darwin":
+        return _MACOS_FONTDIR_CANDIDATES
+    return _LINUX_FONTDIR_CANDIDATES
+
+
+def _ui_font_candidates(platform_name: str | None = None):
+    platform_name = platform_name or sys.platform
+    if platform_name == "win32":
+        return _WINDOWS_UI_FONT_CANDIDATES
+    if platform_name == "darwin":
+        return _MACOS_UI_FONT_CANDIDATES
+    return _LINUX_UI_FONT_CANDIDATES
+
+
+def _mono_font_candidates(platform_name: str | None = None):
+    platform_name = platform_name or sys.platform
+    if platform_name == "win32":
+        return _WINDOWS_MONO_FONT_CANDIDATES
+    if platform_name == "darwin":
+        return _MACOS_MONO_FONT_CANDIDATES
+    return _LINUX_MONO_FONT_CANDIDATES
+
+
+def configure_platform_font_environment(environ=None, platform_name: str | None = None):
+    """Point Qt at a real system font directory when the runtime doesn't provide one."""
+    env = os.environ if environ is None else environ
+    current = str(env.get("QT_QPA_FONTDIR", "") or "").strip()
+    if current:
+        return current
+
+    for candidate in _fontdir_candidates(platform_name):
+        if candidate and os.path.isdir(candidate):
+            env["QT_QPA_FONTDIR"] = candidate
+            return candidate
+    return ""
+
+
+def _available_font_families():
+    try:
+        return set(QFontDatabase().families())
+    except Exception:
+        return set()
+
+
+def _select_font_family(candidates, available_families, fallback=""):
+    for family in candidates:
+        if family and family in available_families:
+            return family
+    return str(fallback or "").strip()
+
+
+def designer_ui_font_family(app: QApplication | None = None, available_families=None, platform_name: str | None = None):
+    """Resolve the preferred proportional UI font family for the current platform."""
+    target_app = app if app is not None else QApplication.instance()
+    families = set(available_families) if available_families is not None else _available_font_families()
+    fallback = ""
+    if target_app is not None:
+        fallback = str(target_app.font().family() or "").strip()
+    if not fallback:
+        try:
+            fallback = str(QFontDatabase.systemFont(QFontDatabase.GeneralFont).family() or "").strip()
+        except Exception:
+            fallback = ""
+    return _select_font_family(_ui_font_candidates(platform_name), families, fallback) or "Sans Serif"
+
+
+def designer_monospace_font_family(app: QApplication | None = None, available_families=None, platform_name: str | None = None):
+    """Resolve the preferred monospace font family for the current platform."""
+    target_app = app if app is not None else QApplication.instance()
+    families = set(available_families) if available_families is not None else _available_font_families()
+    fallback = ""
+    try:
+        fallback = str(QFontDatabase.systemFont(QFontDatabase.FixedFont).family() or "").strip()
+    except Exception:
+        fallback = ""
+    if not fallback and target_app is not None:
+        fallback = str(target_app.font().family() or "").strip()
+    return _select_font_family(_mono_font_candidates(platform_name), families, fallback) or "Monospace"
+
+
+def designer_ui_font(*, point_size=None, pixel_size=None, weight=None, app: QApplication | None = None):
+    font = QFont(designer_ui_font_family(app))
+    if point_size is not None and int(point_size) > 0:
+        font.setPointSize(int(point_size))
+    if pixel_size is not None and int(pixel_size) > 0:
+        font.setPixelSize(int(pixel_size))
+    if weight is not None:
+        font.setWeight(int(weight))
+    return font
+
+
+def designer_monospace_font(*, point_size=None, pixel_size=None, weight=None, app: QApplication | None = None):
+    font = QFont(designer_monospace_font_family(app))
+    font.setStyleHint(QFont.Monospace)
+    if point_size is not None and int(point_size) > 0:
+        font.setPointSize(int(point_size))
+    if pixel_size is not None and int(pixel_size) > 0:
+        font.setPixelSize(int(pixel_size))
+    if weight is not None:
+        font.setWeight(int(weight))
+    return font
 
 
 def _normalize_density(density="standard"):
@@ -711,7 +885,7 @@ QPushButton, QToolButton {{
     border: 1px solid {t['border']};
     border-radius: {t['r_md']}px;
     padding: {t['pad_btn_v']}px {t['pad_btn_h']}px;
-    font-size: {t['fs_body_sm']}px;
+    font-size: {t['fs_body']}px;
     font-weight: {t['fw_medium']};
 }}
 
@@ -739,8 +913,8 @@ QListView, QTreeView, QTableView, QListWidget, QTreeWidget, QTableWidget {{
 }}
 
 QListView::item, QTreeView::item, QTableView::item, QListWidget::item, QTreeWidget::item {{
-    padding: 6px 8px;
-    min-height: 28px;
+    padding: 4px 8px;
+    min-height: 24px;
 }}
 
 QListView::item:hover, QTreeView::item:hover, QTableView::item:hover, QListWidget::item:hover, QTreeWidget::item:hover {{
@@ -782,7 +956,7 @@ QTabWidget::pane {{
 QTabBar::tab {{
     background-color: transparent;
     color: {t['text_muted']};
-    padding: {t['space_xs']}px {t['space_sm']}px;
+    padding: 2px {t['space_sm']}px;
     margin-right: {t['space_xs']}px;
     min-height: {t['h_tab_min']}px;
     border: 1px solid transparent;
@@ -1272,10 +1446,10 @@ QPushButton#project_workspace_view_button {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    font-size: {t['fs_body_sm']}px;
-    padding: 2px 6px;
+    font-size: {t['fs_body']}px;
+    padding: 1px 6px;
     text-align: left;
-    min-height: 24px;
+    min-height: 22px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -1336,7 +1510,7 @@ QToolBar#main_toolbar QToolButton {{
     border-radius: 0px;
     color: {t['text_muted']};
     padding: 1px 4px;
-    min-height: 22px;
+    min-height: 20px;
 }}
 
 QToolBar#main_toolbar QToolButton:hover {{
@@ -1364,11 +1538,11 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
+    padding: 1px {t['space_sm']}px;
     min-width: 52px;
     max-width: 52px;
-    min-height: 26px;
-    max-height: 26px;
+    min-height: 24px;
+    max-height: 24px;
 }}
 
 QPushButton#workspace_mode_button:hover {{
@@ -1387,9 +1561,9 @@ QPushButton#workspace_bottom_toggle_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
+    padding: 1px {t['space_sm']}px;
     min-width: 48px;
-    min-height: 26px;
+    min-height: 24px;
 }}
 
 QPushButton#workspace_bottom_toggle_button:hover {{
@@ -1413,11 +1587,11 @@ QPushButton#workspace_insert_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
+    padding: 1px {t['space_sm']}px;
     min-width: 52px;
     max-width: 52px;
-    min-height: 26px;
-    max-height: 26px;
+    min-height: 24px;
+    max-height: 24px;
 }}
 
 QPushButton#workspace_insert_button:hover {{
@@ -1500,13 +1674,13 @@ QToolButton[workspaceNav="true"] {{
     color: {t['text_muted']};
     border: 1px solid transparent;
     border-radius: 0px;
-    font-size: {t['fs_micro']}px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 2px 0;
+    padding: 1px 0;
     min-width: 56px;
     max-width: 56px;
-    min-height: 26px;
-    max-height: 26px;
+    min-height: 24px;
+    max-height: 24px;
 }}
 
 QToolButton[workspaceNav="true"]:hover {{
@@ -1536,8 +1710,8 @@ QTabWidget#workspace_inspector_tabs::pane {{
 QTabWidget#workspace_inspector_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 26px;
-    padding: 3px 6px;
+    min-height: 24px;
+    padding: 2px 6px;
 }}
 
 QTabWidget#workspace_bottom_tabs::pane {{
@@ -1551,8 +1725,8 @@ QTabWidget#workspace_bottom_tabs::pane {{
 QTabWidget#workspace_bottom_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 26px;
-    padding: 3px 6px;
+    min-height: 24px;
+    padding: 2px 6px;
 }}
 
 #workspace_status_chip {{
@@ -1570,7 +1744,7 @@ QToolButton#workspace_status_chip {{
     color: {t['text_muted']};
     font-size: {t['fs_body_sm']}px;
     padding: {t['space_xxs']}px {t['space_xs']}px;
-    min-height: 24px;
+    min-height: 22px;
 }}
 
 QToolButton#workspace_status_chip:hover {{
@@ -1694,8 +1868,8 @@ QToolButton#workspace_summary_indicator {{
     color: {t['text']};
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 2px {t['space_xs']}px;
-    min-height: 26px;
+    padding: 1px {t['space_xs']}px;
+    min-height: 24px;
 }}
 
 QToolButton#workspace_summary_indicator:hover {{
@@ -1859,7 +2033,7 @@ QTableWidget#resource_panel_table {{
 QListWidget#resource_panel_list::item,
 QListWidget#resource_panel_image_list::item,
 QTreeWidget#project_dock_tree::item {{
-    min-height: 28px;
+    min-height: 26px;
 }}
 
 QTabWidget#resource_panel_tabs::pane {{
@@ -1872,8 +2046,8 @@ QTabWidget#resource_panel_tabs::pane {{
 QTabWidget#resource_panel_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 28px;
-    padding: 6px 10px;
+    min-height: 26px;
+    padding: 4px 10px;
 }}
 
 QTabWidget#resource_panel_details_tabs::pane {{
@@ -1886,8 +2060,8 @@ QTabWidget#resource_panel_details_tabs::pane {{
 QTabWidget#resource_panel_details_tabs QTabBar::tab {{
     border-radius: 0px;
     margin-right: 0px;
-    min-height: 28px;
-    padding: 6px 10px;
+    min-height: 26px;
+    padding: 4px 10px;
 }}
 
 QTableWidget#resource_panel_table QHeaderView::section {{
@@ -1946,8 +2120,8 @@ QPushButton#project_dock_add_page_button {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px 6px;
-    min-height: 28px;
+    padding: 2px 6px;
+    min-height: 26px;
 }}
 
 QComboBox#project_dock_mode_combo:hover,
@@ -2039,8 +2213,8 @@ QTreeWidget#project_dock_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
-    min-height: 28px;
+    padding: 2px {t['space_sm']}px;
+    min-height: 26px;
 }}
 
 #structure_primary_strip QPushButton:hover,
@@ -2098,8 +2272,8 @@ QTreeWidget#project_dock_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
-    min-height: 26px;
+    padding: 1px {t['space_sm']}px;
+    min-height: 24px;
 }}
 
 #diagnostics_controls_strip QComboBox:hover,
@@ -2157,8 +2331,8 @@ QListWidget#diagnostics_list {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
-    min-height: 26px;
+    padding: 1px {t['space_sm']}px;
+    min-height: 24px;
 }}
 
 #debug_panel_controls_strip QPushButton:hover {{
@@ -2241,8 +2415,8 @@ QListWidget#history_panel_list {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
-    min-height: 26px;
+    padding: 1px {t['space_sm']}px;
+    min-height: 24px;
 }}
 
 #animations_panel_actions_strip QPushButton:hover {{
@@ -2368,8 +2542,8 @@ QTreeWidget#widget_tree_panel_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 3px {t['space_sm']}px;
-    min-height: 28px;
+    padding: 2px {t['space_sm']}px;
+    min-height: 26px;
 }}
 
 #page_editor_actions QPushButton:hover,
@@ -3028,6 +3202,7 @@ def _apply_app_base_font(app: QApplication, tokens: dict):
     if app is None:
         return
     font = app.font()
+    font.setFamily(designer_ui_font_family(app))
     try:
         pixel_size = int(tokens.get("fs_body", 13))
     except (TypeError, ValueError):

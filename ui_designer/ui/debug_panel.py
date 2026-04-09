@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QTextCharFormat, QColor
 
-from .theme import designer_font_size_pt, theme_tokens
+from .theme import designer_font_size_pt, designer_monospace_font, theme_tokens
 
 
 _TOKENS = theme_tokens("dark")
@@ -129,7 +129,7 @@ class DebugPanel(QWidget):
         self._output = QPlainTextEdit()
         self._output.setObjectName("debug_output_surface")
         self._output.setReadOnly(True)
-        self._output.setFont(QFont("Consolas", _debug_font_size_pt()))
+        self._output.setFont(designer_monospace_font(point_size=_debug_font_size_pt()))
         self._output.setLineWrapMode(QPlainTextEdit.NoWrap)
         self._output.setMaximumBlockCount(5000)  # Limit lines
         layout.addWidget(self._output)

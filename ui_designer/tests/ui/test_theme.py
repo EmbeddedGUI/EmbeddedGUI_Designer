@@ -8,6 +8,7 @@ from ui_designer.ui.theme import (
     _ensure_fluent_engineering_style_manager,
     app_theme_tokens,
     apply_theme,
+    designer_ui_font_family,
     qt_font_weight,
     designer_font_scale,
     designer_font_size_pt,
@@ -68,7 +69,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
         compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
-        assert f"font-size: {t['fs_micro']}px;" in nav_button
+        assert f"font-size: {t['fs_body_sm']}px;" in nav_button
         assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
@@ -191,6 +192,22 @@ def test_font_scale_helpers_follow_app_preference():
         app.setProperty("designer_ui_density", None)
 
 
+def test_windows_ui_font_family_prefers_segoe_for_designer_surfaces():
+    family = designer_ui_font_family(
+        available_families={"Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Arial"},
+        platform_name="win32",
+    )
+    assert family == "Segoe UI Variable Text"
+
+
+def test_windows_ui_font_family_falls_back_to_yahei_when_segoe_is_unavailable():
+    family = designer_ui_font_family(
+        available_families={"Microsoft YaHei UI", "Arial"},
+        platform_name="win32",
+    )
+    assert family == "Microsoft YaHei UI"
+
+
 def test_apply_typography_role_uses_active_density_and_font_preference():
     from PyQt5.QtWidgets import QLabel
 
@@ -234,8 +251,8 @@ def test_engineering_theme_radii_remove_pill_shapes():
         status_button = css.split("QPushButton#preview_status_button {", 1)[1].split("}", 1)[0]
 
         assert "border-radius: 0px;" in chip
-        assert "padding: 2px 4px;" in chip
-        assert "min-height: 26px;" in chip
+        assert "padding: 1px 4px;" in chip
+        assert "min-height: 24px;" in chip
         assert "border-radius: 0px;" in browser_card
         assert "border-radius: 0px;" in insert_button
         assert "border-radius: 0px;" in status_button
@@ -301,8 +318,8 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 28px;" in buttons
-        assert f"padding: 3px {t['space_sm']}px;" in buttons
+        assert "min-height: 26px;" in buttons
+        assert f"padding: 2px {t['space_sm']}px;" in buttons
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -331,8 +348,8 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 28px;" in buttons
-        assert f"padding: 3px {t['space_sm']}px;" in buttons
+        assert "min-height: 26px;" in buttons
+        assert f"padding: 2px {t['space_sm']}px;" in buttons
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():
@@ -410,7 +427,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
         assert "padding: 1px 4px;" in toolbar_button
-        assert "min-height: 22px;" in toolbar_button
+        assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert "min-width: 1px;" in host_separator
         assert "max-width: 1px;" in host_separator
@@ -418,11 +435,11 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin-right: 2px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
-        assert "padding: 2px 8px;" in insert_button
+        assert "padding: 1px 8px;" in insert_button
         assert "min-width: 52px;" in insert_button
         assert "max-width: 52px;" in insert_button
-        assert "min-height: 26px;" in insert_button
-        assert "max-height: 26px;" in insert_button
+        assert "min-height: 24px;" in insert_button
+        assert "max-height: 24px;" in insert_button
         assert f"background-color: {t['surface_hover']};" in insert_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
@@ -456,16 +473,16 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in mode_button
         assert "min-width: 52px;" in mode_button
         assert "max-width: 52px;" in mode_button
-        assert "min-height: 26px;" in mode_button
-        assert "max-height: 26px;" in mode_button
+        assert "min-height: 24px;" in mode_button
+        assert "max-height: 24px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
         assert "min-width: 48px;" in bottom_toggle_button
-        assert "min-height: 26px;" in bottom_toggle_button
+        assert "min-height: 24px;" in bottom_toggle_button
         assert "border-radius: 0px;" in nav_button
         assert "min-width: 56px;" in nav_button
         assert "max-width: 56px;" in nav_button
-        assert "min-height: 26px;" in nav_button
-        assert "max-height: 26px;" in nav_button
+        assert "min-height: 24px;" in nav_button
+        assert "max-height: 24px;" in nav_button
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
         assert "border-top: 1px solid" in empty_state
@@ -483,15 +500,15 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in resource_dialog_control_shell
         assert "border-radius: 0px;" in resource_tabs_tab
         assert "margin-right: 0px;" in resource_tabs_tab
-        assert "min-height: 28px;" in resource_tabs_tab
-        assert "padding: 6px 10px;" in resource_tabs_tab
+        assert "min-height: 26px;" in resource_tabs_tab
+        assert "padding: 4px 10px;" in resource_tabs_tab
         assert "background-color: transparent;" in resource_details_pane
         assert "border: none;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_pane
         assert "border-radius: 0px;" in resource_details_tab
         assert "margin-right: 0px;" in resource_details_tab
-        assert "min-height: 28px;" in resource_details_tab
-        assert "padding: 6px 10px;" in resource_details_tab
+        assert "min-height: 26px;" in resource_details_tab
+        assert "padding: 4px 10px;" in resource_details_tab
         assert "background-color: transparent;" in inspector_tabs_pane
         assert "border: none;" in inspector_tabs_pane
         assert "border-radius: 0px;" in inspector_tabs_pane
@@ -499,8 +516,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in inspector_tabs_pane
         assert "border-radius: 0px;" in inspector_tabs_tab
         assert "margin-right: 0px;" in inspector_tabs_tab
-        assert "min-height: 26px;" in inspector_tabs_tab
-        assert "padding: 3px 6px;" in inspector_tabs_tab
+        assert "min-height: 24px;" in inspector_tabs_tab
+        assert "padding: 2px 6px;" in inspector_tabs_tab
         assert "background-color: transparent;" in bottom_tabs_pane
         assert "border: none;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_pane
@@ -508,8 +525,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "top: 0px;" in bottom_tabs_pane
         assert "border-radius: 0px;" in bottom_tabs_tab
         assert "margin-right: 0px;" in bottom_tabs_tab
-        assert "min-height: 26px;" in bottom_tabs_tab
-        assert "padding: 3px 6px;" in bottom_tabs_tab
+        assert "min-height: 24px;" in bottom_tabs_tab
+        assert "padding: 2px 6px;" in bottom_tabs_tab
         assert "background-color: transparent;" in thumb_surface
         assert "border: none;" in thumb_surface
         assert "border-radius: 0px;" in thumb_surface
@@ -743,8 +760,8 @@ def test_project_dock_styles_use_engineering_surface_tokens():
         assert "border: none;" in settings
         assert "border-radius: 0px;" in settings
         assert "border-radius: 0px;" in controls
-        assert "padding: 3px 6px;" in controls
-        assert "min-height: 28px;" in controls
+        assert "padding: 2px 6px;" in controls
+        assert "min-height: 26px;" in controls
         assert "background-color: transparent;" in metric_card
         assert "border: none;" in metric_card
         assert "border-radius: 0px;" in metric_card
@@ -866,8 +883,8 @@ def test_widget_tree_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in drag_hint
         assert f"font-size: {t['fs_body_sm']}px;" in structure_label
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 28px;" in buttons
-        assert f"padding: 3px {t['space_sm']}px;" in buttons
+        assert "min-height: 26px;" in buttons
+        assert f"padding: 2px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in tree
         _assert_default_border(tree, t)
         assert "border-radius: 0px;" in tree
@@ -896,8 +913,8 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 26px;" in buttons
-        assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert "min-height: 24px;" in buttons
+        assert f"padding: 1px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in list_block
         assert "border-radius: 0px;" in list_block
 
@@ -924,8 +941,8 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in controls
         assert "border-radius: 0px;" in controls
         assert "border-radius: 0px;" in button
-        assert "min-height: 26px;" in button
-        assert f"padding: 2px {t['space_sm']}px;" in button
+        assert "min-height: 24px;" in button
+        assert f"padding: 1px {t['space_sm']}px;" in button
         assert f"background-color: {t['canvas_stage']};" in surface
         assert "border-radius: 0px;" in surface
 
@@ -973,8 +990,8 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in actions
         assert "border-radius: 0px;" in actions
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 26px;" in buttons
-        assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert "min-height: 24px;" in buttons
+        assert f"padding: 1px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail
@@ -999,8 +1016,9 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "border: none;" in metrics
         assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in buttons
-        assert "padding: 2px 6px;" in buttons
-        assert "min-height: 24px;" in buttons
+        assert f"font-size: {t['fs_body']}px;" in buttons
+        assert "padding: 1px 6px;" in buttons
+        assert "min-height: 22px;" in buttons
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")

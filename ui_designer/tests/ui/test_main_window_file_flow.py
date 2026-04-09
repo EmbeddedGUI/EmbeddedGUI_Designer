@@ -6523,7 +6523,7 @@ class TestMainWindowFileFlow:
         assert window.page_tab_bar.accessibleName() == (
             "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. No dirty pages."
         )
-        assert window.page_tab_bar.height() == 34
+        assert window.page_tab_bar.height() == 30
         assert window.page_tab_bar.tabMaximumWidth() == 156
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
 
@@ -8686,7 +8686,7 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
         assert window._insert_widget_button.text() == "Add"
         assert window._insert_widget_button.width() == 52
-        assert window._insert_widget_button.height() == 26
+        assert window._insert_widget_button.height() == 24
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
@@ -8939,9 +8939,9 @@ class TestMainWindowFileFlow:
         assert window._toolbar_command_row_layout.spacing() == 2
         assert mode_host.layout().spacing() == 1
         assert window._mode_buttons["design"].width() == 52
-        assert window._mode_buttons["design"].height() == 26
-        assert separator.minimumHeight() == 22
-        assert separator.maximumHeight() == 22
+        assert window._mode_buttons["design"].height() == 24
+        assert separator.minimumHeight() == 20
+        assert separator.maximumHeight() == 20
         assert window._workspace_context_label.text() == "No project open"
         assert all(
             action.icon().isNull()
@@ -9138,7 +9138,7 @@ class TestMainWindowFileFlow:
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
         assert window._mode_buttons[MODE_DESIGN].width() == 52
-        assert window._mode_buttons[MODE_DESIGN].height() == 26
+        assert window._mode_buttons[MODE_DESIGN].height() == 24
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()

@@ -793,5 +793,6 @@ def _paint_icon(painter: QPainter, icon_key: str, rect: QRectF, palette: dict) -
         painter.drawLine(QPointF(rect.left() + 6, rect.center().y()), QPointF(rect.right() - 10, rect.center().y()))
     else:
         painter.drawRoundedRect(rect.adjusted(3, 3, -3, -3), 5, 5)
-        painter.setFont(QFont("Segoe UI", max(int(rect.height() * 0.44), 8), QFont.DemiBold))
+        from .theme import designer_ui_font
+        painter.setFont(designer_ui_font(point_size=max(int(rect.height() * 0.44), 8), weight=QFont.DemiBold))
         painter.drawText(rect, Qt.AlignCenter, "W")

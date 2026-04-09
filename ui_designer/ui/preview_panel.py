@@ -13,7 +13,7 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QPointF, QTimer, pyqtSignal, QRectF,
 from PyQt5.QtGui import QPainter, QPen, QColor, QFont, QBrush, QTransform, QPixmap, QImage, QRegion
 
 
-from .theme import designer_font_scale, scaled_point_size, theme_tokens
+from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size, theme_tokens
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_registry import WidgetRegistry
 from ..engine.python_renderer import render_page
@@ -299,14 +299,14 @@ class WidgetOverlay(QWidget):
     def _widget_label_font(self):
         point_size = self._widget_label_font_point_size()
         if self._label_font_cache is None or self._label_font_cache_pt != point_size:
-            self._label_font_cache = QFont("Segoe UI", point_size)
+            self._label_font_cache = designer_ui_font(point_size=point_size)
             self._label_font_cache_pt = point_size
         return self._label_font_cache
 
     def _coord_tooltip_font(self):
         point_size = self._coord_tooltip_font_point_size()
         if self._coord_font_cache is None or self._coord_font_cache_pt != point_size:
-            self._coord_font_cache = QFont("Consolas", point_size)
+            self._coord_font_cache = designer_monospace_font(point_size=point_size)
             self._coord_font_cache_pt = point_size
         return self._coord_font_cache
 

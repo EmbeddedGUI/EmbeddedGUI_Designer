@@ -60,7 +60,7 @@ from ..services.font_charset_presets import (
     suggest_charset_filename,
     summarize_charset_diff,
 )
-from .theme import designer_font_scale, scaled_point_size
+from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
 
 # -- Constants ----------------------------------------------------------
@@ -566,7 +566,7 @@ class _PreviewWidget(QWidget):
         painter.drawPixmap(x, y, scaled)
         text_x = x + scaled.width() + 8
         painter.setPen(QColor(200, 200, 200))
-        painter.setFont(QFont("Segoe UI", self._image_meta_font_point_size()))
+        painter.setFont(designer_ui_font(point_size=self._image_meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 8
         for line in self._meta_lines:
@@ -575,7 +575,7 @@ class _PreviewWidget(QWidget):
 
     def _paint_font(self, painter, w, h):
         painter.setPen(QColor(180, 180, 180))
-        painter.setFont(QFont("Segoe UI", self._meta_font_point_size()))
+        painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -594,7 +594,7 @@ class _PreviewWidget(QWidget):
 
     def _paint_text(self, painter, w, h):
         painter.setPen(QColor(180, 180, 180))
-        painter.setFont(QFont("Segoe UI", self._meta_font_point_size()))
+        painter.setFont(designer_ui_font(point_size=self._meta_font_point_size()))
         fm = painter.fontMetrics()
         ty = 4
         for line in self._meta_lines:
@@ -603,7 +603,7 @@ class _PreviewWidget(QWidget):
 
         preview_rect = QRect(8, ty + 6, max(w - 16, 0), max(h - ty - 12, 0))
         painter.setPen(QColor(220, 220, 220))
-        painter.setFont(QFont("Consolas", self._text_preview_font_point_size()))
+        painter.setFont(designer_monospace_font(point_size=self._text_preview_font_point_size()))
         painter.drawText(preview_rect, Qt.TextWordWrap | Qt.AlignTop | Qt.AlignLeft, "\n".join(self._text_lines))
 
 

@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .preview_panel import PreviewPanel
-from .theme import designer_font_size_pt, theme_tokens
+from .theme import designer_font_size_pt, designer_monospace_font, theme_tokens
 from .xml_highlighter import XmlSyntaxHighlighter
 
 
@@ -66,8 +66,7 @@ class XmlEditor(QPlainTextEdit):
         )
 
     def set_editor_font_size_pt(self, point_size):
-        font = QFont("Consolas", int(point_size))
-        font.setStyleHint(QFont.Monospace)
+        font = designer_monospace_font(point_size=int(point_size))
         self.setFont(font)
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
 
