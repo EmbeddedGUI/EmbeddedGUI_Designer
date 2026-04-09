@@ -6997,6 +6997,7 @@ class TestMainWindowFileFlow:
 
         assert reload_calls == []
         assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == (
             "External project changes detected: main_page.xml. Local unsaved changes remain: 1 page. "
             "Save or reload from disk to sync."
@@ -7036,6 +7037,7 @@ class TestMainWindowFileFlow:
         assert window._undo_manager.is_any_dirty() is False
         assert reload_calls == []
         assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == (
             "External project changes detected: main_page.xml. Local unsaved changes remain: project changes (startup page). "
             "Save or reload from disk to sync."
@@ -7081,6 +7083,7 @@ class TestMainWindowFileFlow:
 
         assert reload_calls == []
         assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == (
             "External project changes detected: main_page.xml. Local unsaved changes remain: "
             "1 page + project changes (startup page). Save or reload from disk to sync."
@@ -7120,10 +7123,97 @@ class TestMainWindowFileFlow:
 
         assert reload_calls == []
         assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == (
             "External project changes detected: main_page.xml. Reload will resume after background compile."
         )
         window._compile_worker = None
+        _close_window(window)
+
+    def test_pending_external_reload_preserves_changed_paths_until_dirty_clears(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingDirtyReloadResumeDemo"
+        project = _create_project(project_dir, "PendingDirtyReloadResumeDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._undo_manager.get_stack("main_page").push("<Page dirty='1' />")
+
+        reload_calls = []
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- resume dirty external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert reload_calls == []
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        window._undo_manager.mark_all_saved()
+        window._poll_project_files()
+
+        assert len(reload_calls) == 1
+        assert reload_calls[0]["auto"] is True
+        assert reload_calls[0]["changed_paths"] == [os.path.normpath(os.path.abspath(layout_file))]
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        _close_window(window)
+
+    def test_pending_external_reload_preserves_changed_paths_until_compile_finishes(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingCompileReloadResumeDemo"
+        project = _create_project(project_dir, "PendingCompileReloadResumeDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._compile_worker = _BusyWorker()
+
+        reload_calls = []
+
+        def _capture_reload(*args, **kwargs):
+            reload_calls.append(kwargs)
+            window._clear_external_reload_pending()
+            return True
+
+        monkeypatch.setattr(window, "_reload_project_from_disk", _capture_reload)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- resume compile external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert reload_calls == []
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        window._compile_worker = None
+        window._poll_project_files()
+
+        assert len(reload_calls) == 1
+        assert reload_calls[0]["auto"] is True
+        assert reload_calls[0]["changed_paths"] == [os.path.normpath(os.path.abspath(layout_file))]
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
         _close_window(window)
 
     def test_close_project_prompts_when_only_project_state_is_dirty(self, qapp, isolated_config, tmp_path, monkeypatch):

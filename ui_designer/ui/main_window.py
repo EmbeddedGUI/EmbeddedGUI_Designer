@@ -309,6 +309,7 @@ class MainWindow(QMainWindow):
         self._last_drag_geometry_refresh_ts = 0.0
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
+        self._external_reload_changed_paths = []
         self._pending_page_renames = {}
         self._project_dirty = False
         self._project_dirty_sources = []
@@ -2725,15 +2726,23 @@ class MainWindow(QMainWindow):
             summary += f" (+{remaining})"
         return summary
 
+    def _set_external_reload_pending(self, changed_paths=None):
+        self._external_reload_pending = True
+        self._external_reload_changed_paths = list(changed_paths or [])
+
+    def _clear_external_reload_pending(self):
+        self._external_reload_pending = False
+        self._external_reload_changed_paths = []
+
     def _refresh_project_watch_snapshot(self):
         if self.project is None or not self._project_dir:
             self._project_watch_timer.stop()
             self._project_watch_snapshot = {}
-            self._external_reload_pending = False
+            self._clear_external_reload_pending()
             return
 
         self._project_watch_snapshot = self._build_project_watch_snapshot()
-        self._external_reload_pending = False
+        self._clear_external_reload_pending()
         if not self._project_watch_timer.isActive():
             self._project_watch_timer.start()
 
@@ -2748,7 +2757,10 @@ class MainWindow(QMainWindow):
                 return
             if self._precompile_worker is not None and self._precompile_worker.isRunning():
                 return
-            self._reload_project_from_disk(auto=True)
+            self._reload_project_from_disk(
+                auto=True,
+                changed_paths=list(getattr(self, "_external_reload_changed_paths", []) or []),
+            )
             return
 
         new_snapshot = self._build_project_watch_snapshot()
@@ -2763,18 +2775,18 @@ class MainWindow(QMainWindow):
         summary = self._summarize_changed_paths(changed_paths)
 
         if self._has_unsaved_changes():
-            self._external_reload_pending = True
+            self._set_external_reload_pending(changed_paths)
             self.debug_panel.log_info(f"External project change detected while dirty: {summary or 'project files updated'}")
             self.statusBar().showMessage(self._external_reload_blocked_text(summary), 5000)
             return
 
         if self._compile_worker is not None and self._compile_worker.isRunning():
-            self._external_reload_pending = True
+            self._set_external_reload_pending(changed_paths)
             self.statusBar().showMessage(self._external_reload_compile_wait_text(summary), 4000)
             return
 
         if self._precompile_worker is not None and self._precompile_worker.isRunning():
-            self._external_reload_pending = True
+            self._set_external_reload_pending(changed_paths)
             self.statusBar().showMessage(self._external_reload_compile_wait_text(summary), 4000)
             return
 
@@ -2801,7 +2813,7 @@ class MainWindow(QMainWindow):
         try:
             project = Project.load(self._project_dir)
         except Exception as exc:
-            self._external_reload_pending = True
+            self._set_external_reload_pending(changed_paths or getattr(self, "_external_reload_changed_paths", []))
             self.debug_panel.log_error(f"Project reload failed: {exc}")
             self._show_bottom_panel("Debug Output")
             if auto:
@@ -2828,7 +2840,7 @@ class MainWindow(QMainWindow):
         self.preview_panel.stop_rendering()
         self._last_runtime_error_text = ""
         self._project_watch_snapshot = {}
-        self._external_reload_pending = False
+        self._clear_external_reload_pending()
         self._pending_page_renames = {}
         self._clear_project_dirty()
         self._active_batch_source = ""
@@ -4556,7 +4568,7 @@ class MainWindow(QMainWindow):
         self._cleanup_compiler(stop_exe=True)
 
         self._project_watch_snapshot = {}
-        self._external_reload_pending = False
+        self._clear_external_reload_pending()
         self.project = None
         self._project_dir = None
         WidgetRegistry.instance().clear_app_local_widgets()
