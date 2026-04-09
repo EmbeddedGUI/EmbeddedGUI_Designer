@@ -199,17 +199,84 @@ class TestProjectWorkspacePanel:
 
         panel = ProjectWorkspacePanel(QWidget(), QWidget())
 
-        panel.set_workspace_snapshot(page_count=2, active_page="main_page", startup_page="detail_page", dirty_pages=0, project_dirty=True)
+        panel.set_workspace_snapshot(
+            page_count=2,
+            active_page="main_page",
+            startup_page="detail_page",
+            dirty_pages=0,
+            project_dirty=True,
+            project_dirty_reason="startup page",
+        )
 
-        assert panel._dirty_chip.text() == "Project changes pending"
-        assert panel._dirty_chip.accessibleName() == "Dirty state: Project changes pending."
-        assert panel._summary_label.text() == "2 pages. Active: main_page. Project changes pending."
-        assert panel._summary_label.accessibleName() == "Pages summary: 2 pages. Active: main_page. Project changes pending."
-        assert panel._metrics_frame.accessibleName() == "Project workspace metrics: 2 pages. Project changes pending."
+        assert panel._dirty_chip.text() == "Project changes pending (startup page)"
+        assert panel._dirty_chip.accessibleName() == "Dirty state: Project changes pending (startup page)."
+        assert panel._summary_label.text() == "2 pages. Active: main_page. Project changes pending (startup page)."
+        assert panel._summary_label.accessibleName() == (
+            "Pages summary: 2 pages. Active: main_page. Project changes pending (startup page)."
+        )
+        assert panel._metrics_frame.accessibleName() == (
+            "Project workspace metrics: 2 pages. Project changes pending (startup page)."
+        )
         assert panel.accessibleName() == (
             "Project workspace: List view. Pages: 2 pages. Active page: main_page. Startup page: detail_page. "
-            "Dirty state: Project changes pending."
+            "Dirty state: Project changes pending (startup page)."
         )
+        panel.deleteLater()
+
+    def test_workspace_snapshot_reports_project_level_and_page_dirty_reason_summary(self, qapp):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+
+        panel.set_workspace_snapshot(
+            page_count=3,
+            active_page="detail_page",
+            startup_page="detail_page",
+            dirty_pages=2,
+            project_dirty=True,
+            project_dirty_reason="startup page, page mode (+1)",
+        )
+
+        assert panel._dirty_chip.text() == "2 dirty pages + project changes (startup page, page mode (+1))"
+        assert panel._summary_label.text() == (
+            "3 pages. Active: detail_page. 2 dirty pages + project changes (startup page, page mode (+1))."
+        )
+        assert panel._metrics_frame.accessibleName() == (
+            "Project workspace metrics: 3 pages. 2 dirty pages + project changes (startup page, page mode (+1))."
+        )
+        assert panel.accessibleName() == (
+            "Project workspace: List view. Pages: 3 pages. Active page: detail_page. Startup page: detail_page. "
+            "Dirty state: 2 dirty pages + project changes (startup page, page mode (+1))."
+        )
+        panel.deleteLater()
+
+    def test_workspace_snapshot_refreshes_when_project_dirty_reason_changes(self, qapp, monkeypatch):
+        from ui_designer.ui.project_workspace import ProjectWorkspacePanel
+
+        panel = ProjectWorkspacePanel(QWidget(), QWidget())
+        metadata_updates = 0
+        original_update_panel_metadata = panel._update_panel_metadata
+
+        def counted_update_panel_metadata():
+            nonlocal metadata_updates
+            metadata_updates += 1
+            return original_update_panel_metadata()
+
+        monkeypatch.setattr(panel, "_update_panel_metadata", counted_update_panel_metadata)
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", project_dirty=True, project_dirty_reason="startup page")
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(page_count=2, active_page="main_page", project_dirty=True, project_dirty_reason="startup page")
+        assert metadata_updates == 1
+
+        panel.set_workspace_snapshot(
+            page_count=2,
+            active_page="main_page",
+            project_dirty=True,
+            project_dirty_reason="startup page, resources",
+        )
+        assert metadata_updates == 2
         panel.deleteLater()
 
     def test_panel_metadata_helper_skips_no_op_tooltip_rewrites(self, qapp, monkeypatch):

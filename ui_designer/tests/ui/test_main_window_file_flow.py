@@ -5216,9 +5216,13 @@ class TestMainWindowFileFlow:
         window._on_startup_changed("detail_page")
 
         assert window._undo_manager.is_any_dirty() is False
-        assert window._close_project_action.toolTip() == "Close the current project (Ctrl+W). Unsaved changes: project changes."
+        assert window._close_project_action.toolTip() == (
+            "Close the current project (Ctrl+W). Unsaved changes: project changes (startup page)."
+        )
         assert window._close_project_action.statusTip() == window._close_project_action.toolTip()
-        assert window._quit_action.toolTip() == "Quit EmbeddedGUI Designer (Ctrl+Q). Project: open. Unsaved changes: project changes."
+        assert window._quit_action.toolTip() == (
+            "Quit EmbeddedGUI Designer (Ctrl+Q). Project: open. Unsaved changes: project changes (startup page)."
+        )
         _close_window(window)
 
     def test_duplicate_page_copies_existing_page_content(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -7078,14 +7082,95 @@ class TestMainWindowFileFlow:
 
         assert window._undo_manager.is_any_dirty() is False
         assert window.page_tab_bar.accessibleName() == (
-            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. Project changes pending."
+            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. "
+            "Project changes pending (startup page)."
         )
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
-        assert window._project_workspace._dirty_chip.text() == "Project changes pending"
-        assert window._project_workspace._summary_label.text() == "2 pages. Active: detail_page. Project changes pending."
+        assert window._project_workspace._dirty_chip.text() == "Project changes pending (startup page)"
+        assert window._project_workspace._summary_label.text() == (
+            "2 pages. Active: detail_page. Project changes pending (startup page)."
+        )
         assert window._project_workspace.accessibleName() == (
             "Project workspace: List view. Pages: 2 pages. Active page: detail_page. Startup page: detail_page. "
-            "Dirty state: Project changes pending."
+            "Dirty state: Project changes pending (startup page)."
+        )
+        _close_window(window)
+
+    def test_project_dirty_reasons_accumulate_in_hints_and_workspace(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ProjectDirtyReasonsDemo"
+        project = _create_project(project_dir, "ProjectDirtyReasonsDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        window._on_startup_changed("detail_page")
+        window._on_page_mode_changed("activity")
+        window._mark_project_dirty("resources")
+
+        assert window._undo_manager.is_any_dirty() is False
+        assert window._project_dirty_reason_text() == "startup page, page mode (+1)"
+        assert window._save_action.toolTip() == (
+            "Save the current project (Ctrl+S). "
+            f"Unsaved changes: project changes (startup page, page mode (+1)). Target: {window._project_dir}."
+        )
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. "
+            "Project changes pending (startup page, page mode (+1))."
+        )
+        assert window._project_workspace._dirty_chip.text() == (
+            "Project changes pending (startup page, page mode (+1))"
+        )
+        assert window._project_workspace._summary_label.text() == (
+            "2 pages. Active: detail_page. Project changes pending (startup page, page mode (+1))."
+        )
+        _close_window(window)
+
+    def test_dirty_page_and_project_reason_are_combined_in_unsaved_change_hints(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DirtyPageAndProjectReasonDemo"
+        project = _create_project(project_dir, "DirtyPageAndProjectReasonDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        stack = window._undo_manager.get_stack("detail_page")
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_window_title()
+
+        window._on_startup_changed("detail_page")
+
+        assert window._save_action.toolTip() == (
+            "Save the current project (Ctrl+S). "
+            f"Unsaved changes: 1 page + project changes (startup page). Target: {window._project_dir}."
+        )
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. "
+            "1 dirty page + project changes (startup page)."
+        )
+        assert window._project_workspace._dirty_chip.text() == "1 dirty page + project changes (startup page)"
+        assert window._project_workspace._summary_label.text() == (
+            "2 pages. Active: detail_page. 1 dirty page + project changes (startup page)."
         )
         _close_window(window)
 
@@ -9942,12 +10027,11 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
 
         window._on_startup_changed("detail_page")
-        window._update_toolbar_action_metadata()
 
         assert window._undo_manager.is_any_dirty() is False
         assert window._save_action.toolTip() == (
             "Save the current project (Ctrl+S). "
-            f"Unsaved changes: project changes. Target: {window._project_dir}."
+            f"Unsaved changes: project changes (startup page). Target: {window._project_dir}."
         )
         assert window._save_action.statusTip() == window._save_action.toolTip()
         _close_window(window)

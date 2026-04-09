@@ -311,6 +311,7 @@ class MainWindow(QMainWindow):
         self._external_reload_pending = False
         self._pending_page_renames = {}
         self._project_dirty = False
+        self._project_dirty_sources = []
         self._last_runtime_error_text = ""
 
         self._project_watch_timer = QTimer(self)
@@ -1200,22 +1201,41 @@ class MainWindow(QMainWindow):
     def _has_unsaved_changes(self):
         return self._has_unsaved_page_changes() or bool(getattr(self, "_project_dirty", False))
 
+    def _project_dirty_reason_text(self, max_items=2):
+        reasons = list(getattr(self, "_project_dirty_sources", []) or [])
+        if not reasons:
+            return ""
+        labels = reasons[:max_items]
+        remaining = len(reasons) - len(labels)
+        summary = ", ".join(labels)
+        if remaining > 0:
+            summary += f" (+{remaining})"
+        return summary
+
+    def _project_dirty_suffix(self):
+        reason_text = self._project_dirty_reason_text()
+        return f" ({reason_text})" if reason_text else ""
+
     def _unsaved_changes_hint_text(self):
         dirty_label = self._dirty_page_label()
         if not getattr(self, "_project_dirty", False):
             return f"Unsaved pages: {dirty_label}."
         if dirty_label == "none":
-            return "Unsaved changes: project changes."
-        return f"Unsaved changes: {dirty_label} + project changes."
+            return f"Unsaved changes: project changes{self._project_dirty_suffix()}."
+        return f"Unsaved changes: {dirty_label} + project changes{self._project_dirty_suffix()}."
 
-    def _mark_project_dirty(self):
+    def _mark_project_dirty(self, source=""):
         if self.project is None:
             return
         self._project_dirty = True
+        source = str(source or "").strip()
+        if source and source not in self._project_dirty_sources:
+            self._project_dirty_sources.append(source)
         self._update_window_title()
 
     def _clear_project_dirty(self):
         self._project_dirty = False
+        self._project_dirty_sources = []
 
     def _update_file_open_action_metadata(self, binding_label=""):
         open_app_action = getattr(self, "_open_app_action", None)
@@ -1847,13 +1867,14 @@ class MainWindow(QMainWindow):
         startup_page = startup_value if any(getattr(page, "name", None) == startup_value for page in project_pages) else "none"
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         dirty_count = len(dirty_pages)
+        project_dirty_suffix = self._project_dirty_suffix()
         if dirty_count == 0 and not self._project_dirty:
             dirty_label = "No dirty pages"
         elif dirty_count == 0:
-            dirty_label = "Project changes pending"
+            dirty_label = f"Project changes pending{project_dirty_suffix}"
         elif self._project_dirty:
             page_dirty_label = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
-            dirty_label = f"{page_dirty_label} + project changes"
+            dirty_label = f"{page_dirty_label} + project changes{project_dirty_suffix}"
         else:
             dirty_label = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
         summary = f"Page tabs: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
@@ -2054,6 +2075,7 @@ class MainWindow(QMainWindow):
                 startup_page=startup_page_name,
                 dirty_pages=dirty_count,
                 project_dirty=self._project_dirty,
+                project_dirty_reason=self._project_dirty_reason_text(),
             )
         self._update_workspace_context_label(page_count=page_count)
         self._update_status_bar_summary()
@@ -2779,7 +2801,7 @@ class MainWindow(QMainWindow):
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._pending_page_renames = {}
-        self._project_dirty = False
+        self._clear_project_dirty()
         self._active_batch_source = ""
         self._selected_widget = None
         self._selection_state.clear()
@@ -2827,7 +2849,7 @@ class MainWindow(QMainWindow):
         self.app_name = project.app_name
         self._undo_manager = UndoManager()
         self._pending_page_renames = {}
-        self._project_dirty = False
+        self._clear_project_dirty()
         self._recreate_compiler()
         self._show_editor()
         self._clear_editor_state()
@@ -3957,6 +3979,7 @@ class MainWindow(QMainWindow):
         self._update_file_open_action_metadata()
         self._update_file_project_action_metadata()
         self._update_file_menu_metadata()
+        self._update_toolbar_action_metadata()
 
     def _update_history_panel(self):
         if self._current_page is None:
@@ -4857,13 +4880,13 @@ class MainWindow(QMainWindow):
     def _on_resource_renamed(self, res_type, old_name, new_name):
         """Update widget references after a resource file was renamed."""
         touched_pages = self._rewrite_resource_references(res_type, old_name, new_name)
-        self._mark_project_dirty()
+        self._mark_project_dirty("resources")
         self._finalize_resource_reference_change(touched_pages, source=f"{res_type} resource rename")
 
     def _on_resource_deleted(self, res_type, filename):
         """Clear widget references after a resource file was deleted."""
         touched_pages = self._rewrite_resource_references(res_type, filename, "")
-        self._mark_project_dirty()
+        self._mark_project_dirty("resources")
         self._finalize_resource_reference_change(touched_pages, source=f"{res_type} resource delete")
 
     def _on_string_key_deleted(self, key, replacement_text):
@@ -4873,7 +4896,7 @@ class MainWindow(QMainWindow):
             key,
             replacement_text=replacement_text,
         )
-        self._mark_project_dirty()
+        self._mark_project_dirty("strings")
         self._finalize_resource_reference_change(touched_pages, source="string key delete")
 
     def _on_string_key_renamed(self, old_key, new_key):
@@ -4883,7 +4906,7 @@ class MainWindow(QMainWindow):
             old_key,
             new_key=new_key,
         )
-        self._mark_project_dirty()
+        self._mark_project_dirty("strings")
         self._finalize_resource_reference_change(touched_pages, source="string key rename")
 
     def _on_resource_imported(self):
@@ -4899,7 +4922,7 @@ class MainWindow(QMainWindow):
         self._update_resource_usage_panel()
         self._update_diagnostics_panel()
         self._resources_need_regen = True
-        self._mark_project_dirty()
+        self._mark_project_dirty("resources")
         # Auto-trigger resource generation with debounce
         self._refresh_project_watch_snapshot()
         self._regen_timer.start()
@@ -5410,7 +5433,7 @@ class MainWindow(QMainWindow):
         self._refresh_page_navigator()
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
-        self._mark_project_dirty()
+        self._mark_project_dirty("pages")
         self._trigger_compile()
 
     def _on_page_duplicated(self, source_name, page_name):
@@ -5422,6 +5445,7 @@ class MainWindow(QMainWindow):
         self._refresh_page_navigator()
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
+        self._mark_project_dirty("pages")
         self._trigger_compile()
 
     def _on_page_removed(self, page_name):
@@ -5456,7 +5480,7 @@ class MainWindow(QMainWindow):
                 self.project_dock.set_current_page(self._current_page.name)
                 self.page_navigator.set_current_page(self._current_page.name)
                 self._update_preview_overlay()
-            self._mark_project_dirty()
+            self._mark_project_dirty("pages")
             self._trigger_compile()
             self._update_window_title()
             self._update_edit_actions()
@@ -5477,7 +5501,7 @@ class MainWindow(QMainWindow):
             self.project_dock.set_project(self.project)
             self._refresh_page_navigator()
             self._rename_page_tab(old_name, new_name)
-            self._mark_project_dirty()
+            self._mark_project_dirty("page rename")
             if was_current:
                 self._switch_page(new_name)
             elif self._current_page:
@@ -5587,6 +5611,7 @@ class MainWindow(QMainWindow):
         self._refresh_page_navigator()
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
+        self._mark_project_dirty("pages")
 
     def _on_startup_changed(self, page_name):
         """User changed the startup page."""
@@ -5596,14 +5621,14 @@ class MainWindow(QMainWindow):
             self.page_navigator.set_startup_page(page_name)
             self._update_page_tab_bar_metadata()
             self._update_workspace_chips()
-            self._mark_project_dirty()
+            self._mark_project_dirty("startup page")
             self._trigger_compile()
 
     def _on_page_mode_changed(self, mode):
         """User switched between easy_page and activity mode."""
         if self.project and self.project.page_mode != mode:
             self.project.page_mode = mode
-            self._mark_project_dirty()
+            self._mark_project_dirty("page mode")
             self._trigger_compile()
 
     # 鈹€鈹€ Page tabs (qfluentwidgets TabBar) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
