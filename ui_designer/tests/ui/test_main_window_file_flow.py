@@ -6385,9 +6385,9 @@ class TestMainWindowFileFlow:
         assert window._toolbar_command_row_layout.spacing() == 2
         assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (2, 2, 2, 2)
         assert window._workspace_nav_frame.width() == 116
-        assert window.project_dock.minimumWidth() == 172
-        assert window._left_panel_stack.minimumWidth() == 172
-        assert window._left_shell.minimumWidth() == 290
+        assert window.project_dock.minimumWidth() == 256
+        assert window._left_panel_stack.minimumWidth() == 256
+        assert window._left_shell.minimumWidth() == 374
         assert window._left_shell.layout().spacing() == 2
         assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 2
@@ -9322,9 +9322,9 @@ class TestMainWindowFileFlow:
         assert window._bottom_toggle_button.height() == 22
         assert window._workspace_nav_frame.width() == 116
         assert window._workspace_nav_frame.layout().spacing() == 2
-        assert window.project_dock.minimumWidth() == 172
-        assert window._left_panel_stack.minimumWidth() == 172
-        assert window._left_shell.minimumWidth() == 290
+        assert window.project_dock.minimumWidth() == 256
+        assert window._left_panel_stack.minimumWidth() == 256
+        assert window._left_shell.minimumWidth() == 374
         project_button = window._workspace_nav_buttons["project"]
         assert project_button.sizePolicy().horizontalPolicy() == QSizePolicy.Fixed
         assert project_button.sizePolicy().verticalPolicy() == QSizePolicy.Fixed

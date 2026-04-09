@@ -139,8 +139,8 @@ INSPECTOR_SCROLL_MIN_WIDTH = 264
 WORKSPACE_NAV_RAIL_WIDTH = 116
 WORKSPACE_NAV_BUTTON_WIDTH = 112
 WORKSPACE_NAV_BUTTON_HEIGHT = 24
-LEFT_PANEL_STACK_MIN_WIDTH = 172
-LEFT_PANEL_DEFAULT_WIDTH = 236
+LEFT_PANEL_STACK_MIN_WIDTH = 256
+LEFT_PANEL_DEFAULT_WIDTH = 376
 CENTER_PANEL_DEFAULT_WIDTH = 860
 INSPECTOR_PANEL_DEFAULT_WIDTH = 264
 WORKSPACE_TOP_VISIBLE_HEIGHT = 860
@@ -437,6 +437,7 @@ class MainWindow(QMainWindow):
             "assets": self.res_panel,
         }
         for panel in self._left_panel_pages.values():
+            panel.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
             self._left_panel_stack.addWidget(panel)
 
         self._workspace_nav_buttons = {}
