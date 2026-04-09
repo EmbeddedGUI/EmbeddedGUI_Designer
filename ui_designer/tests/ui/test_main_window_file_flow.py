@@ -7058,6 +7058,37 @@ class TestMainWindowFileFlow:
         assert reloaded.startup_page == "detail_page"
         _close_window(window)
 
+    def test_project_level_changes_update_page_tab_and_workspace_summaries(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ProjectDirtySummaryDemo"
+        project = _create_project(project_dir, "ProjectDirtySummaryDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        window._on_startup_changed("detail_page")
+
+        assert window._undo_manager.is_any_dirty() is False
+        assert window.page_tab_bar.accessibleName() == (
+            "Page tabs: 2 open pages. Current page: detail_page. Startup page: detail_page. Project changes pending."
+        )
+        assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
+        assert window._project_workspace._dirty_chip.text() == "Project changes pending"
+        assert window._project_workspace._summary_label.text() == "2 pages. Active: detail_page. Project changes pending."
+        assert window._project_workspace.accessibleName() == (
+            "Project workspace: List view. Pages: 2 pages. Active page: detail_page. Startup page: detail_page. "
+            "Dirty state: Project changes pending."
+        )
+        _close_window(window)
+
     def test_reload_project_from_disk_preserves_current_page(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow

@@ -1847,11 +1847,15 @@ class MainWindow(QMainWindow):
         startup_page = startup_value if any(getattr(page, "name", None) == startup_value for page in project_pages) else "none"
         dirty_pages = set(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else set()
         dirty_count = len(dirty_pages)
-        dirty_label = (
-            "No dirty pages"
-            if dirty_count == 0
-            else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
-        )
+        if dirty_count == 0 and not self._project_dirty:
+            dirty_label = "No dirty pages"
+        elif dirty_count == 0:
+            dirty_label = "Project changes pending"
+        elif self._project_dirty:
+            page_dirty_label = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
+            dirty_label = f"{page_dirty_label} + project changes"
+        else:
+            dirty_label = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
         summary = f"Page tabs: {page_label}. Current page: {current_page}. Startup page: {startup_page}. {dirty_label}."
         if getattr(self, "_page_tab_bar_metadata_snapshot", None) == summary:
             return
@@ -2049,6 +2053,7 @@ class MainWindow(QMainWindow):
                 active_page=active_page_name,
                 startup_page=startup_page_name,
                 dirty_pages=dirty_count,
+                project_dirty=self._project_dirty,
             )
         self._update_workspace_context_label(page_count=page_count)
         self._update_status_bar_summary()

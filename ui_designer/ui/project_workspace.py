@@ -52,6 +52,7 @@ class ProjectWorkspacePanel(QWidget):
         self._current_active_page = ""
         self._current_startup_page = ""
         self._current_dirty_pages = 0
+        self._has_project_dirty = False
         self._current_view_name = ""
         self._workspace_snapshot_initialized = False
         self._init_ui()
@@ -169,15 +170,31 @@ class ProjectWorkspacePanel(QWidget):
         active_text = self._current_active_page or "none"
         startup_text = self._current_startup_page or "none"
         dirty_count = int(self._current_dirty_pages or 0)
-        dirty_text = "No dirty pages" if dirty_count == 0 else (f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages")
-        summary_dirty_text = "Clean" if dirty_count == 0 else dirty_text
+        has_project_dirty = bool(self._has_project_dirty)
+        if dirty_count == 0 and not has_project_dirty:
+            dirty_text = "No dirty pages"
+            summary_dirty_text = "Clean"
+            chip_text = "Clean"
+        elif dirty_count == 0:
+            dirty_text = "Project changes pending"
+            summary_dirty_text = dirty_text
+            chip_text = dirty_text
+        elif has_project_dirty:
+            dirty_pages_text = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
+            dirty_text = f"{dirty_pages_text} + project changes"
+            summary_dirty_text = dirty_text
+            chip_text = dirty_text
+        else:
+            dirty_text = f"{dirty_count} dirty page" if dirty_count == 1 else f"{dirty_count} dirty pages"
+            summary_dirty_text = dirty_text
+            chip_text = dirty_text
         summary = (
             f"Project workspace: {view_label}. "
             f"Pages: {page_label}. Active page: {active_text}. Startup page: {startup_text}. Dirty state: {dirty_text}."
         )
         self._view_chip.setText(view_label)
         self._page_count_chip.setText(page_label)
-        self._dirty_chip.setText("Clean" if dirty_count == 0 else dirty_text)
+        self._dirty_chip.setText(chip_text)
         self._summary_label.setText(f"{page_label}. Active: {active_text}. {summary_dirty_text}.")
         self._meta_label.setText(f"Startup: {startup_text}")
 
@@ -298,9 +315,10 @@ class ProjectWorkspacePanel(QWidget):
             return self.VIEW_THUMBNAILS
         return self.VIEW_LIST
 
-    def set_workspace_snapshot(self, *, page_count=0, active_page="", startup_page="", dirty_pages=0):
+    def set_workspace_snapshot(self, *, page_count=0, active_page="", startup_page="", dirty_pages=0, project_dirty=False):
         pages = max(int(page_count or 0), 0)
         dirty = max(int(dirty_pages or 0), 0)
+        has_project_dirty = bool(project_dirty)
         active = str(active_page or "").strip() or "None"
         startup = str(startup_page or "").strip() or "None"
         normalized_active = "" if active == "None" else active
@@ -311,11 +329,13 @@ class ProjectWorkspacePanel(QWidget):
             and self._current_active_page == normalized_active
             and self._current_startup_page == normalized_startup
             and self._current_dirty_pages == dirty
+            and self._has_project_dirty == has_project_dirty
         ):
             return
         self._current_page_count = pages
         self._current_active_page = normalized_active
         self._current_startup_page = normalized_startup
         self._current_dirty_pages = dirty
+        self._has_project_dirty = has_project_dirty
         self._workspace_snapshot_initialized = True
         self._update_panel_metadata()
