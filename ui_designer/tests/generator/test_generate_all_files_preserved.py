@@ -418,3 +418,52 @@ class TestMultiPageProject:
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
         assert "page_a.c" not in result     # existing → not overwritten
         assert "page_b.c" in result          # new → skeleton created
+def test_multi_page_mixed_user_owned_files_preserve_existing_and_create_missing(tmp_path):
+    root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
+    page2 = Page(file_path="layout/detail_page.xml", root_widget=root2)
+
+    proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
+    proj.add_page(page1)
+    proj.add_page(page2)
+
+    (tmp_path / "main_page.c").write_text("/* keep main user source */\n", encoding="utf-8")
+    (tmp_path / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
+
+    result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
+    assert "main_page.c" not in result
+    assert "detail_page_ext.h" not in result
+    assert "main_page_ext.h" in result
+    assert "detail_page.c" in result
+
+
+def test_multi_page_migrates_only_missing_ext_header_from_legacy_header(tmp_path):
+    root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
+    page2 = Page(file_path="layout/detail_page.xml", root_widget=root2)
+
+    proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
+    proj.add_page(page1)
+    proj.add_page(page2)
+
+    (tmp_path / "main_page.h").write_text(
+        (
+            "#ifndef _MAIN_PAGE_H_\n"
+            "#define _MAIN_PAGE_H_\n"
+            "// USER CODE BEGIN declarations\n"
+            "void main_page_extra(void);\n"
+            "// USER CODE END declarations\n"
+            "#endif\n"
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
+
+    result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
+    assert "main_page_ext.h" in result
+    assert "void main_page_extra(void);" in result["main_page_ext.h"]
+    assert "detail_page_ext.h" not in result

@@ -2890,6 +2890,39 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_export_code_multi_page_mixed_directory_preserves_existing_and_generates_missing(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ExportMultiMixedDemo"
+        export_dir = tmp_path / "export_multi_mixed_out"
+        export_dir.mkdir()
+        project = _create_project(project_dir, "ExportMultiMixedDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        (export_dir / "main_page.c").write_text("/* keep main page user */\n", encoding="utf-8")
+        (export_dir / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._export_code()
+
+        assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep main page user */\n"
+        assert (export_dir / "detail_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_DETAIL_EXT 1\n"
+        assert (export_dir / "main_page_ext.h").is_file()
+        assert (export_dir / "detail_page.c").is_file()
+        assert (export_dir / "detail_page.h").is_file()
+        assert (export_dir / "detail_page_layout.c").is_file()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_set_sdk_root_updates_current_project_and_rebuilds_compiler(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
