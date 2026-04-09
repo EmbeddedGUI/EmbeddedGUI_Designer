@@ -5077,6 +5077,34 @@ class TestMainWindowFileFlow:
         window._regen_timer.stop()
         _close_window(window)
 
+    def test_ensure_resources_generated_reruns_when_output_bin_is_missing(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        output_bin = sdk_root / "output" / "app_egui_resource_merge.bin"
+        output_bin.parent.mkdir(parents=True, exist_ok=True)
+
+        window = MainWindow(str(sdk_root))
+        calls = []
+
+        def _fake_run_resource_generation(*, silent=False):
+            calls.append(silent)
+            output_bin.write_bytes(b"")
+            return True
+
+        monkeypatch.setattr(window, "_run_resource_generation", _fake_run_resource_generation)
+
+        window._resources_need_regen = False
+        if output_bin.exists():
+            output_bin.unlink()
+
+        window._ensure_resources_generated()
+
+        assert calls == [True]
+        assert output_bin.exists() is True
+        _close_window(window)
+
     def test_property_panel_callback_edit_updates_widget_and_dirty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

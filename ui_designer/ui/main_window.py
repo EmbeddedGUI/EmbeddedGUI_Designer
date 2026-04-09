@@ -5045,7 +5045,9 @@ class MainWindow(QMainWindow):
         Skips entirely when resources haven't changed since last generation.
         Runs silently 鈥?errors are logged to debug panel only.
         """
-        if not self._resources_need_regen:
+        output_resource_bin = os.path.join(self.project_root, "output", "app_egui_resource_merge.bin") if self.project_root else ""
+        resource_output_missing = bool(output_resource_bin) and not os.path.exists(output_resource_bin)
+        if not self._resources_need_regen and not resource_output_missing:
             return
         self._run_resource_generation(silent=True)
 

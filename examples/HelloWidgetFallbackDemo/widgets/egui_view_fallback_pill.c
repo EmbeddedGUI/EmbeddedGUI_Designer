@@ -3,10 +3,12 @@
 #include "background/egui_background_color.h"
 
 EGUI_BACKGROUND_COLOR_PARAM_INIT_ROUND_RECTANGLE_STROKE(bg_fallback_pill_idle_param, EGUI_COLOR_LIGHT_GREY, EGUI_ALPHA_100, 18, 1, EGUI_COLOR_DARK_GREY, EGUI_ALPHA_100);
-EGUI_BACKGROUND_COLOR_STATIC_CONST_INIT(bg_fallback_pill_idle, (const egui_background_params_t *)&bg_fallback_pill_idle_param);
+EGUI_BACKGROUND_PARAM_INIT(bg_fallback_pill_idle_params, &bg_fallback_pill_idle_param, NULL, NULL);
+EGUI_BACKGROUND_COLOR_STATIC_CONST_INIT(bg_fallback_pill_idle, &bg_fallback_pill_idle_params);
 
 EGUI_BACKGROUND_COLOR_PARAM_INIT_ROUND_RECTANGLE_STROKE(bg_fallback_pill_emphasis_param, EGUI_COLOR_BLUE, EGUI_ALPHA_100, 18, 1, EGUI_COLOR_NAVY, EGUI_ALPHA_100);
-EGUI_BACKGROUND_COLOR_STATIC_CONST_INIT(bg_fallback_pill_emphasis, (const egui_background_params_t *)&bg_fallback_pill_emphasis_param);
+EGUI_BACKGROUND_PARAM_INIT(bg_fallback_pill_emphasis_params, &bg_fallback_pill_emphasis_param, NULL, NULL);
+EGUI_BACKGROUND_COLOR_STATIC_CONST_INIT(bg_fallback_pill_emphasis, &bg_fallback_pill_emphasis_params);
 
 static void egui_view_fallback_pill_apply_emphasis(egui_view_t *self, uint8_t emphasis)
 {
