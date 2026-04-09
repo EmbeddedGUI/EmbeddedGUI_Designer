@@ -7216,6 +7216,81 @@ class TestMainWindowFileFlow:
         assert window._external_reload_changed_paths == []
         _close_window(window)
 
+    def test_save_project_clears_pending_external_reload_state(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveClearsPendingReloadDemo"
+        project = _create_project(project_dir, "SaveClearsPendingReloadDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._undo_manager.get_stack("main_page").push("<Page dirty='1' />")
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- save clears pending external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        assert window._save_project() is True
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        _close_window(window)
+
+    def test_pending_external_reload_retries_with_same_changed_paths_after_reload_failure(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.project import Project
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingReloadFailureRetryDemo"
+        project = _create_project(project_dir, "PendingReloadFailureRetryDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._compile_worker = _BusyWorker()
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- reload failure retry external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        window._compile_worker = None
+        original_load = Project.load
+        monkeypatch.setattr("ui_designer.ui.main_window.Project.load", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+
+        assert window._poll_project_files() is None
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+        assert window.statusBar().currentMessage() == "Project reload failed: boom"
+
+        monkeypatch.setattr("ui_designer.ui.main_window.Project.load", original_load)
+
+        assert window._poll_project_files() is None
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        assert window.statusBar().currentMessage() == "Reloaded external changes: main_page.xml"
+        _close_window(window)
+
     def test_close_project_prompts_when_only_project_state_is_dirty(self, qapp, isolated_config, tmp_path, monkeypatch):
         from PyQt5.QtWidgets import QMessageBox
         from ui_designer.ui.main_window import MainWindow
