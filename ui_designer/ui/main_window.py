@@ -310,6 +310,7 @@ class MainWindow(QMainWindow):
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._pending_page_renames = {}
+        self._project_dirty = False
         self._last_runtime_error_text = ""
 
         self._project_watch_timer = QTimer(self)
@@ -1073,7 +1074,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_file_menu"):
             return
         project_state = "open" if getattr(self, "project", None) is not None else "none"
-        dirty_state = "present" if hasattr(self, "_undo_manager") and self._undo_manager.is_any_dirty() else "none"
+        dirty_state = "present" if self._has_unsaved_changes() else "none"
         reload_state = "available" if getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)() else "unavailable"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
@@ -1166,9 +1167,7 @@ class MainWindow(QMainWindow):
                 if attr_name == "_save_as_action":
                     hint = f"{base_text} Default parent: {self._default_save_project_as_dir()}."
                 elif attr_name == "_close_project_action":
-                    dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
-                    dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
-                    hint = f"{base_text} Unsaved pages: {dirty_label}."
+                    hint = f"{base_text} {self._unsaved_changes_hint_text()}"
                 elif attr_name == "_export_action":
                     hint = f"{base_text} Default export directory: {self._default_export_code_dir()}."
                 else:
@@ -1182,13 +1181,41 @@ class MainWindow(QMainWindow):
         action = getattr(self, "_quit_action", None)
         if action is None:
             return
-        dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
-        dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
         project_state = "open" if getattr(self, "project", None) is not None else "none"
         self._apply_action_hint(
             action,
-            f"Quit EmbeddedGUI Designer (Ctrl+Q). Project: {project_state}. Unsaved pages: {dirty_label}.",
+            f"Quit EmbeddedGUI Designer (Ctrl+Q). Project: {project_state}. {self._unsaved_changes_hint_text()}",
         )
+
+    def _dirty_page_count(self):
+        return len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
+
+    def _dirty_page_label(self):
+        dirty_count = self._dirty_page_count()
+        return "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
+
+    def _has_unsaved_page_changes(self):
+        return hasattr(self, "_undo_manager") and self._undo_manager.is_any_dirty()
+
+    def _has_unsaved_changes(self):
+        return self._has_unsaved_page_changes() or bool(getattr(self, "_project_dirty", False))
+
+    def _unsaved_changes_hint_text(self):
+        dirty_label = self._dirty_page_label()
+        if not getattr(self, "_project_dirty", False):
+            return f"Unsaved pages: {dirty_label}."
+        if dirty_label == "none":
+            return "Unsaved changes: project changes."
+        return f"Unsaved changes: {dirty_label} + project changes."
+
+    def _mark_project_dirty(self):
+        if self.project is None:
+            return
+        self._project_dirty = True
+        self._update_window_title()
+
+    def _clear_project_dirty(self):
+        self._project_dirty = False
 
     def _update_file_open_action_metadata(self, binding_label=""):
         open_app_action = getattr(self, "_open_app_action", None)
@@ -1487,10 +1514,8 @@ class MainWindow(QMainWindow):
             has_project = getattr(self, "project", None) is not None
             self._save_action.setEnabled(has_project)
             if has_project:
-                dirty_count = len(self._undo_manager.dirty_pages()) if hasattr(self, "_undo_manager") else 0
-                dirty_label = "none" if dirty_count == 0 else f"{dirty_count} page" if dirty_count == 1 else f"{dirty_count} pages"
                 target_dir = normalize_path(self._project_dir) or "unsaved project directory"
-                save_hint = f"Save the current project (Ctrl+S). Unsaved pages: {dirty_label}. Target: {target_dir}."
+                save_hint = f"Save the current project (Ctrl+S). {self._unsaved_changes_hint_text()} Target: {target_dir}."
             else:
                 save_hint = self._action_hint("Save the current project (Ctrl+S).", False, "open a project first")
             self._apply_action_hint(self._save_action, save_hint)
@@ -2662,7 +2687,7 @@ class MainWindow(QMainWindow):
             return
 
         if self._external_reload_pending:
-            if self._undo_manager.is_any_dirty():
+            if self._has_unsaved_changes():
                 return
             if self._compile_worker is not None and self._compile_worker.isRunning():
                 return
@@ -2682,7 +2707,7 @@ class MainWindow(QMainWindow):
         self._project_watch_snapshot = new_snapshot
         summary = self._summarize_changed_paths(changed_paths)
 
-        if self._undo_manager.is_any_dirty():
+        if self._has_unsaved_changes():
             self._external_reload_pending = True
             self.debug_panel.log_info(f"External project change detected while dirty: {summary or 'project files updated'}")
             self.statusBar().showMessage("External project changes detected. Save or reload from disk to sync.", 5000)
@@ -2704,7 +2729,7 @@ class MainWindow(QMainWindow):
         if self.project is None or not self._project_dir:
             return False
 
-        if self._undo_manager.is_any_dirty():
+        if self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self,
                 "Reload Project",
@@ -2749,6 +2774,7 @@ class MainWindow(QMainWindow):
         self._project_watch_snapshot = {}
         self._external_reload_pending = False
         self._pending_page_renames = {}
+        self._project_dirty = False
         self._active_batch_source = ""
         self._selected_widget = None
         self._selection_state.clear()
@@ -2796,6 +2822,7 @@ class MainWindow(QMainWindow):
         self.app_name = project.app_name
         self._undo_manager = UndoManager()
         self._pending_page_renames = {}
+        self._project_dirty = False
         self._recreate_compiler()
         self._show_editor()
         self._clear_editor_state()
@@ -3915,7 +3942,7 @@ class MainWindow(QMainWindow):
         title = f"EmbeddedGUI Designer - {self.app_name}"
         if self._project_dir:
             title += f" [{self._project_dir}]"
-        if dirty_pages:
+        if dirty_pages or self._project_dirty:
             title += " *"
         self.setWindowTitle(title)
         self._update_history_panel()
@@ -4374,18 +4401,18 @@ class MainWindow(QMainWindow):
             filepath = os.path.join(project_dir, filename)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
+        self._clear_project_dirty()
         return files
 
     def _save_project(self):
         if self.project is None:
             self.statusBar().showMessage("No project to save")
-            return
+            return False
 
         self._flush_pending_xml()
 
         if not self._project_dir:
-            self._save_project_as()
-            return
+            return self._save_project_as()
 
         os.makedirs(self._project_dir, exist_ok=True)
         try:
@@ -4396,7 +4423,7 @@ class MainWindow(QMainWindow):
             self._show_bottom_panel("Diagnostics")
             QMessageBox.warning(self, "Save Failed", f"Failed to save generated code:\n{exc}")
             self.statusBar().showMessage(f"Save failed: {exc}", 5000)
-            return
+            return False
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
@@ -4406,20 +4433,21 @@ class MainWindow(QMainWindow):
         self._update_window_title()
         self._update_compile_availability()
         self.statusBar().showMessage(f"Saved: {self._project_dir} ({len(files)} code file(s) updated)")
+        return True
 
     def _save_project_as(self):
         if self.project is None:
             self.statusBar().showMessage("No project to save")
-            return
+            return False
 
         path = QFileDialog.getExistingDirectory(self, "Save Project To Directory", self._default_save_project_as_dir())
         if not path:
-            return
+            return False
 
         path = normalize_path(path)
         if self._has_directory_conflict(path, allow_current=True):
             self._show_directory_conflict(path, "The selected directory already exists")
-            return
+            return False
 
         old_project_dir = self._project_dir
         os.makedirs(path, exist_ok=True)
@@ -4432,7 +4460,7 @@ class MainWindow(QMainWindow):
             self._show_bottom_panel("Diagnostics")
             QMessageBox.warning(self, "Save As Failed", f"Failed to save generated code:\n{exc}")
             self.statusBar().showMessage(f"Save As failed: {exc}", 5000)
-            return
+            return False
         self._project_dir = path
         self.project.project_dir = path
         self._bump_async_generation()
@@ -4444,6 +4472,7 @@ class MainWindow(QMainWindow):
         self._update_window_title()
         self._update_compile_availability()
         self.statusBar().showMessage(f"Saved: {path} ({len(files)} code file(s) updated)")
+        return True
 
     def _close_project(self):
         """Close current project and return to welcome page."""
@@ -4451,7 +4480,7 @@ class MainWindow(QMainWindow):
             self._show_welcome_page()
             return
 
-        if self._undo_manager.is_any_dirty():
+        if self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self, "Close Project",
                 "There are unsaved changes. Do you want to save before closing?",
@@ -4462,7 +4491,8 @@ class MainWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return
             if reply == QMessageBox.Save:
-                self._save_project()
+                if not self._save_project():
+                    return
 
         self._bump_async_generation()
         self._shutdown_async_activity()
@@ -4822,11 +4852,13 @@ class MainWindow(QMainWindow):
     def _on_resource_renamed(self, res_type, old_name, new_name):
         """Update widget references after a resource file was renamed."""
         touched_pages = self._rewrite_resource_references(res_type, old_name, new_name)
+        self._mark_project_dirty()
         self._finalize_resource_reference_change(touched_pages, source=f"{res_type} resource rename")
 
     def _on_resource_deleted(self, res_type, filename):
         """Clear widget references after a resource file was deleted."""
         touched_pages = self._rewrite_resource_references(res_type, filename, "")
+        self._mark_project_dirty()
         self._finalize_resource_reference_change(touched_pages, source=f"{res_type} resource delete")
 
     def _on_string_key_deleted(self, key, replacement_text):
@@ -4836,6 +4868,7 @@ class MainWindow(QMainWindow):
             key,
             replacement_text=replacement_text,
         )
+        self._mark_project_dirty()
         self._finalize_resource_reference_change(touched_pages, source="string key delete")
 
     def _on_string_key_renamed(self, old_key, new_key):
@@ -4845,6 +4878,7 @@ class MainWindow(QMainWindow):
             old_key,
             new_key=new_key,
         )
+        self._mark_project_dirty()
         self._finalize_resource_reference_change(touched_pages, source="string key rename")
 
     def _on_resource_imported(self):
@@ -4860,6 +4894,7 @@ class MainWindow(QMainWindow):
         self._update_resource_usage_panel()
         self._update_diagnostics_panel()
         self._resources_need_regen = True
+        self._mark_project_dirty()
         # Auto-trigger resource generation with debounce
         self._refresh_project_watch_snapshot()
         self._regen_timer.start()
@@ -5370,6 +5405,7 @@ class MainWindow(QMainWindow):
         self._refresh_page_navigator()
         self._ensure_page_tab(page_name)
         self._switch_page(page_name)
+        self._mark_project_dirty()
         self._trigger_compile()
 
     def _on_page_duplicated(self, source_name, page_name):
@@ -5415,6 +5451,7 @@ class MainWindow(QMainWindow):
                 self.project_dock.set_current_page(self._current_page.name)
                 self.page_navigator.set_current_page(self._current_page.name)
                 self._update_preview_overlay()
+            self._mark_project_dirty()
             self._trigger_compile()
             self._update_window_title()
             self._update_edit_actions()
@@ -5435,6 +5472,7 @@ class MainWindow(QMainWindow):
             self.project_dock.set_project(self.project)
             self._refresh_page_navigator()
             self._rename_page_tab(old_name, new_name)
+            self._mark_project_dirty()
             if was_current:
                 self._switch_page(new_name)
             elif self._current_page:
@@ -5547,18 +5585,20 @@ class MainWindow(QMainWindow):
 
     def _on_startup_changed(self, page_name):
         """User changed the startup page."""
-        if self.project:
+        if self.project and self.project.startup_page != page_name:
             self.project.startup_page = page_name
             self.project_dock.set_project(self.project)
             self.page_navigator.set_startup_page(page_name)
             self._update_page_tab_bar_metadata()
             self._update_workspace_chips()
+            self._mark_project_dirty()
             self._trigger_compile()
 
     def _on_page_mode_changed(self, mode):
         """User switched between easy_page and activity mode."""
-        if self.project:
+        if self.project and self.project.page_mode != mode:
             self.project.page_mode = mode
+            self._mark_project_dirty()
             self._trigger_compile()
 
     # 鈹€鈹€ Page tabs (qfluentwidgets TabBar) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
@@ -7102,7 +7142,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         self._is_closing = True
-        if self.project and self._undo_manager.is_any_dirty():
+        if self.project and self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
                 "There are unsaved changes. Do you want to save before closing?",
@@ -7114,7 +7154,10 @@ class MainWindow(QMainWindow):
                 event.ignore()
                 return
             elif reply == QMessageBox.Save:
-                self._save_project()
+                if not self._save_project():
+                    self._is_closing = False
+                    event.ignore()
+                    return
 
         # Save config
         self._config.auto_compile = self.auto_compile
