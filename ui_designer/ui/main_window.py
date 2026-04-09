@@ -1237,11 +1237,20 @@ class MainWindow(QMainWindow):
             return f"Reload project files from disk and discard unsaved changes: {summary}?"
         return f"There are unsaved changes: {summary}. Do you want to save before closing?"
 
-    def _external_reload_blocked_text(self):
+    def _external_change_status_prefix(self, summary=""):
+        summary = str(summary or "").strip()
+        if not summary:
+            return "External project changes detected"
+        return f"External project changes detected: {summary}"
+
+    def _external_reload_blocked_text(self, summary=""):
         return (
-            "External project changes detected while local unsaved changes remain: "
+            f"{self._external_change_status_prefix(summary)}. Local unsaved changes remain: "
             f"{self._unsaved_changes_summary_text()}. Save or reload from disk to sync."
         )
+
+    def _external_reload_compile_wait_text(self, summary=""):
+        return f"{self._external_change_status_prefix(summary)}. Reload will resume after background compile."
 
     def _mark_project_dirty(self, source=""):
         if self.project is None:
@@ -2756,16 +2765,17 @@ class MainWindow(QMainWindow):
         if self._has_unsaved_changes():
             self._external_reload_pending = True
             self.debug_panel.log_info(f"External project change detected while dirty: {summary or 'project files updated'}")
-            self.statusBar().showMessage(self._external_reload_blocked_text(), 5000)
+            self.statusBar().showMessage(self._external_reload_blocked_text(summary), 5000)
             return
 
         if self._compile_worker is not None and self._compile_worker.isRunning():
             self._external_reload_pending = True
+            self.statusBar().showMessage(self._external_reload_compile_wait_text(summary), 4000)
             return
 
         if self._precompile_worker is not None and self._precompile_worker.isRunning():
             self._external_reload_pending = True
-            self.statusBar().showMessage("External project changes detected. Reload will resume after background compile.", 4000)
+            self.statusBar().showMessage(self._external_reload_compile_wait_text(summary), 4000)
             return
 
         self._reload_project_from_disk(auto=True, changed_paths=changed_paths)

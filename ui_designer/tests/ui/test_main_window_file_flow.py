@@ -6998,7 +6998,7 @@ class TestMainWindowFileFlow:
         assert reload_calls == []
         assert window._external_reload_pending is True
         assert window.statusBar().currentMessage() == (
-            "External project changes detected while local unsaved changes remain: 1 page. "
+            "External project changes detected: main_page.xml. Local unsaved changes remain: 1 page. "
             "Save or reload from disk to sync."
         )
         window._undo_manager.mark_all_saved()
@@ -7037,7 +7037,7 @@ class TestMainWindowFileFlow:
         assert reload_calls == []
         assert window._external_reload_pending is True
         assert window.statusBar().currentMessage() == (
-            "External project changes detected while local unsaved changes remain: project changes (startup page). "
+            "External project changes detected: main_page.xml. Local unsaved changes remain: project changes (startup page). "
             "Save or reload from disk to sync."
         )
         _close_window(window)
@@ -7082,9 +7082,48 @@ class TestMainWindowFileFlow:
         assert reload_calls == []
         assert window._external_reload_pending is True
         assert window.statusBar().currentMessage() == (
-            "External project changes detected while local unsaved changes remain: "
+            "External project changes detected: main_page.xml. Local unsaved changes remain: "
             "1 page + project changes (startup page). Save or reload from disk to sync."
         )
+        _close_window(window)
+
+    def test_poll_project_files_reports_compile_wait_with_changed_file_summary(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CompileWaitWatchDemo"
+        project = _create_project(project_dir, "CompileWaitWatchDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._compile_worker = _BusyWorker()
+
+        reload_calls = []
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- compile wait external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is True
+        assert window.statusBar().currentMessage() == (
+            "External project changes detected: main_page.xml. Reload will resume after background compile."
+        )
+        window._compile_worker = None
         _close_window(window)
 
     def test_close_project_prompts_when_only_project_state_is_dirty(self, qapp, isolated_config, tmp_path, monkeypatch):
