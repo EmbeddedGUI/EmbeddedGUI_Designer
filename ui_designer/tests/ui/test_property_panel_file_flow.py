@@ -111,6 +111,26 @@ class TestPropertyPanelFileFlow:
         assert margins.bottom() == 3
         panel.deleteLater()
 
+    def test_property_tree_uses_remaining_vertical_space(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+
+        widget = WidgetModel("label", name="title", x=10, y=20, width=80, height=24)
+
+        panel = PropertyPanel()
+        panel.resize(420, 700)
+        panel.set_widget(widget)
+        panel.show()
+        qapp.processEvents()
+
+        tree_index = panel._layout.indexOf(panel._property_tree)
+
+        assert tree_index >= 0
+        assert panel._layout.stretch(tree_index) == 1
+        assert panel._layout.itemAt(panel._layout.count() - 1).spacerItem() is None
+        assert panel._property_tree.height() > panel._container.height() // 2
+        panel.deleteLater()
+
     def test_empty_state_and_search_metadata(self, qapp):
         from ui_designer.ui.property_panel import PropertyPanel
 

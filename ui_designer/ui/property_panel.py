@@ -1674,7 +1674,6 @@ class PropertyPanel(QWidget):
             header.hide()
             self._layout.addWidget(header)
             self._build_multi_selection_form()
-            self._layout.addWidget(self._property_tree)
             self._sync_collapsible_group_states()
             self._on_search_changed(self._search_edit.text())
             self._refresh_property_tree_theme_patches()
@@ -1798,11 +1797,10 @@ class PropertyPanel(QWidget):
 
         self._build_callbacks_group(w)
         self._build_designer_state_group()
-        self._layout.addWidget(self._property_tree)
+        self._layout.addWidget(self._property_tree, 1)
         feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
-        self._layout.addStretch()
         self._sync_collapsible_group_states()
         self._on_search_changed(self._search_edit.text())
         self._refresh_property_tree_theme_patches()
@@ -1826,11 +1824,10 @@ class PropertyPanel(QWidget):
         self._build_multi_common_properties_group()
         self._build_multi_callbacks_group(callback_entries)
         self._build_designer_state_group()
-        self._layout.addWidget(self._property_tree)
+        self._layout.addWidget(self._property_tree, 1)
         feedback_group = self._build_selection_feedback_group()
         if feedback_group is not None:
             self._layout.addWidget(feedback_group)
-        self._layout.addStretch()
         self._sync_collapsible_group_states()
 
     def _build_designer_state_group(self):
