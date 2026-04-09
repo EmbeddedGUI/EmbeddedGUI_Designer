@@ -5,7 +5,7 @@ Covers:
   - USER_OWNED (.c) file: NOT overwritten when it already exists
   - USER_OWNED (.c) file: migrated when it's an old-style auto-generated file
   - GENERATED_ALWAYS (*_layout.c, uicode.*): always produced in output dict
-  - GENERATED_PRESERVED (.h): user code regions preserved from existing file
+  - legacy header user code migrates into *_ext.h
   - Multi-page project: all page files produced
   - Backup=False skips backup creation
 """
@@ -19,7 +19,6 @@ from ui_designer.model.project import Project
 from ui_designer.generator.code_generator import (
     generate_all_files_preserved,
     GENERATED_ALWAYS,
-    GENERATED_PRESERVED,
     USER_OWNED,
 )
 
@@ -78,7 +77,7 @@ class TestUserOwnedFiles:
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "egui_main_page_on_open" in result["main_page.c"]
+        assert "egui_main_page_user_on_open" in result["main_page.c"]
 
     def test_user_owned_contains_customisation_hooks(self, tmp_path):
         """The skeleton must contain comments/regions so users know where to add code."""
@@ -191,9 +190,11 @@ class TestUserOwnedFiles:
         assert 'egui_view_label_set_text((egui_view_t *)&local->title_label, "ready");' in result["main_page.c"]
         assert "cleanup_logic();" in result["main_page.c"]
         assert "init_logic();" in result["main_page.c"]
-        assert "egui_main_page_timers_init(self);" in result["main_page.c"]
-        assert "egui_main_page_timers_start_auto(self);" in result["main_page.c"]
-        assert "egui_main_page_timers_stop(self);" in result["main_page.c"]
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in result["main_page.c"]
+        assert "main_page_layout.c" in result["main_page.c"]
+        assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result["main_page_layout.c"]
+        assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result["main_page_layout.c"]
+        assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result["main_page_layout.c"]
 
 
 # ======================================================================
@@ -249,15 +250,13 @@ class TestGeneratedAlwaysFiles:
 # ======================================================================
 
 
-class TestGeneratedPreservedFiles:
-    """GENERATED_PRESERVED (.h) files preserve USER CODE regions."""
+class TestLegacyHeaderMigration:
+    """Legacy header USER CODE blocks migrate into *_ext.h."""
 
-    def test_header_preserves_user_code(self, tmp_path):
-        """When .h exists with user code, regeneration must keep user code."""
+    def test_header_user_code_migrates_to_ext_header(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
 
-        # Write a header file with custom user code
         header_path = tmp_path / "main_page.h"
         existing_header = (
             "#ifndef _MAIN_PAGE_H_\n"
@@ -265,6 +264,9 @@ class TestGeneratedPreservedFiles:
             "// USER CODE BEGIN includes\n"
             '#include "my_custom.h"\n'
             "// USER CODE END includes\n"
+            "    // USER CODE BEGIN user_fields\n"
+            "    int custom_state;\n"
+            "    // USER CODE END user_fields\n"
             "// USER CODE BEGIN declarations\n"
             "void my_extra_func(void);\n"
             "// USER CODE END declarations\n"
@@ -273,10 +275,10 @@ class TestGeneratedPreservedFiles:
         header_path.write_text(existing_header, encoding="utf-8")
 
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "main_page.h" in result
-        # User code must be preserved
-        assert '#include "my_custom.h"' in result["main_page.h"]
-        assert "void my_extra_func(void);" in result["main_page.h"]
+        assert "main_page_ext.h" in result
+        assert '#include "my_custom.h"' in result["main_page_ext.h"]
+        assert "void my_extra_func(void);" in result["main_page_ext.h"]
+        assert "custom_state" in result["main_page_ext.h"]
 
     def test_header_produced_fresh_when_not_on_disk(self, tmp_path):
         """If no existing header, fresh output must be produced."""
@@ -309,9 +311,11 @@ class TestMultiPageProject:
         assert "home.c" in result
         assert "home.h" in result
         assert "home_layout.c" in result
+        assert "home_ext.h" in result
         assert "settings.c" in result
         assert "settings.h" in result
         assert "settings_layout.c" in result
+        assert "settings_ext.h" in result
 
     def test_uicode_contains_all_pages(self, tmp_path):
         root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)

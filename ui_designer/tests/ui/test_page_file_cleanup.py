@@ -1,7 +1,8 @@
 """Tests for page file cleanup when a page is deleted.
 
 Covers the delete_page_generated_files() behavior:
-  - Deletes .h, _layout.c, .c files for the named page
+  - Deletes .h and _layout.c files for the named page
+  - Archives .c and _ext.h user files for the named page
   - Handles missing files gracefully (no exception)
   - Does not delete unrelated files
   - Works with nested paths
@@ -114,3 +115,18 @@ class TestDeletePageGeneratedFiles:
         assert os.path.isfile(os.path.join(str(tmp_path), "page_b.h"))
         assert os.path.isfile(os.path.join(str(tmp_path), "page_b_layout.c"))
         assert os.path.isfile(os.path.join(str(tmp_path), "page_b.c"))
+
+    def test_archives_user_owned_files(self, tmp_path, delete_fn):
+        (tmp_path / "detail.h").write_text("", encoding="utf-8")
+        (tmp_path / "detail_layout.c").write_text("", encoding="utf-8")
+        (tmp_path / "detail.c").write_text("/* user */\n", encoding="utf-8")
+        (tmp_path / "detail_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
+
+        delete_fn(str(tmp_path), "detail")
+
+        assert not (tmp_path / "detail.h").exists()
+        assert not (tmp_path / "detail_layout.c").exists()
+        assert not (tmp_path / "detail.c").exists()
+        assert not (tmp_path / "detail_ext.h").exists()
+        assert (tmp_path / ".eguiproject" / "orphaned_user_code" / "detail" / "detail.c").is_file()
+        assert (tmp_path / ".eguiproject" / "orphaned_user_code" / "detail" / "detail_ext.h").is_file()

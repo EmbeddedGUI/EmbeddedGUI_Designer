@@ -219,8 +219,7 @@ class TestCtrlSNoConflict:
 # ======================================================================
 
 class TestCodeGeneratorFunctionNamePattern:
-    """Validate that generated function names follow egui_{page}_init pattern
-    so that we understand WHY reserved names matter."""
+    """Validate that generated hook names keep the full page prefix."""
 
     def test_main_page_init_func_name(self):
         from ui_designer.model.widget_model import WidgetModel
@@ -234,10 +233,10 @@ class TestCodeGeneratorFunctionNamePattern:
         proj.add_page(page)
 
         output = generate_page_user_source(page, proj)
-        assert "egui_main_page_init" in output
+        assert "egui_main_page_user_init" in output
 
     def test_timer_page_init_func_name_safe(self):
-        """'timer_page' generates egui_timer_page_init — safe (not timer_init)."""
+        """'timer_page' generates egui_timer_page_user_init – safe (not timer_init)."""
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.model.page import Page
         from ui_designer.model.project import Project
@@ -250,12 +249,12 @@ class TestCodeGeneratorFunctionNamePattern:
 
         output = generate_page_user_source(page, proj)
         # Must use timer_page, not just timer
-        assert "egui_timer_page_init" in output
+        assert "egui_timer_page_user_init" in output
         # Must NOT accidentally generate just egui_timer_init
-        assert "egui_timer_init" not in output or "egui_timer_page_init" in output
+        assert "egui_timer_init" not in output or "egui_timer_page_user_init" in output
 
     def test_test_page_init_func_name_safe(self):
-        """'test_page' generates egui_test_page_init — not egui_test_init."""
+        """'test_page' generates egui_test_page_user_init – not egui_test_init."""
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.model.page import Page
         from ui_designer.model.project import Project
@@ -267,4 +266,4 @@ class TestCodeGeneratorFunctionNamePattern:
         proj.add_page(page)
 
         output = generate_page_user_source(page, proj)
-        assert "egui_test_page_init" in output
+        assert "egui_test_page_user_init" in output

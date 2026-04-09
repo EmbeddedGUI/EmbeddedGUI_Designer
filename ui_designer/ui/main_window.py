@@ -165,10 +165,11 @@ def _discard_detached_worker(worker):
 
 
 def delete_page_generated_files(project_dir, page_name):
-    """Delete the three generated C files for a removed page.
+    """Delete generated page files and archive user-owned ones.
 
-    Removes {page_name}.h, {page_name}_layout.c, {page_name}.c from
-    project_dir so they are no longer picked up by EGUI_CODE_SRC.
+    Removes {page_name}.h and {page_name}_layout.c from project_dir.
+    Moves {page_name}.c and {page_name}_ext.h into
+    .eguiproject/orphaned_user_code/{page_name}/ so user code is preserved.
     Silently ignores missing files and permission errors.
 
     Only deletes files that resolve to paths strictly inside project_dir
@@ -177,14 +178,39 @@ def delete_page_generated_files(project_dir, page_name):
     if not page_name or not project_dir:
         return
     project_real = os.path.realpath(project_dir)
-    for suffix in (f"{page_name}.h", f"{page_name}_layout.c", f"{page_name}.c"):
+
+    for suffix in (f"{page_name}.h", f"{page_name}_layout.c"):
         fpath = os.path.realpath(os.path.join(project_dir, suffix))
-        # Safety check: only files directly inside project_real
         if not fpath.startswith(project_real + os.sep):
             continue
         try:
             if os.path.isfile(fpath):
                 os.remove(fpath)
+        except OSError:
+            pass
+
+    orphan_root = os.path.realpath(
+        os.path.join(project_dir, ".eguiproject", "orphaned_user_code", page_name)
+    )
+    if not orphan_root.startswith(project_real + os.sep):
+        return
+
+    for suffix in (f"{page_name}.c", f"{page_name}_ext.h"):
+        src = os.path.realpath(os.path.join(project_dir, suffix))
+        if not src.startswith(project_real + os.sep):
+            continue
+        if not os.path.isfile(src):
+            continue
+        try:
+            os.makedirs(orphan_root, exist_ok=True)
+            base_name = os.path.basename(src)
+            stem, ext = os.path.splitext(base_name)
+            dest = os.path.join(orphan_root, base_name)
+            index = 1
+            while os.path.exists(dest):
+                dest = os.path.join(orphan_root, f"{stem}_{index}{ext}")
+                index += 1
+            shutil.move(src, dest)
         except OSError:
             pass
 
@@ -5148,23 +5174,11 @@ class MainWindow(QMainWindow):
         if not stub:
             return content, False
 
-        begin_marker = "// USER CODE BEGIN callbacks"
-        end_marker = "// USER CODE END callbacks"
-        begin_index = content.find(begin_marker)
-        end_index = content.find(end_marker)
-        if begin_index < 0 or end_index < begin_index:
-            return content, False
-
-        body_start = content.find("\n", begin_index)
-        if body_start < 0 or body_start >= end_index:
-            return content, False
-
-        callback_body = content[body_start + 1:end_index]
-        if callback_body.strip():
-            new_body = callback_body.rstrip() + "\n\n" + stub + "\n"
+        trimmed = content.rstrip()
+        if trimmed:
+            updated = trimmed + "\n\n" + stub + "\n"
         else:
-            new_body = stub + "\n"
-        updated = content[:body_start + 1] + new_body + content[end_index:]
+            updated = stub + "\n"
         return updated, True
 
     def _ensure_page_user_source_ready(self, page, callback_name="", signature=""):

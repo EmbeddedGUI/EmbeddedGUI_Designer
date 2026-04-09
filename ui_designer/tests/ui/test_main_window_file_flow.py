@@ -4891,8 +4891,8 @@ class TestMainWindowFileFlow:
         assert opened == [str(source_path)]
         assert source_path.exists() is True
         content = source_path.read_text(encoding="utf-8")
-        assert "void egui_main_page_init(egui_page_base_t *self)" in content
-        assert "// USER CODE BEGIN init" in content
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in content
+        assert "// USER CODE BEGIN" not in content
         assert window.statusBar().currentMessage() == "Opened user code: main_page.c (init)."
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -8367,7 +8367,11 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_workspace_layout_version_bump_ignores_old_splitter_state_and_keeps_center_primary(self, qapp, isolated_config):
-        from ui_designer.ui.main_window import MainWindow
+        from ui_designer.ui.main_window import (
+            MainWindow,
+            LEFT_PANEL_DEFAULT_WIDTH,
+            INSPECTOR_PANEL_DEFAULT_WIDTH,
+        )
 
         seed = MainWindow("")
         seed._top_splitter.setSizes([520, 400, 500])
@@ -8388,7 +8392,8 @@ class TestMainWindowFileFlow:
 
         assert sizes[1] > sizes[0]
         assert sizes[1] > sizes[2]
-        assert sizes[0] < sizes[2]
+        assert abs(sizes[0] - LEFT_PANEL_DEFAULT_WIDTH) <= 2
+        assert abs(sizes[2] - INSPECTOR_PANEL_DEFAULT_WIDTH) <= 2
         _close_window(window)
 
     def test_bottom_panel_toggle_preserves_user_splitter_sizes(self, qapp, isolated_config):

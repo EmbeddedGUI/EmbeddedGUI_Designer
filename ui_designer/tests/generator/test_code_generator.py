@@ -271,15 +271,13 @@ class TestGeneratePageHeader:
         assert "egui_view_group_t root_group;" in output
         assert "egui_view_label_t my_label;" in output
 
-    def test_header_user_code_regions(self):
+    def test_header_includes_ext_header_and_hook_defaults(self):
         page, proj = self._make_simple_page_and_project()
         output = generate_page_header(page, proj)
-        assert "// USER CODE BEGIN includes" in output
-        assert "// USER CODE END includes" in output
-        assert "// USER CODE BEGIN user_fields" in output
-        assert "// USER CODE END user_fields" in output
-        assert "// USER CODE BEGIN declarations" in output
-        assert "// USER CODE END declarations" in output
+        assert '#include "main_page_ext.h"' in output
+        assert "#ifndef EGUI_MAIN_PAGE_EXT_FIELDS" in output
+        assert "void egui_main_page_user_init(egui_main_page_t *page);" in output
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page);" in output
 
     def test_header_function_declarations(self):
         page, proj = self._make_simple_page_and_project()
@@ -318,7 +316,7 @@ class TestGeneratePageHeader:
 
         assert '#include "widgets/status/egui_view_status_pill.h"' in output
 
-    def test_header_includes_generated_page_fields_before_user_code_region(self):
+    def test_header_includes_generated_page_fields_before_ext_fields_macro(self):
         page, proj = self._make_simple_page_and_project()
         page.user_fields = [
             {"name": "counter", "type": "int", "default": "0"},
@@ -330,7 +328,7 @@ class TestGeneratePageHeader:
         assert "    // Page fields (auto-generated from Designer metadata)" in output
         assert "    int counter;" in output
         assert "    uint8_t buffer[16];" in output
-        assert output.index("    int counter;") < output.index("    // USER CODE BEGIN user_fields")
+        assert output.index("    int counter;") < output.index("    EGUI_MAIN_PAGE_EXT_FIELDS")
 
     def test_header_skips_invalid_or_conflicting_page_fields(self):
         page, proj = self._make_simple_page_and_project()
@@ -497,28 +495,28 @@ class TestGeneratePageUserSource:
     def test_user_source_on_open(self):
         page, proj = self._make_simple()
         output = generate_page_user_source(page, proj)
-        assert "egui_main_page_on_open" in output
+        assert "egui_main_page_user_on_open" in output
 
     def test_user_source_layout_init_call(self):
         page, proj = self._make_simple()
         output = generate_page_user_source(page, proj)
-        assert "egui_main_page_layout_init" in output
+        assert "Generated page lifecycle wrappers live in main_page_layout.c." in output
 
-    def test_user_source_vtable(self):
+    def test_user_source_fixed_hook_functions(self):
         page, proj = self._make_simple()
         output = generate_page_user_source(page, proj)
-        assert "EGUI_VIEW_API_TABLE_NAME" in output
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in output
+        assert "void egui_main_page_user_on_key_pressed(egui_main_page_t *page, uint16_t keycode)" in output
 
-    def test_user_source_contains_user_code_regions(self):
+    def test_user_source_contains_hook_functions_without_user_code_regions(self):
         page, proj = self._make_simple()
         output = generate_page_user_source(page, proj)
 
-        assert "// USER CODE BEGIN includes" in output
-        assert "// USER CODE BEGIN callbacks" in output
-        assert "// USER CODE BEGIN on_open" in output
-        assert "// USER CODE BEGIN on_close" in output
-        assert "// USER CODE BEGIN on_key_pressed" in output
-        assert "// USER CODE BEGIN init" in output
+        assert "// USER CODE BEGIN" not in output
+        assert "egui_main_page_user_init" in output
+        assert "egui_main_page_user_on_open" in output
+        assert "egui_main_page_user_on_close" in output
+        assert "egui_main_page_user_on_key_pressed" in output
 
     def test_user_source_wires_timer_helpers_and_callback_stubs(self):
         page, proj = self._make_simple()
@@ -536,9 +534,7 @@ class TestGeneratePageUserSource:
 
         assert "void tick_refresh(egui_timer_t *timer)" in output
         assert "EGUI_UNUSED(local);" in output
-        assert "egui_main_page_timers_start_auto(self);" in output
-        assert "egui_main_page_timers_stop(self);" in output
-        assert "egui_main_page_timers_init(self);" in output
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in output
 
     def test_user_source_includes_on_click_callback_stub(self):
         page, proj = self._make_simple()
@@ -629,6 +625,7 @@ class TestGenerateAllFiles:
         assert "main_page.h" in files
         assert "main_page_layout.c" in files
         assert "main_page.c" in files
+        assert "main_page_ext.h" in files
         assert "uicode.h" in files
         assert "uicode.c" in files
         assert "app_egui_config.h" in files
@@ -639,11 +636,13 @@ class TestGenerateAllFiles:
         proj = _make_project([page])
         files = generate_all_files(proj)
         _, cat_h = files["main_page.h"]
-        assert cat_h == GENERATED_PRESERVED
+        assert cat_h == GENERATED_ALWAYS
         _, cat_layout = files["main_page_layout.c"]
         assert cat_layout == GENERATED_ALWAYS
         _, cat_c = files["main_page.c"]
         assert cat_c == USER_OWNED
+        _, cat_ext = files["main_page_ext.h"]
+        assert cat_ext == USER_OWNED
         _, cat_uicode_h = files["uicode.h"]
         assert cat_uicode_h == GENERATED_ALWAYS
 
@@ -655,9 +654,11 @@ class TestGenerateAllFiles:
         assert "main_page.h" in files
         assert "main_page_layout.c" in files
         assert "main_page.c" in files
+        assert "main_page_ext.h" in files
         assert "settings.h" in files
         assert "settings_layout.c" in files
         assert "settings.c" in files
+        assert "settings_ext.h" in files
 
     def test_all_files_with_i18n(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
