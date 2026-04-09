@@ -1,4 +1,3 @@
-// GENERATED_HASH: 2e6ac0a9c37d1feb
 #ifndef _UICODE_H_
 #define _UICODE_H_
 

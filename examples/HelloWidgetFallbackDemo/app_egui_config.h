@@ -1,4 +1,3 @@
-// GENERATED_HASH: 65572836a0ae46fb
 #ifndef _APP_EGUI_CONFIG_H_
 #define _APP_EGUI_CONFIG_H_
 

@@ -1,4 +1,3 @@
-// GENERATED_HASH: 59d4958c112f6bb8
 #ifndef _MAIN_PAGE_H_
 #define _MAIN_PAGE_H_
 
@@ -11,7 +10,6 @@
 
 // USER CODE BEGIN includes
 // USER CODE END includes
-
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus
 extern "C" {
@@ -39,7 +37,6 @@ void egui_main_page_init(egui_page_base_t *self);
 
 // USER CODE BEGIN declarations
 // USER CODE END declarations
-
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
 }
