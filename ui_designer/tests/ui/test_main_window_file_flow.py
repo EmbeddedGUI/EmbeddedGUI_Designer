@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
-    from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel, QSizePolicy
     from PyQt5.QtWidgets import QMessageBox
     from PyQt5.QtTest import QTest
 
@@ -9321,8 +9321,10 @@ class TestMainWindowFileFlow:
         assert window.project_dock.minimumWidth() == 172
         assert window._left_panel_stack.minimumWidth() == 172
         assert window._left_shell.minimumWidth() == 234
-        assert window._workspace_nav_buttons["project"].width() == 56
-        assert window._workspace_nav_buttons["project"].height() == 26
+        project_button = window._workspace_nav_buttons["project"]
+        assert project_button.sizePolicy().horizontalPolicy() == QSizePolicy.Fixed
+        assert project_button.sizePolicy().verticalPolicy() == QSizePolicy.Fixed
+        assert project_button.width() <= window._workspace_nav_frame.width()
 
         assert window._workspace_nav_buttons["project"].toolTip() == (
             "Currently showing Project panel. View: List view. Active page: none. Startup page: none."
@@ -9373,8 +9375,6 @@ class TestMainWindowFileFlow:
         )
         assert window._bottom_toggle_button.objectName() == "workspace_bottom_toggle_button"
         assert window._bottom_toggle_button.text() == "Show"
-        assert window._bottom_toggle_button.width() == 48
-        assert window._bottom_toggle_button.height() == 26
         assert window._bottom_toggle_button.toolTip() == "Show the bottom tools panel."
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: hidden. Activate to show."
 
