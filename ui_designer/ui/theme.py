@@ -1012,31 +1012,90 @@ QMenu::separator {{
 }}
 
 QScrollBar:vertical {{
-    background: transparent;
-    width: 12px;
-    margin: 2px;
+    background-color: {t['panel_alt']};
+    width: 10px;
+    margin: 0px;
+    border: none;
 }}
 
 QScrollBar::handle:vertical {{
-    background: {t['border_strong']};
+    background-color: {t['border_strong']};
     min-height: 24px;
-    border-radius: {t['r_sm']}px;
+    border: none;
+    border-radius: 0px;
 }}
 
 QScrollBar::handle:vertical:hover {{
-    background: {t['text_soft']};
+    background-color: {t['text_soft']};
+}}
+
+QScrollBar::handle:vertical:pressed {{
+    background-color: {t['accent']};
+}}
+
+QScrollBar::handle:vertical:disabled {{
+    background-color: {t['surface_hover']};
+}}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {{
+    background-color: transparent;
+    border: none;
+    height: 0px;
+}}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {{
+    background-color: transparent;
 }}
 
 QScrollBar:horizontal {{
-    background: transparent;
-    height: 12px;
-    margin: 2px;
+    background-color: {t['panel_alt']};
+    height: 10px;
+    margin: 0px;
+    border: none;
 }}
 
 QScrollBar::handle:horizontal {{
-    background: {t['border_strong']};
+    background-color: {t['border_strong']};
     min-width: 24px;
-    border-radius: {t['r_sm']}px;
+    border: none;
+    border-radius: 0px;
+}}
+
+QScrollBar::handle:horizontal:hover {{
+    background-color: {t['text_soft']};
+}}
+
+QScrollBar::handle:horizontal:pressed {{
+    background-color: {t['accent']};
+}}
+
+QScrollBar::handle:horizontal:disabled {{
+    background-color: {t['surface_hover']};
+}}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {{
+    background-color: transparent;
+    border: none;
+    width: 0px;
+}}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {{
+    background-color: transparent;
+}}
+
+QAbstractScrollArea::corner {{
+    background-color: {t['panel_alt']};
+    border: none;
+}}
+
+QTableCornerButton::section {{
+    background-color: {t['panel_alt']};
+    border: 1px solid {t['border']};
+    border-radius: 0px;
 }}
 
 QToolTip {{

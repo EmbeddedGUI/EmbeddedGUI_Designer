@@ -56,6 +56,53 @@ def test_build_stylesheet_uses_surface_hover_tokens_for_light_theme():
     assert tokens["surface_hover"] in stylesheet.split("QPushButton#widget_browser_insert_button:hover", 1)[1]
 
 
+def test_scrollbars_follow_theme_surface_tokens():
+    for mode in ("light", "dark"):
+        t = theme_tokens(mode)
+        css = _build_stylesheet(mode)
+
+        vertical = css.split("QScrollBar:vertical {", 1)[1].split("}", 1)[0]
+        vertical_handle = css.split("QScrollBar::handle:vertical {", 1)[1].split("}", 1)[0]
+        vertical_disabled = css.split("QScrollBar::handle:vertical:disabled {", 1)[1].split("}", 1)[0]
+        vertical_lines = css.split("QScrollBar::add-line:vertical,", 1)[1].split("}", 1)[0]
+        vertical_pages = css.split("QScrollBar::add-page:vertical,", 1)[1].split("}", 1)[0]
+        horizontal = css.split("QScrollBar:horizontal {", 1)[1].split("}", 1)[0]
+        horizontal_handle = css.split("QScrollBar::handle:horizontal {", 1)[1].split("}", 1)[0]
+        horizontal_disabled = css.split("QScrollBar::handle:horizontal:disabled {", 1)[1].split("}", 1)[0]
+        horizontal_lines = css.split("QScrollBar::add-line:horizontal,", 1)[1].split("}", 1)[0]
+        horizontal_pages = css.split("QScrollBar::add-page:horizontal,", 1)[1].split("}", 1)[0]
+        corner = css.split("QAbstractScrollArea::corner {", 1)[1].split("}", 1)[0]
+        table_corner = css.split("QTableCornerButton::section {", 1)[1].split("}", 1)[0]
+
+        assert f"background-color: {t['panel_alt']};" in vertical
+        assert "width: 10px;" in vertical
+        assert "margin: 0px;" in vertical
+        assert "border: none;" in vertical
+        assert f"background-color: {t['border_strong']};" in vertical_handle
+        assert "border-radius: 0px;" in vertical_handle
+        assert f"background-color: {t['surface_hover']};" in vertical_disabled
+        assert "height: 0px;" in vertical_lines
+        assert "background-color: transparent;" in vertical_lines
+        assert "background-color: transparent;" in vertical_pages
+
+        assert f"background-color: {t['panel_alt']};" in horizontal
+        assert "height: 10px;" in horizontal
+        assert "margin: 0px;" in horizontal
+        assert "border: none;" in horizontal
+        assert f"background-color: {t['border_strong']};" in horizontal_handle
+        assert "border-radius: 0px;" in horizontal_handle
+        assert f"background-color: {t['surface_hover']};" in horizontal_disabled
+        assert "width: 0px;" in horizontal_lines
+        assert "background-color: transparent;" in horizontal_lines
+        assert "background-color: transparent;" in horizontal_pages
+
+        assert f"background-color: {t['panel_alt']};" in corner
+        assert "border: none;" in corner
+        assert f"background-color: {t['panel_alt']};" in table_corner
+        assert f"border: 1px solid {t['border']};" in table_corner
+        assert "border-radius: 0px;" in table_corner
+
+
 def test_stylesheet_shell_and_dialog_hint_tokens():
     for mode in ("light", "dark"):
         t = theme_tokens(mode)
