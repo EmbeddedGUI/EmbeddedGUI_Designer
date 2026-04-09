@@ -5275,6 +5275,38 @@ class TestMainWindowFileFlow:
         assert window._reload_project_action.statusTip() == window._reload_project_action.toolTip()
         _close_window(window)
 
+    def test_reload_project_action_and_file_menu_clear_pending_external_change_context(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReloadActionPendingClearDemo"
+        project = _create_project(project_dir, "ReloadActionPendingClearDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        window._set_external_reload_pending([os.path.normpath(os.path.abspath(layout_file))])
+
+        window._clear_external_reload_pending()
+
+        assert window._reload_project_action.toolTip() == (
+            "Reload the current project from disk (Ctrl+Shift+R). "
+            f"Current project directory: {window._project_dir}."
+        )
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: open. SDK: valid. Unsaved changes: none. Reload: available. Recent projects: 1 project."
+        )
+        _close_window(window)
+
     def test_close_project_action_exposes_dirty_page_count(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
