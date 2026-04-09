@@ -49,6 +49,9 @@ class TestProjectWorkspacePanel:
         assert panel._view_chip.isHidden() is True
         assert panel._view_chip.text() == "List view"
         assert panel._view_chip.accessibleName() == "Workspace view: List view."
+        assert panel._settings_btn.height() == 22
+        assert panel._list_btn.height() == 22
+        assert panel._thumb_btn.height() == 22
         assert panel._header_eyebrow.accessibleName() == "Project navigation workspace surface."
         assert panel._header_eyebrow.isHidden() is True
         assert panel._page_count_chip.text() == "0 pages"

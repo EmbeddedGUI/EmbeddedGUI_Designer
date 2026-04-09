@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (
     QDialog, QDialogButtonBox, QMenu, QApplication,
     QSplitter, QSizePolicy, QAbstractItemView,
     QInputDialog, QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QComboBox, QCheckBox, QToolButton, QLineEdit, QPlainTextEdit,
+    QComboBox, QCheckBox, QToolButton, QLineEdit, QPlainTextEdit, QPushButton,
 )
 from PyQt5.QtCore import (
     Qt, QSize, pyqtSignal, QMimeData, QUrl, QTimer, QRect,
@@ -38,9 +38,7 @@ from PyQt5.QtGui import (
     QPainter, QColor, QDrag, QPen,
 )
 
-from qfluentwidgets import (
-    PushButton, TabWidget, CaptionLabel,
-)
+from qfluentwidgets import TabWidget, CaptionLabel
 
 from ..model.resource_catalog import ResourceCatalog, IMAGE_EXTENSIONS, FONT_EXTENSIONS, TEXT_EXTENSIONS
 from ..model.resource_usage import (
@@ -74,6 +72,7 @@ EGUI_RESOURCE_MIME = "application/x-egui-resource"
 # Regex for validating English-only filenames
 _VALID_FILENAME_RE = re.compile(r'^[A-Za-z0-9_\-]+\.[A-Za-z0-9]+$')
 _DEFAULT_RESOURCE_PREVIEW_FONT_PT = 9
+_RESOURCE_PANEL_CONTROL_HEIGHT = 22
 
 
 # -- Helpers ------------------------------------------------------------
@@ -90,6 +89,12 @@ def _file_size_str(path):
         return f"{size / 1024:.1f} KB"
     else:
         return f"{size / (1024 * 1024):.2f} MB"
+
+
+def _set_compact_control_height(widget, *, height=_RESOURCE_PANEL_CONTROL_HEIGHT):
+    if widget is not None:
+        widget.setFixedHeight(height)
+    return widget
 
 
 def _validate_english_filename(name):
@@ -792,6 +797,7 @@ class _GenerateCharsetDialog(QDialog):
         self._filename_edit.setPlaceholderText("charset_ascii_printable.txt")
         self._filename_edit.textEdited.connect(self._on_filename_edited)
         self._filename_edit.textChanged.connect(self._refresh_preview)
+        _set_compact_control_height(self._filename_edit)
         file_row.addWidget(self._filename_edit, 1)
         output_layout.addLayout(file_row)
 
@@ -817,6 +823,8 @@ class _GenerateCharsetDialog(QDialog):
         self._save_button = button_box.addButton("Save", QDialogButtonBox.AcceptRole)
         self._save_assign_button = button_box.addButton("Save and Bind Current Widget", QDialogButtonBox.AcceptRole)
         self._cancel_button = button_box.addButton(QDialogButtonBox.Cancel)
+        for button in (self._save_button, self._save_assign_button, self._cancel_button):
+            _set_compact_control_height(button)
         self._save_button.clicked.connect(self._accept_save)
         self._save_assign_button.clicked.connect(self._accept_save_and_assign)
         self._cancel_button.clicked.connect(self.reject)
@@ -1471,6 +1479,8 @@ class _ReferenceImpactDialog(QDialog):
         self._cancel_button = buttons.button(QDialogButtonBox.Cancel)
         if self._cancel_button is not None:
             self._cancel_button.setText("Cancel")
+        for button in (self._open_usage_button, self._ok_button, self._cancel_button):
+            _set_compact_control_height(button)
         self._open_usage_button.clicked.connect(self._open_selected_usage)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -1704,6 +1714,8 @@ class _BatchReplaceImpactDialog(QDialog):
         self._cancel_button = buttons.button(QDialogButtonBox.Cancel)
         if self._cancel_button is not None:
             self._cancel_button.setText("Cancel")
+        for button in (self._open_usage_button, self._ok_button, self._cancel_button):
+            _set_compact_control_height(button)
         self._open_usage_button.clicked.connect(self._open_selected_usage)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -2195,22 +2207,22 @@ class ResourcePanel(QWidget):
 
         img_btn_layout = QHBoxLayout()
         img_btn_layout.setSpacing(2)
-        import_img_btn = PushButton("Import...")
+        import_img_btn = QPushButton("Import...")
         import_img_btn.clicked.connect(self._on_import_image)
         img_btn_layout.addWidget(import_img_btn)
-        copy_img_btn = PushButton("Copy Names")
+        copy_img_btn = QPushButton("Copy Names")
         copy_img_btn.clicked.connect(lambda: self._copy_visible_names("image"))
         img_btn_layout.addWidget(copy_img_btn)
-        restore_img_btn = PushButton("Restore Missing...")
+        restore_img_btn = QPushButton("Restore Missing...")
         restore_img_btn.clicked.connect(lambda: self._restore_missing_resources("image"))
         img_btn_layout.addWidget(restore_img_btn)
-        replace_img_btn = PushButton("Replace Missing...")
+        replace_img_btn = QPushButton("Replace Missing...")
         replace_img_btn.clicked.connect(lambda: self._replace_missing_resources("image"))
         img_btn_layout.addWidget(replace_img_btn)
-        next_missing_img_btn = PushButton("Next Missing")
+        next_missing_img_btn = QPushButton("Next Missing")
         next_missing_img_btn.clicked.connect(lambda: self._focus_missing_resource("image"))
         img_btn_layout.addWidget(next_missing_img_btn)
-        clean_unused_img_btn = PushButton("Clean Unused...")
+        clean_unused_img_btn = QPushButton("Clean Unused...")
         clean_unused_img_btn.clicked.connect(lambda: self._clean_unused_resources("image"))
         img_btn_layout.addWidget(clean_unused_img_btn)
         image_more_btn = self._create_resource_more_button(
@@ -2266,25 +2278,25 @@ class ResourcePanel(QWidget):
 
         font_btn_layout = QHBoxLayout()
         font_btn_layout.setSpacing(2)
-        import_font_btn = PushButton("Import...")
+        import_font_btn = QPushButton("Import...")
         import_font_btn.clicked.connect(self._on_import_font)
         font_btn_layout.addWidget(import_font_btn)
-        copy_font_btn = PushButton("Copy Names")
+        copy_font_btn = QPushButton("Copy Names")
         copy_font_btn.clicked.connect(lambda: self._copy_visible_names("font"))
         font_btn_layout.addWidget(copy_font_btn)
-        self._generate_charset_btn = PushButton("Generate Charset...")
+        self._generate_charset_btn = QPushButton("Generate Charset...")
         self._generate_charset_btn.clicked.connect(self._on_generate_charset)
         font_btn_layout.addWidget(self._generate_charset_btn)
-        restore_font_btn = PushButton("Restore Missing...")
+        restore_font_btn = QPushButton("Restore Missing...")
         restore_font_btn.clicked.connect(lambda: self._restore_missing_resources("font"))
         font_btn_layout.addWidget(restore_font_btn)
-        replace_font_btn = PushButton("Replace Missing...")
+        replace_font_btn = QPushButton("Replace Missing...")
         replace_font_btn.clicked.connect(lambda: self._replace_missing_resources("font"))
         font_btn_layout.addWidget(replace_font_btn)
-        next_missing_font_btn = PushButton("Next Missing")
+        next_missing_font_btn = QPushButton("Next Missing")
         next_missing_font_btn.clicked.connect(lambda: self._focus_missing_resource("font"))
         font_btn_layout.addWidget(next_missing_font_btn)
-        clean_unused_font_btn = PushButton("Clean Unused...")
+        clean_unused_font_btn = QPushButton("Clean Unused...")
         clean_unused_font_btn.clicked.connect(lambda: self._clean_unused_resources("font"))
         font_btn_layout.addWidget(clean_unused_font_btn)
         font_more_btn = self._create_resource_more_button(
@@ -2340,25 +2352,25 @@ class ResourcePanel(QWidget):
 
         text_btn_layout = QHBoxLayout()
         text_btn_layout.setSpacing(2)
-        import_text_btn = PushButton("Import...")
+        import_text_btn = QPushButton("Import...")
         import_text_btn.clicked.connect(self._on_import_text)
         text_btn_layout.addWidget(import_text_btn)
-        copy_text_btn = PushButton("Copy Names")
+        copy_text_btn = QPushButton("Copy Names")
         copy_text_btn.clicked.connect(lambda: self._copy_visible_names("text"))
         text_btn_layout.addWidget(copy_text_btn)
-        self._generate_charset_text_btn = PushButton("Generate Charset...")
+        self._generate_charset_text_btn = QPushButton("Generate Charset...")
         self._generate_charset_text_btn.clicked.connect(self._on_generate_charset)
         text_btn_layout.addWidget(self._generate_charset_text_btn)
-        restore_text_btn = PushButton("Restore Missing...")
+        restore_text_btn = QPushButton("Restore Missing...")
         restore_text_btn.clicked.connect(lambda: self._restore_missing_resources("text"))
         text_btn_layout.addWidget(restore_text_btn)
-        replace_text_btn = PushButton("Replace Missing...")
+        replace_text_btn = QPushButton("Replace Missing...")
         replace_text_btn.clicked.connect(lambda: self._replace_missing_resources("text"))
         text_btn_layout.addWidget(replace_text_btn)
-        next_missing_text_btn = PushButton("Next Missing")
+        next_missing_text_btn = QPushButton("Next Missing")
         next_missing_text_btn.clicked.connect(lambda: self._focus_missing_resource("text"))
         text_btn_layout.addWidget(next_missing_text_btn)
-        clean_unused_text_btn = PushButton("Clean Unused...")
+        clean_unused_text_btn = QPushButton("Clean Unused...")
         clean_unused_text_btn.clicked.connect(lambda: self._clean_unused_resources("text"))
         text_btn_layout.addWidget(clean_unused_text_btn)
         text_more_btn = self._create_resource_more_button(
@@ -2402,10 +2414,10 @@ class ResourcePanel(QWidget):
         self._locale_combo.setMinimumWidth(96)
         self._locale_combo.currentIndexChanged.connect(self._on_locale_changed)
         locale_row.addWidget(self._locale_combo)
-        self._add_locale_btn = PushButton("Add...")
+        self._add_locale_btn = QPushButton("Add...")
         self._add_locale_btn.clicked.connect(self._on_add_locale)
         locale_row.addWidget(self._add_locale_btn)
-        self._remove_locale_btn = PushButton("Remove")
+        self._remove_locale_btn = QPushButton("Remove")
         self._remove_locale_btn.clicked.connect(self._on_remove_locale)
         locale_row.addWidget(self._remove_locale_btn)
         locale_row.addStretch()
@@ -2439,19 +2451,19 @@ class ResourcePanel(QWidget):
         # Buttons
         str_btn_layout = QHBoxLayout()
         str_btn_layout.setSpacing(2)
-        self._add_key_btn = PushButton("Add...")
+        self._add_key_btn = QPushButton("Add...")
         self._add_key_btn.clicked.connect(self._on_add_string_key)
         str_btn_layout.addWidget(self._add_key_btn)
-        self._rename_key_btn = PushButton("Rename...")
+        self._rename_key_btn = QPushButton("Rename...")
         self._rename_key_btn.clicked.connect(self._on_rename_string_key)
         str_btn_layout.addWidget(self._rename_key_btn)
-        self._remove_key_btn = PushButton("Remove")
+        self._remove_key_btn = QPushButton("Remove")
         self._remove_key_btn.clicked.connect(self._on_remove_string_key)
         str_btn_layout.addWidget(self._remove_key_btn)
-        self._copy_visible_string_btn = PushButton("Copy Keys")
+        self._copy_visible_string_btn = QPushButton("Copy Keys")
         self._copy_visible_string_btn.clicked.connect(self._copy_visible_string_keys)
         str_btn_layout.addWidget(self._copy_visible_string_btn)
-        self._clean_unused_string_btn = PushButton("Clean Unused...")
+        self._clean_unused_string_btn = QPushButton("Clean Unused...")
         self._clean_unused_string_btn.clicked.connect(self._clean_unused_string_keys)
         str_btn_layout.addWidget(self._clean_unused_string_btn)
         str_btn_layout.addStretch()
@@ -2533,6 +2545,7 @@ class ResourcePanel(QWidget):
 
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
+        self._apply_compact_shell_metrics()
         self._update_resource_action_metadata()
         self._update_string_action_metadata()
         self._update_usage_accessibility_metadata()
@@ -2550,6 +2563,32 @@ class ResourcePanel(QWidget):
             card = getattr(metric_value, "_resource_panel_metric_card", None)
             if card is not None:
                 card.hide()
+
+    def _apply_compact_shell_metrics(self):
+        for widget in self._resource_search_inputs.values():
+            _set_compact_control_height(widget)
+        for widget in self._resource_status_filters.values():
+            _set_compact_control_height(widget)
+        for widget in self._resource_filter_reset_buttons.values():
+            _set_compact_control_height(widget)
+        for buttons in self._resource_action_buttons.values():
+            for widget in buttons.values():
+                _set_compact_control_height(widget)
+        for spec in self._resource_more_menus.values():
+            _set_compact_control_height(spec.get("button"))
+        for widget in (
+            self._locale_combo,
+            self._add_locale_btn,
+            self._remove_locale_btn,
+            self._add_key_btn,
+            self._rename_key_btn,
+            self._remove_key_btn,
+            self._copy_visible_string_btn,
+            self._clean_unused_string_btn,
+            self._generate_charset_btn,
+            self._generate_charset_text_btn,
+        ):
+            _set_compact_control_height(widget)
 
     def _add_resource_filter_row(self, parent_layout, resource_type, statuses):
         row = QHBoxLayout()
@@ -2569,7 +2608,7 @@ class ResourcePanel(QWidget):
         status_combo.currentIndexChanged.connect(lambda _index, kind=resource_type: self._on_resource_filter_changed(kind))
         row.addWidget(status_combo)
 
-        reset_button = PushButton("Reset")
+        reset_button = QPushButton("Reset")
         reset_button.clicked.connect(lambda checked=False, kind=resource_type: self._reset_resource_filter(kind))
         row.addWidget(reset_button)
 

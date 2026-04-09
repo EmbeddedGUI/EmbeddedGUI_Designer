@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QTimer, Qt
-    from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QComboBox, QFrame, QLabel, QLineEdit, QMessageBox, QPushButton
 
     _has_pyqt5 = True
 except ImportError:
@@ -42,6 +42,32 @@ class TestResourcePanelFileFlow:
         finally:
             preview.deleteLater()
             qapp.setProperty("designer_font_size_pt", 0)
+
+    def test_resource_panel_shell_controls_use_compact_heights(self, qapp):
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        panel = ResourcePanel()
+
+        image_buttons = panel._resource_action_buttons["image"]
+        image_search = panel._resource_search_inputs["image"]
+        image_status = panel._resource_status_filters["image"]
+        image_reset = panel._resource_filter_reset_buttons["image"]
+
+        assert isinstance(image_buttons["import"], QPushButton)
+        assert isinstance(image_search, QLineEdit)
+        assert isinstance(image_status, QComboBox)
+        assert image_buttons["import"].height() == 22
+        assert image_buttons["clean_unused"].height() == 22
+        assert panel._resource_more_menus["image"]["button"].height() == 22
+        assert image_search.height() == 22
+        assert image_status.height() == 22
+        assert image_reset.height() == 22
+        assert panel._generate_charset_btn.height() == 22
+        assert panel._locale_combo.height() == 22
+        assert panel._add_locale_btn.height() == 22
+        assert panel._add_key_btn.height() == 22
+        assert panel._clean_unused_string_btn.height() == 22
+        panel.deleteLater()
 
     def test_header_exposes_workspace_and_metric_metadata(self, qapp, tmp_path):
         from ui_designer.model.resource_catalog import ResourceCatalog

@@ -8686,7 +8686,7 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.objectName() == "workspace_insert_button"
         assert window._insert_widget_button.text() == "Add"
         assert window._insert_widget_button.width() == 52
-        assert window._insert_widget_button.height() == 24
+        assert window._insert_widget_button.height() == 22
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
         assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
@@ -8938,8 +8938,10 @@ class TestMainWindowFileFlow:
         assert window._toolbar_host.statusTip() == window._toolbar_host.toolTip()
         assert window._toolbar_command_row_layout.spacing() == 2
         assert mode_host.layout().spacing() == 1
+        assert window._toolbar.height() == 24
+        assert window._toolbar.widgetForAction(window._save_action).height() == 22
         assert window._mode_buttons["design"].width() == 52
-        assert window._mode_buttons["design"].height() == 24
+        assert window._mode_buttons["design"].height() == 22
         assert separator.minimumHeight() == 20
         assert separator.maximumHeight() == 20
         assert window._workspace_context_label.text() == "No project open"
@@ -9138,7 +9140,7 @@ class TestMainWindowFileFlow:
 
         assert window._mode_buttons[MODE_DESIGN].toolTip() == "Currently showing Design mode."
         assert window._mode_buttons[MODE_DESIGN].width() == 52
-        assert window._mode_buttons[MODE_DESIGN].height() == 24
+        assert window._mode_buttons[MODE_DESIGN].height() == 22
         assert window._mode_buttons[MODE_DESIGN].accessibleName() == "Editor mode button: Design. Current mode."
         assert window._mode_buttons[MODE_CODE].toolTip() == "Switch the workspace editor to Code mode."
         assert window._mode_buttons[MODE_CODE].statusTip() == window._mode_buttons[MODE_CODE].toolTip()
@@ -9315,7 +9317,8 @@ class TestMainWindowFileFlow:
         assert window._workspace_nav_buttons["structure"].text() == "Tree"
         assert window._workspace_nav_buttons["widgets"].text() == "Add"
         assert window._workspace_nav_buttons["assets"].text() == "Assets"
-        assert window._workspace_nav_buttons["project"].toolButtonStyle() == Qt.ToolButtonTextOnly
+        assert all(button.height() == 22 for button in window._workspace_nav_buttons.values())
+        assert window._bottom_toggle_button.height() == 22
         assert window._workspace_nav_frame.width() == 60
         assert window._workspace_nav_frame.layout().spacing() == 2
         assert window.project_dock.minimumWidth() == 172

@@ -66,7 +66,7 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert "QTabBar::tab:selected" in css
         assert t["panel_raised"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
         nav = css.split("#workspace_nav_rail", 1)[1].split("}", 1)[0]
-        nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        nav_button = css.split('QPushButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
         compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
         assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
         assert f"font-size: {t['fs_body_sm']}px;" in nav_button
@@ -426,7 +426,7 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin: 1px 1px;" in toolbar_separator
         assert "background-color: transparent;" in toolbar_button
         assert "border-radius: 0px;" in toolbar_button
-        assert "padding: 1px 4px;" in toolbar_button
+        assert "padding: 0px 4px;" in toolbar_button
         assert "min-height: 20px;" in toolbar_button
         assert f"background-color: {t['surface_hover']};" in toolbar_button_hover
         assert "min-width: 1px;" in host_separator
@@ -435,11 +435,11 @@ def test_workspace_command_bar_styles_use_engineering_surface_tokens():
         assert "margin-right: 2px;" in host_separator
         assert "background-color: transparent;" in insert_button
         assert "border-radius: 0px;" in insert_button
-        assert "padding: 1px 8px;" in insert_button
+        assert "padding: 0px 8px;" in insert_button
         assert "min-width: 52px;" in insert_button
         assert "max-width: 52px;" in insert_button
-        assert "min-height: 24px;" in insert_button
-        assert "max-height: 24px;" in insert_button
+        assert "min-height: 20px;" in insert_button
+        assert "max-height: 20px;" in insert_button
         assert f"background-color: {t['surface_hover']};" in insert_button_hover
         assert "background-color: transparent;" in mode_strip
         assert "border: none;" in mode_strip
@@ -453,7 +453,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
 
         mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
         bottom_toggle_button = css.split("QPushButton#workspace_bottom_toggle_button {", 1)[1].split("}", 1)[0]
-        nav_button = css.split('QToolButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        nav_button = css.split('QPushButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
         status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
         empty_state = css.split("#property_panel_empty_state {", 1)[1].split("}", 1)[0]
@@ -473,16 +473,17 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "border-radius: 0px;" in mode_button
         assert "min-width: 52px;" in mode_button
         assert "max-width: 52px;" in mode_button
-        assert "min-height: 24px;" in mode_button
-        assert "max-height: 24px;" in mode_button
+        assert "min-height: 20px;" in mode_button
+        assert "max-height: 20px;" in mode_button
         assert "border-radius: 0px;" in bottom_toggle_button
         assert "min-width: 48px;" in bottom_toggle_button
-        assert "min-height: 24px;" in bottom_toggle_button
+        assert "min-height: 20px;" in bottom_toggle_button
+        assert "max-height: 20px;" in bottom_toggle_button
         assert "border-radius: 0px;" in nav_button
         assert "min-width: 56px;" in nav_button
         assert "max-width: 56px;" in nav_button
-        assert "min-height: 24px;" in nav_button
-        assert "max-height: 24px;" in nav_button
+        assert "min-height: 20px;" in nav_button
+        assert "max-height: 20px;" in nav_button
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
         assert "border-top: 1px solid" in empty_state
@@ -1017,8 +1018,9 @@ def test_project_workspace_styles_use_engineering_surface_tokens():
         assert "border-radius: 0px;" in metrics
         assert "border-radius: 0px;" in buttons
         assert f"font-size: {t['fs_body']}px;" in buttons
-        assert "padding: 1px 6px;" in buttons
-        assert "min-height: 22px;" in buttons
+        assert "padding: 0px 6px;" in buttons
+        assert "min-height: 20px;" in buttons
+        assert "max-height: 20px;" in buttons
 
 
 @pytest.mark.skipif(not HAS_FLUENT, reason="qfluentwidgets not installed")
@@ -1043,14 +1045,14 @@ def test_apply_theme_patches_existing_fluent_widgets_with_engineering_radii():
         for expected_kind, widget in widgets:
             assert widget.property("_designer_fluent_engineering_style") == expected_kind
 
-        assert "border-radius: 6px;" in widgets[0][1].styleSheet()
-        assert "border-radius: 6px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[0][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[1][1].styleSheet()
         assert "#lineEditButton" in widgets[1][1].styleSheet()
-        assert "border-radius: 4px;" in widgets[1][1].styleSheet()
-        assert "border-radius: 6px;" in widgets[2][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[1][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[2][1].styleSheet()
         assert "SpinButton" in widgets[3][1].styleSheet()
-        assert "border-radius: 6px;" in widgets[3][1].styleSheet()
-        assert "border-radius: 4px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[3][1].styleSheet()
+        assert "border-radius: 0px;" in widgets[3][1].styleSheet()
     finally:
         for _, widget in widgets:
             widget.close()
@@ -1073,8 +1075,8 @@ def test_apply_theme_patches_new_fluent_widgets_after_theme_install():
 
         assert button.property("_designer_fluent_engineering_style") == "button"
         assert search.property("_designer_fluent_engineering_style") == "line_edit"
-        assert "border-radius: 6px;" in button.styleSheet()
-        assert "border-radius: 6px;" in search.styleSheet()
+        assert "border-radius: 0px;" in button.styleSheet()
+        assert "border-radius: 0px;" in search.styleSheet()
     finally:
         button.close()
         button.deleteLater()

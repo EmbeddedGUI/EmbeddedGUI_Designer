@@ -35,7 +35,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, QByteArray, QSignalBlocker
 from PyQt5.QtGui import QGuiApplication
 
-from qfluentwidgets import PushButton, TabBar, TabCloseButtonDisplayMode
+from qfluentwidgets import TabBar, TabCloseButtonDisplayMode
 
 from .widget_tree import WidgetTreePanel
 from .property_panel import PropertyPanel
@@ -145,6 +145,8 @@ WORKSPACE_TOP_VISIBLE_HEIGHT = 860
 WORKSPACE_BOTTOM_VISIBLE_HEIGHT = 200
 WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
 WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
+WORKSPACE_CONTROL_HEIGHT = 22
+WORKSPACE_TOOLBAR_HEIGHT = 24
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -527,9 +529,9 @@ class MainWindow(QMainWindow):
         self._bottom_title = QLabel("Tools")
         self._bottom_title.setObjectName("workspace_section_title")
         bottom_header_layout.addWidget(self._bottom_title)
-        self._bottom_toggle_button = PushButton("Hide")
+        self._bottom_toggle_button = QPushButton("Hide")
         self._bottom_toggle_button.setObjectName("workspace_bottom_toggle_button")
-        self._bottom_toggle_button.setFixedSize(48, 24)
+        self._bottom_toggle_button.setFixedSize(48, WORKSPACE_CONTROL_HEIGHT)
         self._bottom_toggle_button.clicked.connect(lambda: self._set_bottom_panel_visible(not self._bottom_panel_visible))
         bottom_header_layout.addStretch()
         bottom_header_layout.addWidget(self._bottom_toggle_button)
@@ -681,15 +683,21 @@ class MainWindow(QMainWindow):
         dock_widget.setTitleBarWidget(QWidget(dock_widget))
 
     def _create_workspace_nav_button(self, label, short_label, panel_key):
-        button = QToolButton(self)
+        button = QPushButton(self)
         button.setObjectName(f"workspace_nav_button_{panel_key}")
         button.setProperty("workspaceNav", True)
         button.setCheckable(True)
-        button.setToolButtonStyle(Qt.ToolButtonTextOnly)
         button.setText(str(short_label or label or ""))
-        button.setFixedSize(56, 24)
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button.setFixedSize(56, WORKSPACE_CONTROL_HEIGHT)
         button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
         return button
+
+    def _set_toolbar_button_height(self, toolbar, action):
+        widget = toolbar.widgetForAction(action)
+        if widget is not None:
+            widget.setFixedHeight(WORKSPACE_CONTROL_HEIGHT)
+        return widget
 
     def _workspace_panel_label(self, panel_key):
         return {
@@ -3468,6 +3476,7 @@ class MainWindow(QMainWindow):
         tb.setObjectName("main_toolbar")
         tb.setMovable(False)
         tb.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        tb.setFixedHeight(WORKSPACE_TOOLBAR_HEIGHT)
         self._toolbar_command_row_layout.addWidget(tb, 1)
 
         toolbar_rail_sep = QFrame()
@@ -3477,20 +3486,23 @@ class MainWindow(QMainWindow):
         toolbar_rail_sep.setFixedHeight(20)
         self._toolbar_command_row_layout.addWidget(toolbar_rail_sep, 0)
 
-        self._insert_widget_button = PushButton("Add")
+        self._insert_widget_button = QPushButton("Add")
         self._insert_widget_button.setObjectName("workspace_insert_button")
-        self._insert_widget_button.setFixedSize(52, 24)
+        self._insert_widget_button.setFixedSize(52, WORKSPACE_CONTROL_HEIGHT)
         self._insert_widget_button.clicked.connect(lambda: self._show_widget_browser_for_parent(self._default_insert_parent()))
         tb.addWidget(self._insert_widget_button)
         self._update_insert_widget_button_metadata()
 
         tb.addSeparator()
         tb.addAction(self._save_action)
+        self._set_toolbar_button_height(tb, self._save_action)
 
         tb.addSeparator()
 
         tb.addAction(self._undo_action)
+        self._set_toolbar_button_height(tb, self._undo_action)
         tb.addAction(self._redo_action)
+        self._set_toolbar_button_height(tb, self._redo_action)
         more_menu = QMenu(self)
         more_menu.addAction(self._copy_action)
         more_menu.addAction(self._paste_action)
@@ -3502,12 +3514,15 @@ class MainWindow(QMainWindow):
         self._toolbar_more_button.setMenu(more_menu)
         self._toolbar_more_button.setText("More")
         self._toolbar_more_button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        self._toolbar_more_button.setFixedHeight(WORKSPACE_CONTROL_HEIGHT)
         tb.addWidget(self._toolbar_more_button)
 
         tb.addSeparator()
 
         tb.addAction(self._compile_action)
+        self._set_toolbar_button_height(tb, self._compile_action)
         tb.addAction(self._stop_action)
+        self._set_toolbar_button_height(tb, self._stop_action)
 
         mode_host = QWidget()
         mode_host.setObjectName("workspace_mode_switch")
@@ -3523,7 +3538,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(label)
             button.setObjectName("workspace_mode_button")
             button.setCheckable(True)
-            button.setFixedSize(52, 24)
+            button.setFixedSize(52, WORKSPACE_CONTROL_HEIGHT)
             button.clicked.connect(lambda checked=False, m=mode: self.editor_tabs.set_mode(m))
             self._mode_buttons[mode] = button
             mode_layout.addWidget(button)

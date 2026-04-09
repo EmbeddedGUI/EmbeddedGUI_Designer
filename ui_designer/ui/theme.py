@@ -76,7 +76,7 @@ TransparentPushButton,
 TransparentToolButton,
 TransparentToggleButton,
 TransparentToggleToolButton {{
-    border-radius: {_ENGINEERING_RADIUS_MD}px;
+    border-radius: 0px;
     font-size: 13px;
 }}
 """
@@ -107,13 +107,13 @@ LineEdit,
 TextEdit,
 PlainTextEdit,
 TextBrowser {{
-    border-radius: {_ENGINEERING_RADIUS_MD}px;
+    border-radius: 0px;
     padding: 0px 8px;
     font-size: 13px;
 }}
 
 #lineEditButton {{
-    border-radius: {_ENGINEERING_RADIUS_SM}px;
+    border-radius: 0px;
 }}
 """
 
@@ -136,7 +136,7 @@ TextBrowser {
 _FLUENT_COMBO_BOX_RADIUS_QSS = f"""
 ComboBox,
 ModelComboBox {{
-    border-radius: {_ENGINEERING_RADIUS_MD}px;
+    border-radius: 0px;
     min-height: 24px;
     padding: 0px 8px;
     font-size: 13px;
@@ -163,14 +163,14 @@ CompactDoubleSpinBox,
 CompactDateEdit,
 CompactDateTimeEdit,
 CompactTimeEdit {{
-    border-radius: {_ENGINEERING_RADIUS_MD}px;
+    border-radius: 0px;
     min-height: 24px;
     padding: 0px 8px;
     font-size: 13px;
 }}
 
 SpinButton {{
-    border-radius: {_ENGINEERING_RADIUS_SM}px;
+    border-radius: 0px;
 }}
 """
 
@@ -822,7 +822,7 @@ QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox, QSpinBox, QDoubleSpinBox
     background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     padding: {t['pad_input_v']}px {t['pad_input_h']}px;
     selection-background-color: {t['selection']};
     font-size: {t['fs_body']}px;
@@ -883,7 +883,7 @@ QPushButton, QToolButton {{
     background-color: {t['panel_raised']};
     color: {t['text']};
     border: 1px solid {t['border']};
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
     padding: {t['pad_btn_v']}px {t['pad_btn_h']}px;
     font-size: {t['fs_body']}px;
     font-weight: {t['fw_medium']};
@@ -960,7 +960,7 @@ QTabBar::tab {{
     margin-right: {t['space_xs']}px;
     min-height: {t['h_tab_min']}px;
     border: 1px solid transparent;
-    border-radius: {t['r_md']}px;
+    border-radius: 0px;
 }}
 
 QTabBar::tab:selected {{
@@ -1447,9 +1447,10 @@ QPushButton#project_workspace_view_button {{
     border-radius: 0px;
     color: {t['text_muted']};
     font-size: {t['fs_body']}px;
-    padding: 1px 6px;
+    padding: 0px 6px;
     text-align: left;
-    min-height: 22px;
+    min-height: 20px;
+    max-height: 20px;
 }}
 
 QPushButton#project_workspace_view_button:hover {{
@@ -1509,8 +1510,10 @@ QToolBar#main_toolbar QToolButton {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px 4px;
+    padding: 0px 4px;
     min-height: 20px;
+    max-height: 20px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QToolBar#main_toolbar QToolButton:hover {{
@@ -1538,11 +1541,11 @@ QPushButton#workspace_mode_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
+    padding: 0px {t['space_sm']}px;
     min-width: 52px;
     max-width: 52px;
-    min-height: 24px;
-    max-height: 24px;
+    min-height: 20px;
+    max-height: 20px;
 }}
 
 QPushButton#workspace_mode_button:hover {{
@@ -1561,9 +1564,10 @@ QPushButton#workspace_bottom_toggle_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
+    padding: 0px {t['space_sm']}px;
     min-width: 48px;
-    min-height: 24px;
+    min-height: 20px;
+    max-height: 20px;
 }}
 
 QPushButton#workspace_bottom_toggle_button:hover {{
@@ -1587,11 +1591,11 @@ QPushButton#workspace_insert_button {{
     border: 1px solid transparent;
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
+    padding: 0px {t['space_sm']}px;
     min-width: 52px;
     max-width: 52px;
-    min-height: 24px;
-    max-height: 24px;
+    min-height: 20px;
+    max-height: 20px;
 }}
 
 QPushButton#workspace_insert_button:hover {{
@@ -1669,31 +1673,31 @@ QFrame#toolbar_host_separator {{
     margin-right: 2px;
 }}
 
-QToolButton[workspaceNav="true"] {{
+QPushButton[workspaceNav="true"] {{
     background-color: transparent;
     color: {t['text_muted']};
     border: 1px solid transparent;
     border-radius: 0px;
     font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
-    padding: 1px 0;
+    padding: 0px 0;
     min-width: 56px;
     max-width: 56px;
-    min-height: 24px;
-    max-height: 24px;
+    min-height: 20px;
+    max-height: 20px;
 }}
 
-QToolButton[workspaceNav="true"]:hover {{
+QPushButton[workspaceNav="true"]:hover {{
     background-color: {t['surface_hover']};
     border-color: {t['border_strong']};
     color: {t['text']};
 }}
 
-QToolButton[workspaceNav="true"]:pressed {{
+QPushButton[workspaceNav="true"]:pressed {{
     background-color: {t['surface_pressed']};
 }}
 
-QToolButton[workspaceNav="true"]:checked {{
+QPushButton[workspaceNav="true"]:checked {{
     background-color: {t['accent_soft']};
     color: {t['accent_hover']};
     border: 1px solid {t['accent']};
@@ -1969,6 +1973,10 @@ QWidget#widget_tree_dock QLabel#workspace_section_title {{
 #resource_dialog_shell QToolButton,
 #resource_dialog_shell QComboBox {{
     border-radius: 0px;
+    padding: 0px 6px;
+    min-height: 20px;
+    max-height: 20px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 #resource_panel_header {{

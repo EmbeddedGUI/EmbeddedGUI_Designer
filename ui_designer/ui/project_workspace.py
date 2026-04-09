@@ -12,6 +12,7 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
+_PROJECT_WORKSPACE_BUTTON_HEIGHT = 22
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -28,6 +29,11 @@ def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
         if current_accessible_name is None or str(current_accessible_name) != resolved_accessible_name:
             widget.setAccessibleName(resolved_accessible_name)
             widget.setProperty("_workspace_metadata_accessible_snapshot", resolved_accessible_name)
+
+
+def _set_compact_button_height(button):
+    button.setFixedHeight(_PROJECT_WORKSPACE_BUTTON_HEIGHT)
+    return button
 
 
 class ProjectWorkspacePanel(QWidget):
@@ -115,7 +121,7 @@ class ProjectWorkspacePanel(QWidget):
 
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self._settings_btn = QPushButton("Settings")
+        self._settings_btn = _set_compact_button_height(QPushButton("Settings"))
         self._settings_btn.setObjectName("project_workspace_view_button")
         self._settings_btn.clicked.connect(self._toggle_project_settings)
         _set_widget_metadata(
@@ -123,7 +129,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show or hide low-frequency project settings.",
             accessible_name="Project settings button",
         )
-        self._list_btn = QPushButton("List")
+        self._list_btn = _set_compact_button_height(QPushButton("List"))
         self._list_btn.setObjectName("project_workspace_view_button")
         self._list_btn.setCheckable(True)
         _set_widget_metadata(
@@ -131,7 +137,7 @@ class ProjectWorkspacePanel(QWidget):
             tooltip="Show the page list for structure-first editing.",
             accessible_name="Workspace view button: List. Structure first.",
         )
-        self._thumb_btn = QPushButton("Thumbs")
+        self._thumb_btn = _set_compact_button_height(QPushButton("Thumbs"))
         self._thumb_btn.setObjectName("project_workspace_view_button")
         self._thumb_btn.setCheckable(True)
         _set_widget_metadata(
