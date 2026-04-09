@@ -1075,7 +1075,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_file_menu"):
             return
         project_state = "open" if getattr(self, "project", None) is not None else "none"
-        dirty_state = "present" if self._has_unsaved_changes() else "none"
+        dirty_state = self._unsaved_changes_summary_text()
         reload_state = "available" if getattr(getattr(self, "_reload_project_action", None), "isEnabled", lambda: False)() else "unavailable"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         recent = getattr(getattr(self, "_config", None), "recent_projects", []) or []
@@ -1216,13 +1216,26 @@ class MainWindow(QMainWindow):
         reason_text = self._project_dirty_reason_text()
         return f" ({reason_text})" if reason_text else ""
 
-    def _unsaved_changes_hint_text(self):
+    def _unsaved_changes_summary_text(self):
         dirty_label = self._dirty_page_label()
         if not getattr(self, "_project_dirty", False):
-            return f"Unsaved pages: {dirty_label}."
+            return dirty_label
+        project_label = f"project changes{self._project_dirty_suffix()}"
         if dirty_label == "none":
-            return f"Unsaved changes: project changes{self._project_dirty_suffix()}."
-        return f"Unsaved changes: {dirty_label} + project changes{self._project_dirty_suffix()}."
+            return project_label
+        return f"{dirty_label} + {project_label}"
+
+    def _unsaved_changes_hint_text(self):
+        summary = self._unsaved_changes_summary_text()
+        if not getattr(self, "_project_dirty", False):
+            return f"Unsaved pages: {summary}."
+        return f"Unsaved changes: {summary}."
+
+    def _unsaved_changes_prompt_text(self, action="close"):
+        summary = self._unsaved_changes_summary_text()
+        if action == "reload":
+            return f"Reload project files from disk and discard unsaved changes: {summary}?"
+        return f"There are unsaved changes: {summary}. Do you want to save before closing?"
 
     def _mark_project_dirty(self, source=""):
         if self.project is None:
@@ -2760,7 +2773,7 @@ class MainWindow(QMainWindow):
             reply = QMessageBox.question(
                 self,
                 "Reload Project",
-                "Reload project files from disk and discard unsaved changes?",
+                self._unsaved_changes_prompt_text("reload"),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -4511,7 +4524,7 @@ class MainWindow(QMainWindow):
         if self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self, "Close Project",
-                "There are unsaved changes. Do you want to save before closing?",
+                self._unsaved_changes_prompt_text("close"),
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
                 QMessageBox.Save
             )
@@ -7175,7 +7188,7 @@ class MainWindow(QMainWindow):
         if self.project and self._has_unsaved_changes():
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
-                "There are unsaved changes. Do you want to save before closing?",
+                self._unsaved_changes_prompt_text("close"),
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
                 QMessageBox.Save
             )

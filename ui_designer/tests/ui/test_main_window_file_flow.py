@@ -4748,7 +4748,7 @@ class TestMainWindowFileFlow:
 
         assert file_action.toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: open. SDK: valid. Unsaved changes: present. Reload: available. Recent projects: 1 project."
+            "Project: open. SDK: valid. Unsaved changes: 1 page. Reload: available. Recent projects: 1 project."
         )
         assert file_action.statusTip() == file_action.toolTip()
         _close_window(window)
@@ -4776,7 +4776,41 @@ class TestMainWindowFileFlow:
         assert window._has_unsaved_changes() is True
         assert file_action.toolTip() == (
             "Create, open, save, export, and close projects. "
-            "Project: open. SDK: valid. Unsaved changes: present. Reload: available. Recent projects: 1 project."
+            "Project: open. SDK: valid. Unsaved changes: project changes (startup page). Reload: available. "
+            "Recent projects: 1 project."
+        )
+        assert file_action.statusTip() == file_action.toolTip()
+        _close_window(window)
+
+    def test_file_menu_reports_page_and_project_dirty_reasons_together(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "FileCategoryMixedDirtyDemo"
+        project = _create_project(project_dir, "FileCategoryMixedDirtyDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow("")
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+
+        file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        stack = window._undo_manager.get_stack("detail_page")
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_window_title()
+        window._on_startup_changed("detail_page")
+
+        assert file_action.toolTip() == (
+            "Create, open, save, export, and close projects. "
+            "Project: open. SDK: valid. Unsaved changes: 1 page + project changes (startup page). "
+            "Reload: available. Recent projects: 1 project."
         )
         assert file_action.statusTip() == file_action.toolTip()
         _close_window(window)
@@ -7029,8 +7063,40 @@ class TestMainWindowFileFlow:
         window._close_project()
 
         assert window._undo_manager.is_any_dirty() is False
-        assert prompts == [("Close Project", "There are unsaved changes. Do you want to save before closing?")]
+        assert prompts == [
+            ("Close Project", "There are unsaved changes: project changes (startup page). Do you want to save before closing?")
+        ]
         assert window.project is not None
+        _close_window(window)
+
+    def test_reload_project_prompt_describes_project_level_unsaved_reason(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from PyQt5.QtWidgets import QMessageBox
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReloadProjectDirtyStateDemo"
+        project = _create_project(project_dir, "ReloadProjectDirtyStateDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._on_startup_changed("detail_page")
+
+        prompts = []
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QMessageBox.question",
+            lambda *args, **kwargs: prompts.append(args[1:3]) or QMessageBox.No,
+        )
+
+        assert window._reload_project_from_disk() is False
+        assert prompts == [
+            ("Reload Project", "Reload project files from disk and discard unsaved changes: project changes (startup page)?")
+        ]
         _close_window(window)
 
     def test_save_project_clears_project_change_flag(self, qapp, isolated_config, tmp_path, monkeypatch):
