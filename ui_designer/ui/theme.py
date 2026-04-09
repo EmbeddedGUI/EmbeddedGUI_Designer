@@ -1085,6 +1085,7 @@ QWidget#property_panel_root {{
 QFrame#property_panel_overview {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: {t['r_md']}px;
 }}
 
@@ -1394,6 +1395,7 @@ QFrame#inspector_group_body {{
 #workspace_panel_header[panelTone="property"] {{
     background-color: {t['panel_raised']};
     border-color: {t['border']};
+    border-top: none;
 }}
 
 #workspace_hint_strip[panelTone="property"] {{
@@ -1936,7 +1938,7 @@ QWidget#page_timers_dock QLabel#workspace_section_title {{
 
 #property_panel_empty_state {{
     background-color: transparent;
-    border-top: 1px solid {t['border']};
+    border-top: none;
     border-right: none;
     border-bottom: none;
     border-left: none;
@@ -2228,6 +2230,7 @@ QTreeWidget#project_dock_tree {{
 #diagnostics_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 
@@ -2290,6 +2293,7 @@ QListWidget#diagnostics_list {{
 #debug_panel_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 
@@ -2345,6 +2349,7 @@ QPlainTextEdit#debug_output_surface {{
 #history_panel_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 
@@ -2374,6 +2379,7 @@ QListWidget#history_panel_list {{
 #animations_panel_header {{
     background-color: {t['panel']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 
@@ -2473,6 +2479,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_fields_header[panelTone="fields"] {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 
@@ -2496,6 +2503,7 @@ QTreeWidget#widget_tree_panel_tree {{
 #page_timers_header[panelTone="timers"] {{
     background-color: {t['panel_raised']};
     border: 1px solid {t['border']};
+    border-top: none;
     border-radius: 0px;
 }}
 

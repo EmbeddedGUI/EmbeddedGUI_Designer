@@ -9526,7 +9526,9 @@ class TestMainWindowFileFlow:
             "Inspector tabs: Properties selected. 3 tabs. Current page: none. Selection: none."
         )
         assert window._inspector_tabs.minimumWidth() == 264
+        assert window._inspector_tabs.documentMode() is True
         assert all(window._inspector_tabs.tabBar().tabIcon(i).isNull() for i in range(window._inspector_tabs.count()))
+        assert window._inspector_tabs.tabBar().drawBase() is False
         assert window._inspector_tabs.toolTip() == (
             "Inspector tabs. Current section: Properties. Current page: none. Selection: none."
         )
@@ -9539,7 +9541,9 @@ class TestMainWindowFileFlow:
         assert window._bottom_tabs.accessibleName() == (
             "Bottom tools tabs: Diagnostics selected. 3 tabs. Current page: none. Panel hidden."
         )
+        assert window._bottom_tabs.documentMode() is True
         assert all(window._bottom_tabs.tabBar().tabIcon(i).isNull() for i in range(window._bottom_tabs.count()))
+        assert window._bottom_tabs.tabBar().drawBase() is False
         assert window._bottom_tabs.toolTip() == (
             "Bottom tools tabs. Current section: Diagnostics. Current page: none. Panel hidden."
         )

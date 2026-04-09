@@ -307,6 +307,7 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-top: none;" in header
         assert "border-radius: 0px;" in header
         assert f"color: {t['accent_hover']};" in eyebrow
         assert "background-color: transparent;" in metrics
@@ -338,6 +339,7 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-top: none;" in header
         assert "border-radius: 0px;" in header
         assert f"color: {t['accent_hover']};" in eyebrow
         assert "background-color: transparent;" in metrics
@@ -492,7 +494,7 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "padding: 2px 6px;" in left_tabs_tab
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
-        assert "border-top: 1px solid" in empty_state
+        assert "border-top: none;" in empty_state
         assert "border-right: none;" in empty_state
         assert "border-bottom: none;" in empty_state
         assert "border-left: none;" in empty_state
@@ -912,6 +914,7 @@ def test_diagnostics_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-top: none;" in header
         assert "border-radius: 0px;" in header
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
@@ -940,6 +943,7 @@ def test_debug_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-top: none;" in header
         assert "border-radius: 0px;" in header
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header
@@ -966,6 +970,7 @@ def test_history_panel_styles_use_engineering_surface_tokens():
 
         _assert_panel_surface(header, t)
         _assert_default_border(header, t)
+        assert "border-top: none;" in header
         assert "border-radius: 0px;" in header
         assert f"background-color: {t['panel']};" in tone_header
         assert f"border-color: {t['border']};" in tone_header

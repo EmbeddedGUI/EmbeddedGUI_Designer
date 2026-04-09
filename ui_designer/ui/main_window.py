@@ -502,6 +502,8 @@ class MainWindow(QMainWindow):
         self._inspector_tabs.setObjectName("workspace_inspector_tabs")
         self._inspector_tabs.setMinimumWidth(INSPECTOR_SCROLL_MIN_WIDTH)
         self._inspector_tabs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        self._inspector_tabs.setDocumentMode(True)
+        self._inspector_tabs.tabBar().setDrawBase(False)
         self._inspector_tabs.addTab(self.props_dock, "Properties")
         self._inspector_tabs.addTab(self.animations_panel, "Animations")
         self._inspector_tabs.addTab(self._page_tools_scroll, "Page")
@@ -538,6 +540,8 @@ class MainWindow(QMainWindow):
 
         self._bottom_tabs = QTabWidget()
         self._bottom_tabs.setObjectName("workspace_bottom_tabs")
+        self._bottom_tabs.setDocumentMode(True)
+        self._bottom_tabs.tabBar().setDrawBase(False)
         self._bottom_tabs.addTab(self.diagnostics_panel, "Diagnostics")
         self._bottom_tabs.addTab(self.history_panel, "History")
         self._bottom_tabs.addTab(self.debug_panel, "Debug Output")
