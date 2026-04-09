@@ -2613,6 +2613,36 @@ class TestMainWindowFileFlow:
         assert "#define EGUI_MAIN_PAGE_EXT_FIELDS" in (dst_dir / "main_page_ext.h").read_text(encoding="utf-8")
         _close_window(window)
 
+    def test_save_project_as_multi_page_real_generator_writes_all_page_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        src_dir = tmp_path / "SrcMultiDemo"
+        dst_dir = tmp_path / "DstMultiDemo"
+        project = _create_project(src_dir, "SaveAsMultiDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(src_dir))
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(src_dir)
+        window.app_name = "SaveAsMultiDemo"
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._save_project_as()
+
+        for page_name in ("main_page", "detail_page"):
+            assert (dst_dir / f"{page_name}.h").is_file()
+            assert (dst_dir / f"{page_name}_layout.c").is_file()
+            assert (dst_dir / f"{page_name}.c").is_file()
+            assert (dst_dir / f"{page_name}_ext.h").is_file()
+        _close_window(window)
+
     def test_save_project_as_warns_on_non_empty_directory(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -2828,6 +2858,35 @@ class TestMainWindowFileFlow:
         assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
         assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
         assert "Exported " in window.statusBar().currentMessage()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_export_code_keeps_existing_user_owned_page_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ExportKeepUserDemo"
+        export_dir = tmp_path / "export_keep_out"
+        export_dir.mkdir()
+        project = _create_project(project_dir, "ExportKeepUserDemo", sdk_root)
+
+        (export_dir / "main_page.c").write_text("/* keep user source */\n", encoding="utf-8")
+        (export_dir / "main_page_ext.h").write_text("#define KEEP_USER_EXT 1\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._export_code()
+
+        assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep user source */\n"
+        assert (export_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_USER_EXT 1\n"
+        assert (export_dir / "main_page.h").is_file()
+        assert (export_dir / "main_page_layout.c").is_file()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -5042,6 +5101,38 @@ class TestMainWindowFileFlow:
         assert not (project_dir / "detail_page_layout.c").exists()
         assert not (project_dir / "detail_page.c").exists()
         assert not (project_dir / "detail_page_ext.h").exists()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").is_file()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page_ext.h").is_file()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_delete_current_page_via_project_dock_switches_to_remaining_page(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DeleteCurrentPageDemo"
+        project = _create_project(project_dir, "DeleteCurrentPageDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        (project_dir / "detail_page.c").write_text("/* detail user */\n", encoding="utf-8")
+        (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr(window, "_remove_page_tab", lambda *args, **kwargs: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        window._on_page_removed("detail_page")
+        qapp.processEvents()
+
+        assert window._current_page is not None
+        assert window._current_page.name == "main_page"
+        assert window.page_navigator._current_page == "main_page"
+        assert window.project.get_page_by_name("detail_page") is None
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").is_file()
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page_ext.h").is_file()
         window._undo_manager.mark_all_saved()
