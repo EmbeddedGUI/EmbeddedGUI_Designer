@@ -7099,6 +7099,41 @@ class TestMainWindowFileFlow:
         ]
         _close_window(window)
 
+    def test_close_event_prompt_describes_project_level_unsaved_reason(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from PyQt5.QtGui import QCloseEvent
+        from PyQt5.QtWidgets import QMessageBox
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CloseEventDirtyStateDemo"
+        project = _create_project(project_dir, "CloseEventDirtyStateDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._on_startup_changed("detail_page")
+
+        prompts = []
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.QMessageBox.question",
+            lambda *args, **kwargs: prompts.append(args[1:3]) or QMessageBox.Cancel,
+        )
+
+        event = QCloseEvent()
+        window.closeEvent(event)
+
+        assert prompts == [
+            ("Unsaved Changes", "There are unsaved changes: project changes (startup page). Do you want to save before closing?")
+        ]
+        assert event.isAccepted() is False
+        assert window._is_closing is False
+        _close_window(window)
+
     def test_save_project_clears_project_change_flag(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
