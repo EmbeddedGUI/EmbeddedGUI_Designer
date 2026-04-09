@@ -318,8 +318,9 @@ def test_page_fields_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 26px;" in buttons
-        assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert "min-height: 20px;" in buttons
+        assert "max-height: 20px;" in buttons
+        assert f"padding: 0px {t['space_sm']}px;" in buttons
 
 
 def test_page_timers_panel_styles_use_engineering_surface_tokens():
@@ -348,8 +349,9 @@ def test_page_timers_panel_styles_use_engineering_surface_tokens():
         assert f"border: 1px solid {t['border']};" in table
         assert "border-radius: 0px;" in table
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 26px;" in buttons
-        assert f"padding: 2px {t['space_sm']}px;" in buttons
+        assert "min-height: 20px;" in buttons
+        assert "max-height: 20px;" in buttons
+        assert f"padding: 0px {t['space_sm']}px;" in buttons
 
 
 def test_editor_tabs_styles_use_engineering_shell_tokens():
@@ -991,8 +993,9 @@ def test_animations_panel_styles_use_engineering_surface_tokens():
         assert "border: none;" in actions
         assert "border-radius: 0px;" in actions
         assert "border-radius: 0px;" in buttons
-        assert "min-height: 24px;" in buttons
-        assert f"padding: 1px {t['space_sm']}px;" in buttons
+        assert "min-height: 20px;" in buttons
+        assert "max-height: 20px;" in buttons
+        assert f"padding: 0px {t['space_sm']}px;" in buttons
         assert f"background-color: {t['panel_alt']};" in table
         assert "border-radius: 0px;" in table
         assert "background-color: transparent;" in detail

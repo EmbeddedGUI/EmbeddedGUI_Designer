@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -21,6 +22,9 @@ from ..model.page_timers import (
     suggest_page_timer_name,
     validate_page_timers,
 )
+
+
+_PAGE_TIMERS_CONTROL_HEIGHT = 22
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -41,6 +45,12 @@ def _set_item_metadata(item, tooltip):
     item.setToolTip(tooltip)
     item.setStatusTip(tooltip)
     item.setData(Qt.AccessibleTextRole, tooltip)
+
+
+def _set_compact_button_metrics(button):
+    button.setFixedHeight(_PAGE_TIMERS_CONTROL_HEIGHT)
+    button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+    return button
 
 
 class PageTimersPanel(QWidget):
@@ -146,6 +156,8 @@ class PageTimersPanel(QWidget):
         self._add_button = QPushButton("Add Timer")
         self._remove_button = QPushButton("Remove Timer")
         self._open_code_button = QPushButton("Open User Code")
+        for button in (self._add_button, self._remove_button, self._open_code_button):
+            _set_compact_button_metrics(button)
         self._add_button.clicked.connect(self._on_add_timer)
         self._remove_button.clicked.connect(self._on_remove_timer)
         self._open_code_button.clicked.connect(self._on_open_user_code)

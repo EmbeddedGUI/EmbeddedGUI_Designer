@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QSizePolicy,
 )
 
 from ..model.widget_animations import (
@@ -39,6 +40,7 @@ _TOKENS = theme_tokens("dark")
 _SPACE_XS = int(_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_TOKENS.get("space_md", 12))
+_ANIMATIONS_CONTROL_HEIGHT = 22
 
 
 
@@ -60,6 +62,21 @@ def _set_item_metadata(item, tooltip):
     item.setToolTip(tooltip)
     item.setStatusTip(tooltip)
     item.setData(Qt.AccessibleTextRole, tooltip)
+
+
+def _set_compact_button_metrics(button):
+    button.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+    button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+    return button
+
+
+def _set_compact_editor_metrics(editor):
+    if isinstance(editor, QCheckBox):
+        editor.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+        editor.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+    else:
+        editor.setFixedHeight(_ANIMATIONS_CONTROL_HEIGHT)
+    return editor
 
 
 class AnimationsPanel(QWidget):
@@ -142,6 +159,8 @@ class AnimationsPanel(QWidget):
         self._add_button = QPushButton("Add Animation")
         self._duplicate_button = QPushButton("Duplicate")
         self._remove_button = QPushButton("Remove")
+        for button in (self._add_button, self._duplicate_button, self._remove_button):
+            _set_compact_button_metrics(button)
         self._add_button.clicked.connect(self._on_add_animation)
         self._duplicate_button.clicked.connect(self._on_duplicate_animation)
         self._remove_button.clicked.connect(self._on_remove_animation)
@@ -298,6 +317,7 @@ class AnimationsPanel(QWidget):
     def _add_detail_row(self, label_text, editor, animation_label):
         label_widget = QLabel(label_text)
         self._apply_detail_label_metadata(label_widget, label_text)
+        _set_compact_editor_metrics(editor)
         self._bind_detail_editor_metadata(
             editor,
             label_text,
@@ -516,6 +536,7 @@ class AnimationsPanel(QWidget):
 
         auto_start_check = QCheckBox("Start automatically")
         auto_start_check.setChecked(animation.auto_start)
+        _set_compact_editor_metrics(auto_start_check)
         auto_start_check.toggled.connect(lambda value, index=row: self._on_auto_start_changed(index, value))
         self._bind_detail_editor_metadata(
             auto_start_check,

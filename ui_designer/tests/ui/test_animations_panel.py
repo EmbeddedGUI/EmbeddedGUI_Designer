@@ -85,12 +85,18 @@ class TestAnimationsPanel:
         assert panel._add_button.toolTip() == "Add an animation to label title."
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
         assert panel._add_button.accessibleName() == "Add animation to label title"
+        assert panel._add_button.minimumHeight() == 22
+        assert panel._add_button.maximumHeight() == 22
         assert panel._duplicate_button.toolTip() == "Duplicate the selected animation: alpha."
         assert panel._duplicate_button.statusTip() == panel._duplicate_button.toolTip()
         assert panel._duplicate_button.accessibleName() == "Duplicate animation: alpha"
+        assert panel._duplicate_button.minimumHeight() == 22
+        assert panel._duplicate_button.maximumHeight() == 22
         assert panel._remove_button.toolTip() == "Remove the selected animation: alpha."
         assert panel._remove_button.statusTip() == panel._remove_button.toolTip()
         assert panel._remove_button.accessibleName() == "Remove animation: alpha"
+        assert panel._remove_button.minimumHeight() == 22
+        assert panel._remove_button.maximumHeight() == 22
         assert panel._detail_group.title() == ""
         assert panel._detail_group.isFlat() is True
         assert panel._detail_group.toolTip() == "Selected animation details: alpha. Duration 500 ms. Interpolator linear."
@@ -109,17 +115,23 @@ class TestAnimationsPanel:
         assert type_label.toolTip() == "Animation field label: Type."
         assert type_label.statusTip() == type_label.toolTip()
         assert type_label.accessibleName() == type_label.toolTip()
+        assert type_combo.minimumHeight() == 22
+        assert type_combo.maximumHeight() == 22
         assert type_combo.toolTip() == "Type for animation alpha on label title. Current value: alpha."
         assert type_combo.statusTip() == type_combo.toolTip()
         assert type_combo.accessibleName() == "Animation Type: alpha."
         duration_label, duration_spin = _detail_row_widgets(panel, "Duration (ms):")
         assert isinstance(duration_spin, QSpinBox)
         assert duration_label.accessibleName() == "Animation field label: Duration (ms)."
+        assert duration_spin.minimumHeight() == 22
+        assert duration_spin.maximumHeight() == 22
         assert duration_spin.toolTip() == "Duration (ms) for animation alpha on label title. Current value: 500."
         assert duration_spin.accessibleName() == "Animation Duration (ms): 500."
         interpolator_label, interpolator_combo = _detail_row_widgets(panel, "Interpolator:")
         assert isinstance(interpolator_combo, QComboBox)
         assert interpolator_label.accessibleName() == "Animation field label: Interpolator."
+        assert interpolator_combo.minimumHeight() == 22
+        assert interpolator_combo.maximumHeight() == 22
         assert interpolator_combo.toolTip() == (
             "Interpolator for animation alpha on label title. Current value: linear."
         )
@@ -127,6 +139,8 @@ class TestAnimationsPanel:
         repeat_count_label, repeat_count_spin = _detail_row_widgets(panel, "Repeat Count:")
         assert isinstance(repeat_count_spin, QSpinBox)
         assert repeat_count_label.accessibleName() == "Animation field label: Repeat Count."
+        assert repeat_count_spin.minimumHeight() == 22
+        assert repeat_count_spin.maximumHeight() == 22
         assert repeat_count_spin.toolTip() == (
             "Repeat Count for animation alpha on label title. Current value: 0."
         )
@@ -134,6 +148,8 @@ class TestAnimationsPanel:
         repeat_mode_label, repeat_mode_combo = _detail_row_widgets(panel, "Repeat Mode:")
         assert isinstance(repeat_mode_combo, QComboBox)
         assert repeat_mode_label.accessibleName() == "Animation field label: Repeat Mode."
+        assert repeat_mode_combo.minimumHeight() == 22
+        assert repeat_mode_combo.maximumHeight() == 22
         assert repeat_mode_combo.toolTip() == (
             "Repeat Mode for animation alpha on label title. Current value: restart."
         )
@@ -141,6 +157,8 @@ class TestAnimationsPanel:
         auto_start_check = next(
             check for check in panel.findChildren(QCheckBox) if check.text() == "Start automatically"
         )
+        assert auto_start_check.minimumHeight() == 22
+        assert auto_start_check.maximumHeight() == 22
         assert auto_start_check.toolTip() == (
             "Auto Start for animation alpha on label title. Current value: enabled."
         )

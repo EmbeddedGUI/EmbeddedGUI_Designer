@@ -6523,8 +6523,9 @@ class TestMainWindowFileFlow:
         assert window.page_tab_bar.accessibleName() == (
             "Page tabs: 1 open page. Current page: main_page. Startup page: main_page. No dirty pages."
         )
-        assert window.page_tab_bar.height() == 30
-        assert window.page_tab_bar.tabMaximumWidth() == 156
+        assert window.page_tab_bar.height() == 36
+        assert window.page_tab_bar.tabMaximumWidth() == 188
+        assert window.page_tab_bar.tabRect(0).height() <= window.page_tab_bar.height()
         assert window.page_tab_bar.toolTip() == window.page_tab_bar.accessibleName()
 
         window._undo_manager.get_stack("main_page").push("<Page dirty='main' />")

@@ -103,13 +103,23 @@ class TestPageFieldsPanel:
         assert panel._open_on_open_button.toolTip() == "Open the on_open section in main_page user code."
         assert panel._open_on_open_button.statusTip() == panel._open_on_open_button.toolTip()
         assert panel._open_on_open_button.accessibleName() == "Open on_open user code for main_page"
+        assert panel._open_on_open_button.minimumHeight() == 22
+        assert panel._open_on_open_button.maximumHeight() == 22
         assert panel._open_on_close_button.accessibleName() == "Open on_close user code for main_page"
+        assert panel._open_on_close_button.minimumHeight() == 22
+        assert panel._open_on_close_button.maximumHeight() == 22
         assert panel._open_init_button.accessibleName() == "Open init user code for main_page"
+        assert panel._open_init_button.minimumHeight() == 22
+        assert panel._open_init_button.maximumHeight() == 22
         assert panel._add_button.toolTip() == "Add a page field."
         assert panel._add_button.accessibleName() == "Add page field to main_page"
         assert panel._add_button.statusTip() == panel._add_button.toolTip()
+        assert panel._add_button.minimumHeight() == 22
+        assert panel._add_button.maximumHeight() == 22
         assert panel._remove_button.toolTip() == "Select a field to remove it."
         assert panel._remove_button.accessibleName() == "Remove page field unavailable"
+        assert panel._remove_button.minimumHeight() == 22
+        assert panel._remove_button.maximumHeight() == 22
         assert panel._table.rowCount() == 2
         assert panel._table.item(0, 0).text() == "counter"
         assert panel._table.item(0, 1).text() == "int"

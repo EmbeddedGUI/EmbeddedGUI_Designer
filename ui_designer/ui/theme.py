@@ -1910,7 +1910,10 @@ QToolButton#workspace_summary_indicator[indicatorTone="danger"] {{
 }}
 
 QWidget#project_workspace_panel QLabel#workspace_section_title,
-QWidget#widget_tree_dock QLabel#workspace_section_title {{
+QWidget#widget_tree_dock QLabel#workspace_section_title,
+QWidget#animations_dock QLabel#workspace_section_title,
+QWidget#page_fields_dock QLabel#workspace_section_title,
+QWidget#page_timers_dock QLabel#workspace_section_title {{
     font-size: {t['fs_body_sm']}px;
 }}
 
@@ -2423,8 +2426,10 @@ QListWidget#history_panel_list {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 1px {t['space_sm']}px;
-    min-height: 24px;
+    padding: 0px {t['space_sm']}px;
+    min-height: 20px;
+    max-height: 20px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 #animations_panel_actions_strip QPushButton:hover {{
@@ -2445,12 +2450,33 @@ QTableWidget#animations_panel_table {{
     padding: {t['space_xxs']}px;
 }}
 
+QTableWidget#animations_panel_table QHeaderView::section,
+QTableWidget#page_editor_table QHeaderView::section {{
+    padding: 4px 6px;
+    font-size: {t['fs_caption']}px;
+}}
+
 QGroupBox#animations_panel_detail_group {{
     background-color: transparent;
     border: none;
     border-radius: 0px;
     margin-top: 0px;
     padding-top: 0px;
+}}
+
+QWidget#animations_dock QComboBox,
+QWidget#animations_dock QSpinBox,
+QWidget#animations_dock QLineEdit {{
+    border-radius: 0px;
+    padding: 0px 6px;
+    min-height: 20px;
+    max-height: 20px;
+    font-size: {t['fs_body_sm']}px;
+}}
+
+QWidget#animations_dock QCheckBox {{
+    min-height: 20px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 QTreeWidget#widget_tree_panel_tree {{
@@ -2533,7 +2559,7 @@ QTreeWidget#widget_tree_panel_tree {{
 
 #page_editor_section_label {{
     color: {t['text']};
-    font-size: {t['fs_panel_title']}px;
+    font-size: {t['fs_body_sm']}px;
     font-weight: {t['fw_medium']};
 }}
 
@@ -2550,8 +2576,10 @@ QTreeWidget#widget_tree_panel_tree {{
     border: 1px solid {t['border']};
     border-radius: 0px;
     color: {t['text_muted']};
-    padding: 2px {t['space_sm']}px;
-    min-height: 26px;
+    padding: 0px {t['space_sm']}px;
+    min-height: 20px;
+    max-height: 20px;
+    font-size: {t['fs_body_sm']}px;
 }}
 
 #page_editor_actions QPushButton:hover,

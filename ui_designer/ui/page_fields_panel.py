@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -16,6 +17,9 @@ from PyQt5.QtWidgets import (
 )
 
 from ..model.page_fields import COMMON_PAGE_FIELD_TYPES, normalize_page_fields, suggest_page_field_name, validate_page_fields
+
+
+_PAGE_FIELDS_CONTROL_HEIGHT = 22
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -36,6 +40,12 @@ def _set_item_metadata(item, tooltip):
     item.setToolTip(tooltip)
     item.setStatusTip(tooltip)
     item.setData(Qt.AccessibleTextRole, tooltip)
+
+
+def _set_compact_button_metrics(button):
+    button.setFixedHeight(_PAGE_FIELDS_CONTROL_HEIGHT)
+    button.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+    return button
 
 
 class PageFieldsPanel(QWidget):
@@ -126,6 +136,8 @@ class PageFieldsPanel(QWidget):
         self._open_on_open_button = QPushButton("Open on_open")
         self._open_on_close_button = QPushButton("Open on_close")
         self._open_init_button = QPushButton("Open init")
+        for button in (self._open_on_open_button, self._open_on_close_button, self._open_init_button):
+            _set_compact_button_metrics(button)
         self._open_on_open_button.clicked.connect(lambda: self._request_section("on_open"))
         self._open_on_close_button.clicked.connect(lambda: self._request_section("on_close"))
         self._open_init_button.clicked.connect(lambda: self._request_section("init"))
@@ -175,6 +187,8 @@ class PageFieldsPanel(QWidget):
         buttons.setSpacing(2)
         self._add_button = QPushButton("Add Field")
         self._remove_button = QPushButton("Remove Field")
+        for button in (self._add_button, self._remove_button):
+            _set_compact_button_metrics(button)
         self._add_button.clicked.connect(self._on_add_field)
         self._remove_button.clicked.connect(self._on_remove_field)
         buttons.addWidget(self._add_button)

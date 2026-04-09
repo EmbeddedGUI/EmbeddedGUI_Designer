@@ -147,6 +147,8 @@ WORKSPACE_TOP_HIDDEN_HEIGHT = 1000
 WORKSPACE_BOTTOM_HIDDEN_HEIGHT = 0
 WORKSPACE_CONTROL_HEIGHT = 22
 WORKSPACE_TOOLBAR_HEIGHT = 24
+PAGE_TAB_BAR_HEIGHT = 36
+PAGE_TAB_BAR_MAX_WIDTH = 188
 
 NEW_SHELL_ENABLED = os.environ.get("EGUI_NEW_SHELL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -2811,9 +2813,9 @@ class MainWindow(QMainWindow):
         page_tab_bar.setScrollable(True)
         page_tab_bar.setAddButtonVisible(False)
         page_tab_bar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ON_HOVER)
-        page_tab_bar.setTabMaximumWidth(156)
+        page_tab_bar.setTabMaximumWidth(PAGE_TAB_BAR_MAX_WIDTH)
         page_tab_bar.setTabShadowEnabled(False)
-        page_tab_bar.setFixedHeight(30)
+        page_tab_bar.setFixedHeight(PAGE_TAB_BAR_HEIGHT)
         page_tab_bar.tabCloseRequested.connect(self._on_page_tab_closed)
         page_tab_bar.currentChanged.connect(self._on_page_tab_changed)
         page_tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
