@@ -2582,6 +2582,37 @@ class TestMainWindowFileFlow:
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
         _close_window(window)
 
+    def test_save_project_as_writes_split_page_outputs_with_real_generator(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        src_dir = tmp_path / "SrcRealDemo"
+        dst_dir = tmp_path / "DstRealDemo"
+        project = _create_project(src_dir, "SaveAsRealDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(src_dir)
+        window.app_name = "SaveAsRealDemo"
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._save_project_as()
+
+        assert window._project_dir == os.path.normpath(os.path.abspath(dst_dir))
+        assert (dst_dir / "main_page.h").is_file()
+        assert (dst_dir / "main_page_layout.c").is_file()
+        assert (dst_dir / "main_page.c").is_file()
+        assert (dst_dir / "main_page_ext.h").is_file()
+        assert '#include "main_page_ext.h"' in (dst_dir / "main_page.h").read_text(encoding="utf-8")
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in (dst_dir / "main_page.c").read_text(encoding="utf-8")
+        assert "#define EGUI_MAIN_PAGE_EXT_FIELDS" in (dst_dir / "main_page_ext.h").read_text(encoding="utf-8")
+        _close_window(window)
+
     def test_save_project_as_warns_on_non_empty_directory(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -2720,6 +2751,83 @@ class TestMainWindowFileFlow:
         assert "blocked by diagnostics" in warnings[0][1]
         assert not (export_dir / "main_page.c").exists()
         assert window.statusBar().currentMessage() == "Export blocked: 1 error(s) in diagnostics."
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_export_code_migrates_legacy_page_files_and_creates_backups(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ExportLegacyDemo"
+        export_dir = tmp_path / "export_out"
+        export_dir.mkdir()
+        project = _create_project(project_dir, "ExportLegacyDemo", sdk_root)
+        button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
+        button.on_click = "on_confirm"
+        project.get_startup_page().root_widget.add_child(button)
+        project.save(str(project_dir))
+
+        (export_dir / "main_page.h").write_text(
+            (
+                "#ifndef _MAIN_PAGE_H_\n"
+                "#define _MAIN_PAGE_H_\n"
+                "// USER CODE BEGIN includes\n"
+                '#include "legacy_logic.h"\n'
+                "// USER CODE END includes\n"
+                "// USER CODE BEGIN declarations\n"
+                "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)\n"
+                "void main_page_after_open(egui_main_page_t *page);\n"
+                "// USER CODE END declarations\n"
+                "#endif\n"
+            ),
+            encoding="utf-8",
+        )
+        (export_dir / "main_page.c").write_text(
+            (
+                "// main_page.c - User implementation for main_page\n"
+                "// Layout/widget init is in main_page_layout.c (auto-generated).\n"
+                '#include "egui.h"\n'
+                '#include "uicode.h"\n'
+                '#include "main_page.h"\n'
+                "\n"
+                "// USER CODE BEGIN callbacks\n"
+                "void on_confirm(egui_view_t *self)\n"
+                "{\n"
+                "    EGUI_UNUSED(self);\n"
+                "    custom_confirm();\n"
+                "}\n"
+                "// USER CODE END callbacks\n"
+                "\n"
+                "// USER CODE BEGIN on_open\n"
+                "    main_page_after_open(local);\n"
+                "// USER CODE END on_open\n"
+            ),
+            encoding="utf-8",
+        )
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._export_code()
+
+        assert '#include "legacy_logic.h"' in (export_dir / "main_page_ext.h").read_text(encoding="utf-8")
+        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in (
+            export_dir / "main_page_ext.h"
+        ).read_text(encoding="utf-8")
+        exported_source = (export_dir / "main_page.c").read_text(encoding="utf-8")
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in exported_source
+        assert exported_source.count("void on_confirm(egui_view_t *self)") == 1
+        assert "custom_confirm();" in exported_source
+        backup_root = export_dir / ".eguiproject" / "backup"
+        assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
+        assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
+        assert "Exported " in window.statusBar().currentMessage()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -4901,6 +5009,41 @@ class TestMainWindowFileFlow:
         assert duplicated.mockup_image_path == "mockup/main.png"
         assert duplicated.mockup_image_opacity == 0.6
         assert window._undo_manager.is_any_dirty() is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_delete_page_via_project_dock_archives_user_owned_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from PyQt5.QtWidgets import QMessageBox
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "DeletePageArchiveDemo"
+        project = _create_project(project_dir, "DeletePageArchiveDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        (project_dir / "detail_page.h").write_text("", encoding="utf-8")
+        (project_dir / "detail_page_layout.c").write_text("", encoding="utf-8")
+        (project_dir / "detail_page.c").write_text("/* detail user */\n", encoding="utf-8")
+        (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr("ui_designer.ui.project_dock.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window.project_dock._delete_page("detail_page")
+        qapp.processEvents()
+
+        assert window.project.get_page_by_name("detail_page") is None
+        assert not (project_dir / "detail_page.h").exists()
+        assert not (project_dir / "detail_page_layout.c").exists()
+        assert not (project_dir / "detail_page.c").exists()
+        assert not (project_dir / "detail_page_ext.h").exists()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").is_file()
+        assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page_ext.h").is_file()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
