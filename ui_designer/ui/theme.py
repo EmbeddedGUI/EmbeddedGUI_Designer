@@ -1475,12 +1475,6 @@ QPushButton#project_workspace_view_button:checked {{
     border-radius: 0px;
 }}
 
-#workspace_nav_rail {{
-    background-color: transparent;
-    border: none;
-    padding: {t['space_xxs']}px {t['space_xs']}px;
-}}
-
 #workspace_mode_switch {{
     background-color: transparent;
     border: none;
@@ -1672,34 +1666,19 @@ QFrame#toolbar_host_separator {{
     margin-right: 2px;
 }}
 
-QPushButton[workspaceNav="true"] {{
+QTabWidget#workspace_left_tabs::pane {{
     background-color: transparent;
-    color: {t['text_muted']};
-    border: 1px solid transparent;
+    border: none;
     border-radius: 0px;
-    font-size: {t['fs_body_sm']}px;
-    font-weight: {t['fw_medium']};
-    padding: 0px 4px;
-    min-width: 108px;
-    max-width: 108px;
+    padding: 0px;
+    top: 0px;
+}}
+
+QTabWidget#workspace_left_tabs QTabBar::tab {{
+    border-radius: 0px;
+    margin-right: 0px;
     min-height: 24px;
-    max-height: 24px;
-}}
-
-QPushButton[workspaceNav="true"]:hover {{
-    background-color: {t['surface_hover']};
-    border-color: {t['border_strong']};
-    color: {t['text']};
-}}
-
-QPushButton[workspaceNav="true"]:pressed {{
-    background-color: {t['surface_pressed']};
-}}
-
-QPushButton[workspaceNav="true"]:checked {{
-    background-color: {t['accent_soft']};
-    color: {t['accent_hover']};
-    border: 1px solid {t['accent']};
+    padding: 2px 6px;
 }}
 
 QTabWidget#workspace_inspector_tabs::pane {{

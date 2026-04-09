@@ -10,9 +10,9 @@ Layout (conceptual):
   +------------------------------------------------------------------+--------+
   | command bar (toolbar)                                            |        |
   +---------------------------+--------------------------------------+--------+
-  | [Nav] | left stack        | page tabs + editor                   | inspec |
-  | rail  | (project / tree / | (Design | Split | Code)              | tabs   |
-  |       |  widgets / ...)     |                                    |        |
+  | left tabs + stack         | page tabs + editor                   | inspec |
+  | (project / tree /         | (Design | Split | Code)              | tabs   |
+  |  widgets / ...)           |                                      |        |
   +---------------------------+--------------------------------------+--------+
   | bottom tools (diagnostics / history / debug), toggleable         |
   +------------------------------------------------------------------+
@@ -136,9 +136,6 @@ MAIN_WINDOW_DEFAULT_HEIGHT = 800
 INSPECTOR_SCROLL_MIN_WIDTH = 264
 
 # UIX-004: workspace shell proportions (top-level frame balance)
-WORKSPACE_NAV_RAIL_WIDTH = 116
-WORKSPACE_NAV_BUTTON_WIDTH = 108
-WORKSPACE_NAV_BUTTON_HEIGHT = 24
 LEFT_PANEL_STACK_MIN_WIDTH = 256
 LEFT_PANEL_DEFAULT_WIDTH = 376
 CENTER_PANEL_DEFAULT_WIDTH = 860
@@ -427,46 +424,44 @@ class MainWindow(QMainWindow):
         self._project_workspace.set_view(saved_workspace_state.get("project_workspace_view", ProjectWorkspacePanel.VIEW_LIST))
         self._project_workspace._view_chip.show()
 
-        self._left_panel_stack = QStackedWidget()
+        self._left_panel_stack = QTabWidget()
+        self._left_panel_stack.setObjectName("workspace_left_tabs")
         self._left_panel_stack.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
         self._left_panel_stack.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self._left_panel_stack.setDocumentMode(True)
+        self._left_panel_stack.setUsesScrollButtons(False)
         self._left_panel_pages = {
             "project": self._project_workspace,
             "structure": self.widget_tree,
             "widgets": self.widget_browser,
             "assets": self.res_panel,
         }
-        for panel in self._left_panel_pages.values():
-            panel.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
-            self._left_panel_stack.addWidget(panel)
-
-        self._workspace_nav_buttons = {}
-        self._workspace_nav_frame = QFrame()
-        self._workspace_nav_frame.setObjectName("workspace_nav_rail")
-        self._workspace_nav_frame.setFixedWidth(WORKSPACE_NAV_RAIL_WIDTH)
-        self._workspace_nav_frame.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        nav_layout = QVBoxLayout(self._workspace_nav_frame)
-        nav_layout.setContentsMargins(2, 2, 2, 2)
-        nav_layout.setSpacing(2)
+        self._left_panel_tab_keys = []
+        self._left_panel_tab_index_by_key = {}
         for key, label, short_label in (
             ("project", "Project", "Pages"),
             ("structure", "Structure", "Tree"),
             ("widgets", "Components", "Add"),
             ("assets", "Assets", "Assets"),
         ):
-            button = self._create_workspace_nav_button(label, short_label, key)
-            self._workspace_nav_buttons[key] = button
-            nav_layout.addWidget(button, 0, Qt.AlignLeft)
-        nav_layout.addStretch()
+            panel = self._left_panel_pages[key]
+            panel.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
+            index = self._left_panel_stack.addTab(panel, str(short_label or label or ""))
+            self._left_panel_tab_keys.append(key)
+            self._left_panel_tab_index_by_key[key] = index
+        self._workspace_nav_frame = self._left_panel_stack.tabBar()
+        self._workspace_nav_frame.setObjectName("workspace_left_tabs_bar")
+        self._workspace_nav_frame.setExpanding(False)
+        self._workspace_nav_frame.setDrawBase(False)
+        self._left_panel_stack.currentChanged.connect(self._on_left_panel_tab_changed)
 
         self._left_shell = QWidget()
         self._left_shell.setObjectName("workspace_left_shell")
-        self._left_shell.setMinimumWidth(WORKSPACE_NAV_RAIL_WIDTH + LEFT_PANEL_STACK_MIN_WIDTH + 2)
+        self._left_shell.setMinimumWidth(LEFT_PANEL_STACK_MIN_WIDTH)
         self._left_shell.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        left_shell_layout = QHBoxLayout(self._left_shell)
+        left_shell_layout = QVBoxLayout(self._left_shell)
         left_shell_layout.setContentsMargins(0, 0, 0, 0)
         left_shell_layout.setSpacing(2)
-        left_shell_layout.addWidget(self._workspace_nav_frame, 0)
         left_shell_layout.addWidget(self._left_panel_stack, 1)
 
         center_shell = QWidget()
@@ -687,17 +682,6 @@ class MainWindow(QMainWindow):
         dock_widget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         dock_widget.setTitleBarWidget(QWidget(dock_widget))
 
-    def _create_workspace_nav_button(self, label, short_label, panel_key):
-        button = QPushButton(self)
-        button.setObjectName(f"workspace_nav_button_{panel_key}")
-        button.setProperty("workspaceNav", True)
-        button.setCheckable(True)
-        button.setText(str(short_label or label or ""))
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        button.setFixedSize(WORKSPACE_NAV_BUTTON_WIDTH, WORKSPACE_NAV_BUTTON_HEIGHT)
-        button.clicked.connect(lambda checked=False, key=panel_key: self._select_left_panel(key))
-        return button
-
     def _set_toolbar_button_height(self, toolbar, action):
         widget = toolbar.widgetForAction(action)
         if widget is not None:
@@ -756,9 +740,9 @@ class MainWindow(QMainWindow):
         return f"Current page: {current_page}."
 
     def _update_workspace_nav_button_metadata(self, current_panel):
-        if not hasattr(self, "_workspace_nav_buttons"):
+        if not hasattr(self, "_left_panel_tab_index_by_key"):
             return
-        for key, button in self._workspace_nav_buttons.items():
+        for key, index in self._left_panel_tab_index_by_key.items():
             label = self._workspace_panel_label(key)
             if key == "project":
                 context = self._project_workspace_nav_context()
@@ -772,18 +756,21 @@ class MainWindow(QMainWindow):
                 context = ""
             if key == current_panel:
                 tooltip = f"Currently showing {label} panel."
-                accessible_name = f"Workspace panel button: {label}. Current panel."
+                accessible_name = f"Workspace panel tab: {label}. Current panel."
             else:
                 tooltip = f"Open {label} panel."
-                accessible_name = f"Workspace panel button: {label}."
+                accessible_name = f"Workspace panel tab: {label}."
             if context:
                 tooltip = f"{tooltip} {context}"
                 accessible_name = f"{accessible_name} {context}"
-            self._set_metadata_summary(button, tooltip, accessible_name)
+            if self._left_panel_stack.tabToolTip(index) != tooltip:
+                self._left_panel_stack.setTabToolTip(index, tooltip)
+            if self._left_panel_stack.tabWhatsThis(index) != accessible_name:
+                self._left_panel_stack.setTabWhatsThis(index, accessible_name)
         current_label = self._workspace_panel_label(current_panel)
         current_context = self._workspace_menu_action_context(current_panel)
         if hasattr(self, "_workspace_nav_frame"):
-            nav_summary = f"Workspace navigation rail. Current panel: {current_label}."
+            nav_summary = f"Workspace panel tabs. Current panel: {current_label}."
             self._set_metadata_summary(self._workspace_nav_frame, nav_summary)
         if hasattr(self, "_left_panel_stack"):
             stack_summary = f"Workspace panels: {current_label} visible."
@@ -796,6 +783,13 @@ class MainWindow(QMainWindow):
                 shell_summary = f"{shell_summary} {current_context}"
             self._set_metadata_summary(self._left_shell, shell_summary)
         self._update_workspace_layout_metadata()
+
+    def _on_left_panel_tab_changed(self, index):
+        if index < 0 or index >= len(getattr(self, "_left_panel_tab_keys", [])):
+            return
+        panel_key = self._left_panel_tab_keys[index]
+        if panel_key != getattr(self, "_current_left_panel", None):
+            self._select_left_panel(panel_key)
 
     def _workspace_menu_action_context(self, panel_key):
         if panel_key == "project":
@@ -1281,8 +1275,11 @@ class MainWindow(QMainWindow):
             self._state_store.set_left_tab(panel_key)
         page = self._left_panel_pages[panel_key]
         self._left_panel_stack.setCurrentWidget(page)
-        for key, button in getattr(self, "_workspace_nav_buttons", {}).items():
-            button.setChecked(key == panel_key)
+        index = getattr(self, "_left_panel_tab_index_by_key", {}).get(panel_key, -1)
+        if index >= 0 and self._left_panel_stack.currentIndex() != index:
+            blocker = QSignalBlocker(self._left_panel_stack)
+            self._left_panel_stack.setCurrentIndex(index)
+            del blocker
         self._update_workspace_nav_button_metadata(panel_key)
         self._update_view_panel_navigation_action_metadata()
         if panel_key == "widgets":

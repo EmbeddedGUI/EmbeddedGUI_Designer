@@ -122,6 +122,18 @@ def _close_window(window):
         app.processEvents()
 
 
+def _left_panel_tab_index(window, panel_key):
+    return window._left_panel_tab_index_by_key[panel_key]
+
+
+def _left_panel_tab_tooltip(window, panel_key):
+    return window._left_panel_stack.tabToolTip(_left_panel_tab_index(window, panel_key))
+
+
+def _left_panel_tab_whats_this(window, panel_key):
+    return window._left_panel_stack.tabWhatsThis(_left_panel_tab_index(window, panel_key))
+
+
 def _menu_target_labels(menu):
     ignored_labels = {"Move Into Last Target", "Clear Move Target History"}
     return [
@@ -6364,10 +6376,10 @@ class TestMainWindowFileFlow:
         assert window._page_tools_scroll.accessibleName() == (
             "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: main_page."
         )
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Currently showing Project panel. View: List view. Active page: main_page. Startup page: main_page."
         )
-        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: main_page."
+        assert _left_panel_tab_tooltip(window, "assets") == "Open Assets panel. Current page: main_page."
         assert window._workspace_context_label.text() == "NavigatorDemo / main_page"
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: NavigatorDemo. Current page: main_page. Project contains 2 pages."
@@ -6375,26 +6387,29 @@ class TestMainWindowFileFlow:
         editor_layout = window._editor_container.layout()
         editor_margins = editor_layout.contentsMargins()
         toolbar_host_margins = window._toolbar_host_layout.contentsMargins()
-        nav_layout = window._workspace_nav_frame.layout()
-        nav_margins = nav_layout.contentsMargins()
+        left_shell_layout = window._left_shell.layout()
         bottom_header_layout = window._bottom_header.layout()
         bottom_header_margins = bottom_header_layout.contentsMargins()
         assert (editor_margins.left(), editor_margins.top(), editor_margins.right(), editor_margins.bottom()) == (6, 6, 6, 6)
         assert editor_layout.spacing() == 2
         assert (toolbar_host_margins.left(), toolbar_host_margins.top(), toolbar_host_margins.right(), toolbar_host_margins.bottom()) == (1, 1, 1, 1)
         assert window._toolbar_command_row_layout.spacing() == 2
-        assert (nav_margins.left(), nav_margins.top(), nav_margins.right(), nav_margins.bottom()) == (2, 2, 2, 2)
-        assert window._workspace_nav_frame.width() == 116
         assert window.project_dock.minimumWidth() == 256
         assert window._left_panel_stack.minimumWidth() == 256
-        assert window._left_shell.minimumWidth() == 374
-        assert window._left_shell.layout().spacing() == 2
+        assert window._left_shell.minimumWidth() == 256
+        assert left_shell_layout.spacing() == 2
+        assert (left_shell_layout.contentsMargins().left(), left_shell_layout.contentsMargins().top(), left_shell_layout.contentsMargins().right(), left_shell_layout.contentsMargins().bottom()) == (0, 0, 0, 0)
+        assert window._left_panel_stack.count() == 4
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "project")) == "Pages"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "structure")) == "Tree"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "widgets")) == "Add"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "assets")) == "Assets"
         assert window._center_shell.layout().spacing() == 2
         assert window._page_inspector_body.layout().spacing() == 2
         assert (bottom_header_margins.left(), bottom_header_margins.top(), bottom_header_margins.right(), bottom_header_margins.bottom()) == (1, 1, 1, 1)
         assert bottom_header_layout.spacing() == 2
         assert window._bottom_shell.layout().spacing() == 2
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace panel tabs. Current panel: Project."
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Project visible. View: List view. Active page: main_page. Startup page: main_page."
         )
@@ -6423,10 +6438,10 @@ class TestMainWindowFileFlow:
         assert window._page_tools_scroll.accessibleName() == (
             "Page inspector: Fields and Timers sections. Scroll focus: Fields. Current page: detail_page."
         )
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: main_page."
         )
-        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: detail_page."
+        assert _left_panel_tab_tooltip(window, "assets") == "Open Assets panel. Current page: detail_page."
         assert window._workspace_context_label.text() == "NavigatorDemo / detail_page"
         assert window._workspace_context_label.toolTip() == (
             "Current workspace context: NavigatorDemo. Current page: detail_page. Project contains 2 pages."
@@ -6460,7 +6475,7 @@ class TestMainWindowFileFlow:
         assert "Startup page" not in window.page_navigator._thumbnails["main_page"].accessibleName()
         assert "Startup page: detail_page." in window.page_tab_bar.accessibleName()
         assert "Startup page: detail_page." in window._project_workspace.accessibleName()
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Currently showing Project panel. View: List view. Active page: detail_page. Startup page: detail_page."
         )
         assert window._workspace_context_label.text() == "NavigatorDemo / detail_page"
@@ -8531,22 +8546,23 @@ class TestMainWindowFileFlow:
 
         _close_window(window)
 
-    def test_workspace_left_nav_buttons_switch_panels_via_click(self, qapp, isolated_config):
+    def test_workspace_left_tabs_switch_panels_via_click(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
         window.show()
         qapp.processEvents()
 
-        assets_button = window._workspace_nav_buttons["assets"]
-        QTest.mouseClick(assets_button, Qt.LeftButton)
+        tab_bar = window._workspace_nav_frame
+        assets_rect = tab_bar.tabRect(_left_panel_tab_index(window, "assets"))
+        QTest.mouseClick(tab_bar, Qt.LeftButton, Qt.NoModifier, assets_rect.center())
         qapp.processEvents()
 
         assert window._current_left_panel == "assets"
         assert window._left_panel_stack.currentWidget() is window.res_panel
 
-        structure_button = window._workspace_nav_buttons["structure"]
-        QTest.mouseClick(structure_button, Qt.LeftButton)
+        structure_rect = tab_bar.tabRect(_left_panel_tab_index(window, "structure"))
+        QTest.mouseClick(tab_bar, Qt.LeftButton, Qt.NoModifier, structure_rect.center())
         qapp.processEvents()
 
         assert window._current_left_panel == "structure"
@@ -8613,15 +8629,15 @@ class TestMainWindowFileFlow:
         assert window._project_workspace._view_chip.isHidden() is False
         assert window._project_workspace._summary_label.text() == "0 pages. Active: none. Clean."
         assert window._project_workspace._meta_label.text() == "Startup: none"
-        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "widgets") == (
             "Currently showing Components panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Open Project panel. View: Thumbnails. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.toolTip() == "Workspace panel tabs. Current panel: Components."
         assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace panel tabs. Current panel: Components."
         assert window._left_panel_stack.toolTip() == (
             "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
         )
@@ -8690,7 +8706,7 @@ class TestMainWindowFileFlow:
         assert window._insert_widget_button.height() == 22
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
-        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
+        assert all(window._left_panel_stack.tabIcon(i).isNull() for i in range(window._left_panel_stack.count()))
         assert window._project_workspace._view_chip.isHidden() is False
         assert window._project_workspace._summary_label.text() == "1 page. Active: main_page. Clean."
         assert window._project_workspace._meta_label.text() == "Startup: main_page"
@@ -8962,7 +8978,7 @@ class TestMainWindowFileFlow:
         assert window._grid_menu.icon().isNull() is True
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
-        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
+        assert all(window._left_panel_stack.tabIcon(i).isNull() for i in range(window._left_panel_stack.count()))
         assert all(button.icon().isNull() for button in window._mode_buttons.values())
         assert window._save_action.toolTip() == "Save the current project (Ctrl+S). Unavailable: open a project first."
         assert window._save_action.statusTip() == window._save_action.toolTip()
@@ -8997,7 +9013,7 @@ class TestMainWindowFileFlow:
         assert window._grid_menu.icon().isNull() is True
         assert window._insert_widget_button.icon().isNull() is True
         assert window._toolbar_more_button.icon().isNull() is True
-        assert all(button.icon().isNull() for button in window._workspace_nav_buttons.values())
+        assert all(window._left_panel_stack.tabIcon(i).isNull() for i in range(window._left_panel_stack.count()))
         assert all(button.icon().isNull() for button in window._mode_buttons.values())
 
         sdk_root = tmp_path / "sdk"
@@ -9309,46 +9325,41 @@ class TestMainWindowFileFlow:
         assert tooltip_calls == 1
         _close_window(window)
 
-    def test_workspace_nav_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
+    def test_workspace_left_tabs_and_bottom_toggle_buttons_expose_current_state(self, qapp, isolated_config):
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
 
-        assert window._workspace_nav_buttons["project"].text() == "Pages"
-        assert window._workspace_nav_buttons["structure"].text() == "Tree"
-        assert window._workspace_nav_buttons["widgets"].text() == "Add"
-        assert window._workspace_nav_buttons["assets"].text() == "Assets"
-        assert all(button.height() == 24 for button in window._workspace_nav_buttons.values())
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "project")) == "Pages"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "structure")) == "Tree"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "widgets")) == "Add"
+        assert window._left_panel_stack.tabText(_left_panel_tab_index(window, "assets")) == "Assets"
+        assert window._workspace_nav_frame.height() >= 24
         assert window._bottom_toggle_button.height() == 22
-        assert window._workspace_nav_frame.width() == 116
-        assert window._workspace_nav_frame.layout().spacing() == 2
         assert window.project_dock.minimumWidth() == 256
         assert window._left_panel_stack.minimumWidth() == 256
-        assert window._left_shell.minimumWidth() == 374
-        project_button = window._workspace_nav_buttons["project"]
-        assert project_button.sizePolicy().horizontalPolicy() == QSizePolicy.Fixed
-        assert project_button.sizePolicy().verticalPolicy() == QSizePolicy.Fixed
-        assert project_button.width() <= window._workspace_nav_frame.width()
+        assert window._left_shell.minimumWidth() == 256
+        assert window._workspace_nav_frame.parentWidget() is window._left_panel_stack
 
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Currently showing Project panel. View: List view. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_buttons["project"].accessibleName() == (
-            "Workspace panel button: Project. Current panel. View: List view. Active page: none. Startup page: none."
+        assert _left_panel_tab_whats_this(window, "project") == (
+            "Workspace panel tab: Project. Current panel. View: List view. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_buttons["structure"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "structure") == (
             "Open Structure panel. Current page: none. Selection: none."
         )
-        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "widgets") == (
             "Open Components panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["assets"].toolTip() == "Open Assets panel. Current page: none."
-        assert window._workspace_nav_buttons["widgets"].accessibleName() == (
-            "Workspace panel button: Components. Current page: none. Insert target: unavailable."
+        assert _left_panel_tab_tooltip(window, "assets") == "Open Assets panel. Current page: none."
+        assert _left_panel_tab_whats_this(window, "widgets") == (
+            "Workspace panel tab: Components. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_frame.toolTip() == "Workspace navigation rail. Current panel: Project."
+        assert window._workspace_nav_frame.toolTip() == "Workspace panel tabs. Current panel: Project."
         assert window._workspace_nav_frame.statusTip() == window._workspace_nav_frame.toolTip()
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Project."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace panel tabs. Current panel: Project."
         assert window._left_panel_stack.toolTip() == (
             "Workspace panels: Project visible. View: List view. Active page: none. Startup page: none."
         )
@@ -9384,16 +9395,16 @@ class TestMainWindowFileFlow:
 
         window._select_left_panel("widgets")
 
-        assert window._workspace_nav_buttons["widgets"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "widgets") == (
             "Currently showing Components panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["widgets"].accessibleName() == (
-            "Workspace panel button: Components. Current panel. Current page: none. Insert target: unavailable."
+        assert _left_panel_tab_whats_this(window, "widgets") == (
+            "Workspace panel tab: Components. Current panel. Current page: none. Insert target: unavailable."
         )
-        assert window._workspace_nav_buttons["project"].toolTip() == (
+        assert _left_panel_tab_tooltip(window, "project") == (
             "Open Project panel. View: List view. Active page: none. Startup page: none."
         )
-        assert window._workspace_nav_frame.accessibleName() == "Workspace navigation rail. Current panel: Components."
+        assert window._workspace_nav_frame.accessibleName() == "Workspace panel tabs. Current panel: Components."
         assert window._left_panel_stack.accessibleName() == (
             "Workspace panels: Components visible. Current page: none. Insert target: unavailable."
         )
@@ -9458,12 +9469,11 @@ class TestMainWindowFileFlow:
         assert window._bottom_toggle_button.accessibleName() == "Bottom tools toggle: shown. Activate to hide."
         _close_window(window)
 
-    def test_workspace_nav_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
+    def test_workspace_left_tab_metadata_skips_no_op_refreshes(self, qapp, isolated_config, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
         for widget in (
-            *window._workspace_nav_buttons.values(),
             window._workspace_nav_frame,
             window._left_panel_stack,
             window._left_shell,
@@ -9473,20 +9483,23 @@ class TestMainWindowFileFlow:
 
         project_tooltip_calls = 0
         stack_tooltip_calls = 0
-        original_project_set_tooltip = window._workspace_nav_buttons["project"].setToolTip
+        project_index = _left_panel_tab_index(window, "project")
+        window._left_panel_stack.setTabToolTip(project_index, "")
+        original_set_tab_tooltip = window._left_panel_stack.setTabToolTip
         original_stack_set_tooltip = window._left_panel_stack.setToolTip
 
-        def counted_project_set_tooltip(text):
+        def counted_set_tab_tooltip(index, text):
             nonlocal project_tooltip_calls
-            project_tooltip_calls += 1
-            return original_project_set_tooltip(text)
+            if index == project_index:
+                project_tooltip_calls += 1
+            return original_set_tab_tooltip(index, text)
 
         def counted_stack_set_tooltip(text):
             nonlocal stack_tooltip_calls
             stack_tooltip_calls += 1
             return original_stack_set_tooltip(text)
 
-        monkeypatch.setattr(window._workspace_nav_buttons["project"], "setToolTip", counted_project_set_tooltip)
+        monkeypatch.setattr(window._left_panel_stack, "setTabToolTip", counted_set_tab_tooltip)
         monkeypatch.setattr(window._left_panel_stack, "setToolTip", counted_stack_set_tooltip)
 
         window._update_workspace_nav_button_metadata("project")

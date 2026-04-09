@@ -65,11 +65,12 @@ def test_stylesheet_shell_and_dialog_hint_tokens():
         assert t["shell_bg"] in css.split("QMainWindow, QDialog", 1)[1].split("}", 1)[0]
         assert "QTabBar::tab:selected" in css
         assert t["panel_raised"] in css.split("QTabBar::tab:selected", 1)[1].split("}", 1)[0]
-        nav = css.split("#workspace_nav_rail", 1)[1].split("}", 1)[0]
-        nav_button = css.split('QPushButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
+        left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
+        left_tabs_tab = css.split("QTabWidget#workspace_left_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         compact_panel_title = css.split("QWidget#project_workspace_panel QLabel#workspace_section_title,", 1)[1].split("}", 1)[0]
-        assert str(t["space_xxs"]) in nav and str(t["space_xs"]) in nav
-        assert f"font-size: {t['fs_body_sm']}px;" in nav_button
+        assert "background-color: transparent;" in left_tabs_pane
+        assert "border: none;" in left_tabs_pane
+        assert "padding: 2px 6px;" in left_tabs_tab
         assert f"font-size: {t['fs_body_sm']}px;" in compact_panel_title
         indicator = css.split("QToolButton#workspace_summary_indicator {", 1)[1].split("}", 1)[0]
         metrics = css.split("#preview_metrics_strip {", 1)[1].split("}", 1)[0]
@@ -455,9 +456,8 @@ def test_workspace_chrome_corner_radii_stay_flat():
 
         mode_button = css.split("QPushButton#workspace_mode_button {", 1)[1].split("}", 1)[0]
         bottom_toggle_button = css.split("QPushButton#workspace_bottom_toggle_button {", 1)[1].split("}", 1)[0]
-        nav_button = css.split('QPushButton[workspaceNav="true"] {', 1)[1].split("}", 1)[0]
-        nav_rail = css.split("#workspace_nav_rail {", 1)[1].split("}", 1)[0]
-        nav_button_checked = css.split('QPushButton[workspaceNav="true"]:checked {', 1)[1].split("}", 1)[0]
+        left_tabs_pane = css.split("QTabWidget#workspace_left_tabs::pane {", 1)[1].split("}", 1)[0]
+        left_tabs_tab = css.split("QTabWidget#workspace_left_tabs QTabBar::tab {", 1)[1].split("}", 1)[0]
         status_chip = css.split("#workspace_status_chip {", 1)[1].split("}", 1)[0]
         search_shell = css.split("QFrame#property_panel_search_shell {", 1)[1].split("}", 1)[0]
         empty_state = css.split("#property_panel_empty_state {", 1)[1].split("}", 1)[0]
@@ -483,14 +483,13 @@ def test_workspace_chrome_corner_radii_stay_flat():
         assert "min-width: 48px;" in bottom_toggle_button
         assert "min-height: 20px;" in bottom_toggle_button
         assert "max-height: 20px;" in bottom_toggle_button
-        assert "border-radius: 0px;" in nav_button
-        assert "padding: 0px 4px;" in nav_button
-        assert "min-width: 108px;" in nav_button
-        assert "max-width: 108px;" in nav_button
-        assert "min-height: 24px;" in nav_button
-        assert "max-height: 24px;" in nav_button
-        assert "border-right" not in nav_rail
-        assert "border: 1px solid" in nav_button_checked
+        assert "background-color: transparent;" in left_tabs_pane
+        assert "border: none;" in left_tabs_pane
+        assert "border-radius: 0px;" in left_tabs_pane
+        assert "border-radius: 0px;" in left_tabs_tab
+        assert "margin-right: 0px;" in left_tabs_tab
+        assert "min-height: 24px;" in left_tabs_tab
+        assert "padding: 2px 6px;" in left_tabs_tab
         assert "border-radius: 0px;" in status_chip
         assert "background-color: transparent;" in empty_state
         assert "border-top: 1px solid" in empty_state
