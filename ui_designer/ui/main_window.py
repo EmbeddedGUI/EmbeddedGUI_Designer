@@ -1237,6 +1237,12 @@ class MainWindow(QMainWindow):
             return f"Reload project files from disk and discard unsaved changes: {summary}?"
         return f"There are unsaved changes: {summary}. Do you want to save before closing?"
 
+    def _external_reload_blocked_text(self):
+        return (
+            "External project changes detected while local unsaved changes remain: "
+            f"{self._unsaved_changes_summary_text()}. Save or reload from disk to sync."
+        )
+
     def _mark_project_dirty(self, source=""):
         if self.project is None:
             return
@@ -2750,7 +2756,7 @@ class MainWindow(QMainWindow):
         if self._has_unsaved_changes():
             self._external_reload_pending = True
             self.debug_panel.log_info(f"External project change detected while dirty: {summary or 'project files updated'}")
-            self.statusBar().showMessage("External project changes detected. Save or reload from disk to sync.", 5000)
+            self.statusBar().showMessage(self._external_reload_blocked_text(), 5000)
             return
 
         if self._compile_worker is not None and self._compile_worker.isRunning():

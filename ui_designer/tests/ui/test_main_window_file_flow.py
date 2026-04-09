@@ -6997,7 +6997,10 @@ class TestMainWindowFileFlow:
 
         assert reload_calls == []
         assert window._external_reload_pending is True
-        assert "External project changes detected" in window.statusBar().currentMessage()
+        assert window.statusBar().currentMessage() == (
+            "External project changes detected while local unsaved changes remain: 1 page. "
+            "Save or reload from disk to sync."
+        )
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -7033,7 +7036,55 @@ class TestMainWindowFileFlow:
         assert window._undo_manager.is_any_dirty() is False
         assert reload_calls == []
         assert window._external_reload_pending is True
-        assert "External project changes detected" in window.statusBar().currentMessage()
+        assert window.statusBar().currentMessage() == (
+            "External project changes detected while local unsaved changes remain: project changes (startup page). "
+            "Save or reload from disk to sync."
+        )
+        _close_window(window)
+
+    def test_poll_project_files_marks_pending_with_page_and_project_dirty_reason_summary(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MixedDirtyWatchDemo"
+        project = _create_project(project_dir, "MixedDirtyWatchDemo", sdk_root)
+        project.create_new_page("detail_page")
+        project.save(str(project_dir))
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._switch_page("detail_page")
+        stack = window._undo_manager.get_stack("detail_page")
+        stack.push("state 1", label="initial")
+        stack.mark_saved()
+        stack.push("state 2", label="changed")
+        window._update_window_title()
+        window._on_startup_changed("detail_page")
+
+        reload_calls = []
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- mixed dirty external -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is True
+        assert window.statusBar().currentMessage() == (
+            "External project changes detected while local unsaved changes remain: "
+            "1 page + project changes (startup page). Save or reload from disk to sync."
+        )
         _close_window(window)
 
     def test_close_project_prompts_when_only_project_state_is_dirty(self, qapp, isolated_config, tmp_path, monkeypatch):
