@@ -513,6 +513,25 @@ class TestWidgetBrowserPanel:
         assert buttons["Clear Search"].toolTip() == "Clear the widget browser search."
         panel.deleteLater()
 
+    def test_empty_state_uses_remaining_vertical_space(self, qapp, isolated_config):
+        from ui_designer.ui.widget_browser import WidgetBrowserPanel
+
+        panel = WidgetBrowserPanel()
+        panel.resize(420, 700)
+        panel._search.setText("__no_widget_matches__")
+        panel.refresh()
+        panel.show()
+        qapp.processEvents()
+
+        empty_state = _find_empty_state(panel)
+        empty_index = panel._cards_layout.indexOf(empty_state)
+
+        assert empty_index >= 0
+        assert panel._cards_layout.stretch(empty_index) == 1
+        assert panel._cards_layout.itemAt(panel._cards_layout.count() - 1).spacerItem() is None
+        assert empty_state.height() > panel._cards_container.height() // 2
+        panel.deleteLater()
+
     def test_empty_state_for_category_uses_show_all_action(self, qapp, isolated_config):
         from ui_designer.ui.widget_browser import WidgetBrowserPanel
 

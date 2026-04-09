@@ -664,8 +664,7 @@ class WidgetBrowserPanel(QWidget):
                 accessible_name="No widgets match the current filters.",
             )
             _set_widget_metadata(summary, tooltip=summary.text(), accessible_name="Widget browser empty state.")
-            self._cards_layout.addWidget(empty)
-            self._cards_layout.addStretch(1)
+            self._cards_layout.addWidget(empty, 1)
             return
 
         visible_types = [item.get("type_name", "") for item in items]
@@ -684,7 +683,6 @@ class WidgetBrowserPanel(QWidget):
             self._cards[index] = card
             card.set_selected(card.type_name == self._selected_type)
 
-        self._cards_layout.addStretch(1)
 
     def _select_card(self, widget_type):
         self._selected_type = widget_type

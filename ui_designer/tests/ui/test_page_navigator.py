@@ -171,6 +171,23 @@ class TestPageNavigator:
         assert navigator._dirty_chip.accessibleName() == "Dirty pages: 1 dirty page."
         navigator.deleteLater()
 
+    def test_page_navigator_empty_state_uses_remaining_vertical_space(self, qapp):
+        from ui_designer.ui.widgets.page_navigator import PageNavigator
+
+        navigator = PageNavigator()
+        navigator.resize(320, 700)
+        navigator.set_pages({})
+        navigator.show()
+        qapp.processEvents()
+
+        empty_state = navigator._layout.itemAt(0).widget()
+
+        assert empty_state.objectName() == "page_navigator_empty_state"
+        assert navigator._layout.stretch(0) == 1
+        assert navigator._layout.itemAt(navigator._layout.count() - 1).spacerItem() is None
+        assert empty_state.height() > navigator._container.height() // 2
+        navigator.deleteLater()
+
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.widgets.page_navigator import PageNavigator
 

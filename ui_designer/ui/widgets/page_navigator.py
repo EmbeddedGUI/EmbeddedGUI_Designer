@@ -544,8 +544,7 @@ class PageNavigator(QWidget):
             empty_state.setObjectName("page_navigator_empty_state")
             empty_state.setWordWrap(True)
             empty_state.setAlignment(Qt.AlignCenter)
-            self._layout.addWidget(empty_state)
-            self._layout.addStretch()
+            self._layout.addWidget(empty_state, 1)
             self._update_accessibility_summary()
             return
 
@@ -568,7 +567,6 @@ class PageNavigator(QWidget):
             except Exception:
                 pass
 
-        self._layout.addStretch()
         self._update_accessibility_summary()
 
     def _on_thumb_clicked(self, page_name):
