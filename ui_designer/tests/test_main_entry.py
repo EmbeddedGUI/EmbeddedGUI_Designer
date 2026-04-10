@@ -11,7 +11,6 @@ import pytest
 class _FakeConfig:
     def __init__(self):
         self.sdk_root = ""
-        self.egui_root = ""
         self.last_app = "HelloDesigner"
         self.last_project_path = ""
         self.recent_projects = []
@@ -19,6 +18,14 @@ class _FakeConfig:
         self.ui_density = "standard"
         self.font_size_px = 0
         self.save_calls = 0
+
+    @property
+    def egui_root(self):
+        return self.sdk_root
+
+    @egui_root.setter
+    def egui_root(self, value):
+        self.sdk_root = value
 
     def save(self):
         self.save_calls += 1

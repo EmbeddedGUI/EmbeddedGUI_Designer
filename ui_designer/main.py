@@ -68,14 +68,13 @@ def main():
     cli_project = normalize_path(args.project)
     sdk_root = find_sdk_root(
         cli_sdk_root=args.sdk_root,
-        configured_sdk_root=config.sdk_root or config.egui_root,
+        configured_sdk_root=config.sdk_root,
         project_path=cli_project,
     )
     app_name = args.app or config.last_app or "HelloDesigner"
 
     if sdk_root:
         config.sdk_root = sdk_root
-        config.egui_root = sdk_root
         config.save()
 
     WidgetRegistry.instance()
@@ -96,7 +95,7 @@ def main():
         last_project_path = normalize_path(config.last_project_path)
         if os.path.exists(last_project_path):
             project_to_open = last_project_path
-            preferred_sdk_root = preferred_sdk_root or config.sdk_root or config.egui_root
+            preferred_sdk_root = preferred_sdk_root or config.sdk_root
         else:
             removed = False
             remove_recent_project = getattr(config, "remove_recent_project", None)
