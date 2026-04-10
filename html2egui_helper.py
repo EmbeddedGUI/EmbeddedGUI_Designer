@@ -124,6 +124,19 @@ def _resolve_export_image_output_dir(sdk_root, *, output_path="", app_name=None)
     raise ValueError("Must specify either --output or --app")
 
 
+def _emit_json_output(output_path, output_json, *, written_message):
+    """Write JSON text to a file or stdout using the helper's CLI conventions."""
+    if output_path:
+        with open(output_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(output_json)
+        if written_message:
+            print(written_message.format(path=output_path), file=sys.stderr)
+        return
+
+    sys.stdout.buffer.write(output_json.encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
+
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
 def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
@@ -2086,13 +2099,11 @@ def cmd_extract_layout(args):
     }
 
     output_json = json.dumps(result, indent=2, ensure_ascii=False)
-    if args.output:
-        with open(args.output, "w", encoding="utf-8", newline="\n") as f:
-            f.write(output_json)
-        print(f"Layout analysis written to: {args.output}", file=sys.stderr)
-    else:
-        sys.stdout.buffer.write(output_json.encode("utf-8"))
-        sys.stdout.buffer.write(b"\n")
+    _emit_json_output(
+        args.output,
+        output_json,
+        written_message="Layout analysis written to: {path}",
+    )
 
 
 # ── Sub-command: verify ──────────────────────────────────────────
@@ -3632,13 +3643,11 @@ def cmd_figmamake_extract(args):
         result["sections"] = pages_result[0]["sections"]
 
     output_json = json.dumps(result, indent=2, ensure_ascii=False)
-    if args.output:
-        with open(args.output, "w", encoding="utf-8", newline="\n") as f:
-            f.write(output_json)
-        print(f"Figma Make layout analysis written to: {args.output}", file=sys.stderr)
-    else:
-        sys.stdout.buffer.write(output_json.encode("utf-8"))
-        sys.stdout.buffer.write(b"\n")
+    _emit_json_output(
+        args.output,
+        output_json,
+        written_message="Figma Make layout analysis written to: {path}",
+    )
 
 
 def _collect_colors_from_sections(sections, colors_dict):

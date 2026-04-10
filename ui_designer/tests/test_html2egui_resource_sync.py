@@ -84,6 +84,27 @@ class TestHelperResourceSync:
         with pytest.raises(ValueError, match="Must specify either --output or --app"):
             h._resolve_export_image_output_dir(str(tmp_path / "sdk"))
 
+    def test_emit_json_output_writes_file_and_status_message(self, tmp_path, capsys):
+        output_path = tmp_path / "layout.json"
+
+        h._emit_json_output(
+            str(output_path),
+            '{"screen":{}}',
+            written_message="Saved to: {path}",
+        )
+
+        captured = capsys.readouterr()
+        assert output_path.read_text(encoding="utf-8") == '{"screen":{}}'
+        assert captured.out == ""
+        assert captured.err == f"Saved to: {output_path}\n"
+
+    def test_emit_json_output_writes_stdout_when_path_missing(self, capsys):
+        h._emit_json_output("", '{"screen":{}}', written_message="ignored: {path}")
+
+        captured = capsys.readouterr()
+        assert captured.out == '{"screen":{}}\n'
+        assert captured.err == ""
+
     def test_build_egui_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = h._build_egui_project_xml("DemoApp", 320, 240, "../../sdk/EmbeddedGUI", pages=["main_page"])
 
