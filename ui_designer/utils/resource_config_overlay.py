@@ -109,14 +109,7 @@ def merge_resource_configs(designer_config: dict | None, user_config: dict | Non
 def load_merged_resource_config(src_dir: str) -> dict | None:
     """Load and merge split config files from ``resource/src``."""
     user_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-    designer_config = None
-    for designer_path in (
-        designer_resource_config_path(src_dir),
-        os.path.join(src_dir, APP_RESOURCE_CONFIG_DESIGNER_FILENAME),
-    ):
-        designer_config = load_resource_config(designer_path)
-        if designer_config is not None:
-            break
+    designer_config = load_resource_config(designer_resource_config_path(src_dir))
     user_config = load_resource_config(user_path)
     if designer_config is None and user_config is None:
         return None

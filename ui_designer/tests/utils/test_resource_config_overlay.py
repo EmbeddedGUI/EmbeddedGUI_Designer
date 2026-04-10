@@ -174,7 +174,7 @@ class TestLoadMergedResourceConfig:
             }
         ]
 
-    def test_loads_legacy_root_designer_config_when_split_file_is_missing(self, tmp_path):
+    def test_ignores_legacy_root_designer_config_when_split_file_is_missing(self, tmp_path):
         (tmp_path / APP_RESOURCE_CONFIG_DESIGNER_FILENAME).write_text(
             json.dumps(
                 {
@@ -215,3 +215,33 @@ class TestLoadMergedResourceConfig:
                 "external": "1",
             }
         ]
+        assert "font" in merged
+
+    def test_root_legacy_designer_entries_do_not_contribute_without_split_file(self, tmp_path):
+        (tmp_path / APP_RESOURCE_CONFIG_DESIGNER_FILENAME).write_text(
+            json.dumps(
+                {
+                    "img": [{"file": "legacy_only.png", "format": "alpha", "alpha": "4"}],
+                    "font": [],
+                },
+                ensure_ascii=False,
+                indent=4,
+            ),
+            encoding="utf-8",
+        )
+        (tmp_path / APP_RESOURCE_CONFIG_FILENAME).write_text(
+            json.dumps(
+                {
+                    "img": [],
+                    "font": [],
+                },
+                ensure_ascii=False,
+                indent=4,
+            ),
+            encoding="utf-8",
+        )
+
+        merged = load_merged_resource_config(str(tmp_path))
+
+        assert merged["img"] == []
+        assert merged["font"] == []
