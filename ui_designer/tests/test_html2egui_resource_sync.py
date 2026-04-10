@@ -18,6 +18,12 @@ class _FakePage:
 
 
 class TestHelperResourceSync:
+    def test_build_egui_project_xml_uses_canonical_sdk_root_attribute(self):
+        xml = h._build_egui_project_xml("DemoApp", 320, 240, "../../sdk/EmbeddedGUI", pages=["main_page"])
+
+        assert 'sdk_root="../../sdk/EmbeddedGUI"' in xml
+        assert 'egui_root="' not in xml
+
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
         egui_root = tmp_path / "sdk"
         tools_dir = egui_root / "scripts" / "tools"

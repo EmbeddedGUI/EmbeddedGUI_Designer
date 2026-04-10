@@ -580,12 +580,12 @@ class FigmaMakeCodegen:
 
         # 4. Create .egui project file
         print(f"[4/5] Creating project file...")
-        egui_root_rel = os.path.relpath(egui_root, app_dir).replace("\\", "/")
+        sdk_root_rel = os.path.relpath(egui_root, app_dir).replace("\\", "/")
         project_xml = _build_egui_project_xml(
             app_name=self.app_name,
             width=self.width,
             height=self.height,
-            egui_root=egui_root_rel,
+            sdk_root=sdk_root_rel,
             pages=page_names,
         )
         egui_file = os.path.join(app_dir, f"{self.app_name}.egui")

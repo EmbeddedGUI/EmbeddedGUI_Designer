@@ -109,7 +109,7 @@ EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource/font
 # UI Designer project file template (use _build_egui_project_xml for multi-page)
 EGUI_PROJECT_TEMPLATE = """\
 <?xml version="1.0" encoding="utf-8"?>
-<Project app_name="{app_name}" screen_width="{width}" screen_height="{height}" page_mode="easy_page" startup="{startup}" egui_root="{egui_root}">
+<Project app_name="{app_name}" screen_width="{width}" screen_height="{height}" page_mode="easy_page" startup="{startup}" sdk_root="{sdk_root}">
     <Pages>
 {page_refs}
     </Pages>
@@ -118,7 +118,7 @@ EGUI_PROJECT_TEMPLATE = """\
 """
 
 
-def _build_egui_project_xml(app_name, width, height, egui_root, pages=None):
+def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
     """Build .egui project XML with multiple page refs."""
     if pages is None:
         pages = ["main_page"]
@@ -127,7 +127,7 @@ def _build_egui_project_xml(app_name, width, height, egui_root, pages=None):
     )
     return EGUI_PROJECT_TEMPLATE.format(
         app_name=app_name, width=width, height=height,
-        startup=pages[0], egui_root=egui_root, page_refs=page_refs
+        startup=pages[0], sdk_root=sdk_root, page_refs=page_refs
     )
 
 # Empty page layout template
@@ -172,8 +172,8 @@ def cmd_scaffold(args):
     # Circle radius support: half of the smaller dimension
     circle_radius = min(width, height) // 2
 
-    # Compute relative egui_root path from app_dir
-    egui_root = os.path.relpath(root, app_dir).replace("\\", "/")
+    # Compute relative sdk_root path from app_dir
+    sdk_root_rel = os.path.relpath(root, app_dir).replace("\\", "/")
 
     # Create directories
     config_dir = os.path.join(app_dir, ".eguiproject")
@@ -214,7 +214,7 @@ def cmd_scaffold(args):
     _write_file(os.path.join(app_dir, f"{args.app}.egui"),
                 _build_egui_project_xml(
                     app_name=args.app, width=width, height=height,
-                    egui_root=egui_root, pages=pages))
+                    sdk_root=sdk_root_rel, pages=pages))
 
     # resources.xml (always overwrite)
     _write_file(os.path.join(config_dir, "resources", "resources.xml"),

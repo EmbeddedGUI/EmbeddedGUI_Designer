@@ -58,7 +58,8 @@ class TestScaffold:
         real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
         try:
             assert os.path.isdir(real_app_dir)
-            assert os.path.isfile(os.path.join(real_app_dir, f"{app_name}.egui"))
+            egui_file = os.path.join(real_app_dir, f"{app_name}.egui")
+            assert os.path.isfile(egui_file)
             assert os.path.isfile(os.path.join(real_app_dir, "app_egui_config.h"))
             assert os.path.isfile(os.path.join(real_app_dir, ".designer", "app_egui_config_designer.h"))
             assert os.path.isfile(os.path.join(real_app_dir, "build.mk"))
@@ -67,6 +68,9 @@ class TestScaffold:
             assert os.path.isfile(
                 os.path.join(real_app_dir, ".eguiproject", "layout", "main_page.xml")
             )
+            egui_content = open(egui_file, "r", encoding="utf-8").read()
+            assert 'sdk_root="' in egui_content
+            assert 'egui_root="' not in egui_content
         finally:
             # Cleanup
             import shutil
