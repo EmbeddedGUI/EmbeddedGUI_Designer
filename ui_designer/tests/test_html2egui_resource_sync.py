@@ -5,6 +5,8 @@ import os
 import sys
 from types import SimpleNamespace
 
+import pytest
+
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 import html2egui_helper as h
@@ -57,6 +59,30 @@ class TestHelperResourceSync:
             "  1. Step A\n"
             "  2. Step B\n"
         )
+
+    def test_resolve_export_image_output_dir_prefers_explicit_output(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+        explicit = tmp_path / "custom-output"
+
+        assert h._resolve_export_image_output_dir(
+            str(sdk_root),
+            output_path=str(explicit),
+            app_name="DemoApp",
+        ) == str(explicit)
+
+    def test_resolve_export_image_output_dir_uses_app_images_dir(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+
+        assert h._resolve_export_image_output_dir(
+            str(sdk_root),
+            app_name="DemoApp",
+        ) == str(
+            sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "images"
+        )
+
+    def test_resolve_export_image_output_dir_requires_output_or_app(self, tmp_path):
+        with pytest.raises(ValueError, match="Must specify either --output or --app"):
+            h._resolve_export_image_output_dir(str(tmp_path / "sdk"))
 
     def test_build_egui_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = h._build_egui_project_xml("DemoApp", 320, 240, "../../sdk/EmbeddedGUI", pages=["main_page"])

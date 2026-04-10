@@ -115,6 +115,15 @@ def _print_numbered_steps(steps):
         print(f"  {index}. {step}")
 
 
+def _resolve_export_image_output_dir(sdk_root, *, output_path="", app_name=None):
+    """Resolve the target directory for exported PNG image assets."""
+    if output_path:
+        return output_path
+    if app_name:
+        return _get_app_resource_images_dir(_get_app_dir(sdk_root, app_name))
+    raise ValueError("Must specify either --output or --app")
+
+
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
 def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
@@ -802,14 +811,14 @@ def cmd_export_icons(args):
     app_name = getattr(args, "app", None)
 
     # Determine output directory
-    if args.output:
-        output_dir = args.output
-    elif app_name:
-        # Default: .eguiproject/resources/images/ for designer workflow
-        app_dir = _get_app_dir(sdk_root, app_name)
-        output_dir = _get_app_resource_images_dir(app_dir)
-    else:
-        print("ERROR: Must specify either --output or --app")
+    try:
+        output_dir = _resolve_export_image_output_dir(
+            sdk_root,
+            output_path=args.output,
+            app_name=app_name,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
         sys.exit(1)
 
     os.makedirs(output_dir, exist_ok=True)
@@ -1243,13 +1252,14 @@ def cmd_export_svgs(args):
     app_name = getattr(args, "app", None)
 
     # Determine output directory
-    if args.output:
-        output_dir = args.output
-    elif app_name:
-        app_dir = _get_app_dir(sdk_root, app_name)
-        output_dir = _get_app_resource_images_dir(app_dir)
-    else:
-        print("ERROR: Must specify either --output or --app")
+    try:
+        output_dir = _resolve_export_image_output_dir(
+            sdk_root,
+            output_path=args.output,
+            app_name=app_name,
+        )
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
         sys.exit(1)
 
     os.makedirs(output_dir, exist_ok=True)
