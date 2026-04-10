@@ -59,7 +59,7 @@ This repo is the standalone distribution of the **EmbeddedGUI Visual UI Designer
 - `python_renderer.py` — Software renderer for design-time preview without building
 
 **`ui_designer/generator/`** — C code generation:
-- `code_generator.py` — Produces MFC-style multi-file output per page: `{page}_layout.c` (always overwritten), `{page}.h` (struct + USER CODE regions), `{page}.c` (created once, never overwritten)
+- `code_generator.py` — Produces split designer/user output per page: `.designer/{page}.h` + `.designer/{page}_layout.c` (always overwritten), `{page}.c` and `{page}_ext.h` (user-owned, created once)
 - `resource_config_generator.py`, `string_resource_generator.py` — Resource and i18n C/header generation
 - `user_code_preserver.py` — Extracts and re-injects `/* USER CODE */` regions so user code survives regeneration
 

@@ -3669,6 +3669,82 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_rebuild_egui_project_removes_stale_designer_string_outputs_before_compile(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _DummySignal:
+            def connect(self, _handler):
+                return None
+
+        class _DummyWorker:
+            def __init__(self):
+                self.log = _DummySignal()
+
+            def isRunning(self):
+                return False
+
+        class _CaptureCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.files_dict = None
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return True
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def compile_and_run_async(self, *args, **kwargs):
+                self.files_dict = kwargs.get("files_dict")
+                return _DummyWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewStringCleanupDemo"
+        project = _create_project(project_dir, "PreviewStringCleanupDemo", sdk_root)
+        designer_dir = project_dir / ".designer"
+        designer_dir.mkdir(exist_ok=True)
+        (designer_dir / "egui_strings.h").write_text("// stale string header\n", encoding="utf-8")
+        (designer_dir / "egui_strings.c").write_text("// stale string source\n", encoding="utf-8")
+
+        compiler = _CaptureCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._do_rebuild_egui_project()
+
+        assert compiler.files_dict is not None
+        assert ".designer/egui_strings.h" not in compiler.files_dict
+        assert ".designer/egui_strings.c" not in compiler.files_dict
+        assert not (designer_dir / "egui_strings.h").exists()
+        assert not (designer_dir / "egui_strings.c").exists()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_clean_all_and_reconstruct_runs_destructive_recovery_flow(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project_cleaner import ProjectCleanReport
         from ui_designer.ui.main_window import MainWindow

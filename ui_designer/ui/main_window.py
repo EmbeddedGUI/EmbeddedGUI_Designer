@@ -7452,6 +7452,13 @@ class MainWindow(QMainWindow):
             # Restore the persisted startup page even when preview generation fails.
             self.project.startup_page = original_startup
 
+        _cleanup_legacy_designer_codegen_files(
+            preview_output_dir,
+            all_generated_files,
+            backup_existing=False,
+            remove_stale_strings=not self.project.string_catalog.has_strings,
+        )
+
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
         if force_rebuild:
             self.debug_panel.log_cmd(
