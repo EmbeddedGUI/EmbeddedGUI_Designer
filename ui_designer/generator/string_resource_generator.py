@@ -62,6 +62,7 @@ egui_strings.c::
 """
 
 from ..model.string_resource import StringResourceCatalog, DEFAULT_LOCALE
+from ..utils.scaffold import EGUI_STRINGS_HEADER_RELPATH, EGUI_STRINGS_SOURCE_RELPATH
 
 
 def _key_to_enum(key):
@@ -253,7 +254,11 @@ def generate_string_files(catalog):
     from ..generator.code_generator import GENERATED_ALWAYS
 
     files = {}
-    files["egui_strings.h"] = (generate_strings_header(catalog), GENERATED_ALWAYS)
-    files["egui_strings.c"] = (generate_strings_source(catalog), GENERATED_ALWAYS)
+    files[EGUI_STRINGS_HEADER_RELPATH] = (
+        generate_strings_header(catalog), GENERATED_ALWAYS
+    )
+    files[EGUI_STRINGS_SOURCE_RELPATH] = (
+        generate_strings_source(catalog), GENERATED_ALWAYS
+    )
 
     return files

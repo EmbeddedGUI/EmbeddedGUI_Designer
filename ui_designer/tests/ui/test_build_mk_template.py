@@ -28,6 +28,7 @@ class TestBuildMkContent:
     def test_designer_file_contains_build_paths(self, designer):
         assert "EGUI_CODE_SRC" in designer
         assert "EGUI_CODE_INCLUDE" in designer
+        assert "$(EGUI_APP_PATH)/.designer" in designer
         assert "$(EGUI_APP_PATH)/resource/img" in designer
         assert "$(EGUI_APP_PATH)/resource/font" in designer
         assert "-I$(EGUI_APP_PATH)" not in designer

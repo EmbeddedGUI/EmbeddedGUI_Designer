@@ -112,11 +112,11 @@ class TestGenerateCode:
             result = _run_helper("generate-code", "--app", app_name)
 
             # Verify generated files
-            assert os.path.isfile(os.path.join(real_app_dir, "main_page.h"))
-            assert os.path.isfile(os.path.join(real_app_dir, "main_page_layout.c"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "main_page.h"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "main_page_layout.c"))
             assert os.path.isfile(os.path.join(real_app_dir, "main_page.c"))
-            assert os.path.isfile(os.path.join(real_app_dir, "uicode.h"))
-            assert os.path.isfile(os.path.join(real_app_dir, "uicode.c"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "uicode.h"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "uicode.c"))
 
             # Verify resource config was generated
             rc_path = os.path.join(real_app_dir, "resource", "src", ".designer", "app_resource_config_designer.json")

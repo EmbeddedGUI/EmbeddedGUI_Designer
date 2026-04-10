@@ -1,7 +1,7 @@
 """Tests for page file cleanup when a page is deleted.
 
 Covers the delete_page_generated_files() behavior:
-  - Deletes .h and _layout.c files for the named page
+  - Deletes .designer/.h and .designer/_layout.c files for the named page
   - Archives .c and _ext.h user files for the named page
   - Handles missing files gracefully (no exception)
   - Does not delete unrelated files
@@ -14,9 +14,11 @@ import pytest
 
 def _make_page_files(directory, page_name):
     """Create the three generated files for a page in directory."""
+    designer_dir = os.path.join(directory, ".designer")
+    os.makedirs(designer_dir, exist_ok=True)
     files = [
-        os.path.join(directory, f"{page_name}.h"),
-        os.path.join(directory, f"{page_name}_layout.c"),
+        os.path.join(designer_dir, f"{page_name}.h"),
+        os.path.join(designer_dir, f"{page_name}_layout.c"),
         os.path.join(directory, f"{page_name}.c"),
     ]
     for f in files:
@@ -52,7 +54,9 @@ class TestDeletePageGeneratedFiles:
     def test_no_error_when_only_some_files_exist(self, tmp_path, delete_fn):
         """Should not raise when only a subset of files exists."""
         # Only create the .h file
-        h_file = os.path.join(str(tmp_path), "partial.h")
+        designer_dir = tmp_path / ".designer"
+        designer_dir.mkdir()
+        h_file = os.path.join(str(designer_dir), "partial.h")
         with open(h_file, "w") as f:
             f.write("")
 
@@ -66,8 +70,9 @@ class TestDeletePageGeneratedFiles:
         _make_page_files(str(tmp_path), "about")
         # Create unrelated files
         unrelated = os.path.join(str(tmp_path), "uicode.c")
-        main_h = os.path.join(str(tmp_path), "main_page.h")
+        main_h = os.path.join(str(tmp_path), ".designer", "main_page.h")
         for f in (unrelated, main_h):
+            os.makedirs(os.path.dirname(f), exist_ok=True)
             with open(f, "w") as fp:
                 fp.write("")
 
@@ -79,9 +84,11 @@ class TestDeletePageGeneratedFiles:
     def test_correct_file_suffixes_deleted(self, tmp_path, delete_fn):
         """Verify the exact file names that are deleted."""
         page_name = "my_screen"
+        designer_dir = tmp_path / ".designer"
+        designer_dir.mkdir()
         expected = [
-            os.path.join(str(tmp_path), f"{page_name}.h"),
-            os.path.join(str(tmp_path), f"{page_name}_layout.c"),
+            os.path.join(str(designer_dir), f"{page_name}.h"),
+            os.path.join(str(designer_dir), f"{page_name}_layout.c"),
             os.path.join(str(tmp_path), f"{page_name}.c"),
         ]
         for f in expected:
@@ -108,24 +115,25 @@ class TestDeletePageGeneratedFiles:
         delete_fn(str(tmp_path), "page_a")
 
         # page_a gone
-        assert not os.path.exists(os.path.join(str(tmp_path), "page_a.h"))
-        assert not os.path.exists(os.path.join(str(tmp_path), "page_a_layout.c"))
+        assert not os.path.exists(os.path.join(str(tmp_path), ".designer", "page_a.h"))
+        assert not os.path.exists(os.path.join(str(tmp_path), ".designer", "page_a_layout.c"))
         assert not os.path.exists(os.path.join(str(tmp_path), "page_a.c"))
         # page_b intact
-        assert os.path.isfile(os.path.join(str(tmp_path), "page_b.h"))
-        assert os.path.isfile(os.path.join(str(tmp_path), "page_b_layout.c"))
+        assert os.path.isfile(os.path.join(str(tmp_path), ".designer", "page_b.h"))
+        assert os.path.isfile(os.path.join(str(tmp_path), ".designer", "page_b_layout.c"))
         assert os.path.isfile(os.path.join(str(tmp_path), "page_b.c"))
 
     def test_archives_user_owned_files(self, tmp_path, delete_fn):
-        (tmp_path / "detail.h").write_text("", encoding="utf-8")
-        (tmp_path / "detail_layout.c").write_text("", encoding="utf-8")
+        (tmp_path / ".designer").mkdir()
+        (tmp_path / ".designer" / "detail.h").write_text("", encoding="utf-8")
+        (tmp_path / ".designer" / "detail_layout.c").write_text("", encoding="utf-8")
         (tmp_path / "detail.c").write_text("/* user */\n", encoding="utf-8")
         (tmp_path / "detail_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
 
         delete_fn(str(tmp_path), "detail")
 
-        assert not (tmp_path / "detail.h").exists()
-        assert not (tmp_path / "detail_layout.c").exists()
+        assert not (tmp_path / ".designer" / "detail.h").exists()
+        assert not (tmp_path / ".designer" / "detail_layout.c").exists()
         assert not (tmp_path / "detail.c").exists()
         assert not (tmp_path / "detail_ext.h").exists()
         assert (tmp_path / ".eguiproject" / "orphaned_user_code" / "detail" / "detail.c").is_file()
@@ -137,8 +145,9 @@ class TestDeletePageGeneratedFiles:
         (archive_dir / "detail.c").write_text("/* older */\n", encoding="utf-8")
         (archive_dir / "detail_ext.h").write_text("#define OLD_DETAIL_EXT 1\n", encoding="utf-8")
 
-        (tmp_path / "detail.h").write_text("", encoding="utf-8")
-        (tmp_path / "detail_layout.c").write_text("", encoding="utf-8")
+        (tmp_path / ".designer").mkdir()
+        (tmp_path / ".designer" / "detail.h").write_text("", encoding="utf-8")
+        (tmp_path / ".designer" / "detail_layout.c").write_text("", encoding="utf-8")
         (tmp_path / "detail.c").write_text("/* current */\n", encoding="utf-8")
         (tmp_path / "detail_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
 

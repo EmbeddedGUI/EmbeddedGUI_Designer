@@ -14,10 +14,24 @@ import re
 DESIGNER_PROJECT_DIRNAME = ".designer"
 BUILD_DESIGNER_FILENAME = "build_designer.mk"
 APP_CONFIG_DESIGNER_FILENAME = "app_egui_config_designer.h"
+UICODE_HEADER_FILENAME = "uicode.h"
+UICODE_SOURCE_FILENAME = "uicode.c"
+EGUI_STRINGS_HEADER_FILENAME = "egui_strings.h"
+EGUI_STRINGS_SOURCE_FILENAME = "egui_strings.c"
 
 BUILD_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{BUILD_DESIGNER_FILENAME}"
 APP_CONFIG_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{APP_CONFIG_DESIGNER_FILENAME}"
 BUILD_DESIGNER_INCLUDE_TARGET = f"$(EGUI_APP_PATH)/{BUILD_DESIGNER_RELPATH}"
+UICODE_HEADER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{UICODE_HEADER_FILENAME}"
+UICODE_SOURCE_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{UICODE_SOURCE_FILENAME}"
+EGUI_STRINGS_HEADER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{EGUI_STRINGS_HEADER_FILENAME}"
+EGUI_STRINGS_SOURCE_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{EGUI_STRINGS_SOURCE_FILENAME}"
+DESIGNER_CODEGEN_STALE_STRING_RELPATHS = (
+    EGUI_STRINGS_HEADER_RELPATH,
+    EGUI_STRINGS_SOURCE_RELPATH,
+    EGUI_STRINGS_HEADER_FILENAME,
+    EGUI_STRINGS_SOURCE_FILENAME,
+)
 
 LEGACY_BUILD_DESIGNER_RELPATH = BUILD_DESIGNER_FILENAME
 LEGACY_APP_CONFIG_DESIGNER_RELPATH = APP_CONFIG_DESIGNER_FILENAME
@@ -29,11 +43,13 @@ APP_CONFIG_WRAPPER_GUARD = "_APP_EGUI_CONFIG_H_"
 APP_CONFIG_DESIGNER_GUARD = "_APP_EGUI_CONFIG_DESIGNER_H_"
 
 _BUILD_DESIGNER_LINES = (
+    f"EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/{DESIGNER_PROJECT_DIRNAME}",
     "EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)",
     "EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource",
     "EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource/img",
     "EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource/font",
     "",
+    f"EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/{DESIGNER_PROJECT_DIRNAME}",
     "EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)",
     "EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource",
     "EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource/img",
@@ -132,6 +148,27 @@ def _split_make_include_target(content: str, include_name: str) -> str:
 
 def project_designer_dir(project_dir: str) -> str:
     return os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME)
+
+
+def designer_codegen_relpath(filename: str) -> str:
+    normalized = str(filename or "").replace("\\", "/").lstrip("/")
+    return f"{DESIGNER_PROJECT_DIRNAME}/{normalized}"
+
+
+def designer_page_header_relpath(page_name: str) -> str:
+    return designer_codegen_relpath(f"{page_name}.h")
+
+
+def designer_page_layout_relpath(page_name: str) -> str:
+    return designer_codegen_relpath(f"{page_name}_layout.c")
+
+
+def designer_codegen_legacy_root_relpath(relpath: str) -> str:
+    normalized = str(relpath or "").replace("\\", "/").lstrip("/")
+    prefix = f"{DESIGNER_PROJECT_DIRNAME}/"
+    if normalized.startswith(prefix):
+        return normalized[len(prefix):]
+    return normalized
 
 
 def build_designer_path(project_dir: str) -> str:

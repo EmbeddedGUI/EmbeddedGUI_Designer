@@ -83,6 +83,10 @@ This repo is the standalone distribution of the **EmbeddedGUI Visual UI Designer
 example/<AppName>/
     <AppName>.egui              # project metadata (XML)
     .designer/
+        <page>.h                # Designer-generated page struct/header
+        <page>_layout.c         # Designer-generated layout/lifecycle source
+        uicode.h                # Designer-generated page/runtime declarations
+        uicode.c                # Designer-generated page/runtime implementation
         build_designer.mk       # Designer-managed build inputs
         app_egui_config_designer.h  # Designer-managed default screen/config macros
     .eguiproject/
@@ -95,6 +99,10 @@ example/<AppName>/
     resource/                   # generated output (don't hand-edit)
         src/app_resource_config.json         # user overlay config
         src/.designer/app_resource_config_designer.json  # Designer-generated resource metadata
+    <page>.c                    # user-owned business logic
+    <page>_ext.h                # user-owned page extension/hooks
+    build.mk                    # user-owned wrapper that includes .designer/build_designer.mk
+    app_egui_config.h           # user-owned wrapper that includes .designer/app_egui_config_designer.h
 ```
 
 ### SDK validity check

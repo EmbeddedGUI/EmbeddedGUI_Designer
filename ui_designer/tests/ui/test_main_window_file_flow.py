@@ -481,17 +481,51 @@ class TestMainWindowFileFlow:
 
         files = window._save_project_files(str(project_dir))
 
-        assert "main_page.h" in files
-        assert "main_page_layout.c" in files
+        assert ".designer/main_page.h" in files
+        assert ".designer/main_page_layout.c" in files
         assert "main_page.c" in files
         assert "main_page_ext.h" in files
-        assert (project_dir / "main_page.h").is_file()
-        assert (project_dir / "main_page_layout.c").is_file()
+        assert (project_dir / ".designer" / "main_page.h").is_file()
+        assert (project_dir / ".designer" / "main_page_layout.c").is_file()
         assert (project_dir / "main_page.c").is_file()
         assert (project_dir / "main_page_ext.h").is_file()
-        assert '#include "main_page_ext.h"' in (project_dir / "main_page.h").read_text(encoding="utf-8")
+        assert '#include "main_page_ext.h"' in (project_dir / ".designer" / "main_page.h").read_text(encoding="utf-8")
         assert "void egui_main_page_user_init(egui_main_page_t *page)" in (project_dir / "main_page.c").read_text(encoding="utf-8")
         assert "#define EGUI_MAIN_PAGE_EXT_FIELDS" in (project_dir / "main_page_ext.h").read_text(encoding="utf-8")
+        _close_window(window)
+
+    def test_save_project_files_removes_legacy_root_designer_outputs(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveLegacyDesignerOutputsDemo"
+        project = _create_project(project_dir, "SaveLegacyDesignerOutputsDemo", sdk_root)
+
+        (project_dir / "main_page.h").write_text("// legacy root header\n", encoding="utf-8")
+        (project_dir / "main_page_layout.c").write_text("// legacy root layout\n", encoding="utf-8")
+        (project_dir / "uicode.h").write_text("// legacy root uicode header\n", encoding="utf-8")
+        (project_dir / "uicode.c").write_text("// legacy root uicode source\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(project_dir)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+
+        window._save_project_files(str(project_dir))
+
+        assert not (project_dir / "main_page.h").exists()
+        assert not (project_dir / "main_page_layout.c").exists()
+        assert not (project_dir / "uicode.h").exists()
+        assert not (project_dir / "uicode.c").exists()
+        assert (project_dir / ".designer" / "main_page.h").is_file()
+        assert (project_dir / ".designer" / "main_page_layout.c").is_file()
+        assert (project_dir / ".designer" / "uicode.h").is_file()
+        assert (project_dir / ".designer" / "uicode.c").is_file()
+        backup_root = project_dir / ".eguiproject" / "backup"
+        assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
+        assert any(path.name == "uicode.c" for path in backup_root.rglob("uicode.c"))
         _close_window(window)
 
     def test_save_project_files_migrates_legacy_page_files_and_creates_backups(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -590,15 +624,19 @@ class TestMainWindowFileFlow:
         window._on_page_renamed("main_page", "dashboard_page")
         files = window._save_project_files(str(project_dir))
 
-        assert "dashboard_page.h" in files
-        assert "dashboard_page_layout.c" in files
+        assert ".designer/dashboard_page.h" in files
+        assert ".designer/dashboard_page_layout.c" in files
         assert window._current_page is not None
         assert window._current_page.name == "dashboard_page"
         assert window.project.startup_page == "dashboard_page"
         assert not (project_dir / "main_page.h").exists()
         assert not (project_dir / "main_page_layout.c").exists()
+        assert not (project_dir / ".designer" / "main_page.h").exists()
+        assert not (project_dir / ".designer" / "main_page_layout.c").exists()
         assert not (project_dir / "main_page.c").exists()
         assert not (project_dir / "main_page_ext.h").exists()
+        assert (project_dir / ".designer" / "dashboard_page.h").is_file()
+        assert (project_dir / ".designer" / "dashboard_page_layout.c").is_file()
         assert (project_dir / "dashboard_page.c").is_file()
         assert (project_dir / "dashboard_page_ext.h").is_file()
         assert (project_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* rename me */\n"
@@ -2737,11 +2775,11 @@ class TestMainWindowFileFlow:
         window._save_project_as()
 
         assert window._project_dir == os.path.normpath(os.path.abspath(dst_dir))
-        assert (dst_dir / "main_page.h").is_file()
-        assert (dst_dir / "main_page_layout.c").is_file()
+        assert (dst_dir / ".designer" / "main_page.h").is_file()
+        assert (dst_dir / ".designer" / "main_page_layout.c").is_file()
         assert (dst_dir / "main_page.c").is_file()
         assert (dst_dir / "main_page_ext.h").is_file()
-        assert '#include "main_page_ext.h"' in (dst_dir / "main_page.h").read_text(encoding="utf-8")
+        assert '#include "main_page_ext.h"' in (dst_dir / ".designer" / "main_page.h").read_text(encoding="utf-8")
         assert "void egui_main_page_user_init(egui_main_page_t *page)" in (dst_dir / "main_page.c").read_text(encoding="utf-8")
         assert "#define EGUI_MAIN_PAGE_EXT_FIELDS" in (dst_dir / "main_page_ext.h").read_text(encoding="utf-8")
         _close_window(window)
@@ -2770,8 +2808,8 @@ class TestMainWindowFileFlow:
         window._save_project_as()
 
         for page_name in ("main_page", "detail_page"):
-            assert (dst_dir / f"{page_name}.h").is_file()
-            assert (dst_dir / f"{page_name}_layout.c").is_file()
+            assert (dst_dir / ".designer" / f"{page_name}.h").is_file()
+            assert (dst_dir / ".designer" / f"{page_name}_layout.c").is_file()
             assert (dst_dir / f"{page_name}.c").is_file()
             assert (dst_dir / f"{page_name}_ext.h").is_file()
         _close_window(window)
@@ -3018,8 +3056,8 @@ class TestMainWindowFileFlow:
 
         assert (export_dir / "main_page.c").read_text(encoding="utf-8") == "/* keep user source */\n"
         assert (export_dir / "main_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_USER_EXT 1\n"
-        assert (export_dir / "main_page.h").is_file()
-        assert (export_dir / "main_page_layout.c").is_file()
+        assert (export_dir / ".designer" / "main_page.h").is_file()
+        assert (export_dir / ".designer" / "main_page_layout.c").is_file()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -3051,8 +3089,8 @@ class TestMainWindowFileFlow:
         assert (export_dir / "detail_page_ext.h").read_text(encoding="utf-8") == "#define KEEP_DETAIL_EXT 1\n"
         assert (export_dir / "main_page_ext.h").is_file()
         assert (export_dir / "detail_page.c").is_file()
-        assert (export_dir / "detail_page.h").is_file()
-        assert (export_dir / "detail_page_layout.c").is_file()
+        assert (export_dir / ".designer" / "detail_page.h").is_file()
+        assert (export_dir / ".designer" / "detail_page_layout.c").is_file()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -3082,10 +3120,12 @@ class TestMainWindowFileFlow:
 
         assert not (export_dir / "main_page.h").exists()
         assert not (export_dir / "main_page_layout.c").exists()
+        assert not (export_dir / ".designer" / "main_page.h").exists()
+        assert not (export_dir / ".designer" / "main_page_layout.c").exists()
         assert not (export_dir / "main_page.c").exists()
         assert not (export_dir / "main_page_ext.h").exists()
-        assert (export_dir / "dashboard_page.h").is_file()
-        assert (export_dir / "dashboard_page_layout.c").is_file()
+        assert (export_dir / ".designer" / "dashboard_page.h").is_file()
+        assert (export_dir / ".designer" / "dashboard_page_layout.c").is_file()
         assert (export_dir / "dashboard_page.c").read_text(encoding="utf-8") == "/* exported rename me */\n"
         assert (export_dir / "dashboard_page_ext.h").read_text(encoding="utf-8") == "#define EXPORT_KEEP_MAIN_EXT 1\n"
         window._undo_manager.mark_all_saved()
@@ -3445,7 +3485,7 @@ class TestMainWindowFileFlow:
                     "output_dir": output_dir,
                     "backup": backup,
                 }
-            ) or {"uicode.c": "// rebuild test\n"},
+            ) or {".designer/uicode.c": "// rebuild test\n"},
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
@@ -3528,7 +3568,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         monkeypatch.setattr(
             "ui_designer.ui.main_window.generate_all_files_preserved",
-            lambda project_obj, output_dir, backup=True: {"uicode.c": "// rebuild button test\n"},
+            lambda project_obj, output_dir, backup=True: {".designer/uicode.c": "// rebuild button test\n"},
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
@@ -3625,7 +3665,7 @@ class TestMainWindowFileFlow:
         assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in migrated
         assert "static void egui_main_page_on_open(egui_page_base_t *self)" not in migrated
         assert "void egui_main_page_init(egui_page_base_t *self)" not in migrated
-        assert "main_page_layout.c" in compiler.files_dict
+        assert ".designer/main_page_layout.c" in compiler.files_dict
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -3668,7 +3708,7 @@ class TestMainWindowFileFlow:
 
         def fake_save_project_files(project_path, *, reset_scaffold=False):
             captured["save_project_files"] = (project_path, reset_scaffold)
-            return {"uicode.c": "// reconstructed\n"}
+            return {".designer/uicode.c": "// reconstructed\n"}
 
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", fake_confirm)
         monkeypatch.setattr("ui_designer.ui.main_window.clean_project_for_reconstruct", fake_clean)
@@ -5739,8 +5779,9 @@ class TestMainWindowFileFlow:
         project.create_new_page("detail_page")
         project.save(str(project_dir))
 
-        (project_dir / "detail_page.h").write_text("", encoding="utf-8")
-        (project_dir / "detail_page_layout.c").write_text("", encoding="utf-8")
+        (project_dir / ".designer").mkdir()
+        (project_dir / ".designer" / "detail_page.h").write_text("", encoding="utf-8")
+        (project_dir / ".designer" / "detail_page_layout.c").write_text("", encoding="utf-8")
         (project_dir / "detail_page.c").write_text("/* detail user */\n", encoding="utf-8")
         (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
 
@@ -5754,8 +5795,8 @@ class TestMainWindowFileFlow:
         qapp.processEvents()
 
         assert window.project.get_page_by_name("detail_page") is None
-        assert not (project_dir / "detail_page.h").exists()
-        assert not (project_dir / "detail_page_layout.c").exists()
+        assert not (project_dir / ".designer" / "detail_page.h").exists()
+        assert not (project_dir / ".designer" / "detail_page_layout.c").exists()
         assert not (project_dir / "detail_page.c").exists()
         assert not (project_dir / "detail_page_ext.h").exists()
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").is_file()
@@ -5822,6 +5863,8 @@ class TestMainWindowFileFlow:
         assert window.project.get_page_by_name("dashboard_page") is None
         assert not (project_dir / "detail_page.h").exists()
         assert not (project_dir / "detail_page_layout.c").exists()
+        assert not (project_dir / ".designer" / "detail_page.h").exists()
+        assert not (project_dir / ".designer" / "detail_page_layout.c").exists()
         assert not (project_dir / "detail_page.c").exists()
         assert not (project_dir / "detail_page_ext.h").exists()
         assert (project_dir / ".eguiproject" / "orphaned_user_code" / "detail_page" / "detail_page.c").read_text(

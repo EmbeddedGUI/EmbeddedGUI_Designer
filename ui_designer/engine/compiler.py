@@ -13,7 +13,12 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from .designer_bridge import DesignerBridge
 from ..model.workspace import compute_make_app_root_arg, normalize_path
-from ..utils.scaffold import BUILD_DESIGNER_RELPATH, LEGACY_BUILD_DESIGNER_RELPATH
+from ..utils.scaffold import (
+    BUILD_DESIGNER_RELPATH,
+    LEGACY_BUILD_DESIGNER_RELPATH,
+    UICODE_SOURCE_RELPATH,
+    designer_codegen_legacy_root_relpath,
+)
 
 
 class BuildConfig:
@@ -124,11 +129,20 @@ class CompileWorker(QThread):
     finished = pyqtSignal(bool, str, object)  # success, message, old_process
     log = pyqtSignal(str, str)  # message, msg_type
 
-    def __init__(self, compiler, code=None, files_dict=None, force_rebuild=False, parent=None):
+    def __init__(
+        self,
+        compiler,
+        code=None,
+        files_dict=None,
+        generated_relpaths=None,
+        force_rebuild=False,
+        parent=None,
+    ):
         super().__init__(parent)
         self.compiler = compiler
         self.code = code
         self.files_dict = files_dict
+        self.generated_relpaths = generated_relpaths
         self.force_rebuild = bool(force_rebuild)
         self._old_process = None
 
@@ -141,7 +155,10 @@ class CompileWorker(QThread):
         t1 = time.time()
         written = []
         if self.files_dict:
-            written = self.compiler.write_project_files(self.files_dict)
+            written = self.compiler.write_project_files(
+                self.files_dict,
+                generated_relpaths=self.generated_relpaths,
+            )
         elif self.code:
             self.compiler.write_uicode(self.code)
             written = ["uicode.c"]
@@ -274,7 +291,7 @@ class CompilerEngine:
         app_dir = getattr(self, "app_dir", "")
         if not app_dir:
             app_dir = os.path.join(self.project_root, "example", self.app_name)
-        return os.path.join(app_dir, "uicode.c")
+        return os.path.join(app_dir, UICODE_SOURCE_RELPATH.replace("/", os.sep))
 
     @property
     def exe_path(self):
@@ -356,11 +373,12 @@ class CompilerEngine:
 
     def write_uicode(self, code):
         """Write generated C code to uicode.c."""
+        os.makedirs(os.path.dirname(self.uicode_path), exist_ok=True)
         with open(self.uicode_path, "w", encoding="utf-8") as f:
             f.write(code)
         self._last_changed_files = ["uicode.c"]
 
-    def write_project_files(self, files_dict):
+    def write_project_files(self, files_dict, generated_relpaths=None):
         """Write multiple generated C files to the app directory.
 
         Respects file ownership categories:
@@ -377,6 +395,9 @@ class CompilerEngine:
         Args:
             files_dict: dict[str, str | tuple[str, str]] mapping
                 filename to content (or (content, category))
+            generated_relpaths: iterable of all current designer-managed output
+                relpaths so legacy root duplicates can be removed even when a
+                nested file was unchanged and skipped this round.
 
         Returns:
             list[str]: List of filenames that were actually written (changed)
@@ -389,7 +410,16 @@ class CompilerEngine:
         app_dir = self.app_dir
         os.makedirs(app_dir, exist_ok=True)
         written = []
+        cleanup_relpaths = set()
+        cleanup_sources = generated_relpaths if generated_relpaths is not None else files_dict.keys()
+        for relpath in cleanup_sources:
+            normalized = str(relpath or "").replace("\\", "/")
+            if normalized.startswith(".designer/"):
+                cleanup_relpaths.add(designer_codegen_legacy_root_relpath(normalized))
+
         for filename, value in files_dict.items():
+            normalized = str(filename or "").replace("\\", "/")
+
             # Support both (content, category) tuples and plain strings
             if isinstance(value, tuple):
                 content, category = value
@@ -422,7 +452,16 @@ class CompilerEngine:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
             written.append(filename)
-        self._last_changed_files = [f for f in written if f.endswith(".c")]
+
+        for relpath in sorted(cleanup_relpaths):
+            legacy_path = os.path.join(app_dir, relpath.replace("/", os.sep))
+            try:
+                if os.path.isfile(legacy_path):
+                    os.remove(legacy_path)
+            except OSError:
+                pass
+
+        self._last_changed_files = [os.path.basename(f) for f in written if str(f).endswith(".c")]
         return written
 
     def compile(self, changed_files=None, force_rebuild=False):
@@ -736,19 +775,33 @@ class CompilerEngine:
 
         return True, f"Build #{self._compile_count} OK", None
 
-    def compile_and_run_async(self, code, callback, files_dict=None, force_rebuild=False):
+    def compile_and_run_async(
+        self,
+        code,
+        callback,
+        files_dict=None,
+        generated_relpaths=None,
+        force_rebuild=False,
+    ):
         """Asynchronous version - runs compile in background thread.
 
         Args:
             code: Generated C code to compile (single-file mode, can be None)
             callback: Function(success, message, old_process) called when done
             files_dict: dict of filename->content (multi-file mode)
+            generated_relpaths: iterable of all current generated relpaths
             force_rebuild: when True, run a full clean rebuild before preview
 
         Returns:
             CompileWorker: The worker thread (caller should keep reference)
         """
-        worker = CompileWorker(self, code=code, files_dict=files_dict, force_rebuild=force_rebuild)
+        worker = CompileWorker(
+            self,
+            code=code,
+            files_dict=files_dict,
+            generated_relpaths=generated_relpaths,
+            force_rebuild=force_rebuild,
+        )
         worker.finished.connect(callback)
         worker.start()
         return worker

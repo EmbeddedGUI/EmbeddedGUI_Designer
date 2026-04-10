@@ -113,11 +113,15 @@ class TestDeletePageGeneratedFilesPathTraversal:
 
     def test_normal_name_deletes_three_files(self, tmp_path):
         from ui_designer.ui.main_window import delete_page_generated_files
-        for fname in ("nav.h", "nav_layout.c", "nav.c"):
+        (tmp_path / ".designer").mkdir()
+        for fname in ("nav.c",):
             (tmp_path / fname).write_text("x")
+        for fname in ("nav.h", "nav_layout.c"):
+            (tmp_path / ".designer" / fname).write_text("x")
         delete_page_generated_files(str(tmp_path), "nav")
-        for fname in ("nav.h", "nav_layout.c", "nav.c"):
-            assert not (tmp_path / fname).exists()
+        assert not (tmp_path / ".designer" / "nav.h").exists()
+        assert not (tmp_path / ".designer" / "nav_layout.c").exists()
+        assert not (tmp_path / "nav.c").exists()
 
     def test_traversal_attempt_does_not_escape(self, tmp_path):
         """Page name with '..' should not escape the project directory."""

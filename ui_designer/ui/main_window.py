@@ -104,12 +104,18 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
+    generate_all_files,
     generate_all_files_preserved,
     generate_page_user_source,
     generate_uicode,
     render_page_callback_stub,
 )
-from ..generator.user_code_preserver import compute_source_hash, embed_source_hash, read_existing_file
+from ..generator.user_code_preserver import (
+    backup_file,
+    compute_source_hash,
+    embed_source_hash,
+    read_existing_file,
+)
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
 from ..engine.layout_engine import compute_layout, compute_page_layout
@@ -123,11 +129,16 @@ from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     BUILD_DESIGNER_INCLUDE_TARGET,
     BUILD_DESIGNER_RELPATH,
+    DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     DESIGNER_PROJECT_DIRNAME,
+    EGUI_STRINGS_HEADER_RELPATH,
     app_config_designer_include_target,
     app_config_designer_path,
     build_mk_designer_include_target,
     build_designer_path,
+    designer_codegen_legacy_root_relpath,
+    designer_page_header_relpath,
+    designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     make_app_build_designer_mk_content,
@@ -236,7 +247,7 @@ def _archive_page_user_file(project_dir, page_name, src_path):
 def delete_page_generated_files(project_dir, page_name):
     """Delete generated page files and archive user-owned ones.
 
-    Removes {page_name}.h and {page_name}_layout.c from project_dir.
+    Removes designer-managed page files from ``.designer/`` and legacy root paths.
     Moves {page_name}.c and {page_name}_ext.h into
     .eguiproject/orphaned_user_code/{page_name}/ so user code is preserved.
     Silently ignores missing files and permission errors.
@@ -247,7 +258,12 @@ def delete_page_generated_files(project_dir, page_name):
     if not page_name or not project_dir:
         return
 
-    for suffix in (f"{page_name}.h", f"{page_name}_layout.c"):
+    for suffix in (
+        designer_page_header_relpath(page_name),
+        designer_page_layout_relpath(page_name),
+        f"{page_name}.h",
+        f"{page_name}_layout.c",
+    ):
         fpath = _project_child_realpath(project_dir, suffix)
         if fpath is None:
             continue
@@ -262,6 +278,44 @@ def delete_page_generated_files(project_dir, page_name):
         if src is None:
             continue
         _archive_page_user_file(project_dir, page_name, src)
+
+
+def _cleanup_legacy_designer_codegen_files(
+    project_dir,
+    generated_files,
+    *,
+    backup_existing=False,
+    remove_stale_strings=False,
+):
+    if not project_dir:
+        return
+
+    generated_relpaths = {
+        str(filename or "").replace("\\", "/")
+        for filename in getattr(generated_files, "keys", lambda: generated_files)()
+    }
+    cleanup_relpaths = {
+        designer_codegen_legacy_root_relpath(relpath)
+        for relpath in generated_relpaths
+        if relpath.startswith(f"{DESIGNER_PROJECT_DIRNAME}/")
+    }
+
+    if remove_stale_strings and EGUI_STRINGS_HEADER_RELPATH not in generated_relpaths:
+        cleanup_relpaths.update(DESIGNER_CODEGEN_STALE_STRING_RELPATHS)
+
+    backup_root = os.path.join(project_dir, ".eguiproject", "backup")
+    for relpath in sorted(cleanup_relpaths):
+        if not relpath or relpath in generated_relpaths:
+            continue
+        path = _project_child_realpath(project_dir, relpath)
+        if path is None or not os.path.isfile(path):
+            continue
+        try:
+            if backup_existing:
+                backup_file(path, backup_root)
+            os.remove(path)
+        except OSError:
+            pass
 
 
 def _callback_definition_exists(content, callback_name):
@@ -4662,11 +4716,18 @@ class MainWindow(QMainWindow):
         self._apply_pending_page_rename_outputs(project_dir)
 
         files = generate_all_files_preserved(self.project, project_dir, backup=True)
+        all_generated_files = generate_all_files(self.project)
         for filename, content in files.items():
             filepath = os.path.join(project_dir, filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
+        _cleanup_legacy_designer_codegen_files(
+            project_dir,
+            all_generated_files,
+            backup_existing=True,
+            remove_stale_strings=not self.project.string_catalog.has_strings,
+        )
         self._clear_project_dirty()
         return files
 
@@ -4792,11 +4853,18 @@ class MainWindow(QMainWindow):
         files = generate_all_files_preserved(
             self.project, path, backup=True,
         )
+        all_generated_files = generate_all_files(self.project)
         for filename, content in files.items():
             filepath = os.path.join(path, filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
+        _cleanup_legacy_designer_codegen_files(
+            path,
+            all_generated_files,
+            backup_existing=True,
+            remove_stale_strings=not self.project.string_catalog.has_strings,
+        )
         self.statusBar().showMessage(
             f"Exported {len(files)} files to {path} (user code preserved)"
         )
@@ -5788,7 +5856,12 @@ class MainWindow(QMainWindow):
             if not old_name or not new_name or old_name == new_name:
                 continue
 
-            for suffix in (f"{old_name}.h", f"{old_name}_layout.c"):
+            for suffix in (
+                designer_page_header_relpath(old_name),
+                designer_page_layout_relpath(old_name),
+                f"{old_name}.h",
+                f"{old_name}_layout.c",
+            ):
                 src = _project_child_realpath(output_dir, suffix)
                 if src is None:
                     continue
@@ -7366,6 +7439,7 @@ class MainWindow(QMainWindow):
         self._ensure_resources_generated()
 
         preview_output_dir = self.compiler.app_dir if self.compiler is not None else (self._project_dir or "")
+        self._apply_pending_page_rename_outputs(preview_output_dir)
 
         # Temporarily set startup_page to current page for preview
         original_startup = self.project.startup_page
@@ -7373,6 +7447,7 @@ class MainWindow(QMainWindow):
             self.project.startup_page = self._current_page.name
         try:
             files = generate_all_files_preserved(self.project, preview_output_dir, backup=False)
+            all_generated_files = generate_all_files(self.project)
         finally:
             # Restore the persisted startup page even when preview generation fails.
             self.project.startup_page = original_startup
@@ -7393,6 +7468,7 @@ class MainWindow(QMainWindow):
                 worker, generation, force_rebuild, success, message, old_process
             ),
             files_dict=files,
+            generated_relpaths=list(all_generated_files.keys()),
             force_rebuild=force_rebuild,
         )
         self._compile_worker = worker

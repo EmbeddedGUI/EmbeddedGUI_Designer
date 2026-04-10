@@ -23,10 +23,10 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
 )
 
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
-    "page/user code files in the project root (*.c, *.h, *_ext.h)",
+    "user-owned page files in the project root (*.c, *_ext.h)",
     "resource/img, resource/font, and other synced/generated resource outputs",
     "resource/src/.designer/** designer-generated resource metadata",
-    ".designer/** project scaffold files (legacy root designer files also removed)",
+    ".designer/** generated code and scaffold files (legacy root designer files also removed)",
     ".eguiproject/backup, orphaned_user_code, and other generated caches",
 )
 

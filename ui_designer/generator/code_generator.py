@@ -1,24 +1,19 @@
 """C code generator for EmbeddedGUI Designer — MFC-style multi-file output.
 
 Architecture (per page):
-    {page_name}.h          — struct definition (generated, auto page fields + USER CODE regions)
-    {page_name}_layout.c   — pure layout code (100% generated, always overwritten)
-    {page_name}.c          — user implementation (skeleton, created once, NEVER overwritten)
+    .designer/{page_name}.h        — generated page struct + hook declarations
+    .designer/{page_name}_layout.c — generated lifecycle wrappers + layout code
+    {page_name}.c                  — user implementation (created once)
+    {page_name}_ext.h              — user struct extension / hook override macros
 
 Framework files (fully generated, always overwritten):
-    uicode.h               — page enum, exported functions
-    uicode.c               — page switching backend (EasyPage or Activity mode)
-    app_egui_config.h      — screen config (only if not present)
+    .designer/uicode.h
+    .designer/uicode.c
+    .designer/app_egui_config_designer.h
+    .designer/build_designer.mk
 
-The {page_name}_layout.c exports ``egui_{page}_layout_init()`` which is
-called by the user's ``egui_{page}_on_open()`` in {page_name}.c.
-
-This achieves zero overlap between generated and user code:
-  - Layout changes only touch *_layout.c (fully generated)
-  - User logic lives entirely in {page_name}.c (never overwritten)
-  - The .h bridges both via struct definition + function declarations
-
-Reference patterns taken from example/HelloEasyPage.
+This keeps always-generated Designer outputs under ``.designer/`` while
+leaving business logic in root ``*.c`` / ``*_ext.h`` files.
 """
 
 import re
@@ -41,6 +36,10 @@ from ..model.string_resource import parse_string_ref
 from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     BUILD_DESIGNER_RELPATH,
+    UICODE_HEADER_RELPATH,
+    UICODE_SOURCE_RELPATH,
+    designer_page_header_relpath,
+    designer_page_layout_relpath,
     make_app_build_designer_mk_content,
     make_app_config_designer_h_content,
 )
@@ -711,7 +710,7 @@ def _gen_anim_declarations(all_widgets, page_name):
 # ── Page Header (.h) ─────────────────────────────────────────────
 
 def generate_page_header(page, project):
-    """Generate the {page_name}.h file content.
+    """Generate the ``.designer/{page_name}.h`` file content.
 
     This file is fully regenerated on every save.
     """
@@ -817,14 +816,20 @@ def generate_page_header(page, project):
     lines.append("")
 
     # Function declarations
-    lines.append(f"// Layout init (auto-generated in {name}_layout.c)")
+    lines.append(
+        f"// Layout init (auto-generated in {designer_page_layout_relpath(name)})"
+    )
     lines.append(f"void {struct_name}_layout_init(egui_page_base_t *self);")
     lines.append("")
-    lines.append(f"// Page init (auto-generated in {name}_layout.c)")
+    lines.append(
+        f"// Page init (auto-generated in {designer_page_layout_relpath(name)})"
+    )
     lines.append(f"void {struct_name}_init(egui_page_base_t *self);")
     lines.append("")
     if generated_timers:
-        lines.append(f"// Timer helpers (auto-generated in {name}_layout.c)")
+        lines.append(
+            f"// Timer helpers (auto-generated in {designer_page_layout_relpath(name)})"
+        )
         lines.append(f"void {helper_names['init']}(egui_page_base_t *self);")
         lines.append(f"void {helper_names['start_auto']}(egui_page_base_t *self);")
         lines.append(f"void {helper_names['stop']}(egui_page_base_t *self);")
@@ -843,7 +848,7 @@ def generate_page_header(page, project):
 # ── Page Layout Source (*_layout.c) — 100% generated ─────────────
 
 def generate_page_layout_source(page, project):
-    """Generate the {page_name}_layout.c file content.
+    """Generate the ``.designer/{page_name}_layout.c`` file content.
 
     This file is 100% auto-generated and overwritten on every save.
     It contains NO user code regions. All widget initialization,
@@ -1255,7 +1260,9 @@ def _render_page_user_source_content(page, project, *, preamble="", hook_bodies=
     lines = []
     lines.append(f"// {name}.c – User implementation for {name}")
     lines.append("// This file is YOUR code. The designer only creates or migrates it once.")
-    lines.append(f"// Generated page lifecycle wrappers live in {name}_layout.c.")
+    lines.append(
+        f"// Generated page lifecycle wrappers live in {designer_page_layout_relpath(name)}."
+    )
     lines.append("")
     lines.append('#include "egui.h"')
     lines.append("#include <stdlib.h>")
@@ -1833,10 +1840,10 @@ def generate_all_files(project):
     files = {}
 
     for page in project.pages:
-        files[f"{page.name}.h"] = (
+        files[designer_page_header_relpath(page.name)] = (
             generate_page_header(page, project), GENERATED_ALWAYS
         )
-        files[f"{page.name}_layout.c"] = (
+        files[designer_page_layout_relpath(page.name)] = (
             generate_page_layout_source(page, project), GENERATED_ALWAYS
         )
         files[f"{page.name}.c"] = (
@@ -1846,8 +1853,8 @@ def generate_all_files(project):
             generate_page_ext_header(page, project), USER_OWNED
         )
 
-    files["uicode.h"] = (generate_uicode_header(project), GENERATED_ALWAYS)
-    files["uicode.c"] = (generate_uicode_source(project), GENERATED_ALWAYS)
+    files[UICODE_HEADER_RELPATH] = (generate_uicode_header(project), GENERATED_ALWAYS)
+    files[UICODE_SOURCE_RELPATH] = (generate_uicode_source(project), GENERATED_ALWAYS)
     files[BUILD_DESIGNER_RELPATH] = (
         make_app_build_designer_mk_content(project.app_name),
         GENERATED_ALWAYS,

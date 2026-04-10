@@ -22,7 +22,16 @@ from ui_designer.generator.code_generator import (
     GENERATED_ALWAYS,
     USER_OWNED,
 )
-from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, BUILD_DESIGNER_RELPATH
+from ui_designer.utils.scaffold import (
+    APP_CONFIG_DESIGNER_RELPATH,
+    BUILD_DESIGNER_RELPATH,
+    EGUI_STRINGS_HEADER_RELPATH,
+    EGUI_STRINGS_SOURCE_RELPATH,
+    UICODE_HEADER_RELPATH,
+    UICODE_SOURCE_RELPATH,
+    designer_page_header_relpath,
+    designer_page_layout_relpath,
+)
 
 
 # ── Fixtures ─────────────────────────────────────────────────────
@@ -205,9 +214,10 @@ class TestUserOwnedFiles:
         assert "init_logic();" in result["main_page.c"]
         assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in result["main_page.c"]
         assert "main_page_layout.c" in result["main_page.c"]
-        assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result["main_page_layout.c"]
-        assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result["main_page_layout.c"]
-        assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result["main_page_layout.c"]
+        layout_relpath = designer_page_layout_relpath("main_page")
+        assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result[layout_relpath]
+        assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result[layout_relpath]
+        assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result[layout_relpath]
 
     def test_legacy_user_source_fixture_migrates_to_user_hooks(self, tmp_path):
         proj = _make_project_with_page("main_page")
@@ -277,19 +287,19 @@ class TestGeneratedAlwaysFiles:
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "main_page_layout.c" in result
+        assert designer_page_layout_relpath("main_page") in result
 
     def test_uicode_source_always_produced(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "uicode.c" in result
+        assert UICODE_SOURCE_RELPATH in result
 
     def test_uicode_header_always_produced(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "uicode.h" in result
+        assert UICODE_HEADER_RELPATH in result
 
     def test_app_config_always_produced(self, tmp_path):
         proj = _make_project_with_page("main_page")
@@ -303,16 +313,31 @@ class TestGeneratedAlwaysFiles:
         result = generate_all_files_preserved(proj, output_dir, backup=False)
         assert BUILD_DESIGNER_RELPATH in result
 
+    def test_i18n_string_files_use_designer_paths(self, tmp_path):
+        from ui_designer.model.string_resource import StringResourceCatalog
+
+        proj = _make_project_with_page("main_page")
+        catalog = StringResourceCatalog()
+        catalog.set("title", "Hello", "")
+        proj.string_catalog = catalog
+
+        result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
+        assert EGUI_STRINGS_HEADER_RELPATH in result
+        assert EGUI_STRINGS_SOURCE_RELPATH in result
+
     def test_layout_regenerated_even_when_existing(self, tmp_path):
         """Even if *_layout.c exists on disk, it should appear in result (may
         be skipped if hash matches, but if content changed it overwrites)."""
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
+        layout_relpath = designer_page_layout_relpath("main_page")
         # First pass
         result1 = generate_all_files_preserved(proj, output_dir, backup=False)
-        if "main_page_layout.c" in result1:
-            layout_path = tmp_path / "main_page_layout.c"
-            layout_path.write_text(result1["main_page_layout.c"], encoding="utf-8")
+        if layout_relpath in result1:
+            layout_path = tmp_path / layout_relpath
+            layout_path.parent.mkdir(parents=True, exist_ok=True)
+            layout_path.write_text(result1[layout_relpath], encoding="utf-8")
         # Second pass without modification — may skip (hash match) but no crash
         result2 = generate_all_files_preserved(proj, output_dir, backup=False)
         # Either skipped or re-produced — no crash is the key assertion
@@ -380,8 +405,9 @@ class TestLegacyHeaderMigration:
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "main_page.h" in result
-        assert "#ifndef _MAIN_PAGE_H_" in result["main_page.h"]
+        header_relpath = designer_page_header_relpath("main_page")
+        assert header_relpath in result
+        assert "#ifndef _MAIN_PAGE_H_" in result[header_relpath]
 
 
 # ======================================================================
@@ -404,12 +430,12 @@ class TestMultiPageProject:
 
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
         assert "home.c" in result
-        assert "home.h" in result
-        assert "home_layout.c" in result
+        assert designer_page_header_relpath("home") in result
+        assert designer_page_layout_relpath("home") in result
         assert "home_ext.h" in result
         assert "settings.c" in result
-        assert "settings.h" in result
-        assert "settings_layout.c" in result
+        assert designer_page_header_relpath("settings") in result
+        assert designer_page_layout_relpath("settings") in result
         assert "settings_ext.h" in result
 
     def test_uicode_contains_all_pages(self, tmp_path):
@@ -423,8 +449,8 @@ class TestMultiPageProject:
         proj.add_page(page2)
 
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
-        assert "PAGE_HOME" in result["uicode.h"]
-        assert "PAGE_ABOUT" in result["uicode.h"]
+        assert "PAGE_HOME" in result[UICODE_HEADER_RELPATH]
+        assert "PAGE_ABOUT" in result[UICODE_HEADER_RELPATH]
 
     def test_second_user_file_not_overwritten(self, tmp_path):
         """Only the non-existent user file skeleton should appear in result."""

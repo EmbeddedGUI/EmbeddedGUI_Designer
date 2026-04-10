@@ -23,7 +23,16 @@ from ui_designer.generator.code_generator import (
     GENERATED_PRESERVED,
     USER_OWNED,
 )
-from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, BUILD_DESIGNER_RELPATH
+from ui_designer.utils.scaffold import (
+    APP_CONFIG_DESIGNER_RELPATH,
+    BUILD_DESIGNER_RELPATH,
+    EGUI_STRINGS_HEADER_RELPATH,
+    EGUI_STRINGS_SOURCE_RELPATH,
+    UICODE_HEADER_RELPATH,
+    UICODE_SOURCE_RELPATH,
+    designer_page_header_relpath,
+    designer_page_layout_relpath,
+)
 
 
 # ── Fixture helpers ───────────────────────────────────────────────
@@ -553,7 +562,7 @@ class TestGeneratePageUserSource:
     def test_user_source_layout_init_call(self):
         page, proj = self._make_simple()
         output = generate_page_user_source(page, proj)
-        assert "Generated page lifecycle wrappers live in main_page_layout.c." in output
+        assert "Generated page lifecycle wrappers live in .designer/main_page_layout.c." in output
 
     def test_user_source_fixed_hook_functions(self):
         page, proj = self._make_simple()
@@ -675,12 +684,12 @@ class TestGenerateAllFiles:
         page = _make_page("main_page", root)
         proj = _make_project([page])
         files = generate_all_files(proj)
-        assert "main_page.h" in files
-        assert "main_page_layout.c" in files
+        assert designer_page_header_relpath("main_page") in files
+        assert designer_page_layout_relpath("main_page") in files
         assert "main_page.c" in files
         assert "main_page_ext.h" in files
-        assert "uicode.h" in files
-        assert "uicode.c" in files
+        assert UICODE_HEADER_RELPATH in files
+        assert UICODE_SOURCE_RELPATH in files
         assert BUILD_DESIGNER_RELPATH in files
         assert APP_CONFIG_DESIGNER_RELPATH in files
 
@@ -689,15 +698,15 @@ class TestGenerateAllFiles:
         page = _make_page("main_page", root)
         proj = _make_project([page])
         files = generate_all_files(proj)
-        _, cat_h = files["main_page.h"]
+        _, cat_h = files[designer_page_header_relpath("main_page")]
         assert cat_h == GENERATED_ALWAYS
-        _, cat_layout = files["main_page_layout.c"]
+        _, cat_layout = files[designer_page_layout_relpath("main_page")]
         assert cat_layout == GENERATED_ALWAYS
         _, cat_c = files["main_page.c"]
         assert cat_c == USER_OWNED
         _, cat_ext = files["main_page_ext.h"]
         assert cat_ext == USER_OWNED
-        _, cat_uicode_h = files["uicode.h"]
+        _, cat_uicode_h = files[UICODE_HEADER_RELPATH]
         assert cat_uicode_h == GENERATED_ALWAYS
         _, cat_build = files[BUILD_DESIGNER_RELPATH]
         assert cat_build == GENERATED_ALWAYS
@@ -709,12 +718,12 @@ class TestGenerateAllFiles:
         p2 = _make_page("settings")
         proj = _make_project([p1, p2])
         files = generate_all_files(proj)
-        assert "main_page.h" in files
-        assert "main_page_layout.c" in files
+        assert designer_page_header_relpath("main_page") in files
+        assert designer_page_layout_relpath("main_page") in files
         assert "main_page.c" in files
         assert "main_page_ext.h" in files
-        assert "settings.h" in files
-        assert "settings_layout.c" in files
+        assert designer_page_header_relpath("settings") in files
+        assert designer_page_layout_relpath("settings") in files
         assert "settings.c" in files
         assert "settings_ext.h" in files
 
@@ -729,8 +738,8 @@ class TestGenerateAllFiles:
         cat.set("greeting", "Hello", "")
         proj.string_catalog = cat
         files = generate_all_files(proj)
-        assert "egui_strings.h" in files
-        assert "egui_strings.c" in files
+        assert EGUI_STRINGS_HEADER_RELPATH in files
+        assert EGUI_STRINGS_SOURCE_RELPATH in files
 
 
 # ── TestAnimationCodeGen ─────────────────────────────────────────

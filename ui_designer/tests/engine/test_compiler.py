@@ -11,12 +11,12 @@ from ui_designer.engine.compiler import BuildConfig, CompilerEngine
 MAKE_DRYRUN_OUTPUT = """\
 echo Compiling  : "example/HelloDesigner_1/main_page.c"
 gcc -DEGUI_APP=\\"HelloDesigner_1\\" -DEGUI_PORT=EGUI_PORT_TYPE_PC -O0 -Wall -std=c99 -Iexample/HelloDesigner_1 -Isrc -Iporting/designer -c example/HelloDesigner_1/main_page.c  -o output/obj/example/HelloDesigner_1/main_page.o
-echo Compiling  : "example/HelloDesigner_1/uicode.c"
-gcc -DEGUI_APP=\\"HelloDesigner_1\\" -DEGUI_PORT=EGUI_PORT_TYPE_PC -O0 -Wall -std=c99 -Iexample/HelloDesigner_1 -Isrc -Iporting/designer -c example/HelloDesigner_1/uicode.c  -o output/obj/example/HelloDesigner_1/uicode.o
+echo Compiling  : "example/HelloDesigner_1/.designer/uicode.c"
+gcc -DEGUI_APP=\\"HelloDesigner_1\\" -DEGUI_PORT=EGUI_PORT_TYPE_PC -O0 -Wall -std=c99 -Iexample/HelloDesigner_1 -Isrc -Iporting/designer -c example/HelloDesigner_1/.designer/uicode.c  -o output/obj/example/HelloDesigner_1/.designer/uicode.o
 echo Compiling  : "porting/designer/main.c"
 gcc -DEGUI_APP=\\"HelloDesigner_1\\" -DEGUI_PORT=EGUI_PORT_TYPE_PC -O0 -Wall -std=c99 -Iexample/HelloDesigner_1 -Isrc -Iporting/designer -c porting/designer/main.c  -o output/obj/porting/designer/main.o
 echo Linking    : "output/main.exe"
-gcc -DEGUI_APP=\\"HelloDesigner_1\\" -O0 -Wall -std=c99 -o output/main.exe output/obj/example/HelloDesigner_1/main_page.o output/obj/example/HelloDesigner_1/uicode.o output/obj/porting/designer/main.o output/libegui.a -lpthread
+gcc -DEGUI_APP=\\"HelloDesigner_1\\" -O0 -Wall -std=c99 -o output/main.exe output/obj/example/HelloDesigner_1/main_page.o output/obj/example/HelloDesigner_1/.designer/uicode.o output/obj/porting/designer/main.o output/libegui.a -lpthread
 echo Building   : "output/main.exe"
 """
 
@@ -50,8 +50,8 @@ class TestBuildConfigExtract:
         assert "uicode.c" in cfg.src_to_obj
         assert "main.c" in cfg.src_to_obj
         src, obj = cfg.src_to_obj["uicode.c"]
-        assert src == "example/HelloDesigner_1/uicode.c"
-        assert obj == "output/obj/example/HelloDesigner_1/uicode.o"
+        assert src == "example/HelloDesigner_1/.designer/uicode.c"
+        assert obj == "output/obj/example/HelloDesigner_1/.designer/uicode.o"
 
     @patch("subprocess.run")
     @patch("os.path.getmtime", return_value=1000.0)
@@ -143,11 +143,11 @@ class TestCompilerFastPath:
     def _make_config(self, tmp_path):
         cfg = BuildConfig()
         cfg.compile_cmd_prefix = "gcc -O0 -Wall -Isrc"
-        cfg.link_cmd = "gcc -o output/main.exe output/obj/uicode.o output/libegui.a"
+        cfg.link_cmd = "gcc -o output/main.exe output/obj/.designer/uicode.o output/libegui.a"
         cfg.compile_cmd_args = ["gcc", "-O0", "-Wall", "-Isrc"]
-        cfg.link_cmd_args = ["gcc", "-o", "output/main.exe", "output/obj/uicode.o", "output/libegui.a"]
+        cfg.link_cmd_args = ["gcc", "-o", "output/main.exe", "output/obj/.designer/uicode.o", "output/libegui.a"]
         cfg.src_to_obj = {
-            "uicode.c": ("example/TestApp/uicode.c", "output/obj/uicode.o"),
+            "uicode.c": ("example/TestApp/.designer/uicode.c", "output/obj/.designer/uicode.o"),
         }
         makefile = tmp_path / "Makefile"
         makefile.write_text("test")
@@ -193,6 +193,19 @@ class TestCompilerFastPath:
         assert (tmp_path / "example" / "TestApp" / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8") == (
             "#define TEST_FLAG 1\n"
         )
+
+    def test_write_project_files_removes_legacy_root_counterparts_even_when_no_nested_file_changes(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        app_dir = tmp_path / "example" / "TestApp"
+        (app_dir / ".designer").mkdir(parents=True)
+        (app_dir / ".designer" / "uicode.c").write_text("int ui(void) { return 0; }\n", encoding="utf-8")
+        (app_dir / "uicode.c").write_text("legacy root copy\n", encoding="utf-8")
+
+        written = engine.write_project_files({}, generated_relpaths=[".designer/uicode.c"])
+
+        assert written == []
+        assert not (app_dir / "uicode.c").exists()
+        assert (app_dir / ".designer" / "uicode.c").is_file()
 
     @patch("subprocess.run")
     def test_falls_back_to_make_without_config(self, mock_run, tmp_path):
@@ -301,7 +314,7 @@ class TestCompilerFastPath:
         os.makedirs(engine.app_dir, exist_ok=True)
         engine.write_uicode("int main() {}")
         assert engine._last_changed_files == ["uicode.c"]
-        assert os.path.isfile(os.path.join(engine.app_dir, "uicode.c"))
+        assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
 
 
 class TestCompilerRuntime:
