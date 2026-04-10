@@ -210,6 +210,33 @@ class TestFigmaRootPageXml:
         assert '<Label id="title" x="10" y="20" width="100" height="24" />' in xml
         assert xml.endswith("    </Group>\n</Page>")
 
+    def test_build_figma_page_xml_collects_background_and_children(self, monkeypatch):
+        node = {
+            "fills": [
+                {
+                    "visible": True,
+                    "type": "SOLID",
+                    "color": {"r": 1.0, "g": 0.0, "b": 0.0},
+                }
+            ],
+            "children": [{"name": "child_a"}, {"name": "child_b"}],
+        }
+        seen = []
+
+        def fake_node_to_xml(child, parent_x=0, parent_y=0, scale=1.0, indent=2):
+            seen.append((child["name"], parent_x, parent_y, scale, indent))
+            return f'        <Label id="{child["name"]}" x="0" y="0" width="10" height="10" />'
+
+        monkeypatch.setattr(h, "_figma_node_to_xml", fake_node_to_xml)
+
+        xml = h._build_figma_page_xml(node, 320, 240, parent_x=11, parent_y=22, scale=1.5)
+
+        assert ('child_a', 11, 22, 1.5, 2) in seen
+        assert ('child_b', 11, 22, 1.5, 2) in seen
+        assert 'EGUI_COLOR_HEX(0xFF0000)' in xml
+        assert '<Label id="child_a"' in xml
+        assert '<Label id="child_b"' in xml
+
 
 class TestFigmaShadowMapping:
     """Test Figma drop-shadow to EGUI shadow parameters."""

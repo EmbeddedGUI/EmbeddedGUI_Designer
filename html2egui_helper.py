@@ -111,6 +111,31 @@ def _build_root_page_xml(width, height, child_xml_blocks=None, *, background_hex
     return "\n".join(xml_lines)
 
 
+def _build_figma_page_xml(root_node, target_w, target_h, *, parent_x=0, parent_y=0, scale=1.0):
+    """Build page XML from a Figma frame/node using the shared root wrapper."""
+    child_xml_blocks = []
+    background_hex = None
+
+    for fill in root_node.get("fills", []):
+        if fill.get("visible", True) and fill.get("type") == "SOLID":
+            background_hex = _figma_color_to_hex(fill.get("color"))
+            if background_hex:
+                break
+            break
+
+    for child in root_node.get("children", []):
+        child_xml = _figma_node_to_xml(child, parent_x, parent_y, scale, indent=2)
+        if child_xml:
+            child_xml_blocks.append(child_xml)
+
+    return _build_root_page_xml(
+        target_w,
+        target_h,
+        child_xml_blocks,
+        background_hex=background_hex,
+    )
+
+
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
     app_dir = os.path.join(sdk_root, "example", app_name)
@@ -2646,30 +2671,13 @@ def cmd_figma2xml(args):
     print("\nConverting to EGUI XML...")
     parent_x = bbox.get("x", 0)
     parent_y = bbox.get("y", 0)
-
-    child_xml_blocks = []
-    background_hex = None
-
-    # Check for background fill on root
-    fills = root_node.get("fills", [])
-    for fill in fills:
-        if fill.get("visible", True) and fill.get("type") == "SOLID":
-            background_hex = _figma_color_to_hex(fill.get("color"))
-            if background_hex:
-                break
-            break
-
-    # Process children
-    for child in root_node.get("children", []):
-        child_xml = _figma_node_to_xml(child, parent_x, parent_y, scale, indent=2)
-        if child_xml:
-            child_xml_blocks.append(child_xml)
-
-    xml_content = _build_root_page_xml(
+    xml_content = _build_figma_page_xml(
+        root_node,
         target_w,
         target_h,
-        child_xml_blocks,
-        background_hex=background_hex,
+        parent_x=parent_x,
+        parent_y=parent_y,
+        scale=scale,
     )
 
     # Write XML file
@@ -2794,28 +2802,16 @@ def cmd_figma_mcp(args):
         scale = min(sx, sy)
         px, py = fb.get("x", 0), fb.get("y", 0)
 
-        child_xml_blocks = []
-        background_hex = None
-        for fill in frame.get("fills", []):
-            if fill.get("visible", True) and fill.get("type") == "SOLID":
-                background_hex = _figma_color_to_hex(fill.get("color"))
-                if background_hex:
-                    break
-                break
-
-        for child in frame.get("children", []):
-            child_xml = _figma_node_to_xml(child, px, py, scale, indent=2)
-            if child_xml:
-                child_xml_blocks.append(child_xml)
-
         xml_path = os.path.join(layout_dir, f"{page_name}.xml")
         with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(
-                _build_root_page_xml(
+                _build_figma_page_xml(
+                    frame,
                     target_w,
                     target_h,
-                    child_xml_blocks,
-                    background_hex=background_hex,
+                    parent_x=px,
+                    parent_y=py,
+                    scale=scale,
                 )
             )
         print(f"  Written: {xml_path}")
