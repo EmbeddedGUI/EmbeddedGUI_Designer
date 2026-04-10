@@ -154,6 +154,24 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     return app_dir
 
 
+def _parse_target_size(target_arg, default_width, default_height):
+    """Parse a WxH target string, or fall back to the provided defaults."""
+    if not target_arg:
+        return default_width, default_height
+    try:
+        width_text, height_text = str(target_arg).lower().split("x")
+        return int(width_text), int(height_text)
+    except ValueError as exc:
+        raise ValueError(f"Invalid target format: {target_arg} (use WxH, e.g., 320x480)") from exc
+
+
+def _compute_fit_scale(target_w, target_h, source_w, source_h):
+    """Return the uniform scale factor to fit source size into target size."""
+    scale_x = target_w / source_w if source_w > 0 else 1.0
+    scale_y = target_h / source_h if source_h > 0 else 1.0
+    return min(scale_x, scale_y)
+
+
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
@@ -2646,19 +2664,14 @@ def cmd_figma2xml(args):
     print(f"Frame size: {frame_w}x{frame_h}")
 
     # Parse target size
-    if args.target:
-        try:
-            target_w, target_h = map(int, args.target.lower().split("x"))
-        except ValueError:
-            print(f"ERROR: Invalid target format: {args.target} (use WxH, e.g., 320x480)")
-            sys.exit(1)
-    else:
-        target_w, target_h = frame_w, frame_h
+    try:
+        target_w, target_h = _parse_target_size(args.target, frame_w, frame_h)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
 
     # Calculate scale
-    scale_x = target_w / frame_w if frame_w > 0 else 1.0
-    scale_y = target_h / frame_h if frame_h > 0 else 1.0
-    scale = min(scale_x, scale_y)  # Maintain aspect ratio
+    scale = _compute_fit_scale(target_w, target_h, frame_w, frame_h)
     if abs(scale - 1.0) > 0.01:
         print(f"Scaling: {scale:.2f}x (target: {target_w}x{target_h})")
 
@@ -2778,10 +2791,11 @@ def cmd_figma_mcp(args):
     frame_w = int(bbox.get("width", 320))
     frame_h = int(bbox.get("height", 480))
 
-    if args.target:
-        target_w, target_h = map(int, args.target.lower().split("x"))
-    else:
-        target_w, target_h = frame_w, frame_h
+    try:
+        target_w, target_h = _parse_target_size(args.target, frame_w, frame_h)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        sys.exit(1)
 
     # Setup app directory
     sdk_root = _find_sdk_root()
@@ -2797,9 +2811,7 @@ def cmd_figma_mcp(args):
         fb = frame.get("absoluteBoundingBox", {})
         fw = int(fb.get("width", 320))
         fh = int(fb.get("height", 480))
-        sx = target_w / fw if fw > 0 else 1.0
-        sy = target_h / fh if fh > 0 else 1.0
-        scale = min(sx, sy)
+        scale = _compute_fit_scale(target_w, target_h, fw, fh)
         px, py = fb.get("x", 0), fb.get("y", 0)
 
         xml_path = os.path.join(layout_dir, f"{page_name}.xml")

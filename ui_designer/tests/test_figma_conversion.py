@@ -238,6 +238,24 @@ class TestFigmaRootPageXml:
         assert '<Label id="child_b"' in xml
 
 
+class TestFigmaTargetHelpers:
+    """Test shared target-size parsing and fit-scale helpers."""
+
+    def test_parse_target_size_uses_defaults_when_empty(self):
+        assert h._parse_target_size("", 320, 240) == (320, 240)
+
+    def test_parse_target_size_parses_wxh_string(self):
+        assert h._parse_target_size("480x272", 320, 240) == (480, 272)
+
+    def test_parse_target_size_rejects_invalid_input(self):
+        with pytest.raises(ValueError, match="Invalid target format"):
+            h._parse_target_size("bad-target", 320, 240)
+
+    def test_compute_fit_scale_uses_min_axis(self):
+        assert h._compute_fit_scale(320, 240, 160, 240) == 1.0
+        assert h._compute_fit_scale(320, 240, 160, 120) == 2.0
+
+
 class TestFigmaShadowMapping:
     """Test Figma drop-shadow to EGUI shadow parameters."""
 
