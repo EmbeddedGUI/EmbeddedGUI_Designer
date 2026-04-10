@@ -367,7 +367,7 @@ def list_designer_example_entries(repo_root: str | None = None) -> list[dict[str
                 "app_dir": app_dir,
                 "project_path": normalize_path(os.path.join(app_dir, project_files[0])),
                 "has_project": True,
-                "is_legacy": False,
+                "is_unmanaged": False,
                 "source": "designer",
             }
         )

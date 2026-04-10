@@ -224,7 +224,7 @@ class TestWorkspaceHelpers:
                 "app_dir": normalize_path(str(app_dir)),
                 "project_path": normalize_path(str(app_dir / "HelloSimpleDemo.egui")),
                 "has_project": True,
-                "is_legacy": False,
+                "is_unmanaged": False,
                 "source": "designer",
             }
         ]

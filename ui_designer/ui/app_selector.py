@@ -207,7 +207,7 @@ class AppSelectorDialog(QDialog):
         hero_copy.addWidget(self._title_label)
 
         self._subtitle_label = QLabel(
-            "Browse bundled Designer examples, or attach a valid SDK workspace to open Designer projects and import legacy apps."
+            "Browse bundled Designer examples, or attach a valid SDK workspace to open Designer projects and initialize unmanaged SDK examples."
         )
         self._subtitle_label.setObjectName("app_selector_subtitle")
         self._subtitle_label.setWordWrap(True)
@@ -303,15 +303,15 @@ class AppSelectorDialog(QDialog):
         options_layout.addWidget(options_hint)
         options_hint.hide()
 
-        self._show_legacy = QCheckBox("Show unmanaged")
-        self._show_legacy.setChecked(self._config.show_all_examples)
-        self._show_legacy.toggled.connect(self._on_toggle_legacy)
+        self._show_unmanaged = QCheckBox("Show unmanaged")
+        self._show_unmanaged.setChecked(self._config.show_all_examples)
+        self._show_unmanaged.toggled.connect(self._on_toggle_unmanaged)
         _set_widget_metadata(
-            self._show_legacy,
+            self._show_unmanaged,
             tooltip="Include SDK examples that do not yet have Designer project files.",
             accessible_name="Show unmanaged SDK examples",
         )
-        options_layout.addWidget(self._show_legacy)
+        options_layout.addWidget(self._show_unmanaged)
         options_layout.addStretch(1)
         left_column.addWidget(options_card)
         left_column.addStretch(1)
@@ -461,9 +461,9 @@ class AppSelectorDialog(QDialog):
         if entry.get("source") == "designer":
             kind_key = "designer"
             kind_text = "Designer Example"
-        elif entry["is_legacy"]:
-            kind_key = "legacy"
-            kind_text = "Legacy Import"
+        elif entry["is_unmanaged"]:
+            kind_key = "unmanaged"
+            kind_text = "Needs Initialization"
         else:
             kind_key = "project"
             kind_text = "SDK Project"
@@ -498,7 +498,7 @@ class AppSelectorDialog(QDialog):
         self._root_edit.setText(path)
         self._refresh_app_list()
 
-    def _on_toggle_legacy(self, checked):
+    def _on_toggle_unmanaged(self, checked):
         self._config.show_all_examples = checked
         self._config.save()
         self._refresh_app_list()
@@ -558,15 +558,15 @@ class AppSelectorDialog(QDialog):
             entries.extend(
                 self._config.list_available_app_entries(
                     sdk_root=self._egui_root,
-                    include_legacy=self._show_legacy.isChecked(),
+                    include_unmanaged=self._show_unmanaged.isChecked(),
                 )
             )
         for entry in entries:
             if search_text and search_text not in entry["app_name"].lower():
                 continue
             label = entry["app_name"]
-            if entry["is_legacy"]:
-                label += " [Legacy]"
+            if entry["is_unmanaged"]:
+                label += " [Unmanaged]"
             item = QListWidgetItem(label)
             item.setData(Qt.UserRole, entry)
             if entry["has_project"]:
@@ -578,9 +578,12 @@ class AppSelectorDialog(QDialog):
             else:
                 _set_item_metadata(
                     item,
-                    tooltip=f"{entry['app_dir']}\nLegacy example without .egui. Opening it will initialize a Designer project.",
+                    tooltip=(
+                        f"{entry['app_dir']}\n"
+                        "SDK example without .egui. Opening it will initialize a Designer project."
+                    ),
                     accessible_text=(
-                        f"Example: {label}. Legacy example path: {entry['app_dir']}. "
+                        f"Example: {label}. SDK example path: {entry['app_dir']}. "
                         "Opening it will initialize a Designer project."
                     ),
                 )
@@ -673,7 +676,7 @@ class AppSelectorDialog(QDialog):
             self._update_accessibility_summary()
             return
 
-        if entry.get("is_legacy"):
+        if entry.get("is_unmanaged"):
             self._open_btn.setText("Initialize")
             self._selection_hint_label.setText(
                 f"SDK example path:\n{entry.get('app_dir', '')}\n\n"
@@ -701,7 +704,7 @@ class AppSelectorDialog(QDialog):
     def _selection_action_summary(self):
         if not self._selected_entry:
             return "Selection required"
-        if self._selected_entry.get("is_legacy"):
+        if self._selected_entry.get("is_unmanaged"):
             return "Initialize Designer project"
         return "Open example project"
 
@@ -713,7 +716,7 @@ class AppSelectorDialog(QDialog):
         selection_name = self._selected_entry.get("app_name", "none") if self._selected_entry else "none"
         list_count = self._app_list.count()
         list_text = "1 entry" if list_count == 1 else f"{list_count} entries"
-        legacy_text = "on" if self._show_legacy.isChecked() else "off"
+        unmanaged_text = "on" if self._show_unmanaged.isChecked() else "off"
 
         self._root_metric_value.setText(root_status_summary)
         self._results_metric_value.setText(self._visible_examples_summary())
@@ -721,7 +724,7 @@ class AppSelectorDialog(QDialog):
 
         summary = (
             f"Open Example dialog: SDK root {root_value}. Search {search_text}. "
-            f"Unmanaged SDK examples {legacy_text}. Examples list: {list_text}. Selection: {selection_name}."
+            f"Unmanaged SDK examples {unmanaged_text}. Examples list: {list_text}. Selection: {selection_name}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
@@ -757,19 +760,19 @@ class AppSelectorDialog(QDialog):
         self._update_header_metric_metadata(self._root_metric_value)
         self._update_header_metric_metadata(self._results_metric_value)
         self._update_header_metric_metadata(self._selection_metric_value)
-        legacy_hint = (
+        unmanaged_hint = (
             "Showing SDK examples that do not yet have Designer project files."
-            if self._show_legacy.isChecked()
+            if self._show_unmanaged.isChecked()
             else "Include SDK examples that do not yet have Designer project files."
         )
         _set_widget_metadata(
-            self._show_legacy,
-            tooltip=legacy_hint,
-            accessible_name=f"Show unmanaged SDK examples: {'on' if self._show_legacy.isChecked() else 'off'}",
+            self._show_unmanaged,
+            tooltip=unmanaged_hint,
+            accessible_name=f"Show unmanaged SDK examples: {'on' if self._show_unmanaged.isChecked() else 'off'}",
         )
         if not self._selected_entry:
             open_hint = "Select an example to open it."
-        elif self._selected_entry.get("is_legacy"):
+        elif self._selected_entry.get("is_unmanaged"):
             open_hint = (
                 "Initialize a fresh Designer project scaffold in the selected SDK example directory. "
                 "Existing app pages, resources, and business code are not migrated."

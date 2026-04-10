@@ -3273,7 +3273,7 @@ class TestMainWindowFileFlow:
                     "app_name": "DesignerSandbox",
                     "project_path": str(project_path),
                     "has_project": True,
-                    "is_legacy": False,
+                    "is_unmanaged": False,
                     "source": "designer",
                 }
                 self._egui_root = ""

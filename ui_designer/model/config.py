@@ -453,7 +453,7 @@ class DesignerConfig:
         app_name = app_name or self.last_app
         return os.path.join(app_dir, f"{app_name}.egui")
 
-    def list_available_app_entries(self, sdk_root=None, include_legacy=False):
+    def list_available_app_entries(self, sdk_root=None, include_unmanaged=False):
         """List all available app entries in the SDK ``example/`` directory."""
         sdk_root = self._resolve_sdk_root(sdk_root)
         if not sdk_root:
@@ -473,7 +473,7 @@ class DesignerConfig:
 
             project_path = os.path.join(app_path, f"{name}.egui")
             has_project = os.path.isfile(project_path)
-            if not has_project and not include_legacy:
+            if not has_project and not include_unmanaged:
                 continue
 
             entries.append(
@@ -482,14 +482,14 @@ class DesignerConfig:
                     "app_dir": app_path,
                     "project_path": project_path if has_project else "",
                     "has_project": has_project,
-                    "is_legacy": not has_project,
+                    "is_unmanaged": not has_project,
                 }
             )
         return sorted(entries, key=lambda item: item["app_name"].lower())
 
-    def list_available_apps(self, sdk_root=None, include_legacy=False):
+    def list_available_apps(self, sdk_root=None, include_unmanaged=False):
         """Return app names for SDK examples."""
-        entries = self.list_available_app_entries(sdk_root=sdk_root, include_legacy=include_legacy)
+        entries = self.list_available_app_entries(sdk_root=sdk_root, include_unmanaged=include_unmanaged)
         return [entry["app_name"] for entry in entries]
 
 

@@ -156,7 +156,7 @@ class TestAppSelectorDialog:
         assert _find_label_by_text(dialog, "SDK") is not None
         assert _find_label_by_text(dialog, "Filters") is not None
         assert _find_label_by_text(dialog, "Examples") is not None
-        assert dialog._show_legacy.text() == "Show unmanaged"
+        assert dialog._show_unmanaged.text() == "Show unmanaged"
         assert dialog._search_edit.placeholderText() == "Search examples..."
         assert len(dialog.findChildren(QFrame, "app_selector_metric_card")) == 3
         dialog.deleteLater()
@@ -179,7 +179,7 @@ class TestAppSelectorDialog:
             "Open action unavailable: Open. Select an example to open it."
         )
         assert dialog._browse_btn.icon().isNull()
-        assert dialog._show_legacy.accessibleName() == "Show unmanaged SDK examples: off"
+        assert dialog._show_unmanaged.accessibleName() == "Show unmanaged SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
             "Examples list item: Set an SDK root first."
@@ -311,7 +311,7 @@ class TestAppSelectorDialog:
                     "app_dir": str(project_dir),
                     "project_path": str(project_path),
                     "has_project": True,
-                    "is_legacy": False,
+                    "is_unmanaged": False,
                     "source": "designer",
                 }
             ],
@@ -364,34 +364,34 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = str(sdk_root)
         dialog = AppSelectorDialog(egui_root=str(sdk_root))
-        dialog._show_legacy.setChecked(True)
+        dialog._show_unmanaged.setChecked(True)
 
         assert isolated_config.show_all_examples is True
         assert dialog._app_list.count() == 2
-        assert dialog._show_legacy.toolTip() == (
+        assert dialog._show_unmanaged.toolTip() == (
             "Showing SDK examples that do not yet have Designer project files."
         )
-        assert dialog._show_legacy.accessibleName() == "Show unmanaged SDK examples: on"
+        assert dialog._show_unmanaged.accessibleName() == "Show unmanaged SDK examples: on"
         texts = [dialog._app_list.item(i).text() for i in range(dialog._app_list.count())]
-        assert "LegacyApp [Legacy]" in texts
-        legacy_item = next(
+        assert "LegacyApp [Unmanaged]" in texts
+        unmanaged_item = next(
             dialog._app_list.item(i)
             for i in range(dialog._app_list.count())
-            if dialog._app_list.item(i).text() == "LegacyApp [Legacy]"
+            if dialog._app_list.item(i).text() == "LegacyApp [Unmanaged]"
         )
-        assert legacy_item.data(Qt.AccessibleTextRole) == (
-            f"Example: LegacyApp [Legacy]. Legacy example path: {legacy}. "
+        assert unmanaged_item.data(Qt.AccessibleTextRole) == (
+            f"Example: LegacyApp [Unmanaged]. SDK example path: {legacy}. "
             "Opening it will initialize a Designer project."
         )
-        legacy_widget = dialog._app_list.itemWidget(legacy_item)
-        legacy_path_label = legacy_widget.findChild(QLabel, "app_selector_item_meta")
-        legacy_kind_label = legacy_widget.findChild(QLabel, "app_selector_item_kind")
-        assert legacy_widget.findChild(QFrame, "app_selector_item_icon_shell") is None
-        assert legacy_path_label.isHidden()
-        assert legacy_path_label.accessibleName().startswith("Example path: ")
-        assert "LegacyApp" in legacy_path_label.accessibleName()
-        assert legacy_kind_label.isHidden()
-        assert legacy_kind_label.accessibleName() == "Example kind: Legacy Import"
+        unmanaged_widget = dialog._app_list.itemWidget(unmanaged_item)
+        unmanaged_path_label = unmanaged_widget.findChild(QLabel, "app_selector_item_meta")
+        unmanaged_kind_label = unmanaged_widget.findChild(QLabel, "app_selector_item_kind")
+        assert unmanaged_widget.findChild(QFrame, "app_selector_item_icon_shell") is None
+        assert unmanaged_path_label.isHidden()
+        assert unmanaged_path_label.accessibleName().startswith("Example path: ")
+        assert "LegacyApp" in unmanaged_path_label.accessibleName()
+        assert unmanaged_kind_label.isHidden()
+        assert unmanaged_kind_label.accessibleName() == "Example kind: Needs Initialization"
         dialog.deleteLater()
 
     def test_selection_updates_selected_entry_and_enables_open(self, qapp, isolated_config, tmp_path):
@@ -529,10 +529,10 @@ class TestAppSelectorDialog:
         (legacy / "build.mk").write_text("")
 
         dialog = AppSelectorDialog(egui_root=str(sdk_root))
-        dialog._show_legacy.setChecked(True)
+        dialog._show_unmanaged.setChecked(True)
 
         for index in range(dialog._app_list.count()):
-            if dialog._app_list.item(index).text() == "LegacyApp [Legacy]":
+            if dialog._app_list.item(index).text() == "LegacyApp [Unmanaged]":
                 dialog._app_list.setCurrentRow(index)
                 break
 
