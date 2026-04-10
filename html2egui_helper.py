@@ -145,6 +145,15 @@ def _resolve_existing_app_dir(app_name):
     return sdk_root, app_dir
 
 
+def _read_required_text_file(path, *, error_label="File", error_file=None):
+    """Read a required UTF-8 text file or exit with a CLI-style error."""
+    if not os.path.isfile(path):
+        print(f"ERROR: {error_label} not found: {path}", file=error_file)
+        sys.exit(1)
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def _emit_text_output(output_path, text, *, written_message=""):
     """Write plain text to a file or stdout using the helper's CLI conventions."""
     if output_path:
@@ -1269,12 +1278,7 @@ def cmd_export_svgs(args):
 
     print(f"SVG renderer: {backend_name}")
 
-    if not os.path.isfile(args.input):
-        print(f"ERROR: HTML file not found: {args.input}")
-        sys.exit(1)
-
-    with open(args.input, "r", encoding="utf-8") as f:
-        html = f.read()
+    html = _read_required_text_file(args.input, error_label="HTML file")
 
     sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
@@ -1400,12 +1404,7 @@ class _TextExtractHTMLParser(HTMLParser):
 
 def cmd_extract_text(args):
     """Extract unique characters from HTML visible text, output to .txt for font generation."""
-    if not os.path.isfile(args.input):
-        print(f"ERROR: HTML file not found: {args.input}")
-        sys.exit(1)
-
-    with open(args.input, "r", encoding="utf-8") as f:
-        html = f.read()
+    html = _read_required_text_file(args.input, error_label="HTML file")
 
     parser = _TextExtractHTMLParser()
     parser.feed(html)
@@ -2049,12 +2048,11 @@ def _parse_css_in_js(style_str):
 
 def cmd_extract_layout(args):
     """Parse HTML and output structured JSON layout analysis."""
-    if not os.path.isfile(args.input):
-        print(f"ERROR: HTML file not found: {args.input}", file=sys.stderr)
-        sys.exit(1)
-
-    with open(args.input, "r", encoding="utf-8") as f:
-        html = f.read()
+    html = _read_required_text_file(
+        args.input,
+        error_label="HTML file",
+        error_file=sys.stderr,
+    )
 
     # Extract custom colors from Tailwind config
     colors = _extract_colors_from_tailwind_config(html)
