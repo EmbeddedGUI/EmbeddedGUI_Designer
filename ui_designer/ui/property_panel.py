@@ -31,6 +31,7 @@ from ..model.resource_binding import assign_resource_to_widget
 from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_valid_widget_name
 from ..model.widget_registry import WidgetRegistry
 from ..settings.ui_prefs import _normalize_inspector_group_expanded
+from ..utils.resource_config_overlay import is_designer_resource_path
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
@@ -2747,6 +2748,13 @@ class PropertyPanel(QWidget):
             path_dir = os.path.dirname(path)
             if path_dir and os.path.isdir(path_dir):
                 self._last_external_file_dir = path_dir
+            if is_designer_resource_path(filename):
+                QMessageBox.warning(
+                    self,
+                    "Reserved Filename",
+                    f"'{filename}' is reserved for Designer-generated files.\nChoose a different filename.",
+                )
+                return
             imported = False
             # Auto-import: copy to .eguiproject/resources/ if not there
             if self._source_resource_dir:

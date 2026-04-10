@@ -58,6 +58,7 @@ from ..services.font_charset_presets import (
     suggest_charset_filename,
     summarize_charset_diff,
 )
+from ..utils.resource_config_overlay import is_designer_resource_path
 from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
 
@@ -100,6 +101,16 @@ def _set_compact_control_height(widget, *, height=_RESOURCE_PANEL_CONTROL_HEIGHT
 def _validate_english_filename(name):
     """Check filename is ASCII letters, digits, underscore, dash, one dot."""
     return bool(_VALID_FILENAME_RE.match(name))
+
+
+def _reserved_resource_filename_error(name):
+    normalized = str(name or "").strip()
+    if not normalized or not is_designer_resource_path(normalized):
+        return ""
+    return (
+        f"'{normalized}' is reserved for Designer-generated files.\n"
+        "Choose a different filename."
+    )
 
 
 def _set_widget_metadata(widget, *, tooltip=None, accessible_name=None):
@@ -932,6 +943,9 @@ class _GenerateCharsetDialog(QDialog):
                 f"'{filename}' is invalid.\n"
                 "Use only ASCII letters, digits, underscore, and dash."
             )
+        reserved_error = _reserved_resource_filename_error(filename)
+        if reserved_error:
+            return reserved_error
         return ""
 
     def _refresh_preview(self):
@@ -4019,6 +4033,10 @@ class ResourcePanel(QWidget):
             return
 
         filename = dialog.filename()
+        reserved_error = _reserved_resource_filename_error(filename)
+        if reserved_error:
+            QMessageBox.warning(self, "Reserved Filename", reserved_error)
+            return
         target_path = os.path.join(self._src_dir, filename)
         chars = dialog.generated_chars()
         diff = dialog.overwrite_diff()
@@ -4292,6 +4310,10 @@ class ResourcePanel(QWidget):
                     "Use only ASCII letters, digits, underscore, and dash."
                 )
                 continue
+            reserved_error = _reserved_resource_filename_error(fname)
+            if reserved_error:
+                QMessageBox.warning(self, "Reserved Filename", reserved_error)
+                continue
             dst = os.path.join(target_dir, fname)
             if os.path.exists(dst):
                 QMessageBox.warning(self, "Error", f"'{fname}' already exists.")
@@ -4439,6 +4461,10 @@ class ResourcePanel(QWidget):
                 f"'{new_name}' is invalid.\n"
                 "Use only ASCII letters, digits, underscore, and dash."
             )
+            return
+        reserved_error = _reserved_resource_filename_error(new_name)
+        if reserved_error:
+            QMessageBox.warning(self, "Reserved Filename", reserved_error)
             return
         file_dir = self._target_dir_for_resource_type(resource_type)
         old_path = os.path.join(file_dir, old_name)

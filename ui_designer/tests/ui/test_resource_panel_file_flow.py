@@ -2797,6 +2797,45 @@ class TestResourcePanelFileFlow:
         assert (resource_dir / "chars_new.txt").is_file()
         panel.deleteLater()
 
+    def test_rename_text_resource_rejects_designer_reserved_filename(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+        old_path = resource_dir / "chars.txt"
+        old_path.write_text("abc\n", encoding="utf-8")
+
+        catalog = ResourceCatalog()
+        catalog.add_text_file("chars.txt")
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(catalog)
+        warnings = []
+
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QInputDialog.getText",
+            lambda *args, **kwargs: ("_generated_text_demo_16_4.txt", True),
+        )
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._rename_resource("chars.txt", "text")
+
+        assert old_path.is_file()
+        assert not (resource_dir / "_generated_text_demo_16_4.txt").exists()
+        assert panel.get_resource_catalog().text_files == ["chars.txt"]
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'_generated_text_demo_16_4.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
+        panel.deleteLater()
+
     def test_delete_resource_with_usages_uses_shared_impact_confirmation(self, qapp, tmp_path, monkeypatch):
         from ui_designer.model.resource_catalog import ResourceCatalog
         from ui_designer.model.resource_usage import ResourceUsageEntry
@@ -3069,6 +3108,61 @@ class TestResourcePanelFileFlow:
         assert imported == [True]
         assert selected == [("text", "charset_combo.txt")]
         assert messages == ["Created and assigned text resource 'charset_combo.txt' with 3 chars."]
+        panel.deleteLater()
+
+    def test_generate_charset_rejects_designer_reserved_filename(self, qapp, tmp_path, monkeypatch):
+        from ui_designer.model.resource_catalog import ResourceCatalog
+        from ui_designer.ui.resource_panel import ResourcePanel
+
+        resource_dir = tmp_path / "project" / ".eguiproject" / "resources"
+        resource_dir.mkdir(parents=True)
+
+        panel = ResourcePanel()
+        panel.set_resource_dir(str(resource_dir))
+        panel.set_resource_catalog(ResourceCatalog())
+        warnings = []
+        imported = []
+        panel.resource_imported.connect(lambda: imported.append(True))
+
+        class FakeDialog:
+            def __init__(self, resource_dir_arg, initial_filename="", source_label="", initial_preset_ids=(), initial_custom_text="", parent=None):
+                assert resource_dir_arg == str(resource_dir)
+
+            def exec_(self):
+                return 1
+
+            def filename(self):
+                return "_generated_text_demo_16_4.txt"
+
+            def generated_chars(self):
+                return ("A", "B")
+
+            def generated_text(self):
+                return "A\nB\n"
+
+            def overwrite_diff(self):
+                return SimpleNamespace(existing_count=0, new_count=2, added_count=2, removed_count=0)
+
+            def save_and_assign(self):
+                return False
+
+        monkeypatch.setattr("ui_designer.ui.resource_panel._GenerateCharsetDialog", FakeDialog)
+        monkeypatch.setattr(
+            "ui_designer.ui.resource_panel.QMessageBox.warning",
+            lambda *args: warnings.append((args[1], args[2])),
+        )
+
+        panel._on_generate_charset()
+
+        assert not (resource_dir / "_generated_text_demo_16_4.txt").exists()
+        assert panel.get_resource_catalog().text_files == []
+        assert imported == []
+        assert warnings == [
+            (
+                "Reserved Filename",
+                "'_generated_text_demo_16_4.txt' is reserved for Designer-generated files.\nChoose a different filename.",
+            )
+        ]
         panel.deleteLater()
 
     def test_generate_charset_requires_confirmation_before_overwriting_existing_file(self, qapp, tmp_path, monkeypatch):
