@@ -47,6 +47,8 @@ from ui_designer.utils.scaffold import (
     make_app_config_designer_h_content,
     make_app_config_h_content,
     make_empty_resource_config_content,
+    migrate_app_build_mk_content,
+    migrate_app_config_h_content,
 )
 
 
@@ -190,8 +192,29 @@ def cmd_scaffold(args):
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    # Write wrapper + Designer-managed scaffold files.
-    _write_file(os.path.join(app_dir, "app_egui_config.h"), make_app_config_h_content(args.app))
+    # Write user-owned wrappers without discarding existing custom content.
+    config_h_path = os.path.join(app_dir, "app_egui_config.h")
+    config_h_existing = _read_text_file(config_h_path)
+    if config_h_existing is None:
+        _write_file(config_h_path, make_app_config_h_content(args.app))
+    else:
+        migrated_config_h = migrate_app_config_h_content(
+            config_h_existing,
+            args.app,
+            width,
+            height,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+        )
+        if migrated_config_h != config_h_existing:
+            _write_file(
+                config_h_path,
+                migrated_config_h,
+                action="Updated",
+            )
+        else:
+            print("  Skipped: app_egui_config.h (already configured)")
+
     _write_file(
         app_config_designer_path(app_dir),
         make_app_config_designer_h_content(
@@ -203,7 +226,21 @@ def cmd_scaffold(args):
             extra_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
         ),
     )
-    _write_file(os.path.join(app_dir, "build.mk"), make_app_build_mk_content(args.app))
+    build_mk_path = os.path.join(app_dir, "build.mk")
+    build_mk_existing = _read_text_file(build_mk_path)
+    if build_mk_existing is None:
+        _write_file(build_mk_path, make_app_build_mk_content(args.app))
+    else:
+        migrated_build_mk = migrate_app_build_mk_content(build_mk_existing, args.app)
+        if migrated_build_mk != build_mk_existing:
+            _write_file(
+                build_mk_path,
+                migrated_build_mk,
+                action="Updated",
+            )
+        else:
+            print("  Skipped: build.mk (already configured)")
+
     _write_file(
         build_designer_path(app_dir),
         make_app_build_designer_mk_content(args.app),
@@ -256,12 +293,21 @@ def cmd_scaffold(args):
     print(f"  6. Build & verify:   python html2egui_helper.py verify --app {args.app}")
 
 
-def _write_file(path, content):
+def _write_file(path, content, *, action="Created"):
     """Write content to file, creating parent dirs if needed."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
-    print(f"  Created: {os.path.basename(path)}")
+    print(f"  {action}: {os.path.basename(path)}")
+
+
+def _read_text_file(path):
+    """Read UTF-8 text from disk, returning None when the file is missing."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return None
 
 
 # ── Sub-command: export-icons ─────────────────────────────────────

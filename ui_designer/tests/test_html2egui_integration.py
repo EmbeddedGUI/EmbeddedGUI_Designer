@@ -134,6 +134,65 @@ class TestGenerateCode:
             if os.path.isdir(real_app_dir):
                 shutil.rmtree(real_app_dir, ignore_errors=True)
 
+    def test_scaffold_force_migrates_wrappers_without_overwriting_user_content(self):
+        app_name = "TestScaffoldPreserveWrappersApp"
+        _run_helper(
+            "scaffold", "--app", app_name,
+            "--width", "320", "--height", "240", "--force",
+        )
+
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
+        try:
+            build_mk = os.path.join(real_app_dir, "build.mk")
+            config_h = os.path.join(real_app_dir, "app_egui_config.h")
+            overlay_path = os.path.join(real_app_dir, "resource", "src", "app_resource_config.json")
+            designer_build = os.path.join(real_app_dir, ".designer", "build_designer.mk")
+            designer_config = os.path.join(real_app_dir, ".designer", "app_egui_config_designer.h")
+
+            with open(build_mk, "w", encoding="utf-8") as f:
+                f.write("# custom build\nEGUI_CODE_SRC += legacy.c\n")
+            with open(config_h, "w", encoding="utf-8") as f:
+                f.write("#define CUSTOM_CFG 1\n")
+            with open(overlay_path, "w", encoding="utf-8") as f:
+                json.dump({"img": [{"name": "user_logo"}], "font": []}, f)
+            with open(designer_build, "w", encoding="utf-8") as f:
+                f.write("# stale designer build\n")
+            with open(designer_config, "w", encoding="utf-8") as f:
+                f.write("#define STALE_DESIGNER_CFG 1\n")
+
+            result = _run_helper(
+                "scaffold", "--app", app_name,
+                "--width", "320", "--height", "240", "--force",
+            )
+
+            with open(build_mk, "r", encoding="utf-8") as f:
+                build_content = f.read()
+            with open(config_h, "r", encoding="utf-8") as f:
+                config_content = f.read()
+            with open(overlay_path, "r", encoding="utf-8") as f:
+                overlay_data = json.load(f)
+            with open(designer_build, "r", encoding="utf-8") as f:
+                designer_build_content = f.read()
+            with open(designer_config, "r", encoding="utf-8") as f:
+                designer_config_content = f.read()
+
+            assert "Updated: build.mk" in result.stdout
+            assert "Updated: app_egui_config.h" in result.stdout
+            assert "# custom build" in build_content
+            assert "EGUI_CODE_SRC += legacy.c" in build_content
+            assert ".designer/build_designer.mk" in build_content
+            assert "#define CUSTOM_CFG 1" in config_content
+            assert '#include ".designer/app_egui_config_designer.h"' in config_content
+            assert overlay_data == {"img": [{"name": "user_logo"}], "font": []}
+            assert "# stale designer build" not in designer_build_content
+            assert "Designer-managed build inputs" in designer_build_content
+            assert "STALE_DESIGNER_CFG" not in designer_config_content
+            assert "#define EGUI_CONFIG_SCEEN_WIDTH  320" in designer_config_content
+        finally:
+            import shutil
+            if os.path.isdir(real_app_dir):
+                shutil.rmtree(real_app_dir, ignore_errors=True)
+
     def test_generate_code_removes_legacy_root_designer_outputs(self):
         app_name = "TestGenCodeLegacyCleanupApp"
 
