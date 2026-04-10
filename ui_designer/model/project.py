@@ -96,7 +96,6 @@ class Project:
         self.project_dir = ""  # Path to the app/project directory
         self.page_mode = "easy_page"  # "easy_page" or "activity"
         self.startup_page = "main_page"  # filename without extension
-        self.resource_config = ""  # relative path to resource config (legacy)
         self.resource_catalog = ResourceCatalog()  # project resource catalog
         self.string_catalog = StringResourceCatalog()  # i18n string resources
         self.pages = []  # list[Page]
@@ -338,10 +337,6 @@ class Project:
         proj.sdk_fingerprint = _parse_sdk_fingerprint(root)
         proj.page_mode = root.get("page_mode", "easy_page")
         proj.startup_page = root.get("startup", "main_page")
-        # Resource config
-        res_elem = root.find("Resources")
-        if res_elem is not None:
-            proj.resource_config = res_elem.get("config", "")
 
         # Determine canonical resource directories
         eguiproject_res_dir = os.path.join(config_dir, "resources")
@@ -383,6 +378,7 @@ class Project:
                     print(f"Warning: Failed to load page {file_path}: {e}")
 
         return proj
+
     def sync_resources_to_src(self, project_dir):
         """Sync .eguiproject/resources/ 鈫?resource/src/ for the generation pipeline.
 
