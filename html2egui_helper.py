@@ -36,6 +36,7 @@ from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     designer_resource_config_path,
+    is_designer_resource_path,
 )
 from ui_designer.utils.scaffold import (
     app_config_designer_path,
@@ -1310,6 +1311,9 @@ def _sync_font_files(project, egui_root, src_dir):
     tools_dir = os.path.join(egui_root, "scripts", "tools")
     synced = 0
     for fname in font_files:
+        if is_designer_resource_path(fname):
+            print(f"  Skipped reserved font filename: {fname}")
+            continue
         dst = os.path.join(src_dir, fname)
         if os.path.isfile(dst):
             synced += 1
@@ -1356,6 +1360,8 @@ def cmd_generate_code(args):
         os.makedirs(src_dir, exist_ok=True)
         synced = 0
         for fname in os.listdir(images_dir):
+            if is_designer_resource_path(fname):
+                continue
             if fname.lower().endswith((".png", ".bmp", ".jpg")):
                 shutil.copy2(os.path.join(images_dir, fname), os.path.join(src_dir, fname))
                 synced += 1

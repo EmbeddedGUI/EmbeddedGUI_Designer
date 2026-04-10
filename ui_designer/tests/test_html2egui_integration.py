@@ -170,6 +170,33 @@ class TestGenerateCode:
             if os.path.isdir(real_app_dir):
                 shutil.rmtree(real_app_dir, ignore_errors=True)
 
+    def test_generate_code_skips_designer_reserved_resource_sync(self):
+        app_name = "TestGenCodeReservedSyncApp"
+
+        _run_helper(
+            "scaffold", "--app", app_name,
+            "--width", "240", "--height", "320", "--force",
+        )
+
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
+        try:
+            images_dir = os.path.join(real_app_dir, ".eguiproject", "resources", "images")
+            os.makedirs(images_dir, exist_ok=True)
+            with open(os.path.join(images_dir, "hero.png"), "wb") as f:
+                f.write(b"PNG")
+            with open(os.path.join(images_dir, "_generated_text_preview.png"), "wb") as f:
+                f.write(b"BAD")
+
+            _run_helper("generate-code", "--app", app_name)
+
+            src_dir = os.path.join(real_app_dir, "resource", "src")
+            assert os.path.isfile(os.path.join(src_dir, "hero.png"))
+            assert not os.path.exists(os.path.join(src_dir, "_generated_text_preview.png"))
+        finally:
+            import shutil
+            if os.path.isdir(real_app_dir):
+                shutil.rmtree(real_app_dir, ignore_errors=True)
+
 
 @pytest.mark.integration
 class TestExtractText:
