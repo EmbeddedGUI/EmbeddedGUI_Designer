@@ -70,10 +70,6 @@ class TestDefaults:
         assert config.window_geometry == ""
         assert config.window_state == ""
         assert config.widget_browser_active_category == "all"
-        assert config.widget_browser_active_scenario == "all"
-        assert config.widget_browser_active_tags == []
-        assert config.widget_browser_sort_mode == "relevance"
-        assert config.widget_browser_complexity_filter == "all"
         assert config.diagnostics_view == {}
         assert config.show_clean_all_startup_notice is True
 
@@ -90,10 +86,6 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.widget_browser_active_category = "layout"
-        config.widget_browser_active_scenario = "favorites"
-        config.widget_browser_active_tags = ["layout", "input"]
-        config.widget_browser_sort_mode = "name"
-        config.widget_browser_complexity_filter = "advanced"
         config.diagnostics_view = {"severity_filter": "warning"}
         config.show_clean_all_startup_notice = False
 
@@ -115,10 +107,6 @@ class TestSaveLoad:
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
         assert loaded.widget_browser_active_category == "layout"
-        assert loaded.widget_browser_active_scenario == "favorites"
-        assert loaded.widget_browser_active_tags == ["layout", "input"]
-        assert loaded.widget_browser_sort_mode == "name"
-        assert loaded.widget_browser_complexity_filter == "advanced"
         assert loaded.diagnostics_view == {"severity_filter": "warning"}
         assert loaded.show_clean_all_startup_notice is False
 
@@ -137,7 +125,7 @@ class TestSaveLoad:
             config.load()  # should not raise
         assert config.last_app == "HelloDesigner"
 
-    def test_load_legacy_widget_browser_filters_falls_back_to_all_category(self, config, tmp_path):
+    def test_load_ignores_legacy_widget_browser_filter_fields(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         config_path.write_text(
             json.dumps(
@@ -155,8 +143,10 @@ class TestSaveLoad:
             config.load()
 
         assert config.widget_browser_active_category == "all"
-        assert config.widget_browser_active_scenario == "scenario:layout & containers"
-        assert config.widget_browser_active_tags == ["layout"]
+        assert not hasattr(config, "widget_browser_active_scenario")
+        assert not hasattr(config, "widget_browser_active_tags")
+        assert not hasattr(config, "widget_browser_sort_mode")
+        assert not hasattr(config, "widget_browser_complexity_filter")
 
     def test_save_creates_directory(self, config, tmp_path):
         nested = tmp_path / "sub" / "dir"
@@ -184,6 +174,10 @@ class TestSaveLoad:
         data = json.loads(config_path.read_text(encoding="utf-8"))
         assert "egui_root" not in data
         assert "recent_apps" not in data
+        assert "widget_browser_active_scenario" not in data
+        assert "widget_browser_active_tags" not in data
+        assert "widget_browser_sort_mode" not in data
+        assert "widget_browser_complexity_filter" not in data
 
     def test_load_ignores_legacy_lightweight_drag_key(self, config, tmp_path):
         config_path = tmp_path / "config.json"
@@ -271,27 +265,6 @@ class TestRecentProjects:
                 config.set_widget_browser_active_category("LAYOUT")
 
         assert config.widget_browser_active_category == "layout"
-
-    def test_legacy_widget_browser_filters_keep_old_fields_without_overriding_new_category(self, config, tmp_path):
-        config_path = tmp_path / "config.json"
-        config.widget_browser_active_category = "favorites"
-        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
-            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
-                config.set_widget_browser_filters("SCENARIO:LAYOUT & CONTAINERS", ["Layout", "layout", "", "Container"])
-
-        assert config.widget_browser_active_category == "favorites"
-        assert config.widget_browser_active_scenario == "scenario:layout & containers"
-        assert config.widget_browser_active_tags == ["Layout", "Container"]
-
-    def test_set_widget_browser_organizers_normalizes_values(self, config, tmp_path):
-        config_path = tmp_path / "config.json"
-        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
-            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
-                config.set_widget_browser_organizers(sort_mode="NAME", complexity="ADVANCED")
-                config.set_widget_browser_organizers(sort_mode="invalid", complexity="unknown")
-
-        assert config.widget_browser_sort_mode == "relevance"
-        assert config.widget_browser_complexity_filter == "all"
 
 
 class TestPathManagement:

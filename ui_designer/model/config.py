@@ -69,10 +69,6 @@ class DesignerConfig:
         self.widget_browser_recent = []
         self.widget_browser_favorites = []
         self.widget_browser_active_category = "all"
-        self.widget_browser_active_scenario = "all"
-        self.widget_browser_active_tags = []
-        self.widget_browser_sort_mode = "relevance"
-        self.widget_browser_complexity_filter = "all"
         self.diagnostics_view = {}
         self.show_clean_all_startup_notice = True
 
@@ -189,16 +185,6 @@ class DesignerConfig:
             self.widget_browser_favorites = [str(item).strip() for item in favorites if str(item).strip()][:64]
             active_category = str(data.get("widget_browser_active_category", "all") or "all").strip().lower()
             self.widget_browser_active_category = active_category or "all"
-            active_scenario = str(data.get("widget_browser_active_scenario", "all") or "all").strip().lower()
-            self.widget_browser_active_scenario = active_scenario or "all"
-            active_tags = data.get("widget_browser_active_tags", [])
-            self.widget_browser_active_tags = [str(item).strip() for item in active_tags if str(item).strip()][:24]
-            sort_mode = str(data.get("widget_browser_sort_mode", "relevance") or "relevance").strip().lower()
-            self.widget_browser_sort_mode = sort_mode if sort_mode in {"relevance", "name", "complexity"} else "relevance"
-            complexity_filter = str(data.get("widget_browser_complexity_filter", "all") or "all").strip().lower()
-            self.widget_browser_complexity_filter = (
-                complexity_filter if complexity_filter in {"all", "basic", "intermediate", "advanced"} else "all"
-            )
             self.diagnostics_view = data.get("diagnostics_view", {}) if isinstance(data.get("diagnostics_view", {}), dict) else {}
             self.show_clean_all_startup_notice = bool(data.get("show_clean_all_startup_notice", True))
         except Exception as e:
@@ -233,10 +219,6 @@ class DesignerConfig:
                 "widget_browser_recent": self.widget_browser_recent,
                 "widget_browser_favorites": self.widget_browser_favorites,
                 "widget_browser_active_category": self.widget_browser_active_category,
-                "widget_browser_active_scenario": self.widget_browser_active_scenario,
-                "widget_browser_active_tags": self.widget_browser_active_tags,
-                "widget_browser_sort_mode": self.widget_browser_sort_mode,
-                "widget_browser_complexity_filter": self.widget_browser_complexity_filter,
                 "diagnostics_view": self.diagnostics_view,
                 "show_clean_all_startup_notice": self.show_clean_all_startup_notice,
             }
@@ -316,55 +298,6 @@ class DesignerConfig:
         """Persist the simplified widget browser category selection."""
         normalized = str(category or "all").strip().lower()
         self.widget_browser_active_category = normalized or "all"
-        self.save()
-
-    def set_widget_browser_filters(self, scenario=None, tags=None):
-        """Compatibility wrapper for legacy widget browser filters."""
-        if scenario is not None:
-            normalized = str(scenario or "all").strip().lower()
-            self.widget_browser_active_scenario = normalized or "all"
-            # Only carry forward categories supported by the simplified browser.
-            supported_categories = {
-                "all",
-                "favorites",
-                "recent",
-                "containers",
-                "basics",
-                "layout",
-                "input",
-                "navigation",
-                "display & data",
-                "media",
-                "decoration",
-                "custom",
-            }
-            if self.widget_browser_active_scenario in supported_categories:
-                self.widget_browser_active_category = self.widget_browser_active_scenario
-        if tags is not None:
-            unique_tags = []
-            seen = set()
-            for item in tags:
-                text = str(item or "").strip()
-                key = text.lower()
-                if not text or key in seen:
-                    continue
-                seen.add(key)
-                unique_tags.append(text)
-            self.widget_browser_active_tags = unique_tags[:24]
-        self.save()
-
-    def set_widget_browser_organizers(self, sort_mode=None, complexity=None):
-        """Persist widget browser sort mode and complexity filter."""
-        if sort_mode is not None:
-            normalized_sort = str(sort_mode or "relevance").strip().lower()
-            self.widget_browser_sort_mode = (
-                normalized_sort if normalized_sort in {"relevance", "name", "complexity"} else "relevance"
-            )
-        if complexity is not None:
-            normalized_complexity = str(complexity or "all").strip().lower()
-            self.widget_browser_complexity_filter = (
-                normalized_complexity if normalized_complexity in {"all", "basic", "intermediate", "advanced"} else "all"
-            )
         self.save()
 
     def get_app_dir(self, app_name=None, sdk_root=None):
