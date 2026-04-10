@@ -59,7 +59,6 @@ class TestDefaults:
         assert config.egui_root == ""
         assert config.last_app == "HelloDesigner"
         assert config.recent_projects == []
-        assert config.recent_apps == []
         assert config.theme == "dark"
         assert config.auto_compile is True
         assert config.overlay_mode == "horizontal"
@@ -197,45 +196,51 @@ class TestSaveLoad:
         assert not hasattr(config, "lightweight_drag")
 
 
-class TestRecentApps:
-    """Test recent apps MRU list management."""
+class TestRecentProjects:
+    """Test recent project MRU list management."""
 
-    def test_add_recent_app(self, config, tmp_path):
+    def test_add_recent_project(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
-                config.add_recent_app("App1", "/root1")
-        assert config.recent_apps == [("App1", normalize_path("/root1"))]
+                config.add_recent_project("/root1/example/App1/App1.egui", "/root1", "App1")
+        assert config.recent_projects == [
+            {
+                "project_path": normalize_path("/root1/example/App1/App1.egui"),
+                "sdk_root": normalize_path("/root1"),
+                "display_name": "App1",
+            }
+        ]
         assert config.recent_projects[0]["display_name"] == "App1"
 
-    def test_add_recent_app_moves_to_front(self, config, tmp_path):
+    def test_add_recent_project_moves_to_front(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
-                config.add_recent_app("App1", "/root")
-                config.add_recent_app("App2", "/root")
-                config.add_recent_app("App1", "/root")
-        assert config.recent_apps[0] == ("App1", normalize_path("/root"))
-        assert len(config.recent_apps) == 2
+                config.add_recent_project("/root/example/App1/App1.egui", "/root", "App1")
+                config.add_recent_project("/root/example/App2/App2.egui", "/root", "App2")
+                config.add_recent_project("/root/example/App1/App1.egui", "/root", "App1")
+        assert config.recent_projects[0]["display_name"] == "App1"
+        assert len(config.recent_projects) == 2
 
-    def test_add_recent_app_max_10(self, config, tmp_path):
+    def test_add_recent_project_max_10(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
                 for i in range(15):
-                    config.add_recent_app(f"App{i}", "/root")
-        assert len(config.recent_apps) == 10
-        assert config.recent_apps[0] == ("App14", normalize_path("/root"))
+                    config.add_recent_project(f"/root/example/App{i}/App{i}.egui", "/root", f"App{i}")
+        assert len(config.recent_projects) == 10
+        assert config.recent_projects[0]["display_name"] == "App14"
 
-    def test_add_recent_deduplicates(self, config, tmp_path):
+    def test_add_recent_project_deduplicates(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
-                config.add_recent_app("App1", "/root")
-                config.add_recent_app("App1", "/root")
-        assert len(config.recent_apps) == 1
+                config.add_recent_project("/root/example/App1/App1.egui", "/root", "App1")
+                config.add_recent_project("/root/example/App1/App1.egui", "/root", "App1")
+        assert len(config.recent_projects) == 1
 
-    def test_remove_recent_project_updates_legacy_recent_apps(self, config, tmp_path):
+    def test_remove_recent_project_updates_recent_project_list(self, config, tmp_path):
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
             with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
@@ -246,7 +251,6 @@ class TestRecentApps:
 
         assert removed is True
         assert [item["display_name"] for item in config.recent_projects] == ["App2"]
-        assert config.recent_apps == [("App2", normalize_path("/root"))]
 
     def test_remove_recent_project_clears_last_project_path_when_matching(self, config, tmp_path):
         config_path = tmp_path / "config.json"
@@ -415,3 +419,15 @@ class TestConfigMigration:
 
         assert config.last_app == "PrimaryApp"
         assert observed_paths == [normalize_path(str(primary_path))]
+
+    def test_load_ignores_legacy_recent_apps_payload(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(
+            json.dumps({"recent_apps": [["LegacyApp", "/legacy/sdk"]]}),
+            encoding="utf-8",
+        )
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            config.load()
+
+        assert config.recent_projects == []

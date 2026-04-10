@@ -52,7 +52,6 @@ class DesignerConfig:
         self.last_app = "HelloDesigner"
         self.last_project_path = ""
         self.recent_projects = []
-        self.recent_apps = []
         self.theme = "dark"
         self.auto_compile = True
         self.overlay_mode = "horizontal"
@@ -94,7 +93,7 @@ class DesignerConfig:
             cls._instance.load()
         return cls._instance
 
-    def _normalize_recent_projects(self, recent_projects, recent_apps, fallback_sdk_root):
+    def _normalize_recent_projects(self, recent_projects):
         normalized = []
 
         for item in recent_projects or []:
@@ -115,19 +114,6 @@ class DesignerConfig:
                 }
             )
 
-        for app_name, egui_root in recent_apps or []:
-            sdk_root = normalize_path(egui_root or fallback_sdk_root)
-            if not sdk_root or not app_name:
-                continue
-            project_path = normalize_path(os.path.join(sdk_root, "example", app_name, f"{app_name}.egui"))
-            normalized.append(
-                {
-                    "project_path": project_path,
-                    "sdk_root": sdk_root,
-                    "display_name": app_name,
-                }
-            )
-
         deduped = []
         seen = set()
         for item in normalized:
@@ -137,15 +123,6 @@ class DesignerConfig:
             seen.add(key)
             deduped.append(item)
         return deduped[:10]
-
-    def _legacy_recent_apps_from_projects(self):
-        result = []
-        for item in self.recent_projects[:10]:
-            app_name = item.get("display_name") or os.path.splitext(os.path.basename(item.get("project_path", "")))[0]
-            sdk_root = item.get("sdk_root", "")
-            if app_name and sdk_root:
-                result.append((app_name, sdk_root))
-        return result
 
     def _default_cached_sdk_root(self):
         return normalize_path(os.path.join(_get_config_dir(), "sdk", "EmbeddedGUI"))
@@ -184,12 +161,7 @@ class DesignerConfig:
             self.egui_root = self.sdk_root
             self.last_app = data.get("last_app", "HelloDesigner")
             self.last_project_path = normalize_path(data.get("last_project_path", ""))
-            self.recent_projects = self._normalize_recent_projects(
-                data.get("recent_projects", []),
-                data.get("recent_apps", []),
-                self.sdk_root,
-            )
-            self.recent_apps = self._legacy_recent_apps_from_projects()
+            self.recent_projects = self._normalize_recent_projects(data.get("recent_projects", []))
             self.theme = data.get("theme", "dark")
             self.auto_compile = data.get("auto_compile", True)
             self.overlay_mode = data.get("overlay_mode", "horizontal")
@@ -292,7 +264,6 @@ class DesignerConfig:
             },
         )
         self.recent_projects = self.recent_projects[:10]
-        self.recent_apps = self._legacy_recent_apps_from_projects()
         self.save()
 
     def remove_recent_project(self, project_path):
@@ -307,19 +278,8 @@ class DesignerConfig:
         if removed:
             if self.last_project_path == project_path:
                 self.last_project_path = ""
-            self.recent_apps = self._legacy_recent_apps_from_projects()
             self.save()
         return removed
-
-    def add_recent_app(self, app_name, egui_root):
-        """Legacy MRU helper kept for compatibility."""
-        if not app_name:
-            return
-        sdk_root = normalize_path(egui_root)
-        project_path = ""
-        if sdk_root:
-            project_path = os.path.join(sdk_root, "example", app_name, f"{app_name}.egui")
-        self.add_recent_project(project_path, sdk_root, app_name)
 
     def record_widget_browser_recent(self, widget_type):
         """Add a widget type to the browser MRU list."""
