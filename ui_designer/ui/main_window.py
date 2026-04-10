@@ -124,6 +124,7 @@ from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
     designer_resource_config_path,
+    is_designer_resource_path,
 )
 from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
@@ -2816,14 +2817,30 @@ class MainWindow(QMainWindow):
                 os.makedirs(os.path.dirname(dst_path), exist_ok=True)
                 shutil.copy2(src_path, dst_path)
 
+        resource_rel_dir = os.path.join(".eguiproject", "resources")
         for rel_dir in (
-            os.path.join(".eguiproject", "resources"),
+            resource_rel_dir,
             os.path.join(".eguiproject", "mockup"),
         ):
             src_path = os.path.join(src_dir, rel_dir)
             dst_path = os.path.join(dst_dir, rel_dir)
             if os.path.isdir(src_path):
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                if rel_dir != resource_rel_dir:
+                    shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                    continue
+
+                for walk_root, dir_names, file_names in os.walk(src_path):
+                    dir_names[:] = [name for name in dir_names if not is_designer_resource_path(name)]
+                    rel_root = os.path.relpath(walk_root, src_path)
+                    walk_dst = dst_path if rel_root in ("", ".") else os.path.join(dst_path, rel_root)
+                    os.makedirs(walk_dst, exist_ok=True)
+                    for file_name in file_names:
+                        if is_designer_resource_path(file_name):
+                            continue
+                        shutil.copy2(
+                            os.path.join(walk_root, file_name),
+                            os.path.join(walk_dst, file_name),
+                        )
 
     def _load_project_app_local_widgets(self, project_dir):
         project_dir = normalize_path(project_dir)

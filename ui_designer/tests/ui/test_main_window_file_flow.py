@@ -2713,6 +2713,9 @@ class TestMainWindowFileFlow:
         images_dir = src_dir / ".eguiproject" / "resources" / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
         (images_dir / "legacy.png").write_bytes(b"PNG")
+        (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
+        resource_root = src_dir / ".eguiproject" / "resources"
+        (resource_root / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
         resource_src_dir = src_dir / "resource" / "src"
         resource_src_dir.mkdir(parents=True, exist_ok=True)
         (resource_src_dir / "app_resource_config.json").write_text(
@@ -2745,12 +2748,16 @@ class TestMainWindowFileFlow:
         assert (dst_dir / ".designer" / "build_designer.mk").is_file()
         assert (dst_dir / ".designer" / "app_egui_config_designer.h").is_file()
         assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").is_file()
+        assert not (dst_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
+        assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").is_file()
         assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
             "img": [{"file": "legacy.png"}],
             "font": [],
         }
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
+        assert not (dst_dir / "resource" / "src" / "_generated_text_preview.png").exists()
+        assert not (dst_dir / "resource" / "src" / "_generated_text_demo_16_4.txt").exists()
         _close_window(window)
 
     def test_save_project_as_writes_split_page_outputs_with_real_generator(self, qapp, isolated_config, tmp_path, monkeypatch):
