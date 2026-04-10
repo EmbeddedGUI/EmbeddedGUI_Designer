@@ -111,6 +111,24 @@ def _build_root_page_xml(width, height, child_xml_blocks=None, *, background_hex
     return "\n".join(xml_lines)
 
 
+def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
+    """Ensure the target app directory exists by running scaffold when needed."""
+    app_dir = os.path.join(sdk_root, "example", app_name)
+    if os.path.exists(app_dir):
+        return app_dir
+
+    print(f"Creating app scaffold: {app_name}")
+    scaffold_args = argparse.Namespace(
+        app=app_name,
+        width=width,
+        height=height,
+        color_depth=16,
+        force=False,
+    )
+    cmd_scaffold(scaffold_args)
+    return app_dir
+
+
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
@@ -2622,16 +2640,7 @@ def cmd_figma2xml(args):
     # Setup app directory
     sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(sdk_root, "example", app_name)
-
-    # Run scaffold if app doesn't exist
-    if not os.path.exists(app_dir):
-        print(f"\nCreating app scaffold: {app_name}")
-        scaffold_args = argparse.Namespace(
-            app=app_name, width=target_w, height=target_h,
-            color_depth=16, force=False
-        )
-        cmd_scaffold(scaffold_args)
+    app_dir = _ensure_app_scaffold_exists(sdk_root, app_name, target_w, target_h)
 
     # Convert node tree to XML
     print("\nConverting to EGUI XML...")
@@ -2769,15 +2778,7 @@ def cmd_figma_mcp(args):
     # Setup app directory
     sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(sdk_root, "example", app_name)
-
-    if not os.path.exists(app_dir):
-        print(f"Creating app scaffold: {app_name}")
-        scaffold_args = argparse.Namespace(
-            app=app_name, width=target_w, height=target_h,
-            color_depth=16, force=False
-        )
-        cmd_scaffold(scaffold_args)
+    app_dir = _ensure_app_scaffold_exists(sdk_root, app_name, target_w, target_h)
 
     layout_dir = os.path.join(app_dir, ".eguiproject", "layout")
     os.makedirs(layout_dir, exist_ok=True)

@@ -24,6 +24,26 @@ class TestHelperResourceSync:
         assert 'sdk_root="../../sdk/EmbeddedGUI"' in xml
         assert 'egui_root="' not in xml
 
+    def test_ensure_app_scaffold_exists_runs_scaffold_only_when_missing(self, tmp_path, monkeypatch):
+        sdk_root = tmp_path / "sdk"
+        existing_app_dir = sdk_root / "example" / "ExistingApp"
+        existing_app_dir.mkdir(parents=True)
+        calls = []
+
+        monkeypatch.setattr(h, "cmd_scaffold", lambda args: calls.append(args))
+
+        existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
+        created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)
+
+        assert existing == str(existing_app_dir)
+        assert created == str(sdk_root / "example" / "NewApp")
+        assert len(calls) == 1
+        assert calls[0].app == "NewApp"
+        assert calls[0].width == 320
+        assert calls[0].height == 240
+        assert calls[0].color_depth == 16
+        assert calls[0].force is False
+
     def test_ensure_resource_config_file_uses_shared_default_content(self, tmp_path):
         config_path = tmp_path / "resource" / "src" / "app_resource_config.json"
 
