@@ -130,6 +130,46 @@ class TestGenerateCode:
             if os.path.isdir(real_app_dir):
                 shutil.rmtree(real_app_dir, ignore_errors=True)
 
+    def test_generate_code_removes_legacy_root_designer_outputs(self):
+        app_name = "TestGenCodeLegacyCleanupApp"
+
+        _run_helper(
+            "scaffold", "--app", app_name,
+            "--width", "240", "--height", "320", "--force",
+        )
+
+        real_app_dir = os.path.join(SDK_ROOT, "example", app_name)
+        legacy_files = (
+            "main_page.h",
+            "main_page_layout.c",
+            "uicode.h",
+            "uicode.c",
+            "egui_strings.h",
+            "egui_strings.c",
+            "build_designer.mk",
+            "app_egui_config_designer.h",
+        )
+        try:
+            for relpath in legacy_files:
+                with open(os.path.join(real_app_dir, relpath), "w", encoding="utf-8") as f:
+                    f.write(f"// stale legacy file: {relpath}\n")
+
+            _run_helper("generate-code", "--app", app_name)
+
+            for relpath in legacy_files:
+                assert not os.path.exists(os.path.join(real_app_dir, relpath))
+
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "main_page.h"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "main_page_layout.c"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "uicode.h"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "uicode.c"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "build_designer.mk"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "app_egui_config_designer.h"))
+        finally:
+            import shutil
+            if os.path.isdir(real_app_dir):
+                shutil.rmtree(real_app_dir, ignore_errors=True)
+
 
 @pytest.mark.integration
 class TestExtractText:

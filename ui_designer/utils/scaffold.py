@@ -171,6 +171,25 @@ def designer_codegen_legacy_root_relpath(relpath: str) -> str:
     return normalized
 
 
+def legacy_designer_codegen_cleanup_relpaths(generated_files, *, remove_stale_strings=False):
+    """Return legacy root paths that should be removed after writing designer outputs."""
+    generated_relpaths = {
+        str(filename or "").replace("\\", "/")
+        for filename in getattr(generated_files, "keys", lambda: generated_files)()
+    }
+    cleanup_relpaths = {
+        designer_codegen_legacy_root_relpath(relpath)
+        for relpath in generated_relpaths
+        if relpath.startswith(f"{DESIGNER_PROJECT_DIRNAME}/")
+    }
+
+    if remove_stale_strings and EGUI_STRINGS_HEADER_RELPATH not in generated_relpaths:
+        cleanup_relpaths.update(DESIGNER_CODEGEN_STALE_STRING_RELPATHS)
+
+    cleanup_relpaths.difference_update(generated_relpaths)
+    return tuple(sorted(relpath for relpath in cleanup_relpaths if relpath))
+
+
 def build_designer_path(project_dir: str) -> str:
     return os.path.join(project_dir, BUILD_DESIGNER_RELPATH.replace("/", os.sep))
 

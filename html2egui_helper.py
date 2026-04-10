@@ -40,6 +40,7 @@ from ui_designer.utils.resource_config_overlay import (
 from ui_designer.utils.scaffold import (
     app_config_designer_path,
     build_designer_path,
+    legacy_designer_codegen_cleanup_relpaths,
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
     make_app_config_designer_h_content,
@@ -1376,13 +1377,29 @@ def cmd_generate_code(args):
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
 
     # Generate C code
-    from ui_designer.generator.code_generator import generate_all_files_preserved
+    from ui_designer.generator.code_generator import (
+        generate_all_files,
+        generate_all_files_preserved,
+    )
     files = generate_all_files_preserved(project, app_dir, backup=False)
+    all_generated_files = generate_all_files(project)
     for filename, content in files.items():
         filepath = os.path.join(app_dir, filename)
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, "w", encoding="utf-8", newline="\n") as f:
             f.write(content)
+
+    cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(
+        all_generated_files,
+        remove_stale_strings=not project.string_catalog.has_strings,
+    )
+    for relpath in cleanup_relpaths:
+        legacy_path = os.path.join(app_dir, relpath.replace("/", os.sep))
+        try:
+            if os.path.isfile(legacy_path):
+                os.remove(legacy_path)
+        except OSError:
+            pass
 
     print(f"\nGenerated {len(files)} C files:")
     for filename in sorted(files.keys()):

@@ -62,6 +62,7 @@ class ResourceConfigGenerator:
         config = self.generate(project)
 
         # Write generated text files for inline font text
+        self._cleanup_stale_generated_text_files(config, src_dir)
         self._write_font_text_files(config, src_dir)
 
         config_path = designer_resource_config_path(src_dir)
@@ -301,3 +302,29 @@ class ResourceConfigGenerator:
                 current_text = font_cfg.get("text", "")
                 all_texts = [current_text] + extra_files if current_text else extra_files
                 font_cfg["text"] = ",".join(all_texts)
+
+    def _cleanup_stale_generated_text_files(self, config, src_dir):
+        """Remove obsolete Designer-generated font text files."""
+        designer_dir = os.path.dirname(designer_resource_config_path(src_dir))
+        if not os.path.isdir(designer_dir):
+            return
+
+        expected_files = set()
+        for font_cfg in config.get("font", []):
+            for text_item in str(font_cfg.get("text", "") or "").split(","):
+                normalized = text_item.strip().replace("\\", "/")
+                basename = os.path.basename(normalized)
+                if basename.startswith("_generated_text_"):
+                    expected_files.add(basename)
+
+        for filename in os.listdir(designer_dir):
+            if not filename.startswith("_generated_text_"):
+                continue
+            if filename in expected_files:
+                continue
+            stale_path = os.path.join(designer_dir, filename)
+            try:
+                if os.path.isfile(stale_path):
+                    os.remove(stale_path)
+            except OSError:
+                pass

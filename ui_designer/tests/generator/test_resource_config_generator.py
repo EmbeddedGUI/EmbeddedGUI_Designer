@@ -308,3 +308,22 @@ class TestGenerateAndSave:
         content = (txt_root / txt_files[0]).read_text(encoding="utf-8")
         # Non-ASCII chars should be escaped as &#xHHHH;
         assert "&#x" in content
+
+    def test_removes_stale_generated_text_files(self, tmp_path):
+        lbl = WidgetModel("label", name="title", x=0, y=0, width=100, height=30)
+        lbl.properties["text"] = "Hello"
+        lbl.properties["font_file"] = "test.ttf"
+        lbl.properties["font_pixelsize"] = "16"
+        lbl.properties["font_fontbitsize"] = "4"
+
+        gen = ResourceConfigGenerator()
+        gen.generate_and_save(_make_project_with_widgets([lbl]), str(tmp_path))
+
+        txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
+        txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
+        assert len(txt_files) == 1
+
+        gen.generate_and_save(_make_project_with_widgets([]), str(tmp_path))
+
+        txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
+        assert txt_files == []

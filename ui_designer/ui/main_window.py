@@ -129,16 +129,14 @@ from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     BUILD_DESIGNER_INCLUDE_TARGET,
     BUILD_DESIGNER_RELPATH,
-    DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     DESIGNER_PROJECT_DIRNAME,
-    EGUI_STRINGS_HEADER_RELPATH,
     app_config_designer_include_target,
     app_config_designer_path,
     build_mk_designer_include_target,
     build_designer_path,
-    designer_codegen_legacy_root_relpath,
     designer_page_header_relpath,
     designer_page_layout_relpath,
+    legacy_designer_codegen_cleanup_relpaths,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     make_app_build_designer_mk_content,
@@ -289,24 +287,13 @@ def _cleanup_legacy_designer_codegen_files(
 ):
     if not project_dir:
         return
-
-    generated_relpaths = {
-        str(filename or "").replace("\\", "/")
-        for filename in getattr(generated_files, "keys", lambda: generated_files)()
-    }
-    cleanup_relpaths = {
-        designer_codegen_legacy_root_relpath(relpath)
-        for relpath in generated_relpaths
-        if relpath.startswith(f"{DESIGNER_PROJECT_DIRNAME}/")
-    }
-
-    if remove_stale_strings and EGUI_STRINGS_HEADER_RELPATH not in generated_relpaths:
-        cleanup_relpaths.update(DESIGNER_CODEGEN_STALE_STRING_RELPATHS)
+    cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(
+        generated_files,
+        remove_stale_strings=remove_stale_strings,
+    )
 
     backup_root = os.path.join(project_dir, ".eguiproject", "backup")
     for relpath in sorted(cleanup_relpaths):
-        if not relpath or relpath in generated_relpaths:
-            continue
         path = _project_child_realpath(project_dir, relpath)
         if path is None or not os.path.isfile(path):
             continue
