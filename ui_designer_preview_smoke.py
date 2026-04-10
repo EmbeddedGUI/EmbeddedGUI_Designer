@@ -134,6 +134,7 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     (app_dir / ".designer").mkdir(parents=True, exist_ok=True)
     resource_src_dir = app_dir / "resource" / "src"
     resource_src_dir.mkdir(parents=True, exist_ok=True)
+
     build_mk_path = app_dir / "build.mk"
     build_mk_existing = _read_text(build_mk_path)
     if build_mk_existing is None:
@@ -142,7 +143,7 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         migrated_build_mk = migrate_app_build_mk_content(build_mk_existing, app_name)
         if migrated_build_mk != build_mk_existing:
             _write_text(build_mk_path, migrated_build_mk)
-    _write_text(Path(build_designer_path(str(app_dir))), make_app_build_designer_mk_content(app_name))
+
     config_h_path = app_dir / "app_egui_config.h"
     config_h_existing = _read_text(config_h_path)
     if config_h_existing is None:
@@ -156,6 +157,13 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         )
         if migrated_config_h != config_h_existing:
             _write_text(config_h_path, migrated_config_h)
+
+    # Keep smoke workspaces buildable by always refreshing the Designer-owned
+    # scaffold while preserving user-owned wrappers and overlay files.
+    _write_text(
+        Path(build_designer_path(str(app_dir))),
+        make_app_build_designer_mk_content(app_name),
+    )
     _write_text(
         Path(app_config_designer_path(str(app_dir))),
         make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
@@ -168,17 +176,6 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         Path(designer_resource_config_path(str(resource_src_dir))),
         make_empty_resource_config_content(),
     )
-    return
-    # NOTE: DesignerPreviewSmoke 编译需要 circle-mask helpers。
-    # app_egui_config.h 由 scaffold 生成，但为了避免 scaffold/SDK 配置不一致导致的 linker
-    # undefined reference，我们在这里对缺失项做强制补齐（最小化影响仅限 smoke 工具）。
-    _write_text(app_dir / "app_egui_config.h", make_app_config_h_content(app_name))
-    _write_text(
-        Path(app_config_designer_path(str(app_dir))),
-        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
-    )
-    _write_text(resource_src_dir / APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config_content())
-    _write_text(Path(designer_resource_config_path(str(resource_src_dir))), make_empty_resource_config_content())
 
 
 def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
