@@ -15,8 +15,6 @@ from ui_designer.model.workspace import normalize_path
 def reset_singleton(tmp_path, monkeypatch):
     """Reset the singleton instance before each test."""
     monkeypatch.setenv("EMBEDDEDGUI_DESIGNER_CONFIG_DIR", str(tmp_path / "config-home"))
-    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_dir", lambda: str(tmp_path / "legacy-config"))
-    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_path", lambda: str(tmp_path / "legacy-config" / "config.json"))
     DesignerConfig._instance = None
     yield
     DesignerConfig._instance = None
@@ -93,6 +91,10 @@ class TestSaveLoad:
         config.grid_size = 12
         config.font_size_px = 14
         config.widget_browser_active_category = "layout"
+        config.widget_browser_active_scenario = "favorites"
+        config.widget_browser_active_tags = ["layout", "input"]
+        config.widget_browser_sort_mode = "name"
+        config.widget_browser_complexity_filter = "advanced"
         config.diagnostics_view = {"severity_filter": "warning"}
         config.show_clean_all_startup_notice = False
 
@@ -114,10 +116,10 @@ class TestSaveLoad:
         assert loaded.grid_size == 12
         assert loaded.font_size_px == 14
         assert loaded.widget_browser_active_category == "layout"
-        assert loaded.widget_browser_active_scenario == "all"
-        assert loaded.widget_browser_active_tags == []
-        assert loaded.widget_browser_sort_mode == "relevance"
-        assert loaded.widget_browser_complexity_filter == "all"
+        assert loaded.widget_browser_active_scenario == "favorites"
+        assert loaded.widget_browser_active_tags == ["layout", "input"]
+        assert loaded.widget_browser_sort_mode == "name"
+        assert loaded.widget_browser_complexity_filter == "advanced"
         assert loaded.diagnostics_view == {"severity_filter": "warning"}
         assert loaded.show_clean_all_startup_notice is False
 
@@ -173,6 +175,16 @@ class TestSaveLoad:
 
         data = json.loads(config_path.read_text(encoding="utf-8"))
         assert "lightweight_drag" not in data
+
+    def test_save_omits_legacy_sdk_and_recent_app_aliases(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path)):
+                config.save()
+
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+        assert "egui_root" not in data
+        assert "recent_apps" not in data
 
     def test_load_ignores_legacy_lightweight_drag_key(self, config, tmp_path):
         config_path = tmp_path / "config.json"
@@ -387,44 +399,19 @@ class TestConfigMigration:
         assert _get_config_dir() == normalize_path(str(override_dir))
         assert _get_config_path() == normalize_path(str(override_dir / "config.json"))
 
-    def test_load_falls_back_to_legacy_repo_local_config(self, config, tmp_path):
+    def test_load_uses_primary_user_config_path_only(self, config, tmp_path):
         primary_path = tmp_path / "user" / "config.json"
-        legacy_path = tmp_path / "legacy" / "config.json"
-        legacy_path.parent.mkdir(parents=True)
-        legacy_path.write_text(json.dumps({"last_app": "LegacyApp"}), encoding="utf-8")
-
-        with patch("ui_designer.model.config._get_config_path", return_value=str(primary_path)):
-            with patch("ui_designer.model.config._get_legacy_config_path", return_value=str(legacy_path)):
-                config.load()
-
-        assert config.last_app == "LegacyApp"
-
-    def test_load_prefers_primary_config_over_legacy(self, config, tmp_path):
-        primary_path = tmp_path / "user" / "config.json"
-        legacy_path = tmp_path / "legacy" / "config.json"
         primary_path.parent.mkdir(parents=True)
-        legacy_path.parent.mkdir(parents=True)
         primary_path.write_text(json.dumps({"last_app": "PrimaryApp"}), encoding="utf-8")
-        legacy_path.write_text(json.dumps({"last_app": "LegacyApp"}), encoding="utf-8")
+        observed_paths = []
+        real_isfile = os.path.isfile
 
         with patch("ui_designer.model.config._get_config_path", return_value=str(primary_path)):
-            with patch("ui_designer.model.config._get_legacy_config_path", return_value=str(legacy_path)):
+            with patch(
+                "ui_designer.model.config.os.path.isfile",
+                side_effect=lambda path: observed_paths.append(normalize_path(path)) or real_isfile(path),
+            ):
                 config.load()
 
         assert config.last_app == "PrimaryApp"
-
-    def test_get_app_dir_uses_legacy_cached_sdk_when_primary_cache_is_missing(self, config, tmp_path):
-        legacy_cfg = tmp_path / "legacy"
-        legacy_cached_sdk = legacy_cfg / "sdk" / "EmbeddedGUI"
-        (legacy_cached_sdk / "src").mkdir(parents=True)
-        (legacy_cached_sdk / "porting" / "designer").mkdir(parents=True)
-        (legacy_cached_sdk / "Makefile").write_text("all:\n")
-        config.sdk_root = str(tmp_path / "missing_sdk")
-        config.last_app = "LegacyApp"
-
-        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
-            with patch("ui_designer.model.config._get_config_dir", return_value=str(tmp_path / "primary")):
-                with patch("ui_designer.model.config._get_legacy_config_dir", return_value=str(legacy_cfg)):
-                    result = config.get_app_dir()
-
-        assert result == os.path.join(normalize_path(str(legacy_cached_sdk)), "example", "LegacyApp")
+        assert observed_paths == [normalize_path(str(primary_path))]

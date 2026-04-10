@@ -32,13 +32,8 @@ def isolated_config(tmp_path, monkeypatch):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_path = config_dir / "config.json"
-    legacy_config_dir = tmp_path / "legacy_config"
-    legacy_config_path = legacy_config_dir / "config.json"
     monkeypatch.setattr("ui_designer.model.config._get_config_dir", lambda: str(config_dir))
     monkeypatch.setattr("ui_designer.model.config._get_config_path", lambda: str(config_path))
-    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_dir", lambda: str(legacy_config_dir))
-    monkeypatch.setattr("ui_designer.model.config._get_legacy_config_path", lambda: str(legacy_config_path))
-    monkeypatch.setattr("ui_designer.model.config._get_load_config_paths", lambda: [str(config_path), str(legacy_config_path)])
     DesignerConfig._instance = None
     config = DesignerConfig.instance()
     yield config

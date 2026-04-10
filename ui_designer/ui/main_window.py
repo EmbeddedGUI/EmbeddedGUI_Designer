@@ -4540,7 +4540,7 @@ class MainWindow(QMainWindow):
         if is_valid_sdk_root(cached_sdk_root):
             return cached_sdk_root
 
-        # Reuse config-side recovery so legacy repo-local caches still work.
+        # Reuse config-side resolution so configured and cached SDK roots still work.
         config_cached_sdk_root = self._config._resolve_sdk_root("")
         if is_valid_sdk_root(config_cached_sdk_root):
             return config_cached_sdk_root

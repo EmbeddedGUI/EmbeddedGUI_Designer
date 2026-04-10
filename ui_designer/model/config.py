@@ -23,12 +23,6 @@ def _default_user_config_dir():
     return os.path.join(base, "EmbeddedGUI-Designer")
 
 
-def _get_legacy_config_dir():
-    """Return the historical repo-local config directory."""
-    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return normalize_path(os.path.join(base, ".config"))
-
-
 def _config_path_for_dir(config_dir):
     """Build the config.json path for a config directory."""
     return normalize_path(os.path.join(config_dir, "config.json"))
@@ -45,21 +39,6 @@ def _get_config_dir():
 def _get_config_path():
     """Get the full path to the primary config file."""
     return _config_path_for_dir(_get_config_dir())
-
-
-def _get_legacy_config_path():
-    """Get the full path to the legacy repo-local config file."""
-    return _config_path_for_dir(_get_legacy_config_dir())
-
-
-def _get_load_config_paths():
-    """Return config load candidates, preferring the new user-scoped path."""
-    paths = []
-    for path in (_get_config_path(), _get_legacy_config_path()):
-        normalized = normalize_path(path)
-        if normalized and normalized not in paths:
-            paths.append(normalized)
-    return paths
 
 
 class DesignerConfig:
@@ -171,9 +150,6 @@ class DesignerConfig:
     def _default_cached_sdk_root(self):
         return normalize_path(os.path.join(_get_config_dir(), "sdk", "EmbeddedGUI"))
 
-    def _legacy_cached_sdk_root(self):
-        return normalize_path(os.path.join(_get_legacy_config_dir(), "sdk", "EmbeddedGUI"))
-
     def _resolve_sdk_root(self, sdk_root=""):
         candidates = []
         for candidate in (sdk_root, self.sdk_root, self.egui_root):
@@ -192,20 +168,12 @@ class DesignerConfig:
         if is_valid_sdk_root(primary_cached):
             return primary_cached
 
-        legacy_cached = self._legacy_cached_sdk_root()
-        if is_valid_sdk_root(legacy_cached):
-            return legacy_cached
-
         return resolve_available_sdk_root(*candidates, cached_sdk_root=primary_cached)
 
     def load(self):
         """Load configuration from file."""
-        config_path = ""
-        for candidate in _get_load_config_paths():
-            if os.path.isfile(candidate):
-                config_path = candidate
-                break
-        if not config_path:
+        config_path = _get_config_path()
+        if not os.path.isfile(config_path):
             return
 
         try:
@@ -273,11 +241,9 @@ class DesignerConfig:
             os.makedirs(config_dir, exist_ok=True)
             data = {
                 "sdk_root": self.sdk_root,
-                "egui_root": self.sdk_root,
                 "last_app": self.last_app,
                 "last_project_path": self.last_project_path,
                 "recent_projects": self.recent_projects,
-                "recent_apps": self._legacy_recent_apps_from_projects(),
                 "theme": self.theme,
                 "auto_compile": self.auto_compile,
                 "overlay_mode": self.overlay_mode,
@@ -295,6 +261,10 @@ class DesignerConfig:
                 "widget_browser_recent": self.widget_browser_recent,
                 "widget_browser_favorites": self.widget_browser_favorites,
                 "widget_browser_active_category": self.widget_browser_active_category,
+                "widget_browser_active_scenario": self.widget_browser_active_scenario,
+                "widget_browser_active_tags": self.widget_browser_active_tags,
+                "widget_browser_sort_mode": self.widget_browser_sort_mode,
+                "widget_browser_complexity_filter": self.widget_browser_complexity_filter,
                 "diagnostics_view": self.diagnostics_view,
                 "show_clean_all_startup_notice": self.show_clean_all_startup_notice,
             }
