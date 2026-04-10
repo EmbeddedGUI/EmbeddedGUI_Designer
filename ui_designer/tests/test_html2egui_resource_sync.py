@@ -129,6 +129,27 @@ class TestHelperResourceSync:
         with pytest.raises(SystemExit, match="1"):
             h._resolve_existing_app_dir("MissingApp")
 
+    def test_emit_text_output_writes_file_and_optional_status_message(self, tmp_path, capsys):
+        output_path = tmp_path / "text.txt"
+
+        h._emit_text_output(
+            str(output_path),
+            "plain text",
+            written_message="Saved text to: {path}",
+        )
+
+        captured = capsys.readouterr()
+        assert output_path.read_text(encoding="utf-8") == "plain text"
+        assert captured.out == ""
+        assert captured.err == f"Saved text to: {output_path}\n"
+
+    def test_emit_text_output_writes_stdout_when_path_missing(self, capsys):
+        h._emit_text_output("", "plain text")
+
+        captured = capsys.readouterr()
+        assert captured.out == "plain text\n"
+        assert captured.err == ""
+
     def test_emit_json_output_writes_file_and_status_message(self, tmp_path, capsys):
         output_path = tmp_path / "layout.json"
 

@@ -145,17 +145,26 @@ def _resolve_existing_app_dir(app_name):
     return sdk_root, app_dir
 
 
-def _emit_json_output(output_path, output_json, *, written_message):
-    """Write JSON text to a file or stdout using the helper's CLI conventions."""
+def _emit_text_output(output_path, text, *, written_message=""):
+    """Write plain text to a file or stdout using the helper's CLI conventions."""
     if output_path:
         with open(output_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(output_json)
+            f.write(text)
         if written_message:
             print(written_message.format(path=output_path), file=sys.stderr)
         return
 
-    sys.stdout.buffer.write(output_json.encode("utf-8"))
+    sys.stdout.buffer.write(text.encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
+
+
+def _emit_json_output(output_path, output_json, *, written_message):
+    """Write JSON text to a file or stdout using the helper's CLI conventions."""
+    _emit_text_output(
+        output_path,
+        output_json,
+        written_message=written_message,
+    )
 
 
 # ── Sub-command: scaffold ─────────────────────────────────────────
@@ -1428,13 +1437,11 @@ def cmd_extract_text(args):
     )
     if not out_path:
         # Print to stdout
-        sys.stdout.buffer.write(char_str.encode("utf-8"))
-        sys.stdout.buffer.write(b"\n")
+        _emit_text_output("", char_str)
         print(f"\n({len(sorted_chars)} unique characters)", file=sys.stderr)
         return
 
-    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(char_str)
+    _emit_text_output(out_path, char_str)
 
     print(f"Extracted {len(sorted_chars)} unique characters to: {out_path}")
 
