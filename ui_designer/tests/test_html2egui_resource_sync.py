@@ -84,6 +84,32 @@ class TestHelperResourceSync:
         with pytest.raises(ValueError, match="Must specify either --output or --app"):
             h._resolve_export_image_output_dir(str(tmp_path / "sdk"))
 
+    def test_resolve_extract_text_output_path_prefers_explicit_output(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+        explicit = tmp_path / "supported_text.txt"
+
+        assert h._resolve_extract_text_output_path(
+            str(sdk_root),
+            output_path=str(explicit),
+            app_name="DemoApp",
+        ) == str(explicit)
+
+    def test_resolve_extract_text_output_path_uses_app_resource_src_dir(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+
+        out_path = h._resolve_extract_text_output_path(
+            str(sdk_root),
+            app_name="DemoApp",
+        )
+
+        assert out_path == str(
+            sdk_root / "example" / "DemoApp" / "resource" / "src" / "supported_text.txt"
+        )
+        assert (sdk_root / "example" / "DemoApp" / "resource" / "src").is_dir()
+
+    def test_resolve_extract_text_output_path_allows_stdout_fallback(self, tmp_path):
+        assert h._resolve_extract_text_output_path(str(tmp_path / "sdk")) == ""
+
     def test_emit_json_output_writes_file_and_status_message(self, tmp_path, capsys):
         output_path = tmp_path / "layout.json"
 

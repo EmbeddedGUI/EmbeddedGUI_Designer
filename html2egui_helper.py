@@ -124,6 +124,17 @@ def _resolve_export_image_output_dir(sdk_root, *, output_path="", app_name=None)
     raise ValueError("Must specify either --output or --app")
 
 
+def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None):
+    """Resolve the output path for extracted supported text."""
+    if output_path:
+        return output_path
+    if app_name:
+        src_dir = _get_app_resource_src_dir(_get_app_dir(sdk_root, app_name))
+        os.makedirs(src_dir, exist_ok=True)
+        return os.path.join(src_dir, "supported_text.txt")
+    return ""
+
+
 def _emit_json_output(output_path, output_json, *, written_message):
     """Write JSON text to a file or stdout using the helper's CLI conventions."""
     if output_path:
@@ -802,18 +813,6 @@ def _update_resource_config_files(
     )
 
 
-def _update_resource_config(config_path, icon_names, icon_size, image_format="rgb565", image_alpha="4", suffix=""):
-    """Update the user overlay resource config with image entries."""
-    _update_resource_config_files(
-        config_path,
-        [f"icon_{name}{suffix}.png" for name in icon_names],
-        icon_size,
-        image_format=image_format,
-        image_alpha=image_alpha,
-        entry_label="icon",
-    )
-
-
 def cmd_export_icons(args):
     """Extract Material Symbols from HTML, render as PNG, update resource config."""
     if not os.path.isfile(args.input):
@@ -1412,14 +1411,12 @@ def cmd_extract_text(args):
     sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
 
-    if args.output:
-        out_path = args.output
-    elif app_name:
-        app_dir = _get_app_dir(sdk_root, app_name)
-        src_dir = _get_app_resource_src_dir(app_dir)
-        os.makedirs(src_dir, exist_ok=True)
-        out_path = os.path.join(src_dir, "supported_text.txt")
-    else:
+    out_path = _resolve_extract_text_output_path(
+        sdk_root,
+        output_path=args.output,
+        app_name=app_name,
+    )
+    if not out_path:
         # Print to stdout
         sys.stdout.buffer.write(char_str.encode("utf-8"))
         sys.stdout.buffer.write(b"\n")
