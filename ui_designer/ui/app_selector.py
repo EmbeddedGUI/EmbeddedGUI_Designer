@@ -151,7 +151,7 @@ class AppEntryRowWidget(QWidget):
 
 
 class AppSelectorDialog(QDialog):
-    """Dialog for opening bundled, Designer-aware, or legacy SDK examples."""
+    """Dialog for opening bundled, Designer-aware, or unmanaged SDK examples."""
 
     def __init__(self, parent=None, egui_root=None):
         super().__init__(parent)
@@ -294,19 +294,22 @@ class AppSelectorDialog(QDialog):
         options_title.setObjectName("workspace_section_title")
         options_layout.addWidget(options_title)
 
-        options_hint = QLabel("Keep the browser focused on ready-to-open projects, or widen the SDK section to include legacy apps that still need import.")
+        options_hint = QLabel(
+            "Keep the browser focused on ready-to-open projects, or widen the SDK section to include "
+            "unmanaged SDK examples that still need Designer initialization."
+        )
         options_hint.setObjectName("workspace_section_subtitle")
         options_hint.setWordWrap(True)
         options_layout.addWidget(options_hint)
         options_hint.hide()
 
-        self._show_legacy = QCheckBox("Show legacy")
+        self._show_legacy = QCheckBox("Show unmanaged")
         self._show_legacy.setChecked(self._config.show_all_examples)
         self._show_legacy.toggled.connect(self._on_toggle_legacy)
         _set_widget_metadata(
             self._show_legacy,
-            tooltip="Include legacy SDK examples that do not yet have Designer project files.",
-            accessible_name="Show legacy SDK examples",
+            tooltip="Include SDK examples that do not yet have Designer project files.",
+            accessible_name="Show unmanaged SDK examples",
         )
         options_layout.addWidget(self._show_legacy)
         options_layout.addStretch(1)
@@ -718,7 +721,7 @@ class AppSelectorDialog(QDialog):
 
         summary = (
             f"Open Example dialog: SDK root {root_value}. Search {search_text}. "
-            f"Legacy examples {legacy_text}. Examples list: {list_text}. Selection: {selection_name}."
+            f"Unmanaged SDK examples {legacy_text}. Examples list: {list_text}. Selection: {selection_name}."
         )
         _set_widget_metadata(self, tooltip=summary, accessible_name=summary)
         _set_widget_metadata(
@@ -755,14 +758,14 @@ class AppSelectorDialog(QDialog):
         self._update_header_metric_metadata(self._results_metric_value)
         self._update_header_metric_metadata(self._selection_metric_value)
         legacy_hint = (
-            "Showing legacy SDK examples that do not yet have Designer project files."
+            "Showing SDK examples that do not yet have Designer project files."
             if self._show_legacy.isChecked()
-            else "Include legacy SDK examples that do not yet have Designer project files."
+            else "Include SDK examples that do not yet have Designer project files."
         )
         _set_widget_metadata(
             self._show_legacy,
             tooltip=legacy_hint,
-            accessible_name=f"Show legacy SDK examples: {'on' if self._show_legacy.isChecked() else 'off'}",
+            accessible_name=f"Show unmanaged SDK examples: {'on' if self._show_legacy.isChecked() else 'off'}",
         )
         if not self._selected_entry:
             open_hint = "Select an example to open it."

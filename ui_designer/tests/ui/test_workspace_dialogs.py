@@ -114,7 +114,7 @@ class TestAppSelectorDialog:
 
         assert dialog._header_frame.accessibleName() == (
             "Example header. Open Example dialog: SDK root none. Search none. "
-            "Legacy examples off. Examples list: 1 entry. Selection: none."
+            "Unmanaged SDK examples off. Examples list: 1 entry. Selection: none."
         )
         assert dialog._eyebrow_label.isHidden()
         assert dialog._subtitle_label.isHidden()
@@ -143,7 +143,7 @@ class TestAppSelectorDialog:
         ).isHidden()
         assert _find_label_by_text(
             dialog,
-            "Keep the browser focused on ready-to-open projects, or widen the SDK section to include legacy apps that still need import.",
+            "Keep the browser focused on ready-to-open projects, or widen the SDK section to include unmanaged SDK examples that still need Designer initialization.",
         ).isHidden()
         assert _find_label_by_text(
             dialog,
@@ -156,7 +156,7 @@ class TestAppSelectorDialog:
         assert _find_label_by_text(dialog, "SDK") is not None
         assert _find_label_by_text(dialog, "Filters") is not None
         assert _find_label_by_text(dialog, "Examples") is not None
-        assert dialog._show_legacy.text() == "Show legacy"
+        assert dialog._show_legacy.text() == "Show unmanaged"
         assert dialog._search_edit.placeholderText() == "Search examples..."
         assert len(dialog.findChildren(QFrame, "app_selector_metric_card")) == 3
         dialog.deleteLater()
@@ -170,7 +170,7 @@ class TestAppSelectorDialog:
 
         assert dialog.accessibleName() == (
             "Open Example dialog: SDK root none. Search none. "
-            "Legacy examples off. Examples list: 1 entry. Selection: none."
+            "Unmanaged SDK examples off. Examples list: 1 entry. Selection: none."
         )
         assert dialog._search_edit.toolTip() == "Filter examples by name. Current search: none."
         assert dialog._app_list.accessibleName() == "Examples list: 1 entry. Current selection: none."
@@ -179,7 +179,7 @@ class TestAppSelectorDialog:
             "Open action unavailable: Open. Select an example to open it."
         )
         assert dialog._browse_btn.icon().isNull()
-        assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: off"
+        assert dialog._show_legacy.accessibleName() == "Show unmanaged SDK examples: off"
         assert dialog._root_status_label.accessibleName() == f"SDK root status: {dialog._root_status_label.text()}"
         assert dialog._app_list.item(0).data(Qt.AccessibleTextRole) == (
             "Examples list item: Set an SDK root first."
@@ -369,9 +369,9 @@ class TestAppSelectorDialog:
         assert isolated_config.show_all_examples is True
         assert dialog._app_list.count() == 2
         assert dialog._show_legacy.toolTip() == (
-            "Showing legacy SDK examples that do not yet have Designer project files."
+            "Showing SDK examples that do not yet have Designer project files."
         )
-        assert dialog._show_legacy.accessibleName() == "Show legacy SDK examples: on"
+        assert dialog._show_legacy.accessibleName() == "Show unmanaged SDK examples: on"
         texts = [dialog._app_list.item(i).text() for i in range(dialog._app_list.count())]
         assert "LegacyApp [Legacy]" in texts
         legacy_item = next(
