@@ -113,7 +113,18 @@ from ..generator.user_code_preserver import compute_source_hash, embed_source_ha
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
 from ..engine.layout_engine import compute_layout, compute_page_layout
-from ..utils.scaffold import make_app_build_mk_content, make_app_config_h_content, make_empty_resource_config_content
+from ..utils.scaffold import (
+    app_config_includes_designer,
+    build_mk_includes_designer,
+    make_app_build_designer_mk_content,
+    make_app_build_mk_content,
+    make_app_config_designer_h_content,
+    make_app_config_h_content,
+    make_empty_resource_config_content,
+    migrate_app_build_mk_content,
+    migrate_app_config_h_content,
+    read_app_config_dimensions,
+)
 from .theme import apply_theme, theme_tokens
 
 
@@ -2518,8 +2529,9 @@ class MainWindow(QMainWindow):
             "The project was created or last reset against a different SDK revision.\n\n"
             f"Recorded SDK revision:\n{recorded_revision}\n\n"
             f"Current SDK revision:\n{current_revision}\n\n"
-            "Reset the project scaffold now? This rewrites build.mk, app_egui_config.h, "
-            "resource/src/app_resource_config.json, and updates the .egui SDK version metadata.",
+            "Reset the project scaffold now? This regenerates build_designer.mk, "
+            "app_egui_config_designer.h, resource/src/app_resource_config.json, "
+            "and updates the .egui SDK version metadata while preserving user wrapper files.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -2643,24 +2655,8 @@ class MainWindow(QMainWindow):
         self._update_recent_menu()
 
     def _read_app_dimensions(self, app_dir):
-        screen_w, screen_h = 240, 320
         config_h = os.path.join(app_dir, "app_egui_config.h")
-        if not os.path.isfile(config_h):
-            return screen_w, screen_h
-
-        try:
-            with open(config_h, "r", encoding="utf-8") as f:
-                content = f.read()
-            import re
-            match = re.search(r"EGUI_CONFIG_SCEEN_WIDTH\s+(\d+)", content)
-            if match:
-                screen_w = int(match.group(1))
-            match = re.search(r"EGUI_CONFIG_SCEEN_HEIGHT\s+(\d+)", content)
-            if match:
-                screen_h = int(match.group(1))
-        except Exception:
-            pass
-        return screen_w, screen_h
+        return read_app_config_dimensions(config_h)
 
     def _create_standard_project_model(self, app_name, sdk_root, project_dir):
         WidgetModel.reset_counter()
@@ -2676,15 +2672,56 @@ class MainWindow(QMainWindow):
         resource_src_dir = os.path.join(project_dir, "resource", "src")
         os.makedirs(resource_src_dir, exist_ok=True)
 
-        build_mk = os.path.join(project_dir, "build.mk")
-        if overwrite or not os.path.exists(build_mk):
-            with open(build_mk, "w", encoding="utf-8") as f:
-                f.write(make_app_build_mk_content(app_name))
+        def _read_text(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except OSError:
+                return None
 
+        def _write_text(path, content):
+            existing = _read_text(path)
+            if existing == content:
+                return
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        build_mk_content = make_app_build_mk_content(app_name)
+        build_designer_content = make_app_build_designer_mk_content(app_name)
+
+        build_mk = os.path.join(project_dir, "build.mk")
+        build_mk_existing = _read_text(build_mk)
+        if build_mk_existing is None:
+            _write_text(build_mk, build_mk_content)
+        elif overwrite or not build_mk_includes_designer(build_mk_existing):
+            _write_text(build_mk, migrate_app_build_mk_content(build_mk_existing, app_name))
+
+        build_designer_mk = os.path.join(project_dir, "build_designer.mk")
+        _write_text(build_designer_mk, build_designer_content)
+
+        config_h_content = make_app_config_h_content(app_name)
+        config_designer_content = make_app_config_designer_h_content(
+            app_name,
+            screen_width,
+            screen_height,
+        )
         config_h = os.path.join(project_dir, "app_egui_config.h")
-        if overwrite or not os.path.exists(config_h):
-            with open(config_h, "w", encoding="utf-8") as f:
-                f.write(make_app_config_h_content(app_name, screen_width, screen_height))
+        config_h_existing = _read_text(config_h)
+        if config_h_existing is None:
+            _write_text(config_h, config_h_content)
+        elif overwrite or not app_config_includes_designer(config_h_existing):
+            _write_text(
+                config_h,
+                migrate_app_config_h_content(
+                    config_h_existing,
+                    app_name,
+                    screen_width,
+                    screen_height,
+                ),
+            )
+
+        config_designer_h = os.path.join(project_dir, "app_egui_config_designer.h")
+        _write_text(config_designer_h, config_designer_content)
 
         resource_cfg = os.path.join(resource_src_dir, "app_resource_config.json")
         if overwrite or not os.path.exists(resource_cfg):
@@ -2765,6 +2802,10 @@ class MainWindow(QMainWindow):
         eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
         watch_roots = [
             project_file,
+            os.path.join(self._project_dir, "build.mk"),
+            os.path.join(self._project_dir, "build_designer.mk"),
+            os.path.join(self._project_dir, "app_egui_config.h"),
+            os.path.join(self._project_dir, "app_egui_config_designer.h"),
             os.path.join(eguiproject_dir, "layout"),
             os.path.join(eguiproject_dir, "resources"),
             os.path.join(eguiproject_dir, "mockup"),

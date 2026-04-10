@@ -32,6 +32,13 @@ import subprocess
 import sys
 
 from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.utils.scaffold import (
+    make_app_build_designer_mk_content,
+    make_app_build_mk_content,
+    make_app_config_designer_h_content,
+    make_app_config_h_content,
+    make_empty_resource_config_content,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parent
@@ -173,13 +180,24 @@ def cmd_scaffold(args):
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    # Write template files (always overwrite config/build)
-    _write_file(os.path.join(app_dir, "app_egui_config.h"),
-                APP_EGUI_CONFIG_TEMPLATE.format(
-                    width=width, height=height,
-                    color_depth=color_depth,
-                    circle_radius=circle_radius))
-    _write_file(os.path.join(app_dir, "build.mk"), BUILD_MK_TEMPLATE)
+    # Write wrapper + Designer-managed scaffold files.
+    _write_file(os.path.join(app_dir, "app_egui_config.h"), make_app_config_h_content(args.app))
+    _write_file(
+        os.path.join(app_dir, "app_egui_config_designer.h"),
+        make_app_config_designer_h_content(
+            args.app,
+            width,
+            height,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+        ),
+    )
+    _write_file(os.path.join(app_dir, "build.mk"), make_app_build_mk_content(args.app))
+    _write_file(
+        os.path.join(app_dir, "build_designer.mk"),
+        make_app_build_designer_mk_content(args.app),
+    )
 
     # .egui project file (always overwrite)
     pages = [p.strip() for p in args.pages.split(",")] if args.pages else ["main_page"]
@@ -205,7 +223,7 @@ def cmd_scaffold(args):
     # Resource config — only create if it does not exist
     rc_path = os.path.join(app_dir, "resource", "src", "app_resource_config.json")
     if not os.path.exists(rc_path):
-        _write_file(rc_path, RESOURCE_CONFIG_TEMPLATE)
+        _write_file(rc_path, make_empty_resource_config_content())
         print(f"  Created: resource/src/app_resource_config.json")
     else:
         print(f"  Skipped: resource/src/app_resource_config.json (already exists)")

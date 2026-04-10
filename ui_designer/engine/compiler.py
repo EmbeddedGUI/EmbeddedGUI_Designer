@@ -99,6 +99,7 @@ class BuildConfig:
             "Makefile",
             os.path.join("porting", "designer", "Makefile.base"),
             os.path.join(app_root_arg, app_name, "build.mk"),
+            os.path.join(app_root_arg, app_name, "build_designer.mk"),
         ]
         for p in makefile_paths:
             full = os.path.join(project_root, p)

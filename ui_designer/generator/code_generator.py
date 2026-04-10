@@ -38,6 +38,10 @@ from ..model.page_fields import page_field_declaration, page_field_default_assig
 from ..model.page_timers import valid_page_timers
 from ..model.widget_registry import WidgetRegistry
 from ..model.string_resource import parse_string_ref
+from ..utils.scaffold import (
+    make_app_build_designer_mk_content,
+    make_app_config_designer_h_content,
+)
 
 
 def _get_type_info(widget_type):
@@ -1779,13 +1783,10 @@ def generate_uicode_source(project):
 
 # ── app_egui_config.h ─────────────────────────────────────────────
 
-def generate_app_config(project):
-    """Generate app_egui_config.h with screen dimensions."""
+def generate_app_config_designer(project):
+    """Generate app_egui_config_designer.h with screen dimensions."""
     w = project.screen_width
     h = project.screen_height
-    # PFB size: 1/8 of screen dimensions
-    pfb_w = w // 8
-    pfb_h = h // 8
 
     # Determine max circle radius needed from circular progress bars
     max_radius = 20  # default
@@ -1796,36 +1797,12 @@ def generate_app_config(project):
                 if r > max_radius:
                     max_radius = r
 
-    # Recording test macro is injected via USER_CFLAGS by code_runtime_check.py
     # (not baked into config — keeps config portable)
-    recording_line = ""
-
-    return (
-        "#ifndef _APP_EGUI_CONFIG_H_\n"
-        "#define _APP_EGUI_CONFIG_H_\n"
-        "\n"
-        "#ifdef __cplusplus\n"
-        'extern "C" {\n'
-        "#endif\n"
-        "\n"
-        f"#define EGUI_CONFIG_SCEEN_WIDTH  {w}\n"
-        f"#define EGUI_CONFIG_SCEEN_HEIGHT {h}\n"
-        f"#define EGUI_CONFIG_PFB_WIDTH    {pfb_w}\n"
-        f"#define EGUI_CONFIG_PFB_HEIGHT   {pfb_h}\n"
-        "\n"
-        "#define EGUI_CONFIG_COLOR_DEPTH 16\n"
-        "\n"
-        # Designer UI relies on circle-mask helpers under EGUI_CONFIG_FUNCTION_SUPPORT_MASK.
-        "#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1\n"
-        "\n"
-        f"#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE {max_radius}\n"
-        "\n"
-        f"{recording_line}"
-        "#ifdef __cplusplus\n"
-        "}\n"
-        "#endif\n"
-        "\n"
-        "#endif /* _APP_EGUI_CONFIG_H_ */\n"
+    return make_app_config_designer_h_content(
+        project.app_name,
+        w,
+        h,
+        circle_radius=max_radius,
     )
 
 
@@ -1869,7 +1846,14 @@ def generate_all_files(project):
 
     files["uicode.h"] = (generate_uicode_header(project), GENERATED_ALWAYS)
     files["uicode.c"] = (generate_uicode_source(project), GENERATED_ALWAYS)
-    files["app_egui_config.h"] = (generate_app_config(project), GENERATED_ALWAYS)
+    files["build_designer.mk"] = (
+        make_app_build_designer_mk_content(project.app_name),
+        GENERATED_ALWAYS,
+    )
+    files["app_egui_config_designer.h"] = (
+        generate_app_config_designer(project),
+        GENERATED_ALWAYS,
+    )
 
     # i18n string resources
     if project.string_catalog.has_strings:

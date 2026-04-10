@@ -6,7 +6,7 @@ Covers scenarios not in test_code_generator.py:
   - init_with_params widgets: progress_bar, circular_progress_bar, slider
   - Widget with both animation AND event handler
   - uicode startup index edge cases (startup page that does not exist)
-  - app_egui_config.h content correctness
+  - app_egui_config_designer.h content correctness
   - Viewport / position sentinel — position at (0,0) still appears in layout
   - on_click listener for non-button widgets (label with on_click)
   - generate_page_header for activity vs easy_page mode
@@ -76,7 +76,7 @@ class TestMinimalPage:
         pg = _page("bare_page", root)
         proj = _proj([pg])
         out = generate_page_user_source(pg, proj)
-        assert "egui_bare_page_on_open" in out
+        assert "egui_bare_page_user_on_open" in out
 
 
 # ======================================================================
@@ -199,14 +199,14 @@ class TestUicodeStartupEdgeCases:
 # ======================================================================
 
 class TestAppEguiConfigContent:
-    """app_egui_config.h generated with correct dimensions."""
+    """app_egui_config_designer.h generated with correct dimensions."""
 
     def test_config_has_correct_dimensions_240x320(self):
         pg = _page("main_page", _simple_root())
         proj = Project(screen_width=240, screen_height=320, app_name="App")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config.h"]
+        c, _ = files["app_egui_config_designer.h"]
         assert "240" in c
         assert "320" in c
 
@@ -216,7 +216,7 @@ class TestAppEguiConfigContent:
         proj = Project(screen_width=480, screen_height=272, app_name="WideApp")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config.h"]
+        c, _ = files["app_egui_config_designer.h"]
         assert "480" in c
         assert "272" in c
 
@@ -225,7 +225,7 @@ class TestAppEguiConfigContent:
         proj = Project(screen_width=240, screen_height=320, app_name="App")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config.h"]
+        c, _ = files["app_egui_config_designer.h"]
         assert "EGUI_CONFIG_PFB_WIDTH" in c
         assert "EGUI_CONFIG_PFB_HEIGHT" in c
 

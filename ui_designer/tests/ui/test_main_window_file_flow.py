@@ -345,8 +345,12 @@ class TestMainWindowFileFlow:
         assert "sdk-old-123" in prompts[0]["text"]
         assert "sdk-new-456" in prompts[0]["text"]
         assert reloaded.sdk_fingerprint.revision == "sdk-new-456"
-        assert "EGUI_CODE_SRC" in (project_dir / "build.mk").read_text(encoding="utf-8")
-        assert "EGUI_CONFIG_SCEEN_WIDTH" in (project_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert "build_designer.mk" in (project_dir / "build.mk").read_text(encoding="utf-8")
+        assert "# legacy build" in (project_dir / "build.mk").read_text(encoding="utf-8")
+        assert '#include "app_egui_config_designer.h"' in (project_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert "#define LEGACY_CONFIG 1" in (project_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert (project_dir / "build_designer.mk").is_file()
+        assert (project_dir / "app_egui_config_designer.h").is_file()
         assert json.loads((project_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],
@@ -424,7 +428,9 @@ class TestMainWindowFileFlow:
         assert (project_dir / "SaveDemo.egui").is_file()
         assert (project_dir / "generated.c").read_text(encoding="utf-8") == "// generated\n"
         assert (project_dir / "build.mk").is_file()
+        assert (project_dir / "build_designer.mk").is_file()
         assert (project_dir / "app_egui_config.h").is_file()
+        assert (project_dir / "app_egui_config_designer.h").is_file()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert isolated_config.last_project_path == os.path.join(str(project_dir), "SaveDemo.egui")
         assert isolated_config.recent_projects[0]["project_path"] == os.path.join(str(project_dir), "SaveDemo.egui")
@@ -2661,8 +2667,12 @@ class TestMainWindowFileFlow:
         assert window._project_dir == os.path.normpath(os.path.abspath(dst_dir))
         assert window.project.project_dir == os.path.normpath(os.path.abspath(dst_dir))
         assert (dst_dir / "generated.c").read_text(encoding="utf-8") == "// save as\n"
-        assert (dst_dir / "build.mk").read_text(encoding="utf-8") == "# custom build\n"
-        assert (dst_dir / "app_egui_config.h").read_text(encoding="utf-8") == "#define CUSTOM_CFG 1\n"
+        assert "build_designer.mk" in (dst_dir / "build.mk").read_text(encoding="utf-8")
+        assert "# custom build" in (dst_dir / "build.mk").read_text(encoding="utf-8")
+        assert '#include "app_egui_config_designer.h"' in (dst_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert "#define CUSTOM_CFG 1" in (dst_dir / "app_egui_config.h").read_text(encoding="utf-8")
+        assert (dst_dir / "build_designer.mk").is_file()
+        assert (dst_dir / "app_egui_config_designer.h").is_file()
         assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").is_file()
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").is_file()
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
@@ -3671,7 +3681,7 @@ class TestMainWindowFileFlow:
 
         window._do_clean_all_and_reconstruct()
 
-        assert "Opened:" in window.statusBar().currentMessage()
+        assert "Opened" in window.statusBar().currentMessage()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -3823,6 +3833,49 @@ class TestMainWindowFileFlow:
             "preferred_sdk_root": os.path.normpath(os.path.abspath(sdk_root)),
             "silent": False,
         }
+        _close_window(window)
+
+    def test_import_legacy_example_reads_dimensions_from_designer_wrapper(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.project import Project
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        app_dir = sdk_root / "example" / "LegacyWrappedApp"
+        app_dir.mkdir(parents=True)
+        (app_dir / "build.mk").write_text("# legacy\n", encoding="utf-8")
+        (app_dir / "app_egui_config.h").write_text(
+            '#include "app_egui_config_designer.h"\n',
+            encoding="utf-8",
+        )
+        (app_dir / "app_egui_config_designer.h").write_text(
+            "#define EGUI_CONFIG_SCEEN_WIDTH  320\n#define EGUI_CONFIG_SCEEN_HEIGHT 320\n",
+            encoding="utf-8",
+        )
+
+        window = MainWindow(str(sdk_root))
+        opened = {}
+
+        def fake_open_project_path(path, preferred_sdk_root="", silent=False):
+            opened["path"] = path
+            opened["preferred_sdk_root"] = preferred_sdk_root
+            opened["silent"] = silent
+
+        monkeypatch.setattr(window, "_open_project_path", fake_open_project_path)
+
+        window._import_legacy_example(
+            {
+                "app_name": "LegacyWrappedApp",
+                "app_dir": str(app_dir),
+            },
+            str(sdk_root),
+        )
+
+        project_path = app_dir / "LegacyWrappedApp.egui"
+        saved = Project.load(str(project_path))
+        assert saved.screen_width == 320
+        assert saved.screen_height == 320
+        assert opened["path"] == os.path.normpath(os.path.abspath(project_path))
         _close_window(window)
 
     def test_import_legacy_example_warns_on_eguiproject_conflict(self, qapp, isolated_config, tmp_path, monkeypatch):

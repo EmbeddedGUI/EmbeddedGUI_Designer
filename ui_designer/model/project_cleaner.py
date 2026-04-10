@@ -11,6 +11,7 @@ from .workspace import normalize_path
 
 DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     "*.egui project metadata",
+    "build.mk and app_egui_config.h user override wrappers",
     ".eguiproject/layout/*.xml page layouts",
     ".eguiproject/resources/** source assets and resource metadata",
     ".eguiproject/mockup/** preview mockups",
@@ -22,13 +23,14 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     "page/user code files in the project root (*.c, *.h, *_ext.h)",
     "resource/** generated resources and synced source mirrors",
-    "build.mk and app_egui_config.h scaffold files",
+    "build_designer.mk and app_egui_config_designer.h designer-managed scaffold files",
     ".eguiproject/backup, orphaned_user_code, and other generated caches",
 )
 
 _PRESERVED_TOP_LEVEL_DIRS = {"widgets", "custom_widgets"}
 _PRESERVED_EGUIPROJECT_DIRS = {"layout", "resources", "mockup"}
 _PRESERVED_EGUIPROJECT_FILES = {"release.json"}
+_PRESERVED_TOP_LEVEL_FILES = {"build.mk", "app_egui_config.h"}
 
 
 @dataclass(frozen=True)
@@ -108,6 +110,10 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
         rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
 
         if os.path.isfile(child_path) and name.lower().endswith(".egui"):
+            preserved_paths.append(rel_path)
+            continue
+
+        if os.path.isfile(child_path) and name in _PRESERVED_TOP_LEVEL_FILES:
             preserved_paths.append(rel_path)
             continue
 

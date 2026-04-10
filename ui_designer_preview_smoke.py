@@ -29,7 +29,9 @@ from ui_designer.model.widget_model import AnimationModel, BackgroundModel, Widg
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
+    make_app_build_designer_mk_content,
     make_app_build_mk_content,
+    make_app_config_designer_h_content,
     make_app_config_h_content,
     make_empty_resource_config_content,
 )
@@ -111,21 +113,16 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     resource_src_dir = app_dir / "resource" / "src"
     resource_src_dir.mkdir(parents=True, exist_ok=True)
     _write_text(app_dir / "build.mk", make_app_build_mk_content(app_name))
+    _write_text(app_dir / "build_designer.mk", make_app_build_designer_mk_content(app_name))
     # NOTE: DesignerPreviewSmoke 编译需要 circle-mask helpers。
     # app_egui_config.h 由 scaffold 生成，但为了避免 scaffold/SDK 配置不一致导致的 linker
     # undefined reference，我们在这里对缺失项做强制补齐（最小化影响仅限 smoke 工具）。
     cfg = make_app_config_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT)
-    if "EGUI_CONFIG_COLOR_DEPTH" not in cfg:
-        cfg = cfg.replace(
-            "#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE",
-            "#define EGUI_CONFIG_COLOR_DEPTH 16\n\n#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE",
-        )
-    if "EGUI_CONFIG_FUNCTION_SUPPORT_MASK" not in cfg:
-        cfg = cfg.replace(
-            "#endif /* _APP_EGUI_CONFIG_H_ */",
-            "#define EGUI_CONFIG_FUNCTION_SUPPORT_MASK 1\n\n#endif /* _APP_EGUI_CONFIG_H_ */",
-        )
-    _write_text(app_dir / "app_egui_config.h", cfg)
+    _write_text(app_dir / "app_egui_config.h", make_app_config_h_content(app_name))
+    _write_text(
+        app_dir / "app_egui_config_designer.h",
+        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
+    )
     _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
 
 
