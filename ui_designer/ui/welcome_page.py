@@ -400,7 +400,6 @@ class WelcomePage(QWidget):
     def _refresh_sdk_status(self):
         sdk_root = resolve_configured_sdk_root(
             self._config.sdk_root,
-            self._config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
             preserve_invalid=True,
         )

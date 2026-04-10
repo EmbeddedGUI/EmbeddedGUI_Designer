@@ -63,7 +63,6 @@ class NewProjectDialog(QDialog):
         self._sdk_root = resolve_configured_sdk_root(
             sdk_root,
             config.sdk_root,
-            config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
             preserve_invalid=True,
         )
