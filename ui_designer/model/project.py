@@ -229,6 +229,39 @@ class Project:
 
     # 鈹€鈹€ Save / Load (.egui XML) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
+    def to_xml_string(self, project_dir="", *, stored_sdk_root=None):
+        """Serialize project metadata to a .egui XML string."""
+        project_dir = normalize_path(project_dir or self.project_dir or self.get_app_dir())
+
+        root = ET.Element("Project")
+        root.set("app_name", self.app_name)
+        root.set("screen_width", str(self.screen_width))
+        root.set("screen_height", str(self.screen_height))
+        root.set("page_mode", self.page_mode)
+        root.set("startup", self.startup_page)
+        if stored_sdk_root is not None:
+            sdk_value = str(stored_sdk_root or "").strip().replace("\\", "/")
+        elif self.sdk_root:
+            sdk_value = serialize_sdk_root(project_dir, self.sdk_root)
+        else:
+            sdk_value = ""
+        if sdk_value:
+            root.set("sdk_root", sdk_value)
+        _serialize_sdk_fingerprint(root, self.sdk_fingerprint)
+
+        pages_elem = ET.SubElement(root, "Pages")
+        for page in self.pages:
+            ref = ET.SubElement(pages_elem, "PageRef")
+            ref.set("file", page.file_path)
+
+        res = ET.SubElement(root, "Resources")
+        res.set("catalog", "resources.xml")
+
+        ET.indent(root, space="    ")
+        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(
+            root, encoding="unicode"
+        )
+
     def save(self, project_dir):
         """Save project to directory.
 
@@ -265,31 +298,9 @@ class Project:
             if _sdk_revision_text(fingerprint):
                 self.sdk_fingerprint = fingerprint
 
-        root = ET.Element("Project")
-        root.set("app_name", self.app_name)
-        root.set("screen_width", str(self.screen_width))
-        root.set("screen_height", str(self.screen_height))
-        root.set("page_mode", self.page_mode)
-        root.set("startup", self.startup_page)
-        if self.sdk_root:
-            sdk_value = serialize_sdk_root(project_dir, self.sdk_root)
-            root.set("sdk_root", sdk_value)
-        _serialize_sdk_fingerprint(root, self.sdk_fingerprint)
-
-        pages_elem = ET.SubElement(root, "Pages")
-        for page in self.pages:
-            ref = ET.SubElement(pages_elem, "PageRef")
-            ref.set("file", page.file_path)
-
-        res = ET.SubElement(root, "Resources")
-        res.set("catalog", "resources.xml")
-
-        ET.indent(root, space="    ")
         eui_path = os.path.join(project_dir, f"{self.app_name}.egui")
-        tree = ET.ElementTree(root)
         with open(eui_path, "w", encoding="utf-8") as f:
-            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-            tree.write(f, encoding="unicode", xml_declaration=False)
+            f.write(self.to_xml_string(project_dir))
 
     @classmethod
     def _find_project_file(cls, directory):

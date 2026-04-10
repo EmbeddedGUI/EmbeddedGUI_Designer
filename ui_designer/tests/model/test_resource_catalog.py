@@ -170,6 +170,19 @@ class TestAutoDetectAddFile:
 class TestXmlSerialization:
     """Test save/load XML round-trip."""
 
+    def test_to_xml_string_includes_decl_and_entries(self):
+        cat = ResourceCatalog()
+        cat.add_image("star.png")
+        cat.add_font("demo.ttf")
+        cat.add_text_file("supported_text.txt")
+
+        xml = cat.to_xml_string()
+
+        assert xml.startswith('<?xml version="1.0" encoding="utf-8"?>\n')
+        assert '<ImageFile file="star.png"' in xml
+        assert '<FontFile file="demo.ttf"' in xml
+        assert '<TextFile file="supported_text.txt"' in xml
+
     def test_save_and_load_roundtrip(self, tmp_path):
         cat = ResourceCatalog()
         cat.add_image("star.png")

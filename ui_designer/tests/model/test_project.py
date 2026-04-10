@@ -235,6 +235,20 @@ class TestGetAllWidgets:
 class TestSaveLoad:
     """Tests for save/load file I/O."""
 
+    def test_to_xml_string_supports_explicit_stored_sdk_root(self):
+        proj = Project(screen_width=320, screen_height=480, app_name="XmlDemo")
+        proj.startup_page = "home"
+        proj.add_page(Page.create_default("home", screen_width=320, screen_height=480))
+        proj.add_page(Page.create_default("detail", screen_width=320, screen_height=480))
+
+        xml = proj.to_xml_string(stored_sdk_root="../../sdk/EmbeddedGUI")
+
+        assert xml.startswith('<?xml version="1.0" encoding="utf-8"?>\n')
+        assert 'sdk_root="../../sdk/EmbeddedGUI"' in xml
+        assert '<PageRef file="layout/home.xml"' in xml
+        assert '<PageRef file="layout/detail.xml"' in xml
+        assert 'startup="home"' in xml
+
     @pytest.mark.integration
     def test_save_load_round_trip_preserves_sdk_version_metadata(self, tmp_path, monkeypatch):
         proj = Project(screen_width=320, screen_height=480, app_name="VersionedApp")

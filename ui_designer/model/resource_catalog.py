@@ -107,8 +107,8 @@ class ResourceCatalog:
 
     # ── Serialization ─────────────────────────────────────────────
 
-    def save(self, project_dir):
-        """Save catalog to resources.xml in project directory."""
+    def to_xml_string(self):
+        """Serialize the catalog to a resources.xml string."""
         root = ET.Element("Resources")
 
         if self.images:
@@ -132,11 +132,15 @@ class ResourceCatalog:
                 elem.set("file", txt)
 
         ET.indent(root, space="    ")
+        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(
+            root, encoding="unicode"
+        )
+
+    def save(self, project_dir):
+        """Save catalog to resources.xml in project directory."""
         xml_path = os.path.join(project_dir, "resources.xml")
-        tree = ET.ElementTree(root)
         with open(xml_path, "w", encoding="utf-8") as f:
-            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-            tree.write(f, encoding="unicode", xml_declaration=False)
+            f.write(self.to_xml_string())
 
     @classmethod
     def load(cls, project_dir):

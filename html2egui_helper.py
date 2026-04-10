@@ -31,6 +31,10 @@ import re
 import subprocess
 import sys
 
+from ui_designer.model.page import Page
+from ui_designer.model.project import Project
+from ui_designer.model.resource_catalog import ResourceCatalog
+from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
@@ -66,45 +70,29 @@ def _find_sdk_root():
 
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
-# UI Designer project file template (use _build_egui_project_xml for multi-page)
-EGUI_PROJECT_TEMPLATE = """\
-<?xml version="1.0" encoding="utf-8"?>
-<Project app_name="{app_name}" screen_width="{width}" screen_height="{height}" page_mode="easy_page" startup="{startup}" sdk_root="{sdk_root}">
-    <Pages>
-{page_refs}
-    </Pages>
-    <Resources catalog="resources.xml" />
-</Project>
-"""
-
-
 def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
     """Build .egui project XML with multiple page refs."""
     if pages is None:
         pages = ["main_page"]
-    page_refs = "\n".join(
-        f'        <PageRef file="layout/{p}.xml" />' for p in pages
-    )
-    return EGUI_PROJECT_TEMPLATE.format(
-        app_name=app_name, width=width, height=height,
-        startup=pages[0], sdk_root=sdk_root, page_refs=page_refs
-    )
+    project = Project(screen_width=width, screen_height=height, app_name=app_name)
+    project.startup_page = pages[0]
+    for page_name in pages:
+        page = Page(file_path=f"layout/{page_name}.xml")
+        page.root_widget = WidgetModel("group", name="root", x=0, y=0, width=width, height=height)
+        project.add_page(page)
+    return project.to_xml_string(stored_sdk_root=sdk_root)
 
-# Empty page layout template
-PAGE_XML_TEMPLATE = """\
-<?xml version="1.0" encoding="utf-8"?>
-<Page>
-    <Group id="root" x="0" y="0" width="{width}" height="{height}" />
-</Page>
-"""
 
-# Resource catalog template
-RESOURCES_XML_TEMPLATE = """\
-<?xml version="1.0" encoding="utf-8"?>
-<Resources>
-    <Images />
-</Resources>
-"""
+def _build_empty_page_xml(page_name, width, height):
+    """Build an empty page layout XML using the shared page serializer."""
+    page = Page(file_path=f"layout/{page_name}.xml")
+    page.root_widget = WidgetModel("group", name="root", x=0, y=0, width=width, height=height)
+    return page.to_xml_string()
+
+
+def _build_empty_resources_xml():
+    """Build an empty resources.xml using the shared catalog serializer."""
+    return ResourceCatalog().to_xml_string()
 
 
 def cmd_scaffold(args):
@@ -180,14 +168,14 @@ def cmd_scaffold(args):
 
     # resources.xml (always overwrite)
     _write_file(os.path.join(config_dir, "resources", "resources.xml"),
-                RESOURCES_XML_TEMPLATE)
+                _build_empty_resources_xml())
 
     # Page XML templates — only create if they do not exist (user/AI-owned)
     for page_name in pages:
         page_xml_path = os.path.join(config_dir, "layout", f"{page_name}.xml")
         if not os.path.exists(page_xml_path):
             _write_file(page_xml_path,
-                         PAGE_XML_TEMPLATE.format(width=width, height=height))
+                         _build_empty_page_xml(page_name, width, height))
             print(f"  Created: {page_name}.xml (empty template)")
         else:
             print(f"  Skipped: {page_name}.xml (already exists)")
