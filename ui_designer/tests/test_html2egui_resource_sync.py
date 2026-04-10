@@ -1,5 +1,6 @@
 """Tests for helper-side resource sync filtering in html2egui_helper.py."""
 
+import json
 import os
 import sys
 from types import SimpleNamespace
@@ -93,6 +94,62 @@ class TestHelperResourceSync:
         assert created_again is False
         assert config_path.read_text(encoding="utf-8") == h.make_empty_resource_config_content()
 
+    def test_sync_exported_pngs_skips_reserved_filenames(self, tmp_path):
+        output_dir = tmp_path / "out"
+        src_dir = tmp_path / "src"
+        output_dir.mkdir()
+        (output_dir / "kept.png").write_bytes(b"PNG")
+        (output_dir / "_generated_text_demo_16_4.png").write_bytes(b"BAD")
+
+        synced = h._sync_exported_pngs(
+            str(output_dir),
+            str(src_dir),
+            ["kept.png", "_generated_text_demo_16_4.png"],
+            reserved_label="SVG",
+        )
+
+        assert synced == ["kept.png"]
+        assert (src_dir / "kept.png").is_file()
+        assert not (src_dir / "_generated_text_demo_16_4.png").exists()
+
+    def test_update_resource_config_files_appends_only_missing_entries(self, tmp_path):
+        config_path = tmp_path / "app_resource_config.json"
+        config_path.write_text(
+            json.dumps(
+                {
+                    "img": [
+                        {
+                            "file": "icon_wifi.png",
+                            "external": "0",
+                            "format": "alpha",
+                            "alpha": "4",
+                            "dim": "24,24",
+                        }
+                    ],
+                    "font": [],
+                },
+                indent=4,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+        h._update_resource_config_files(
+            str(config_path),
+            ["icon_wifi.png", "icon_alarm.png", "icon_alarm.png"],
+            24,
+            image_format="alpha",
+            entry_label="icon",
+        )
+
+        saved = json.loads(config_path.read_text(encoding="utf-8"))
+        assert [entry["file"] for entry in saved["img"]] == [
+            "icon_wifi.png",
+            "icon_alarm.png",
+        ]
+        assert saved["img"][1]["format"] == "alpha"
+        assert saved["img"][1]["dim"] == "24,24"
+
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
         sdk_root = tmp_path / "sdk"
         tools_dir = sdk_root / "scripts" / "tools"
@@ -126,8 +183,6 @@ class TestHelperResourceSync:
         src_dir = app_dir / "resource" / "src"
         output_dir.mkdir(parents=True)
 
-        updated_configs = []
-
         def fake_render(svg_str, out_path, size):
             with open(out_path, "wb") as f:
                 f.write(b"PNG")
@@ -143,9 +198,9 @@ class TestHelperResourceSync:
         monkeypatch.setattr(h, "_ensure_svg_dimensions", lambda svg, _size: svg)
         monkeypatch.setattr(
             h,
-            "_update_resource_config",
-            lambda config_path, names, size, image_format="rgb565", suffix="": updated_configs.append(
-                (config_path, list(names), size, image_format, suffix)
+            "_update_resource_config_files",
+            lambda config_path, filenames, size, image_format="rgb565", image_alpha="4", entry_label="image": (_ for _ in ()).throw(
+                AssertionError("resource config should not be updated for reserved-only SVG exports")
             ),
         )
 
@@ -163,4 +218,3 @@ class TestHelperResourceSync:
         assert (output_dir / "_generated_text_demo_16_4.png").is_file()
         assert not (src_dir / "_generated_text_demo_16_4.png").exists()
         assert not (src_dir / "app_resource_config.json").exists()
-        assert updated_configs == []

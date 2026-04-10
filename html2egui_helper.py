@@ -706,8 +706,34 @@ def _material_icon_codepoint(icon_name):
     return _MATERIAL_ICON_CODEPOINTS.get(icon_name, None)
 
 
-def _update_resource_config(config_path, icon_names, icon_size, image_format="rgb565", image_alpha="4", suffix=""):
-    """Update the user overlay resource config with image entries."""
+def _sync_exported_pngs(output_dir, src_dir, filenames, *, reserved_label="asset"):
+    """Copy exported PNGs into resource/src/, skipping reserved filenames."""
+    import shutil
+
+    os.makedirs(src_dir, exist_ok=True)
+    synced_filenames = []
+    for filename in filenames:
+        if is_designer_resource_path(filename):
+            print(f"  Skipped reserved {reserved_label} filename: {filename}")
+            continue
+        src_png = os.path.join(output_dir, filename)
+        dst_png = os.path.join(src_dir, filename)
+        if os.path.exists(src_png):
+            shutil.copy2(src_png, dst_png)
+            synced_filenames.append(filename)
+    return synced_filenames
+
+
+def _update_resource_config_files(
+    config_path,
+    filenames,
+    image_size,
+    *,
+    image_format="rgb565",
+    image_alpha="4",
+    entry_label="image",
+):
+    """Update the user overlay resource config with concrete image filenames."""
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -732,10 +758,9 @@ def _update_resource_config(config_path, icon_names, icon_size, image_format="rg
     existing_files = {entry.get("file", "") for entry in config["img"]}
 
     added = 0
-    for name in icon_names:
-        filename = f"icon_{name}{suffix}.png"
+    for filename in filenames:
         if filename not in existing_files:
-            dim_str = f"{icon_size},{icon_size}"
+            dim_str = f"{image_size},{image_size}"
             config["img"].append({
                 "file": filename,
                 "external": "0",
@@ -743,12 +768,28 @@ def _update_resource_config(config_path, icon_names, icon_size, image_format="rg
                 "alpha": image_alpha,
                 "dim": dim_str,
             })
+            existing_files.add(filename)
             added += 1
 
     with open(config_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
 
-    print(f"  Updated resource config: {added} new icon(s) added, {len(config['img'])} total images")
+    print(
+        f"  Updated resource config: {added} new {entry_label}(s) added, "
+        f"{len(config['img'])} total images"
+    )
+
+
+def _update_resource_config(config_path, icon_names, icon_size, image_format="rgb565", image_alpha="4", suffix=""):
+    """Update the user overlay resource config with image entries."""
+    _update_resource_config_files(
+        config_path,
+        [f"icon_{name}{suffix}.png" for name in icon_names],
+        icon_size,
+        image_format=image_format,
+        image_alpha=image_alpha,
+        entry_label="icon",
+    )
 
 
 def cmd_export_icons(args):
@@ -820,41 +861,34 @@ def cmd_export_icons(args):
 
     print(f"\nRendered {rendered}/{len(icons)} icons to {output_dir}")
 
+    icon_filenames = [f"icon_{name}{suffix}.png" for name in icons]
+
     # Sync PNGs to resource/src/ if using --app (designer workflow)
     if app_name:
         app_dir = _get_app_dir(sdk_root, app_name)
         src_dir = _get_app_resource_src_dir(app_dir)
-        os.makedirs(src_dir, exist_ok=True)
-        import shutil
-        synced = 0
-        syncable_icons = []
-        for name in icons:
-            fname = f"icon_{name}{suffix}.png"
-            if is_designer_resource_path(fname):
-                print(f"  Skipped reserved icon filename: {fname}")
-                continue
-            src_png = os.path.join(output_dir, fname)
-            dst_png = os.path.join(src_dir, fname)
-            if os.path.exists(src_png):
-                shutil.copy2(src_png, dst_png)
-                synced += 1
-                syncable_icons.append(name)
-        print(f"  Synced {synced} icons to {src_dir}")
+        synced_filenames = _sync_exported_pngs(
+            output_dir,
+            src_dir,
+            icon_filenames,
+            reserved_label="icon",
+        )
+        print(f"  Synced {len(synced_filenames)} icons to {src_dir}")
         config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
     else:
         config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
-        syncable_icons = list(icons)
+        synced_filenames = list(icon_filenames)
 
     # Update resource config
     if _ensure_resource_config_file(config_path):
         print(f"  Created new: {config_path}")
 
-    _update_resource_config(
+    _update_resource_config_files(
         config_path,
-        syncable_icons,
+        synced_filenames,
         size,
         image_format=getattr(args, "image_format", "alpha"),
-        suffix=suffix,
+        entry_label="icon",
     )
 
     if app_name:
@@ -1261,34 +1295,30 @@ def cmd_export_svgs(args):
 
     print(f"\nRendered {rendered}/{len(svgs)} SVGs to {output_dir}")
 
+    exported_filenames = [f"{prefix}{name}.png" for name in exported_names]
+
     # Sync to resource/src/ if using --app
     if app_name and exported_names:
         app_dir = _get_app_dir(sdk_root, app_name)
         src_dir = _get_app_resource_src_dir(app_dir)
-        os.makedirs(src_dir, exist_ok=True)
-        import shutil
-        synced = 0
-        syncable_exported_names = []
-        for name in exported_names:
-            fname = f"{prefix}{name}.png"
-            if is_designer_resource_path(fname):
-                print(f"  Skipped reserved SVG filename: {fname}")
-                continue
-            src_png = os.path.join(output_dir, fname)
-            dst_png = os.path.join(src_dir, fname)
-            if os.path.exists(src_png):
-                shutil.copy2(src_png, dst_png)
-                synced += 1
-                syncable_exported_names.append(name)
-        print(f"  Synced {synced} SVG PNGs to {src_dir}")
+        synced_filenames = _sync_exported_pngs(
+            output_dir,
+            src_dir,
+            exported_filenames,
+            reserved_label="SVG",
+        )
+        print(f"  Synced {len(synced_filenames)} SVG PNGs to {src_dir}")
 
         # Update resource config
-        if syncable_exported_names:
+        if synced_filenames:
             config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
             _ensure_resource_config_file(config_path)
-            full_names = [f"{prefix}{n}" for n in syncable_exported_names]
-            _update_resource_config(config_path, full_names, size,
-                                    image_format=getattr(args, "image_format", "rgb565"))
+            _update_resource_config_files(
+                config_path,
+                synced_filenames,
+                size,
+                image_format=getattr(args, "image_format", "rgb565"),
+            )
 
 
 # ── Sub-command: extract-text ─────────────────────────────────────
