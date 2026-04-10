@@ -537,12 +537,17 @@ class TestAppSelectorDialog:
                 break
 
         assert dialog.selected_entry["app_name"] == "LegacyApp"
-        assert dialog._open_btn.text() == "Import"
-        assert dialog._open_btn.toolTip() == "Import the selected legacy example into a Designer project."
-        assert dialog._open_btn.accessibleName() == (
-            "Open action: Import. Import the selected legacy example into a Designer project."
+        assert dialog._open_btn.text() == "Initialize"
+        assert dialog._open_btn.toolTip() == (
+            "Initialize a fresh Designer project scaffold in the selected SDK example directory. "
+            "Existing app pages, resources, and business code are not migrated."
         )
-        assert "initialize a Designer project" in dialog._selection_hint_label.text()
+        assert dialog._open_btn.accessibleName() == (
+            "Open action: Initialize. Initialize a fresh Designer project scaffold in the selected SDK example "
+            "directory. Existing app pages, resources, and business code are not migrated."
+        )
+        assert "fresh Designer project scaffold" in dialog._selection_hint_label.text()
+        assert "not migrated" in dialog._selection_hint_label.text()
         assert str(legacy) in dialog._selection_hint_label.text()
         dialog.deleteLater()
 
@@ -1002,10 +1007,14 @@ class TestWelcomePage:
             "Open project file action. Open an existing .egui project file."
         )
         assert page._open_app_btn.text() == "Open Example..."
-        assert page._open_app_btn.toolTip() == "Open a bundled example, SDK example project, or legacy example."
+        assert page._open_app_btn.toolTip() == (
+            "Open a bundled example, SDK example project, or initialize a Designer project "
+            "for an unmanaged SDK example."
+        )
         assert page._open_app_btn.statusTip() == page._open_app_btn.toolTip()
         assert page._open_app_btn.accessibleName() == (
-            "Open example action. Open a bundled example, SDK example project, or legacy example."
+            "Open example action. Open a bundled example, SDK example project, or initialize a Designer project "
+            "for an unmanaged SDK example."
         )
         assert page._set_sdk_root_btn.text() == "Set SDK..."
         assert page._set_sdk_root_btn.toolTip() == "Change the EmbeddedGUI SDK root used for compile preview."

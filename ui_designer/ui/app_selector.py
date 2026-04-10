@@ -664,17 +664,18 @@ class AppSelectorDialog(QDialog):
         if not entry:
             self._open_btn.setText("Open")
             self._selection_hint_label.setText(
-                "Select an example project or a legacy example from the list."
+                "Select an example project or an unmanaged SDK example from the list."
             )
             _set_label_hint_tone(self._selection_hint_label, "muted")
             self._update_accessibility_summary()
             return
 
         if entry.get("is_legacy"):
-            self._open_btn.setText("Import")
+            self._open_btn.setText("Initialize")
             self._selection_hint_label.setText(
-                f"Legacy path:\n{entry.get('app_dir', '')}\n\n"
-                "Opening it will initialize a Designer project in this app directory."
+                f"SDK example path:\n{entry.get('app_dir', '')}\n\n"
+                "This initializes a fresh Designer project scaffold here. Existing app pages, "
+                "resources, and business code are not migrated."
             )
             _set_label_hint_tone(self._selection_hint_label, "warning")
             self._update_accessibility_summary()
@@ -698,7 +699,7 @@ class AppSelectorDialog(QDialog):
         if not self._selected_entry:
             return "Selection required"
         if self._selected_entry.get("is_legacy"):
-            return "Import legacy example"
+            return "Initialize Designer project"
         return "Open example project"
 
     def _update_accessibility_summary(self):
@@ -766,7 +767,10 @@ class AppSelectorDialog(QDialog):
         if not self._selected_entry:
             open_hint = "Select an example to open it."
         elif self._selected_entry.get("is_legacy"):
-            open_hint = "Import the selected legacy example into a Designer project."
+            open_hint = (
+                "Initialize a fresh Designer project scaffold in the selected SDK example directory. "
+                "Existing app pages, resources, and business code are not migrated."
+            )
         else:
             open_hint = "Open the selected example project."
         _set_widget_metadata(

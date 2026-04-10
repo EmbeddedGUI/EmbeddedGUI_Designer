@@ -1397,7 +1397,8 @@ class MainWindow(QMainWindow):
             default_sdk_root = self._active_sdk_root() or "none"
             self._apply_action_hint(
                 open_app_action,
-                f"Open a bundled example, SDK example project, or legacy example. Current binding: {label}. Default SDK root: {default_sdk_root}.",
+                "Open a bundled example, SDK example project, or initialize a Designer project "
+                f"for an unmanaged SDK example. Current binding: {label}. Default SDK root: {default_sdk_root}.",
             )
         open_project_action = getattr(self, "_open_project_action", None)
         if open_project_action is not None:
@@ -3254,7 +3255,10 @@ class MainWindow(QMainWindow):
 
         self._open_app_action = QAction("Open Example...", self)
         self._open_app_action.setShortcut("Ctrl+Shift+O")
-        self._apply_action_hint(self._open_app_action, "Open a bundled example, SDK example project, or legacy example.")
+        self._apply_action_hint(
+            self._open_app_action,
+            "Open a bundled example, SDK example project, or initialize a Designer project for an unmanaged SDK example.",
+        )
         self._open_app_action.triggered.connect(self._open_app_dialog)
         file_menu.addAction(self._open_app_action)
 
@@ -4187,7 +4191,7 @@ class MainWindow(QMainWindow):
         try:
             self._import_legacy_example(entry, sdk_root)
         except Exception as exc:
-            QMessageBox.critical(self, "Error", f"Failed to import legacy example:\n{exc}")
+            QMessageBox.critical(self, "Error", f"Failed to initialize Designer project for SDK example:\n{exc}")
 
     def _set_sdk_root(self):
         path = QFileDialog.getExistingDirectory(self, "Select EmbeddedGUI SDK Root", self._active_sdk_root() or "")
@@ -4238,6 +4242,20 @@ class MainWindow(QMainWindow):
                 "Legacy Example Conflict",
                 "This example already contains a .eguiproject directory but has no .egui file. Please resolve the directory conflict manually before importing it into Designer.",
             )
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Initialize Designer Project",
+            "This will create a fresh Designer project scaffold in the selected SDK example directory.\n\n"
+            "Existing app pages, resources, and business code remain on disk, but they are not migrated into "
+            "Designer-managed pages or resource models.\n\n"
+            f"App: {app_name}\n"
+            f"Path:\n{app_dir}",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
             return
 
         project = self._create_standard_project_model(app_name, sdk_root, app_dir)

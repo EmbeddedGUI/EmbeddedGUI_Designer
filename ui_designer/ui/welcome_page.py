@@ -328,7 +328,7 @@ class WelcomePage(QWidget):
         )
         _set_widget_metadata(
             self._open_app_btn,
-            tooltip="Open a bundled example, SDK example project, or legacy example.",
+            tooltip="Open a bundled example, SDK example project, or initialize a Designer project for an unmanaged SDK example.",
             accessible_name="Open example",
         )
         _set_widget_metadata(self._set_sdk_root_btn, tooltip="Choose the EmbeddedGUI SDK root used for compile preview.", accessible_name="Set SDK root")
@@ -540,7 +540,10 @@ class WelcomePage(QWidget):
             accessible_name=f"SDK hint: {self._sdk_hint_label.text()}",
         )
         if sdk_status.startswith("Ready:"):
-            open_app_hint = "Open a bundled example, SDK example project, or legacy example."
+            open_app_hint = (
+                "Open a bundled example, SDK example project, or initialize a Designer project "
+                "for an unmanaged SDK example."
+            )
             set_sdk_hint = "Change the EmbeddedGUI SDK root used for compile preview."
         elif sdk_status.startswith("Invalid:"):
             open_app_hint = "Open a bundled example, or fix the SDK root before browsing SDK examples."

@@ -3960,6 +3960,7 @@ class TestMainWindowFileFlow:
             opened["silent"] = silent
 
         monkeypatch.setattr(window, "_open_project_path", fake_open_project_path)
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
 
         window._import_legacy_example(
             {
@@ -4010,6 +4011,7 @@ class TestMainWindowFileFlow:
             opened["silent"] = silent
 
         monkeypatch.setattr(window, "_open_project_path", fake_open_project_path)
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
 
         window._import_legacy_example(
             {
@@ -4024,6 +4026,32 @@ class TestMainWindowFileFlow:
         assert saved.screen_width == 240
         assert saved.screen_height == 320
         assert opened["path"] == os.path.normpath(os.path.abspath(project_path))
+        _close_window(window)
+
+    def test_import_legacy_example_cancels_when_user_declines_initialization(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        app_dir = sdk_root / "example" / "LegacyDeclined"
+        app_dir.mkdir(parents=True)
+        (app_dir / "build.mk").write_text("# legacy\n", encoding="utf-8")
+
+        window = MainWindow(str(sdk_root))
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.No)
+        monkeypatch.setattr(window, "_open_project_path", lambda *args, **kwargs: pytest.fail("_open_project_path should not be called"))
+
+        window._import_legacy_example(
+            {
+                "app_name": "LegacyDeclined",
+                "app_dir": str(app_dir),
+            },
+            str(sdk_root),
+        )
+
+        assert not (app_dir / "LegacyDeclined.egui").exists()
+        assert not (app_dir / ".designer").exists()
         _close_window(window)
 
     def test_import_legacy_example_warns_on_eguiproject_conflict(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -5411,7 +5439,8 @@ class TestMainWindowFileFlow:
         )
         assert actions["New Project"].statusTip() == actions["New Project"].toolTip()
         assert actions["Open Example..."].toolTip() == (
-            "Open a bundled example, SDK example project, or legacy example. "
+            "Open a bundled example, SDK example project, or initialize a Designer project "
+            "for an unmanaged SDK example. "
             f"Current binding: SDK: missing. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
@@ -5468,7 +5497,8 @@ class TestMainWindowFileFlow:
             if action.text() in {"Open Example...", "Open Project..."}
         }
         assert actions["Open Example..."].toolTip() == (
-            "Open a bundled example, SDK example project, or legacy example. "
+            "Open a bundled example, SDK example project, or initialize a Designer project "
+            "for an unmanaged SDK example. "
             f"Current binding: SDK: cached. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert actions["Open Example..."].statusTip() == actions["Open Example..."].toolTip()
@@ -5493,7 +5523,8 @@ class TestMainWindowFileFlow:
             if action.text() == "Open Example..."
         )
         assert action.toolTip() == (
-            "Open a bundled example, SDK example project, or legacy example. "
+            "Open a bundled example, SDK example project, or initialize a Designer project "
+            "for an unmanaged SDK example. "
             f"Current binding: SDK: sdk-example. Default SDK root: {window._active_sdk_root() or 'none'}."
         )
         assert action.statusTip() == action.toolTip()
