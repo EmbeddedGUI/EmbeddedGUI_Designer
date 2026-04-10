@@ -135,6 +135,20 @@ class TestHelperResourceSync:
 
         assert h._read_required_text_file(str(html_path), error_label="HTML file") == "<div>Hello</div>"
 
+    def test_require_existing_file_returns_path_when_present(self, tmp_path):
+        html_path = tmp_path / "demo.html"
+        html_path.write_text("<div>Hello</div>", encoding="utf-8")
+
+        assert h._require_existing_file(str(html_path), error_label="HTML file") == str(html_path)
+
+    def test_require_existing_file_exits_with_error_message(self, tmp_path, capsys):
+        missing = tmp_path / "missing.html"
+
+        with pytest.raises(SystemExit, match="1"):
+            h._require_existing_file(str(missing), error_label="HTML file")
+
+        assert capsys.readouterr().out == f"ERROR: HTML file not found: {missing}\n"
+
     def test_read_required_text_file_exits_with_error_message(self, tmp_path, capsys):
         missing = tmp_path / "missing.html"
 

@@ -145,12 +145,21 @@ def _resolve_existing_app_dir(app_name):
     return sdk_root, app_dir
 
 
-def _read_required_text_file(path, *, error_label="File", error_file=None):
-    """Read a required UTF-8 text file or exit with a CLI-style error."""
+def _require_existing_file(path, *, error_label="File", error_file=None):
+    """Validate that a required file exists or exit with a CLI-style error."""
     if not os.path.isfile(path):
         print(f"ERROR: {error_label} not found: {path}", file=error_file)
         sys.exit(1)
-    with open(path, "r", encoding="utf-8") as f:
+    return path
+
+
+def _read_required_text_file(path, *, error_label="File", error_file=None):
+    """Read a required UTF-8 text file or exit with a CLI-style error."""
+    with open(
+        _require_existing_file(path, error_label=error_label, error_file=error_file),
+        "r",
+        encoding="utf-8",
+    ) as f:
         return f.read()
 
 
@@ -843,9 +852,7 @@ def _update_resource_config_files(
 
 def cmd_export_icons(args):
     """Extract Material Symbols from HTML, render as PNG, update resource config."""
-    if not os.path.isfile(args.input):
-        print(f"ERROR: HTML file not found: {args.input}")
-        sys.exit(1)
+    _require_existing_file(args.input, error_label="HTML file")
 
     sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
