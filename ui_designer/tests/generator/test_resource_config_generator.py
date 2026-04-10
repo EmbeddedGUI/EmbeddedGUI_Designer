@@ -327,3 +327,31 @@ class TestGenerateAndSave:
 
         txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
         assert txt_files == []
+
+    def test_keeps_active_generated_text_files_and_unrelated_designer_files(self, tmp_path):
+        title = WidgetModel("label", name="title", x=0, y=0, width=100, height=30)
+        title.properties["text"] = "Hello"
+        title.properties["font_file"] = "test.ttf"
+        title.properties["font_pixelsize"] = "16"
+        title.properties["font_fontbitsize"] = "4"
+
+        subtitle = WidgetModel("label", name="subtitle", x=0, y=40, width=100, height=30)
+        subtitle.properties["text"] = "World"
+        subtitle.properties["font_file"] = "test.ttf"
+        subtitle.properties["font_pixelsize"] = "20"
+        subtitle.properties["font_fontbitsize"] = "4"
+
+        gen = ResourceConfigGenerator()
+        gen.generate_and_save(_make_project_with_widgets([title, subtitle]), str(tmp_path))
+
+        txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
+        generated_before = sorted(f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_"))
+        assert len(generated_before) == 2
+        (txt_root / "notes.txt").write_text("keep me\n", encoding="utf-8")
+
+        gen.generate_and_save(_make_project_with_widgets([title]), str(tmp_path))
+
+        generated_after = sorted(f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_"))
+        assert len(generated_after) == 1
+        assert generated_after[0] in generated_before
+        assert (txt_root / "notes.txt").is_file()

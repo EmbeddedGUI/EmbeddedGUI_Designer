@@ -101,6 +101,41 @@ class TestMergeResourceConfigs:
         assert merged["img"] == [{"file": "user.png", "format": "alpha", "alpha": "4"}]
         assert merged["theme"] == "custom"
 
+    def test_font_text_merge_deduplicates_repeated_paths(self):
+        merged = merge_resource_configs(
+            {
+                "img": [],
+                "font": [
+                    {
+                        "file": "demo.ttf",
+                        "pixelsize": "16",
+                        "fontbitsize": "4",
+                        "text": ".designer/_generated_text_demo_16_4.txt,shared.txt",
+                    }
+                ],
+            },
+            {
+                "img": [],
+                "font": [
+                    {
+                        "file": "demo.ttf",
+                        "pixelsize": "16",
+                        "fontbitsize": "4",
+                        "text": "shared.txt,custom.txt",
+                    }
+                ],
+            },
+        )
+
+        assert merged["font"] == [
+            {
+                "file": "demo.ttf",
+                "pixelsize": "16",
+                "fontbitsize": "4",
+                "text": ".designer/_generated_text_demo_16_4.txt,shared.txt,custom.txt",
+            }
+        ]
+
 
 class TestLoadMergedResourceConfig:
     def test_loads_split_files_from_disk(self, tmp_path):
@@ -134,6 +169,48 @@ class TestLoadMergedResourceConfig:
             {
                 "file": "designer.png",
                 "format": "rgb565",
+                "alpha": "4",
+                "external": "1",
+            }
+        ]
+
+    def test_loads_legacy_root_designer_config_when_split_file_is_missing(self, tmp_path):
+        (tmp_path / APP_RESOURCE_CONFIG_DESIGNER_FILENAME).write_text(
+            json.dumps(
+                {
+                    "img": [{"file": "legacy.png", "format": "alpha", "alpha": "4"}],
+                    "font": [],
+                },
+                ensure_ascii=False,
+                indent=4,
+            ),
+            encoding="utf-8",
+        )
+        (tmp_path / APP_RESOURCE_CONFIG_FILENAME).write_text(
+            json.dumps(
+                {
+                    "img": [
+                        {
+                            "file": "legacy.png",
+                            "format": "alpha",
+                            "alpha": "4",
+                            "external": "1",
+                        }
+                    ],
+                    "font": [],
+                },
+                ensure_ascii=False,
+                indent=4,
+            ),
+            encoding="utf-8",
+        )
+
+        merged = load_merged_resource_config(str(tmp_path))
+
+        assert merged["img"] == [
+            {
+                "file": "legacy.png",
+                "format": "alpha",
                 "alpha": "4",
                 "external": "1",
             }
