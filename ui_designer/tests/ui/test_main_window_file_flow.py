@@ -3222,10 +3222,10 @@ class TestMainWindowFileFlow:
         class FakeDialog:
             Accepted = 1
 
-            def __init__(self, parent=None, egui_root=None, on_download_sdk=None):
-                captured["egui_root"] = egui_root
+            def __init__(self, parent=None, sdk_root=None, egui_root=None, on_download_sdk=None):
+                captured["sdk_root"] = sdk_root if sdk_root is not None else egui_root
                 self._selected_entry = None
-                self._egui_root = egui_root
+                self._sdk_root = sdk_root if sdk_root is not None else egui_root
 
             def exec_(self):
                 return 0
@@ -3235,8 +3235,8 @@ class TestMainWindowFileFlow:
                 return self._selected_entry
 
             @property
-            def egui_root(self):
-                return self._egui_root
+            def sdk_root(self):
+                return self._sdk_root
 
         window = MainWindow("")
         monkeypatch.setattr("ui_designer.ui.main_window.default_sdk_install_dir", lambda: str(cached_sdk))
@@ -3244,7 +3244,7 @@ class TestMainWindowFileFlow:
 
         window._open_app_dialog()
 
-        assert captured["egui_root"] == os.path.normpath(os.path.abspath(cached_sdk))
+        assert captured["sdk_root"] == os.path.normpath(os.path.abspath(cached_sdk))
         _close_window(window)
 
     def test_open_app_dialog_opens_bundled_example_without_rebinding_sdk(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -3263,7 +3263,7 @@ class TestMainWindowFileFlow:
         class FakeDialog:
             Accepted = 1
 
-            def __init__(self, parent=None, egui_root=None, on_download_sdk=None):
+            def __init__(self, parent=None, sdk_root=None, egui_root=None, on_download_sdk=None):
                 self._selected_entry = {
                     "app_name": "DesignerSandbox",
                     "project_path": str(project_path),
@@ -3271,7 +3271,7 @@ class TestMainWindowFileFlow:
                     "is_unmanaged": False,
                     "source": "designer",
                 }
-                self._egui_root = ""
+                self._sdk_root = sdk_root if sdk_root is not None else egui_root or ""
 
             def exec_(self):
                 return self.Accepted
@@ -3281,8 +3281,8 @@ class TestMainWindowFileFlow:
                 return self._selected_entry
 
             @property
-            def egui_root(self):
-                return self._egui_root
+            def sdk_root(self):
+                return self._sdk_root
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.AppSelectorDialog", FakeDialog)

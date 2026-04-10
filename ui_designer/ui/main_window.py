@@ -2604,7 +2604,6 @@ class MainWindow(QMainWindow):
 
         self.project_root = path
         self._config.sdk_root = path
-        self._config.egui_root = path
         self._config.save()
 
         if self.project is not None:
@@ -2704,7 +2703,6 @@ class MainWindow(QMainWindow):
         self._config.last_project_path = normalize_path(os.path.join(self._project_dir, f"{self.app_name}.egui")) if self._project_dir else ""
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
-            self._config.egui_root = self.project_root
         if self._config.last_project_path:
             self._config.add_recent_project(self._config.last_project_path, self.project_root, self.app_name)
         else:
@@ -3123,7 +3121,6 @@ class MainWindow(QMainWindow):
             infer_sdk_root_from_project_dir(project_dir),
             self.project_root,
             self._config.sdk_root,
-            self._config.egui_root,
         )
         project.sdk_root = resolved_sdk_root or normalize_path(preferred_sdk_root or project.sdk_root)
         project.project_dir = project_dir
@@ -4164,12 +4161,12 @@ class MainWindow(QMainWindow):
 
     def _open_app_dialog(self):
         """Show dialog to select and open a bundled or SDK example."""
-        dialog = AppSelectorDialog(self, self._active_sdk_root())
+        dialog = AppSelectorDialog(self, sdk_root=self._active_sdk_root())
         if dialog.exec_() != QDialog.Accepted:
             return
 
         entry = dialog.selected_entry
-        sdk_root = normalize_path(dialog.egui_root)
+        sdk_root = normalize_path(dialog.sdk_root)
         if not entry:
             return
 
@@ -4177,7 +4174,6 @@ class MainWindow(QMainWindow):
         if entry_source == "sdk":
             self.project_root = sdk_root
             self._config.sdk_root = sdk_root
-            self._config.egui_root = sdk_root
             self._config.save()
 
         if entry.get("has_project"):
@@ -4573,7 +4569,6 @@ class MainWindow(QMainWindow):
         return self._resolve_ui_sdk_root(
             self.project_root,
             self._config.sdk_root,
-            self._config.egui_root,
         )
 
     def _nearest_existing_directory(self, path=""):
@@ -7647,7 +7642,6 @@ class MainWindow(QMainWindow):
         self._save_diagnostics_view_state()
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
-            self._config.egui_root = self.project_root
         self._config.save()
 
         self._bump_async_generation()

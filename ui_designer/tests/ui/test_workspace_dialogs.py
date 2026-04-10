@@ -427,6 +427,21 @@ class TestAppSelectorDialog:
         assert dialog._root_edit.text() == os.path.normpath(os.path.abspath(sdk_root))
         dialog.deleteLater()
 
+    def test_sdk_root_keyword_sets_canonical_dialog_root(self, qapp, isolated_config, tmp_path):
+        from ui_designer.ui.app_selector import AppSelectorDialog
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        (sdk_root / "example").mkdir()
+
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
+
+        expected = os.path.normpath(os.path.abspath(sdk_root))
+        assert dialog.sdk_root == expected
+        assert dialog.egui_root == expected
+        assert dialog._root_edit.text() == expected
+        dialog.deleteLater()
+
     def test_search_filters_examples_by_name(self, qapp, isolated_config, tmp_path):
         from ui_designer.ui.app_selector import AppSelectorDialog
 

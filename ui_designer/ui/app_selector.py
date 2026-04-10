@@ -153,17 +153,17 @@ class AppEntryRowWidget(QWidget):
 class AppSelectorDialog(QDialog):
     """Dialog for opening bundled, Designer-aware, or unmanaged SDK examples."""
 
-    def __init__(self, parent=None, egui_root=None):
+    def __init__(self, parent=None, sdk_root=None, egui_root=None):
         super().__init__(parent)
         self.setWindowTitle("Open Example")
         self.setMinimumSize(860, 620)
         self.resize(980, 680)
 
         self._config = get_config()
-        self._egui_root = resolve_configured_sdk_root(
-            egui_root,
+        initial_sdk_root = sdk_root if sdk_root is not None else egui_root
+        self._sdk_root = resolve_configured_sdk_root(
+            initial_sdk_root,
             self._config.sdk_root,
-            self._config.egui_root,
             cached_sdk_root=default_sdk_install_dir(),
             preserve_invalid=True,
         )
@@ -261,7 +261,7 @@ class AppSelectorDialog(QDialog):
         root_layout.addWidget(root_label)
 
         self._root_edit = LineEdit()
-        self._root_edit.setText(self._egui_root)
+        self._root_edit.setText(self._sdk_root)
         self._root_edit.setReadOnly(True)
         root_layout.addWidget(self._root_edit)
 
@@ -483,7 +483,7 @@ class AppSelectorDialog(QDialog):
                 widget.set_selected(item is current_item)
 
     def _browse_root(self):
-        path = QFileDialog.getExistingDirectory(self, "Select EmbeddedGUI SDK Root", self._egui_root or "")
+        path = QFileDialog.getExistingDirectory(self, "Select EmbeddedGUI SDK Root", self._sdk_root or "")
         if not path:
             return
         path = resolve_sdk_root_candidate(path)
@@ -494,7 +494,7 @@ class AppSelectorDialog(QDialog):
                 "This directory does not appear to contain a valid EmbeddedGUI SDK root.",
             )
             return
-        self._egui_root = path
+        self._sdk_root = path
         self._root_edit.setText(path)
         self._refresh_app_list()
 
@@ -530,9 +530,9 @@ class AppSelectorDialog(QDialog):
         self._refresh_root_status()
 
         bundled_entries = list_designer_example_entries()
-        has_valid_sdk = bool(self._egui_root and is_valid_sdk_root(self._egui_root))
+        has_valid_sdk = bool(self._sdk_root and is_valid_sdk_root(self._sdk_root))
 
-        if not bundled_entries and not self._egui_root:
+        if not bundled_entries and not self._sdk_root:
             self._add_placeholder_item(
                 "(Set an SDK root first)",
                 tooltip="Set an SDK root first.",
@@ -542,7 +542,7 @@ class AppSelectorDialog(QDialog):
             self._update_accessibility_summary()
             return
 
-        if not bundled_entries and self._egui_root and not has_valid_sdk:
+        if not bundled_entries and self._sdk_root and not has_valid_sdk:
             self._add_placeholder_item(
                 "(Current SDK root is invalid)",
                 tooltip="Current SDK root is invalid.",
@@ -557,7 +557,7 @@ class AppSelectorDialog(QDialog):
         if has_valid_sdk:
             entries.extend(
                 self._config.list_available_app_entries(
-                    sdk_root=self._egui_root,
+                    sdk_root=self._sdk_root,
                     include_unmanaged=self._show_unmanaged.isChecked(),
                 )
             )
@@ -619,9 +619,9 @@ class AppSelectorDialog(QDialog):
         self._update_accessibility_summary()
 
     def _refresh_root_status(self):
-        status = describe_sdk_root(self._egui_root)
+        status = describe_sdk_root(self._sdk_root)
         if status == "ready":
-            source_kind = sdk_root_source_kind(self._egui_root)
+            source_kind = sdk_root_source_kind(self._sdk_root)
             if source_kind == "bundled":
                 self._root_status_label.setText("Ready: using bundled SDK workspace.")
             elif source_kind == "runtime_local":
@@ -631,7 +631,7 @@ class AppSelectorDialog(QDialog):
             else:
                 self._root_status_label.setText("Ready: using selected SDK root.")
             self._root_status_label.setText(
-                f"{self._root_status_label.text()}\n{describe_sdk_source_hint(self._egui_root)}"
+                f"{self._root_status_label.text()}\n{describe_sdk_source_hint(self._sdk_root)}"
             )
             _set_label_hint_tone(self._root_status_label, "success")
             return
@@ -709,7 +709,7 @@ class AppSelectorDialog(QDialog):
         return "Open example project"
 
     def _update_accessibility_summary(self):
-        root_value = self._egui_root or "none"
+        root_value = self._sdk_root or "none"
         root_status = self._root_status_label.text().strip() or "SDK root status unavailable."
         root_status_summary = root_status.splitlines()[0]
         search_text = self._search_edit.text().strip() or "none"
@@ -800,5 +800,10 @@ class AppSelectorDialog(QDialog):
         return None
 
     @property
+    def sdk_root(self):
+        return self._sdk_root
+
+    @property
     def egui_root(self):
-        return self._egui_root
+        """Compatibility alias for older call sites."""
+        return self._sdk_root
