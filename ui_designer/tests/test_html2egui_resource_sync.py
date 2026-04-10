@@ -110,6 +110,25 @@ class TestHelperResourceSync:
     def test_resolve_extract_text_output_path_allows_stdout_fallback(self, tmp_path):
         assert h._resolve_extract_text_output_path(str(tmp_path / "sdk")) == ""
 
+    def test_resolve_existing_app_dir_returns_sdk_and_app_paths(self, tmp_path, monkeypatch):
+        sdk_root = tmp_path / "sdk"
+        app_dir = sdk_root / "example" / "DemoApp"
+        app_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(h, "_find_sdk_root", lambda: str(sdk_root))
+
+        resolved_sdk_root, resolved_app_dir = h._resolve_existing_app_dir("DemoApp")
+
+        assert resolved_sdk_root == str(sdk_root)
+        assert resolved_app_dir == str(app_dir)
+
+    def test_resolve_existing_app_dir_exits_when_app_missing(self, tmp_path, monkeypatch):
+        sdk_root = tmp_path / "sdk"
+        monkeypatch.setattr(h, "_find_sdk_root", lambda: str(sdk_root))
+
+        with pytest.raises(SystemExit, match="1"):
+            h._resolve_existing_app_dir("MissingApp")
+
     def test_emit_json_output_writes_file_and_status_message(self, tmp_path, capsys):
         output_path = tmp_path / "layout.json"
 

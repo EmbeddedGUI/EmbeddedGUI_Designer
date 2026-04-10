@@ -135,6 +135,16 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
     return ""
 
 
+def _resolve_existing_app_dir(app_name):
+    """Resolve an existing app directory under the SDK example tree."""
+    sdk_root = _find_sdk_root()
+    app_dir = _get_app_dir(sdk_root, app_name)
+    if not os.path.isdir(app_dir):
+        print(f"ERROR: App directory not found: {app_dir}")
+        sys.exit(1)
+    return sdk_root, app_dir
+
+
 def _emit_json_output(output_path, output_json, *, written_message):
     """Write JSON text to a file or stdout using the helper's CLI conventions."""
     if output_path:
@@ -1443,13 +1453,8 @@ def cmd_extract_text(args):
 
 def cmd_gen_resource(args):
     """Run resource generation (wraps make resource)."""
-    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = _get_app_dir(sdk_root, app_name)
-
-    if not os.path.isdir(app_dir):
-        print(f"ERROR: App directory not found: {app_dir}")
-        sys.exit(1)
+    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     resource_dir = _get_app_generated_resource_dir(app_dir)
     src_dir = _get_app_resource_src_dir(app_dir)
@@ -1523,13 +1528,8 @@ def _sync_font_files(project, sdk_root, src_dir):
 
 def cmd_generate_code(args):
     """Generate C code from UI Designer XML project."""
-    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = _get_app_dir(sdk_root, app_name)
-
-    if not os.path.isdir(app_dir):
-        print(f"ERROR: App directory not found: {app_dir}")
-        sys.exit(1)
+    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     # Find .egui project file
     egui_file = os.path.join(app_dir, f"{app_name}.egui")
@@ -2107,13 +2107,8 @@ def cmd_extract_layout(args):
 
 def cmd_verify(args):
     """Build and run runtime check for an app."""
-    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = _get_app_dir(sdk_root, app_name)
-
-    if not os.path.isdir(app_dir):
-        print(f"ERROR: App directory not found: {app_dir}")
-        sys.exit(1)
+    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     bits_flag = "BITS=64" if args.bits64 else ""
 
