@@ -114,21 +114,6 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
 
 def _write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists():
-        if path.name == "app_egui_config.h":
-            existing = _read_text(path)
-            if existing is not None:
-                migrated = migrate_app_config_h_content(
-                    existing,
-                    path.parent.name,
-                    SCREEN_WIDTH,
-                    SCREEN_HEIGHT,
-                )
-                if migrated != existing:
-                    path.write_text(migrated, encoding="utf-8")
-                return
-        if path.name == APP_RESOURCE_CONFIG_FILENAME:
-            return
     path.write_text(content, encoding="utf-8")
 
 
@@ -137,6 +122,11 @@ def _read_text(path: Path) -> str | None:
         return path.read_text(encoding="utf-8")
     except OSError:
         return None
+
+
+def _write_text_if_missing(path: Path, content: str) -> None:
+    if not path.exists():
+        _write_text(path, content)
 
 
 def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
@@ -166,6 +156,19 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         )
         if migrated_config_h != config_h_existing:
             _write_text(config_h_path, migrated_config_h)
+    _write_text(
+        Path(app_config_designer_path(str(app_dir))),
+        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
+    )
+    _write_text_if_missing(
+        resource_src_dir / APP_RESOURCE_CONFIG_FILENAME,
+        make_empty_resource_config_content(),
+    )
+    _write_text(
+        Path(designer_resource_config_path(str(resource_src_dir))),
+        make_empty_resource_config_content(),
+    )
+    return
     # NOTE: DesignerPreviewSmoke 编译需要 circle-mask helpers。
     # app_egui_config.h 由 scaffold 生成，但为了避免 scaffold/SDK 配置不一致导致的 linker
     # undefined reference，我们在这里对缺失项做强制补齐（最小化影响仅限 smoke 工具）。
