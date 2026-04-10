@@ -66,47 +66,6 @@ def _find_sdk_root():
 
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
-APP_EGUI_CONFIG_TEMPLATE = """\
-#ifndef _APP_EGUI_CONFIG_H_
-#define _APP_EGUI_CONFIG_H_
-
-/* Set up for C function definitions, even when using C++ */
-#ifdef __cplusplus
-extern "C" {{
-#endif
-
-#define EGUI_CONFIG_SCEEN_WIDTH  {width}
-#define EGUI_CONFIG_SCEEN_HEIGHT {height}
-
-#define EGUI_CONFIG_PFB_WIDTH  ({width} / 8)
-#define EGUI_CONFIG_PFB_HEIGHT ({height} / 8)
-
-#define EGUI_CONFIG_COLOR_DEPTH {color_depth}
-
-#define EGUI_CONFIG_CIRCLE_SUPPORT_RADIUS_BASIC_RANGE {circle_radius}
-
-#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1
-
-/* Ends C function definitions when using C++ */
-#ifdef __cplusplus
-}}
-#endif
-
-#endif /* _APP_EGUI_CONFIG_H_ */
-"""
-
-BUILD_MK_TEMPLATE = """\
-EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)
-EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource
-EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource/img
-EGUI_CODE_SRC\t\t+= $(EGUI_APP_PATH)/resource/font
-
-EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)
-EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource
-EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource/img
-EGUI_CODE_INCLUDE\t+= $(EGUI_APP_PATH)/resource/font
-"""
-
 # UI Designer project file template (use _build_egui_project_xml for multi-page)
 EGUI_PROJECT_TEMPLATE = """\
 <?xml version="1.0" encoding="utf-8"?>
@@ -145,15 +104,6 @@ RESOURCES_XML_TEMPLATE = """\
 <Resources>
     <Images />
 </Resources>
-"""
-
-RESOURCE_CONFIG_TEMPLATE = """\
-{
-    "img": [
-    ],
-    "font": [
-    ]
-}
 """
 
 
@@ -273,6 +223,16 @@ def _write_file(path, content, *, action="Created"):
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
     print(f"  {action}: {os.path.basename(path)}")
+
+
+def _ensure_resource_config_file(path):
+    """Create the default resource config file when it is missing."""
+    if os.path.exists(path):
+        return False
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(make_empty_resource_config_content())
+    return True
 
 
 def _print_scaffold_status(relpath, status, *, label=None, unchanged_reason="already up to date"):
@@ -744,9 +704,7 @@ def cmd_export_icons(args):
         syncable_icons = list(icons)
 
     # Update resource config
-    if not os.path.exists(config_path):
-        with open(config_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(RESOURCE_CONFIG_TEMPLATE)
+    if _ensure_resource_config_file(config_path):
         print(f"  Created new: {config_path}")
 
     _update_resource_config(
@@ -1182,9 +1140,7 @@ def cmd_export_svgs(args):
         # Update resource config
         if syncable_exported_names:
             config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-            if not os.path.exists(config_path):
-                with open(config_path, "w", encoding="utf-8", newline="\n") as f:
-                    f.write(RESOURCE_CONFIG_TEMPLATE)
+            _ensure_resource_config_file(config_path)
             full_names = [f"{prefix}{n}" for n in syncable_exported_names]
             _update_resource_config(config_path, full_names, size,
                                     image_format=getattr(args, "image_format", "rgb565"))
@@ -1416,9 +1372,7 @@ def cmd_generate_code(args):
     from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
     rcg = ResourceConfigGenerator()
     user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-    if not os.path.exists(user_config_path):
-        with open(user_config_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(make_empty_resource_config_content())
+    if _ensure_resource_config_file(user_config_path):
         print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
     rcg.generate_and_save(project, src_dir)
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")

@@ -24,6 +24,16 @@ class TestHelperResourceSync:
         assert 'sdk_root="../../sdk/EmbeddedGUI"' in xml
         assert 'egui_root="' not in xml
 
+    def test_ensure_resource_config_file_uses_shared_default_content(self, tmp_path):
+        config_path = tmp_path / "resource" / "src" / "app_resource_config.json"
+
+        created = h._ensure_resource_config_file(str(config_path))
+        created_again = h._ensure_resource_config_file(str(config_path))
+
+        assert created is True
+        assert created_again is False
+        assert config_path.read_text(encoding="utf-8") == h.make_empty_resource_config_content()
+
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
         sdk_root = tmp_path / "sdk"
         tools_dir = sdk_root / "scripts" / "tools"
