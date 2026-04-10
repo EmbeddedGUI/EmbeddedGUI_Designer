@@ -99,7 +99,6 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
-    generate_all_files,
     generate_all_files_preserved,
     generate_page_user_source,
     generate_uicode,
@@ -7134,15 +7133,17 @@ class MainWindow(QMainWindow):
         # Generate resource config + resource C files if needed
         self._ensure_resources_generated()
 
+        preview_output_dir = self.compiler.app_dir if self.compiler is not None else (self._project_dir or "")
+
         # Temporarily set startup_page to current page for preview
         original_startup = self.project.startup_page
         if self._current_page:
             self.project.startup_page = self._current_page.name
-
-        files = generate_all_files(self.project)
-
-        # Restore original startup_page
-        self.project.startup_page = original_startup
+        try:
+            files = generate_all_files_preserved(self.project, preview_output_dir, backup=False)
+        finally:
+            # Restore the persisted startup page even when preview generation fails.
+            self.project.startup_page = original_startup
 
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
         if force_rebuild:

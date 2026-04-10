@@ -3380,7 +3380,9 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "RebuildDemo"
         project = _create_project(project_dir, "RebuildDemo", sdk_root)
         compiler = _RebuildCaptureCompiler()
+        compiler.app_dir = str(project_dir)
         preview_stop_calls = []
+        generated = {}
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
@@ -3389,8 +3391,14 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: preview_stop_calls.append("stop"))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.generate_all_files",
-            lambda project_obj: {"uicode.c": ("// rebuild test\n", "generated_always")},
+            "ui_designer.ui.main_window.generate_all_files_preserved",
+            lambda project_obj, output_dir, backup=True: generated.update(
+                {
+                    "project": project_obj,
+                    "output_dir": output_dir,
+                    "backup": backup,
+                }
+            ) or {"uicode.c": "// rebuild test\n"},
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
@@ -3403,6 +3411,9 @@ class TestMainWindowFileFlow:
         assert compiler.force_rebuild is True
         assert compiler.stop_calls == 1
         assert preview_stop_calls == ["stop"]
+        assert generated["project"] is project
+        assert generated["output_dir"] == os.path.normpath(os.path.abspath(project_dir))
+        assert generated["backup"] is False
         assert window.preview_panel.status_label.text() == "Rebuilding..."
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -3458,6 +3469,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "RebuildButtonDemo"
         project = _create_project(project_dir, "RebuildButtonDemo", sdk_root)
         compiler = _RebuildCaptureCompiler()
+        compiler.app_dir = str(project_dir)
         preview_reasons = []
 
         window = MainWindow(str(sdk_root))
@@ -3468,8 +3480,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: None)
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.generate_all_files",
-            lambda project_obj: {"uicode.c": ("// rebuild button test\n", "generated_always")},
+            "ui_designer.ui.main_window.generate_all_files_preserved",
+            lambda project_obj, output_dir, backup=True: {"uicode.c": "// rebuild button test\n"},
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
@@ -3485,6 +3497,88 @@ class TestMainWindowFileFlow:
         window.debug_panel._rebuild_btn.click()
 
         assert compiler.force_rebuild is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_rebuild_egui_project_migrates_legacy_page_source_before_compile(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _DummySignal:
+            def connect(self, _handler):
+                return None
+
+        class _DummyWorker:
+            def __init__(self):
+                self.log = _DummySignal()
+
+            def isRunning(self):
+                return False
+
+        class _CaptureCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.files_dict = None
+                self.force_rebuild = None
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return True
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def compile_and_run_async(self, *args, **kwargs):
+                self.files_dict = kwargs.get("files_dict")
+                self.force_rebuild = kwargs.get("force_rebuild")
+                return _DummyWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PreviewMigrationDemo"
+        project = _create_project(project_dir, "PreviewMigrationDemo", sdk_root)
+        legacy_source = (
+            Path(__file__).resolve().parents[1] / "test_data" / "user_code_sample.c"
+        ).read_text(encoding="utf-8")
+        (project_dir / "main_page.c").write_text(legacy_source, encoding="utf-8")
+
+        compiler = _CaptureCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
+        monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        window._do_rebuild_egui_project()
+
+        assert compiler.force_rebuild is True
+        assert compiler.files_dict is not None
+        assert "main_page.c" in compiler.files_dict
+        migrated = compiler.files_dict["main_page.c"]
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in migrated
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in migrated
+        assert "static void egui_main_page_on_open(egui_page_base_t *self)" not in migrated
+        assert "void egui_main_page_init(egui_page_base_t *self)" not in migrated
+        assert "main_page_layout.c" in compiler.files_dict
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

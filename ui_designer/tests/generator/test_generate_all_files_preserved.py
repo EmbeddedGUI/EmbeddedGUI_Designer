@@ -11,6 +11,7 @@ Covers:
 """
 
 import os
+from pathlib import Path
 import pytest
 
 from ui_designer.model.widget_model import WidgetModel
@@ -206,6 +207,23 @@ class TestUserOwnedFiles:
         assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result["main_page_layout.c"]
         assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result["main_page_layout.c"]
         assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result["main_page_layout.c"]
+
+    def test_legacy_user_source_fixture_migrates_to_user_hooks(self, tmp_path):
+        proj = _make_project_with_page("main_page")
+        fixture_path = Path(__file__).resolve().parents[1] / "test_data" / "user_code_sample.c"
+        user_file = tmp_path / "main_page.c"
+        user_file.write_text(fixture_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+        result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+
+        assert "main_page.c" in result
+        migrated = result["main_page.c"]
+        assert 'include "my_sensor_lib.h"' in migrated
+        assert "void egui_main_page_user_init(egui_main_page_t *page)" in migrated
+        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in migrated
+        assert "static void on_btn_click(egui_view_t *self)" in migrated
+        assert "static void egui_main_page_on_open(egui_page_base_t *self)" not in migrated
+        assert "void egui_main_page_init(egui_page_base_t *self)" not in migrated
 
     def test_legacy_user_code_callbacks_migrate_without_duplicate_stub_regeneration(self, tmp_path):
         proj = _make_project_with_page("main_page")
