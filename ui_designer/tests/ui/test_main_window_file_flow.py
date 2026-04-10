@@ -3222,10 +3222,10 @@ class TestMainWindowFileFlow:
         class FakeDialog:
             Accepted = 1
 
-            def __init__(self, parent=None, sdk_root=None, egui_root=None, on_download_sdk=None):
-                captured["sdk_root"] = sdk_root if sdk_root is not None else egui_root
+            def __init__(self, parent=None, sdk_root=None, on_download_sdk=None):
+                captured["sdk_root"] = sdk_root
                 self._selected_entry = None
-                self._sdk_root = sdk_root if sdk_root is not None else egui_root
+                self._sdk_root = sdk_root
 
             def exec_(self):
                 return 0
@@ -3263,7 +3263,7 @@ class TestMainWindowFileFlow:
         class FakeDialog:
             Accepted = 1
 
-            def __init__(self, parent=None, sdk_root=None, egui_root=None, on_download_sdk=None):
+            def __init__(self, parent=None, sdk_root=None, on_download_sdk=None):
                 self._selected_entry = {
                     "app_name": "DesignerSandbox",
                     "project_path": str(project_path),
@@ -3271,7 +3271,7 @@ class TestMainWindowFileFlow:
                     "is_unmanaged": False,
                     "source": "designer",
                 }
-                self._sdk_root = sdk_root if sdk_root is not None else egui_root or ""
+                self._sdk_root = sdk_root or ""
 
             def exec_(self):
                 return self.Accepted

@@ -85,7 +85,7 @@ class TestAppSelectorDialog:
         (modern_dir / "build.mk").write_text("all:\n", encoding="utf-8")
         (modern_dir / "HelloModern.egui").write_text("<project />", encoding="utf-8")
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         initial_count = len(dialog.findChildren(AppEntryRowWidget))
 
         dialog._search_edit.setText("HelloModern")
@@ -105,7 +105,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog._header_frame.accessibleName() == (
             "Example header. Open Example dialog: SDK root none. Search none. "
@@ -161,7 +161,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog.accessibleName() == (
             "Open Example dialog: SDK root none. Search none. "
@@ -186,7 +186,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
         dialog._header_frame.setProperty("_app_selector_hint_snapshot", None)
 
         hint_calls = 0
@@ -217,7 +217,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
         dialog._header_frame.setProperty("_app_selector_accessible_snapshot", None)
 
         accessible_calls = 0
@@ -264,7 +264,7 @@ class TestAppSelectorDialog:
         isolated_config.last_app = "ModernApp"
         isolated_config.show_all_examples = False
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "ModernApp"
         assert dialog._app_list.currentItem().text() == "ModernApp"
@@ -283,7 +283,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "(Set an SDK root first)"
@@ -312,7 +312,7 @@ class TestAppSelectorDialog:
             ],
         )
 
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "DesignerSandbox"
@@ -329,7 +329,7 @@ class TestAppSelectorDialog:
 
         isolated_config.sdk_root = ""
         isolated_config.egui_root = ""
-        dialog = AppSelectorDialog(egui_root=str(tmp_path / "not_sdk"))
+        dialog = AppSelectorDialog(sdk_root=str(tmp_path / "not_sdk"))
 
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "(Current SDK root is invalid)"
@@ -358,7 +358,7 @@ class TestAppSelectorDialog:
         (legacy / "build.mk").write_text("")
 
         isolated_config.sdk_root = str(sdk_root)
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         dialog._show_unmanaged.setChecked(True)
 
         assert isolated_config.show_all_examples is True
@@ -403,7 +403,7 @@ class TestAppSelectorDialog:
         (modern / "ModernApp.egui").write_text("")
 
         isolated_config.sdk_root = str(sdk_root)
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         dialog._app_list.setCurrentRow(0)
 
         assert dialog.selected_entry["app_name"] == "ModernApp"
@@ -418,12 +418,12 @@ class TestAppSelectorDialog:
         _create_sdk_root(sdk_root)
         (sdk_root / "example").mkdir()
 
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
         monkeypatch.setattr("ui_designer.ui.app_selector.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(sdk_parent))
 
         dialog._browse_root()
 
-        assert dialog.egui_root == os.path.normpath(os.path.abspath(sdk_root))
+        assert dialog.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
         assert dialog._root_edit.text() == os.path.normpath(os.path.abspath(sdk_root))
         dialog.deleteLater()
 
@@ -438,7 +438,7 @@ class TestAppSelectorDialog:
 
         expected = os.path.normpath(os.path.abspath(sdk_root))
         assert dialog.sdk_root == expected
-        assert dialog.egui_root == expected
+        assert dialog.sdk_root == expected
         assert dialog._root_edit.text() == expected
         dialog.deleteLater()
 
@@ -457,7 +457,7 @@ class TestAppSelectorDialog:
             (app_dir / f"{name}.egui").write_text("")
 
         isolated_config.sdk_root = str(sdk_root)
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         dialog._search_edit.setText("show")
 
         assert dialog._app_list.count() == 1
@@ -479,7 +479,7 @@ class TestAppSelectorDialog:
         (app_dir / "HelloVirtual.egui").write_text("")
 
         isolated_config.sdk_root = str(sdk_root)
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         dialog._search_edit.setText("missing")
 
         assert dialog._app_list.count() == 1
@@ -495,7 +495,7 @@ class TestAppSelectorDialog:
         _create_sdk_root(sdk_root)
         (sdk_root / "example").mkdir()
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         placeholder_item = dialog._app_list.item(0)
         accepted = []
         dialog.accept = lambda: accepted.append(True)
@@ -514,7 +514,7 @@ class TestAppSelectorDialog:
         _create_sdk_root(sdk_root)
         (sdk_root / "example").mkdir()
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
 
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "(No examples found)"
@@ -538,7 +538,7 @@ class TestAppSelectorDialog:
         legacy.mkdir()
         (legacy / "build.mk").write_text("")
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
         dialog._show_unmanaged.setChecked(True)
 
         for index in range(dialog._app_list.count()):
@@ -574,7 +574,7 @@ class TestAppSelectorDialog:
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.frozen", True, raising=False)
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))
 
-        dialog = AppSelectorDialog(egui_root=str(sdk_root))
+        dialog = AppSelectorDialog(sdk_root=str(sdk_root))
 
         assert "bundled SDK" in dialog._root_status_label.text()
         assert "switch to another SDK root" in dialog._root_status_label.text()
@@ -596,9 +596,9 @@ class TestAppSelectorDialog:
         isolated_config.egui_root = str(tmp_path / "missing_sdk")
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap._get_config_dir", lambda: str(tmp_path / "config"))
 
-        dialog = AppSelectorDialog(egui_root="")
+        dialog = AppSelectorDialog(sdk_root="")
 
-        assert dialog.egui_root == os.path.normpath(os.path.abspath(sdk_root))
+        assert dialog.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
         assert dialog._root_edit.text() == os.path.normpath(os.path.abspath(sdk_root))
         assert dialog._app_list.count() == 1
         assert dialog._app_list.item(0).text() == "HelloShowcase"

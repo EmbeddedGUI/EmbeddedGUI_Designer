@@ -153,16 +153,15 @@ class AppEntryRowWidget(QWidget):
 class AppSelectorDialog(QDialog):
     """Dialog for opening bundled, Designer-aware, or unmanaged SDK examples."""
 
-    def __init__(self, parent=None, sdk_root=None, egui_root=None):
+    def __init__(self, parent=None, sdk_root=None):
         super().__init__(parent)
         self.setWindowTitle("Open Example")
         self.setMinimumSize(860, 620)
         self.resize(980, 680)
 
         self._config = get_config()
-        initial_sdk_root = sdk_root if sdk_root is not None else egui_root
         self._sdk_root = resolve_configured_sdk_root(
-            initial_sdk_root,
+            sdk_root,
             self._config.sdk_root,
             cached_sdk_root=default_sdk_install_dir(),
             preserve_invalid=True,
@@ -801,9 +800,4 @@ class AppSelectorDialog(QDialog):
 
     @property
     def sdk_root(self):
-        return self._sdk_root
-
-    @property
-    def egui_root(self):
-        """Compatibility alias for older call sites."""
         return self._sdk_root
