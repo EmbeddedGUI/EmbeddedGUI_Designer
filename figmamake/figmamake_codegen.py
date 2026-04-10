@@ -39,6 +39,7 @@ from html2egui_helper import (
     _build_egui_project_xml,
 )
 from figmamake_anim_extractor import AnimExtractor
+from ui_designer.model.resource_catalog import ResourceCatalog
 
 
 # ── Tailwind → pixel converters ──────────────────────────────────
@@ -599,8 +600,7 @@ class FigmaMakeCodegen:
         )
         if not os.path.exists(res_xml_path):
             with open(res_xml_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-                f.write("<Resources>\n    <Images />\n    <Fonts />\n</Resources>\n")
+                f.write(ResourceCatalog().to_xml_string())
 
         # 5. Generate C code
         if skip_c_gen:

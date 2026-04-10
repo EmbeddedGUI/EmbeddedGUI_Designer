@@ -51,11 +51,15 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
 
     egui_path = sdk_root / "example" / "DemoApp" / "DemoApp.egui"
     xml = egui_path.read_text(encoding="utf-8")
+    resources_xml_path = sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "resources.xml"
+    resources_xml = resources_xml_path.read_text(encoding="utf-8")
 
     assert result["pages"] == ["home_page"]
     assert 'sdk_root="../.."' in xml
     assert 'egui_root="' not in xml
     assert (sdk_root / "example" / "DemoApp" / ".eguiproject" / "layout" / "home_page.xml").is_file()
+    assert resources_xml.startswith('<?xml version="1.0" encoding="utf-8"?>\n')
+    assert "<Resources" in resources_xml
 
 
 def test_figmamake_pipeline_reports_sdk_root_label(tmp_path, monkeypatch, capsys):
