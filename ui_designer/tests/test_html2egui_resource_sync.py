@@ -43,6 +43,20 @@ class TestHelperResourceSync:
             sdk_root / "example" / "DemoApp" / "resource" / "src"
         )
 
+    def test_helper_app_command_uses_standard_cli_format(self):
+        assert h._helper_app_command("generate-code", "DemoApp") == (
+            "python html2egui_helper.py generate-code --app DemoApp"
+        )
+
+    def test_print_numbered_steps_formats_ordered_list(self, capsys):
+        h._print_numbered_steps(["Step A", "Step B"])
+
+        assert capsys.readouterr().out == (
+            "\nNext steps:\n"
+            "  1. Step A\n"
+            "  2. Step B\n"
+        )
+
     def test_build_egui_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = h._build_egui_project_xml("DemoApp", 320, 240, "../../sdk/EmbeddedGUI", pages=["main_page"])
 

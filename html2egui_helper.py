@@ -103,6 +103,18 @@ def _get_app_resource_src_dir(app_dir):
     return os.path.join(_get_app_generated_resource_dir(app_dir), "src")
 
 
+def _helper_app_command(subcommand, app_name):
+    """Return the standard helper CLI command for a given app."""
+    return f"python html2egui_helper.py {subcommand} --app {app_name}"
+
+
+def _print_numbered_steps(steps):
+    """Print a numbered follow-up step list."""
+    print(f"\nNext steps:")
+    for index, step in enumerate(steps, start=1):
+        print(f"  {index}. {step}")
+
+
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
 def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
@@ -337,13 +349,14 @@ def cmd_scaffold(args):
 
     print(f"\nScaffold complete: {app_dir}")
     print(f"  Screen: {width}x{height}, color depth: {color_depth}")
-    print(f"\nNext steps:")
-    print(f"  1. Extract layout:   python html2egui_helper.py extract-layout --input <html>")
-    print(f"  2. Export icons:     python html2egui_helper.py export-icons --input <html> --app {args.app}")
-    print(f"  3. Write XML layout: Edit .eguiproject/layout/main_page.xml")
-    print(f"  4. Generate code:    python html2egui_helper.py generate-code --app {args.app}")
-    print(f"  5. Gen resources:    python html2egui_helper.py gen-resource --app {args.app}")
-    print(f"  6. Build & verify:   python html2egui_helper.py verify --app {args.app}")
+    _print_numbered_steps([
+        "Extract layout:   python html2egui_helper.py extract-layout --input <html>",
+        f"Export icons:     python html2egui_helper.py export-icons --input <html> --app {args.app}",
+        "Write XML layout: Edit .eguiproject/layout/main_page.xml",
+        f"Generate code:    {_helper_app_command('generate-code', args.app)}",
+        f"Gen resources:    {_helper_app_command('gen-resource', args.app)}",
+        f"Build & verify:   {_helper_app_command('verify', args.app)}",
+    ])
 
 
 def _write_file(path, content, *, action="Created"):
@@ -844,13 +857,16 @@ def cmd_export_icons(args):
         suffix=suffix,
     )
 
-    print(f"\nNext steps:")
     if app_name:
-        print(f"  1. Write XML layout: Edit example/{app_name}/.eguiproject/layout/main_page.xml")
-        print(f"  2. Generate code:    python html2egui_helper.py generate-code --app {app_name}")
-        print(f"  3. Gen resources:    python html2egui_helper.py gen-resource --app {app_name}")
+        _print_numbered_steps([
+            f"Write XML layout: Edit example/{app_name}/.eguiproject/layout/main_page.xml",
+            f"Generate code:    {_helper_app_command('generate-code', app_name)}",
+            f"Gen resources:    {_helper_app_command('gen-resource', app_name)}",
+        ])
     else:
-        print(f"  1. Run: python html2egui_helper.py gen-resource --app <AppName>")
+        _print_numbered_steps([
+            "Run: python html2egui_helper.py gen-resource --app <AppName>",
+        ])
 
 
 # ── Sub-command: export-svgs ──────────────────────────────────────
@@ -1534,9 +1550,10 @@ def cmd_generate_code(args):
     print(f"\nGenerated {len(files)} C files:")
     for filename in sorted(files.keys()):
         print(f"  {filename}")
-    print(f"\nNext steps:")
-    print(f"  1. Gen resources:  python html2egui_helper.py gen-resource --app {app_name}")
-    print(f"  2. Build & verify: python html2egui_helper.py verify --app {app_name}")
+    _print_numbered_steps([
+        f"Gen resources:  {_helper_app_command('gen-resource', app_name)}",
+        f"Build & verify: {_helper_app_command('verify', app_name)}",
+    ])
 
 
 # ── Sub-command: extract-layout ──────────────────────────────────
@@ -2779,11 +2796,12 @@ def cmd_figma2xml(args):
         _figma_export_images(file_key, vector_nodes, token, images_dir, scale=2)
 
     print(f"\nFigma conversion complete: {app_name}")
-    print(f"\nNext steps:")
-    print(f"  1. Review/edit XML: {xml_path}")
-    print(f"  2. Generate code:   python html2egui_helper.py generate-code --app {app_name}")
-    print(f"  3. Gen resources:   python html2egui_helper.py gen-resource --app {app_name}")
-    print(f"  4. Build & verify:  python html2egui_helper.py verify --app {app_name}")
+    _print_numbered_steps([
+        f"Review/edit XML: {xml_path}",
+        f"Generate code:   {_helper_app_command('generate-code', app_name)}",
+        f"Gen resources:   {_helper_app_command('gen-resource', app_name)}",
+        f"Build & verify:  {_helper_app_command('verify', app_name)}",
+    ])
 
 
 # ── Sub-command: figma-mcp ────────────────────────────────────────
@@ -2881,11 +2899,12 @@ def cmd_figma_mcp(args):
         )
         print(f"  Written: {xml_path}")
 
-    print(f"\nNext steps:")
-    print(f"  1. Review/edit XML: {xml_path}")
-    print(f"  2. Generate code:   python html2egui_helper.py generate-code --app {app_name}")
-    print(f"  3. Gen resources:   python html2egui_helper.py gen-resource --app {app_name}")
-    print(f"  4. Build & verify:  python html2egui_helper.py verify --app {app_name}")
+    _print_numbered_steps([
+        f"Review/edit XML: {xml_path}",
+        f"Generate code:   {_helper_app_command('generate-code', app_name)}",
+        f"Gen resources:   {_helper_app_command('gen-resource', app_name)}",
+        f"Build & verify:  {_helper_app_command('verify', app_name)}",
+    ])
 
 
 # ── Sub-command: figmamake-extract ────────────────────────────────
