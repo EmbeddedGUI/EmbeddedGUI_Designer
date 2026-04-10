@@ -47,8 +47,7 @@ class DesignerConfig:
     _instance = None
 
     def __init__(self):
-        self.sdk_root = ""
-        self.egui_root = ""
+        self._sdk_root = ""
         self.last_app = "HelloDesigner"
         self.last_project_path = ""
         self.recent_projects = []
@@ -71,6 +70,14 @@ class DesignerConfig:
         self.widget_browser_active_category = "all"
         self.diagnostics_view = {}
         self.show_clean_all_startup_notice = True
+
+    @property
+    def sdk_root(self):
+        return self._sdk_root
+
+    @sdk_root.setter
+    def sdk_root(self, value):
+        self._sdk_root = normalize_path(value)
 
     @property
     def egui_root(self):
@@ -125,7 +132,7 @@ class DesignerConfig:
 
     def _resolve_sdk_root(self, sdk_root=""):
         candidates = []
-        for candidate in (sdk_root, self.sdk_root, self.egui_root):
+        for candidate in (sdk_root, self.sdk_root):
             normalized = normalize_path(candidate)
             if normalized and normalized not in candidates:
                 candidates.append(normalized)
@@ -154,7 +161,6 @@ class DesignerConfig:
                 data = json.load(f)
 
             self.sdk_root = normalize_path(data.get("sdk_root", ""))
-            self.egui_root = self.sdk_root
             self.last_app = data.get("last_app", "HelloDesigner")
             self.last_project_path = normalize_path(data.get("last_project_path", ""))
             self.recent_projects = self._normalize_recent_projects(data.get("recent_projects", []))

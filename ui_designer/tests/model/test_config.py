@@ -73,6 +73,15 @@ class TestDefaults:
         assert config.diagnostics_view == {}
         assert config.show_clean_all_startup_notice is True
 
+    def test_egui_root_alias_updates_sdk_root(self, config):
+        config.egui_root = "/alias/sdk"
+        assert config.sdk_root == normalize_path("/alias/sdk")
+        assert config.egui_root == normalize_path("/alias/sdk")
+
+    def test_sdk_root_assignment_normalizes_path(self, config):
+        config.sdk_root = "/alias/sdk"
+        assert config.sdk_root == normalize_path("/alias/sdk")
+
 
 class TestSaveLoad:
     """Test save/load JSON round-trip."""
@@ -271,7 +280,7 @@ class TestPathManagement:
     """Test path helper methods."""
 
     def test_get_app_dir(self, config):
-        config.egui_root = "/project"
+        config.sdk_root = "/project"
         config.last_app = "MyApp"
         result = config.get_app_dir()
         assert result == os.path.join(normalize_path("/project"), "example", "MyApp")
@@ -281,7 +290,7 @@ class TestPathManagement:
         assert result == os.path.join(normalize_path("/other/root"), "example", "TestApp")
 
     def test_get_app_dir_empty_root(self, config):
-        config.egui_root = ""
+        config.sdk_root = ""
         assert config.get_app_dir() == ""
 
     def test_get_app_dir_uses_cached_sdk_when_saved_root_is_invalid(self, config, tmp_path):
@@ -299,13 +308,13 @@ class TestPathManagement:
         assert result == os.path.join(normalize_path(str(cached_sdk)), "example", "MyApp")
 
     def test_get_project_path(self, config):
-        config.egui_root = "/project"
+        config.sdk_root = "/project"
         config.last_app = "MyApp"
         result = config.get_project_path()
         assert result == os.path.join(normalize_path("/project"), "example", "MyApp", "MyApp.egui")
 
     def test_get_project_path_empty(self, config):
-        config.egui_root = ""
+        config.sdk_root = ""
         assert config.get_project_path() == ""
 
     def test_list_available_apps(self, config, tmp_path):

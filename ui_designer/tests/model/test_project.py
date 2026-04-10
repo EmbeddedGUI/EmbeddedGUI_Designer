@@ -160,7 +160,7 @@ class TestPathHelpers:
 
     def test_get_app_dir(self):
         proj = Project(app_name="TestApp")
-        proj.egui_root = "/home/user/EmbeddedGUI"
+        proj.sdk_root = "/home/user/EmbeddedGUI"
 
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp")
         assert proj.get_app_dir() == expected
@@ -171,14 +171,14 @@ class TestPathHelpers:
 
     def test_get_resource_dir(self):
         proj = Project(app_name="TestApp")
-        proj.egui_root = "/home/user/EmbeddedGUI"
+        proj.sdk_root = "/home/user/EmbeddedGUI"
 
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp", "resource")
         assert proj.get_resource_dir() == expected
 
     def test_get_eguiproject_dir(self):
         proj = Project(app_name="TestApp")
-        proj.egui_root = "/home/user/EmbeddedGUI"
+        proj.sdk_root = "/home/user/EmbeddedGUI"
 
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp", ".eguiproject")
         assert proj.get_eguiproject_dir() == expected
@@ -186,8 +186,19 @@ class TestPathHelpers:
     def test_get_app_dir_prefers_project_dir(self):
         proj = Project(app_name="TestApp")
         proj.project_dir = normalize_path("/workspace/TestApp")
-        proj.egui_root = "/home/user/EmbeddedGUI"
+        proj.sdk_root = "/home/user/EmbeddedGUI"
         assert proj.get_app_dir() == normalize_path("/workspace/TestApp")
+
+    def test_egui_root_alias_updates_sdk_root(self):
+        proj = Project(app_name="TestApp")
+        proj.egui_root = "/home/user/EmbeddedGUI"
+        assert proj.sdk_root == normalize_path("/home/user/EmbeddedGUI")
+        assert proj.egui_root == normalize_path("/home/user/EmbeddedGUI")
+
+    def test_sdk_root_assignment_normalizes_path(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+        assert proj.sdk_root == normalize_path("/home/user/EmbeddedGUI")
 
 
 class TestResourceSync:

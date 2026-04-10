@@ -91,7 +91,7 @@ class Project:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.app_name = app_name
-        self.sdk_root = ""  # Path to EmbeddedGUI SDK root directory
+        self._sdk_root = ""  # Path to EmbeddedGUI SDK root directory
         self.sdk_fingerprint = SdkFingerprint()  # Project scaffold SDK baseline
         self.project_dir = ""  # Path to the app/project directory
         self.page_mode = "easy_page"  # "easy_page" or "activity"
@@ -99,6 +99,14 @@ class Project:
         self.resource_catalog = ResourceCatalog()  # project resource catalog
         self.string_catalog = StringResourceCatalog()  # i18n string resources
         self.pages = []  # list[Page]
+
+    @property
+    def sdk_root(self):
+        return self._sdk_root
+
+    @sdk_root.setter
+    def sdk_root(self, value):
+        self._sdk_root = normalize_path(value)
 
     @property
     def egui_root(self):
