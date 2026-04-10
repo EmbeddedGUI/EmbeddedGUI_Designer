@@ -41,6 +41,8 @@ from ui_designer.utils.scaffold import (
     make_app_config_designer_h_content,
     make_app_config_h_content,
     make_empty_resource_config_content,
+    migrate_app_build_mk_content,
+    migrate_app_config_h_content,
 )
 
 
@@ -112,7 +114,29 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
 
 def _write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if path.name == "app_egui_config.h":
+            existing = _read_text(path)
+            if existing is not None:
+                migrated = migrate_app_config_h_content(
+                    existing,
+                    path.parent.name,
+                    SCREEN_WIDTH,
+                    SCREEN_HEIGHT,
+                )
+                if migrated != existing:
+                    path.write_text(migrated, encoding="utf-8")
+                return
+        if path.name == APP_RESOURCE_CONFIG_FILENAME:
+            return
     path.write_text(content, encoding="utf-8")
+
+
+def _read_text(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return None
 
 
 def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
@@ -120,8 +144,28 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     (app_dir / ".designer").mkdir(parents=True, exist_ok=True)
     resource_src_dir = app_dir / "resource" / "src"
     resource_src_dir.mkdir(parents=True, exist_ok=True)
-    _write_text(app_dir / "build.mk", make_app_build_mk_content(app_name))
+    build_mk_path = app_dir / "build.mk"
+    build_mk_existing = _read_text(build_mk_path)
+    if build_mk_existing is None:
+        _write_text(build_mk_path, make_app_build_mk_content(app_name))
+    else:
+        migrated_build_mk = migrate_app_build_mk_content(build_mk_existing, app_name)
+        if migrated_build_mk != build_mk_existing:
+            _write_text(build_mk_path, migrated_build_mk)
     _write_text(Path(build_designer_path(str(app_dir))), make_app_build_designer_mk_content(app_name))
+    config_h_path = app_dir / "app_egui_config.h"
+    config_h_existing = _read_text(config_h_path)
+    if config_h_existing is None:
+        _write_text(config_h_path, make_app_config_h_content(app_name))
+    else:
+        migrated_config_h = migrate_app_config_h_content(
+            config_h_existing,
+            app_name,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+        )
+        if migrated_config_h != config_h_existing:
+            _write_text(config_h_path, migrated_config_h)
     # NOTE: DesignerPreviewSmoke 编译需要 circle-mask helpers。
     # app_egui_config.h 由 scaffold 生成，但为了避免 scaffold/SDK 配置不一致导致的 linker
     # undefined reference，我们在这里对缺失项做强制补齐（最小化影响仅限 smoke 工具）。
