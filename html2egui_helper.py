@@ -702,17 +702,23 @@ def cmd_export_icons(args):
         os.makedirs(src_dir, exist_ok=True)
         import shutil
         synced = 0
+        syncable_icons = []
         for name in icons:
             fname = f"icon_{name}{suffix}.png"
+            if is_designer_resource_path(fname):
+                print(f"  Skipped reserved icon filename: {fname}")
+                continue
             src_png = os.path.join(output_dir, fname)
             dst_png = os.path.join(src_dir, fname)
             if os.path.exists(src_png):
                 shutil.copy2(src_png, dst_png)
                 synced += 1
+                syncable_icons.append(name)
         print(f"  Synced {synced} icons to {src_dir}")
         config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
     else:
         config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
+        syncable_icons = list(icons)
 
     # Update resource config
     if not os.path.exists(config_path):
@@ -720,7 +726,13 @@ def cmd_export_icons(args):
             f.write(RESOURCE_CONFIG_TEMPLATE)
         print(f"  Created new: {config_path}")
 
-    _update_resource_config(config_path, icons, size, image_format=getattr(args, "image_format", "alpha"), suffix=suffix)
+    _update_resource_config(
+        config_path,
+        syncable_icons,
+        size,
+        image_format=getattr(args, "image_format", "alpha"),
+        suffix=suffix,
+    )
 
     print(f"\nNext steps:")
     if app_name:
@@ -1130,23 +1142,29 @@ def cmd_export_svgs(args):
         os.makedirs(src_dir, exist_ok=True)
         import shutil
         synced = 0
+        syncable_exported_names = []
         for name in exported_names:
             fname = f"{prefix}{name}.png"
+            if is_designer_resource_path(fname):
+                print(f"  Skipped reserved SVG filename: {fname}")
+                continue
             src_png = os.path.join(output_dir, fname)
             dst_png = os.path.join(src_dir, fname)
             if os.path.exists(src_png):
                 shutil.copy2(src_png, dst_png)
                 synced += 1
+                syncable_exported_names.append(name)
         print(f"  Synced {synced} SVG PNGs to {src_dir}")
 
         # Update resource config
-        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-        if not os.path.exists(config_path):
-            with open(config_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(RESOURCE_CONFIG_TEMPLATE)
-        full_names = [f"{prefix}{n}" for n in exported_names]
-        _update_resource_config(config_path, full_names, size,
-                                image_format=getattr(args, "image_format", "rgb565"))
+        if syncable_exported_names:
+            config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+            if not os.path.exists(config_path):
+                with open(config_path, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(RESOURCE_CONFIG_TEMPLATE)
+            full_names = [f"{prefix}{n}" for n in syncable_exported_names]
+            _update_resource_config(config_path, full_names, size,
+                                    image_format=getattr(args, "image_format", "rgb565"))
 
 
 # ── Sub-command: extract-text ─────────────────────────────────────
