@@ -35,7 +35,7 @@ from html2egui_helper import (
     _jsx_to_pseudo_html,
     _lucide_name_to_material,
     _extract_tw_color,
-    _find_egui_root,
+    _find_sdk_root,
     _build_egui_project_xml,
 )
 from figmamake_anim_extractor import AnimExtractor
@@ -481,8 +481,8 @@ class FigmaMakeCodegen:
 
         Returns dict with generated file paths.
         """
-        egui_root = _find_egui_root()
-        app_dir = os.path.join(egui_root, "example", self.app_name)
+        sdk_root = _find_sdk_root()
+        app_dir = os.path.join(sdk_root, "example", self.app_name)
 
         # 1. Discover project structure
         print(f"[1/5] Discovering Figma Make project: {project_dir}")
@@ -580,7 +580,7 @@ class FigmaMakeCodegen:
 
         # 4. Create .egui project file
         print(f"[4/5] Creating project file...")
-        sdk_root_rel = os.path.relpath(egui_root, app_dir).replace("\\", "/")
+        sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
         project_xml = _build_egui_project_xml(
             app_name=self.app_name,
             width=self.width,
@@ -607,7 +607,7 @@ class FigmaMakeCodegen:
             print("[5/5] Skipping C code generation (--skip-c-gen)")
         else:
             print(f"[5/5] Generating C code...")
-            self._generate_c_code(egui_root, app_dir)
+            self._generate_c_code(sdk_root, app_dir)
 
         print(f"\nDone! App directory: {app_dir}")
         return {
@@ -617,7 +617,7 @@ class FigmaMakeCodegen:
             "extensions_needed": anim_result.get("extensions_needed", []),
         }
 
-    def _generate_c_code(self, egui_root, app_dir):
+    def _generate_c_code(self, sdk_root, app_dir):
         """Invoke the existing code generator."""
         from ui_designer.model.project import Project
         from ui_designer.generator.code_generator import generate_all_files_preserved

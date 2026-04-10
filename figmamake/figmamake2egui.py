@@ -42,7 +42,7 @@ sys.path.insert(0, SCRIPTS_DIR)
 REPO_ROOT = Path(SCRIPTS_DIR).resolve()
 
 
-def _find_egui_root():
+def _find_sdk_root():
     """Resolve the EmbeddedGUI SDK root for the standalone Designer repo."""
     return require_designer_sdk_root(
         repo_root=str(REPO_ROOT),
@@ -50,19 +50,19 @@ def _find_egui_root():
     )
 
 
-def _ensure_sdk_scripts_on_path(egui_root):
-    sdk_scripts_dir = os.path.join(egui_root, "scripts")
+def _ensure_sdk_scripts_on_path(sdk_root):
+    sdk_scripts_dir = os.path.join(sdk_root, "scripts")
     if sdk_scripts_dir not in sys.path:
         sys.path.insert(0, sdk_scripts_dir)
 
 
-def stage_capture(figma_url, app_name, width, height, egui_root):
+def stage_capture(figma_url, app_name, width, height, sdk_root):
     """Stage 1: Capture reference frames from Figma Make."""
     print("\n" + "=" * 60)
     print("STAGE 1: CAPTURE — Reference frames from Figma Make")
     print("=" * 60)
 
-    app_dir = os.path.join(egui_root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
     ref_dir = os.path.join(app_dir, ".eguiproject", "reference_frames")
     os.makedirs(ref_dir, exist_ok=True)
 
@@ -86,7 +86,7 @@ def stage_capture(figma_url, app_name, width, height, egui_root):
     return True, ref_dir
 
 
-def stage_convert(project_dir, app_name, width, height, egui_root, skip_c_gen=False):
+def stage_convert(project_dir, app_name, width, height, sdk_root, skip_c_gen=False):
     """Stage 2: Parse TSX → Extract animations → Generate XML + C code."""
     print("\n" + "=" * 60)
     print("STAGE 2: CONVERT — TSX → XML → C code")
@@ -106,13 +106,13 @@ def stage_convert(project_dir, app_name, width, height, egui_root, skip_c_gen=Fa
     return result
 
 
-def stage_build_and_run(app_name, egui_root, width, height):
+def stage_build_and_run(app_name, sdk_root, width, height):
     """Stage 3: Compile EGUI app and capture rendered frames."""
     print("\n" + "=" * 60)
     print("STAGE 3: BUILD & RUN — Compile and capture rendered frames")
     print("=" * 60)
 
-    app_dir = os.path.join(egui_root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     # Generate resources first
     print("  [3a] Generating resources...")
@@ -122,14 +122,14 @@ def stage_build_and_run(app_name, egui_root, width, height):
         "gen-resource", "--app", app_name,
     ]
     result = subprocess.run(gen_res_cmd, capture_output=True, text=True,
-                            cwd=egui_root)
+                            cwd=sdk_root)
     if result.returncode != 0:
         print(f"  Resource generation failed: {result.stderr}", file=sys.stderr)
         return False, ""
 
     # Compile
     print("  [3b] Compiling...")
-    _ensure_sdk_scripts_on_path(egui_root)
+    _ensure_sdk_scripts_on_path(sdk_root)
     from code_runtime_check import compile_app
     if not compile_app(app_name):
         print("  Compilation FAILED", file=sys.stderr)
@@ -140,7 +140,7 @@ def stage_build_and_run(app_name, egui_root, width, height):
     rendered_dir = os.path.join(
         "runtime_check_output", app_name, "regression"
     )
-    _ensure_sdk_scripts_on_path(egui_root)
+    _ensure_sdk_scripts_on_path(sdk_root)
     from code_runtime_check import capture_animation_frames
     success, frames, msg = capture_animation_frames(
         app_name, rendered_dir, fps=10, duration=5, speed=1
@@ -154,7 +154,7 @@ def stage_build_and_run(app_name, egui_root, width, height):
     return True, rendered_dir
 
 
-def stage_verify(ref_dir, rendered_dir, app_name, egui_root):
+def stage_verify(ref_dir, rendered_dir, app_name, sdk_root):
     """Stage 4: SSIM regression verification."""
     print("\n" + "=" * 60)
     print("STAGE 4: VERIFY — SSIM regression comparison")
@@ -171,7 +171,7 @@ def stage_verify(ref_dir, rendered_dir, app_name, egui_root):
         print(f"  [{status:4s}] {r['name']:30s}  SSIM={r['ssim']:.4f}")
 
     # Generate HTML report
-    app_dir = os.path.join(egui_root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
     report_path = os.path.join(app_dir, ".eguiproject", "regression_report.html")
     generate_html_report(summary, report_path)
 
@@ -209,21 +209,21 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    egui_root = _find_egui_root()
-    os.chdir(egui_root)
+    sdk_root = _find_sdk_root()
+    os.chdir(sdk_root)
 
     start_time = time.time()
     print(f"Figma Make → EGUI Pipeline")
     print(f"  App: {args.app}")
     print(f"  Screen: {args.width}x{args.height}")
-    print(f"  EGUI root: {egui_root}")
+    print(f"  SDK root: {sdk_root}")
 
     # Stage 1: Capture
-    ref_dir = os.path.join(egui_root, "example", args.app,
+    ref_dir = os.path.join(sdk_root, "example", args.app,
                            ".eguiproject", "reference_frames")
     if args.figma_url and not args.skip_capture:
         success, ref_dir = stage_capture(
-            args.figma_url, args.app, args.width, args.height, egui_root
+            args.figma_url, args.app, args.width, args.height, sdk_root
         )
         if not success:
             print("\nPipeline FAILED at Stage 1 (CAPTURE)")
@@ -242,18 +242,18 @@ def main():
             sys.exit(1)
     else:
         convert_result = stage_convert(
-            project_dir, args.app, args.width, args.height, egui_root
+            project_dir, args.app, args.width, args.height, sdk_root
         )
 
     if args.convert_only:
         elapsed = time.time() - start_time
         print(f"\nConversion complete in {elapsed:.1f}s")
-        print(f"  App dir: {os.path.join(egui_root, 'example', args.app)}")
+        print(f"  App dir: {os.path.join(sdk_root, 'example', args.app)}")
         sys.exit(0)
 
     # Stage 3: Build & Run
     success, rendered_dir = stage_build_and_run(
-        args.app, egui_root, args.width, args.height
+        args.app, sdk_root, args.width, args.height
     )
     if not success:
         print("\nPipeline FAILED at Stage 3 (BUILD & RUN)")
@@ -263,7 +263,7 @@ def main():
     if args.skip_verify:
         print("\n[Stage 4: VERIFY] Skipped")
     else:
-        summary = stage_verify(ref_dir, rendered_dir, args.app, egui_root)
+        summary = stage_verify(ref_dir, rendered_dir, args.app, sdk_root)
 
         elapsed = time.time() - start_time
         print(f"\n{'=' * 60}")

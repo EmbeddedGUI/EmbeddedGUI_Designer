@@ -55,7 +55,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 
 # ── Path helpers ──────────────────────────────────────────────────
 
-def _find_egui_root():
+def _find_sdk_root():
     """Resolve the EmbeddedGUI SDK root for the standalone Designer repo."""
     return require_designer_sdk_root(
         repo_root=str(REPO_ROOT),
@@ -158,8 +158,8 @@ RESOURCE_CONFIG_TEMPLATE = """\
 
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
-    root = _find_egui_root()
-    app_dir = os.path.join(root, "example", args.app)
+    sdk_root = _find_sdk_root()
+    app_dir = os.path.join(sdk_root, "example", args.app)
 
     if os.path.exists(app_dir) and not args.force:
         print(f"ERROR: Directory already exists: {app_dir}")
@@ -173,7 +173,7 @@ def cmd_scaffold(args):
     circle_radius = min(width, height) // 2
 
     # Compute relative sdk_root path from app_dir
-    sdk_root_rel = os.path.relpath(root, app_dir).replace("\\", "/")
+    sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
 
     # Create directories
     config_dir = os.path.join(app_dir, ".eguiproject")
@@ -632,7 +632,7 @@ def cmd_export_icons(args):
         print(f"ERROR: HTML file not found: {args.input}")
         sys.exit(1)
 
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
 
     # Determine output directory
@@ -640,7 +640,7 @@ def cmd_export_icons(args):
         output_dir = args.output
     elif app_name:
         # Default: .eguiproject/resources/images/ for designer workflow
-        app_dir = os.path.join(root, "example", app_name)
+        app_dir = os.path.join(sdk_root, "example", app_name)
         output_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
     else:
         print("ERROR: Must specify either --output or --app")
@@ -697,7 +697,7 @@ def cmd_export_icons(args):
 
     # Sync PNGs to resource/src/ if using --app (designer workflow)
     if app_name:
-        app_dir = os.path.join(root, "example", app_name)
+        app_dir = os.path.join(sdk_root, "example", app_name)
         src_dir = os.path.join(app_dir, "resource", "src")
         os.makedirs(src_dir, exist_ok=True)
         import shutil
@@ -1079,14 +1079,14 @@ def cmd_export_svgs(args):
     with open(args.input, "r", encoding="utf-8") as f:
         html = f.read()
 
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
 
     # Determine output directory
     if args.output:
         output_dir = args.output
     elif app_name:
-        app_dir = os.path.join(root, "example", app_name)
+        app_dir = os.path.join(sdk_root, "example", app_name)
         output_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
     else:
         print("ERROR: Must specify either --output or --app")
@@ -1137,7 +1137,7 @@ def cmd_export_svgs(args):
 
     # Sync to resource/src/ if using --app
     if app_name and exported_names:
-        app_dir = os.path.join(root, "example", app_name)
+        app_dir = os.path.join(sdk_root, "example", app_name)
         src_dir = os.path.join(app_dir, "resource", "src")
         os.makedirs(src_dir, exist_ok=True)
         import shutil
@@ -1232,13 +1232,13 @@ def cmd_extract_text(args):
     char_str = "".join(sorted_chars)
 
     # Determine output path
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
 
     if args.output:
         out_path = args.output
     elif app_name:
-        app_dir = os.path.join(root, "example", app_name)
+        app_dir = os.path.join(sdk_root, "example", app_name)
         src_dir = os.path.join(app_dir, "resource", "src")
         os.makedirs(src_dir, exist_ok=True)
         out_path = os.path.join(src_dir, "supported_text.txt")
@@ -1269,9 +1269,9 @@ def cmd_extract_text(args):
 
 def cmd_gen_resource(args):
     """Run resource generation (wraps make resource)."""
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
@@ -1295,14 +1295,14 @@ def cmd_gen_resource(args):
         if os.path.exists(cached_path):
             os.remove(cached_path)
 
-    gen_script = os.path.join(root, "scripts", "tools", "app_resource_generate.py")
-    output_dir = os.path.join(root, "output")
+    gen_script = os.path.join(sdk_root, "scripts", "tools", "app_resource_generate.py")
+    output_dir = os.path.join(sdk_root, "output")
     os.makedirs(output_dir, exist_ok=True)
 
     cmd = [sys.executable, gen_script, "-r", resource_dir, "-o", output_dir]
     print(f"Running: {' '.join(cmd)}")
 
-    result = subprocess.run(cmd, cwd=root)
+    result = subprocess.run(cmd, cwd=sdk_root)
     if result.returncode == 0:
         print(f"\nResource generation complete.")
         print(f"  C files generated in: {resource_dir}/img/ and {resource_dir}/font/")
@@ -1314,7 +1314,7 @@ def cmd_gen_resource(args):
 
 # ── Sub-command: generate-code ──────────────────────────────────
 
-def _sync_font_files(project, egui_root, src_dir):
+def _sync_font_files(project, sdk_root, src_dir):
     """Copy font files referenced by widgets to resource/src/."""
     import shutil
     font_files = set()
@@ -1326,7 +1326,7 @@ def _sync_font_files(project, egui_root, src_dir):
     if not font_files:
         return
     os.makedirs(src_dir, exist_ok=True)
-    tools_dir = os.path.join(egui_root, "scripts", "tools")
+    tools_dir = os.path.join(sdk_root, "scripts", "tools")
     synced = 0
     for fname in font_files:
         if is_designer_resource_path(fname):
@@ -1349,9 +1349,9 @@ def _sync_font_files(project, egui_root, src_dir):
 
 def cmd_generate_code(args):
     """Generate C code from UI Designer XML project."""
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
@@ -1387,7 +1387,7 @@ def cmd_generate_code(args):
             print(f"  Synced {synced} images to resource/src/")
 
     # Sync font files referenced by widgets to resource/src/
-    _sync_font_files(project, root, src_dir)
+    _sync_font_files(project, sdk_root, src_dir)
 
     # Generate Designer-managed resource config from XML
     from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
@@ -1936,9 +1936,9 @@ def cmd_extract_layout(args):
 
 def cmd_verify(args):
     """Build and run runtime check for an app."""
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
@@ -1950,14 +1950,14 @@ def cmd_verify(args):
     if not args.no_clean:
         print("=== Step 1: Clean ===")
         clean_cmd = f"make clean APP={app_name}"
-        result = subprocess.run(clean_cmd, shell=True, cwd=root)
+        result = subprocess.run(clean_cmd, shell=True, cwd=sdk_root)
         if result.returncode != 0:
             print(f"WARNING: Clean failed (continuing anyway)")
 
     # Step 2: Build
     print("\n=== Step 2: Build ===")
     build_cmd = f"make all APP={app_name} PORT=pc {bits_flag}".strip()
-    result = subprocess.run(build_cmd, shell=True, cwd=root)
+    result = subprocess.run(build_cmd, shell=True, cwd=sdk_root)
     if result.returncode != 0:
         print(f"\nBUILD FAILED (exit code {result.returncode})")
         sys.exit(1)
@@ -1965,20 +1965,20 @@ def cmd_verify(args):
 
     # Step 3: Runtime check
     print("\n=== Step 3: Runtime Check ===")
-    check_script = os.path.join(root, "scripts", "code_runtime_check.py")
+    check_script = os.path.join(sdk_root, "scripts", "code_runtime_check.py")
     check_cmd = [sys.executable, check_script, "--app", app_name, "--keep-screenshots"]
     if args.bits64:
         check_cmd.append("--bits64")
     if args.timeout:
         check_cmd.extend(["--timeout", str(args.timeout)])
-    result = subprocess.run(check_cmd, cwd=root)
+    result = subprocess.run(check_cmd, cwd=sdk_root)
     if result.returncode != 0:
         print(f"\nRUNTIME CHECK FAILED (exit code {result.returncode})")
         sys.exit(1)
     print("\nRUNTIME CHECK OK")
 
     # Step 4: Report screenshot location
-    screenshot_dir = os.path.join(root, "runtime_check_output", app_name)
+    screenshot_dir = os.path.join(sdk_root, "runtime_check_output", app_name)
     if os.path.isdir(screenshot_dir):
         pngs = [f for f in os.listdir(screenshot_dir) if f.endswith(".png")]
         if pngs:
@@ -1994,14 +1994,14 @@ def cmd_verify(args):
         frames = sorted(f for f in os.listdir(search_dir) if f.endswith(".png"))
         if frames:
             rendered_path = os.path.join(search_dir, frames[0])
-            compare_script = os.path.join(root, "scripts", "figma_visual_compare.py")
+            compare_script = os.path.join(sdk_root, "scripts", "figma_visual_compare.py")
             output_path = os.path.join(screenshot_dir, "comparison.png")
             compare_cmd = [sys.executable, compare_script,
                            "--design", design_path,
                            "--rendered", rendered_path,
                            "--output", output_path]
             print("\n=== Step 5: Visual Comparison ===")
-            subprocess.run(compare_cmd, cwd=root)
+            subprocess.run(compare_cmd, cwd=sdk_root)
 
 
 # ── Sub-command: figma2xml ────────────────────────────────────────
@@ -2639,9 +2639,9 @@ def cmd_figma2xml(args):
         print(f"Scaling: {scale:.2f}x (target: {target_w}x{target_h})")
 
     # Setup app directory
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     # Run scaffold if app doesn't exist
     if not os.path.exists(app_dir):
@@ -2787,9 +2787,9 @@ def cmd_figma_mcp(args):
         target_w, target_h = frame_w, frame_h
 
     # Setup app directory
-    root = _find_egui_root()
+    sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(root, "example", app_name)
+    app_dir = os.path.join(sdk_root, "example", app_name)
 
     if not os.path.exists(app_dir):
         print(f"Creating app scaffold: {app_name}")

@@ -25,8 +25,8 @@ class TestHelperResourceSync:
         assert 'egui_root="' not in xml
 
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
-        egui_root = tmp_path / "sdk"
-        tools_dir = egui_root / "scripts" / "tools"
+        sdk_root = tmp_path / "sdk"
+        tools_dir = sdk_root / "scripts" / "tools"
         tools_dir.mkdir(parents=True)
         (tools_dir / "_generated_text_demo_16_4.ttf").write_bytes(b"BAD")
         (tools_dir / "kept.ttf").write_bytes(b"OK")
@@ -43,7 +43,7 @@ class TestHelperResourceSync:
         )
         src_dir = tmp_path / "project" / "resource" / "src"
 
-        h._sync_font_files(project, str(egui_root), str(src_dir))
+        h._sync_font_files(project, str(sdk_root), str(src_dir))
 
         assert (src_dir / "kept.ttf").is_file()
         assert not (src_dir / "_generated_text_demo_16_4.ttf").exists()
@@ -63,7 +63,7 @@ class TestHelperResourceSync:
             with open(out_path, "wb") as f:
                 f.write(b"PNG")
 
-        monkeypatch.setattr(h, "_find_egui_root", lambda: str(tmp_path))
+        monkeypatch.setattr(h, "_find_sdk_root", lambda: str(tmp_path))
         monkeypatch.setattr(h, "_get_svg_renderer", lambda: ("fake", fake_render))
         monkeypatch.setattr(
             h,
