@@ -343,43 +343,30 @@ class Project:
         if res_elem is not None:
             proj.resource_config = res_elem.get("config", "")
 
-        # Determine directories
-        src_dir = os.path.join(project_dir, "resource", "src")  # legacy
-        eguiproject_res_dir = os.path.join(config_dir, "resources")  # new
+        # Determine canonical resource directories
+        eguiproject_res_dir = os.path.join(config_dir, "resources")
         eguiproject_images_dir = os.path.join(eguiproject_res_dir, "images")
 
         # Load resource catalog
-        # Try .eguiproject/resources/resources.xml first, then .eguiproject/resources.xml (old)
         catalog = ResourceCatalog.load(eguiproject_res_dir)
-        if catalog is None:
-            catalog = ResourceCatalog.load(config_dir)  # legacy location
         if catalog is not None:
             proj.resource_catalog = catalog
         else:
-            # Auto-create catalog from existing resource directory
             if os.path.isdir(eguiproject_res_dir):
                 proj.resource_catalog = ResourceCatalog.from_directory(eguiproject_res_dir)
-            elif os.path.isdir(src_dir):
-                proj.resource_catalog = ResourceCatalog.from_resource_config(src_dir)
             else:
                 proj.resource_catalog = ResourceCatalog()
 
-        # Load i18n string resources
-        # Try .eguiproject/resources/values*/ first, then .eguiproject/values*/, then resource/src/values*/
+        # Load i18n string resources from the canonical resource directory only.
         proj.string_catalog = StringResourceCatalog.scan_and_load(eguiproject_res_dir)
-        if not proj.string_catalog.has_strings:
-            proj.string_catalog = StringResourceCatalog.scan_and_load(config_dir)
-        if not proj.string_catalog.has_strings:
-            proj.string_catalog = StringResourceCatalog.scan_and_load(src_dir)
 
-        # Migration: copy source files from old locations to .eguiproject/resources/
-        proj._migrate_resources_if_needed(project_dir)
-
-        # Determine the authoritative source dir for page loading
-        # (used for image path validation 鈥?point to images/ subfolder)
-        effective_src_dir = eguiproject_images_dir if os.path.isdir(eguiproject_images_dir) else (
-            eguiproject_res_dir if os.path.isdir(eguiproject_res_dir) else src_dir
-        )
+        # Determine the authoritative source dir for page loading.
+        # Prefer images/ for current projects, then the resource root if present.
+        effective_src_dir = None
+        if os.path.isdir(eguiproject_images_dir):
+            effective_src_dir = eguiproject_images_dir
+        elif os.path.isdir(eguiproject_res_dir):
+            effective_src_dir = eguiproject_res_dir
 
         # Load pages
         pages_elem = root.find("Pages")
@@ -396,96 +383,6 @@ class Project:
                     print(f"Warning: Failed to load page {file_path}: {e}")
 
         return proj
-
-    def _migrate_resources_if_needed(self, project_dir):
-        """One-time migration: copy resource files from old locations to the
-        current canonical layout under .eguiproject/resources/.
-
-        Handles three generations of layout:
-          1. resource/src/  (original legacy)
-          2. .eguiproject/resources/ flat + .eguiproject/values*/  (intermediate)
-          3. .eguiproject/resources/images/ + .eguiproject/resources/values*/ (current)
-        """
-        import re
-        _VALUES_DIR_RE = re.compile(r'^values(?:-[a-zA-Z]{2,8})?$')
-        _IMAGE_EXTS = ('.png', '.bmp', '.jpg', '.jpeg')
-        _FONT_EXTS = ('.ttf', '.otf')
-
-        config_dir = os.path.join(project_dir, ".eguiproject")
-        eguiproject_res_dir = os.path.join(config_dir, "resources")
-        images_dir = os.path.join(eguiproject_res_dir, "images")
-        old_src_dir = os.path.join(project_dir, "resource", "src")
-
-        os.makedirs(eguiproject_res_dir, exist_ok=True)
-
-        # --- Step A: migrate from resource/src/ (generation 1 -> 3) ---
-        if os.path.isdir(old_src_dir):
-            os.makedirs(images_dir, exist_ok=True)
-            for fname in os.listdir(old_src_dir):
-                old_path = os.path.join(old_src_dir, fname)
-                if os.path.isfile(old_path):
-                    if is_designer_resource_path(fname):
-                        continue
-                    ext = os.path.splitext(fname)[1].lower()
-                    if ext in _IMAGE_EXTS:
-                        new_path = os.path.join(images_dir, fname)
-                    else:
-                        new_path = os.path.join(eguiproject_res_dir, fname)
-                    if not os.path.exists(new_path):
-                        shutil.copy2(old_path, new_path)
-                elif os.path.isdir(old_path) and _VALUES_DIR_RE.match(fname):
-                    old_xml = os.path.join(old_path, "strings.xml")
-                    if os.path.isfile(old_xml):
-                        new_dir = os.path.join(eguiproject_res_dir, fname)
-                        os.makedirs(new_dir, exist_ok=True)
-                        new_xml = os.path.join(new_dir, "strings.xml")
-                        if not os.path.exists(new_xml):
-                            shutil.copy2(old_xml, new_xml)
-
-        # --- Step B: migrate from flat .eguiproject/resources/ (gen 2 -> 3) ---
-        # Move image files from resources/ root into resources/images/
-        os.makedirs(images_dir, exist_ok=True)
-        for fname in os.listdir(eguiproject_res_dir):
-            fpath = os.path.join(eguiproject_res_dir, fname)
-            if os.path.isfile(fpath):
-                ext = os.path.splitext(fname)[1].lower()
-                if ext in _IMAGE_EXTS:
-                    new_path = os.path.join(images_dir, fname)
-                    if not os.path.exists(new_path):
-                        shutil.move(fpath, new_path)
-                    elif fpath != new_path:
-                        os.remove(fpath)  # duplicate, remove from root
-
-        # --- Step C: migrate values from .eguiproject/ (gen 2 -> 3) ---
-        if os.path.isdir(config_dir):
-            for dname in os.listdir(config_dir):
-                if not _VALUES_DIR_RE.match(dname):
-                    continue
-                old_dir = os.path.join(config_dir, dname)
-                if not os.path.isdir(old_dir):
-                    continue
-                # Skip if it's already inside resources/
-                if os.path.commonpath([old_dir, eguiproject_res_dir]) == os.path.normpath(eguiproject_res_dir):
-                    continue
-                old_xml = os.path.join(old_dir, "strings.xml")
-                if os.path.isfile(old_xml):
-                    new_dir = os.path.join(eguiproject_res_dir, dname)
-                    os.makedirs(new_dir, exist_ok=True)
-                    new_xml = os.path.join(new_dir, "strings.xml")
-                    if not os.path.exists(new_xml):
-                        shutil.copy2(old_xml, new_xml)
-
-        # --- Step D: migrate resources.xml from .eguiproject/ (gen 2 -> 3) ---
-        old_catalog = os.path.join(config_dir, "resources.xml")
-        new_catalog = os.path.join(eguiproject_res_dir, "resources.xml")
-        if os.path.isfile(old_catalog) and not os.path.isfile(new_catalog):
-            shutil.copy2(old_catalog, new_catalog)
-
-        # Reload catalogs from migrated location if needed
-        reloaded_strings = StringResourceCatalog.scan_and_load(eguiproject_res_dir)
-        if reloaded_strings.has_strings:
-            self.string_catalog = reloaded_strings
-
     def sync_resources_to_src(self, project_dir):
         """Sync .eguiproject/resources/ 鈫?resource/src/ for the generation pipeline.
 

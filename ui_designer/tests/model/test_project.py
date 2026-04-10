@@ -1,6 +1,7 @@
 """Tests for ui_designer.model.project.Project."""
 
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -340,6 +341,68 @@ class TestSaveLoad:
         # Verify layout XML was created
         layout_xml = os.path.join(project_dir, ".eguiproject", "layout", "main_page.xml")
         assert os.path.isfile(layout_xml)
+
+    @pytest.mark.integration
+    def test_load_ignores_legacy_resource_src_inputs(self, tmp_path):
+        proj = Project(app_name="LegacySrcIgnored")
+        proj.create_new_page("main_page")
+
+        project_dir = tmp_path / "LegacySrcIgnored"
+        proj.save(str(project_dir))
+
+        legacy_src_dir = project_dir / "resource" / "src"
+        (legacy_src_dir / "legacy.png").write_bytes(b"PNG")
+        values_dir = legacy_src_dir / "values"
+        values_dir.mkdir(parents=True, exist_ok=True)
+        (values_dir / "strings.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<resources>\n"
+            '    <string name="legacy_key">legacy value</string>\n'
+            "</resources>\n",
+            encoding="utf-8",
+        )
+
+        loaded = Project.load(str(project_dir))
+
+        assert loaded.pages[0].name == "main_page"
+        assert loaded.resource_catalog.images == []
+        assert not loaded.string_catalog.has_strings
+        assert not (project_dir / ".eguiproject" / "resources" / "images" / "legacy.png").exists()
+        assert not (project_dir / ".eguiproject" / "resources" / "values" / "strings.xml").exists()
+
+    @pytest.mark.integration
+    def test_load_ignores_legacy_eguiproject_root_resources(self, tmp_path):
+        proj = Project(app_name="LegacyEguiprojectIgnored")
+        proj.create_new_page("main_page")
+
+        project_dir = tmp_path / "LegacyEguiprojectIgnored"
+        proj.save(str(project_dir))
+
+        shutil.rmtree(project_dir / ".eguiproject" / "resources")
+        (project_dir / ".eguiproject" / "resources.xml").write_text(
+            "<Resources>\n"
+            "    <Images>\n"
+            '        <ImageFile file="legacy_root.png" />\n'
+            "    </Images>\n"
+            "</Resources>\n",
+            encoding="utf-8",
+        )
+        legacy_values_dir = project_dir / ".eguiproject" / "values"
+        legacy_values_dir.mkdir(parents=True, exist_ok=True)
+        (legacy_values_dir / "strings.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<resources>\n"
+            '    <string name="legacy_key">legacy value</string>\n'
+            "</resources>\n",
+            encoding="utf-8",
+        )
+
+        loaded = Project.load(str(project_dir))
+
+        assert loaded.pages[0].name == "main_page"
+        assert loaded.resource_catalog.images == []
+        assert not loaded.string_catalog.has_strings
+        assert not (project_dir / ".eguiproject" / "resources").exists()
 
     @pytest.mark.integration
     def test_load_bundled_example_with_manual_widget_descriptor_fallback(self):

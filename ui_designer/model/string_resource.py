@@ -11,8 +11,6 @@ Directory convention (inside ``.eguiproject/resources/``):
             strings.xml          <- Japanese
         ...
 
-Legacy fallback: ``resource/src/values*/strings.xml``
-
 Each ``strings.xml`` follows Android format::
 
     <?xml version="1.0" encoding="utf-8"?>
@@ -234,10 +232,10 @@ class StringResourceCatalog:
 
     @classmethod
     def scan_and_load(cls, src_dir):
-        """Scan ``resource/src/`` for ``values*/strings.xml`` and load all.
+        """Scan a resource directory for ``values*/strings.xml`` and load all.
 
         Args:
-            src_dir: Path to ``resource/src/`` directory.
+            src_dir: Path to the base resource directory.
 
         Returns:
             StringResourceCatalog instance (may be empty if no values/ found).
