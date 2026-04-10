@@ -95,6 +95,22 @@ def _build_empty_resources_xml():
     return ResourceCatalog().to_xml_string()
 
 
+def _build_root_page_xml(width, height, child_xml_blocks=None, *, background_hex=None, root_name="root"):
+    """Build a minimal page XML string with a single root group wrapper."""
+    xml_lines = ['<?xml version="1.0" encoding="utf-8"?>', "<Page>"]
+    xml_lines.append(f'    <Group id="{root_name}" x="0" y="0" width="{width}" height="{height}">')
+    if background_hex:
+        xml_lines.append(
+            f'        <Background type="solid" color="EGUI_COLOR_HEX(0x{background_hex})" alpha="EGUI_ALPHA_100" />'
+        )
+    for block in child_xml_blocks or []:
+        if block:
+            xml_lines.append(block)
+    xml_lines.append("    </Group>")
+    xml_lines.append("</Page>")
+    return "\n".join(xml_lines)
+
+
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
@@ -2622,31 +2638,30 @@ def cmd_figma2xml(args):
     parent_x = bbox.get("x", 0)
     parent_y = bbox.get("y", 0)
 
-    # Build XML document
-    xml_lines = ['<?xml version="1.0" encoding="utf-8"?>', '<Page>']
-
-    # Create root group
-    xml_lines.append(f'    <Group id="root" x="0" y="0" width="{target_w}" height="{target_h}">')
+    child_xml_blocks = []
+    background_hex = None
 
     # Check for background fill on root
     fills = root_node.get("fills", [])
     for fill in fills:
         if fill.get("visible", True) and fill.get("type") == "SOLID":
-            bg_color = _figma_color_to_hex(fill.get("color"))
-            if bg_color:
-                xml_lines.append(f'        <Background type="solid" color="EGUI_COLOR_HEX(0x{bg_color})" alpha="EGUI_ALPHA_100" />')
+            background_hex = _figma_color_to_hex(fill.get("color"))
+            if background_hex:
+                break
             break
 
     # Process children
     for child in root_node.get("children", []):
         child_xml = _figma_node_to_xml(child, parent_x, parent_y, scale, indent=2)
         if child_xml:
-            xml_lines.append(child_xml)
+            child_xml_blocks.append(child_xml)
 
-    xml_lines.append('    </Group>')
-    xml_lines.append('</Page>')
-
-    xml_content = "\n".join(xml_lines)
+    xml_content = _build_root_page_xml(
+        target_w,
+        target_h,
+        child_xml_blocks,
+        background_hex=background_hex,
+    )
 
     # Write XML file
     page_name = args.page or "main_page"
@@ -2778,27 +2793,30 @@ def cmd_figma_mcp(args):
         scale = min(sx, sy)
         px, py = fb.get("x", 0), fb.get("y", 0)
 
-        xml_lines = ['<?xml version="1.0" encoding="utf-8"?>', '<Page>']
-        xml_lines.append(f'    <Group id="root" x="0" y="0" width="{target_w}" height="{target_h}">')
-
+        child_xml_blocks = []
+        background_hex = None
         for fill in frame.get("fills", []):
             if fill.get("visible", True) and fill.get("type") == "SOLID":
-                bg_color = _figma_color_to_hex(fill.get("color"))
-                if bg_color:
-                    xml_lines.append(f'        <Background type="solid" color="EGUI_COLOR_HEX(0x{bg_color})" alpha="EGUI_ALPHA_100" />')
+                background_hex = _figma_color_to_hex(fill.get("color"))
+                if background_hex:
+                    break
                 break
 
         for child in frame.get("children", []):
             child_xml = _figma_node_to_xml(child, px, py, scale, indent=2)
             if child_xml:
-                xml_lines.append(child_xml)
-
-        xml_lines.append('    </Group>')
-        xml_lines.append('</Page>')
+                child_xml_blocks.append(child_xml)
 
         xml_path = os.path.join(layout_dir, f"{page_name}.xml")
         with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write("\n".join(xml_lines))
+            f.write(
+                _build_root_page_xml(
+                    target_w,
+                    target_h,
+                    child_xml_blocks,
+                    background_hex=background_hex,
+                )
+            )
         print(f"  Written: {xml_path}")
 
     print(f"\nNext steps:")

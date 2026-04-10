@@ -193,6 +193,24 @@ class TestFigmaGradientSupport:
         assert result is None
 
 
+class TestFigmaRootPageXml:
+    """Test shared page wrapper generation for Figma conversion flows."""
+
+    def test_build_root_page_xml_wraps_children_and_background(self):
+        xml = h._build_root_page_xml(
+            320,
+            240,
+            ['        <Label id="title" x="10" y="20" width="100" height="24" />'],
+            background_hex="112233",
+        )
+
+        assert xml.startswith('<?xml version="1.0" encoding="utf-8"?>\n<Page>\n')
+        assert '<Group id="root" x="0" y="0" width="320" height="240">' in xml
+        assert '<Background type="solid" color="EGUI_COLOR_HEX(0x112233)" alpha="EGUI_ALPHA_100" />' in xml
+        assert '<Label id="title" x="10" y="20" width="100" height="24" />' in xml
+        assert xml.endswith("    </Group>\n</Page>")
+
+
 class TestFigmaShadowMapping:
     """Test Figma drop-shadow to EGUI shadow parameters."""
 
