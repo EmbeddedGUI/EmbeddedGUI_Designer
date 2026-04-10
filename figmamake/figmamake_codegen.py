@@ -29,10 +29,8 @@ sys.path.insert(0, SCRIPTS_DIR)
 
 from html2egui_helper import (
     _discover_figmamake_pages,
-    _extract_lucide_imports,
-    _extract_jsx_return,
-    _extract_jsx_comments,
-    _jsx_to_pseudo_html,
+    _prepare_figmamake_page_markup,
+    _parse_html_root_node,
     _lucide_name_to_material,
     _extract_tw_color,
     _find_sdk_root,
@@ -535,21 +533,18 @@ class FigmaMakeCodegen:
             with open(page_file, "r", encoding="utf-8") as f:
                 tsx_content = f.read()
 
-            # Parse TSX to node tree
-            lucide_imports = _extract_lucide_imports(tsx_content)
-            jsx_text = _extract_jsx_return(tsx_content, page_info["name"])
-            if not jsx_text:
+            page_markup = _prepare_figmamake_page_markup(
+                tsx_content,
+                component_name=page_info["name"],
+            )
+            if not page_markup["jsx_text"]:
                 print(f"  WARNING: No JSX in {page_file}", file=sys.stderr)
                 continue
 
-            jsx_text, _ = _extract_jsx_comments(jsx_text)
-            pseudo_html = _jsx_to_pseudo_html(jsx_text, lucide_imports)
-
-            parser = _NodeParser()
-            parser.feed(pseudo_html)
-            root_node = parser._root
-            if not root_node and parser._stack:
-                root_node = parser._stack[0]
+            root_node = _parse_html_root_node(
+                page_markup["pseudo_html"],
+                _NodeParser,
+            )
             if not root_node:
                 print(f"  WARNING: Empty parse for {page_name}",
                       file=sys.stderr)

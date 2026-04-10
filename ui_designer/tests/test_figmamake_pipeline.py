@@ -39,10 +39,16 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
         },
     )
     monkeypatch.setattr(codegen_module, "AnimExtractor", _FakeAnimExtractor)
-    monkeypatch.setattr(codegen_module, "_extract_lucide_imports", lambda _tsx: {})
-    monkeypatch.setattr(codegen_module, "_extract_jsx_return", lambda _tsx, _page_name=None: "<div>Hello</div>")
-    monkeypatch.setattr(codegen_module, "_extract_jsx_comments", lambda jsx: (jsx, []))
-    monkeypatch.setattr(codegen_module, "_jsx_to_pseudo_html", lambda jsx, _imports: jsx)
+    monkeypatch.setattr(
+        codegen_module,
+        "_prepare_figmamake_page_markup",
+        lambda _tsx, component_name=None: {
+            "lucide_imports": {},
+            "jsx_text": "<div>Hello</div>",
+            "comments": [],
+            "pseudo_html": "<div>Hello</div>",
+        },
+    )
 
     result = codegen_module.FigmaMakeCodegen("DemoApp", 320, 240).run(
         str(project_dir),

@@ -3334,6 +3334,41 @@ def _jsx_to_pseudo_html(jsx_text, lucide_imports):
     return html
 
 
+def _prepare_figmamake_page_markup(tsx_content, *, component_name=None):
+    """Prepare shared Figma Make page markup artifacts from TSX content."""
+    lucide_imports = _extract_lucide_imports(tsx_content)
+    jsx_text = _extract_jsx_return(tsx_content, component_name)
+    if not jsx_text:
+        return {
+            "lucide_imports": lucide_imports,
+            "jsx_text": "",
+            "comments": [],
+            "pseudo_html": "",
+        }
+
+    jsx_text, comments = _extract_jsx_comments(jsx_text)
+    return {
+        "lucide_imports": lucide_imports,
+        "jsx_text": jsx_text,
+        "comments": comments,
+        "pseudo_html": _jsx_to_pseudo_html(jsx_text, lucide_imports),
+    }
+
+
+def _parse_html_root_node(html, parser_factory):
+    """Parse HTML with a caller-provided parser and return the best root node."""
+    parser = parser_factory()
+    parser.feed(html)
+    root_node = getattr(parser, "_root", None)
+    if root_node:
+        return root_node
+
+    stack = getattr(parser, "_stack", None)
+    if stack:
+        return stack[0]
+    return None
+
+
 def _discover_figmamake_pages(project_dir):
     """Discover page components from a Figma Make project.
 
@@ -3524,8 +3559,8 @@ def cmd_figmamake_extract(args):
         with open(page_file, "r", encoding="utf-8") as f:
             tsx_content = f.read()
 
-        # Extract Lucide imports
-        lucide_imports = _extract_lucide_imports(tsx_content)
+        page_markup = _prepare_figmamake_page_markup(tsx_content)
+        lucide_imports = page_markup["lucide_imports"]
 
         # Collect icon info from usage in JSX
         for local_name, lucide_name in lucide_imports.items():
@@ -3554,35 +3589,21 @@ def cmd_figmamake_extract(args):
                     icon_info["size_px"] = int(size_match2.group(1))
             all_icons.append(icon_info)
 
-        # Extract JSX template
-        jsx_text = _extract_jsx_return(tsx_content)
-        if not jsx_text:
+        if not page_markup["jsx_text"]:
             print(f"WARNING: No JSX return found in {page_file}", file=sys.stderr)
             continue
 
-        # Extract comments before preprocessing
-        jsx_text, comments = _extract_jsx_comments(jsx_text)
-
-        # Preprocess to pseudo-HTML
-        pseudo_html = _jsx_to_pseudo_html(jsx_text, lucide_imports)
-
-        # Parse with HTML parser
-        parser = _LayoutHTMLParser()
         try:
-            parser.feed(pseudo_html)
+            root_node = _parse_html_root_node(
+                page_markup["pseudo_html"],
+                _LayoutHTMLParser,
+            )
         except Exception as e:
             print(f"WARNING: HTML parse error in {page_file}: {e}", file=sys.stderr)
             continue
 
-        # Find the root element (the outermost div returned by the component)
-        root_node = parser._root
         if not root_node:
-            # Stack may have remaining items due to SVG void elements (<stop/>, <br/> etc.)
-            # that HTMLParser treats as open tags. Use bottom of stack as root.
-            if parser._stack:
-                root_node = parser._stack[0]
-            else:
-                continue
+            continue
 
         # For Figma Make, the root element IS the page container (no need to search for main)
         # Mark it as main if it has w-full h-full pattern
@@ -3591,6 +3612,7 @@ def cmd_figmamake_extract(args):
         # Process sections (direct children of root)
         sections = []
         comment_idx = 0
+        comments = page_markup["comments"]
         for i, child in enumerate(main_node.get("children", [])):
             if child.get("tag") in ("style", "script", "link"):
                 continue

@@ -9,6 +9,61 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 import html2egui_helper as h
 
 
+class _FakeStackOnlyParser:
+    def __init__(self):
+        self._root = None
+        self._stack = []
+
+    def feed(self, html):
+        self._stack = [{"tag": "div", "attrs": {}, "children": [], "text": html}]
+
+
+class TestFigmaMakePageMarkup:
+    def test_prepare_figmamake_page_markup_targets_named_component(self):
+        tsx = """
+import { Battery, Wifi as WifiIcon } from "lucide-react";
+
+function HelperCard() {
+    return <section>Ignored helper</section>;
+}
+
+export function DashboardPage() {
+    return (
+        <div className="w-[320px] h-[240px]">
+            {/* Status Header */}
+            <Battery className="w-5 h-5 text-cyan-400" />
+            <WifiIcon />
+            <span>Battery</span>
+        </div>
+    );
+}
+"""
+
+        markup = h._prepare_figmamake_page_markup(
+            tsx,
+            component_name="DashboardPage",
+        )
+
+        assert markup["lucide_imports"] == {
+            "Battery": "Battery",
+            "WifiIcon": "Wifi",
+        }
+        assert markup["comments"] == ["Status Header"]
+        assert "Ignored helper" not in markup["pseudo_html"]
+        assert 'data-lucide="Battery"' in markup["pseudo_html"]
+        assert 'data-lucide="Wifi"' in markup["pseudo_html"]
+
+    def test_parse_html_root_node_falls_back_to_stack_root(self):
+        root = h._parse_html_root_node("<div>stack-only</div>", _FakeStackOnlyParser)
+
+        assert root == {
+            "tag": "div",
+            "attrs": {},
+            "children": [],
+            "text": "<div>stack-only</div>",
+        }
+
+
 class TestClassifyLayout:
     """Test _classify_layout with extended Tailwind classes."""
 
