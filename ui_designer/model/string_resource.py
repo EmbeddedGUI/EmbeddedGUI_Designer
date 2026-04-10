@@ -33,6 +33,8 @@ import re
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
+from ..utils.xml_utils import write_xml_file
+
 # Pattern to detect a string resource reference in a widget text property.
 # e.g. "@string/hello_world"
 STRING_REF_RE = re.compile(r'^@string/([A-Za-z_][A-Za-z0-9_]*)$')
@@ -313,12 +315,7 @@ class StringResourceCatalog:
             elem.set("name", key)
             elem.text = value
 
-        ET.indent(root, space="    ")
-        tree = ET.ElementTree(root)
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-            tree.write(f, encoding="unicode", xml_declaration=False)
-            f.write("\n")
+        write_xml_file(filepath, root, trailing_newline=True)
 
     # ── Resolve reference ──────────────────────────────────────────
 

@@ -9,6 +9,7 @@ import os
 import xml.etree.ElementTree as ET
 
 from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.xml_utils import element_to_xml_string
 
 
 # Image file extensions
@@ -131,10 +132,7 @@ class ResourceCatalog:
                 elem = ET.SubElement(texts_elem, "TextFile")
                 elem.set("file", txt)
 
-        ET.indent(root, space="    ")
-        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(
-            root, encoding="unicode"
-        )
+        return element_to_xml_string(root)
 
     def save(self, project_dir):
         """Save catalog to resources.xml in project directory."""

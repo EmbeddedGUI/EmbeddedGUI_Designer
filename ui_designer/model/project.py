@@ -32,6 +32,7 @@ from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.xml_utils import element_to_xml_string
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
 from .sdk_fingerprint import SdkFingerprint
 
@@ -257,10 +258,7 @@ class Project:
         res = ET.SubElement(root, "Resources")
         res.set("catalog", "resources.xml")
 
-        ET.indent(root, space="    ")
-        return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(
-            root, encoding="unicode"
-        )
+        return element_to_xml_string(root)
 
     def save(self, project_dir):
         """Save project to directory.

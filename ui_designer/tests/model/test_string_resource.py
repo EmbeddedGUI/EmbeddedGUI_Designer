@@ -209,3 +209,8 @@ class TestSaveLoad:
         assert loaded.get("app_name", "zh") == "Test App ZH"
         assert loaded.get("greeting", "zh") == "Ni Hao"
         assert set(loaded.locales) == {DEFAULT_LOCALE, "zh"}
+
+        default_strings = os.path.join(src_dir, "values", "strings.xml")
+        assert open(default_strings, "r", encoding="utf-8").read().endswith(
+            "</resources>\n"
+        )

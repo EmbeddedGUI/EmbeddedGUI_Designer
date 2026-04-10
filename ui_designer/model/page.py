@@ -7,6 +7,7 @@ The page name is derived from the filename — no separate 'name' attribute is s
 import os
 import xml.etree.ElementTree as ET
 
+from ..utils.xml_utils import element_to_xml_string
 from .widget_model import WidgetModel
 
 
@@ -190,7 +191,4 @@ class Page:
 
 def _indent_xml(elem):
     """Pretty-print XML with indentation."""
-    ET.indent(elem, space="    ")
-    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(
-        elem, encoding="unicode"
-    )
+    return element_to_xml_string(elem)

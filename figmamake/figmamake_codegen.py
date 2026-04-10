@@ -40,6 +40,7 @@ from html2egui_helper import (
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.model.resource_catalog import ResourceCatalog
+from ui_designer.utils.xml_utils import write_xml_file
 
 
 # ── Tailwind → pixel converters ──────────────────────────────────
@@ -569,10 +570,7 @@ class FigmaMakeCodegen:
             xml_path = os.path.join(
                 app_dir, ".eguiproject", "layout", f"{page_name}.xml"
             )
-            tree = ET.ElementTree(xml_root)
-            with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-                tree.write(f, encoding="unicode", xml_declaration=False)
+            write_xml_file(xml_path, xml_root)
             print(f"  Generated: {page_name}.xml")
 
         if not page_names:
