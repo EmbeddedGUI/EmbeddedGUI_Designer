@@ -1,6 +1,9 @@
 """Tests for destructive project reconstruction cleanup."""
 
-from ui_designer.model.project_cleaner import clean_project_for_reconstruct
+import os
+import pytest
+
+from ui_designer.model.project_cleaner import clean_project_for_reconstruct, _remove_path
 
 
 class TestProjectCleaner:
@@ -93,3 +96,55 @@ class TestProjectCleaner:
         assert ".eguiproject/orphaned_user_code" in report.removed_paths
         assert "main_page.c" in report.removed_paths
         assert "notes" in report.removed_paths
+
+    def test_clean_project_for_reconstruct_removes_legacy_designer_wrapper_files(self, tmp_path):
+        project_dir = tmp_path / "LegacyWrapperCleanupDemo"
+        (project_dir / ".eguiproject" / "layout").mkdir(parents=True)
+        (project_dir / "resource" / "src").mkdir(parents=True)
+
+        (project_dir / "LegacyWrapperCleanupDemo.egui").write_text("<Project />\n", encoding="utf-8")
+        (project_dir / ".eguiproject" / "layout" / "main_page.xml").write_text("<Page />\n", encoding="utf-8")
+        (project_dir / "build.mk").write_text("include $(EGUI_APP_PATH)/.designer/build_designer.mk\n", encoding="utf-8")
+        (project_dir / "app_egui_config.h").write_text('#include ".designer/app_egui_config_designer.h"\n', encoding="utf-8")
+        (project_dir / "build_designer.mk").write_text("# legacy designer build\n", encoding="utf-8")
+        (project_dir / "app_egui_config_designer.h").write_text("#define LEGACY_CONFIG 1\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / "app_resource_config.json").write_text("{ }\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / "app_resource_config_designer.json").write_text("{ }\n", encoding="utf-8")
+
+        report = clean_project_for_reconstruct(str(project_dir))
+
+        assert (project_dir / "build.mk").is_file()
+        assert (project_dir / "app_egui_config.h").is_file()
+        assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
+        assert not (project_dir / "build_designer.mk").exists()
+        assert not (project_dir / "app_egui_config_designer.h").exists()
+        assert not (project_dir / "resource" / "src" / "app_resource_config_designer.json").exists()
+        assert "build_designer.mk" in report.removed_paths
+        assert "app_egui_config_designer.h" in report.removed_paths
+        assert "resource/src/app_resource_config_designer.json" in report.removed_paths
+
+    def test_remove_path_unlinks_symlink_without_recursing_into_target(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "LinkCleanupDemo"
+        project_dir.mkdir()
+        link_path = project_dir / "generated_link"
+        removed_paths = []
+        calls = []
+
+        monkeypatch.setattr("ui_designer.model.project_cleaner.os.path.islink", lambda path: path == str(link_path))
+        monkeypatch.setattr("ui_designer.model.project_cleaner.os.unlink", lambda path: calls.append(path))
+
+        removed_files, removed_dirs = _remove_path(str(project_dir), str(link_path), removed_paths)
+
+        assert removed_files == 1
+        assert removed_dirs == 0
+        assert calls == [str(link_path)]
+        assert removed_paths == ["generated_link"]
+
+    def test_remove_path_rejects_paths_outside_project(self, tmp_path):
+        project_dir = tmp_path / "SafeProject"
+        project_dir.mkdir()
+        outside_path = tmp_path / "outside.txt"
+        outside_path.write_text("nope\n", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="outside project"):
+            _remove_path(str(project_dir), str(outside_path), [])
