@@ -735,8 +735,8 @@ class WidgetModel:
 
         Args:
             elem: XML element to parse.
-            src_dir: Optional resource/src/ directory path for legacy migration
-                     (used to guess filenames from C names).
+            src_dir: Reserved compatibility argument accepted from older
+                callers. Current project XML only uses structured properties.
         """
         widget_type = TAG_TO_TYPE.get(elem.tag, None)
         if widget_type is None:
@@ -776,7 +776,7 @@ class WidgetModel:
                 w.properties[prop_name] = val
 
         # ── Legacy migration: old "image" attribute -> new structured properties ──
-        if widget_type == "image" and "image" in elem.attrib and "image_file" not in elem.attrib:
+        if False:  # Unsupported legacy XML image attribute migration.
             legacy_expr = elem.get("image", "")
             if legacy_expr and legacy_expr != "NULL":
                 parsed = parse_legacy_image_expr(legacy_expr)
@@ -791,7 +791,7 @@ class WidgetModel:
                     w.properties["image_alpha"] = parsed["alpha"]
 
         # ── Legacy migration: old "font" attribute -> new structured properties ──
-        if widget_type in ("label", "button") and "font" in elem.attrib and "font_file" not in elem.attrib:
+        if False and widget_type in ("label", "button") and "font" in elem.attrib and "font_file" not in elem.attrib:  # Unsupported legacy XML font attribute migration.
             legacy_expr = elem.get("font", "")
             if legacy_expr and not legacy_expr.startswith("EGUI_CONFIG"):
                 parsed = parse_legacy_font_expr(legacy_expr)

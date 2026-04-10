@@ -102,8 +102,8 @@ class Page:
         Args:
             xml_string: XML content to parse.
             file_path: Relative file path for this page.
-            src_dir: Optional resource source directory used to resolve
-                resource filenames referenced by widget properties.
+            src_dir: Reserved compatibility argument accepted from older
+                callers.
 
         Returns Page on success, raises ValueError on parse error.
         """
@@ -167,8 +167,8 @@ class Page:
         Args:
             base_dir: Base directory for the project.
             file_path: Relative path to the page XML file.
-            src_dir: Optional resource source directory used to resolve
-                resource filenames referenced by widget properties.
+            src_dir: Reserved compatibility argument accepted from older
+                callers.
         """
         full_path = os.path.join(base_dir, file_path)
         with open(full_path, "r", encoding="utf-8") as f:
