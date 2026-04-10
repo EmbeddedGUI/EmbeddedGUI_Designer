@@ -68,6 +68,41 @@ def _find_sdk_root():
     )
 
 
+def _get_app_dir(sdk_root, app_name):
+    """Return the absolute app directory under the SDK example tree."""
+    return os.path.join(sdk_root, "example", app_name)
+
+
+def _get_app_config_dir(app_dir):
+    """Return the .eguiproject directory for an app."""
+    return os.path.join(app_dir, ".eguiproject")
+
+
+def _get_app_layout_dir(app_dir):
+    """Return the app layout directory."""
+    return os.path.join(_get_app_config_dir(app_dir), "layout")
+
+
+def _get_app_config_resource_dir(app_dir):
+    """Return the authoritative .eguiproject resource directory."""
+    return os.path.join(_get_app_config_dir(app_dir), "resources")
+
+
+def _get_app_resource_images_dir(app_dir):
+    """Return the authoritative image source directory."""
+    return os.path.join(_get_app_config_resource_dir(app_dir), "images")
+
+
+def _get_app_generated_resource_dir(app_dir):
+    """Return the generated resource directory."""
+    return os.path.join(app_dir, "resource")
+
+
+def _get_app_resource_src_dir(app_dir):
+    """Return the resource/src directory used by generation scripts."""
+    return os.path.join(_get_app_generated_resource_dir(app_dir), "src")
+
+
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
 def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
@@ -148,7 +183,7 @@ def _write_figma_page_xml(
     scale=1.0,
 ):
     """Build and write a Figma-derived page XML into the app layout directory."""
-    layout_dir = os.path.join(app_dir, ".eguiproject", "layout")
+    layout_dir = _get_app_layout_dir(app_dir)
     os.makedirs(layout_dir, exist_ok=True)
 
     xml_path = os.path.join(layout_dir, f"{page_name}.xml")
@@ -167,7 +202,7 @@ def _write_figma_page_xml(
 
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = _get_app_dir(sdk_root, app_name)
     if os.path.exists(app_dir):
         return app_dir
 
@@ -204,7 +239,7 @@ def _compute_fit_scale(target_w, target_h, source_w, source_h):
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
-    app_dir = os.path.join(sdk_root, "example", args.app)
+    app_dir = _get_app_dir(sdk_root, args.app)
 
     if os.path.exists(app_dir) and not args.force:
         print(f"ERROR: Directory already exists: {app_dir}")
@@ -221,14 +256,14 @@ def cmd_scaffold(args):
     sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
 
     # Create directories
-    config_dir = os.path.join(app_dir, ".eguiproject")
+    config_dir = _get_app_config_dir(app_dir)
     dirs = [
         app_dir,
         os.path.join(app_dir, ".designer"),
-        os.path.join(config_dir, "layout"),
-        os.path.join(config_dir, "resources", "images"),
-        os.path.join(app_dir, "resource"),
-        os.path.join(app_dir, "resource", "src"),
+        _get_app_layout_dir(app_dir),
+        _get_app_resource_images_dir(app_dir),
+        _get_app_generated_resource_dir(app_dir),
+        _get_app_resource_src_dir(app_dir),
         os.path.join(app_dir, "resource", "img"),
         os.path.join(app_dir, "resource", "font"),
     ]
@@ -717,8 +752,8 @@ def cmd_export_icons(args):
         output_dir = args.output
     elif app_name:
         # Default: .eguiproject/resources/images/ for designer workflow
-        app_dir = os.path.join(sdk_root, "example", app_name)
-        output_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
+        app_dir = _get_app_dir(sdk_root, app_name)
+        output_dir = _get_app_resource_images_dir(app_dir)
     else:
         print("ERROR: Must specify either --output or --app")
         sys.exit(1)
@@ -774,8 +809,8 @@ def cmd_export_icons(args):
 
     # Sync PNGs to resource/src/ if using --app (designer workflow)
     if app_name:
-        app_dir = os.path.join(sdk_root, "example", app_name)
-        src_dir = os.path.join(app_dir, "resource", "src")
+        app_dir = _get_app_dir(sdk_root, app_name)
+        src_dir = _get_app_resource_src_dir(app_dir)
         os.makedirs(src_dir, exist_ok=True)
         import shutil
         synced = 0
@@ -1161,8 +1196,8 @@ def cmd_export_svgs(args):
     if args.output:
         output_dir = args.output
     elif app_name:
-        app_dir = os.path.join(sdk_root, "example", app_name)
-        output_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
+        app_dir = _get_app_dir(sdk_root, app_name)
+        output_dir = _get_app_resource_images_dir(app_dir)
     else:
         print("ERROR: Must specify either --output or --app")
         sys.exit(1)
@@ -1212,8 +1247,8 @@ def cmd_export_svgs(args):
 
     # Sync to resource/src/ if using --app
     if app_name and exported_names:
-        app_dir = os.path.join(sdk_root, "example", app_name)
-        src_dir = os.path.join(app_dir, "resource", "src")
+        app_dir = _get_app_dir(sdk_root, app_name)
+        src_dir = _get_app_resource_src_dir(app_dir)
         os.makedirs(src_dir, exist_ok=True)
         import shutil
         synced = 0
@@ -1311,8 +1346,8 @@ def cmd_extract_text(args):
     if args.output:
         out_path = args.output
     elif app_name:
-        app_dir = os.path.join(sdk_root, "example", app_name)
-        src_dir = os.path.join(app_dir, "resource", "src")
+        app_dir = _get_app_dir(sdk_root, app_name)
+        src_dir = _get_app_resource_src_dir(app_dir)
         os.makedirs(src_dir, exist_ok=True)
         out_path = os.path.join(src_dir, "supported_text.txt")
     else:
@@ -1344,14 +1379,14 @@ def cmd_gen_resource(args):
     """Run resource generation (wraps make resource)."""
     sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = _get_app_dir(sdk_root, app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
         sys.exit(1)
 
-    resource_dir = os.path.join(app_dir, "resource")
-    src_dir = os.path.join(resource_dir, "src")
+    resource_dir = _get_app_generated_resource_dir(app_dir)
+    src_dir = _get_app_resource_src_dir(app_dir)
     user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
     designer_config_path = designer_resource_config_path(src_dir)
 
@@ -1424,7 +1459,7 @@ def cmd_generate_code(args):
     """Generate C code from UI Designer XML project."""
     sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = _get_app_dir(sdk_root, app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
@@ -1444,8 +1479,8 @@ def cmd_generate_code(args):
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 
     # Sync images from .eguiproject/resources/images/ to resource/src/
-    images_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
-    src_dir = os.path.join(app_dir, "resource", "src")
+    images_dir = _get_app_resource_images_dir(app_dir)
+    src_dir = _get_app_resource_src_dir(app_dir)
     if os.path.isdir(images_dir):
         import shutil
         os.makedirs(src_dir, exist_ok=True)
@@ -2009,7 +2044,7 @@ def cmd_verify(args):
     """Build and run runtime check for an app."""
     sdk_root = _find_sdk_root()
     app_name = args.app
-    app_dir = os.path.join(sdk_root, "example", app_name)
+    app_dir = _get_app_dir(sdk_root, app_name)
 
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
@@ -2740,7 +2775,7 @@ def cmd_figma2xml(args):
     # Export vector images if any
     if vector_nodes and not args.no_export:
         print(f"\nExporting {len(vector_nodes)} vector node(s) as PNG...")
-        images_dir = os.path.join(app_dir, ".eguiproject", "resources", "images")
+        images_dir = _get_app_resource_images_dir(app_dir)
         _figma_export_images(file_key, vector_nodes, token, images_dir, scale=2)
 
     print(f"\nFigma conversion complete: {app_name}")

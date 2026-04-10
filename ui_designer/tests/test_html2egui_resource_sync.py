@@ -18,6 +18,31 @@ class _FakePage:
 
 
 class TestHelperResourceSync:
+    def test_app_path_helpers_use_shared_project_layout(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+
+        app_dir = h._get_app_dir(str(sdk_root), "DemoApp")
+
+        assert app_dir == str(sdk_root / "example" / "DemoApp")
+        assert h._get_app_config_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / ".eguiproject"
+        )
+        assert h._get_app_layout_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / ".eguiproject" / "layout"
+        )
+        assert h._get_app_config_resource_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources"
+        )
+        assert h._get_app_resource_images_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "images"
+        )
+        assert h._get_app_generated_resource_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / "resource"
+        )
+        assert h._get_app_resource_src_dir(app_dir) == str(
+            sdk_root / "example" / "DemoApp" / "resource" / "src"
+        )
+
     def test_build_egui_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = h._build_egui_project_xml("DemoApp", 320, 240, "../../sdk/EmbeddedGUI", pages=["main_page"])
 

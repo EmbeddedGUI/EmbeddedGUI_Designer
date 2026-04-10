@@ -37,6 +37,11 @@ from html2egui_helper import (
     _extract_tw_color,
     _find_sdk_root,
     _build_egui_project_xml,
+    _get_app_dir,
+    _get_app_layout_dir,
+    _get_app_config_resource_dir,
+    _get_app_resource_images_dir,
+    _get_app_resource_src_dir,
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.model.resource_catalog import ResourceCatalog
@@ -484,7 +489,7 @@ class FigmaMakeCodegen:
         Returns dict with generated file paths.
         """
         sdk_root = _find_sdk_root()
-        app_dir = os.path.join(sdk_root, "example", self.app_name)
+        app_dir = _get_app_dir(sdk_root, self.app_name)
 
         # 1. Discover project structure
         print(f"[1/5] Discovering Figma Make project: {project_dir}")
@@ -512,11 +517,9 @@ class FigmaMakeCodegen:
 
         # 3. Generate XML layout files
         print(f"[3/5] Generating XML layouts...")
-        os.makedirs(os.path.join(app_dir, ".eguiproject", "layout"),
-                    exist_ok=True)
-        os.makedirs(os.path.join(app_dir, ".eguiproject", "resources", "images"),
-                    exist_ok=True)
-        os.makedirs(os.path.join(app_dir, "resource", "src"), exist_ok=True)
+        os.makedirs(_get_app_layout_dir(app_dir), exist_ok=True)
+        os.makedirs(_get_app_resource_images_dir(app_dir), exist_ok=True)
+        os.makedirs(_get_app_resource_src_dir(app_dir), exist_ok=True)
 
         page_names = []
         for page_info in discovery["pages"]:
@@ -568,7 +571,7 @@ class FigmaMakeCodegen:
 
             # Write XML
             xml_path = os.path.join(
-                app_dir, ".eguiproject", "layout", f"{page_name}.xml"
+                _get_app_layout_dir(app_dir), f"{page_name}.xml"
             )
             write_xml_file(xml_path, xml_root)
             print(f"  Generated: {page_name}.xml")
@@ -594,7 +597,7 @@ class FigmaMakeCodegen:
 
         # Write resources.xml
         res_xml_path = os.path.join(
-            app_dir, ".eguiproject", "resources", "resources.xml"
+            _get_app_config_resource_dir(app_dir), "resources.xml"
         )
         if not os.path.exists(res_xml_path):
             with open(res_xml_path, "w", encoding="utf-8", newline="\n") as f:
