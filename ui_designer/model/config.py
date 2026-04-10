@@ -96,7 +96,7 @@ class DesignerConfig:
             if not isinstance(item, dict):
                 continue
             project_path = normalize_path(item.get("project_path", ""))
-            sdk_root = normalize_path(item.get("sdk_root", item.get("egui_root", "")))
+            sdk_root = normalize_path(item.get("sdk_root", ""))
             display_name = item.get("display_name", "")
             if not project_path:
                 continue
@@ -153,7 +153,7 @@ class DesignerConfig:
             with open(config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.sdk_root = normalize_path(data.get("sdk_root", data.get("egui_root", "")))
+            self.sdk_root = normalize_path(data.get("sdk_root", ""))
             self.egui_root = self.sdk_root
             self.last_app = data.get("last_app", "HelloDesigner")
             self.last_project_path = normalize_path(data.get("last_project_path", ""))

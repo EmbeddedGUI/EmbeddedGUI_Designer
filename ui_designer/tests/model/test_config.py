@@ -404,3 +404,41 @@ class TestConfigMigration:
             config.load()
 
         assert config.recent_projects == []
+
+    def test_load_ignores_legacy_egui_root_config_key(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(json.dumps({"egui_root": "/legacy/sdk"}), encoding="utf-8")
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            config.load()
+
+        assert config.sdk_root == ""
+        assert config.egui_root == ""
+
+    def test_load_ignores_legacy_recent_project_egui_root_key(self, config, tmp_path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(
+            json.dumps(
+                {
+                    "recent_projects": [
+                        {
+                            "project_path": "/legacy/example/App/App.egui",
+                            "egui_root": "/legacy/sdk",
+                            "display_name": "App",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
+            config.load()
+
+        assert config.recent_projects == [
+            {
+                "project_path": normalize_path("/legacy/example/App/App.egui"),
+                "sdk_root": "",
+                "display_name": "App",
+            }
+        ]
