@@ -456,43 +456,12 @@ class PropertyPanel(QWidget):
             event.ignore()
             return
         res_type = info.get("type", "")
-        # Support both new (filename) and legacy (expr) payload formats
         filename = info.get("filename", "")
-        expr = info.get("expr", "")
         if self._primary_widget is None:
             event.ignore()
             return
 
         if filename and assign_resource_to_widget(self._primary_widget, res_type, filename):
-            self._rebuild_form()
-            self.property_changed.emit()
-            event.acceptProposedAction()
-        elif res_type == "image" and "image_file" in self._primary_widget.properties:
-            if expr:
-                # Legacy: parse expr to extract filename
-                from ..model.widget_model import parse_legacy_image_expr, _guess_filename_from_c_name
-                parsed = parse_legacy_image_expr(expr)
-                if parsed:
-                    src_dir = os.path.join(self._source_resource_dir, "images") if self._source_resource_dir else ""
-                    fn = _guess_filename_from_c_name(parsed["name"], [".png", ".bmp", ".jpg"], src_dir)
-                    self._primary_widget.properties["image_file"] = fn
-                    self._primary_widget.properties["image_format"] = parsed["format"]
-                    self._primary_widget.properties["image_alpha"] = parsed["alpha"]
-            self._rebuild_form()
-            self.property_changed.emit()
-            event.acceptProposedAction()
-        elif res_type == "font" and "font_file" in self._primary_widget.properties:
-            if expr:
-                from ..model.widget_model import parse_legacy_font_expr, _guess_filename_from_c_name
-                parsed = parse_legacy_font_expr(expr)
-                if parsed and "montserrat" not in parsed["name"]:
-                    src_dir = self._source_resource_dir or ""
-                    fn = _guess_filename_from_c_name(parsed["name"], [".ttf", ".otf"], src_dir)
-                    self._primary_widget.properties["font_file"] = fn
-                    self._primary_widget.properties["font_pixelsize"] = parsed["pixelsize"]
-                    self._primary_widget.properties["font_fontbitsize"] = parsed["fontbitsize"]
-                elif parsed:
-                    self._primary_widget.properties["font_builtin"] = expr
             self._rebuild_form()
             self.property_changed.emit()
             event.acceptProposedAction()

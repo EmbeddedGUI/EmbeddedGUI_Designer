@@ -1,5 +1,6 @@
 """Qt UI tests for PropertyPanel file browsing and auto-import."""
 
+import json
 import os
 
 import pytest
@@ -61,6 +62,36 @@ def _find_hint_strip(panel):
     if frame is None:
         raise AssertionError("Hint strip not found")
     return frame
+
+
+class _FakeMimeData:
+    def __init__(self, mime_type, payload):
+        self._mime_type = mime_type
+        self._payload = json.dumps(payload).encode("utf-8")
+
+    def hasFormat(self, mime_type):
+        return mime_type == self._mime_type
+
+    def data(self, mime_type):
+        if mime_type != self._mime_type:
+            return b""
+        return self._payload
+
+
+class _FakeDropEvent:
+    def __init__(self, mime_type, payload):
+        self._mime = _FakeMimeData(mime_type, payload)
+        self.accepted = False
+        self.ignored = False
+
+    def mimeData(self):
+        return self._mime
+
+    def acceptProposedAction(self):
+        self.accepted = True
+
+    def ignore(self):
+        self.ignored = True
 
 
 @_skip_no_qt
@@ -1531,4 +1562,58 @@ class TestPropertyPanelFileFlow:
         assert editor.text() == "on_volume_changed"
         assert property_events == []
         assert messages[-1].startswith("Callback name must be a valid C identifier")
+        panel.deleteLater()
+
+    def test_drop_event_ignores_legacy_expr_payload(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.resource_panel import EGUI_RESOURCE_MIME
+
+        widget = WidgetModel("image", name="hero")
+        panel = PropertyPanel()
+        property_events = []
+        panel.property_changed.connect(lambda: property_events.append("changed"))
+        panel.set_widget(widget)
+
+        event = _FakeDropEvent(
+            EGUI_RESOURCE_MIME,
+            {
+                "type": "image",
+                "expr": "&egui_res_image_star_rgb565_4",
+            },
+        )
+
+        panel.dropEvent(event)
+
+        assert widget.properties["image_file"] == ""
+        assert property_events == []
+        assert event.accepted is False
+        assert event.ignored is True
+        panel.deleteLater()
+
+    def test_drop_event_accepts_filename_payload(self, qapp):
+        from ui_designer.model.widget_model import WidgetModel
+        from ui_designer.ui.property_panel import PropertyPanel
+        from ui_designer.ui.resource_panel import EGUI_RESOURCE_MIME
+
+        widget = WidgetModel("image", name="hero")
+        panel = PropertyPanel()
+        property_events = []
+        panel.property_changed.connect(lambda: property_events.append("changed"))
+        panel.set_widget(widget)
+
+        event = _FakeDropEvent(
+            EGUI_RESOURCE_MIME,
+            {
+                "type": "image",
+                "filename": "hero.png",
+            },
+        )
+
+        panel.dropEvent(event)
+
+        assert widget.properties["image_file"] == "hero.png"
+        assert property_events == ["changed"]
+        assert event.accepted is True
+        assert event.ignored is False
         panel.deleteLater()
