@@ -275,7 +275,6 @@ class Project:
         if self.sdk_root:
             sdk_value = serialize_sdk_root(project_dir, self.sdk_root)
             root.set("sdk_root", sdk_value)
-            root.set("egui_root", sdk_value)
         _serialize_sdk_fingerprint(root, self.sdk_fingerprint)
 
         pages_elem = ET.SubElement(root, "Pages")
@@ -333,7 +332,7 @@ class Project:
             app_name=root.get("app_name", "HelloDesigner"),
         )
         proj.project_dir = project_dir
-        proj.sdk_root = resolve_project_sdk_root(project_dir, root.get("sdk_root", root.get("egui_root", "")))
+        proj.sdk_root = resolve_project_sdk_root(project_dir, root.get("sdk_root", ""))
         proj.sdk_fingerprint = _parse_sdk_fingerprint(root)
         proj.page_mode = root.get("page_mode", "easy_page")
         proj.startup_page = root.get("startup", "main_page")

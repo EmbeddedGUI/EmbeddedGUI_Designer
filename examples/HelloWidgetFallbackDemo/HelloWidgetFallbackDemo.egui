@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project app_name="HelloWidgetFallbackDemo" screen_width="240" screen_height="320" page_mode="easy_page" startup="main_page" sdk_root="../../sdk/EmbeddedGUI" egui_root="../../sdk/EmbeddedGUI">
+<Project app_name="HelloWidgetFallbackDemo" screen_width="240" screen_height="320" page_mode="easy_page" startup="main_page" sdk_root="../../sdk/EmbeddedGUI">
     <SdkVersion source_kind="external" revision="v1.0.0-607-g81a737b" commit="81a737b08eadc7ce28b450380a0c3f5ee0592012" commit_short="81a737b" dirty="1" />
     <Pages>
         <PageRef file="layout/main_page.xml" />

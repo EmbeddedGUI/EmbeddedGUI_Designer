@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -322,6 +323,45 @@ class TestSaveLoad:
         assert home_page is not None
         assert len(home_page.root_widget.children) == 1
         assert home_page.root_widget.children[0].properties["text"] == "Home Page"
+
+    @pytest.mark.integration
+    def test_save_writes_only_canonical_sdk_root_attribute(self, tmp_path):
+        proj = Project(app_name="CanonicalSdkAttrApp")
+        proj.sdk_root = str(tmp_path / "sdk")
+        proj.create_new_page("main_page")
+
+        project_dir = str(tmp_path / "CanonicalSdkAttrApp")
+        proj.save(project_dir)
+
+        egui_file = Path(project_dir) / "CanonicalSdkAttrApp.egui"
+        content = egui_file.read_text(encoding="utf-8")
+
+        assert 'sdk_root="' in content
+        assert 'egui_root="' not in content
+
+    @pytest.mark.integration
+    def test_load_ignores_legacy_egui_root_project_attribute(self, tmp_path):
+        proj = Project(app_name="LegacyProjectAttrIgnored")
+        proj.sdk_root = str(tmp_path / "sdk")
+        proj.create_new_page("main_page")
+
+        project_dir = Path(tmp_path) / "LegacyProjectAttrIgnored"
+        proj.save(str(project_dir))
+
+        egui_file = project_dir / "LegacyProjectAttrIgnored.egui"
+        tree = ET.parse(str(egui_file))
+        root = tree.getroot()
+        root.set("egui_root", root.get("sdk_root", ""))
+        root.attrib.pop("sdk_root", None)
+        ET.indent(root, space="    ")
+        with open(egui_file, "w", encoding="utf-8") as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+            tree.write(f, encoding="unicode", xml_declaration=False)
+
+        loaded = Project.load(str(project_dir))
+
+        assert loaded.sdk_root == ""
+        assert loaded.pages[0].name == "main_page"
 
     @pytest.mark.integration
     def test_save_creates_files(self, tmp_path):
