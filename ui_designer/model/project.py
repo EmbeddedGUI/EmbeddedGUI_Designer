@@ -515,12 +515,16 @@ class Project:
             for fname in os.listdir(images_dir):
                 src_path = os.path.join(images_dir, fname)
                 if os.path.isfile(src_path):
+                    if is_designer_resource_path(fname):
+                        continue
                     _sync_file(src_path, os.path.join(target_src_dir, fname))
 
         # Sync fonts and text files from resources/ root
         for fname in os.listdir(eguiproject_res_dir):
             src_path = os.path.join(eguiproject_res_dir, fname)
             if not os.path.isfile(src_path):
+                continue
+            if is_designer_resource_path(fname):
                 continue
             # Skip resources.xml (not a source file)
             if fname == "resources.xml":

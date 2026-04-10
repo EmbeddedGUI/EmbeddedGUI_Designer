@@ -3795,10 +3795,22 @@ class ResourcePanel(QWidget):
             return False
         return True
 
+    def _validate_replacement_filenames(self, replacements):
+        for source_path in replacements.values():
+            filename = os.path.basename(source_path or "")
+            reserved_error = _reserved_resource_filename_error(filename)
+            if reserved_error:
+                QMessageBox.warning(self, "Reserved Filename", reserved_error)
+                return False
+        return True
+
     def _replace_missing_resource_with_path(self, old_name, resource_type, source_path):
         new_name = os.path.basename(source_path)
         if not _validate_english_filename(new_name):
             return "", f"'{new_name}' is invalid. Use only ASCII letters, digits, underscore, and dash."
+        reserved_error = _reserved_resource_filename_error(new_name)
+        if reserved_error:
+            return "", reserved_error
 
         extension = os.path.splitext(new_name)[1].lower()
         if extension not in self._allowed_extensions_for_resource_type(resource_type):
@@ -4237,6 +4249,8 @@ class ResourcePanel(QWidget):
             return
 
         replacements = dialog.selected_mapping()
+        if not self._validate_replacement_filenames(replacements):
+            return
         impacts, total_rename_count = self._collect_batch_replace_impacts(resource_type, replacements)
         if impacts and not self._confirm_batch_replace_impact(resource_type, impacts, total_rename_count):
             return
@@ -4271,6 +4285,8 @@ class ResourcePanel(QWidget):
         self._remember_external_import_paths([source_path])
 
         replacements = {filename: source_path}
+        if not self._validate_replacement_filenames(replacements):
+            return
         impacts, total_rename_count = self._collect_batch_replace_impacts(resource_type, replacements)
         if impacts and not self._confirm_batch_replace_impact(resource_type, impacts, total_rename_count):
             return

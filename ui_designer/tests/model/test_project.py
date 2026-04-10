@@ -188,6 +188,32 @@ class TestPathHelpers:
         assert proj.get_app_dir() == normalize_path("/workspace/TestApp")
 
 
+class TestResourceSync:
+    """Tests for syncing .eguiproject resources into resource/src."""
+
+    def test_sync_resources_to_src_skips_designer_reserved_files(self, tmp_path):
+        project_dir = tmp_path / "project"
+        resources_dir = project_dir / ".eguiproject" / "resources"
+        images_dir = resources_dir / "images"
+        images_dir.mkdir(parents=True)
+
+        (resources_dir / "kept.txt").write_text("abc\n", encoding="utf-8")
+        (resources_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
+        (resources_dir / "resources.xml").write_text("<resources />\n", encoding="utf-8")
+        (images_dir / "icon.png").write_bytes(b"PNG")
+        (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
+
+        proj = Project()
+        proj.sync_resources_to_src(str(project_dir))
+
+        target_src_dir = project_dir / "resource" / "src"
+        assert (target_src_dir / "kept.txt").is_file()
+        assert (target_src_dir / "icon.png").is_file()
+        assert not (target_src_dir / "_generated_text_demo_16_4.txt").exists()
+        assert not (target_src_dir / "_generated_text_preview.png").exists()
+        assert not (target_src_dir / "resources.xml").exists()
+
+
 class TestGetAllWidgets:
     """Tests for get_all_widgets across multiple pages."""
 
