@@ -1,7 +1,7 @@
 """Tests for ResourceCatalog model."""
 
 import os
-import json
+
 import pytest
 
 from ui_designer.model.resource_catalog import (
@@ -295,69 +295,3 @@ class TestFromDirectory:
         assert cat.has_text_file("supported_text.txt")
 
 
-class TestFromResourceConfig:
-    """Test from_resource_config() migration."""
-
-    def test_from_config_data(self, tmp_path):
-        config_data = {
-            "img": [
-                {"file": "star.png", "format": "rgb565"},
-                {"file": "icon.png", "format": "alpha"},
-            ],
-            "font": [
-                {"file": "test.ttf", "pixelsize": "16", "text": "chars.txt"},
-            ],
-        }
-        cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
-        assert cat.has_image("star.png")
-        assert cat.has_image("icon.png")
-        assert cat.has_font("test.ttf")
-        assert cat.has_text_file("chars.txt")
-
-    def test_from_config_deduplicates(self, tmp_path):
-        config_data = {
-            "img": [
-                {"file": "star.png"},
-                {"file": "star.png"},
-            ],
-            "font": [],
-        }
-        cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
-        assert cat.images.count("star.png") == 1
-
-    def test_from_config_file_on_disk(self, tmp_path):
-        config_data = {"img": [{"file": "a.png"}], "font": []}
-        config_path = tmp_path / "app_resource_config.json"
-        config_path.write_text(json.dumps(config_data))
-
-        cat = ResourceCatalog.from_resource_config(str(tmp_path))
-        assert cat.has_image("a.png")
-
-    def test_from_config_fallback_to_directory(self, tmp_path):
-        # No config file, should fall back to from_directory
-        (tmp_path / "star.png").write_bytes(b"")
-        cat = ResourceCatalog.from_resource_config(str(tmp_path))
-        assert cat.has_image("star.png")
-
-    def test_from_config_also_scans_directory(self, tmp_path):
-        # Config has one image, directory has another
-        config_data = {"img": [{"file": "a.png"}], "font": []}
-        (tmp_path / "b.png").write_bytes(b"")
-        cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
-        assert cat.has_image("a.png")
-        assert cat.has_image("b.png")
-
-    def test_from_config_skips_legacy_generated_text_files_found_in_directory(self, tmp_path):
-        config_data = {
-            "img": [],
-            "font": [
-                {"file": "demo.ttf", "pixelsize": "16", "text": "supported_text.txt"},
-            ],
-        }
-        (tmp_path / "_generated_text_demo_16_4.txt").write_text("designer\n")
-        (tmp_path / "supported_text.txt").write_text("user\n")
-
-        cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
-
-        assert cat.has_text_file("supported_text.txt")
-        assert not cat.has_text_file("_generated_text_demo_16_4.txt")

@@ -279,13 +279,13 @@ class StringResourceCatalog:
         return result
 
     def save(self, src_dir):
-        """Save all locales to ``resource/src/values*/strings.xml``.
+        """Save all locales to ``<resource-dir>/values*/strings.xml``.
 
         Creates directories as needed. Removes directories for locales
         that have been deleted.
 
         Args:
-            src_dir: Path to ``resource/src/`` directory.
+            src_dir: Path to the base resource directory.
         """
         os.makedirs(src_dir, exist_ok=True)
 

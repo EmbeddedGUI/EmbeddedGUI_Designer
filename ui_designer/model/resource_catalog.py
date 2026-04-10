@@ -1,7 +1,8 @@
 """Resource catalog model for EmbeddedGUI Designer.
 
 Manages the project-level resource catalog (resources.xml) which lists
-all available source files (images, fonts, text files) in resource/src/.
+all available source files (images, fonts, text files) in
+.eguiproject/resources/.
 """
 
 import os
@@ -181,7 +182,6 @@ class ResourceCatalog:
         Supports the structured layout (.eguiproject/resources/):
           - images/ subfolder for image files
           - fonts and text files in the root
-        Also supports flat legacy directories (resource/src/).
         """
         catalog = cls()
         if not os.path.isdir(src_dir):
@@ -195,7 +195,7 @@ class ResourceCatalog:
                 if ext in IMAGE_EXTENSIONS:
                     catalog.images.append(fname)
 
-        # Scan root for all file types (fonts, text, and legacy images)
+        # Scan root for all file types; images/ takes precedence when present.
         for fname in sorted(os.listdir(src_dir)):
             fpath = os.path.join(src_dir, fname)
             if not os.path.isfile(fpath):
@@ -204,76 +204,10 @@ class ResourceCatalog:
                 continue
             ext = os.path.splitext(fname)[1].lower()
             if ext in IMAGE_EXTENSIONS and fname not in catalog.images:
-                catalog.images.append(fname)  # legacy flat layout
+                catalog.images.append(fname)
             elif ext in FONT_EXTENSIONS:
                 catalog.fonts.append(fname)
             elif ext in TEXT_EXTENSIONS:
                 catalog.text_files.append(fname)
 
-        return catalog
-
-    @classmethod
-    def from_resource_config(cls, src_dir, config_data=None):
-        """Create a catalog from existing resource config data.
-
-        If config_data is None, tries to load and merge the split config files
-        from ``src_dir``.
-        Used for migration from old format.
-        """
-        from ..utils.resource_config_overlay import (
-            is_designer_resource_path,
-            load_merged_resource_config,
-        )
-
-        catalog = cls()
-
-        if config_data is None:
-            if not os.path.isdir(src_dir):
-                return cls.from_directory(src_dir)
-            try:
-                config_data = load_merged_resource_config(src_dir)
-            except Exception:
-                return cls.from_directory(src_dir)
-            if config_data is None:
-                return cls.from_directory(src_dir)
-
-        # Extract unique filenames from config
-        seen_images = set()
-        for img_cfg in config_data.get("img", []):
-            filename = img_cfg.get("file", "")
-            if filename and filename not in seen_images:
-                catalog.images.append(filename)
-                seen_images.add(filename)
-
-        seen_fonts = set()
-        for font_cfg in config_data.get("font", []):
-            filename = font_cfg.get("file", "")
-            if filename and filename not in seen_fonts:
-                catalog.fonts.append(filename)
-                seen_fonts.add(filename)
-            # Also collect text files referenced by fonts
-            text_file = font_cfg.get("text", "")
-            for text_item in str(text_file or "").split(","):
-                normalized = text_item.strip()
-                if not normalized or is_designer_resource_path(normalized):
-                    continue
-                if normalized not in catalog.text_files:
-                    catalog.text_files.append(normalized)
-
-        # Also scan directory for any files not in config
-        if os.path.isdir(src_dir):
-            for fname in sorted(os.listdir(src_dir)):
-                if is_designer_resource_path(fname):
-                    continue
-                ext = os.path.splitext(fname)[1].lower()
-                if ext in IMAGE_EXTENSIONS and fname not in seen_images:
-                    catalog.images.append(fname)
-                elif ext in FONT_EXTENSIONS and fname not in seen_fonts:
-                    catalog.fonts.append(fname)
-                elif ext in TEXT_EXTENSIONS and fname not in catalog.text_files:
-                    catalog.text_files.append(fname)
-
-        catalog.images.sort()
-        catalog.fonts.sort()
-        catalog.text_files.sort()
         return catalog
