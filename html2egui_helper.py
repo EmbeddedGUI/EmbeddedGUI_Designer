@@ -461,15 +461,12 @@ def _print_scaffold_status(relpath, status, *, label=None, unchanged_reason="alr
 
 # ── Sub-command: export-icons ─────────────────────────────────────
 
-def _extract_material_icons(html_path):
-    """Extract Material Symbols icon names from HTML file.
+def _extract_material_icons(html):
+    """Extract Material Symbols icon names from HTML text.
 
     Looks for: <span class="material-symbols-outlined ...">icon_name</span>
     Returns a sorted list of unique icon names.
     """
-    with open(html_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
     # Pattern: <span class="material-symbols-outlined ...">TEXT</span>
     pattern = r'<span\s+class\s*=\s*"[^"]*material-symbols-outlined[^"]*"\s*>([^<]+)</span>'
     matches = re.findall(pattern, html, re.IGNORECASE)
@@ -514,15 +511,12 @@ _TAILWIND_COLORS = {
 }
 
 
-def _extract_material_icons_with_colors(html_path):
-    """Extract Material Symbols icon names and their colors from HTML.
+def _extract_material_icons_with_colors(html):
+    """Extract Material Symbols icon names and their colors from HTML text.
 
     Parses Tailwind color classes on icon spans and their parent elements.
     Returns a dict: {icon_name: color_hex_without_hash}.
     """
-    with open(html_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
     # Extract custom colors from tailwind config
     custom_colors = {}
     config_match = re.search(r'tailwind\.config\s*=\s*\{.*?\}', html, re.DOTALL)
@@ -852,7 +846,7 @@ def _update_resource_config_files(
 
 def cmd_export_icons(args):
     """Extract Material Symbols from HTML, render as PNG, update resource config."""
-    _require_existing_file(args.input, error_label="HTML file")
+    html = _read_required_text_file(args.input, error_label="HTML file")
 
     sdk_root = _find_sdk_root()
     app_name = getattr(args, "app", None)
@@ -875,13 +869,13 @@ def cmd_export_icons(args):
 
     if auto_color:
         # Extract icons with per-icon colors and filled state from HTML
-        icon_info = _extract_material_icons_with_colors(args.input)
+        icon_info = _extract_material_icons_with_colors(html)
         icons = sorted(icon_info.keys())
         icon_colors = {name: info["color"] for name, info in icon_info.items()}
         icon_filled = {name: info["filled"] for name, info in icon_info.items()}
     else:
         # Extract icon names only, use single --color for all
-        icons = _extract_material_icons(args.input)
+        icons = _extract_material_icons(html)
         default_color = args.color.lstrip("#").upper()
         if len(default_color) < 6:
             default_color = default_color.ljust(6, "0")
@@ -2065,7 +2059,7 @@ def cmd_extract_layout(args):
     colors = _extract_colors_from_tailwind_config(html)
 
     # Extract all Material Symbols icons
-    icons = _extract_material_icons(args.input)
+    icons = _extract_material_icons(html)
 
     # Parse HTML DOM
     parser = _LayoutHTMLParser()

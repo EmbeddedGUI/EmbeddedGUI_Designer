@@ -114,6 +114,37 @@ class TestExtractSvgsFromHtml:
         assert svgs[1]["name"] == "wifi_icon"
 
 
+class TestExtractMaterialIcons:
+    """Test Material Symbols extraction from already-loaded HTML text."""
+
+    def test_extract_material_icons_parses_markup_string(self):
+        html = (
+            '<div>'
+            '<span class="material-symbols-outlined text-white">wifi</span>'
+            '<span class="material-symbols-outlined text-white">battery_full</span>'
+            '<span class="material-symbols-outlined text-white">wifi</span>'
+            "</div>"
+        )
+
+        assert h._extract_material_icons(html) == ["battery_full", "wifi"]
+
+    def test_extract_material_icons_with_colors_parses_text_and_parent_color(self):
+        html = (
+            '<script>tailwind.config = {"theme":{"extend":{"colors":{"brand":"#123456"}}}}</script>'
+            '<div class="text-brand">'
+            '<span class="material-symbols-outlined filled-icon">wifi</span>'
+            "</div>"
+            '<span class="material-symbols-outlined text-cyan-400">cloud</span>'
+        )
+
+        icon_info = h._extract_material_icons_with_colors(html)
+
+        assert icon_info["wifi"]["color"] == "123456"
+        assert icon_info["wifi"]["filled"] is True
+        assert icon_info["cloud"]["color"] == "22D3EE"
+        assert icon_info["cloud"]["filled"] is False
+
+
 class TestExtractTwFont:
     """Test _extract_tw_font with extended patterns."""
 
