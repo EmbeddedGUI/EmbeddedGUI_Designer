@@ -69,6 +69,8 @@ class ResourceCatalog:
 
     def add_text_file(self, filename):
         """Add a text file to the catalog."""
+        if is_designer_resource_path(filename):
+            return
         if filename not in self.text_files:
             self.text_files.append(filename)
             self.text_files.sort()

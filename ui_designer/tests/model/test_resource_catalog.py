@@ -118,6 +118,11 @@ class TestTextFileManagement:
         cat.remove_text_file("a.txt")
         assert not cat.has_text_file("a.txt")
 
+    def test_add_text_file_ignores_designer_generated_file(self):
+        cat = ResourceCatalog()
+        cat.add_text_file("_generated_text_demo_16_4.txt")
+        assert cat.text_files == []
+
 
 class TestAutoDetectAddFile:
     """Test add_file() auto-detection by extension."""
