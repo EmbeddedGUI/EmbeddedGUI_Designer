@@ -3996,7 +3996,7 @@ class TestMainWindowFileFlow:
         }
         _close_window(window)
 
-    def test_import_legacy_example_reads_dimensions_from_designer_wrapper(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_import_legacy_example_without_split_designer_wrapper_uses_defaults(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
 
@@ -4034,7 +4034,7 @@ class TestMainWindowFileFlow:
 
         project_path = app_dir / "LegacyWrappedApp.egui"
         saved = Project.load(str(project_path))
-        assert saved.screen_width == 320
+        assert saved.screen_width == 240
         assert saved.screen_height == 320
         assert opened["path"] == os.path.normpath(os.path.abspath(project_path))
         _close_window(window)

@@ -66,6 +66,11 @@ class TestBuildMkContent:
         assert "include $(EGUI_APP_PATH)/build_designer.mk" not in migrated
         assert "USER_CFLAGS += -DAPP_FLAG=1" in migrated
 
+    def test_build_wrapper_detection_ignores_legacy_root_include(self):
+        from ui_designer.utils.scaffold import build_mk_designer_include_target
+
+        assert build_mk_designer_include_target("include $(EGUI_APP_PATH)/build_designer.mk\n") == ""
+
 
 class TestAppConfigContent:
     @pytest.fixture
@@ -162,6 +167,11 @@ class TestAppConfigContent:
         assert '#include "app_egui_config_designer.h"' not in migrated
         assert "#define CUSTOM_FLAG 1" in migrated
 
+    def test_config_wrapper_detection_ignores_legacy_root_include(self):
+        from ui_designer.utils.scaffold import app_config_designer_include_target
+
+        assert app_config_designer_include_target('#include "app_egui_config_designer.h"\n') == ""
+
     def test_read_dimensions_follows_designer_include(self, tmp_path):
         from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, read_app_config_dimensions
 
@@ -199,7 +209,7 @@ class TestAppConfigContent:
 
         assert read_app_config_dimensions(str(config_h)) == (320, 272)
 
-    def test_read_dimensions_supports_legacy_root_designer_header(self, tmp_path):
+    def test_read_dimensions_ignores_legacy_root_designer_header(self, tmp_path):
         from ui_designer.utils.scaffold import read_app_config_dimensions
 
         config_h = tmp_path / "app_egui_config.h"
@@ -213,4 +223,4 @@ class TestAppConfigContent:
             encoding="utf-8",
         )
 
-        assert read_app_config_dimensions(str(config_h)) == (400, 300)
+        assert read_app_config_dimensions(str(config_h)) == (240, 320)

@@ -81,7 +81,7 @@ class TestBuildConfigExtract:
         cfg = BuildConfig.extract("/project", "HelloDesigner_1", "example")
 
         assert os.path.join("example", "HelloDesigner_1", ".designer", "build_designer.mk") in cfg._makefile_mtimes
-        assert os.path.join("example", "HelloDesigner_1", "build_designer.mk") in cfg._makefile_mtimes
+        assert os.path.join("example", "HelloDesigner_1", "build_designer.mk") not in cfg._makefile_mtimes
 
     @patch("subprocess.run")
     def test_extract_returns_none_on_make_failure(self, mock_run):

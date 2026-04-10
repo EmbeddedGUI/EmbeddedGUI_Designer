@@ -16,7 +16,6 @@ from ..model.workspace import compute_make_app_root_arg, normalize_path
 from ..utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
-    LEGACY_BUILD_DESIGNER_RELPATH,
     UICODE_SOURCE_RELPATH,
     legacy_designer_codegen_cleanup_relpaths,
 )
@@ -107,7 +106,6 @@ class BuildConfig:
             os.path.join("porting", "designer", "Makefile.base"),
             os.path.join(app_root_arg, app_name, "build.mk"),
             os.path.join(app_root_arg, app_name, BUILD_DESIGNER_RELPATH.replace("/", os.sep)),
-            os.path.join(app_root_arg, app_name, LEGACY_BUILD_DESIGNER_RELPATH),
         ]
         for p in makefile_paths:
             full = os.path.join(project_root, p)

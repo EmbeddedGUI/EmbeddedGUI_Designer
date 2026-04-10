@@ -207,11 +207,13 @@ def legacy_app_config_designer_path(project_dir: str) -> str:
 
 
 def build_mk_designer_include_target(content: str) -> str:
-    return _split_make_include_target(content, BUILD_DESIGNER_FILENAME)
+    target = _split_make_include_target(content, BUILD_DESIGNER_FILENAME)
+    return target if target.replace("\\", "/") == BUILD_DESIGNER_INCLUDE_TARGET else ""
 
 
 def app_config_designer_include_target(content: str) -> str:
-    return _split_local_include_target(content, APP_CONFIG_DESIGNER_FILENAME)
+    target = _split_local_include_target(content, APP_CONFIG_DESIGNER_FILENAME)
+    return target.replace("\\", "/") if target.replace("\\", "/") == APP_CONFIG_DESIGNER_RELPATH else ""
 
 
 def parse_define_int(content: str, macro_name: str, default=None):
