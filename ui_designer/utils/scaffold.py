@@ -314,7 +314,7 @@ def migrate_app_build_mk_content(existing_content, app_name):
             continue
         if normalized in designer_keys:
             continue
-        if re.match(r"^#\s*(Build configuration|Designer-managed build inputs)\b", stripped):
+        if re.match(r"^#\s*(Build configuration|Designer-managed build inputs|User build overrides)\b", stripped):
             continue
         preserved.append(raw_line.rstrip())
 
@@ -458,6 +458,8 @@ def migrate_app_config_h_content(
         if _split_local_include_target(raw_line, APP_CONFIG_DESIGNER_FILENAME):
             continue
         if stripped == "#endif" and conditional_depth <= 0:
+            continue
+        if stripped == "/* Define user overrides above the Designer include. */":
             continue
         if re.match(r"^/\*\s*(Configuration|Designer-managed defaults)\s+for\b", stripped):
             continue

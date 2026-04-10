@@ -109,3 +109,50 @@ class TestPreviewSmokeHelpers:
         assert "STALE" not in designer_config
         assert f"#define EGUI_CONFIG_SCEEN_WIDTH  {SCREEN_WIDTH}" in designer_config
         assert f"#define EGUI_CONFIG_SCEEN_HEIGHT {SCREEN_HEIGHT}" in designer_config
+
+    def test_scaffold_app_directory_is_idempotent_for_migrated_user_files(self, tmp_path):
+        app_dir = tmp_path / APP_NAME
+        resource_src = app_dir / "resource" / "src"
+        designer_dir = app_dir / ".designer"
+        resource_src.mkdir(parents=True)
+        designer_dir.mkdir(parents=True)
+
+        build_mk_path = app_dir / "build.mk"
+        config_h_path = app_dir / "app_egui_config.h"
+        overlay_path = resource_src / "app_resource_config.json"
+
+        build_mk_path.write_text(
+            '# User build overrides for DesignerPreviewSmoke\n\n'
+            'include $(EGUI_APP_PATH)/.designer/build_designer.mk\n\n'
+            '# keep me\n',
+            encoding="utf-8",
+        )
+        config_h_path.write_text(
+            "#ifndef _APP_EGUI_CONFIG_H_\n"
+            "#define _APP_EGUI_CONFIG_H_\n\n"
+            "#define USER_FLAG 1\n\n"
+            '/* Define user overrides above the Designer include. */\n'
+            '#include ".designer/app_egui_config_designer.h"\n\n'
+            "#endif /* _APP_EGUI_CONFIG_H_ */\n",
+            encoding="utf-8",
+        )
+        overlay_path.write_text(
+            json.dumps({"img": [{"name": "user_asset"}], "font": [{"name": "font_keep"}]}),
+            encoding="utf-8",
+        )
+
+        _scaffold_app_directory(app_dir, APP_NAME)
+        first_build = build_mk_path.read_text(encoding="utf-8")
+        first_config = config_h_path.read_text(encoding="utf-8")
+        first_overlay = overlay_path.read_text(encoding="utf-8")
+
+        _scaffold_app_directory(app_dir, APP_NAME)
+        second_build = build_mk_path.read_text(encoding="utf-8")
+        second_config = config_h_path.read_text(encoding="utf-8")
+        second_overlay = overlay_path.read_text(encoding="utf-8")
+
+        assert first_build == second_build
+        assert first_config == second_config
+        assert first_overlay == second_overlay
+        assert second_build.count(".designer/build_designer.mk") == 1
+        assert second_config.count('.designer/app_egui_config_designer.h') == 1

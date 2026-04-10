@@ -66,6 +66,19 @@ class TestBuildMkContent:
         assert "include $(EGUI_APP_PATH)/build_designer.mk" not in migrated
         assert "USER_CFLAGS += -DAPP_FLAG=1" in migrated
 
+    def test_migrate_is_idempotent_for_existing_wrapper_header(self):
+        from ui_designer.utils.scaffold import migrate_app_build_mk_content
+
+        existing = (
+            "# User build overrides for LegacyApp\n\n"
+            "include $(EGUI_APP_PATH)/.designer/build_designer.mk\n\n"
+            "# keep me\n"
+        )
+
+        migrated = migrate_app_build_mk_content(existing, "LegacyApp")
+
+        assert migrated == existing
+
     def test_build_wrapper_detection_ignores_legacy_root_include(self):
         from ui_designer.utils.scaffold import build_mk_designer_include_target
 
@@ -166,6 +179,22 @@ class TestAppConfigContent:
         assert f'#include "{APP_CONFIG_DESIGNER_RELPATH}"' in migrated
         assert '#include "app_egui_config_designer.h"' not in migrated
         assert "#define CUSTOM_FLAG 1" in migrated
+
+    def test_migrate_config_is_idempotent_for_existing_wrapper_comment(self):
+        from ui_designer.utils.scaffold import migrate_app_config_h_content
+
+        existing = (
+            "#ifndef _APP_EGUI_CONFIG_H_\n"
+            "#define _APP_EGUI_CONFIG_H_\n\n"
+            "#define CUSTOM_FLAG 1\n\n"
+            "/* Define user overrides above the Designer include. */\n"
+            '#include ".designer/app_egui_config_designer.h"\n\n'
+            "#endif /* _APP_EGUI_CONFIG_H_ */\n"
+        )
+
+        migrated = migrate_app_config_h_content(existing, "LegacyApp", 240, 320)
+
+        assert migrated == existing
 
     def test_config_wrapper_detection_ignores_legacy_root_include(self):
         from ui_designer.utils.scaffold import app_config_designer_include_target
