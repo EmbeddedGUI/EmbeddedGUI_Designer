@@ -4189,7 +4189,7 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            self._import_legacy_example(entry, sdk_root)
+            self._initialize_unmanaged_sdk_example(entry, sdk_root)
         except Exception as exc:
             QMessageBox.critical(self, "Error", f"Failed to initialize Designer project for SDK example:\n{exc}")
 
@@ -4230,7 +4230,7 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{exc}")
 
-    def _import_legacy_example(self, entry, sdk_root):
+    def _initialize_unmanaged_sdk_example(self, entry, sdk_root):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
         project_path = normalize_path(os.path.join(app_dir, f"{app_name}.egui"))
@@ -4239,8 +4239,9 @@ class MainWindow(QMainWindow):
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):
             QMessageBox.warning(
                 self,
-                "Legacy Example Conflict",
-                "This example already contains a .eguiproject directory but has no .egui file. Please resolve the directory conflict manually before importing it into Designer.",
+                "Designer Project Conflict",
+                "This SDK example already contains a .eguiproject directory but has no .egui file. "
+                "Please resolve the directory conflict manually before initializing Designer here.",
             )
             return
 

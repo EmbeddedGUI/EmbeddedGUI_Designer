@@ -3937,7 +3937,7 @@ class TestMainWindowFileFlow:
         assert download_calls == ["download"]
         _close_window(window)
 
-    def test_import_legacy_example_generates_project_and_uses_existing_dimensions(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_initialize_unmanaged_sdk_example_generates_project_and_uses_existing_dimensions(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
 
@@ -3962,7 +3962,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_open_project_path", fake_open_project_path)
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
 
-        window._import_legacy_example(
+        window._initialize_unmanaged_sdk_example(
             {
                 "app_name": "LegacyApp",
                 "app_dir": str(app_dir),
@@ -3984,7 +3984,7 @@ class TestMainWindowFileFlow:
         }
         _close_window(window)
 
-    def test_import_legacy_example_without_split_designer_wrapper_uses_defaults(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_initialize_unmanaged_sdk_example_without_split_designer_wrapper_uses_defaults(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
 
@@ -4013,7 +4013,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_open_project_path", fake_open_project_path)
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
 
-        window._import_legacy_example(
+        window._initialize_unmanaged_sdk_example(
             {
                 "app_name": "LegacyWrappedApp",
                 "app_dir": str(app_dir),
@@ -4028,7 +4028,7 @@ class TestMainWindowFileFlow:
         assert opened["path"] == os.path.normpath(os.path.abspath(project_path))
         _close_window(window)
 
-    def test_import_legacy_example_cancels_when_user_declines_initialization(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_initialize_unmanaged_sdk_example_cancels_when_user_declines_initialization(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
@@ -4042,7 +4042,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.question", lambda *args, **kwargs: QMessageBox.No)
         monkeypatch.setattr(window, "_open_project_path", lambda *args, **kwargs: pytest.fail("_open_project_path should not be called"))
 
-        window._import_legacy_example(
+        window._initialize_unmanaged_sdk_example(
             {
                 "app_name": "LegacyDeclined",
                 "app_dir": str(app_dir),
@@ -4054,7 +4054,7 @@ class TestMainWindowFileFlow:
         assert not (app_dir / ".designer").exists()
         _close_window(window)
 
-    def test_import_legacy_example_warns_on_eguiproject_conflict(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_initialize_unmanaged_sdk_example_warns_on_eguiproject_conflict(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
@@ -4069,7 +4069,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: warnings.append(args[1:]))
         monkeypatch.setattr(window, "_open_project_path", lambda *args, **kwargs: pytest.fail("_open_project_path should not be called"))
 
-        window._import_legacy_example(
+        window._initialize_unmanaged_sdk_example(
             {
                 "app_name": "LegacyConflict",
                 "app_dir": str(app_dir),
@@ -4078,7 +4078,7 @@ class TestMainWindowFileFlow:
         )
 
         assert warnings
-        assert warnings[0][0] == "Legacy Example Conflict"
+        assert warnings[0][0] == "Designer Project Conflict"
         assert not (app_dir / "LegacyConflict.egui").exists()
         _close_window(window)
 
