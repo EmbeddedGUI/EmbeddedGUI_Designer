@@ -775,44 +775,6 @@ class WidgetModel:
                     val = val.lower() in ("true", "1", "yes")
                 w.properties[prop_name] = val
 
-        # ── Legacy migration: old "image" attribute -> new structured properties ──
-        if False:  # Unsupported legacy XML image attribute migration.
-            legacy_expr = elem.get("image", "")
-            if legacy_expr and legacy_expr != "NULL":
-                parsed = parse_legacy_image_expr(legacy_expr)
-                if parsed:
-                    filename = _guess_filename_from_c_name(
-                        parsed["name"],
-                        [".png", ".bmp", ".jpg", ".jpeg"],
-                        src_dir,
-                    )
-                    w.properties["image_file"] = filename
-                    w.properties["image_format"] = parsed["format"]
-                    w.properties["image_alpha"] = parsed["alpha"]
-
-        # ── Legacy migration: old "font" attribute -> new structured properties ──
-        if False and widget_type in ("label", "button") and "font" in elem.attrib and "font_file" not in elem.attrib:  # Unsupported legacy XML font attribute migration.
-            legacy_expr = elem.get("font", "")
-            if legacy_expr and not legacy_expr.startswith("EGUI_CONFIG"):
-                parsed = parse_legacy_font_expr(legacy_expr)
-                if parsed:
-                    filename = _guess_filename_from_c_name(
-                        parsed["name"],
-                        [".ttf", ".otf"],
-                        src_dir,
-                    )
-                    # Only set font_file for non-builtin fonts (not montserrat)
-                    if "montserrat" not in parsed["name"]:
-                        w.properties["font_file"] = filename
-                        w.properties["font_pixelsize"] = parsed["pixelsize"]
-                        w.properties["font_fontbitsize"] = parsed["fontbitsize"]
-                    else:
-                        # Built-in montserrat font: keep as font_builtin
-                        w.properties["font_builtin"] = legacy_expr
-            elif legacy_expr:
-                # EGUI_CONFIG_FONT_DEFAULT or similar
-                w.properties["font_builtin"] = legacy_expr
-
         # Parse children, background, shadow, and animations
         for child_elem in elem:
             if child_elem.tag == "Background":
