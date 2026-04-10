@@ -316,6 +316,18 @@ class TestCompilerFastPath:
         assert engine._last_changed_files == ["uicode.c"]
         assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
 
+    def test_write_uicode_removes_legacy_root_copy(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        os.makedirs(engine.app_dir, exist_ok=True)
+        legacy_uicode = os.path.join(engine.app_dir, "uicode.c")
+        with open(legacy_uicode, "w", encoding="utf-8") as f:
+            f.write("legacy root copy\n")
+
+        engine.write_uicode("int main() {}")
+
+        assert not os.path.exists(legacy_uicode)
+        assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
+
 
 class TestCompilerRuntime:
     def _make_engine(self, tmp_path):

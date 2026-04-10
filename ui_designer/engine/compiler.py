@@ -376,6 +376,12 @@ class CompilerEngine:
         os.makedirs(os.path.dirname(self.uicode_path), exist_ok=True)
         with open(self.uicode_path, "w", encoding="utf-8") as f:
             f.write(code)
+        legacy_root_uicode = os.path.join(self.app_dir, "uicode.c")
+        try:
+            if os.path.isfile(legacy_root_uicode) and os.path.normcase(os.path.abspath(legacy_root_uicode)) != os.path.normcase(os.path.abspath(self.uicode_path)):
+                os.remove(legacy_root_uicode)
+        except OSError:
+            pass
         self._last_changed_files = ["uicode.c"]
 
     def write_project_files(self, files_dict, generated_relpaths=None):
