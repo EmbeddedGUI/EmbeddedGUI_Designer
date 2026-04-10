@@ -237,6 +237,50 @@ class TestFigmaRootPageXml:
         assert '<Label id="child_a"' in xml
         assert '<Label id="child_b"' in xml
 
+    def test_write_figma_page_xml_builds_layout_file(self, tmp_path, monkeypatch):
+        app_dir = tmp_path / "DemoApp"
+        seen = {}
+
+        def fake_build(root_node, target_w, target_h, *, parent_x=0, parent_y=0, scale=1.0):
+            seen.update(
+                {
+                    "root_node": root_node,
+                    "target_w": target_w,
+                    "target_h": target_h,
+                    "parent_x": parent_x,
+                    "parent_y": parent_y,
+                    "scale": scale,
+                }
+            )
+            return '<?xml version="1.0" encoding="utf-8"?>\n<Page />'
+
+        monkeypatch.setattr(h, "_build_figma_page_xml", fake_build)
+
+        xml_path = h._write_figma_page_xml(
+            str(app_dir),
+            "main_page",
+            {"name": "FrameA"},
+            320,
+            240,
+            parent_x=11,
+            parent_y=22,
+            scale=1.5,
+        )
+
+        assert xml_path.endswith(os.path.join(".eguiproject", "layout", "main_page.xml"))
+        assert seen == {
+            "root_node": {"name": "FrameA"},
+            "target_w": 320,
+            "target_h": 240,
+            "parent_x": 11,
+            "parent_y": 22,
+            "scale": 1.5,
+        }
+        assert os.path.isfile(xml_path)
+        assert open(xml_path, "r", encoding="utf-8").read() == (
+            '<?xml version="1.0" encoding="utf-8"?>\n<Page />'
+        )
+
 
 class TestFigmaTargetHelpers:
     """Test shared target-size parsing and fit-scale helpers."""

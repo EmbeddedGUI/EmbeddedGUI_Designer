@@ -136,6 +136,35 @@ def _build_figma_page_xml(root_node, target_w, target_h, *, parent_x=0, parent_y
     )
 
 
+def _write_figma_page_xml(
+    app_dir,
+    page_name,
+    root_node,
+    target_w,
+    target_h,
+    *,
+    parent_x=0,
+    parent_y=0,
+    scale=1.0,
+):
+    """Build and write a Figma-derived page XML into the app layout directory."""
+    layout_dir = os.path.join(app_dir, ".eguiproject", "layout")
+    os.makedirs(layout_dir, exist_ok=True)
+
+    xml_path = os.path.join(layout_dir, f"{page_name}.xml")
+    xml_content = _build_figma_page_xml(
+        root_node,
+        target_w,
+        target_h,
+        parent_x=parent_x,
+        parent_y=parent_y,
+        scale=scale,
+    )
+    with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(xml_content)
+    return xml_path
+
+
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
     app_dir = os.path.join(sdk_root, "example", app_name)
@@ -2684,7 +2713,10 @@ def cmd_figma2xml(args):
     print("\nConverting to EGUI XML...")
     parent_x = bbox.get("x", 0)
     parent_y = bbox.get("y", 0)
-    xml_content = _build_figma_page_xml(
+    page_name = args.page or "main_page"
+    xml_path = _write_figma_page_xml(
+        app_dir,
+        page_name,
         root_node,
         target_w,
         target_h,
@@ -2692,15 +2724,6 @@ def cmd_figma2xml(args):
         parent_y=parent_y,
         scale=scale,
     )
-
-    # Write XML file
-    page_name = args.page or "main_page"
-    layout_dir = os.path.join(app_dir, ".eguiproject", "layout")
-    os.makedirs(layout_dir, exist_ok=True)
-    xml_path = os.path.join(layout_dir, f"{page_name}.xml")
-
-    with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(xml_content)
     print(f"  Written: {xml_path}")
 
     # Collect vector nodes for image export
@@ -2802,9 +2825,6 @@ def cmd_figma_mcp(args):
     app_name = args.app
     app_dir = _ensure_app_scaffold_exists(sdk_root, app_name, target_w, target_h)
 
-    layout_dir = os.path.join(app_dir, ".eguiproject", "layout")
-    os.makedirs(layout_dir, exist_ok=True)
-
     # Process each frame as a page
     for frame, page_name in zip(frames, page_names):
         print(f"\nConverting frame '{frame.get('name', page_name)}' -> {page_name}.xml")
@@ -2814,18 +2834,16 @@ def cmd_figma_mcp(args):
         scale = _compute_fit_scale(target_w, target_h, fw, fh)
         px, py = fb.get("x", 0), fb.get("y", 0)
 
-        xml_path = os.path.join(layout_dir, f"{page_name}.xml")
-        with open(xml_path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(
-                _build_figma_page_xml(
-                    frame,
-                    target_w,
-                    target_h,
-                    parent_x=px,
-                    parent_y=py,
-                    scale=scale,
-                )
-            )
+        xml_path = _write_figma_page_xml(
+            app_dir,
+            page_name,
+            frame,
+            target_w,
+            target_h,
+            parent_x=px,
+            parent_y=py,
+            scale=scale,
+        )
         print(f"  Written: {xml_path}")
 
     print(f"\nNext steps:")
