@@ -6,12 +6,14 @@ import os
 import shutil
 from dataclasses import dataclass, field
 
+from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME
 from .workspace import normalize_path
 
 
 DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     "*.egui project metadata",
     "build.mk and app_egui_config.h user override wrappers",
+    "resource/src/app_resource_config.json user overlay config",
     ".eguiproject/layout/*.xml page layouts",
     ".eguiproject/resources/** source assets and resource metadata",
     ".eguiproject/mockup/** preview mockups",
@@ -22,8 +24,9 @@ DESIGNER_SOURCE_PRESERVE_SUMMARY = (
 
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     "page/user code files in the project root (*.c, *.h, *_ext.h)",
-    "resource/** generated resources and synced source mirrors",
-    "build_designer.mk and app_egui_config_designer.h designer-managed scaffold files",
+    "resource/img, resource/font, and other synced/generated resource outputs",
+    "resource/src/.designer/** designer-generated resource metadata",
+    "build_designer.mk and app_egui_config_designer.h",
     ".eguiproject/backup, orphaned_user_code, and other generated caches",
 )
 
@@ -91,6 +94,39 @@ def _clean_eguiproject_dir(project_dir: str, eguiproject_dir: str, removed_paths
     return removed_files, removed_dirs
 
 
+def _clean_resource_src_dir(project_dir: str, src_dir: str, removed_paths: list[str], preserved_paths: list[str]) -> tuple[int, int]:
+    removed_files = 0
+    removed_dirs = 0
+    for name in os.listdir(src_dir):
+        child_path = os.path.join(src_dir, name)
+        rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
+        if os.path.isfile(child_path) and name == APP_RESOURCE_CONFIG_FILENAME:
+            preserved_paths.append(rel_path)
+            continue
+        files, dirs = _remove_path(project_dir, child_path, removed_paths)
+        removed_files += files
+        removed_dirs += dirs
+    return removed_files, removed_dirs
+
+
+def _clean_resource_dir(project_dir: str, resource_dir: str, removed_paths: list[str], preserved_paths: list[str]) -> tuple[int, int]:
+    removed_files = 0
+    removed_dirs = 0
+    for name in os.listdir(resource_dir):
+        child_path = os.path.join(resource_dir, name)
+        rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
+        if os.path.isdir(child_path) and name == "src":
+            preserved_paths.append(rel_path)
+            files, dirs = _clean_resource_src_dir(project_dir, child_path, removed_paths, preserved_paths)
+            removed_files += files
+            removed_dirs += dirs
+            continue
+        files, dirs = _remove_path(project_dir, child_path, removed_paths)
+        removed_files += files
+        removed_dirs += dirs
+    return removed_files, removed_dirs
+
+
 def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
     """Delete reconstructible project outputs while keeping designer-owned source state."""
 
@@ -120,6 +156,13 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
         if os.path.isdir(child_path) and name == ".eguiproject":
             preserved_paths.append(rel_path)
             files, dirs = _clean_eguiproject_dir(project_dir, child_path, removed_paths, preserved_paths)
+            removed_files += files
+            removed_dirs += dirs
+            continue
+
+        if os.path.isdir(child_path) and name == "resource":
+            preserved_paths.append(rel_path)
+            files, dirs = _clean_resource_dir(project_dir, child_path, removed_paths, preserved_paths)
             removed_files += files
             removed_dirs += dirs
             continue

@@ -1,15 +1,9 @@
 """Resource config generator for EmbeddedGUI Designer.
 
 Scans all layout XMLs (via the Project model), collects widget-level resource
-configurations, deduplicates, and generates ``app_resource_config.json``
-compatible with the existing ``app_resource_generate.py`` pipeline.
-
-Data flow:
-    layout/*.xml (widget-level params)
-        -> ResourceConfigGenerator.generate(project)
-        -> app_resource_config.json
-        -> app_resource_generate.py (unchanged)
-        -> C source files
+configurations, deduplicates, and generates the Designer-managed
+``resource/src/.designer/app_resource_config_designer.json`` consumed by the
+resource pipeline.
 """
 
 import json
@@ -17,10 +11,15 @@ import os
 
 from ..model.widget_model import format_file_name, _file_stem
 from ..model.string_resource import parse_string_ref
+from ..utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    designer_generated_text_relpath,
+    designer_resource_config_path,
+)
 
 
 class ResourceConfigGenerator:
-    """Scans project widgets and generates app_resource_config.json."""
+    """Scans project widgets and generates Designer-managed resource config."""
 
     def generate(self, project):
         """Scan all pages and generate a resource config dict.
@@ -49,24 +48,29 @@ class ResourceConfigGenerator:
 
         return {"img": img_configs, "font": font_configs}
 
-    def generate_and_save(self, project, src_dir):
-        """Generate config and write to app_resource_config.json in src_dir.
+    def generate_and_save(self, project, src_dir, *, filename=APP_RESOURCE_CONFIG_DESIGNER_FILENAME):
+        """Generate config and write it to ``filename`` inside ``src_dir``.
 
         Also writes any generated text files for font text content.
 
         Args:
             project: Project model instance.
             src_dir: Path to resource/src/ directory.
+            filename: Output config filename. Defaults to the Designer-managed
+                split config file.
         """
         config = self.generate(project)
 
         # Write generated text files for inline font text
         self._write_font_text_files(config, src_dir)
 
-        os.makedirs(src_dir, exist_ok=True)
-        config_path = os.path.join(src_dir, "app_resource_config.json")
+        config_path = designer_resource_config_path(src_dir)
+        if filename != APP_RESOURCE_CONFIG_DESIGNER_FILENAME:
+            config_path = os.path.join(src_dir, filename)
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
+        return config_path
 
     # ── Internal methods ──────────────────────────────────────────
 
@@ -243,7 +247,7 @@ class ResourceConfigGenerator:
                 ps = entry["pixelsize"]
                 bs = entry["fontbitsize"]
                 gen_filename = f"_generated_text_{stem}_{ps}_{bs}.txt"
-                cfg["text"] = gen_filename
+                cfg["text"] = designer_generated_text_relpath(gen_filename)
                 cfg["_generated_text_content"] = "".join(sorted(inline_chars))
             elif text_files and not inline_chars:
                 # Only text file references
@@ -257,7 +261,7 @@ class ResourceConfigGenerator:
                 ps = entry["pixelsize"]
                 bs = entry["fontbitsize"]
                 gen_filename = f"_generated_text_{stem}_{ps}_{bs}.txt"
-                cfg["text"] = gen_filename
+                cfg["text"] = designer_generated_text_relpath(gen_filename)
                 cfg["_generated_text_content"] = "".join(sorted(inline_chars))
                 cfg["_extra_text_files"] = list(text_files)
             else:
@@ -283,7 +287,8 @@ class ResourceConfigGenerator:
             if content is not None:
                 text_filename = font_cfg.get("text", "")
                 if text_filename:
-                    text_path = os.path.join(src_dir, text_filename)
+                    text_path = os.path.join(src_dir, text_filename.replace("/", os.sep))
+                    os.makedirs(os.path.dirname(text_path), exist_ok=True)
                     with open(text_path, "w", encoding="utf-8") as f:
                         for ch in content:
                             if ord(ch) >= 0x80:

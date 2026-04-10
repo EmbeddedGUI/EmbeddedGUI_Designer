@@ -32,6 +32,11 @@ import subprocess
 import sys
 
 from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    APP_RESOURCE_CONFIG_FILENAME,
+    designer_resource_config_path,
+)
 from ui_designer.utils.scaffold import (
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
@@ -220,13 +225,20 @@ def cmd_scaffold(args):
         else:
             print(f"  Skipped: {page_name}.xml (already exists)")
 
-    # Resource config — only create if it does not exist
-    rc_path = os.path.join(app_dir, "resource", "src", "app_resource_config.json")
-    if not os.path.exists(rc_path):
-        _write_file(rc_path, make_empty_resource_config_content())
-        print(f"  Created: resource/src/app_resource_config.json")
+    # Resource config split — preserve user overlay, create designer scaffold.
+    user_rc_path = os.path.join(app_dir, "resource", "src", APP_RESOURCE_CONFIG_FILENAME)
+    if not os.path.exists(user_rc_path):
+        _write_file(user_rc_path, make_empty_resource_config_content())
+        print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
     else:
-        print(f"  Skipped: resource/src/app_resource_config.json (already exists)")
+        print(f"  Skipped: resource/src/{APP_RESOURCE_CONFIG_FILENAME} (already exists)")
+
+    designer_rc_path = designer_resource_config_path(os.path.join(app_dir, "resource", "src"))
+    if not os.path.exists(designer_rc_path):
+        _write_file(designer_rc_path, make_empty_resource_config_content())
+        print(f"  Created: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
+    else:
+        print(f"  Skipped: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME} (already exists)")
 
     print(f"\nScaffold complete: {app_dir}")
     print(f"  Screen: {width}x{height}, color depth: {color_depth}")
@@ -565,7 +577,7 @@ def _material_icon_codepoint(icon_name):
 
 
 def _update_resource_config(config_path, icon_names, icon_size, image_format="rgb565", image_alpha="4", suffix=""):
-    """Update app_resource_config.json with icon image entries."""
+    """Update the user overlay resource config with image entries."""
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -693,9 +705,9 @@ def cmd_export_icons(args):
                 shutil.copy2(src_png, dst_png)
                 synced += 1
         print(f"  Synced {synced} icons to {src_dir}")
-        config_path = os.path.join(src_dir, "app_resource_config.json")
+        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
     else:
-        config_path = os.path.join(output_dir, "app_resource_config.json")
+        config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
 
     # Update resource config
     if not os.path.exists(config_path):
@@ -1123,7 +1135,7 @@ def cmd_export_svgs(args):
         print(f"  Synced {synced} SVG PNGs to {src_dir}")
 
         # Update resource config
-        config_path = os.path.join(src_dir, "app_resource_config.json")
+        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
         if not os.path.exists(config_path):
             with open(config_path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(RESOURCE_CONFIG_TEMPLATE)
@@ -1244,10 +1256,12 @@ def cmd_gen_resource(args):
 
     resource_dir = os.path.join(app_dir, "resource")
     src_dir = os.path.join(resource_dir, "src")
-    config_path = os.path.join(src_dir, "app_resource_config.json")
+    user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+    designer_config_path = designer_resource_config_path(src_dir)
 
-    if not os.path.isfile(config_path):
-        print(f"ERROR: Resource config not found: {config_path}")
+    if not os.path.isfile(user_config_path) and not os.path.isfile(designer_config_path):
+        print(f"ERROR: Resource config not found: {user_config_path}")
+        print(f"       or: {designer_config_path}")
         print("Run 'scaffold' or 'export-icons' first.")
         sys.exit(1)
 
@@ -1347,19 +1361,16 @@ def cmd_generate_code(args):
     # Sync font files referenced by widgets to resource/src/
     _sync_font_files(project, root, src_dir)
 
-    # Generate app_resource_config.json from XML
+    # Generate Designer-managed resource config from XML
     from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
     rcg = ResourceConfigGenerator()
+    user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+    if not os.path.exists(user_config_path):
+        with open(user_config_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(make_empty_resource_config_content())
+        print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
     rcg.generate_and_save(project, src_dir)
-    print(f"  Generated: resource/src/app_resource_config.json")
-
-    # Also write generated text files to .eguiproject/resources/ for editor visibility
-    eguiproject_res_dir = os.path.join(app_dir, ".eguiproject", "resources")
-    os.makedirs(eguiproject_res_dir, exist_ok=True)
-    import shutil as _shutil
-    for fname in os.listdir(src_dir):
-        if fname.startswith("_generated_text_") and fname.endswith(".txt"):
-            _shutil.copy2(os.path.join(src_dir, fname), os.path.join(eguiproject_res_dir, fname))
+    print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
 
     # Generate C code
     from ui_designer.generator.code_generator import generate_all_files_preserved

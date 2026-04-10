@@ -308,7 +308,19 @@ class TestMainWindowFileFlow:
         (project_dir / "build.mk").write_text("# legacy build\n", encoding="utf-8")
         (project_dir / "app_egui_config.h").write_text("#define LEGACY_CONFIG 1\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config.json").write_text(
-            json.dumps({"img": ["legacy"], "font": []}, ensure_ascii=False) + "\n",
+            json.dumps(
+                {
+                    "img": [
+                        {
+                            "file": "legacy_extra.png",
+                            "format": "alpha",
+                            "alpha": "4",
+                        }
+                    ],
+                    "font": [],
+                },
+                ensure_ascii=False,
+            ) + "\n",
             encoding="utf-8",
         )
 
@@ -352,6 +364,16 @@ class TestMainWindowFileFlow:
         assert (project_dir / "build_designer.mk").is_file()
         assert (project_dir / "app_egui_config_designer.h").is_file()
         assert json.loads((project_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
+            "img": [
+                {
+                    "file": "legacy_extra.png",
+                    "format": "alpha",
+                    "alpha": "4",
+                }
+            ],
+            "font": [],
+        }
+        assert json.loads((project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").read_text(encoding="utf-8")) == {
             "img": [],
             "font": [],
         }
@@ -432,6 +454,7 @@ class TestMainWindowFileFlow:
         assert (project_dir / "app_egui_config.h").is_file()
         assert (project_dir / "app_egui_config_designer.h").is_file()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
+        assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
         assert isolated_config.last_project_path == os.path.join(str(project_dir), "SaveDemo.egui")
         assert isolated_config.recent_projects[0]["project_path"] == os.path.join(str(project_dir), "SaveDemo.egui")
         assert window._undo_manager.is_any_dirty() is False
@@ -2648,6 +2671,12 @@ class TestMainWindowFileFlow:
         images_dir = src_dir / ".eguiproject" / "resources" / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
         (images_dir / "legacy.png").write_bytes(b"PNG")
+        resource_src_dir = src_dir / "resource" / "src"
+        resource_src_dir.mkdir(parents=True, exist_ok=True)
+        (resource_src_dir / "app_resource_config.json").write_text(
+            json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
         mockup_dir = src_dir / ".eguiproject" / "mockup"
         mockup_dir.mkdir(parents=True, exist_ok=True)
         (mockup_dir / "legacy.txt").write_text("mock", encoding="utf-8")
@@ -2675,6 +2704,10 @@ class TestMainWindowFileFlow:
         assert (dst_dir / "app_egui_config_designer.h").is_file()
         assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").is_file()
         assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").is_file()
+        assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
+            "img": [{"file": "legacy.png"}],
+            "font": [],
+        }
         assert (dst_dir / "resource" / "src" / "legacy.png").is_file()
         _close_window(window)
 
@@ -3828,6 +3861,7 @@ class TestMainWindowFileFlow:
         assert saved.screen_width == 480
         assert saved.screen_height == 272
         assert (app_dir / "resource" / "src" / "app_resource_config.json").is_file()
+        assert (app_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
         assert opened == {
             "path": os.path.normpath(os.path.abspath(project_path)),
             "preferred_sdk_root": os.path.normpath(os.path.abspath(sdk_root)),

@@ -204,23 +204,27 @@ class ResourceCatalog:
 
     @classmethod
     def from_resource_config(cls, src_dir, config_data=None):
-        """Create a catalog from existing app_resource_config.json data.
+        """Create a catalog from existing resource config data.
 
-        If config_data is None, tries to load from src_dir.
+        If config_data is None, tries to load and merge the split config files
+        from ``src_dir``.
         Used for migration from old format.
         """
-        import json
+        from ..utils.resource_config_overlay import (
+            is_designer_resource_path,
+            load_merged_resource_config,
+        )
 
         catalog = cls()
 
         if config_data is None:
-            config_path = os.path.join(src_dir, "app_resource_config.json")
-            if not os.path.isfile(config_path):
+            if not os.path.isdir(src_dir):
                 return cls.from_directory(src_dir)
             try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
+                config_data = load_merged_resource_config(src_dir)
             except Exception:
+                return cls.from_directory(src_dir)
+            if config_data is None:
                 return cls.from_directory(src_dir)
 
         # Extract unique filenames from config
@@ -239,8 +243,12 @@ class ResourceCatalog:
                 seen_fonts.add(filename)
             # Also collect text files referenced by fonts
             text_file = font_cfg.get("text", "")
-            if text_file and text_file not in catalog.text_files:
-                catalog.text_files.append(text_file)
+            for text_item in str(text_file or "").split(","):
+                normalized = text_item.strip()
+                if not normalized or is_designer_resource_path(normalized):
+                    continue
+                if normalized not in catalog.text_files:
+                    catalog.text_files.append(normalized)
 
         # Also scan directory for any files not in config
         if os.path.isdir(src_dir):

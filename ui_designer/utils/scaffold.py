@@ -372,5 +372,5 @@ def migrate_app_config_h_content(
 
 
 def make_empty_resource_config_content():
-    """Return the default ``app_resource_config.json`` content."""
+    """Return the default user-overlay resource config content."""
     return json.dumps({"img": [], "font": []}, indent=4, ensure_ascii=False) + "\n"

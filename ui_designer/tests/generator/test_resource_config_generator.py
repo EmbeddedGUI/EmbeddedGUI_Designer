@@ -9,6 +9,10 @@ from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
+from ui_designer.utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    DESIGNER_RESOURCE_DIRNAME,
+)
 
 
 def _make_project_with_widgets(widgets, screen_w=240, screen_h=320):
@@ -172,7 +176,7 @@ class TestFontCollection:
 
         assert len(config["font"]) == 1
         assert config["font"][0]["file"] == "test.ttf"
-        assert config["font"][0]["text"].startswith("_generated_text_")
+        assert config["font"][0]["text"].startswith(".designer/_generated_text_")
         assert config["font"][0]["_extra_text_files"] == ["chars.txt"]
         assert expected_inline_char in config["font"][0].get("_generated_text_content", "")
 
@@ -263,7 +267,7 @@ class TestGenerateAndSave:
         gen = ResourceConfigGenerator()
         gen.generate_and_save(proj, str(tmp_path))
 
-        config_path = tmp_path / "app_resource_config.json"
+        config_path = tmp_path / DESIGNER_RESOURCE_DIRNAME / APP_RESOURCE_CONFIG_DESIGNER_FILENAME
         assert config_path.is_file()
 
         with open(config_path, "r", encoding="utf-8") as f:
@@ -283,7 +287,8 @@ class TestGenerateAndSave:
         gen.generate_and_save(proj, str(tmp_path))
 
         # Should have created a generated text file
-        txt_files = [f for f in os.listdir(str(tmp_path)) if f.startswith("_generated_text_")]
+        txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
+        txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
         assert len(txt_files) == 1
 
     def test_unicode_chars_escaped_in_text_file(self, tmp_path):
@@ -297,8 +302,9 @@ class TestGenerateAndSave:
         gen = ResourceConfigGenerator()
         gen.generate_and_save(proj, str(tmp_path))
 
-        txt_files = [f for f in os.listdir(str(tmp_path)) if f.startswith("_generated_text_")]
+        txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
+        txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
         assert len(txt_files) == 1
-        content = (tmp_path / txt_files[0]).read_text(encoding="utf-8")
+        content = (txt_root / txt_files[0]).read_text(encoding="utf-8")
         # Non-ASCII chars should be escaped as &#xHHHH;
         assert "&#x" in content

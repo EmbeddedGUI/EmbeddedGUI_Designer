@@ -12,6 +12,7 @@ class TestProjectCleaner:
         (project_dir / ".eguiproject" / "backup" / "old").mkdir(parents=True)
         (project_dir / ".eguiproject" / "orphaned_user_code" / "main_page").mkdir(parents=True)
         (project_dir / "resource" / "src").mkdir(parents=True)
+        (project_dir / "resource" / "img").mkdir(parents=True)
         (project_dir / "widgets").mkdir()
         (project_dir / "custom_widgets").mkdir()
         (project_dir / "notes").mkdir()
@@ -33,6 +34,10 @@ class TestProjectCleaner:
         (project_dir / "build_designer.mk").write_text("EGUI_CODE_SRC += $(EGUI_APP_PATH)\n", encoding="utf-8")
         (project_dir / "app_egui_config_designer.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config.json").write_text("{}\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / ".designer").mkdir()
+        (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
+        (project_dir / "resource" / "src" / ".designer" / ".app_resource_config_merged.json").write_text("{}\n", encoding="utf-8")
+        (project_dir / "resource" / "img" / "generated.c").write_text("// generated\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "backup" / "old" / "main_page.c").write_text("// backup\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "orphaned_user_code" / "main_page" / "main_page.c").write_text("// orphan\n", encoding="utf-8")
         (project_dir / "notes" / "todo.txt").write_text("remove me\n", encoding="utf-8")
@@ -50,19 +55,26 @@ class TestProjectCleaner:
         assert (project_dir / "custom_widgets" / "chip.py").is_file()
         assert (project_dir / "build.mk").is_file()
         assert (project_dir / "app_egui_config.h").is_file()
+        assert (project_dir / "resource").is_dir()
+        assert (project_dir / "resource" / "src").is_dir()
+        assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
 
         assert not (project_dir / "main_page.c").exists()
         assert not (project_dir / "uicode.h").exists()
         assert not (project_dir / "build_designer.mk").exists()
         assert not (project_dir / "app_egui_config_designer.h").exists()
-        assert not (project_dir / "resource").exists()
+        assert not (project_dir / "resource" / "src" / ".designer").exists()
+        assert not (project_dir / "resource" / "img").exists()
         assert not (project_dir / ".eguiproject" / "backup").exists()
         assert not (project_dir / ".eguiproject" / "orphaned_user_code").exists()
         assert not (project_dir / "notes").exists()
 
         assert report.removed_files == 4
-        assert report.removed_dirs == 4
+        assert report.removed_dirs == 5
         assert "CleanAllDemo.egui" in report.preserved_paths
+        assert "resource" in report.preserved_paths
+        assert "resource/src" in report.preserved_paths
+        assert "resource/src/app_resource_config.json" in report.preserved_paths
         assert ".eguiproject/layout" in report.preserved_paths
         assert ".eguiproject/resources" in report.preserved_paths
         assert ".eguiproject/mockup" in report.preserved_paths
@@ -71,7 +83,8 @@ class TestProjectCleaner:
         assert "app_egui_config.h" in report.preserved_paths
         assert "widgets" in report.preserved_paths
         assert "custom_widgets" in report.preserved_paths
-        assert "resource" in report.removed_paths
+        assert "resource/img" in report.removed_paths
+        assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
         assert ".eguiproject/orphaned_user_code" in report.removed_paths
         assert "build_designer.mk" in report.removed_paths

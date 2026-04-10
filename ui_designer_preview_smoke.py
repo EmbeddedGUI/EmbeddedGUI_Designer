@@ -28,6 +28,11 @@ from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    APP_RESOURCE_CONFIG_FILENAME,
+    designer_resource_config_path,
+)
 from ui_designer.utils.scaffold import (
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
@@ -123,24 +128,8 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         app_dir / "app_egui_config_designer.h",
         make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
     )
-    _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
-
-
-def _scaffold_app_directory_clean(app_dir: Path, app_name: str) -> None:
-    app_dir.mkdir(parents=True, exist_ok=True)
-    resource_src_dir = app_dir / "resource" / "src"
-    resource_src_dir.mkdir(parents=True, exist_ok=True)
-    _write_text(app_dir / "build.mk", make_app_build_mk_content(app_name))
-    _write_text(app_dir / "build_designer.mk", make_app_build_designer_mk_content(app_name))
-    _write_text(app_dir / "app_egui_config.h", make_app_config_h_content(app_name))
-    _write_text(
-        app_dir / "app_egui_config_designer.h",
-        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
-    )
-    _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
-
-
-_scaffold_app_directory = _scaffold_app_directory_clean
+    _write_text(resource_src_dir / APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config_content())
+    _write_text(Path(designer_resource_config_path(str(resource_src_dir))), make_empty_resource_config_content())
 
 
 def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:

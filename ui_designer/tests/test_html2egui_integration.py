@@ -119,7 +119,7 @@ class TestGenerateCode:
             assert os.path.isfile(os.path.join(real_app_dir, "uicode.c"))
 
             # Verify resource config was generated
-            rc_path = os.path.join(real_app_dir, "resource", "src", "app_resource_config.json")
+            rc_path = os.path.join(real_app_dir, "resource", "src", ".designer", "app_resource_config_designer.json")
             assert os.path.isfile(rc_path)
             with open(rc_path, "r") as f:
                 data = json.load(f)

@@ -31,6 +31,7 @@ from .widget_model import WidgetModel
 from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
+from ..utils.resource_config_overlay import is_designer_resource_path
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
 from .sdk_fingerprint import SdkFingerprint
 
@@ -423,6 +424,8 @@ class Project:
             for fname in os.listdir(old_src_dir):
                 old_path = os.path.join(old_src_dir, fname)
                 if os.path.isfile(old_path):
+                    if is_designer_resource_path(fname):
+                        continue
                     ext = os.path.splitext(fname)[1].lower()
                     if ext in _IMAGE_EXTS:
                         new_path = os.path.join(images_dir, fname)

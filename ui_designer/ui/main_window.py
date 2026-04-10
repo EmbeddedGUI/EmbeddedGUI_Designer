@@ -113,6 +113,12 @@ from ..generator.user_code_preserver import compute_source_hash, embed_source_ha
 from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
 from ..engine.layout_engine import compute_layout, compute_page_layout
+from ..utils.resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    APP_RESOURCE_CONFIG_FILENAME,
+    DESIGNER_RESOURCE_DIRNAME,
+    designer_resource_config_path,
+)
 from ..utils.scaffold import (
     app_config_includes_designer,
     build_mk_includes_designer,
@@ -2530,8 +2536,8 @@ class MainWindow(QMainWindow):
             f"Recorded SDK revision:\n{recorded_revision}\n\n"
             f"Current SDK revision:\n{current_revision}\n\n"
             "Reset the project scaffold now? This regenerates build_designer.mk, "
-            "app_egui_config_designer.h, resource/src/app_resource_config.json, "
-            "and updates the .egui SDK version metadata while preserving user wrapper files.",
+            "app_egui_config_designer.h, resource/src/.designer/app_resource_config_designer.json, "
+            "and updates the .egui SDK version metadata while preserving user wrapper/overlay files.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -2723,19 +2729,29 @@ class MainWindow(QMainWindow):
         config_designer_h = os.path.join(project_dir, "app_egui_config_designer.h")
         _write_text(config_designer_h, config_designer_content)
 
-        resource_cfg = os.path.join(resource_src_dir, "app_resource_config.json")
-        if overwrite or not os.path.exists(resource_cfg):
+        resource_cfg = os.path.join(resource_src_dir, APP_RESOURCE_CONFIG_FILENAME)
+        if not os.path.exists(resource_cfg):
             with open(resource_cfg, "w", encoding="utf-8") as f:
+                f.write(make_empty_resource_config_content())
+        resource_designer_cfg = designer_resource_config_path(resource_src_dir)
+        if overwrite or not os.path.exists(resource_designer_cfg):
+            os.makedirs(os.path.dirname(resource_designer_cfg), exist_ok=True)
+            with open(resource_designer_cfg, "w", encoding="utf-8") as f:
                 f.write(make_empty_resource_config_content())
 
     def _copy_project_sidecar_files(self, src_dir, dst_dir):
         if not src_dir or not os.path.isdir(src_dir) or normalize_path(src_dir) == normalize_path(dst_dir):
             return
 
-        for rel_path in ("build.mk", "app_egui_config.h"):
+        for rel_path in (
+            "build.mk",
+            "app_egui_config.h",
+            os.path.join("resource", "src", APP_RESOURCE_CONFIG_FILENAME),
+        ):
             src_path = os.path.join(src_dir, rel_path)
             dst_path = os.path.join(dst_dir, rel_path)
             if os.path.isfile(src_path) and not os.path.exists(dst_path):
+                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
                 shutil.copy2(src_path, dst_path)
 
         for rel_dir in (
@@ -2806,6 +2822,8 @@ class MainWindow(QMainWindow):
             os.path.join(self._project_dir, "build_designer.mk"),
             os.path.join(self._project_dir, "app_egui_config.h"),
             os.path.join(self._project_dir, "app_egui_config_designer.h"),
+            os.path.join(self._project_dir, "resource", "src", APP_RESOURCE_CONFIG_FILENAME),
+            os.path.join(self._project_dir, "resource", "src", DESIGNER_RESOURCE_DIRNAME),
             os.path.join(eguiproject_dir, "layout"),
             os.path.join(eguiproject_dir, "resources"),
             os.path.join(eguiproject_dir, "mockup"),
@@ -2839,6 +2857,15 @@ class MainWindow(QMainWindow):
         if remaining > 0:
             summary += f" (+{remaining})"
         return summary
+
+    @staticmethod
+    def _changed_paths_touch_resource_config(paths):
+        watched_names = {
+            APP_RESOURCE_CONFIG_FILENAME,
+            APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+            DESIGNER_RESOURCE_DIRNAME,
+        }
+        return any(os.path.basename(path) in watched_names for path in paths or [])
 
     def _set_external_reload_pending(self, changed_paths=None):
         self._external_reload_pending = True
@@ -2953,6 +2980,10 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.critical(self, "Reload Project Failed", f"Failed to reload project:\n{exc}")
             return False
+
+        resource_config_changed = self._changed_paths_touch_resource_config(changed_paths or [])
+        if resource_config_changed:
+            self._resources_need_regen = True
 
         self._open_loaded_project(project, self._project_dir, preferred_sdk_root=self.project_root, silent=True)
         if current_page_name and self.project and self.project.get_page_by_name(current_page_name):
@@ -5323,7 +5354,7 @@ class MainWindow(QMainWindow):
 
         Steps:
         1. Sync .eguiproject/resources/ -> resource/src/
-        2. Generate app_resource_config.json from layout XML (ResourceConfigGenerator)
+        2. Generate resource/src/.designer/app_resource_config_designer.json from layout XML
         3. Run app_resource_generate.py to produce C source files
 
         Args:
@@ -5336,7 +5367,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Resource generation FAILED.")
 
     def _ensure_resources_generated(self):
-        """Generate app_resource_config.json from widget properties and run
+        """Generate split resource config from widget properties and run
         app_resource_generate.py if .eguiproject/resources/ exists.
 
         Called before each compile to ensure resource C files are up-to-date.
