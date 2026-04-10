@@ -1,9 +1,8 @@
 """Scaffold utilities for creating split user/designer project files.
 
 These helpers generate and migrate ``build.mk`` / ``app_egui_config.h`` wrapper
-files plus their Designer-managed companions (``build_designer.mk`` and
-``app_egui_config_designer.h``). They are Qt-free so both the GUI and CLI
-helpers can share the same behavior.
+files plus their Designer-managed companions under ``.designer/``. They are
+Qt-free so both the GUI and CLI helpers can share the same behavior.
 """
 
 from __future__ import annotations
@@ -12,9 +11,19 @@ import json
 import os
 import re
 
+DESIGNER_PROJECT_DIRNAME = ".designer"
+BUILD_DESIGNER_FILENAME = "build_designer.mk"
+APP_CONFIG_DESIGNER_FILENAME = "app_egui_config_designer.h"
 
-BUILD_DESIGNER_INCLUDE_LINE = "include $(EGUI_APP_PATH)/build_designer.mk"
-APP_CONFIG_DESIGNER_INCLUDE_LINE = '#include "app_egui_config_designer.h"'
+BUILD_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{BUILD_DESIGNER_FILENAME}"
+APP_CONFIG_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{APP_CONFIG_DESIGNER_FILENAME}"
+BUILD_DESIGNER_INCLUDE_TARGET = f"$(EGUI_APP_PATH)/{BUILD_DESIGNER_RELPATH}"
+
+LEGACY_BUILD_DESIGNER_RELPATH = BUILD_DESIGNER_FILENAME
+LEGACY_APP_CONFIG_DESIGNER_RELPATH = APP_CONFIG_DESIGNER_FILENAME
+
+BUILD_DESIGNER_INCLUDE_LINE = f"include {BUILD_DESIGNER_INCLUDE_TARGET}"
+APP_CONFIG_DESIGNER_INCLUDE_LINE = f'#include "{APP_CONFIG_DESIGNER_RELPATH}"'
 
 APP_CONFIG_WRAPPER_GUARD = "_APP_EGUI_CONFIG_H_"
 APP_CONFIG_DESIGNER_GUARD = "_APP_EGUI_CONFIG_DESIGNER_H_"
@@ -112,6 +121,43 @@ def _split_local_include_target(content: str, include_name: str) -> str:
     return match.group("path") if match else ""
 
 
+def _split_make_include_target(content: str, include_name: str) -> str:
+    match = re.search(
+        rf"^\s*include\s+(?P<path>\S*{re.escape(include_name)})\s*$",
+        content,
+        re.MULTILINE,
+    )
+    return match.group("path") if match else ""
+
+
+def project_designer_dir(project_dir: str) -> str:
+    return os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME)
+
+
+def build_designer_path(project_dir: str) -> str:
+    return os.path.join(project_dir, BUILD_DESIGNER_RELPATH.replace("/", os.sep))
+
+
+def app_config_designer_path(project_dir: str) -> str:
+    return os.path.join(project_dir, APP_CONFIG_DESIGNER_RELPATH.replace("/", os.sep))
+
+
+def legacy_build_designer_path(project_dir: str) -> str:
+    return os.path.join(project_dir, LEGACY_BUILD_DESIGNER_RELPATH)
+
+
+def legacy_app_config_designer_path(project_dir: str) -> str:
+    return os.path.join(project_dir, LEGACY_APP_CONFIG_DESIGNER_RELPATH)
+
+
+def build_mk_designer_include_target(content: str) -> str:
+    return _split_make_include_target(content, BUILD_DESIGNER_FILENAME)
+
+
+def app_config_designer_include_target(content: str) -> str:
+    return _split_local_include_target(content, APP_CONFIG_DESIGNER_FILENAME)
+
+
 def parse_define_int(content: str, macro_name: str, default=None):
     """Parse a decimal integer from a ``#define`` line."""
     match = re.search(
@@ -149,7 +195,7 @@ def read_app_config_dimensions(config_path: str, default_width=240, default_heig
         return content
 
     wrapper_content = _consume(config_path)
-    include_target = _split_local_include_target(wrapper_content, "app_egui_config_designer.h")
+    include_target = app_config_designer_include_target(wrapper_content)
     if include_target:
         designer_path = os.path.normpath(os.path.join(os.path.dirname(config_path), include_target))
         _consume(designer_path)
@@ -162,14 +208,12 @@ def read_app_config_dimensions(config_path: str, default_width=240, default_heig
 
 def build_mk_includes_designer(content: str) -> bool:
     """Return True when ``build.mk`` already includes ``build_designer.mk``."""
-    return _normalize_make_line(BUILD_DESIGNER_INCLUDE_LINE) in {
-        _normalize_make_line(line) for line in content.splitlines()
-    }
+    return bool(build_mk_designer_include_target(content))
 
 
 def app_config_includes_designer(content: str) -> bool:
     """Return True when ``app_egui_config.h`` already includes the designer header."""
-    return bool(_split_local_include_target(content, "app_egui_config_designer.h"))
+    return bool(app_config_designer_include_target(content))
 
 
 def make_app_build_designer_mk_content(app_name):
@@ -208,7 +252,7 @@ def migrate_app_build_mk_content(existing_content, app_name):
         if not stripped:
             preserved.append("")
             continue
-        if normalized == _normalize_make_line(BUILD_DESIGNER_INCLUDE_LINE):
+        if _split_make_include_target(raw_line, BUILD_DESIGNER_FILENAME):
             continue
         if normalized in designer_keys:
             continue
@@ -351,8 +395,9 @@ def migrate_app_config_h_content(
             f"#define {APP_CONFIG_DESIGNER_GUARD}",
             f"#endif /* {APP_CONFIG_WRAPPER_GUARD} */",
             f"#endif /* {APP_CONFIG_DESIGNER_GUARD} */",
-            APP_CONFIG_DESIGNER_INCLUDE_LINE,
         }:
+            continue
+        if _split_local_include_target(raw_line, APP_CONFIG_DESIGNER_FILENAME):
             continue
         if stripped == "#endif" and conditional_depth <= 0:
             continue

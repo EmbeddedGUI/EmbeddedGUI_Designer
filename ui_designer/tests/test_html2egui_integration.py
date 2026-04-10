@@ -60,9 +60,9 @@ class TestScaffold:
             assert os.path.isdir(real_app_dir)
             assert os.path.isfile(os.path.join(real_app_dir, f"{app_name}.egui"))
             assert os.path.isfile(os.path.join(real_app_dir, "app_egui_config.h"))
-            assert os.path.isfile(os.path.join(real_app_dir, "app_egui_config_designer.h"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "app_egui_config_designer.h"))
             assert os.path.isfile(os.path.join(real_app_dir, "build.mk"))
-            assert os.path.isfile(os.path.join(real_app_dir, "build_designer.mk"))
+            assert os.path.isfile(os.path.join(real_app_dir, ".designer", "build_designer.mk"))
             assert os.path.isdir(os.path.join(real_app_dir, ".eguiproject", "layout"))
             assert os.path.isfile(
                 os.path.join(real_app_dir, ".eguiproject", "layout", "main_page.xml")

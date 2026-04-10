@@ -13,6 +13,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from .designer_bridge import DesignerBridge
 from ..model.workspace import compute_make_app_root_arg, normalize_path
+from ..utils.scaffold import BUILD_DESIGNER_RELPATH, LEGACY_BUILD_DESIGNER_RELPATH
 
 
 class BuildConfig:
@@ -99,7 +100,8 @@ class BuildConfig:
             "Makefile",
             os.path.join("porting", "designer", "Makefile.base"),
             os.path.join(app_root_arg, app_name, "build.mk"),
-            os.path.join(app_root_arg, app_name, "build_designer.mk"),
+            os.path.join(app_root_arg, app_name, BUILD_DESIGNER_RELPATH.replace("/", os.sep)),
+            os.path.join(app_root_arg, app_name, LEGACY_BUILD_DESIGNER_RELPATH),
         ]
         for p in makefile_paths:
             full = os.path.join(project_root, p)
@@ -396,6 +398,9 @@ class CompilerEngine:
                 category = GENERATED_ALWAYS
 
             filepath = os.path.join(app_dir, filename)
+            parent_dir = os.path.dirname(filepath)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
 
             # User-owned files: skip if already exists
             if category == USER_OWNED and os.path.isfile(filepath):

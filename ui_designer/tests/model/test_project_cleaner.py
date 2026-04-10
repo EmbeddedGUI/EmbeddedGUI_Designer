@@ -31,8 +31,9 @@ class TestProjectCleaner:
         (project_dir / "uicode.h").write_text("// generated\n", encoding="utf-8")
         (project_dir / "build.mk").write_text("EGUI_CODE_SRC += main_page.c\n", encoding="utf-8")
         (project_dir / "app_egui_config.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
-        (project_dir / "build_designer.mk").write_text("EGUI_CODE_SRC += $(EGUI_APP_PATH)\n", encoding="utf-8")
-        (project_dir / "app_egui_config_designer.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
+        (project_dir / ".designer").mkdir()
+        (project_dir / ".designer" / "build_designer.mk").write_text("EGUI_CODE_SRC += $(EGUI_APP_PATH)\n", encoding="utf-8")
+        (project_dir / ".designer" / "app_egui_config_designer.h").write_text("#define EGUI_CONFIG_SCEEN_WIDTH 240\n", encoding="utf-8")
         (project_dir / "resource" / "src" / "app_resource_config.json").write_text("{}\n", encoding="utf-8")
         (project_dir / "resource" / "src" / ".designer").mkdir()
         (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").write_text("{}\n", encoding="utf-8")
@@ -61,16 +62,15 @@ class TestProjectCleaner:
 
         assert not (project_dir / "main_page.c").exists()
         assert not (project_dir / "uicode.h").exists()
-        assert not (project_dir / "build_designer.mk").exists()
-        assert not (project_dir / "app_egui_config_designer.h").exists()
+        assert not (project_dir / ".designer").exists()
         assert not (project_dir / "resource" / "src" / ".designer").exists()
         assert not (project_dir / "resource" / "img").exists()
         assert not (project_dir / ".eguiproject" / "backup").exists()
         assert not (project_dir / ".eguiproject" / "orphaned_user_code").exists()
         assert not (project_dir / "notes").exists()
 
-        assert report.removed_files == 4
-        assert report.removed_dirs == 5
+        assert report.removed_files == 2
+        assert report.removed_dirs == 6
         assert "CleanAllDemo.egui" in report.preserved_paths
         assert "resource" in report.preserved_paths
         assert "resource/src" in report.preserved_paths
@@ -84,10 +84,9 @@ class TestProjectCleaner:
         assert "widgets" in report.preserved_paths
         assert "custom_widgets" in report.preserved_paths
         assert "resource/img" in report.removed_paths
+        assert ".designer" in report.removed_paths
         assert "resource/src/.designer" in report.removed_paths
         assert ".eguiproject/backup" in report.removed_paths
         assert ".eguiproject/orphaned_user_code" in report.removed_paths
-        assert "build_designer.mk" in report.removed_paths
-        assert "app_egui_config_designer.h" in report.removed_paths
         assert "main_page.c" in report.removed_paths
         assert "notes" in report.removed_paths

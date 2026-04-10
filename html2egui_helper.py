@@ -38,6 +38,8 @@ from ui_designer.utils.resource_config_overlay import (
     designer_resource_config_path,
 )
 from ui_designer.utils.scaffold import (
+    app_config_designer_path,
+    build_designer_path,
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
     make_app_config_designer_h_content,
@@ -175,6 +177,7 @@ def cmd_scaffold(args):
     config_dir = os.path.join(app_dir, ".eguiproject")
     dirs = [
         app_dir,
+        os.path.join(app_dir, ".designer"),
         os.path.join(config_dir, "layout"),
         os.path.join(config_dir, "resources", "images"),
         os.path.join(app_dir, "resource"),
@@ -188,7 +191,7 @@ def cmd_scaffold(args):
     # Write wrapper + Designer-managed scaffold files.
     _write_file(os.path.join(app_dir, "app_egui_config.h"), make_app_config_h_content(args.app))
     _write_file(
-        os.path.join(app_dir, "app_egui_config_designer.h"),
+        app_config_designer_path(app_dir),
         make_app_config_designer_h_content(
             args.app,
             width,
@@ -200,7 +203,7 @@ def cmd_scaffold(args):
     )
     _write_file(os.path.join(app_dir, "build.mk"), make_app_build_mk_content(args.app))
     _write_file(
-        os.path.join(app_dir, "build_designer.mk"),
+        build_designer_path(app_dir),
         make_app_build_designer_mk_content(args.app),
     )
 

@@ -22,6 +22,7 @@ from ui_designer.generator.code_generator import (
     GENERATED_ALWAYS,
     USER_OWNED,
 )
+from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, BUILD_DESIGNER_RELPATH
 
 
 # ── Fixtures ─────────────────────────────────────────────────────
@@ -294,13 +295,13 @@ class TestGeneratedAlwaysFiles:
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "app_egui_config_designer.h" in result
+        assert APP_CONFIG_DESIGNER_RELPATH in result
 
     def test_build_designer_always_produced(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
         result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "build_designer.mk" in result
+        assert BUILD_DESIGNER_RELPATH in result
 
     def test_layout_regenerated_even_when_existing(self, tmp_path):
         """Even if *_layout.c exists on disk, it should appear in result (may

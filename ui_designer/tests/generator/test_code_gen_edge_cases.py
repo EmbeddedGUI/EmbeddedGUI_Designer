@@ -27,6 +27,7 @@ from ui_designer.generator.code_generator import (
     generate_uicode_source,
     generate_all_files,
 )
+from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH
 
 
 # ── helpers ─────────────────────────────────────────────────────
@@ -206,7 +207,7 @@ class TestAppEguiConfigContent:
         proj = Project(screen_width=240, screen_height=320, app_name="App")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config_designer.h"]
+        c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "240" in c
         assert "320" in c
 
@@ -216,7 +217,7 @@ class TestAppEguiConfigContent:
         proj = Project(screen_width=480, screen_height=272, app_name="WideApp")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config_designer.h"]
+        c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "480" in c
         assert "272" in c
 
@@ -225,7 +226,7 @@ class TestAppEguiConfigContent:
         proj = Project(screen_width=240, screen_height=320, app_name="App")
         proj.add_page(pg)
         files = generate_all_files(proj)
-        c, _ = files["app_egui_config_designer.h"]
+        c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "EGUI_CONFIG_PFB_WIDTH" in c
         assert "EGUI_CONFIG_PFB_HEIGHT" in c
 

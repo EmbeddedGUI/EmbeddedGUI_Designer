@@ -39,6 +39,8 @@ from ..model.page_timers import valid_page_timers
 from ..model.widget_registry import WidgetRegistry
 from ..model.string_resource import parse_string_ref
 from ..utils.scaffold import (
+    APP_CONFIG_DESIGNER_RELPATH,
+    BUILD_DESIGNER_RELPATH,
     make_app_build_designer_mk_content,
     make_app_config_designer_h_content,
 )
@@ -1846,11 +1848,11 @@ def generate_all_files(project):
 
     files["uicode.h"] = (generate_uicode_header(project), GENERATED_ALWAYS)
     files["uicode.c"] = (generate_uicode_source(project), GENERATED_ALWAYS)
-    files["build_designer.mk"] = (
+    files[BUILD_DESIGNER_RELPATH] = (
         make_app_build_designer_mk_content(project.app_name),
         GENERATED_ALWAYS,
     )
-    files["app_egui_config_designer.h"] = (
+    files[APP_CONFIG_DESIGNER_RELPATH] = (
         generate_app_config_designer(project),
         GENERATED_ALWAYS,
     )

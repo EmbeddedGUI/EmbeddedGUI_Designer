@@ -34,6 +34,8 @@ from ui_designer.utils.resource_config_overlay import (
     designer_resource_config_path,
 )
 from ui_designer.utils.scaffold import (
+    app_config_designer_path,
+    build_designer_path,
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
     make_app_config_designer_h_content,
@@ -115,17 +117,17 @@ def _write_text(path: Path, content: str) -> None:
 
 def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     app_dir.mkdir(parents=True, exist_ok=True)
+    (app_dir / ".designer").mkdir(parents=True, exist_ok=True)
     resource_src_dir = app_dir / "resource" / "src"
     resource_src_dir.mkdir(parents=True, exist_ok=True)
     _write_text(app_dir / "build.mk", make_app_build_mk_content(app_name))
-    _write_text(app_dir / "build_designer.mk", make_app_build_designer_mk_content(app_name))
+    _write_text(Path(build_designer_path(str(app_dir))), make_app_build_designer_mk_content(app_name))
     # NOTE: DesignerPreviewSmoke 编译需要 circle-mask helpers。
     # app_egui_config.h 由 scaffold 生成，但为了避免 scaffold/SDK 配置不一致导致的 linker
     # undefined reference，我们在这里对缺失项做强制补齐（最小化影响仅限 smoke 工具）。
-    cfg = make_app_config_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT)
     _write_text(app_dir / "app_egui_config.h", make_app_config_h_content(app_name))
     _write_text(
-        app_dir / "app_egui_config_designer.h",
+        Path(app_config_designer_path(str(app_dir))),
         make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
     )
     _write_text(resource_src_dir / APP_RESOURCE_CONFIG_FILENAME, make_empty_resource_config_content())

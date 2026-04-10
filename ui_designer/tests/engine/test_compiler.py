@@ -75,6 +75,15 @@ class TestBuildConfigExtract:
         assert cfg.link_cmd_args[0] == "gcc"
 
     @patch("subprocess.run")
+    @patch("os.path.getmtime", return_value=1000.0)
+    def test_extract_tracks_project_designer_makefiles(self, mock_mtime, mock_run):
+        mock_run.return_value = self._make_result(MAKE_DRYRUN_OUTPUT)
+        cfg = BuildConfig.extract("/project", "HelloDesigner_1", "example")
+
+        assert os.path.join("example", "HelloDesigner_1", ".designer", "build_designer.mk") in cfg._makefile_mtimes
+        assert os.path.join("example", "HelloDesigner_1", "build_designer.mk") in cfg._makefile_mtimes
+
+    @patch("subprocess.run")
     def test_extract_returns_none_on_make_failure(self, mock_run):
         mock_run.return_value = self._make_result("error", returncode=1)
         assert BuildConfig.extract("/project", "HelloDesigner_1", "example") is None
@@ -165,6 +174,25 @@ class TestCompilerFastPath:
         assert mock_popen.call_count == 1
         assert mock_popen.call_args[1]["shell"] is False
         assert mock_run.call_args[1]["shell"] is False
+
+    def test_write_project_files_creates_parent_dirs_for_nested_designer_outputs(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+
+        written = engine.write_project_files(
+            {
+                ".designer/build_designer.mk": "# designer build\n",
+                ".designer/app_egui_config_designer.h": "#define TEST_FLAG 1\n",
+            }
+        )
+
+        assert ".designer/build_designer.mk" in written
+        assert ".designer/app_egui_config_designer.h" in written
+        assert (tmp_path / "example" / "TestApp" / ".designer" / "build_designer.mk").read_text(encoding="utf-8") == (
+            "# designer build\n"
+        )
+        assert (tmp_path / "example" / "TestApp" / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8") == (
+            "#define TEST_FLAG 1\n"
+        )
 
     @patch("subprocess.run")
     def test_falls_back_to_make_without_config(self, mock_run, tmp_path):

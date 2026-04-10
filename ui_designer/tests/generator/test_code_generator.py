@@ -23,6 +23,7 @@ from ui_designer.generator.code_generator import (
     GENERATED_PRESERVED,
     USER_OWNED,
 )
+from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH, BUILD_DESIGNER_RELPATH
 
 
 # ── Fixture helpers ───────────────────────────────────────────────
@@ -680,8 +681,8 @@ class TestGenerateAllFiles:
         assert "main_page_ext.h" in files
         assert "uicode.h" in files
         assert "uicode.c" in files
-        assert "build_designer.mk" in files
-        assert "app_egui_config_designer.h" in files
+        assert BUILD_DESIGNER_RELPATH in files
+        assert APP_CONFIG_DESIGNER_RELPATH in files
 
     def test_all_files_categories(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
@@ -698,9 +699,9 @@ class TestGenerateAllFiles:
         assert cat_ext == USER_OWNED
         _, cat_uicode_h = files["uicode.h"]
         assert cat_uicode_h == GENERATED_ALWAYS
-        _, cat_build = files["build_designer.mk"]
+        _, cat_build = files[BUILD_DESIGNER_RELPATH]
         assert cat_build == GENERATED_ALWAYS
-        _, cat_cfg = files["app_egui_config_designer.h"]
+        _, cat_cfg = files[APP_CONFIG_DESIGNER_RELPATH]
         assert cat_cfg == GENERATED_ALWAYS
 
     def test_all_files_multi_page(self):

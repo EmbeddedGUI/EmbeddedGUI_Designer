@@ -120,8 +120,16 @@ from ..utils.resource_config_overlay import (
     designer_resource_config_path,
 )
 from ..utils.scaffold import (
-    app_config_includes_designer,
-    build_mk_includes_designer,
+    APP_CONFIG_DESIGNER_RELPATH,
+    BUILD_DESIGNER_INCLUDE_TARGET,
+    BUILD_DESIGNER_RELPATH,
+    DESIGNER_PROJECT_DIRNAME,
+    app_config_designer_include_target,
+    app_config_designer_path,
+    build_mk_designer_include_target,
+    build_designer_path,
+    legacy_app_config_designer_path,
+    legacy_build_designer_path,
     make_app_build_designer_mk_content,
     make_app_build_mk_content,
     make_app_config_designer_h_content,
@@ -2535,8 +2543,8 @@ class MainWindow(QMainWindow):
             "The project was created or last reset against a different SDK revision.\n\n"
             f"Recorded SDK revision:\n{recorded_revision}\n\n"
             f"Current SDK revision:\n{current_revision}\n\n"
-            "Reset the project scaffold now? This regenerates build_designer.mk, "
-            "app_egui_config_designer.h, resource/src/.designer/app_resource_config_designer.json, "
+            "Reset the project scaffold now? This regenerates .designer/build_designer.mk, "
+            ".designer/app_egui_config_designer.h, resource/src/.designer/app_resource_config_designer.json, "
             "and updates the .egui SDK version metadata while preserving user wrapper/overlay files.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
@@ -2675,6 +2683,7 @@ class MainWindow(QMainWindow):
 
     def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
         os.makedirs(project_dir, exist_ok=True)
+        os.makedirs(os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME), exist_ok=True)
         resource_src_dir = os.path.join(project_dir, "resource", "src")
         os.makedirs(resource_src_dir, exist_ok=True)
 
@@ -2689,8 +2698,18 @@ class MainWindow(QMainWindow):
             existing = _read_text(path)
             if existing == content:
                 return
+            parent_dir = os.path.dirname(path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
+
+        def _remove_if_exists(path):
+            try:
+                if path and os.path.exists(path):
+                    os.remove(path)
+            except OSError:
+                pass
 
         build_mk_content = make_app_build_mk_content(app_name)
         build_designer_content = make_app_build_designer_mk_content(app_name)
@@ -2699,11 +2718,12 @@ class MainWindow(QMainWindow):
         build_mk_existing = _read_text(build_mk)
         if build_mk_existing is None:
             _write_text(build_mk, build_mk_content)
-        elif overwrite or not build_mk_includes_designer(build_mk_existing):
+        elif overwrite or build_mk_designer_include_target(build_mk_existing) != BUILD_DESIGNER_INCLUDE_TARGET:
             _write_text(build_mk, migrate_app_build_mk_content(build_mk_existing, app_name))
 
-        build_designer_mk = os.path.join(project_dir, "build_designer.mk")
+        build_designer_mk = build_designer_path(project_dir)
         _write_text(build_designer_mk, build_designer_content)
+        _remove_if_exists(legacy_build_designer_path(project_dir))
 
         config_h_content = make_app_config_h_content(app_name)
         config_designer_content = make_app_config_designer_h_content(
@@ -2715,7 +2735,7 @@ class MainWindow(QMainWindow):
         config_h_existing = _read_text(config_h)
         if config_h_existing is None:
             _write_text(config_h, config_h_content)
-        elif overwrite or not app_config_includes_designer(config_h_existing):
+        elif overwrite or app_config_designer_include_target(config_h_existing) != APP_CONFIG_DESIGNER_RELPATH:
             _write_text(
                 config_h,
                 migrate_app_config_h_content(
@@ -2726,8 +2746,9 @@ class MainWindow(QMainWindow):
                 ),
             )
 
-        config_designer_h = os.path.join(project_dir, "app_egui_config_designer.h")
+        config_designer_h = app_config_designer_path(project_dir)
         _write_text(config_designer_h, config_designer_content)
+        _remove_if_exists(legacy_app_config_designer_path(project_dir))
 
         resource_cfg = os.path.join(resource_src_dir, APP_RESOURCE_CONFIG_FILENAME)
         if not os.path.exists(resource_cfg):
@@ -2819,9 +2840,10 @@ class MainWindow(QMainWindow):
         watch_roots = [
             project_file,
             os.path.join(self._project_dir, "build.mk"),
-            os.path.join(self._project_dir, "build_designer.mk"),
             os.path.join(self._project_dir, "app_egui_config.h"),
-            os.path.join(self._project_dir, "app_egui_config_designer.h"),
+            os.path.join(self._project_dir, DESIGNER_PROJECT_DIRNAME),
+            legacy_build_designer_path(self._project_dir),
+            legacy_app_config_designer_path(self._project_dir),
             os.path.join(self._project_dir, "resource", "src", APP_RESOURCE_CONFIG_FILENAME),
             os.path.join(self._project_dir, "resource", "src", DESIGNER_RESOURCE_DIRNAME),
             os.path.join(eguiproject_dir, "layout"),
@@ -4642,6 +4664,7 @@ class MainWindow(QMainWindow):
         files = generate_all_files_preserved(self.project, project_dir, backup=True)
         for filename, content in files.items():
             filepath = os.path.join(project_dir, filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
         self._clear_project_dirty()
@@ -4771,6 +4794,7 @@ class MainWindow(QMainWindow):
         )
         for filename, content in files.items():
             filepath = os.path.join(path, filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
         self.statusBar().showMessage(
