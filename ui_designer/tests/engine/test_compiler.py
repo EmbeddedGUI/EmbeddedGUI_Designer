@@ -328,6 +328,31 @@ class TestCompilerFastPath:
         assert not os.path.exists(legacy_uicode)
         assert os.path.isfile(os.path.join(engine.app_dir, ".designer", "uicode.c"))
 
+    def test_write_uicode_removes_legacy_root_copies_for_existing_designer_outputs(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        designer_dir = tmp_path / "example" / "TestApp" / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "uicode.h").write_text("// designer header\n", encoding="utf-8")
+        (designer_dir / "egui_strings.h").write_text("// designer strings header\n", encoding="utf-8")
+        (designer_dir / "egui_strings.c").write_text("// designer strings source\n", encoding="utf-8")
+        (designer_dir / "main_page.h").write_text("// designer page header\n", encoding="utf-8")
+        (designer_dir / "main_page_layout.c").write_text("// designer page layout\n", encoding="utf-8")
+
+        legacy_root_files = (
+            "uicode.h",
+            "egui_strings.h",
+            "egui_strings.c",
+            "main_page.h",
+            "main_page_layout.c",
+        )
+        for relpath in legacy_root_files:
+            (tmp_path / "example" / "TestApp" / relpath).write_text("// legacy root copy\n", encoding="utf-8")
+
+        engine.write_uicode("int main() {}")
+
+        for relpath in legacy_root_files:
+            assert not os.path.exists(os.path.join(engine.app_dir, relpath))
+
 
 class TestCompilerRuntime:
     def _make_engine(self, tmp_path):

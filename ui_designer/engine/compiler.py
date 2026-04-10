@@ -15,9 +15,10 @@ from .designer_bridge import DesignerBridge
 from ..model.workspace import compute_make_app_root_arg, normalize_path
 from ..utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
+    DESIGNER_PROJECT_DIRNAME,
     LEGACY_BUILD_DESIGNER_RELPATH,
     UICODE_SOURCE_RELPATH,
-    designer_codegen_legacy_root_relpath,
+    legacy_designer_codegen_cleanup_relpaths,
 )
 
 
@@ -376,13 +377,32 @@ class CompilerEngine:
         os.makedirs(os.path.dirname(self.uicode_path), exist_ok=True)
         with open(self.uicode_path, "w", encoding="utf-8") as f:
             f.write(code)
-        legacy_root_uicode = os.path.join(self.app_dir, "uicode.c")
-        try:
-            if os.path.isfile(legacy_root_uicode) and os.path.normcase(os.path.abspath(legacy_root_uicode)) != os.path.normcase(os.path.abspath(self.uicode_path)):
-                os.remove(legacy_root_uicode)
-        except OSError:
-            pass
+        self._cleanup_legacy_designer_root_copies(self._designer_output_relpaths_on_disk())
         self._last_changed_files = ["uicode.c"]
+
+    def _designer_output_relpaths_on_disk(self):
+        """List designer-managed output files currently present in ``.designer/``."""
+        designer_dir = os.path.join(self.app_dir, DESIGNER_PROJECT_DIRNAME)
+        if not os.path.isdir(designer_dir):
+            return ()
+
+        relpaths = []
+        for current_root, _, filenames in os.walk(designer_dir):
+            for filename in filenames:
+                full_path = os.path.join(current_root, filename)
+                relpaths.append(os.path.relpath(full_path, self.app_dir).replace("\\", "/"))
+        return tuple(sorted(relpaths))
+
+    def _cleanup_legacy_designer_root_copies(self, generated_relpaths):
+        """Remove legacy root copies for any designer-owned files."""
+        cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(generated_relpaths)
+        for relpath in cleanup_relpaths:
+            legacy_path = os.path.join(self.app_dir, relpath.replace("/", os.sep))
+            try:
+                if os.path.isfile(legacy_path):
+                    os.remove(legacy_path)
+            except OSError:
+                pass
 
     def write_project_files(self, files_dict, generated_relpaths=None):
         """Write multiple generated C files to the app directory.
@@ -416,12 +436,7 @@ class CompilerEngine:
         app_dir = self.app_dir
         os.makedirs(app_dir, exist_ok=True)
         written = []
-        cleanup_relpaths = set()
         cleanup_sources = generated_relpaths if generated_relpaths is not None else files_dict.keys()
-        for relpath in cleanup_sources:
-            normalized = str(relpath or "").replace("\\", "/")
-            if normalized.startswith(".designer/"):
-                cleanup_relpaths.add(designer_codegen_legacy_root_relpath(normalized))
 
         for filename, value in files_dict.items():
             normalized = str(filename or "").replace("\\", "/")
@@ -459,13 +474,7 @@ class CompilerEngine:
                 f.write(content)
             written.append(filename)
 
-        for relpath in sorted(cleanup_relpaths):
-            legacy_path = os.path.join(app_dir, relpath.replace("/", os.sep))
-            try:
-                if os.path.isfile(legacy_path):
-                    os.remove(legacy_path)
-            except OSError:
-                pass
+        self._cleanup_legacy_designer_root_copies(cleanup_sources)
 
         self._last_changed_files = [os.path.basename(f) for f in written if str(f).endswith(".c")]
         return written
