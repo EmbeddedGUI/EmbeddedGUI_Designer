@@ -150,6 +150,11 @@ class TestAutoDetectAddFile:
         assert cat.fonts == []
         assert cat.text_files == []
 
+    def test_add_file_ignores_designer_generated_text_file(self):
+        cat = ResourceCatalog()
+        cat.add_file("_generated_text_demo_16_4.txt")
+        assert cat.text_files == []
+
     def test_remove_file_from_any_category(self):
         cat = ResourceCatalog()
         cat.add_image("star.png")
@@ -194,6 +199,36 @@ class TestXmlSerialization:
         cat.add_image("test.png")
         cat.save(str(tmp_path))
         assert os.path.isfile(os.path.join(str(tmp_path), "resources.xml"))
+
+    def test_save_skips_designer_generated_text_files(self, tmp_path):
+        cat = ResourceCatalog()
+        cat.add_text_file("_generated_text_demo_16_4.txt")
+        cat.add_text_file("supported_text.txt")
+
+        cat.save(str(tmp_path))
+
+        loaded = ResourceCatalog.load(str(tmp_path))
+        assert loaded is not None
+        assert loaded.text_files == ["supported_text.txt"]
+
+    def test_load_skips_designer_generated_text_files(self, tmp_path):
+        (tmp_path / "resources.xml").write_text(
+            (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                "<Resources>\n"
+                "    <TextFiles>\n"
+                '        <TextFile file="_generated_text_demo_16_4.txt" />\n'
+                '        <TextFile file="supported_text.txt" />\n'
+                "    </TextFiles>\n"
+                "</Resources>\n"
+            ),
+            encoding="utf-8",
+        )
+
+        loaded = ResourceCatalog.load(str(tmp_path))
+
+        assert loaded is not None
+        assert loaded.text_files == ["supported_text.txt"]
 
 
 class TestFromDirectory:
@@ -244,6 +279,15 @@ class TestFromDirectory:
 
         cat = ResourceCatalog.from_directory(str(tmp_path))
         assert cat.images.count("star.png") == 1
+
+    def test_scan_skips_designer_generated_text_files(self, tmp_path):
+        (tmp_path / "_generated_text_demo_16_4.txt").write_text("designer\n")
+        (tmp_path / "supported_text.txt").write_text("user\n")
+
+        cat = ResourceCatalog.from_directory(str(tmp_path))
+
+        assert not cat.has_text_file("_generated_text_demo_16_4.txt")
+        assert cat.has_text_file("supported_text.txt")
 
 
 class TestFromResourceConfig:
@@ -297,3 +341,18 @@ class TestFromResourceConfig:
         cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
         assert cat.has_image("a.png")
         assert cat.has_image("b.png")
+
+    def test_from_config_skips_legacy_generated_text_files_found_in_directory(self, tmp_path):
+        config_data = {
+            "img": [],
+            "font": [
+                {"file": "demo.ttf", "pixelsize": "16", "text": "supported_text.txt"},
+            ],
+        }
+        (tmp_path / "_generated_text_demo_16_4.txt").write_text("designer\n")
+        (tmp_path / "supported_text.txt").write_text("user\n")
+
+        cat = ResourceCatalog.from_resource_config(str(tmp_path), config_data)
+
+        assert cat.has_text_file("supported_text.txt")
+        assert not cat.has_text_file("_generated_text_demo_16_4.txt")

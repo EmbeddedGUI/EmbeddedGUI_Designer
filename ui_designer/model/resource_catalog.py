@@ -7,6 +7,8 @@ all available source files (images, fonts, text files) in resource/src/.
 import os
 import xml.etree.ElementTree as ET
 
+from ..utils.resource_config_overlay import is_designer_resource_path
+
 
 # Image file extensions
 IMAGE_EXTENSIONS = {".png", ".bmp", ".jpg", ".jpeg", ".gif"}
@@ -84,6 +86,8 @@ class ResourceCatalog:
 
     def add_file(self, filename):
         """Add a file to the appropriate category based on extension."""
+        if is_designer_resource_path(filename):
+            return
         ext = os.path.splitext(filename)[1].lower()
         if ext in IMAGE_EXTENSIONS:
             self.add_image(filename)
@@ -119,6 +123,8 @@ class ResourceCatalog:
         if self.text_files:
             texts_elem = ET.SubElement(root, "TextFiles")
             for txt in self.text_files:
+                if is_designer_resource_path(txt):
+                    continue
                 elem = ET.SubElement(texts_elem, "TextFile")
                 elem.set("file", txt)
 
@@ -161,7 +167,7 @@ class ResourceCatalog:
         if texts_elem is not None:
             for elem in texts_elem.findall("TextFile"):
                 filename = elem.get("file", "")
-                if filename:
+                if filename and not is_designer_resource_path(filename):
                     catalog.text_files.append(filename)
 
         return catalog
@@ -191,6 +197,8 @@ class ResourceCatalog:
         for fname in sorted(os.listdir(src_dir)):
             fpath = os.path.join(src_dir, fname)
             if not os.path.isfile(fpath):
+                continue
+            if is_designer_resource_path(fname):
                 continue
             ext = os.path.splitext(fname)[1].lower()
             if ext in IMAGE_EXTENSIONS and fname not in catalog.images:
@@ -253,6 +261,8 @@ class ResourceCatalog:
         # Also scan directory for any files not in config
         if os.path.isdir(src_dir):
             for fname in sorted(os.listdir(src_dir)):
+                if is_designer_resource_path(fname):
+                    continue
                 ext = os.path.splitext(fname)[1].lower()
                 if ext in IMAGE_EXTENSIONS and fname not in seen_images:
                     catalog.images.append(fname)
