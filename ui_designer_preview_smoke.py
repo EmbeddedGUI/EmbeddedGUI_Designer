@@ -126,7 +126,7 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
 
 
-def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
+def _scaffold_app_directory_clean(app_dir: Path, app_name: str) -> None:
     app_dir.mkdir(parents=True, exist_ok=True)
     resource_src_dir = app_dir / "resource" / "src"
     resource_src_dir.mkdir(parents=True, exist_ok=True)
@@ -138,6 +138,9 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
         make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
     )
     _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
+
+
+_scaffold_app_directory = _scaffold_app_directory_clean
 
 
 def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
