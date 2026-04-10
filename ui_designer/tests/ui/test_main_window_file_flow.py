@@ -386,7 +386,7 @@ class TestMainWindowFileFlow:
         cached_sdk = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cached_sdk)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         captured = {}
 
         def fake_get_open_file_name(parent, title, directory, filters):
@@ -2663,7 +2663,7 @@ class TestMainWindowFileFlow:
         cached_sdk = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cached_sdk)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         captured = {}
 
         class FakeDialog:
@@ -3192,7 +3192,7 @@ class TestMainWindowFileFlow:
         cached_sdk = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cached_sdk)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         captured = {}
 
         def fake_get_existing_directory(parent, title, directory):
@@ -3216,7 +3216,7 @@ class TestMainWindowFileFlow:
         cached_sdk = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cached_sdk)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         captured = {}
 
         class FakeDialog:
@@ -3253,7 +3253,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         isolated_config.sdk_root = str(sdk_root)
-        isolated_config.egui_root = str(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
         project_dir = tmp_path / "examples" / "DesignerSandbox"
         project_dir.mkdir(parents=True)
         project_path = project_dir / "DesignerSandbox.egui"
@@ -3306,7 +3306,7 @@ class TestMainWindowFileFlow:
             "silent": False,
         }
         assert isolated_config.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
-        assert isolated_config.egui_root == os.path.normpath(os.path.abspath(sdk_root))
+        assert isolated_config.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
         _close_window(window)
 
     def test_open_loaded_project_discovers_default_sdk_cache_when_config_is_empty(self, qapp, isolated_config, tmp_path, monkeypatch):

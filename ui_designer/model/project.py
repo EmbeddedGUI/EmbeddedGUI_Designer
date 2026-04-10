@@ -109,15 +109,6 @@ class Project:
         self._sdk_root = normalize_path(value)
 
     @property
-    def egui_root(self):
-        """Legacy alias for ``sdk_root``."""
-        return self.sdk_root
-
-    @egui_root.setter
-    def egui_root(self, value):
-        self.sdk_root = normalize_path(value)
-
-    @property
     def root_widgets(self):
         """Compatibility shim: return root widgets of the startup page.
 

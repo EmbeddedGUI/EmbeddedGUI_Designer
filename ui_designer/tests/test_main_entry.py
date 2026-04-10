@@ -19,14 +19,6 @@ class _FakeConfig:
         self.font_size_px = 0
         self.save_calls = 0
 
-    @property
-    def egui_root(self):
-        return self.sdk_root
-
-    @egui_root.setter
-    def egui_root(self, value):
-        self.sdk_root = value
-
     def save(self):
         self.save_calls += 1
 
@@ -172,7 +164,6 @@ def test_main_opens_cli_project_with_resolved_sdk_root(monkeypatch, tmp_path, ma
     window = window_state["instance"]
     app = _FakeApp.last_instance
     assert config.sdk_root == sdk_root
-    assert config.egui_root == sdk_root
     assert config.save_calls == 1
     assert theme_calls == [("dark", "standard")]
     assert registry_calls == ["instance"]
@@ -199,7 +190,6 @@ def test_main_reopens_recent_project_directory_silently(monkeypatch, tmp_path, m
     sdk_root = os.path.normpath(os.path.abspath(tmp_path / "sdk"))
     config = _FakeConfig()
     config.sdk_root = sdk_root
-    config.egui_root = sdk_root
     config.last_app = "RecentApp"
     config.last_project_path = str(project_dir)
 
@@ -262,7 +252,6 @@ def test_main_starts_without_sdk_root_and_keeps_window_usable(monkeypatch, main_
     window = window_state["instance"]
     app = _FakeApp.last_instance
     assert config.sdk_root == ""
-    assert config.egui_root == ""
     assert config.save_calls == 0
     assert theme_calls == [("dark", "standard")]
     assert registry_calls == ["instance"]

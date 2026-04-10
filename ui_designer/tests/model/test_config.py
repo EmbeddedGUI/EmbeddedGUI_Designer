@@ -56,7 +56,6 @@ class TestDefaults:
 
     def test_default_values(self, config):
         assert config.sdk_root == ""
-        assert config.egui_root == ""
         assert config.last_app == "HelloDesigner"
         assert config.recent_projects == []
         assert config.theme == "dark"
@@ -72,11 +71,6 @@ class TestDefaults:
         assert config.widget_browser_active_category == "all"
         assert config.diagnostics_view == {}
         assert config.show_clean_all_startup_notice is True
-
-    def test_egui_root_alias_updates_sdk_root(self, config):
-        config.egui_root = "/alias/sdk"
-        assert config.sdk_root == normalize_path("/alias/sdk")
-        assert config.egui_root == normalize_path("/alias/sdk")
 
     def test_sdk_root_assignment_normalizes_path(self, config):
         config.sdk_root = "/alias/sdk"
@@ -108,7 +102,6 @@ class TestSaveLoad:
             loaded.load()
 
         assert loaded.sdk_root == normalize_path("/some/path")
-        assert loaded.egui_root == normalize_path("/some/path")
         assert loaded.last_app == "MyApp"
         assert loaded.theme == "light"
         assert loaded.auto_compile is False
@@ -422,7 +415,6 @@ class TestConfigMigration:
             config.load()
 
         assert config.sdk_root == ""
-        assert config.egui_root == ""
 
     def test_load_ignores_legacy_recent_project_egui_root_key(self, config, tmp_path):
         config_path = tmp_path / "config.json"

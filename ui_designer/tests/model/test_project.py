@@ -23,7 +23,6 @@ class TestProjectDefaults:
         assert proj.screen_height == 320
         assert proj.app_name == "HelloDesigner"
         assert proj.sdk_root == ""
-        assert proj.egui_root == ""
         assert proj.project_dir == ""
         assert proj.page_mode == "easy_page"
         assert proj.startup_page == "main_page"
@@ -188,12 +187,6 @@ class TestPathHelpers:
         proj.project_dir = normalize_path("/workspace/TestApp")
         proj.sdk_root = "/home/user/EmbeddedGUI"
         assert proj.get_app_dir() == normalize_path("/workspace/TestApp")
-
-    def test_egui_root_alias_updates_sdk_root(self):
-        proj = Project(app_name="TestApp")
-        proj.egui_root = "/home/user/EmbeddedGUI"
-        assert proj.sdk_root == normalize_path("/home/user/EmbeddedGUI")
-        assert proj.egui_root == normalize_path("/home/user/EmbeddedGUI")
 
     def test_sdk_root_assignment_normalizes_path(self):
         proj = Project(app_name="TestApp")

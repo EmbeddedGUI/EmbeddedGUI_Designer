@@ -104,7 +104,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog._header_frame.accessibleName() == (
@@ -160,7 +160,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog.accessibleName() == (
@@ -185,7 +185,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
         dialog._header_frame.setProperty("_app_selector_hint_snapshot", None)
 
@@ -216,7 +216,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
         dialog._header_frame.setProperty("_app_selector_accessible_snapshot", None)
 
@@ -282,7 +282,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root="")
 
         assert dialog._app_list.count() == 1
@@ -328,7 +328,7 @@ class TestAppSelectorDialog:
         from ui_designer.ui.app_selector import AppSelectorDialog
 
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         dialog = AppSelectorDialog(sdk_root=str(tmp_path / "not_sdk"))
 
         assert dialog._app_list.count() == 1
@@ -593,7 +593,7 @@ class TestAppSelectorDialog:
         (app_dir / "HelloShowcase.egui").write_text("")
 
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap._get_config_dir", lambda: str(tmp_path / "config"))
 
         dialog = AppSelectorDialog(sdk_root="")
@@ -890,7 +890,7 @@ class TestNewProjectDialog:
         sdk_root = tmp_path / "cache" / "EmbeddedGUI"
         _create_sdk_root(sdk_root)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         monkeypatch.setattr("ui_designer.ui.new_project_dialog.default_sdk_install_dir", lambda: str(sdk_root))
 
         dialog = NewProjectDialog(sdk_root="", default_parent_dir="")
@@ -1280,7 +1280,7 @@ class TestWelcomePage:
 
         cache_dir = tmp_path / "cache" / "EmbeddedGUI"
         isolated_config.sdk_root = ""
-        isolated_config.egui_root = ""
+        isolated_config.sdk_root = ""
         monkeypatch.setattr("ui_designer.ui.welcome_page.default_sdk_install_dir", lambda: str(cache_dir))
 
         page = WelcomePage()
@@ -1305,7 +1305,7 @@ class TestWelcomePage:
         cache_dir = tmp_path / "config" / "sdk" / "EmbeddedGUI"
         _create_sdk_root(cache_dir)
         isolated_config.sdk_root = str(tmp_path / "missing_sdk")
-        isolated_config.egui_root = str(tmp_path / "missing_sdk")
+        isolated_config.sdk_root = str(tmp_path / "missing_sdk")
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap._get_config_dir", lambda: str(tmp_path / "config"))
 
         page = WelcomePage()
@@ -1323,7 +1323,7 @@ class TestWelcomePage:
         _create_sdk_root(sdk_root)
         _mark_bundled_sdk(sdk_root)
         isolated_config.sdk_root = str(sdk_root)
-        isolated_config.egui_root = str(sdk_root)
+        isolated_config.sdk_root = str(sdk_root)
         monkeypatch.setattr("ui_designer.ui.welcome_page.default_sdk_install_dir", lambda: str(sdk_root))
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.frozen", True, raising=False)
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))

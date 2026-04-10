@@ -79,15 +79,6 @@ class DesignerConfig:
     def sdk_root(self, value):
         self._sdk_root = normalize_path(value)
 
-    @property
-    def egui_root(self):
-        """Legacy alias for ``sdk_root``."""
-        return self.sdk_root
-
-    @egui_root.setter
-    def egui_root(self, value):
-        self.sdk_root = normalize_path(value)
-
     @classmethod
     def instance(cls):
         """Get the singleton config instance."""
