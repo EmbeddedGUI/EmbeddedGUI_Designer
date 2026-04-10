@@ -123,31 +123,17 @@ from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
-    designer_resource_config_path,
     is_designer_resource_path,
 )
 from ..utils.scaffold import (
-    APP_CONFIG_DESIGNER_RELPATH,
-    BUILD_DESIGNER_INCLUDE_TARGET,
-    BUILD_DESIGNER_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
-    app_config_designer_include_target,
-    app_config_designer_path,
-    build_mk_designer_include_target,
-    build_designer_path,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_designer_codegen_cleanup_relpaths,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
-    make_app_build_designer_mk_content,
-    make_app_build_mk_content,
-    make_app_config_designer_h_content,
-    make_app_config_h_content,
-    make_empty_resource_config_content,
-    migrate_app_build_mk_content,
-    migrate_app_config_h_content,
     read_app_config_dimensions,
+    sync_project_scaffold_sidecars,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -2723,83 +2709,15 @@ class MainWindow(QMainWindow):
         return project
 
     def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
-        os.makedirs(project_dir, exist_ok=True)
-        os.makedirs(os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME), exist_ok=True)
-        resource_src_dir = os.path.join(project_dir, "resource", "src")
-        os.makedirs(resource_src_dir, exist_ok=True)
-
-        def _read_text(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return f.read()
-            except OSError:
-                return None
-
-        def _write_text(path, content):
-            existing = _read_text(path)
-            if existing == content:
-                return
-            parent_dir = os.path.dirname(path)
-            if parent_dir:
-                os.makedirs(parent_dir, exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-
-        def _remove_if_exists(path):
-            try:
-                if path and os.path.exists(path):
-                    os.remove(path)
-            except OSError:
-                pass
-
-        build_mk_content = make_app_build_mk_content(app_name)
-        build_designer_content = make_app_build_designer_mk_content(app_name)
-
-        build_mk = os.path.join(project_dir, "build.mk")
-        build_mk_existing = _read_text(build_mk)
-        if build_mk_existing is None:
-            _write_text(build_mk, build_mk_content)
-        elif overwrite or build_mk_designer_include_target(build_mk_existing) != BUILD_DESIGNER_INCLUDE_TARGET:
-            _write_text(build_mk, migrate_app_build_mk_content(build_mk_existing, app_name))
-
-        build_designer_mk = build_designer_path(project_dir)
-        _write_text(build_designer_mk, build_designer_content)
-        _remove_if_exists(legacy_build_designer_path(project_dir))
-
-        config_h_content = make_app_config_h_content(app_name)
-        config_designer_content = make_app_config_designer_h_content(
+        sync_project_scaffold_sidecars(
+            project_dir,
             app_name,
             screen_width,
             screen_height,
+            refresh_user_wrappers=overwrite,
+            refresh_designer_resource_config=overwrite,
+            remove_legacy_designer_files=True,
         )
-        config_h = os.path.join(project_dir, "app_egui_config.h")
-        config_h_existing = _read_text(config_h)
-        if config_h_existing is None:
-            _write_text(config_h, config_h_content)
-        elif overwrite or app_config_designer_include_target(config_h_existing) != APP_CONFIG_DESIGNER_RELPATH:
-            _write_text(
-                config_h,
-                migrate_app_config_h_content(
-                    config_h_existing,
-                    app_name,
-                    screen_width,
-                    screen_height,
-                ),
-            )
-
-        config_designer_h = app_config_designer_path(project_dir)
-        _write_text(config_designer_h, config_designer_content)
-        _remove_if_exists(legacy_app_config_designer_path(project_dir))
-
-        resource_cfg = os.path.join(resource_src_dir, APP_RESOURCE_CONFIG_FILENAME)
-        if not os.path.exists(resource_cfg):
-            with open(resource_cfg, "w", encoding="utf-8") as f:
-                f.write(make_empty_resource_config_content())
-        resource_designer_cfg = designer_resource_config_path(resource_src_dir)
-        if overwrite or not os.path.exists(resource_designer_cfg):
-            os.makedirs(os.path.dirname(resource_designer_cfg), exist_ok=True)
-            with open(resource_designer_cfg, "w", encoding="utf-8") as f:
-                f.write(make_empty_resource_config_content())
 
     def _copy_project_sidecar_files(self, src_dir, dst_dir):
         if not src_dir or not os.path.isdir(src_dir) or normalize_path(src_dir) == normalize_path(dst_dir):

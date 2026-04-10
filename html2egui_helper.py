@@ -39,16 +39,15 @@ from ui_designer.utils.resource_config_overlay import (
     is_designer_resource_path,
 )
 from ui_designer.utils.scaffold import (
-    app_config_designer_path,
-    build_designer_path,
+    APP_CONFIG_DESIGNER_RELPATH,
+    APP_CONFIG_RELPATH,
+    BUILD_DESIGNER_RELPATH,
+    BUILD_MK_RELPATH,
+    DESIGNER_RESOURCE_CONFIG_RELPATH,
+    RESOURCE_CONFIG_RELPATH,
     legacy_designer_codegen_cleanup_relpaths,
-    make_app_build_designer_mk_content,
-    make_app_build_mk_content,
-    make_app_config_designer_h_content,
-    make_app_config_h_content,
     make_empty_resource_config_content,
-    migrate_app_build_mk_content,
-    migrate_app_config_h_content,
+    sync_project_scaffold_sidecars,
 )
 
 
@@ -192,58 +191,34 @@ def cmd_scaffold(args):
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    # Write user-owned wrappers without discarding existing custom content.
-    config_h_path = os.path.join(app_dir, "app_egui_config.h")
-    config_h_existing = _read_text_file(config_h_path)
-    if config_h_existing is None:
-        _write_file(config_h_path, make_app_config_h_content(args.app))
-    else:
-        migrated_config_h = migrate_app_config_h_content(
-            config_h_existing,
-            args.app,
-            width,
-            height,
-            color_depth=color_depth,
-            circle_radius=circle_radius,
-        )
-        if migrated_config_h != config_h_existing:
-            _write_file(
-                config_h_path,
-                migrated_config_h,
-                action="Updated",
-            )
-        else:
-            print("  Skipped: app_egui_config.h (already configured)")
-
-    _write_file(
-        app_config_designer_path(app_dir),
-        make_app_config_designer_h_content(
-            args.app,
-            width,
-            height,
-            color_depth=color_depth,
-            circle_radius=circle_radius,
-            extra_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-        ),
+    scaffold_actions = sync_project_scaffold_sidecars(
+        app_dir,
+        args.app,
+        width,
+        height,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+        refresh_user_wrappers=True,
+        refresh_designer_resource_config=False,
     )
-    build_mk_path = os.path.join(app_dir, "build.mk")
-    build_mk_existing = _read_text_file(build_mk_path)
-    if build_mk_existing is None:
-        _write_file(build_mk_path, make_app_build_mk_content(args.app))
-    else:
-        migrated_build_mk = migrate_app_build_mk_content(build_mk_existing, args.app)
-        if migrated_build_mk != build_mk_existing:
-            _write_file(
-                build_mk_path,
-                migrated_build_mk,
-                action="Updated",
-            )
-        else:
-            print("  Skipped: build.mk (already configured)")
-
-    _write_file(
-        build_designer_path(app_dir),
-        make_app_build_designer_mk_content(args.app),
+    _print_scaffold_status(
+        BUILD_MK_RELPATH,
+        scaffold_actions.get(BUILD_MK_RELPATH, "unchanged"),
+        unchanged_reason="already configured",
+    )
+    _print_scaffold_status(
+        APP_CONFIG_RELPATH,
+        scaffold_actions.get(APP_CONFIG_RELPATH, "unchanged"),
+        unchanged_reason="already configured",
+    )
+    _print_scaffold_status(
+        BUILD_DESIGNER_RELPATH,
+        scaffold_actions.get(BUILD_DESIGNER_RELPATH, "unchanged"),
+    )
+    _print_scaffold_status(
+        APP_CONFIG_DESIGNER_RELPATH,
+        scaffold_actions.get(APP_CONFIG_DESIGNER_RELPATH, "unchanged"),
     )
 
     # .egui project file (always overwrite)
@@ -268,19 +243,18 @@ def cmd_scaffold(args):
             print(f"  Skipped: {page_name}.xml (already exists)")
 
     # Resource config split — preserve user overlay, create designer scaffold.
-    user_rc_path = os.path.join(app_dir, "resource", "src", APP_RESOURCE_CONFIG_FILENAME)
-    if not os.path.exists(user_rc_path):
-        _write_file(user_rc_path, make_empty_resource_config_content())
-        print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
-    else:
-        print(f"  Skipped: resource/src/{APP_RESOURCE_CONFIG_FILENAME} (already exists)")
-
-    designer_rc_path = designer_resource_config_path(os.path.join(app_dir, "resource", "src"))
-    if not os.path.exists(designer_rc_path):
-        _write_file(designer_rc_path, make_empty_resource_config_content())
-        print(f"  Created: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
-    else:
-        print(f"  Skipped: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME} (already exists)")
+    _print_scaffold_status(
+        RESOURCE_CONFIG_RELPATH,
+        scaffold_actions.get(RESOURCE_CONFIG_RELPATH, "unchanged"),
+        label=RESOURCE_CONFIG_RELPATH,
+        unchanged_reason="already exists",
+    )
+    _print_scaffold_status(
+        DESIGNER_RESOURCE_CONFIG_RELPATH,
+        scaffold_actions.get(DESIGNER_RESOURCE_CONFIG_RELPATH, "unchanged"),
+        label=DESIGNER_RESOURCE_CONFIG_RELPATH,
+        unchanged_reason="already exists",
+    )
 
     print(f"\nScaffold complete: {app_dir}")
     print(f"  Screen: {width}x{height}, color depth: {color_depth}")
@@ -301,13 +275,16 @@ def _write_file(path, content, *, action="Created"):
     print(f"  {action}: {os.path.basename(path)}")
 
 
-def _read_text_file(path):
-    """Read UTF-8 text from disk, returning None when the file is missing."""
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    except OSError:
-        return None
+def _print_scaffold_status(relpath, status, *, label=None, unchanged_reason="already up to date"):
+    display = label or os.path.basename(relpath)
+    if status == "created":
+        print(f"  Created: {display}")
+    elif status == "updated":
+        print(f"  Updated: {display}")
+    elif status == "removed":
+        print(f"  Removed: {display}")
+    else:
+        print(f"  Skipped: {display} ({unchanged_reason})")
 
 
 # ── Sub-command: export-icons ─────────────────────────────────────

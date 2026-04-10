@@ -28,21 +28,8 @@ from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
-from ui_designer.utils.resource_config_overlay import (
-    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
-    APP_RESOURCE_CONFIG_FILENAME,
-    designer_resource_config_path,
-)
 from ui_designer.utils.scaffold import (
-    app_config_designer_path,
-    build_designer_path,
-    make_app_build_designer_mk_content,
-    make_app_build_mk_content,
-    make_app_config_designer_h_content,
-    make_app_config_h_content,
-    make_empty_resource_config_content,
-    migrate_app_build_mk_content,
-    migrate_app_config_h_content,
+    sync_project_scaffold_sidecars,
 )
 
 
@@ -112,69 +99,14 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
     return (frame[offset], frame[offset + 1], frame[offset + 2])
 
 
-def _write_text(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
-
-
-def _read_text(path: Path) -> str | None:
-    try:
-        return path.read_text(encoding="utf-8")
-    except OSError:
-        return None
-
-
-def _write_text_if_missing(path: Path, content: str) -> None:
-    if not path.exists():
-        _write_text(path, content)
-
-
 def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
-    app_dir.mkdir(parents=True, exist_ok=True)
-    (app_dir / ".designer").mkdir(parents=True, exist_ok=True)
-    resource_src_dir = app_dir / "resource" / "src"
-    resource_src_dir.mkdir(parents=True, exist_ok=True)
-
-    build_mk_path = app_dir / "build.mk"
-    build_mk_existing = _read_text(build_mk_path)
-    if build_mk_existing is None:
-        _write_text(build_mk_path, make_app_build_mk_content(app_name))
-    else:
-        migrated_build_mk = migrate_app_build_mk_content(build_mk_existing, app_name)
-        if migrated_build_mk != build_mk_existing:
-            _write_text(build_mk_path, migrated_build_mk)
-
-    config_h_path = app_dir / "app_egui_config.h"
-    config_h_existing = _read_text(config_h_path)
-    if config_h_existing is None:
-        _write_text(config_h_path, make_app_config_h_content(app_name))
-    else:
-        migrated_config_h = migrate_app_config_h_content(
-            config_h_existing,
-            app_name,
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-        )
-        if migrated_config_h != config_h_existing:
-            _write_text(config_h_path, migrated_config_h)
-
-    # Keep smoke workspaces buildable by always refreshing the Designer-owned
-    # scaffold while preserving user-owned wrappers and overlay files.
-    _write_text(
-        Path(build_designer_path(str(app_dir))),
-        make_app_build_designer_mk_content(app_name),
-    )
-    _write_text(
-        Path(app_config_designer_path(str(app_dir))),
-        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
-    )
-    _write_text_if_missing(
-        resource_src_dir / APP_RESOURCE_CONFIG_FILENAME,
-        make_empty_resource_config_content(),
-    )
-    _write_text(
-        Path(designer_resource_config_path(str(resource_src_dir))),
-        make_empty_resource_config_content(),
+    sync_project_scaffold_sidecars(
+        str(app_dir),
+        app_name,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        refresh_user_wrappers=True,
+        refresh_designer_resource_config=True,
     )
 
 

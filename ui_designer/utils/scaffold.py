@@ -11,6 +11,13 @@ import json
 import os
 import re
 
+from .resource_config_overlay import (
+    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
+    APP_RESOURCE_CONFIG_FILENAME,
+    DESIGNER_RESOURCE_DIRNAME,
+    designer_resource_config_path,
+)
+
 DESIGNER_PROJECT_DIRNAME = ".designer"
 BUILD_DESIGNER_FILENAME = "build_designer.mk"
 APP_CONFIG_DESIGNER_FILENAME = "app_egui_config_designer.h"
@@ -21,11 +28,17 @@ EGUI_STRINGS_SOURCE_FILENAME = "egui_strings.c"
 
 BUILD_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{BUILD_DESIGNER_FILENAME}"
 APP_CONFIG_DESIGNER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{APP_CONFIG_DESIGNER_FILENAME}"
+BUILD_MK_RELPATH = "build.mk"
+APP_CONFIG_RELPATH = "app_egui_config.h"
 BUILD_DESIGNER_INCLUDE_TARGET = f"$(EGUI_APP_PATH)/{BUILD_DESIGNER_RELPATH}"
 UICODE_HEADER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{UICODE_HEADER_FILENAME}"
 UICODE_SOURCE_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{UICODE_SOURCE_FILENAME}"
 EGUI_STRINGS_HEADER_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{EGUI_STRINGS_HEADER_FILENAME}"
 EGUI_STRINGS_SOURCE_RELPATH = f"{DESIGNER_PROJECT_DIRNAME}/{EGUI_STRINGS_SOURCE_FILENAME}"
+RESOURCE_CONFIG_RELPATH = f"resource/src/{APP_RESOURCE_CONFIG_FILENAME}"
+DESIGNER_RESOURCE_CONFIG_RELPATH = (
+    f"resource/src/{DESIGNER_RESOURCE_DIRNAME}/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}"
+)
 DESIGNER_CODEGEN_STALE_STRING_RELPATHS = (
     EGUI_STRINGS_HEADER_RELPATH,
     EGUI_STRINGS_SOURCE_RELPATH,
@@ -479,3 +492,152 @@ def migrate_app_config_h_content(
 def make_empty_resource_config_content():
     """Return the default user-overlay resource config content."""
     return json.dumps({"img": [], "font": []}, indent=4, ensure_ascii=False) + "\n"
+
+
+def _read_text_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def _write_text(path, content):
+    parent_dir = os.path.dirname(path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+
+
+def _write_text_if_changed(path, content):
+    existing = _read_text_file(path)
+    if existing == content:
+        return "unchanged"
+    _write_text(path, content)
+    return "created" if existing is None else "updated"
+
+
+def _write_text_if_missing(path, content):
+    if os.path.exists(path):
+        return "unchanged"
+    _write_text(path, content)
+    return "created"
+
+
+def _remove_file_if_exists(path):
+    try:
+        if path and os.path.exists(path):
+            os.remove(path)
+            return True
+    except OSError:
+        return False
+    return False
+
+
+def sync_project_scaffold_sidecars(
+    project_dir,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_user_wrappers=False,
+    refresh_designer_resource_config=False,
+    remove_legacy_designer_files=False,
+):
+    """Create or migrate split scaffold sidecar files for a project directory.
+
+    Returns a mapping of normalized project-relative paths to actions:
+    ``created``, ``updated``, ``unchanged``, or ``removed``.
+    """
+    project_dir = os.path.normpath(project_dir)
+    designer_dir = project_designer_dir(project_dir)
+    resource_src_dir = os.path.join(project_dir, "resource", "src")
+
+    os.makedirs(project_dir, exist_ok=True)
+    os.makedirs(designer_dir, exist_ok=True)
+    os.makedirs(resource_src_dir, exist_ok=True)
+
+    actions = {}
+
+    build_mk_path = os.path.join(project_dir, BUILD_MK_RELPATH)
+    build_mk_existing = _read_text_file(build_mk_path)
+    if build_mk_existing is None:
+        actions[BUILD_MK_RELPATH] = _write_text_if_changed(
+            build_mk_path,
+            make_app_build_mk_content(app_name),
+        )
+    elif refresh_user_wrappers or build_mk_designer_include_target(build_mk_existing) != BUILD_DESIGNER_INCLUDE_TARGET:
+        actions[BUILD_MK_RELPATH] = _write_text_if_changed(
+            build_mk_path,
+            migrate_app_build_mk_content(build_mk_existing, app_name),
+        )
+    else:
+        actions[BUILD_MK_RELPATH] = "unchanged"
+
+    config_h_path = os.path.join(project_dir, APP_CONFIG_RELPATH)
+    config_h_existing = _read_text_file(config_h_path)
+    if config_h_existing is None:
+        actions[APP_CONFIG_RELPATH] = _write_text_if_changed(
+            config_h_path,
+            make_app_config_h_content(app_name),
+        )
+    elif refresh_user_wrappers or app_config_designer_include_target(config_h_existing) != APP_CONFIG_DESIGNER_RELPATH:
+        actions[APP_CONFIG_RELPATH] = _write_text_if_changed(
+            config_h_path,
+            migrate_app_config_h_content(
+                config_h_existing,
+                app_name,
+                screen_width,
+                screen_height,
+                color_depth=color_depth,
+                circle_radius=circle_radius,
+            ),
+        )
+    else:
+        actions[APP_CONFIG_RELPATH] = "unchanged"
+
+    actions[BUILD_DESIGNER_RELPATH] = _write_text_if_changed(
+        build_designer_path(project_dir),
+        make_app_build_designer_mk_content(app_name),
+    )
+    actions[APP_CONFIG_DESIGNER_RELPATH] = _write_text_if_changed(
+        app_config_designer_path(project_dir),
+        make_app_config_designer_h_content(
+            app_name,
+            screen_width,
+            screen_height,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_macros=extra_config_macros,
+        ),
+    )
+
+    actions[RESOURCE_CONFIG_RELPATH] = _write_text_if_missing(
+        os.path.join(resource_src_dir, APP_RESOURCE_CONFIG_FILENAME),
+        make_empty_resource_config_content(),
+    )
+    designer_resource_cfg = designer_resource_config_path(resource_src_dir)
+    if refresh_designer_resource_config:
+        actions[DESIGNER_RESOURCE_CONFIG_RELPATH] = _write_text_if_changed(
+            designer_resource_cfg,
+            make_empty_resource_config_content(),
+        )
+    else:
+        actions[DESIGNER_RESOURCE_CONFIG_RELPATH] = _write_text_if_missing(
+            designer_resource_cfg,
+            make_empty_resource_config_content(),
+        )
+
+    if remove_legacy_designer_files:
+        for relpath, legacy_path in (
+            (LEGACY_BUILD_DESIGNER_RELPATH, legacy_build_designer_path(project_dir)),
+            (LEGACY_APP_CONFIG_DESIGNER_RELPATH, legacy_app_config_designer_path(project_dir)),
+        ):
+            if _remove_file_if_exists(legacy_path):
+                actions[relpath] = "removed"
+
+    return actions
