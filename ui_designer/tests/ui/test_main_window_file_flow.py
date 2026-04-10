@@ -3582,6 +3582,118 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clean_all_and_reconstruct_runs_destructive_recovery_flow(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.project_cleaner import ProjectCleanReport
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BuildReadyCompiler:
+            def can_build(self):
+                return True
+
+            def is_preview_running(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanAllFlowDemo"
+        project = _create_project(project_dir, "CleanAllFlowDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        compiler = _BuildReadyCompiler()
+        captured = {"resources": 0}
+
+        def fake_confirm(*args):
+            captured["title"] = args[1]
+            captured["text"] = args[2]
+            return QMessageBox.Yes
+
+        def fake_clean(project_path):
+            captured["clean_path"] = project_path
+            return ProjectCleanReport(removed_files=5, removed_dirs=2)
+
+        def fake_save_project_files(project_path, *, reset_scaffold=False):
+            captured["save_project_files"] = (project_path, reset_scaffold)
+            return {"uicode.c": "// reconstructed\n"}
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", fake_confirm)
+        monkeypatch.setattr("ui_designer.ui.main_window.clean_project_for_reconstruct", fake_clean)
+        monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: captured.setdefault("persist_path", project_path))
+        monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: captured.setdefault("shutdown_wait", wait_ms))
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: captured.setdefault("cleanup_stop_exe", stop_exe))
+        monkeypatch.setattr(window, "_save_project_files", fake_save_project_files)
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: captured.__setitem__("resources", captured["resources"] + 1))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: captured.setdefault("snapshot_refreshed", True))
+        monkeypatch.setattr(window, "_update_window_title", lambda: captured.setdefault("title_updated", True))
+        monkeypatch.setattr(window, "_update_compile_availability", lambda: captured.setdefault("availability_updated", True))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: captured.setdefault("compile_force_rebuild", force_rebuild))
+
+        window._do_clean_all_and_reconstruct()
+
+        assert captured["title"] == "Clean All and Reconstruct"
+        assert "Preserved:" in captured["text"]
+        assert "Deleted and reconstructed:" in captured["text"]
+        assert "widgets/** app-local widget sources" in captured["text"]
+        assert captured["clean_path"] == os.path.normpath(os.path.abspath(project_dir))
+        assert captured["persist_path"] == os.path.normpath(os.path.abspath(project_dir))
+        assert captured["shutdown_wait"] == 500
+        assert captured["cleanup_stop_exe"] is True
+        assert captured["save_project_files"] == (os.path.normpath(os.path.abspath(project_dir)), True)
+        assert captured["resources"] == 1
+        assert captured["compile_force_rebuild"] is True
+        assert "Cleaned 5 file(s) and 2 directories" in window.statusBar().currentMessage()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_clean_all_and_reconstruct_stops_when_user_declines(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanAllCancelDemo"
+        project = _create_project(project_dir, "CleanAllCancelDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.No)
+        monkeypatch.setattr("ui_designer.ui.main_window.clean_project_for_reconstruct", lambda *args, **kwargs: pytest.fail("cleanup should not run"))
+        monkeypatch.setattr(window, "_save_project_files", lambda *args, **kwargs: pytest.fail("_save_project_files should not run"))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *args, **kwargs: pytest.fail("_start_compile_cycle should not run"))
+
+        window._do_clean_all_and_reconstruct()
+
+        assert "Opened:" in window.statusBar().currentMessage()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_startup_notice_mentions_clean_all_once(self, qapp, isolated_config):
+        from ui_designer.ui.main_window import MainWindow
+
+        first = MainWindow("")
+        first.show()
+        qapp.processEvents()
+
+        assert "Build > Clean All && Reconstruct" in first.statusBar().currentMessage()
+        assert first._config.show_clean_all_startup_notice is False
+
+        _close_window(first)
+
+        second = MainWindow("")
+        second.show()
+        qapp.processEvents()
+
+        assert "Build > Clean All && Reconstruct" not in second.statusBar().currentMessage()
+        _close_window(second)
+
     @pytest.mark.skip(reason="removed SDK download workflow from Designer")
     def test_download_sdk_failure_mentions_target_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
@@ -3969,6 +4081,7 @@ class TestMainWindowFileFlow:
             if action.text() in {
                 "Build EXE && Run",
                 "Rebuild EGUI Project",
+                "Clean All && Reconstruct",
                 "Auto Compile",
                 "Stop Exe",
                 "Generate Resources",
@@ -3984,6 +4097,11 @@ class TestMainWindowFileFlow:
             "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
             "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
         )
+        assert actions["Clean All && Reconstruct"].toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
+            "Project: none. Saved project: unsaved. SDK: invalid. Preview: stopped. Unavailable: open a project first."
+        )
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. "
             "Project: none. SDK: invalid. Preview: stopped. Unavailable: open a project first."
@@ -3998,8 +4116,8 @@ class TestMainWindowFileFlow:
             "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
         assert build_action.toolTip() == (
-            "Compile previews and generate resources. "
-            "Project: none. SDK: invalid. Compile: unavailable. Auto compile: on. "
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: none. SDK: invalid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
         for action in actions.values():
@@ -4018,13 +4136,18 @@ class TestMainWindowFileFlow:
             "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
             "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
         )
+        assert actions["Clean All && Reconstruct"].toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
+            "Project: open. Saved project: unsaved. SDK: valid. Preview: stopped. Unavailable: save the project first."
+        )
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. "
             "Project: open. SDK: valid. Preview: stopped. Unavailable: preview disabled for test."
         )
         assert build_action.toolTip() == (
-            "Compile previews and generate resources. "
-            "Project: open. SDK: valid. Compile: unavailable. Auto compile: on. "
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
             "Preview: stopped. Source resources: missing. Resource directory: none."
         )
 
@@ -4054,6 +4177,12 @@ class TestMainWindowFileFlow:
             "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
             "Project: open. SDK: valid. Preview: stopped."
         )
+        assert actions["Clean All && Reconstruct"].isEnabled() is True
+        assert actions["Clean All && Reconstruct"].toolTip() == (
+            "Destructive recovery: delete project-side generated/code files outside the preserved "
+            "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5). "
+            "Project: open. Saved project: saved. SDK: valid. Preview: stopped."
+        )
         assert actions["Auto Compile"].toolTip() == (
             "Automatically compile and rerun the preview after changes. Project: open. SDK: valid. Preview: stopped."
         )
@@ -4067,16 +4196,16 @@ class TestMainWindowFileFlow:
             f"Project: open. SDK: valid. Source resources: available. Resource directory: {resources_dir}."
         )
         assert build_action.toolTip() == (
-            "Compile previews and generate resources. "
-            "Project: open. SDK: valid. Compile: available. Auto compile: on. "
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: on. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
 
         window.auto_compile_action.setChecked(False)
 
         assert build_action.toolTip() == (
-            "Compile previews and generate resources. "
-            "Project: open. SDK: valid. Compile: available. Auto compile: off. "
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: off. "
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
         for action in actions.values():
@@ -4738,8 +4867,9 @@ class TestMainWindowFileFlow:
         )
         assert actions["Structure"].statusTip() == actions["Structure"].toolTip()
         assert actions["Build"].toolTip() == (
-            "Compile previews and generate resources. "
-            "Project: none. SDK: invalid. Compile: unavailable. Auto compile: on. Preview: stopped. Source resources: missing. Resource directory: none."
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: none. SDK: invalid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
+            "Preview: stopped. Source resources: missing. Resource directory: none."
         )
         assert actions["Build"].statusTip() == actions["Build"].toolTip()
         assert actions["View"].toolTip() == (

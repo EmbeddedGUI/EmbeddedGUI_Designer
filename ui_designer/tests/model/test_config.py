@@ -78,6 +78,7 @@ class TestDefaults:
         assert config.widget_browser_sort_mode == "relevance"
         assert config.widget_browser_complexity_filter == "all"
         assert config.diagnostics_view == {}
+        assert config.show_clean_all_startup_notice is True
 
 
 class TestSaveLoad:
@@ -93,6 +94,7 @@ class TestSaveLoad:
         config.font_size_px = 14
         config.widget_browser_active_category = "layout"
         config.diagnostics_view = {"severity_filter": "warning"}
+        config.show_clean_all_startup_notice = False
 
         config_path = tmp_path / "config.json"
         with patch("ui_designer.model.config._get_config_path", return_value=str(config_path)):
@@ -117,6 +119,7 @@ class TestSaveLoad:
         assert loaded.widget_browser_sort_mode == "relevance"
         assert loaded.widget_browser_complexity_filter == "all"
         assert loaded.diagnostics_view == {"severity_filter": "warning"}
+        assert loaded.show_clean_all_startup_notice is False
 
     def test_load_nonexistent_file(self, config, tmp_path):
         config_path = tmp_path / "nonexistent.json"

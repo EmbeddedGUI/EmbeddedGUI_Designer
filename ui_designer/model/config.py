@@ -96,6 +96,7 @@ class DesignerConfig:
         self.widget_browser_sort_mode = "relevance"
         self.widget_browser_complexity_filter = "all"
         self.diagnostics_view = {}
+        self.show_clean_all_startup_notice = True
 
     @property
     def egui_root(self):
@@ -259,6 +260,7 @@ class DesignerConfig:
                 complexity_filter if complexity_filter in {"all", "basic", "intermediate", "advanced"} else "all"
             )
             self.diagnostics_view = data.get("diagnostics_view", {}) if isinstance(data.get("diagnostics_view", {}), dict) else {}
+            self.show_clean_all_startup_notice = bool(data.get("show_clean_all_startup_notice", True))
         except Exception as e:
             print(f"Warning: Failed to load config: {e}")
 
@@ -294,6 +296,7 @@ class DesignerConfig:
                 "widget_browser_favorites": self.widget_browser_favorites,
                 "widget_browser_active_category": self.widget_browser_active_category,
                 "diagnostics_view": self.diagnostics_view,
+                "show_clean_all_startup_notice": self.show_clean_all_startup_notice,
             }
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)

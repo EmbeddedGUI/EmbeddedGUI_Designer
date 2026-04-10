@@ -57,6 +57,11 @@ from .project_workspace import ProjectWorkspacePanel
 from .widget_browser import WidgetBrowserPanel
 from ..model.widget_model import WidgetModel
 from ..model.project import Project
+from ..model.project_cleaner import (
+    DESIGNER_RECONSTRUCT_DELETE_SUMMARY,
+    DESIGNER_SOURCE_PRESERVE_SUMMARY,
+    clean_project_for_reconstruct,
+)
 from ..model.page import Page
 from ..model.build_metadata import collect_sdk_fingerprint, format_sdk_binding_label
 from ..model.config import get_config
@@ -636,6 +641,7 @@ class MainWindow(QMainWindow):
         self._update_sdk_status_label()
         self._update_status_bar_summary()
         self.statusBar().showMessage("Ready")
+        self._pending_clean_all_startup_notice = True
 
         # 鈹€鈹€ Connect signals 鈹€鈹€
 
@@ -723,6 +729,21 @@ class MainWindow(QMainWindow):
     def showEvent(self, event):
         super().showEvent(event)
         QTimer.singleShot(0, self._apply_pending_workspace_splitter_defaults)
+        if self._pending_clean_all_startup_notice:
+            self._pending_clean_all_startup_notice = False
+            QTimer.singleShot(0, self._maybe_show_clean_all_startup_notice)
+
+    def _maybe_show_clean_all_startup_notice(self):
+        if not getattr(self._config, "show_clean_all_startup_notice", True):
+            return
+        self._config.show_clean_all_startup_notice = False
+        self._config.save()
+        message = (
+            "Recovery tip: Build > Clean All && Reconstruct deletes generated project files "
+            "and rebuilds from preserved Designer source state."
+        )
+        self.statusBar().showMessage(message, 12000)
+        self.debug_panel.log_info(message)
 
     def _init_renderer_manager(self):
         """Register preview renderer and sync initial state."""
@@ -1055,6 +1076,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_build_menu"):
             return
         compile_state = "available" if getattr(getattr(self, "_compile_action", None), "isEnabled", lambda: False)() else "unavailable"
+        clean_state = "available" if getattr(getattr(self, "_clean_all_action", None), "isEnabled", lambda: False)() else "unavailable"
         auto_compile_state = "on" if getattr(getattr(self, "auto_compile_action", None), "isChecked", lambda: False)() else "off"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
         preview_state = "running" if preview_running else "stopped"
@@ -1065,8 +1087,8 @@ class MainWindow(QMainWindow):
         self._apply_action_hint(
             self._build_menu.menuAction(),
             (
-                "Compile previews and generate resources. "
-                f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Auto compile: {auto_compile_state}. "
+                "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+                f"Project: {project_state}. SDK: {sdk_state}. Compile: {compile_state}. Recovery: {clean_state}. Auto compile: {auto_compile_state}. "
                 f"Preview: {preview_state}. Source resources: {resources_state}. Resource directory: {resources_dir or 'none'}."
             ),
         )
@@ -1570,12 +1592,27 @@ class MainWindow(QMainWindow):
                 return build_error
         return "compile preview is unavailable"
 
+    def _clean_all_action_blocked_reason(self):
+        if self.project is None:
+            return "open a project first"
+        if not self._project_dir:
+            return "save the project first"
+        return "clean-all recovery is unavailable"
+
     def _compile_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"
         sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
         preview_state = "running" if preview_running else "stopped"
         return f"Project: {project_state}. SDK: {sdk_state}. Preview: {preview_state}."
+
+    def _clean_all_action_context_summary(self):
+        project_state = "open" if self.project is not None else "none"
+        saved_state = "saved" if self._project_dir else "unsaved"
+        sdk_state = "valid" if self._has_valid_sdk_root() else "invalid"
+        preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
+        preview_state = "running" if preview_running else "stopped"
+        return f"Project: {project_state}. Saved project: {saved_state}. SDK: {sdk_state}. Preview: {preview_state}."
 
     def _auto_compile_action_context_summary(self):
         return self._compile_action_context_summary()
@@ -1648,6 +1685,17 @@ class MainWindow(QMainWindow):
                 rebuild_hint = f"{base_text} {rebuild_context} Unavailable: {self._compile_action_blocked_reason()}."
             self._apply_action_hint(self._rebuild_action, rebuild_hint)
             self._update_debug_rebuild_action()
+        if hasattr(self, "_clean_all_action"):
+            base_text = (
+                "Destructive recovery: delete project-side generated/code files outside the preserved "
+                "Designer source set, reconstruct the project, and rerun the preview (Ctrl+Shift+F5)."
+            )
+            clean_context = self._clean_all_action_context_summary()
+            if self._clean_all_action.isEnabled():
+                clean_hint = f"{base_text} {clean_context}"
+            else:
+                clean_hint = f"{base_text} {clean_context} Unavailable: {self._clean_all_action_blocked_reason()}."
+            self._apply_action_hint(self._clean_all_action, clean_hint)
         if hasattr(self, "_stop_action"):
             base_text = "Stop the running preview executable."
             stop_context = self._stop_action_context_summary()
@@ -2547,6 +2595,8 @@ class MainWindow(QMainWindow):
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         self._compile_action.setEnabled(can_compile)
         self._rebuild_action.setEnabled(can_compile)
+        if hasattr(self, "_clean_all_action"):
+            self._clean_all_action.setEnabled(self.project is not None and bool(self._project_dir))
         self.auto_compile_action.setEnabled(can_compile)
         auto_compile_base = "Automatically compile and rerun the preview after changes."
         auto_compile_context = self._auto_compile_action_context_summary()
@@ -3352,7 +3402,7 @@ class MainWindow(QMainWindow):
         self._build_menu = build_menu
         self._apply_action_hint(
             build_menu.menuAction(),
-            "Build EXE previews by default and generate resources when needed.",
+            "Build previews, generate resources, or reconstruct the project from Designer sources.",
         )
 
         self._compile_action = QAction("Build EXE && Run", self)
@@ -3366,6 +3416,11 @@ class MainWindow(QMainWindow):
         build_menu.addAction(self._rebuild_action)
         self.debug_panel.rebuild_requested.connect(self._do_rebuild_egui_project)
         self._update_debug_rebuild_action(show=False)
+
+        self._clean_all_action = QAction("Clean All && Reconstruct", self)
+        self._clean_all_action.setShortcut("Ctrl+Shift+F5")
+        self._clean_all_action.triggered.connect(self._do_clean_all_and_reconstruct)
+        build_menu.addAction(self._clean_all_action)
 
         self.auto_compile_action = QAction("Auto Compile", self)
         self.auto_compile_action.setCheckable(True)
@@ -4491,6 +4546,12 @@ class MainWindow(QMainWindow):
             self._open_project_path(path)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{e}")
+
+    def _persist_designer_state_only(self, project_dir):
+        self.project.project_dir = project_dir
+        self.project.sdk_root = self.project_root
+        self._load_project_app_local_widgets(project_dir)
+        self.project.save(project_dir)
 
     def _save_project_files(self, project_dir, *, reset_scaffold=False):
         self.project.project_dir = project_dir
@@ -7057,6 +7118,81 @@ class MainWindow(QMainWindow):
         """Run a clean rebuild for the current EGUI project and restart preview."""
         self._start_compile_cycle(force_rebuild=True)
 
+    def _clean_all_confirmation_text(self):
+        preserved_lines = "\n".join(f"  - {item}" for item in DESIGNER_SOURCE_PRESERVE_SUMMARY)
+        deleted_lines = "\n".join(f"  - {item}" for item in DESIGNER_RECONSTRUCT_DELETE_SUMMARY)
+        return (
+            "This will permanently delete most project-side generated files and business/code outputs, "
+            "then rebuild them from preserved Designer source state.\n\n"
+            "Preserved:\n"
+            f"{preserved_lines}\n\n"
+            "Deleted and reconstructed:\n"
+            f"{deleted_lines}\n\n"
+            "Unsaved Designer changes will be saved first.\n"
+            "Project directory:\n"
+            f"{self._project_dir}"
+        )
+
+    def _do_clean_all_and_reconstruct(self):
+        """Delete reconstructible outputs, rebuild from designer state, and rerun preview."""
+        if self.project is None:
+            return
+        if self._compile_worker is not None and self._compile_worker.isRunning():
+            self.statusBar().showMessage("Wait for the current compile to finish before Clean All.", 5000)
+            return
+        if self._precompile_worker is not None and self._precompile_worker.isRunning():
+            self.statusBar().showMessage("Wait for the current background compile to finish before Clean All.", 5000)
+            return
+        if not self._project_dir and not self._save_project():
+            return
+
+        reply = QMessageBox.warning(
+            self,
+            "Clean All and Reconstruct",
+            self._clean_all_confirmation_text(),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        self._flush_pending_xml()
+        os.makedirs(self._project_dir, exist_ok=True)
+
+        try:
+            self._persist_designer_state_only(self._project_dir)
+            self._bump_async_generation()
+            self._shutdown_async_activity(wait_ms=500)
+            self._cleanup_compiler(stop_exe=True)
+            report = clean_project_for_reconstruct(self._project_dir)
+            files = self._save_project_files(self._project_dir, reset_scaffold=True)
+            if self._has_valid_sdk_root():
+                self._ensure_resources_generated()
+        except Exception as exc:
+            self._update_diagnostics_panel()
+            self.debug_panel.log_error(f"Clean all failed: {exc}")
+            self._show_bottom_panel("Diagnostics")
+            QMessageBox.warning(self, "Clean All Failed", f"Failed to reconstruct the project:\n{exc}")
+            self.statusBar().showMessage(f"Clean all failed: {exc}", 5000)
+            return
+
+        self._recreate_compiler()
+        self._undo_manager.mark_all_saved()
+        self._refresh_project_watch_snapshot()
+        self._update_window_title()
+        self._update_compile_availability()
+
+        summary = (
+            f"Cleaned {report.removed_files} file(s) and {report.removed_dirs} director"
+            f"{'y' if report.removed_dirs == 1 else 'ies'}; reconstructed {len(files)} code file(s)."
+        )
+        self.debug_panel.log_action("Running destructive project cleanup and reconstruction...")
+        self.debug_panel.log_info(summary)
+        self.statusBar().showMessage(summary, 5000)
+
+        if self.compiler is not None and self.compiler.can_build():
+            self._start_compile_cycle(force_rebuild=True)
+
     @staticmethod
     def _compile_failure_summary(message, default):
         lines = [line.strip() for line in str(message or "").splitlines() if line.strip()]
@@ -7206,13 +7342,18 @@ class MainWindow(QMainWindow):
             self._last_runtime_error_text = failure_summary
             if force_rebuild:
                 self.statusBar().showMessage("EGUI clean rebuild failed, switched to Python fallback (see Debug Output)")
-                self.debug_panel.log_info("Clean rebuild did not recover the preview. Review the full build log above.")
+                self.debug_panel.log_info(
+                    "Clean rebuild did not recover the preview. If project-side generated files are corrupted, "
+                    "try Build > Clean All && Reconstruct."
+                )
             else:
                 self.statusBar().showMessage(
-                    "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project to recover."
+                    "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project first, "
+                    "or Clean All && Reconstruct if the project files are corrupted."
                 )
                 self.debug_panel.log_info(
-                    "Build failed. Use Build > Rebuild EGUI Project to clean and recover the EGUI build state."
+                    "Build failed. Use Build > Rebuild EGUI Project first. If that still fails, try "
+                    "Build > Clean All && Reconstruct to rebuild from Designer source state."
                 )
             if self.compiler is not None:
                 self.compiler.stop_exe()
