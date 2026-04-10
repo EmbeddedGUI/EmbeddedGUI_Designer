@@ -126,6 +126,20 @@ def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
     _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
 
 
+def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
+    app_dir.mkdir(parents=True, exist_ok=True)
+    resource_src_dir = app_dir / "resource" / "src"
+    resource_src_dir.mkdir(parents=True, exist_ok=True)
+    _write_text(app_dir / "build.mk", make_app_build_mk_content(app_name))
+    _write_text(app_dir / "build_designer.mk", make_app_build_designer_mk_content(app_name))
+    _write_text(app_dir / "app_egui_config.h", make_app_config_h_content(app_name))
+    _write_text(
+        app_dir / "app_egui_config_designer.h",
+        make_app_config_designer_h_content(app_name, SCREEN_WIDTH, SCREEN_HEIGHT),
+    )
+    _write_text(resource_src_dir / "app_resource_config.json", make_empty_resource_config_content())
+
+
 def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
     """Build the minimal project model used by the smoke test."""
     WidgetRegistry.instance()
@@ -214,39 +228,31 @@ void smoke_on_action_button_click(egui_view_t *self)
     egui_view_label_set_text((egui_view_t *)&s_page->action_button, \"Verified\");
 }}
 
-static void {prefix}_on_open(egui_page_base_t *self)
+void {prefix}_user_init({struct_type} *page)
 {{
-    {struct_type} *local = ({struct_type} *)self;
-    egui_page_base_on_open(self);
-    {prefix}_layout_init(self);
-    s_page = local;
+    {struct_type} *local = page;
+    EGUI_UNUSED(local);
 }}
 
-static void {prefix}_on_close(egui_page_base_t *self)
+void {prefix}_user_on_open({struct_type} *page)
 {{
-    {struct_type} *local = ({struct_type} *)self;
+    {struct_type} *local = page;
+    EGUI_UNUSED(local);
+    s_page = page;
+}}
+
+void {prefix}_user_on_close({struct_type} *page)
+{{
+    {struct_type} *local = page;
     if (s_page == local)
         s_page = NULL;
-    egui_page_base_on_close(self);
 }}
 
-static void {prefix}_on_key_pressed(egui_page_base_t *self, uint16_t keycode)
+void {prefix}_user_on_key_pressed({struct_type} *page, uint16_t keycode)
 {{
-    EGUI_UNUSED(self);
+    {struct_type} *local = page;
+    EGUI_UNUSED(local);
     EGUI_UNUSED(keycode);
-}}
-
-static const egui_page_base_api_t EGUI_VIEW_API_TABLE_NAME({struct_type}) = {{
-    .on_open = {prefix}_on_open,
-    .on_close = {prefix}_on_close,
-    .on_key_pressed = {prefix}_on_key_pressed,
-}};
-
-void {prefix}_init(egui_page_base_t *self)
-{{
-    egui_page_base_init(self);
-    self->api = &EGUI_VIEW_API_TABLE_NAME({struct_type});
-    egui_page_base_set_name(self, \"{page.name}\");
 }}
 """
 
