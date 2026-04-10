@@ -528,7 +528,7 @@ class TestMainWindowFileFlow:
         assert any(path.name == "uicode.c" for path in backup_root.rglob("uicode.c"))
         _close_window(window)
 
-    def test_save_project_files_migrates_legacy_page_files_and_creates_backups(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_save_project_files_rejects_legacy_page_files(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
@@ -586,20 +586,12 @@ class TestMainWindowFileFlow:
         window._project_dir = str(project_dir)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
-        files = window._save_project_files(str(project_dir))
+        with pytest.raises(ValueError, match="Unsupported legacy page source detected: main_page.c"):
+            window._save_project_files(str(project_dir))
 
-        assert "main_page_ext.h" in files
-        assert '#include "legacy_logic.h"' in (project_dir / "main_page_ext.h").read_text(encoding="utf-8")
-        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in (
-            project_dir / "main_page_ext.h"
-        ).read_text(encoding="utf-8")
-        saved_source = (project_dir / "main_page.c").read_text(encoding="utf-8")
-        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in saved_source
-        assert saved_source.count("void on_confirm(egui_view_t *self)") == 1
-        assert "custom_confirm();" in saved_source
-        backup_root = project_dir / ".eguiproject" / "backup"
-        assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
-        assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
+        assert not (project_dir / "main_page_ext.h").exists()
+        assert '#include "legacy_logic.h"' in (project_dir / "main_page.h").read_text(encoding="utf-8")
+        assert "custom_confirm();" in (project_dir / "main_page.c").read_text(encoding="utf-8")
         _close_window(window)
 
     def test_save_project_files_renames_existing_page_codegen_files(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -2962,7 +2954,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
-    def test_export_code_migrates_legacy_page_files_and_creates_backups(self, qapp, isolated_config, tmp_path, monkeypatch):
+    def test_export_code_rejects_legacy_page_files_with_warning(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
@@ -3016,26 +3008,23 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
+        warnings = []
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: warnings.append(args[1:]))
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._export_code()
 
-        assert '#include "legacy_logic.h"' in (export_dir / "main_page_ext.h").read_text(encoding="utf-8")
-        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in (
-            export_dir / "main_page_ext.h"
-        ).read_text(encoding="utf-8")
-        exported_source = (export_dir / "main_page.c").read_text(encoding="utf-8")
-        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in exported_source
-        assert exported_source.count("void on_confirm(egui_view_t *self)") == 1
-        assert "custom_confirm();" in exported_source
-        backup_root = export_dir / ".eguiproject" / "backup"
-        assert any(path.name == "main_page.h" for path in backup_root.rglob("main_page.h"))
-        assert any(path.name == "main_page.c" for path in backup_root.rglob("main_page.c"))
-        assert "Exported " in window.statusBar().currentMessage()
+        assert not (export_dir / "main_page_ext.h").exists()
+        assert '#include "legacy_logic.h"' in (export_dir / "main_page.h").read_text(encoding="utf-8")
+        assert "custom_confirm();" in (export_dir / "main_page.c").read_text(encoding="utf-8")
+        assert warnings
+        assert warnings[0][0] == "Export Failed"
+        assert "Unsupported legacy page source detected: main_page.c" in warnings[0][1]
+        assert "Export failed:" in window.statusBar().currentMessage()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -3594,7 +3583,7 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
-    def test_rebuild_egui_project_migrates_legacy_page_source_before_compile(
+    def test_rebuild_egui_project_rejects_legacy_page_source_before_compile(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
         from ui_designer.ui.main_window import MainWindow
@@ -3656,23 +3645,21 @@ class TestMainWindowFileFlow:
         compiler = _CaptureCompiler(project_dir)
 
         window = MainWindow(str(sdk_root))
+        python_preview_reasons = []
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
         monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
         monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": python_preview_reasons.append(reason))
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window._do_rebuild_egui_project()
 
-        assert compiler.force_rebuild is True
-        assert compiler.files_dict is not None
-        assert "main_page.c" in compiler.files_dict
-        migrated = compiler.files_dict["main_page.c"]
-        assert "void egui_main_page_user_init(egui_main_page_t *page)" in migrated
-        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in migrated
-        assert "static void egui_main_page_on_open(egui_page_base_t *self)" not in migrated
-        assert "void egui_main_page_init(egui_page_base_t *self)" not in migrated
-        assert ".designer/main_page_layout.c" in compiler.files_dict
+        assert compiler.force_rebuild is None
+        assert compiler.files_dict is None
+        assert python_preview_reasons
+        assert "Unsupported legacy page source detected: main_page.c" in python_preview_reasons[0]
+        assert window.preview_panel.status_label.text() == python_preview_reasons[0]
         window._undo_manager.mark_all_saved()
         _close_window(window)
 

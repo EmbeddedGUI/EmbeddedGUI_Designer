@@ -3,9 +3,8 @@
 Covers:
   - USER_OWNED (.c) file: created fresh when it doesn't exist on disk
   - USER_OWNED (.c) file: NOT overwritten when it already exists
-  - USER_OWNED (.c) file: migrated when it's an old-style auto-generated file
+  - legacy USER_OWNED/page header formats are rejected with actionable errors
   - GENERATED_ALWAYS (*_layout.c, uicode.*): always produced in output dict
-  - legacy header user code migrates into *_ext.h
   - Multi-page project: all page files produced
   - Backup=False skips backup creation
 """
@@ -122,7 +121,7 @@ class TestUserOwnedFiles:
         with pytest.raises(ValueError, match="unresolved widget types"):
             generate_all_files_preserved(proj, str(tmp_path), backup=False)
 
-    def test_designer_managed_user_source_is_migrated_with_preserved_code(self, tmp_path):
+    def test_legacy_designer_managed_user_source_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
         proj.get_page_by_name("main_page").timers = [
             {
@@ -205,38 +204,19 @@ class TestUserOwnedFiles:
             encoding="utf-8",
         )
 
-        result = generate_all_files_preserved(proj, output_dir, backup=False)
+        with pytest.raises(ValueError, match="Unsupported legacy page source detected: main_page.c"):
+            generate_all_files_preserved(proj, output_dir, backup=False)
 
-        assert "main_page.c" in result
-        assert '#include "my_logic.h"' in result["main_page.c"]
-        assert 'egui_view_label_set_text((egui_view_t *)&local->title_label, "ready");' in result["main_page.c"]
-        assert "cleanup_logic();" in result["main_page.c"]
-        assert "init_logic();" in result["main_page.c"]
-        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in result["main_page.c"]
-        assert "main_page_layout.c" in result["main_page.c"]
-        layout_relpath = designer_page_layout_relpath("main_page")
-        assert "void egui_main_page_timers_init(egui_page_base_t *self)" in result[layout_relpath]
-        assert "void egui_main_page_timers_start_auto(egui_page_base_t *self)" in result[layout_relpath]
-        assert "void egui_main_page_timers_stop(egui_page_base_t *self)" in result[layout_relpath]
-
-    def test_legacy_user_source_fixture_migrates_to_user_hooks(self, tmp_path):
+    def test_legacy_user_source_fixture_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
         fixture_path = Path(__file__).resolve().parents[1] / "test_data" / "user_code_sample.c"
         user_file = tmp_path / "main_page.c"
         user_file.write_text(fixture_path.read_text(encoding="utf-8"), encoding="utf-8")
 
-        result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
+        with pytest.raises(ValueError, match="Unsupported legacy page source detected: main_page.c"):
+            generate_all_files_preserved(proj, str(tmp_path), backup=False)
 
-        assert "main_page.c" in result
-        migrated = result["main_page.c"]
-        assert 'include "my_sensor_lib.h"' in migrated
-        assert "void egui_main_page_user_init(egui_main_page_t *page)" in migrated
-        assert "void egui_main_page_user_on_open(egui_main_page_t *page)" in migrated
-        assert "static void on_btn_click(egui_view_t *self)" in migrated
-        assert "static void egui_main_page_on_open(egui_page_base_t *self)" not in migrated
-        assert "void egui_main_page_init(egui_page_base_t *self)" not in migrated
-
-    def test_legacy_user_code_callbacks_migrate_without_duplicate_stub_regeneration(self, tmp_path):
+    def test_legacy_user_code_callbacks_source_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
         page = proj.get_page_by_name("main_page")
         button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
@@ -267,12 +247,8 @@ class TestUserOwnedFiles:
             encoding="utf-8",
         )
 
-        result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
-
-        assert "main_page.c" in result
-        assert result["main_page.c"].count("void on_confirm_button_click(egui_view_t *self)") == 1
-        assert "custom_logic();" in result["main_page.c"]
-        assert "init_logic();" in result["main_page.c"]
+        with pytest.raises(ValueError, match="Unsupported legacy page source detected: main_page.c"):
+            generate_all_files_preserved(proj, str(tmp_path), backup=False)
 
 
 # ======================================================================
@@ -350,9 +326,9 @@ class TestGeneratedAlwaysFiles:
 
 
 class TestLegacyHeaderMigration:
-    """Legacy header USER CODE blocks migrate into *_ext.h."""
+    """Legacy header USER CODE blocks are rejected."""
 
-    def test_header_user_code_migrates_to_ext_header(self, tmp_path):
+    def test_header_user_code_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
 
@@ -373,13 +349,10 @@ class TestLegacyHeaderMigration:
         )
         header_path.write_text(existing_header, encoding="utf-8")
 
-        result = generate_all_files_preserved(proj, output_dir, backup=False)
-        assert "main_page_ext.h" in result
-        assert '#include "my_custom.h"' in result["main_page_ext.h"]
-        assert "void my_extra_func(void);" in result["main_page_ext.h"]
-        assert "custom_state" in result["main_page_ext.h"]
+        with pytest.raises(ValueError, match="Unsupported legacy page header detected: main_page.h"):
+            generate_all_files_preserved(proj, output_dir, backup=False)
 
-    def test_header_user_code_migrates_hook_override_defines_to_ext_header(self, tmp_path):
+    def test_header_hook_override_user_code_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
         output_dir = str(tmp_path)
 
@@ -395,10 +368,8 @@ class TestLegacyHeaderMigration:
         )
         header_path.write_text(existing_header, encoding="utf-8")
 
-        result = generate_all_files_preserved(proj, output_dir, backup=False)
-
-        assert "#define EGUI_MAIN_PAGE_HOOK_ON_OPEN(_page) main_page_after_open(_page)" in result["main_page_ext.h"]
-        assert "void main_page_after_open(egui_main_page_t *page);" in result["main_page_ext.h"]
+        with pytest.raises(ValueError, match="Unsupported legacy page header detected: main_page.h"):
+            generate_all_files_preserved(proj, output_dir, backup=False)
 
     def test_header_produced_fresh_when_not_on_disk(self, tmp_path):
         """If no existing header, fresh output must be produced."""
@@ -490,7 +461,7 @@ def test_multi_page_mixed_user_owned_files_preserve_existing_and_create_missing(
     assert "detail_page.c" in result
 
 
-def test_multi_page_migrates_only_missing_ext_header_from_legacy_header(tmp_path):
+def test_multi_page_legacy_header_is_rejected(tmp_path):
     root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
@@ -513,8 +484,5 @@ def test_multi_page_migrates_only_missing_ext_header_from_legacy_header(tmp_path
     )
     (tmp_path / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
 
-    result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
-
-    assert "main_page_ext.h" in result
-    assert "void main_page_extra(void);" in result["main_page_ext.h"]
-    assert "detail_page_ext.h" not in result
+    with pytest.raises(ValueError, match="Unsupported legacy page header detected: main_page.h"):
+        generate_all_files_preserved(proj, str(tmp_path), backup=False)

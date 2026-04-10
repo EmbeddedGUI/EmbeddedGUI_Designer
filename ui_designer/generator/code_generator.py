@@ -1877,8 +1877,8 @@ def generate_all_files_preserved(project, output_dir, backup=True):
     """Generate all C files with proper ownership semantics.
 
     Generated files are always rewritten when the generated hash changes.
-    User-owned files are only created when missing, except for one-time
-    migration from the legacy USER CODE layout.
+    User-owned files are only created when missing. Unsupported legacy page
+    source/header layouts are rejected with an actionable error.
     """
     import os
     from .user_code_preserver import (
@@ -1913,23 +1913,19 @@ def generate_all_files_preserved(project, output_dir, backup=True):
                 page_name = _page_name_from_user_owned_filename(filename)
                 page = pages_by_name.get(page_name)
                 if page is not None and _is_legacy_designer_user_source(existing):
-                    migrated = _migrate_designer_user_source(existing, page, project)
-                    migrated = embed_source_hash(migrated, source_hash)
-                    if migrated != existing:
-                        if backup:
-                            backup_file(filepath, backup_root)
-                        result[filename] = migrated
+                    raise ValueError(
+                        _unsupported_legacy_page_source_message(filename, page_name)
+                    )
                 continue
 
-            migrated = None
             if filename.endswith("_ext.h"):
                 page_name = filename[:-len("_ext.h")]
-                page = pages_by_name.get(page_name)
                 legacy_header = read_existing_file(os.path.join(output_dir, f"{page_name}.h"))
-                if page is not None and legacy_header:
-                    migrated = _migrate_legacy_page_ext_header(legacy_header, page, project)
-            final_content = migrated if migrated is not None else content
-            result[filename] = embed_source_hash(final_content, source_hash)
+                if _legacy_page_header_has_user_code(legacy_header):
+                    raise ValueError(
+                        _unsupported_legacy_page_header_message(page_name)
+                    )
+            result[filename] = embed_source_hash(content, source_hash)
             continue
 
         if should_skip_generation(filepath, source_hash):
@@ -1954,6 +1950,24 @@ def _page_name_from_user_owned_filename(filename):
     return ""
 
 
+def _unsupported_legacy_page_source_message(filename, page_name):
+    page_label = page_name or filename
+    return (
+        f"Unsupported legacy page source detected: {filename} still uses the old Designer-generated layout for "
+        f"'{page_label}'. Automatic migration is no longer supported. Back up the file, then run Clean All && "
+        "Reconstruct or rewrite the page source against the split hooks manually."
+    )
+
+
+def _unsupported_legacy_page_header_message(page_name):
+    filename = f"{page_name}.h" if page_name else "*.h"
+    return (
+        f"Unsupported legacy page header detected: {filename} still contains legacy USER CODE blocks. Automatic "
+        "migration into *_ext.h is no longer supported. Back up the file and move any needed code into the new "
+        "extension header manually, or run Clean All && Reconstruct."
+    )
+
+
 def _looks_like_designer_user_source(content):
     return (
         "Layout/widget init is in" in content
@@ -1971,195 +1985,11 @@ def _is_legacy_designer_user_source(content):
     )
 
 
-def _extract_function_body(content, signature):
-    start = content.find(signature)
-    if start < 0:
-        return ""
-
-    brace_start = content.find("{", start)
-    if brace_start < 0:
-        return ""
-
-    depth = 0
-    index = brace_start
-    while index < len(content):
-        char = content[index]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return content[brace_start + 1:index]
-        index += 1
-    return ""
-
-
-def _clean_preserved_block(text, skip_lines):
-    if not text:
-        return ""
-
-    normalized_skip = {line.strip() for line in skip_lines if line.strip()}
-    kept_lines = []
-    for line in text.splitlines():
-        if line.strip() in normalized_skip:
-            continue
-        kept_lines.append(line.rstrip())
-
-    while kept_lines and not kept_lines[0].strip():
-        kept_lines.pop(0)
-    while kept_lines and not kept_lines[-1].strip():
-        kept_lines.pop()
-
-    if not kept_lines:
-        return ""
-    return "\n".join(kept_lines) + "\n"
-
-
-def _extract_designer_user_blocks(existing_content, page_name):
-    prefix = f"egui_{page_name}"
-    struct_type = f"egui_{page_name}_t"
-    blocks = {}
-
-    include_anchor = f'#include "{page_name}.h"'
-    on_open_signature = f"static void {prefix}_on_open"
-    include_index = existing_content.find(include_anchor)
-    on_open_index = existing_content.find(on_open_signature)
-    if include_index >= 0 and on_open_index > include_index:
-        preamble = existing_content[include_index + len(include_anchor):on_open_index]
-        blocks["includes"] = _clean_preserved_block(preamble, set())
-
-    on_open_body = _extract_function_body(existing_content, on_open_signature)
-    blocks["on_open"] = _clean_preserved_block(
-        on_open_body,
-        {
-            f"{struct_type} *local = ({struct_type} *)self;",
-            "EGUI_UNUSED(local);",
-            "// Call super on_open",
-            "egui_page_base_on_open(self);",
-            "// Auto-generated layout initialization",
-            f"{prefix}_layout_init(self);",
-            f"{prefix}_timers_start_auto(self);",
-            "// USER CODE BEGIN on_open",
-            "// USER CODE END on_open",
-            "// TODO: Add your post-init logic here",
-            "// e.g. register click listeners, start timers, set dynamic text",
-        },
-    )
-
-    on_close_body = _extract_function_body(existing_content, f"static void {prefix}_on_close")
-    blocks["on_close"] = _clean_preserved_block(
-        on_close_body,
-        {
-            f"{struct_type} *local = ({struct_type} *)self;",
-            "EGUI_UNUSED(local);",
-            "// Auto-generated timer cleanup",
-            f"{prefix}_timers_stop(self);",
-            "// Call super on_close",
-            "egui_page_base_on_close(self);",
-            "// USER CODE BEGIN on_close",
-            "// USER CODE END on_close",
-            "// TODO: Add your cleanup logic here",
-        },
-    )
-
-    on_key_body = _extract_function_body(existing_content, f"static void {prefix}_on_key_pressed")
-    blocks["on_key_pressed"] = _clean_preserved_block(
-        on_key_body,
-        {
-            f"{struct_type} *local = ({struct_type} *)self;",
-            "EGUI_UNUSED(local);",
-            "// USER CODE BEGIN on_key_pressed",
-            "// USER CODE END on_key_pressed",
-            "// TODO: Handle key events here",
-        },
-    )
-
-    init_body = _extract_function_body(existing_content, f"void {prefix}_init")
-    blocks["init"] = _clean_preserved_block(
-        init_body,
-        {
-            f"{struct_type} *local = ({struct_type} *)self;",
-            "EGUI_UNUSED(local);",
-            "// Call super init",
-            "egui_page_base_init(self);",
-            "// Set vtable",
-            f"self->api = &EGUI_VIEW_API_TABLE_NAME({struct_type});",
-            "// Auto-generated timer initialization",
-            f"{prefix}_timers_init(self);",
-            f'egui_page_base_set_name(self, "{page_name}");',
-            "// USER CODE BEGIN init",
-            "// USER CODE END init",
-            "// TODO: Add your custom init logic here",
-        },
-    )
-
-    return {tag: body for tag, body in blocks.items() if body}
-
-
-def _merge_nonempty_blocks(*blocks):
-    parts = []
-    for block in blocks:
-        text = str(block or "").strip("\n")
-        if text.strip():
-            parts.append(text)
-    if not parts:
-        return ""
-    return "\n\n".join(parts) + "\n"
-
-
-def _extract_legacy_page_header_blocks(existing_content):
+def _legacy_page_header_has_user_code(existing_content):
     from .user_code_preserver import extract_user_code
 
     blocks = extract_user_code(existing_content or "")
-    return {
-        "includes": blocks.get("includes", ""),
-        "declarations": blocks.get("declarations", ""),
-        "user_fields": blocks.get("user_fields", ""),
-    }
-
-
-def _migrate_legacy_page_ext_header(existing_content, page, project):
-    blocks = _extract_legacy_page_header_blocks(existing_content)
-    return generate_page_ext_header(
-        page,
-        project,
-        include_text=blocks.get("includes", ""),
-        declaration_text=blocks.get("declarations", ""),
-        fields_text=blocks.get("user_fields", ""),
-    )
-
-
-def _migrate_designer_user_source(existing_content, page, project):
-    from .user_code_preserver import extract_user_code
-
-    user_blocks = extract_user_code(existing_content or "")
-    if user_blocks:
-        preamble = _merge_nonempty_blocks(
-            user_blocks.get("includes", ""),
-            user_blocks.get("variables", ""),
-            user_blocks.get("callbacks", ""),
-        )
-        hook_bodies = {
-            "init": user_blocks.get("init", ""),
-            "on_open": user_blocks.get("on_open", ""),
-            "on_close": user_blocks.get("on_close", ""),
-            "on_key_pressed": user_blocks.get("on_key_pressed", "") or user_blocks.get("key_handler", ""),
-        }
-    else:
-        extracted = _extract_designer_user_blocks(existing_content, page.name)
-        preamble = extracted.get("includes", "")
-        hook_bodies = {
-            "init": extracted.get("init", ""),
-            "on_open": extracted.get("on_open", ""),
-            "on_close": extracted.get("on_close", ""),
-            "on_key_pressed": extracted.get("on_key_pressed", ""),
-        }
-    return _render_page_user_source_content(
-        page,
-        project,
-        preamble=preamble,
-        hook_bodies=hook_bodies,
-    )
+    return any(str(blocks.get(tag, "") or "").strip() for tag in ("includes", "declarations", "user_fields"))
 
 
 # ── Legacy single-file generator (backward compatibility) ────────

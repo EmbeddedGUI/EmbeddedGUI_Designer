@@ -4854,10 +4854,18 @@ class MainWindow(QMainWindow):
         if not self._ensure_codegen_preflight("Export", show_dialog=True, switch_to_python_preview=False):
             return
         self._apply_pending_page_rename_outputs(path)
-        files = generate_all_files_preserved(
-            self.project, path, backup=True,
-        )
-        all_generated_files = generate_all_files(self.project)
+        try:
+            files = generate_all_files_preserved(
+                self.project, path, backup=True,
+            )
+            all_generated_files = generate_all_files(self.project)
+        except Exception as exc:
+            self._update_diagnostics_panel()
+            self.debug_panel.log_error(f"Export failed: {exc}")
+            self._show_bottom_panel("Diagnostics")
+            QMessageBox.warning(self, "Export Failed", f"Failed to export generated code:\n{exc}")
+            self.statusBar().showMessage(f"Export failed: {exc}", 5000)
+            return
         for filename, content in files.items():
             filepath = os.path.join(path, filename)
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -7450,8 +7458,23 @@ class MainWindow(QMainWindow):
         if self._current_page:
             self.project.startup_page = self._current_page.name
         try:
-            files = generate_all_files_preserved(self.project, preview_output_dir, backup=False)
-            all_generated_files = generate_all_files(self.project)
+            try:
+                files = generate_all_files_preserved(self.project, preview_output_dir, backup=False)
+                all_generated_files = generate_all_files(self.project)
+            except Exception as exc:
+                failure_summary = self._compile_failure_summary(
+                    exc,
+                    "Rebuild failed" if force_rebuild else "Compile failed",
+                )
+                self._last_runtime_error_text = failure_summary
+                self.debug_panel.log_error(f"Code generation failed: {exc}")
+                self._show_bottom_panel("Debug Output")
+                self._switch_to_python_preview(failure_summary)
+                self.preview_panel.status_label.setText(failure_summary)
+                self.statusBar().showMessage(failure_summary, 5000)
+                self._update_debug_rebuild_action(show=True)
+                self._update_compile_availability()
+                return
         finally:
             # Restore the persisted startup page even when preview generation fails.
             self.project.startup_page = original_startup
