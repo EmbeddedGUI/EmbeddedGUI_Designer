@@ -945,15 +945,12 @@ def cmd_export_icons(args):
 
 # ── Sub-command: export-svgs ──────────────────────────────────────
 
-def _extract_svgs_from_html(html_path):
-    """Extract all inline SVG elements from HTML with contextual names.
+def _extract_svgs_from_html(html):
+    """Extract all inline SVG elements from HTML text with contextual names.
 
     Returns a list of dicts:
         {"name": str, "svg": str, "index": int, "context": str}
     """
-    with open(html_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
     results = []
     idx = 0
     search_start = 0
@@ -1295,7 +1292,7 @@ def cmd_export_svgs(args):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    svgs = _extract_svgs_from_html(args.input)
+    svgs = _extract_svgs_from_html(html)
     if not svgs:
         print("No inline SVG elements found in HTML.")
         return

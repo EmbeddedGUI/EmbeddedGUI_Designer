@@ -94,6 +94,26 @@ class TestExtractTwBg:
         assert result is None
 
 
+class TestExtractSvgsFromHtml:
+    """Test inline SVG extraction from already-loaded HTML text."""
+
+    def test_extract_svgs_from_html_parses_markup_string(self):
+        html = (
+            '<div id="wifi-card">'
+            '<!-- Wifi Icon -->'
+            '<svg viewBox="0 0 24 24"></svg>'
+            '<svg viewBox="0 0 24 24"></svg>'
+            "</div>"
+        )
+
+        svgs = h._extract_svgs_from_html(html)
+
+        assert len(svgs) == 2
+        assert svgs[0]["name"] == "wifi_icon"
+        assert svgs[0]["svg"] == '<svg viewBox="0 0 24 24"></svg>'
+        assert svgs[1]["name"] == "wifi_icon"
+
+
 class TestExtractTwFont:
     """Test _extract_tw_font with extended patterns."""
 
