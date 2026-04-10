@@ -52,8 +52,15 @@ def _is_within_project(project_dir: str, path: str) -> bool:
     return path_real == project_real or path_real.startswith(project_real + os.sep)
 
 
+def _is_project_entry_path(project_dir: str, path: str) -> bool:
+    """Return True when the path entry itself lives under the project root."""
+    project_abs = os.path.abspath(project_dir)
+    path_abs = os.path.abspath(path)
+    return path_abs == project_abs or path_abs.startswith(project_abs + os.sep)
+
+
 def _remove_path(project_dir: str, path: str, removed_paths: list[str]) -> tuple[int, int]:
-    if not _is_within_project(project_dir, path):
+    if not _is_project_entry_path(project_dir, path):
         raise ValueError(f"Refusing to remove path outside project: {path}")
 
     rel_path = os.path.relpath(path, project_dir).replace("\\", "/")
@@ -62,6 +69,9 @@ def _remove_path(project_dir: str, path: str, removed_paths: list[str]) -> tuple
         os.unlink(path)
         removed_paths.append(rel_path)
         return 1, 0
+
+    if not _is_within_project(project_dir, path):
+        raise ValueError(f"Refusing to remove path outside project: {path}")
 
     if os.path.isdir(path):
         shutil.rmtree(path)

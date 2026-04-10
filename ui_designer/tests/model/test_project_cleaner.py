@@ -140,6 +140,24 @@ class TestProjectCleaner:
         assert calls == [str(link_path)]
         assert removed_paths == ["generated_link"]
 
+    def test_remove_path_allows_internal_symlink_even_if_target_resolves_outside_project(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "LinkCleanupDemo"
+        project_dir.mkdir()
+        link_path = project_dir / "generated_link"
+        removed_paths = []
+        calls = []
+
+        monkeypatch.setattr("ui_designer.model.project_cleaner.os.path.islink", lambda path: path == str(link_path))
+        monkeypatch.setattr("ui_designer.model.project_cleaner._is_within_project", lambda project_root, path: False)
+        monkeypatch.setattr("ui_designer.model.project_cleaner.os.unlink", lambda path: calls.append(path))
+
+        removed_files, removed_dirs = _remove_path(str(project_dir), str(link_path), removed_paths)
+
+        assert removed_files == 1
+        assert removed_dirs == 0
+        assert calls == [str(link_path)]
+        assert removed_paths == ["generated_link"]
+
     def test_remove_path_rejects_paths_outside_project(self, tmp_path):
         project_dir = tmp_path / "SafeProject"
         project_dir.mkdir()
