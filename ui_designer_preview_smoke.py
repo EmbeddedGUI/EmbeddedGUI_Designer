@@ -29,7 +29,7 @@ from ui_designer.model.widget_model import AnimationModel, BackgroundModel, Widg
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
-    build_project_model_with_widgets,
+    build_project_model_and_page_with_widgets,
     save_project_model,
 )
 
@@ -107,7 +107,6 @@ def build_smoke_project(
 ) -> tuple[
     Project,
     Page,
-    WidgetModel,
     dict[str, tuple[int, int, int, int] | tuple[int, int]],
 ]:
     """Build the minimal project model used by the smoke test."""
@@ -155,7 +154,7 @@ def build_smoke_project(
     def _customize_page(_page: Page, root: WidgetModel) -> None:
         root.background = root_bg
 
-    project, page, root = build_project_model_with_widgets(
+    project, page = build_project_model_and_page_with_widgets(
         app_name,
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
@@ -173,7 +172,7 @@ def build_smoke_project(
         "bg_sample": BG_SAMPLE,
         "chip_sample": CHIP_SAMPLE,
     }
-    return project, page, root, meta
+    return project, page, meta
 
 
 def build_main_page_user_source(page: Page) -> str:
@@ -282,7 +281,7 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
-        project, page, _root, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
+        project, page, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
         save_project_model(
             project,
             str(app_dir),

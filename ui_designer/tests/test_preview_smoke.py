@@ -30,7 +30,7 @@ class TestPreviewSmokeHelpers:
         assert region == expected
 
     def test_build_smoke_project_creates_expected_widgets_and_metadata(self):
-        project, page, _root, meta = build_smoke_project(
+        project, page, meta = build_smoke_project(
             APP_NAME,
             "D:/sdk",
             "D:/workspace/DesignerPreviewSmoke",
@@ -48,7 +48,7 @@ class TestPreviewSmokeHelpers:
         assert meta["status_region"] == (20, 62, 200, 28)
 
     def test_build_main_page_user_source_wires_callback_and_text_updates(self):
-        _project, page, _root, _meta = build_smoke_project(
+        _project, page, _meta = build_smoke_project(
             APP_NAME,
             "D:/sdk",
             str(Path("D:/workspace") / APP_NAME),
