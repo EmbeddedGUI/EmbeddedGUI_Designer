@@ -686,11 +686,13 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         moving = WidgetModel("label", name="moving", x=20, y=20, width=20, height=20)
         target = WidgetModel("label", name="target", x=60, y=80, width=24, height=20)
-        root.add_child(moving)
-        root.add_child(target)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving, target],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -719,11 +721,14 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
         overlay.set_grid_size(0)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         container = WidgetModel("group", name="container", x=40, y=50, width=120, height=120)
         child = WidgetModel("label", name="child", x=10, y=10, width=20, height=20)
-        root.add_child(container)
         container.add_child(child)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[container],
+        )
         root.display_x = root.x
         root.display_y = root.y
         container.display_x = container.x
@@ -753,15 +758,17 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
         overlay.set_grid_size(0)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         left_branch = WidgetModel("group", name="left_branch", x=20, y=20, width=80, height=80)
         right_branch = WidgetModel("group", name="right_branch", x=130, y=20, width=80, height=80)
         moving = WidgetModel("label", name="moving", x=8, y=8, width=20, height=20)
         cousin = WidgetModel("label", name="cousin", x=0, y=0, width=20, height=20)
-        root.add_child(left_branch)
-        root.add_child(right_branch)
         left_branch.add_child(moving)
         right_branch.add_child(cousin)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[left_branch, right_branch],
+        )
 
         root.display_x = root.x
         root.display_y = root.y
