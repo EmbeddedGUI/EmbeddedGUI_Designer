@@ -12,6 +12,7 @@ import pytest
 from ui_designer.tests.project_builders import build_saved_test_project as _create_project
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
+from ui_designer.utils.scaffold import require_project_page_root
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -786,7 +787,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SelectionRepeatMoveTargetDemo"
         project = _create_project(project_dir, "SelectionRepeatMoveTargetDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("switch", name="first")
         second = WidgetModel("button", name="second")
@@ -816,9 +817,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteLockedDemo"
         project = _create_project(project_dir, "DeleteLockedDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project.get_startup_page().root_widget.add_child(locked)
+        root.add_child(locked)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -834,7 +836,7 @@ class TestMainWindowFileFlow:
 
         assert deleted_count == 0
         assert skipped_locked == 1
-        assert locked in project.get_startup_page().root_widget.children
+        assert locked in root.children
         assert window.statusBar().currentMessage() == "Cannot delete selection: 1 locked widget."
         _close_window(window)
 
@@ -849,7 +851,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         root.add_child(removable)
         root.add_child(locked)
         project.save(str(project_dir))
@@ -884,7 +886,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         root.add_child(removable)
         root.add_child(locked)
         project.save(str(project_dir))
@@ -915,7 +917,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteRecentMoveTargetDemo"
         project = _create_project(project_dir, "DeleteRecentMoveTargetDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         sibling = WidgetModel("label", name="sibling")
         root.add_child(target)
@@ -954,7 +956,7 @@ class TestMainWindowFileFlow:
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         root.add_child(removable)
         root.add_child(locked)
         project.save(str(project_dir))
@@ -982,7 +984,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeRevealDemo"
         project = _create_project(project_dir, "TreeRevealDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
@@ -1016,7 +1018,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeCollapseStateDemo"
         project = _create_project(project_dir, "TreeCollapseStateDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
