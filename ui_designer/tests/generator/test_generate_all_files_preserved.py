@@ -17,7 +17,7 @@ from ui_designer.tests.page_builders import build_test_page_from_root, build_tes
 from ui_designer.tests.project_builders import (
     build_test_project_from_pages,
     build_test_project_with_widget,
-    build_test_project_with_page_root,
+    build_test_project_with_widgets,
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
@@ -118,8 +118,11 @@ class TestUserOwnedFiles:
         assert has_hooks, "User-owned skeleton must contain customisation guidance comments"
 
     def test_generation_raises_for_unknown_widget_types(self, tmp_path):
-        proj, _page, root = build_test_project_with_page_root(page_name="main_page")
-        root.add_child(WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24))
+        missing_widget = WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24)
+        proj, _page, _root = build_test_project_with_widgets(
+            page_name="main_page",
+            widgets=[missing_widget],
+        )
 
         with pytest.raises(ValueError, match="unresolved widget types"):
             generate_all_files_preserved(proj, str(tmp_path), backup=False)

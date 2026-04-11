@@ -17,7 +17,7 @@ Scenarios not covered by test_page_name_validation.py:
 import os
 import pytest
 
-from ui_designer.tests.project_builders import build_test_project_with_page_root
+from ui_designer.tests.project_builders import build_test_project_with_widgets
 
 
 # ======================================================================
@@ -230,7 +230,7 @@ class TestCodeGeneratorFunctionNamePattern:
     def test_main_page_init_func_name(self):
         from ui_designer.generator.code_generator import generate_page_user_source
 
-        proj, page, _root = build_test_project_with_page_root(page_name="main_page")
+        proj, page, _root = build_test_project_with_widgets(page_name="main_page")
 
         output = generate_page_user_source(page, proj)
         assert "egui_main_page_user_init" in output
@@ -239,7 +239,7 @@ class TestCodeGeneratorFunctionNamePattern:
         """'timer_page' generates egui_timer_page_user_init – safe (not timer_init)."""
         from ui_designer.generator.code_generator import generate_page_user_source
 
-        proj, page, _root = build_test_project_with_page_root(page_name="timer_page")
+        proj, page, _root = build_test_project_with_widgets(page_name="timer_page")
 
         output = generate_page_user_source(page, proj)
         # Must use timer_page, not just timer
@@ -251,7 +251,7 @@ class TestCodeGeneratorFunctionNamePattern:
         """'test_page' generates egui_test_page_user_init – not egui_test_init."""
         from ui_designer.generator.code_generator import generate_page_user_source
 
-        proj, page, _root = build_test_project_with_page_root(page_name="test_page")
+        proj, page, _root = build_test_project_with_widgets(page_name="test_page")
 
         output = generate_page_user_source(page, proj)
         assert "egui_test_page_user_init" in output
