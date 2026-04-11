@@ -1,6 +1,6 @@
 from ui_designer.tests.project_builders import (
     build_test_project_from_root_with_widgets,
-    build_test_project_with_widgets,
+    build_test_project_and_root_with_widgets,
 )
 from ui_designer.model.structure_ops import (
     can_move_widgets_to_parent_index,
@@ -21,7 +21,7 @@ from ui_designer.utils.scaffold import add_widget_children
 def test_group_and_ungroup_selection_round_trip_free_layout():
     first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
     second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second],
     )
@@ -78,7 +78,7 @@ def test_group_selection_blocks_non_contiguous_layout_siblings():
 def test_move_into_container_preserves_absolute_position_for_free_layout():
     target = WidgetModel("group", name="target", x=100, y=30, width=80, height=80)
     child = WidgetModel("label", name="child", x=10, y=15, width=20, height=10)
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[target, child],
     )
@@ -96,7 +96,7 @@ def test_lift_to_parent_moves_widgets_after_their_container():
     container = WidgetModel("group", name="container", x=40, y=50, width=100, height=100)
     child = WidgetModel("label", name="child", x=10, y=12, width=20, height=10)
     add_widget_children(container, [child])
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[container],
     )
@@ -115,7 +115,7 @@ def test_move_selection_by_step_moves_selected_block():
     second = WidgetModel("label", name="second")
     third = WidgetModel("label", name="third")
     fourth = WidgetModel("label", name="fourth")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, third, fourth],
     )
@@ -139,7 +139,7 @@ def test_describe_structure_actions_reports_precise_capabilities():
     target = WidgetModel("group", name="target")
     nested = WidgetModel("label", name="nested")
     add_widget_children(target, [nested])
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, target],
     )
@@ -187,7 +187,7 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
     target = WidgetModel("group", name="target")
     locked = WidgetModel("label", name="locked")
     locked.designer_locked = True
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[target, locked],
     )
@@ -221,7 +221,7 @@ def test_describe_structure_actions_blocks_root_and_locked_selection():
 
 def test_describe_structure_actions_reports_isolated_widget_block_reason():
     child = WidgetModel("label", name="child")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[child],
     )
@@ -270,7 +270,7 @@ def test_move_selection_to_edge_moves_selected_block_to_top_and_bottom():
     second = WidgetModel("label", name="second")
     third = WidgetModel("label", name="third")
     fourth = WidgetModel("label", name="fourth")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, third, fourth],
     )
@@ -291,7 +291,7 @@ def test_move_selection_to_edge_moves_selected_block_to_top_and_bottom():
 def test_move_selection_to_edge_reports_boundary_noop():
     first = WidgetModel("label", name="first")
     second = WidgetModel("label", name="second")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second],
     )
@@ -308,7 +308,7 @@ def test_move_widgets_to_parent_index_reorders_selection_block():
     second = WidgetModel("label", name="second")
     third = WidgetModel("label", name="third")
     fourth = WidgetModel("label", name="fourth")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, third, fourth],
     )
@@ -326,7 +326,7 @@ def test_can_move_widgets_to_parent_index_blocks_noop_and_locked_selection():
     second = WidgetModel("label", name="second")
     locked = WidgetModel("label", name="locked")
     locked.designer_locked = True
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, locked],
     )
@@ -338,7 +338,7 @@ def test_can_move_widgets_to_parent_index_blocks_noop_and_locked_selection():
 
 def test_validate_move_widgets_to_parent_index_reports_failure_reason():
     first = WidgetModel("label", name="first")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first],
     )
@@ -354,7 +354,7 @@ def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_
     existing = WidgetModel("label", name="existing", x=10, y=10, width=20, height=10)
     child = WidgetModel("label", name="child", x=15, y=25, width=20, height=10)
     add_widget_children(target, [existing])
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[target, child],
     )
@@ -371,7 +371,7 @@ def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_
 def test_move_widgets_to_parent_index_blocks_noop_position():
     first = WidgetModel("label", name="first")
     second = WidgetModel("label", name="second")
-    project, _page, root = build_test_project_with_widgets(
+    project, root = build_test_project_and_root_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second],
     )

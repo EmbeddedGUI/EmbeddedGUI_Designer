@@ -22,6 +22,7 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_root_widget,
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
+    build_project_model_and_root_with_widgets,
     build_project_model_only_with_page_widgets,
     build_project_model_only_with_widget,
     build_project_model_only_with_widgets,
@@ -609,6 +610,22 @@ class TestCoreProjectScaffold:
         assert project.app_name == "DemoApp"
         assert page.name == "home"
         assert page.root_widget.children == [label]
+
+    def test_build_project_model_and_root_with_widgets_returns_project_and_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, root = build_project_model_and_root_with_widgets(
+            "DemoApp",
+            320,
+            240,
+            page_name="home",
+            widgets=[label],
+        )
+
+        assert project.app_name == "DemoApp"
+        assert [child.name for child in root.children] == ["title"]
 
     def test_build_project_model_only_with_widgets_returns_populated_project(self):
         from ui_designer.model.widget_model import WidgetModel
