@@ -111,10 +111,8 @@ class TestUserOwnedFiles:
         assert has_hooks, "User-owned skeleton must contain customisation guidance comments"
 
     def test_generation_raises_for_unknown_widget_types(self, tmp_path):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, _page, root = build_test_project_with_page_root(page_name="main_page")
         root.add_child(WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24))
-        page = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([page])
 
         with pytest.raises(ValueError, match="unresolved widget types"):
             generate_all_files_preserved(proj, str(tmp_path), backup=False)
