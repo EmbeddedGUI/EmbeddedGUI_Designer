@@ -6395,6 +6395,37 @@ class TestMainWindowFileFlow:
         assert output_bin.exists() is True
         _close_window(window)
 
+    def test_run_resource_generation_recreates_missing_user_overlay_config(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        gen_script = sdk_root / "scripts" / "tools" / "app_resource_generate.py"
+        gen_script.parent.mkdir(parents=True, exist_ok=True)
+        gen_script.write_text("print('ok')\n", encoding="utf-8")
+
+        project_dir = tmp_path / "ResourceOverlayRecoveryDemo"
+        project = _create_project(project_dir, "ResourceOverlayRecoveryDemo", sdk_root)
+        user_config_path = project_dir / "resource" / "src" / "app_resource_config.json"
+        if user_config_path.exists():
+            user_config_path.unlink()
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(project_dir)
+        window.app_name = "ResourceOverlayRecoveryDemo"
+
+        monkeypatch.setattr(
+            subprocess,
+            "run",
+            lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+        )
+
+        assert window._run_resource_generation(silent=True) is True
+        assert user_config_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        _close_window(window)
+
     def test_property_panel_callback_edit_updates_widget_and_dirty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow

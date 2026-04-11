@@ -16,6 +16,7 @@ from .resource_config_overlay import (
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
     designer_resource_config_path,
+    make_empty_resource_config_content,
 )
 
 DESIGNER_PROJECT_DIRNAME = ".designer"
@@ -662,11 +663,6 @@ def migrate_app_config_h_content(
         preserved.append(raw_line.rstrip())
 
     return make_app_config_h_content(app_name, preserved)
-
-
-def make_empty_resource_config_content():
-    """Return the default user-overlay resource config content."""
-    return json.dumps({"img": [], "font": []}, indent=4, ensure_ascii=False) + "\n"
 
 
 def _read_text_file(path):

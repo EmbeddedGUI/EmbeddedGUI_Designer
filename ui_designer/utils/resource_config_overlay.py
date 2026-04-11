@@ -29,6 +29,23 @@ def make_empty_resource_config() -> dict:
     }
 
 
+def make_empty_resource_config_content() -> str:
+    """Return the default user-overlay resource config JSON content."""
+    return json.dumps(make_empty_resource_config(), indent=4, ensure_ascii=False) + "\n"
+
+
+def ensure_resource_config_file(path: str) -> bool:
+    """Create the default user-overlay resource config file when missing."""
+    if os.path.exists(path):
+        return False
+    parent_dir = os.path.dirname(path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(make_empty_resource_config_content())
+    return True
+
+
 def load_resource_config(path: str) -> dict | None:
     """Load a JSON/JSON5-like resource config file."""
     if not path or not os.path.isfile(path):

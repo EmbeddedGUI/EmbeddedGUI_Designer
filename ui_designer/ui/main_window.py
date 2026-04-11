@@ -120,6 +120,7 @@ from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
+    ensure_resource_config_file,
     is_designer_resource_path,
 )
 from ..utils.scaffold import (
@@ -5261,6 +5262,7 @@ class MainWindow(QMainWindow):
         self.project.sync_resources_to_src(self._project_dir)
 
         try:
+            ensure_resource_config_file(os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME))
             ResourceConfigGenerator().generate_and_save(self.project, src_dir)
         except Exception as exc:
             self.debug_panel.log_error(f"Resource config generation failed: {exc}")

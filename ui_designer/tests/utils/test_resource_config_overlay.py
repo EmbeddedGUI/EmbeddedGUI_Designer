@@ -4,7 +4,9 @@ from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
+    ensure_resource_config_file,
     load_merged_resource_config,
+    make_empty_resource_config_content,
     merge_resource_configs,
 )
 
@@ -245,3 +247,15 @@ class TestLoadMergedResourceConfig:
 
         assert merged["img"] == []
         assert merged["font"] == []
+
+
+class TestEnsureResourceConfigFile:
+    def test_creates_default_overlay_config_once(self, tmp_path):
+        config_path = tmp_path / "resource" / "src" / APP_RESOURCE_CONFIG_FILENAME
+
+        created = ensure_resource_config_file(str(config_path))
+        created_again = ensure_resource_config_file(str(config_path))
+
+        assert created is True
+        assert created_again is False
+        assert config_path.read_text(encoding="utf-8") == make_empty_resource_config_content()

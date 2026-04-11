@@ -36,6 +36,7 @@ from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     designer_resource_config_path,
+    ensure_resource_config_file,
     is_designer_resource_path,
 )
 from ui_designer.utils.scaffold import (
@@ -52,7 +53,6 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
-    make_empty_resource_config_content,
 )
 
 
@@ -388,12 +388,7 @@ def cmd_scaffold(args):
 
 def _ensure_resource_config_file(path):
     """Create the default resource config file when it is missing."""
-    if os.path.exists(path):
-        return False
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(make_empty_resource_config_content())
-    return True
+    return ensure_resource_config_file(path)
 
 
 def _print_scaffold_status(relpath, status, *, label=None, unchanged_reason="already up to date"):
