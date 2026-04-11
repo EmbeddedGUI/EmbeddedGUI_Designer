@@ -12,6 +12,7 @@ from .project_builders import (
     build_test_project_with_page_widgets,
 )
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
+from ui_designer.utils.scaffold import add_widget_children
 
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
 _TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -130,8 +131,7 @@ def container_group():
     group = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     label = WidgetModel("label", name="child_label", x=10, y=10, width=100, height=30)
     button = WidgetModel("button", name="child_button", x=10, y=50, width=100, height=40)
-    group.add_child(label)
-    group.add_child(button)
+    add_widget_children(group, [label, button])
     return group
 
 
@@ -142,9 +142,11 @@ def linearlayout_vertical():
     layout = WidgetModel("linearlayout", name="ll_v", x=0, y=0, width=200, height=300)
     layout.properties["orientation"] = "vertical"
     layout.properties["align_type"] = "EGUI_ALIGN_CENTER"
-    for i in range(3):
-        child = WidgetModel("label", name=f"item_{i}", x=0, y=0, width=100, height=40)
-        layout.add_child(child)
+    children = [
+        WidgetModel("label", name=f"item_{i}", x=0, y=0, width=100, height=40)
+        for i in range(3)
+    ]
+    add_widget_children(layout, children)
     return layout
 
 
@@ -155,9 +157,11 @@ def linearlayout_horizontal():
     layout = WidgetModel("linearlayout", name="ll_h", x=0, y=0, width=300, height=100)
     layout.properties["orientation"] = "horizontal"
     layout.properties["align_type"] = "EGUI_ALIGN_CENTER"
-    for i in range(3):
-        child = WidgetModel("label", name=f"item_{i}", x=0, y=0, width=80, height=30)
-        layout.add_child(child)
+    children = [
+        WidgetModel("label", name=f"item_{i}", x=0, y=0, width=80, height=30)
+        for i in range(3)
+    ]
+    add_widget_children(layout, children)
     return layout
 
 

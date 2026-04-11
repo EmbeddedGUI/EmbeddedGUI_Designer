@@ -118,7 +118,7 @@ class TestWidgetModelTree:
         c2 = WidgetModel("group", name="c2")
         c2_1 = WidgetModel("button", name="c2_1")
         add_widget_children(root, [c1, c2])
-        c2.add_child(c2_1)
+        add_widget_children(c2, [c2_1])
         flat = root.get_all_widgets_flat()
         assert len(flat) == 4
         assert flat[0] is root

@@ -228,8 +228,8 @@ class TestDeeplyNestedHierarchy:
         lvl1 = WidgetModel("group", name="lvl1", x=0, y=0, width=200, height=200)
         lvl2 = WidgetModel("linearlayout", name="lvl2", x=0, y=0, width=180, height=180)
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
-        lvl1.add_child(lvl2)
-        lvl2.add_child(leaf)
+        add_widget_children(lvl1, [lvl2])
+        add_widget_children(lvl2, [leaf])
 
         def _setup_page(_page, root):
             root.name = "root"
@@ -250,8 +250,8 @@ class TestDeeplyNestedHierarchy:
         lvl1 = WidgetModel("group", name="lvl1", x=0, y=0, width=200, height=200)
         lvl2 = WidgetModel("linearlayout", name="lvl2", x=0, y=0, width=180, height=180)
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
-        lvl1.add_child(lvl2)
-        lvl2.add_child(leaf)
+        add_widget_children(lvl1, [lvl2])
+        add_widget_children(lvl2, [leaf])
 
         def _setup_page(_page, root):
             root.name = "root"
@@ -270,10 +270,10 @@ class TestDeeplyNestedHierarchy:
             prev = root
             for i in range(1, 5):
                 child = WidgetModel("group", name=f"g{i}", x=0, y=0, width=200, height=200)
-                prev.add_child(child)
+                add_widget_children(prev, [child])
                 prev = child
             leaf = WidgetModel("button", name="deep_btn", x=0, y=0, width=80, height=40)
-            prev.add_child(leaf)
+            add_widget_children(prev, [leaf])
             root.name = "g0"
 
         proj, page, _root = build_test_project_with_widgets(
@@ -346,8 +346,7 @@ class TestViewpageChildPageSetup:
         vp = WidgetModel("viewpage", name="vp", x=0, y=0, width=240, height=280)
         child1 = WidgetModel("group", name="page_a", x=0, y=0, width=240, height=280)
         child2 = WidgetModel("group", name="page_b", x=0, y=0, width=240, height=280)
-        vp.add_child(child1)
-        vp.add_child(child2)
+        add_widget_children(vp, [child1, child2])
 
         def _setup_page(_page, root):
             root.name = "root"

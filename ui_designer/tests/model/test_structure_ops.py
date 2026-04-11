@@ -138,7 +138,7 @@ def test_describe_structure_actions_reports_precise_capabilities():
     second = WidgetModel("label", name="second")
     target = WidgetModel("group", name="target")
     nested = WidgetModel("label", name="nested")
-    target.add_child(nested)
+    add_widget_children(target, [nested])
     project, _page, root = build_test_project_with_widgets(
         "StructureOpsDemo",
         widgets=[first, second, target],
@@ -353,7 +353,7 @@ def test_move_widgets_to_parent_index_moves_into_new_parent_preserving_absolute_
     target = WidgetModel("group", name="target", x=100, y=30, width=80, height=80)
     existing = WidgetModel("label", name="existing", x=10, y=10, width=20, height=10)
     child = WidgetModel("label", name="child", x=15, y=25, width=20, height=10)
-    target.add_child(existing)
+    add_widget_children(target, [existing])
     project, _page, root = build_test_project_with_widgets(
         "StructureOpsDemo",
         widgets=[target, child],

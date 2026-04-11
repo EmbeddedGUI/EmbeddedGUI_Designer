@@ -22,6 +22,7 @@ from ui_designer.tests.page_builders import (
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
+from ui_designer.utils.scaffold import add_widget_children
 
 
 # ── TestAlignGetXY ───────────────────────────────────────────────
@@ -258,7 +259,7 @@ class TestComputeLayout:
         """Group nested inside LinearLayout uses layout-computed position."""
         group = WidgetModel("group", name="g", x=0, y=0, width=100, height=80)
         inner = WidgetModel("label", name="inner", x=10, y=10, width=50, height=20)
-        group.add_child(inner)
+        add_widget_children(group, [inner])
         page, ll = build_test_page_with_widgets(
             "test",
             screen_width=200,
