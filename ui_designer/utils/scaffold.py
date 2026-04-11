@@ -804,6 +804,82 @@ def build_empty_project_model_with_root(
     return project, page, root
 
 
+def build_project_model_from_pages(
+    pages=None,
+    app_name="TestApp",
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup=None,
+    startup_page=None,
+):
+    """Build a project model from preconstructed page models."""
+    from ..model.project import Project
+
+    project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
+    project.sdk_root = str(sdk_root or "")
+    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+    project.page_mode = page_mode
+    for page in pages or []:
+        project.add_page(page)
+    if startup_page is not None:
+        project.startup_page = startup_page
+    elif startup is not None:
+        project.startup_page = startup
+    elif project.pages:
+        project.startup_page = project.pages[0].name
+    return project
+
+
+def build_project_model_from_root(
+    root,
+    *,
+    page_name="main_page",
+    app_name="TestApp",
+    screen_width=None,
+    screen_height=None,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup=None,
+    startup_page=None,
+):
+    """Build a single-page project model around a caller-supplied root widget."""
+    resolved_screen_width = screen_width
+    if resolved_screen_width is None:
+        resolved_screen_width = getattr(root, "width", None)
+    if resolved_screen_width is None:
+        resolved_screen_width = 240
+
+    resolved_screen_height = screen_height
+    if resolved_screen_height is None:
+        resolved_screen_height = getattr(root, "height", None)
+    if resolved_screen_height is None:
+        resolved_screen_height = 320
+
+    page = build_page_model_from_root(
+        page_name,
+        root=root,
+        screen_width=resolved_screen_width,
+        screen_height=resolved_screen_height,
+    )
+    project = build_project_model_from_pages(
+        [page],
+        app_name=app_name,
+        screen_width=resolved_screen_width,
+        screen_height=resolved_screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_mode=page_mode,
+        startup=startup,
+        startup_page=startup_page,
+    )
+    return project, page
+
+
 def build_page_model_with_root_widget(
     page_name="main_page",
     root_widget_type="group",
@@ -827,6 +903,29 @@ def build_page_model_with_root_widget(
     )
     page = Page(file_path=f"layout/{page_name}.xml", root_widget=root)
     return page, root
+
+
+def build_page_model_from_root(
+    page_name="main_page",
+    root=None,
+    *,
+    screen_width=240,
+    screen_height=320,
+):
+    """Build a page model around a caller-supplied root widget or a default group root."""
+    from ..model.page import Page
+
+    resolved_root = root
+    if resolved_root is None:
+        resolved_root = build_basic_widget_model(
+            "group",
+            name="root_group",
+            x=0,
+            y=0,
+            width=screen_width,
+            height=screen_height,
+        )
+    return Page(file_path=f"layout/{page_name}.xml", root_widget=resolved_root)
 
 
 def build_page_model_with_widgets(

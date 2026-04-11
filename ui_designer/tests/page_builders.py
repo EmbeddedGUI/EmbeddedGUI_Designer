@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from ui_designer.model.page import Page
-from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import (
     add_page_widget,
+    build_page_model_from_root,
     build_page_model_with_root_widget,
     build_page_model_with_widget,
     build_page_model_with_widgets,
@@ -49,9 +49,12 @@ def build_test_page_with_root_widget(
 
 def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, screen_height=320):
     """Build a Page model with a caller-supplied or default root widget."""
-    if root is None:
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=screen_width, height=screen_height)
-    return Page(file_path=f"layout/{name}.xml", root_widget=root)
+    return build_page_model_from_root(
+        name,
+        root=root,
+        screen_width=screen_width,
+        screen_height=screen_height,
+    )
 
 
 def build_test_pages(*names, screen_width=240, screen_height=320):
