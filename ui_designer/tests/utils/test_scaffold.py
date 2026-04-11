@@ -12,6 +12,8 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     apply_designer_project_scaffold,
+    build_project_model_with_page_widgets,
+    build_project_model_with_widgets,
     build_empty_project_model,
     build_empty_project_model_with_root,
     build_empty_project_xml,
@@ -317,6 +319,68 @@ class TestCoreProjectScaffold:
         assert root is page.root_widget
         assert root.width == 320
         assert root.height == 240
+
+    def test_build_project_model_with_widgets_attaches_widgets_and_applies_customizers(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        badge = WidgetModel("label", name="badge", x=10, y=40, width=60, height=20)
+
+        def _customize_page(page, root):
+            page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+            root.add_child(badge)
+
+        def _customize_project(project):
+            project.string_catalog.set("greeting", "Hello", "default")
+
+        project, page, root = build_project_model_with_widgets(
+            "DemoApp",
+            320,
+            240,
+            page_name="home",
+            widgets=[label],
+            page_customizer=_customize_page,
+            project_customizer=_customize_project,
+        )
+
+        assert project.app_name == "DemoApp"
+        assert page.name == "home"
+        assert root.children == [label, badge]
+        assert page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
+        assert project.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_build_project_model_with_page_widgets_populates_pages_and_customizers(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        def _customize_detail(page, root):
+            page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500"}]
+            assert root.children == [detail_button]
+
+        def _customize_project(project):
+            project.resource_catalog.add_image("hero.png")
+
+        project, roots = build_project_model_with_page_widgets(
+            "DemoApp",
+            320,
+            240,
+            pages=["home"],
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+            page_customizers={"detail": _customize_detail},
+            project_customizer=_customize_project,
+        )
+        detail_page, _detail_root = require_project_page_root(project, "detail")
+
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
+        assert detail_page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500"}]
+        assert project.resource_catalog.has_image("hero.png") is True
 
     def test_build_empty_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = build_empty_project_xml(

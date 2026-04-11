@@ -29,7 +29,7 @@ from ui_designer.model.widget_model import AnimationModel, BackgroundModel, Widg
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
-    build_empty_project_model_with_root,
+    build_project_model_with_widgets,
     save_project_with_designer_scaffold,
 )
 
@@ -114,20 +114,10 @@ def build_smoke_project(
     WidgetRegistry.instance()
     WidgetModel.reset_counter()
 
-    project, page, root = build_empty_project_model_with_root(
-        app_name,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        sdk_root=str(sdk_root),
-        project_dir=str(project_dir),
-        page_name=PAGE_NAME,
-    )
-
     root_bg = BackgroundModel()
     root_bg.bg_type = "solid"
     root_bg.color = "EGUI_COLOR_WHITE"
     root_bg.alpha = "EGUI_ALPHA_100"
-    root.background = root_bg
 
     title = WidgetModel("label", name="title_label", x=20, y=24, width=200, height=28)
     title.properties["text"] = "Designer Preview Smoke"
@@ -162,8 +152,19 @@ def build_smoke_project(
     }
     animated_chip.animations.append(anim)
 
-    for widget in (title, status, button, animated_chip):
-        root.add_child(widget)
+    def _customize_page(_page: Page, root: WidgetModel) -> None:
+        root.background = root_bg
+
+    project, page, root = build_project_model_with_widgets(
+        app_name,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        sdk_root=str(sdk_root),
+        project_dir=str(project_dir),
+        page_name=PAGE_NAME,
+        widgets=[title, status, button, animated_chip],
+        page_customizer=_customize_page,
+    )
 
     meta = {
         "status_region": STATUS_REGION,

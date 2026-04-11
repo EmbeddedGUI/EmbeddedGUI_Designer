@@ -738,6 +738,96 @@ def build_empty_project_model_with_root(
     return project, page, root
 
 
+def build_project_model_with_page_widgets(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_widgets=None,
+    page_customizers=None,
+    pages=None,
+    project_customizer=None,
+):
+    """Build a project model, attach widgets to named pages, and apply optional customizers."""
+    resolved_pages = pages
+    if resolved_pages is None:
+        resolved_pages = []
+        for page_name in page_widgets or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        for page_name in page_customizers or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        if not resolved_pages:
+            resolved_pages = None
+    else:
+        resolved_pages = list(resolved_pages)
+        for page_name in page_widgets or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        for page_name in page_customizers or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+
+    project = build_empty_project_model(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=resolved_pages,
+    )
+    roots = {}
+    pages_by_name = {}
+    for page in project.pages:
+        resolved_page, root = require_project_page_root(project, page.name)
+        pages_by_name[page.name] = resolved_page
+        roots[page.name] = root
+
+    for page_name, widgets in (page_widgets or {}).items():
+        root = roots[page_name]
+        for widget in widgets or []:
+            root.add_child(widget)
+
+    for page_name, page_customizer in (page_customizers or {}).items():
+        page_customizer(pages_by_name[page_name], roots[page_name])
+
+    if project_customizer is not None:
+        project_customizer(project)
+
+    return project, roots
+
+
+def build_project_model_with_widgets(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+):
+    """Build a single-page project model, attach widgets, and apply optional customizers."""
+    project, roots = build_project_model_with_page_widgets(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_widgets={page_name: widgets or []},
+        page_customizers={page_name: page_customizer} if page_customizer is not None else None,
+        pages=[page_name],
+        project_customizer=project_customizer,
+    )
+    page, root = require_project_page_root(project, page_name)
+    return project, page, root
+
+
 def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
     """Build an empty ``.egui`` project XML using the shared project model."""
     project = build_empty_project_model(
