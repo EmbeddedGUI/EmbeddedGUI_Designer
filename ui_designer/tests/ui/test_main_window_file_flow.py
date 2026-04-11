@@ -11,6 +11,7 @@ import pytest
 
 from ui_designer.tests.project_builders import build_saved_test_project
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
+from ui_designer.tests.sdk_builders import build_test_sdk_root
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -67,9 +68,7 @@ def bind_designer_runtime(monkeypatch, tmp_path):
 
 
 def _create_sdk_root(root):
-    (root / "src").mkdir(parents=True)
-    (root / "porting" / "designer").mkdir(parents=True)
-    (root / "Makefile").write_text("all:\n", encoding="utf-8")
+    return build_test_sdk_root(root)
 
 
 def _create_project(project_dir, app_name, sdk_root=""):

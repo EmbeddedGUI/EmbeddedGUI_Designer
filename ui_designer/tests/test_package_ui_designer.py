@@ -10,6 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from ui_designer.tests.sdk_builders import build_test_sdk_root
+
 
 def _load_module():
     module_path = Path(__file__).resolve().parents[2] / "package_ui_designer.py"
@@ -338,10 +340,7 @@ def test_package_ui_designer_passes_sdk_root_to_preflight(tmp_path, monkeypatch)
 def test_copy_sdk_bundle_copies_sdk_tree_into_app_dir(tmp_path):
     module = _load_module()
 
-    sdk_root = tmp_path / "sdk_root"
-    (sdk_root / "src").mkdir(parents=True)
-    (sdk_root / "porting" / "designer").mkdir(parents=True)
-    (sdk_root / "Makefile").write_text("all:\n", encoding="utf-8")
+    sdk_root = build_test_sdk_root(tmp_path / "sdk_root")
     (sdk_root / ".git").mkdir()
     (sdk_root / ".git" / "config").write_text("ignored", encoding="utf-8")
     (sdk_root / "README.md").write_text("sdk", encoding="utf-8")
@@ -384,10 +383,7 @@ def test_copy_designer_examples_copies_examples_tree_into_app_dir(tmp_path):
 def test_copy_sdk_bundle_ignores_designer_test_tree(tmp_path):
     module = _load_module()
 
-    sdk_root = tmp_path / "sdk_root"
-    (sdk_root / "src").mkdir(parents=True)
-    (sdk_root / "porting" / "designer").mkdir(parents=True)
-    (sdk_root / "Makefile").write_text("all:\n", encoding="utf-8")
+    sdk_root = build_test_sdk_root(tmp_path / "sdk_root")
     (sdk_root / "scripts" / "ui_designer" / "tests").mkdir(parents=True)
     (sdk_root / "scripts" / "ui_designer" / "tests" / "test_dummy.py").write_text("x = 1\n", encoding="utf-8")
     (sdk_root / "scripts" / "ui_designer" / "main.py").write_text("print('ok')\n", encoding="utf-8")
@@ -406,10 +402,7 @@ def test_package_ui_designer_can_bundle_sdk(tmp_path, monkeypatch):
 
     dist_dir = tmp_path / "dist"
     app_dir = dist_dir / module.DIST_APP_NAME
-    sdk_root = tmp_path / "sdk_root"
-    (sdk_root / "src").mkdir(parents=True)
-    (sdk_root / "porting" / "designer").mkdir(parents=True)
-    (sdk_root / "Makefile").write_text("all:\n", encoding="utf-8")
+    sdk_root = build_test_sdk_root(tmp_path / "sdk_root")
 
     monkeypatch.setattr(module, "ensure_pyinstaller_available", lambda: None)
 
@@ -463,10 +456,7 @@ def test_resolve_sdk_bundle_root_rejects_invalid_directory(tmp_path):
 
 def test_resolve_sdk_bundle_root_uses_external_sdk_resolution(tmp_path, monkeypatch):
     module = _load_module()
-    sdk_root = tmp_path / "sdk_root"
-    (sdk_root / "src").mkdir(parents=True)
-    (sdk_root / "porting" / "designer").mkdir(parents=True)
-    (sdk_root / "Makefile").write_text("all:\n", encoding="utf-8")
+    sdk_root = build_test_sdk_root(tmp_path / "sdk_root")
 
     monkeypatch.setattr(module, "require_designer_sdk_root", lambda **kwargs: str(sdk_root))
 
