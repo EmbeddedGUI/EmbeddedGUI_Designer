@@ -1,5 +1,12 @@
 """Tests for ui_designer.model.diagnostics."""
 
+from ui_designer.tests.page_builders import (
+    add_test_widget,
+    build_test_page,
+    build_test_page_with_title,
+    build_test_pages,
+)
+
 from ui_designer.model.diagnostics import (
     analyze_page,
     analyze_project_callback_conflicts,
@@ -7,7 +14,6 @@ from ui_designer.model.diagnostics import (
     diagnostic_entry_payload,
     diagnostic_target_payload,
 )
-from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.resource_catalog import ResourceCatalog
 from ui_designer.model.string_resource import StringResourceCatalog
@@ -16,18 +22,12 @@ from ui_designer.model.widget_model import WidgetModel
 
 class TestPageDiagnostics:
     def test_analyze_page_reports_invalid_duplicate_bounds_and_missing_resource(self, tmp_path):
-        page = Page.create_default("main_page", screen_width=240, screen_height=320)
-
-        invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
-        duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
-        duplicate_b = WidgetModel("label", name="dup_name", x=230, y=40, width=30, height=20)
-        missing = WidgetModel("image", name="missing_image", x=16, y=80, width=48, height=48)
+        page = build_test_page()
+        invalid = add_test_widget(page, name="bad-name", x=8, y=8, width=60, height=20)
+        duplicate_a = add_test_widget(page, name="dup_name", x=20, y=40, width=60, height=20)
+        duplicate_b = add_test_widget(page, name="dup_name", x=230, y=40, width=30, height=20)
+        missing = add_test_widget(page, "image", name="missing_image", x=16, y=80, width=48, height=48)
         missing.properties["image_file"] = "ghost.png"
-
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(duplicate_a)
-        page.root_widget.add_child(duplicate_b)
-        page.root_widget.add_child(missing)
 
         catalog = ResourceCatalog()
         catalog.add_image("ghost.png")
@@ -53,9 +53,7 @@ class TestPageDiagnostics:
         assert missing_entry.target_widget_name == "missing_image"
 
     def test_analyze_page_reports_invalid_page_fields(self):
-        page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        title = WidgetModel("label", name="title", x=8, y=8, width=60, height=20)
-        page.root_widget.add_child(title)
+        page, _title = build_test_page_with_title(x=8, y=8, width=60, height=20)
         page.user_fields = [
             {"name": "title", "type": "int"},
             {"name": "counter", "type": "int"},
@@ -74,9 +72,7 @@ class TestPageDiagnostics:
         assert all(entry.target_page_name == "main_page" for entry in entries)
 
     def test_analyze_page_reports_invalid_page_timers(self):
-        page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        title = WidgetModel("label", name="title", x=8, y=8, width=60, height=20)
-        page.root_widget.add_child(title)
+        page, _title = build_test_page_with_title(x=8, y=8, width=60, height=20)
         page.user_fields = [{"name": "counter", "type": "int"}]
         page.timers = [
             {"name": "title", "callback": "tick_title", "delay_ms": "1000", "period_ms": "1000"},
@@ -92,13 +88,11 @@ class TestPageDiagnostics:
         assert all(entry.target_page_name == "main_page" for entry in entries)
 
     def test_analyze_page_reports_callback_signature_conflicts(self):
-        page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
-        slider = WidgetModel("slider", name="volume_slider", x=8, y=48, width=120, height=24)
+        page = build_test_page()
+        button = add_test_widget(page, "button", name="confirm_button", x=8, y=8, width=80, height=28)
+        slider = add_test_widget(page, "slider", name="volume_slider", x=8, y=48, width=120, height=24)
         button.on_click = "on_shared_action"
         slider.events["onValueChanged"] = "on_shared_action"
-        page.root_widget.add_child(button)
-        page.root_widget.add_child(slider)
 
         entries = analyze_page(page)
 
@@ -110,10 +104,8 @@ class TestPageDiagnostics:
         assert entries[0].target_widget_name == "confirm_button"
 
     def test_analyze_page_reports_missing_string_key_references(self):
-        page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        title = WidgetModel("label", name="title", x=8, y=8, width=60, height=20)
+        page, title = build_test_page_with_title(x=8, y=8, width=60, height=20)
         title.properties["text"] = "@string/missing_key"
-        page.root_widget.add_child(title)
 
         string_catalog = StringResourceCatalog()
         string_catalog.set("greeting", "Hello")
@@ -154,14 +146,11 @@ class TestSelectionDiagnostics:
 class TestProjectDiagnostics:
     def test_analyze_project_reports_duplicate_callbacks_across_pages(self):
         project = Project(screen_width=240, screen_height=320, app_name="DiagApp")
-        main_page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        detail_page = Page.create_default("detail_page", screen_width=240, screen_height=320)
-        main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
-        detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
+        main_page, detail_page = build_test_pages("main_page", "detail_page")
+        main_button = add_test_widget(main_page, "button", name="confirm_button", x=8, y=8, width=80, height=28)
+        detail_button = add_test_widget(detail_page, "button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        main_page.root_widget.add_child(main_button)
-        detail_page.root_widget.add_child(detail_button)
         project.add_page(main_page)
         project.add_page(detail_page)
 
@@ -175,14 +164,11 @@ class TestProjectDiagnostics:
 
     def test_analyze_project_reports_callback_signature_conflicts_across_pages(self):
         project = Project(screen_width=240, screen_height=320, app_name="DiagApp")
-        main_page = Page.create_default("main_page", screen_width=240, screen_height=320)
-        detail_page = Page.create_default("detail_page", screen_width=240, screen_height=320)
-        main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
-        detail_slider = WidgetModel("slider", name="volume_slider", x=8, y=8, width=120, height=24)
+        main_page, detail_page = build_test_pages("main_page", "detail_page")
+        main_button = add_test_widget(main_page, "button", name="confirm_button", x=8, y=8, width=80, height=28)
+        detail_slider = add_test_widget(detail_page, "slider", name="volume_slider", x=8, y=8, width=120, height=24)
         main_button.on_click = "on_shared_action"
         detail_slider.events["onValueChanged"] = "on_shared_action"
-        main_page.root_widget.add_child(main_button)
-        detail_page.root_widget.add_child(detail_slider)
         project.add_page(main_page)
         project.add_page(detail_page)
 

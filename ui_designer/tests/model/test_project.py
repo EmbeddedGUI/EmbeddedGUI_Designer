@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.model.project import Project
 from ui_designer.model.page import Page
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
@@ -238,8 +239,14 @@ class TestSaveLoad:
     def test_to_xml_string_supports_explicit_stored_sdk_root(self):
         proj = Project(screen_width=320, screen_height=480, app_name="XmlDemo")
         proj.startup_page = "home"
-        proj.add_page(Page.create_default("home", screen_width=320, screen_height=480))
-        proj.add_page(Page.create_default("detail", screen_width=320, screen_height=480))
+        home_page, detail_page = build_test_pages(
+            "home",
+            "detail",
+            screen_width=320,
+            screen_height=480,
+        )
+        proj.add_page(home_page)
+        proj.add_page(detail_page)
 
         xml = proj.to_xml_string(stored_sdk_root="../../sdk/EmbeddedGUI")
 
