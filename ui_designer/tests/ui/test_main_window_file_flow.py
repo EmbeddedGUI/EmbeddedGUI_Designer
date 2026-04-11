@@ -6615,16 +6615,16 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
-        project.get_page_by_name("main_page").root_widget.add_child(image_a)
+        main_root.add_child(image_a)
 
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(image_b)
+        detail_root.add_child(image_b)
 
         project.save(str(project_dir))
 
@@ -6659,17 +6659,17 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
-        project.get_page_by_name("main_page").root_widget.add_child(image_a)
+        main_root.add_child(image_a)
 
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(image_b)
+        detail_root.add_child(image_b)
 
         project.save(str(project_dir))
 
@@ -6719,17 +6719,17 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
-        project.get_page_by_name("main_page").root_widget.add_child(image_a)
+        main_root.add_child(image_a)
 
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(image_b)
+        detail_root.add_child(image_b)
 
         project.save(str(project_dir))
 
@@ -6800,8 +6800,8 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
 
         images_dir = project_dir / ".eguiproject" / "resources" / "images"
@@ -6810,11 +6810,11 @@ class TestMainWindowFileFlow:
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
-        project.get_page_by_name("main_page").root_widget.add_child(image_a)
+        main_root.add_child(image_a)
 
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(image_b)
+        detail_root.add_child(image_b)
 
         project.save(str(project_dir))
 
@@ -6847,9 +6847,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteResourceDemo"
         project = _create_project(project_dir, "DeleteResourceDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6876,9 +6877,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AssignTextResourceDemo"
         project = _create_project(project_dir, "AssignTextResourceDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6904,9 +6906,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "GenerateCharsetDemo"
         project = _create_project(project_dir, "GenerateCharsetDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6981,10 +6984,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyCharsetDemo"
         project = _create_project(project_dir, "PropertyCharsetDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo_font.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7015,10 +7019,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyCharsetPresetDemo"
         project = _create_project(project_dir, "PropertyCharsetPresetDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "simhei.ttf"
         label.properties["font_text_file"] = "charset_ascii_printable.txt"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7054,18 +7059,18 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
 
         label_a = WidgetModel("label", name="label_a")
         label_a.properties["font_file"] = "demo.ttf"
         label_a.properties["font_text_file"] = "chars.txt"
-        project.get_page_by_name("main_page").root_widget.add_child(label_a)
+        main_root.add_child(label_a)
 
         label_b = WidgetModel("label", name="label_b")
         label_b.properties["font_file"] = "demo.ttf"
         label_b.properties["font_text_file"] = "chars.txt"
-        detail_page.root_widget.add_child(label_b)
+        detail_root.add_child(label_b)
 
         project.save(str(project_dir))
 
@@ -7094,10 +7099,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteTextResourceDemo"
         project = _create_project(project_dir, "DeleteTextResourceDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        project.get_page_by_name("main_page").root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7129,18 +7135,18 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        project.get_page_by_name("main_page").root_widget.add_child(title)
+        main_root.add_child(title)
 
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        detail_page.root_widget.add_child(subtitle)
+        detail_root.add_child(subtitle)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7176,18 +7182,18 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        project.get_page_by_name("main_page").root_widget.add_child(title)
+        main_root.add_child(title)
 
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        detail_page.root_widget.add_child(subtitle)
+        detail_root.add_child(subtitle)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
