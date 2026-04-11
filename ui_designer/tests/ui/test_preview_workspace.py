@@ -1,22 +1,15 @@
 """Qt UI smoke tests for preview fallback and workspace-aware build gating."""
 
-import os
-
 import pytest
 
-from ui_designer.tests.qt_test_utils import close_widget_safely
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-try:
+if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, Qt
     from PyQt5.QtGui import QContextMenuEvent, QMouseEvent
     from PyQt5.QtWidgets import QScrollArea
-    _has_pyqt5 = True
-except ImportError:
-    _has_pyqt5 = False
 
-_skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
+_skip_no_qt = skip_if_no_qt
 
 
 def _dispose_widget(widget):

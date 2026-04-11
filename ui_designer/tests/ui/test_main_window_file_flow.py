@@ -10,21 +10,15 @@ from pathlib import Path
 import pytest
 
 from ui_designer.tests.project_builders import build_saved_test_project
-from ui_designer.tests.qt_test_utils import close_widget_safely
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-try:
+if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QLabel, QSizePolicy
     from PyQt5.QtWidgets import QMessageBox
     from PyQt5.QtTest import QTest
 
-    _has_pyqt5 = True
-except ImportError:
-    _has_pyqt5 = False
-
-_skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
+_skip_no_qt = skip_if_no_qt
 
 
 @pytest.fixture
@@ -56,21 +50,6 @@ def qapp():
     except Exception:
         pass
     app.processEvents()
-
-
-@pytest.fixture
-def isolated_config(tmp_path, monkeypatch):
-    from ui_designer.model.config import DesignerConfig
-
-    config_dir = tmp_path / "config"
-    config_dir.mkdir()
-    config_path = config_dir / "config.json"
-    monkeypatch.setattr("ui_designer.model.config._get_config_dir", lambda: str(config_dir))
-    monkeypatch.setattr("ui_designer.model.config._get_config_path", lambda: str(config_path))
-    DesignerConfig._instance = None
-    config = DesignerConfig.instance()
-    yield config
-    DesignerConfig._instance = None
 
 
 @pytest.fixture(autouse=True)

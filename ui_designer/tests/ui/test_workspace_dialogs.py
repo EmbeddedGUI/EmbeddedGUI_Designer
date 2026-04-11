@@ -5,32 +5,13 @@ import os
 import pytest
 
 from ui_designer.tests.sdk_builders import build_test_sdk_root, mark_bundled_test_sdk_root
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-try:
+if HAS_PYQT5:
     from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QFrame, QLabel, QWidget
-    _has_pyqt5 = True
-except ImportError:
-    _has_pyqt5 = False
 
-_skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
-
-
-@pytest.fixture
-def isolated_config(tmp_path, monkeypatch):
-    from ui_designer.model.config import DesignerConfig
-
-    config_dir = tmp_path / "config"
-    config_dir.mkdir()
-    config_path = config_dir / "config.json"
-    monkeypatch.setattr("ui_designer.model.config._get_config_dir", lambda: str(config_dir))
-    monkeypatch.setattr("ui_designer.model.config._get_config_path", lambda: str(config_path))
-    DesignerConfig._instance = None
-    config = DesignerConfig.instance()
-    yield config
-    DesignerConfig._instance = None
+_skip_no_qt = skip_if_no_qt
 
 
 @pytest.fixture(autouse=True)

@@ -78,6 +78,22 @@ def qapp():
 
 
 @pytest.fixture
+def isolated_config(tmp_path, monkeypatch):
+    """Bind DesignerConfig to a per-test temporary config path."""
+    from ui_designer.model.config import DesignerConfig
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    config_path = config_dir / "config.json"
+    monkeypatch.setattr("ui_designer.model.config._get_config_dir", lambda: str(config_dir))
+    monkeypatch.setattr("ui_designer.model.config._get_config_path", lambda: str(config_path))
+    DesignerConfig._instance = None
+    config = DesignerConfig.instance()
+    yield config
+    DesignerConfig._instance = None
+
+
+@pytest.fixture
 def simple_label():
     """Create a basic label widget."""
     from ui_designer.model.widget_model import WidgetModel
