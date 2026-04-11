@@ -7,6 +7,7 @@ from ui_designer.tests.project_builders import (
     build_test_project_with_widgets as _build_project_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
+from ui_designer.utils.scaffold import add_widget_children as _add_widget_children
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, Qt
@@ -1338,11 +1339,9 @@ class TestWidgetTreePanel:
         managed_leaf = WidgetModel("label", name="managed_leaf")
         managed_button = WidgetModel("button", name="managed_button")
         unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf")
-        managed_group.add_child(managed_leaf)
-        layout_parent.add_child(managed_group)
-        layout_parent.add_child(managed_button)
-        container.add_child(layout_parent)
-        container.add_child(unmanaged_leaf)
+        _add_widget_children(managed_group, [managed_leaf])
+        _add_widget_children(layout_parent, [managed_group, managed_button])
+        _add_widget_children(container, [layout_parent, unmanaged_leaf])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()

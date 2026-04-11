@@ -20,7 +20,11 @@ from ui_designer.tests.page_builders import (
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
-from ui_designer.utils.scaffold import require_project_page_root, save_project_model
+from ui_designer.utils.scaffold import (
+    add_widget_children as _add_widget_children,
+    require_project_page_root,
+    save_project_model,
+)
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -1311,8 +1315,7 @@ class TestMainWindowFileFlow:
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=200, height=80)
         first = WidgetModel("switch", name="first", width=40, height=20)
         second = WidgetModel("switch", name="second", width=40, height=20)
-        layout_parent.add_child(first)
-        layout_parent.add_child(second)
+        _add_widget_children(layout_parent, [first, second])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "AlignLayoutManagedDemo",
@@ -2387,9 +2390,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("switch", name="first", width=20, height=20)
         second = WidgetModel("switch", name="second", width=20, height=20)
         third = WidgetModel("switch", name="third", width=20, height=20)
-        layout_parent.add_child(first)
-        layout_parent.add_child(second)
-        layout_parent.add_child(third)
+        _add_widget_children(layout_parent, [first, second, third])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "DistributeLayoutManagedDemo",
@@ -8889,7 +8890,7 @@ class TestMainWindowFileFlow:
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
-        layout_parent.add_child(managed)
+        _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
         project, _page, _root = _create_project_with_widgets(
@@ -9022,7 +9023,7 @@ class TestMainWindowFileFlow:
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
-        layout_parent.add_child(managed)
+        _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
         project, _page, _root = _create_project_with_widgets(
@@ -9079,7 +9080,7 @@ class TestMainWindowFileFlow:
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
-        layout_parent.add_child(managed)
+        _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
         project, _page, _root = _create_project_with_widgets(
@@ -9488,7 +9489,7 @@ class TestMainWindowFileFlow:
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
-        layout_parent.add_child(managed)
+        _add_widget_children(layout_parent, [managed])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "DiagnosticsNonNavigableDemo",
@@ -14348,10 +14349,9 @@ class TestMainWindowCanvasActions:
         managed_group = WidgetModel("group", name="managed_group", x=2, y=2, width=48, height=24)
         managed_leaf = WidgetModel("label", name="managed_leaf", x=1, y=1, width=24, height=12)
         unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf", x=4, y=72, width=40, height=16)
-        managed_group.add_child(managed_leaf)
-        layout_parent.add_child(managed_group)
-        container.add_child(layout_parent)
-        container.add_child(unmanaged_leaf)
+        _add_widget_children(managed_group, [managed_leaf])
+        _add_widget_children(layout_parent, [managed_group])
+        _add_widget_children(container, [layout_parent, unmanaged_leaf])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewLayoutContainersContextMenuDemo",
@@ -14404,11 +14404,9 @@ class TestMainWindowCanvasActions:
         managed_leaf = WidgetModel("label", name="managed_leaf", x=1, y=1, width=24, height=12)
         managed_button = WidgetModel("button", name="managed_button", x=2, y=30, width=48, height=20)
         unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf", x=4, y=72, width=40, height=16)
-        managed_group.add_child(managed_leaf)
-        layout_parent.add_child(managed_group)
-        layout_parent.add_child(managed_button)
-        container.add_child(layout_parent)
-        container.add_child(unmanaged_leaf)
+        _add_widget_children(managed_group, [managed_leaf])
+        _add_widget_children(layout_parent, [managed_group, managed_button])
+        _add_widget_children(container, [layout_parent, unmanaged_leaf])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewManagedContextMenuDemo",
@@ -14461,11 +14459,9 @@ class TestMainWindowCanvasActions:
         managed_leaf = WidgetModel("label", name="managed_leaf", x=1, y=1, width=24, height=12)
         managed_button = WidgetModel("button", name="managed_button", x=2, y=30, width=48, height=20)
         unmanaged_leaf = WidgetModel("label", name="unmanaged_leaf", x=4, y=72, width=40, height=16)
-        managed_group.add_child(managed_leaf)
-        layout_parent.add_child(managed_group)
-        layout_parent.add_child(managed_button)
-        container.add_child(layout_parent)
-        container.add_child(unmanaged_leaf)
+        _add_widget_children(managed_group, [managed_leaf])
+        _add_widget_children(layout_parent, [managed_group, managed_button])
+        _add_widget_children(container, [layout_parent, unmanaged_leaf])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewFreePositionContextMenuDemo",
