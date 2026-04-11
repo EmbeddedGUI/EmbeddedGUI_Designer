@@ -39,6 +39,7 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model_with_root,
     build_empty_project_xml,
     default_scaffold_circle_radius,
+    designer_conversion_scaffold_kwargs,
     designer_scaffold_kwargs,
     require_page_root,
     require_project_page_root,
@@ -309,6 +310,17 @@ class TestCoreProjectScaffold:
         assert kwargs == {
             "overwrite": True,
             "color_depth": 32,
+            "circle_radius": 120,
+            "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+            "refresh_designer_resource_config": False,
+        }
+
+    def test_designer_conversion_scaffold_kwargs_enables_shadow_support_defaults(self):
+        kwargs = designer_conversion_scaffold_kwargs(320, 240)
+
+        assert kwargs == {
+            "overwrite": True,
+            "color_depth": 16,
             "circle_radius": 120,
             "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
             "refresh_designer_resource_config": False,

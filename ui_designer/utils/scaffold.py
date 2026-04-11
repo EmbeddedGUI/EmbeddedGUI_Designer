@@ -211,6 +211,23 @@ def designer_scaffold_kwargs(
     return kwargs
 
 
+def designer_conversion_scaffold_kwargs(
+    screen_width,
+    screen_height,
+    *,
+    color_depth=16,
+):
+    """Return scaffold defaults shared by conversion/import entry points."""
+    return designer_scaffold_kwargs(
+        screen_width,
+        screen_height,
+        overwrite=True,
+        color_depth=color_depth,
+        extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+        refresh_designer_resource_config=False,
+    )
+
+
 def designer_codegen_relpath(filename: str) -> str:
     normalized = str(filename or "").replace("\\", "/").lstrip("/")
     return f"{DESIGNER_PROJECT_DIRNAME}/{normalized}"

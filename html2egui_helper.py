@@ -46,7 +46,7 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
-    designer_scaffold_kwargs,
+    designer_conversion_scaffold_kwargs,
     ensure_designer_project_scaffold_with_sdk_root,
     normalize_scaffold_pages,
     project_file_relpath,
@@ -267,14 +267,7 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
         sdk_root,
         width,
         height,
-        **designer_scaffold_kwargs(
-            width,
-            height,
-            overwrite=True,
-            color_depth=16,
-            extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-            refresh_designer_resource_config=False,
-        ),
+        **designer_conversion_scaffold_kwargs(width, height),
     )
     if created:
         print(f"Creating app scaffold: {app_name}")
@@ -330,13 +323,10 @@ def cmd_scaffold(args):
         width,
         height,
         pages=pages,
-        **designer_scaffold_kwargs(
+        **designer_conversion_scaffold_kwargs(
             width,
             height,
-            overwrite=True,
             color_depth=color_depth,
-            extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-            refresh_designer_resource_config=False,
         ),
     )
     _print_scaffold_status(
