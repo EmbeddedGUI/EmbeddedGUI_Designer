@@ -30,7 +30,7 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_with_widgets,
-    save_project_with_designer_scaffold,
+    save_project_model,
 )
 
 
@@ -283,7 +283,12 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
         project, page, _root, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
-        save_project_with_designer_scaffold(project, str(app_dir), overwrite=True)
+        save_project_model(
+            project,
+            str(app_dir),
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
         loaded = Project.load(str(app_dir / f"{APP_NAME}.egui"))
         if loaded.sdk_root != resolved_sdk_root:
             raise RuntimeError("saved project did not restore sdk_root correctly")

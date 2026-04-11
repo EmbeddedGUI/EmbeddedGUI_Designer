@@ -5,15 +5,16 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from ui_designer.tests.page_builders import add_test_widget, build_test_page_from_root
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import (
+    build_project_model_with_widget,
     build_project_model_with_page_widgets,
     build_project_model_with_widgets,
     build_empty_project_model,
     build_empty_project_model_with_root,
     require_project_page_root,
-    save_project_with_designer_scaffold,
+    save_project_model,
 )
 
 
@@ -169,20 +170,18 @@ def build_test_project_with_widget(
     **widget_kwargs,
 ):
     """Build a minimal test project, attach one widget, and optionally customize the page and project."""
-    project, page, root = build_test_project_with_page_root(
+    return build_project_model_with_widget(
         app_name,
+        widget_type,
         page_name=page_name,
         screen_width=screen_width,
         screen_height=screen_height,
         sdk_root=sdk_root,
         project_dir=project_dir,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        **widget_kwargs,
     )
-    widget = add_test_widget(page, widget_type, **widget_kwargs)
-    if page_customizer is not None:
-        page_customizer(page, root)
-    if project_customizer is not None:
-        project_customizer(project)
-    return project, page, widget
 
 
 def build_test_project_from_pages(
@@ -273,7 +272,6 @@ def build_saved_test_project(
 ):
     """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
-    project_root.mkdir(parents=True, exist_ok=True)
     project = build_test_project(
         app_name,
         screen_width,
@@ -284,15 +282,13 @@ def build_saved_test_project(
     )
     if project_customizer is not None:
         project_customizer(project)
-    if with_designer_scaffold:
-        save_project_with_designer_scaffold(
-            project,
-            str(project_root),
-            overwrite=overwrite_scaffold,
-            remove_legacy_designer_files=True,
-        )
-    else:
-        project.save(str(project_root))
+    save_project_model(
+        project,
+        str(project_root),
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
     return project
 
 
@@ -312,7 +308,6 @@ def build_saved_test_project_with_widgets(
 ):
     """Build, populate, optionally customize, and save a single-page test project to disk."""
     project_root = Path(project_dir)
-    project_root.mkdir(parents=True, exist_ok=True)
     project, page, root = build_test_project_with_widgets(
         app_name,
         page_name=page_name,
@@ -324,15 +319,13 @@ def build_saved_test_project_with_widgets(
         page_customizer=page_customizer,
         project_customizer=project_customizer,
     )
-    if with_designer_scaffold:
-        save_project_with_designer_scaffold(
-            project,
-            str(project_root),
-            overwrite=overwrite_scaffold,
-            remove_legacy_designer_files=True,
-        )
-    else:
-        project.save(str(project_root))
+    save_project_model(
+        project,
+        str(project_root),
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
     return project, page, root
 
 
@@ -352,7 +345,6 @@ def build_saved_test_project_with_page_widgets(
 ):
     """Build, populate, optionally customize, and save a multi-page test project to disk."""
     project_root = Path(project_dir)
-    project_root.mkdir(parents=True, exist_ok=True)
     project, roots = build_test_project_with_page_widgets(
         app_name,
         screen_width,
@@ -364,13 +356,11 @@ def build_saved_test_project_with_page_widgets(
         pages=pages,
         project_customizer=project_customizer,
     )
-    if with_designer_scaffold:
-        save_project_with_designer_scaffold(
-            project,
-            str(project_root),
-            overwrite=overwrite_scaffold,
-            remove_legacy_designer_files=True,
-        )
-    else:
-        project.save(str(project_root))
+    save_project_model(
+        project,
+        str(project_root),
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
     return project, roots

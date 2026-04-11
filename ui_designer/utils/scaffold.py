@@ -828,6 +828,45 @@ def build_project_model_with_widgets(
     return project, page, root
 
 
+def build_project_model_with_widget(
+    app_name,
+    widget_type="label",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+    page_customizer=None,
+    project_customizer=None,
+    **widget_kwargs,
+):
+    """Build a single-page project model, attach one widget, and apply optional customizers."""
+    from ..model.widget_model import WidgetModel
+
+    resolved_widget_kwargs = {
+        "name": "title",
+        "x": 12,
+        "y": 16,
+        "width": 100,
+        "height": 24,
+    }
+    resolved_widget_kwargs.update(widget_kwargs)
+    widget = WidgetModel(widget_type, **resolved_widget_kwargs)
+    project, page, root = build_project_model_with_widgets(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+        widgets=[widget],
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+    )
+    return project, page, widget
+
+
 def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
     """Build an empty ``.egui`` project XML using the shared project model."""
     project = build_empty_project_model(
@@ -963,6 +1002,36 @@ def save_project_with_designer_scaffold(
     )
     project.save(project_dir)
     return actions
+
+
+def save_project_model(
+    project,
+    project_dir,
+    *,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Save a project model with optional Designer scaffold sidecars."""
+    project_dir = os.path.normpath(project_dir)
+    os.makedirs(project_dir, exist_ok=True)
+    if with_designer_scaffold:
+        return save_project_with_designer_scaffold(
+            project,
+            project_dir,
+            overwrite=overwrite_scaffold,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_config_macros=extra_config_macros,
+            refresh_designer_resource_config=refresh_designer_resource_config,
+            remove_legacy_designer_files=remove_legacy_designer_files,
+        )
+    project.save(project_dir)
+    return {}
 
 
 def scaffold_designer_project(

@@ -13,6 +13,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CONFIG_RELPATH,
     apply_designer_project_scaffold,
     build_project_model_with_page_widgets,
+    build_project_model_with_widget,
     build_project_model_with_widgets,
     build_empty_project_model,
     build_empty_project_model_with_root,
@@ -23,6 +24,7 @@ from ui_designer.utils.scaffold import (
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
+    save_project_model,
     scaffold_designer_project,
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
@@ -349,6 +351,35 @@ class TestCoreProjectScaffold:
         assert page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
         assert project.string_catalog.get("greeting", "default") == "Hello"
 
+    def test_build_project_model_with_widget_creates_requested_widget_and_applies_customizers(self):
+        def _customize_page(page, root):
+            page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500"}]
+            assert [child.name for child in root.children] == ["cta"]
+
+        def _customize_project(project):
+            project.string_catalog.set("greeting", "Hello", "default")
+
+        project, page, widget = build_project_model_with_widget(
+            "DemoApp",
+            "button",
+            page_name="home",
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+            page_customizer=_customize_page,
+            project_customizer=_customize_project,
+        )
+
+        assert project.app_name == "DemoApp"
+        assert page.name == "home"
+        assert widget.name == "cta"
+        assert widget.widget_type == "button"
+        assert widget in page.root_widget.children
+        assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500"}]
+        assert project.string_catalog.get("greeting", "default") == "Hello"
+
     def test_build_project_model_with_page_widgets_populates_pages_and_customizers(self):
         from ui_designer.model.widget_model import WidgetModel
 
@@ -498,6 +529,43 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
         assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+
+    def test_save_project_model_saves_project_without_scaffold_when_disabled(self, tmp_path):
+        project_dir = tmp_path / "PlainSaveHelperApp"
+        project = build_empty_project_model(
+            "PlainSaveHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        actions = save_project_model(project, str(project_dir))
+
+        assert actions == {}
+        assert (project_dir / "PlainSaveHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").exists() is False
+
+    def test_save_project_model_can_include_designer_scaffold(self, tmp_path):
+        project_dir = tmp_path / "ScaffoldSaveHelperApp"
+        project = build_empty_project_model(
+            "ScaffoldSaveHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        actions = save_project_model(
+            project,
+            str(project_dir),
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions[APP_CONFIG_RELPATH] == "created"
+        assert (project_dir / "ScaffoldSaveHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
 
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
         project_dir = tmp_path / "FullApp"
