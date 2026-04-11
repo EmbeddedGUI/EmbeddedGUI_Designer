@@ -1130,6 +1130,37 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").exists() is False
 
+    def test_save_project_model_binds_sdk_root_and_runs_before_save_hook(self, tmp_path):
+        project_dir = tmp_path / "PlainSaveHookHelperApp"
+        project = build_empty_project_model(
+            "PlainSaveHookHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+        hook_calls = []
+
+        actions = save_project_model(
+            project,
+            str(project_dir),
+            sdk_root="D:/sdk",
+            before_save=lambda output_dir: hook_calls.append(
+                (output_dir, project.project_dir, project.sdk_root)
+            ),
+        )
+
+        assert actions == {}
+        assert hook_calls == [
+            (
+                os.path.normpath(str(project_dir)),
+                os.path.normpath(str(project_dir)),
+                os.path.normpath("D:/sdk"),
+            )
+        ]
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert (project_dir / "PlainSaveHookHelperApp.egui").is_file()
+
     def test_save_project_model_can_include_designer_scaffold(self, tmp_path):
         project_dir = tmp_path / "ScaffoldSaveHelperApp"
         project = build_empty_project_model(
@@ -1151,6 +1182,39 @@ class TestApplyDesignerProjectScaffold:
         assert project.project_dir == os.path.normpath(str(project_dir))
         assert (project_dir / "ScaffoldSaveHelperApp.egui").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_save_project_and_materialize_codegen_runs_before_save_hook_after_binding(self, tmp_path):
+        project_dir = tmp_path / "SavedGeneratedHookHelperApp"
+        project = build_empty_project_model(
+            "SavedGeneratedHookHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+        hook_calls = []
+
+        materialized = save_project_and_materialize_codegen(
+            project,
+            str(project_dir),
+            sdk_root="D:/sdk",
+            before_save=lambda output_dir: hook_calls.append(
+                (output_dir, project.project_dir, project.sdk_root)
+            ),
+            backup=False,
+        )
+
+        assert hook_calls == [
+            (
+                os.path.normpath(str(project_dir)),
+                os.path.normpath(str(project_dir)),
+                os.path.normpath("D:/sdk"),
+            )
+        ]
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert (project_dir / "SavedGeneratedHookHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "home.h").is_file()
+        assert "home_ext.h" in materialized.files
 
     def test_save_empty_project_with_designer_scaffold_builds_and_saves_project(self, tmp_path):
         project_dir = tmp_path / "EmptyScaffoldHelperApp"

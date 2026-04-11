@@ -1640,10 +1640,28 @@ def apply_designer_project_scaffold(
     )
 
 
+def _prepare_project_save(
+    project,
+    project_dir,
+    *,
+    sdk_root=None,
+    before_save=None,
+):
+    """Normalize a save target, bind project storage, and run an optional save hook."""
+    project_dir = os.path.normpath(project_dir)
+    os.makedirs(project_dir, exist_ok=True)
+    bind_project_storage(project, project_dir, sdk_root=sdk_root)
+    if callable(before_save):
+        before_save(project_dir)
+    return project_dir
+
+
 def save_project_with_designer_scaffold(
     project,
     project_dir,
     *,
+    sdk_root=None,
+    before_save=None,
     overwrite=False,
     color_depth=16,
     circle_radius=None,
@@ -1652,7 +1670,12 @@ def save_project_with_designer_scaffold(
     remove_legacy_designer_files=False,
 ):
     """Apply the shared Designer sidecar scaffold and save a project model."""
-    bind_project_storage(project, project_dir)
+    project_dir = _prepare_project_save(
+        project,
+        project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+    )
     actions = apply_designer_project_scaffold(
         project_dir,
         project.app_name,
@@ -1729,6 +1752,8 @@ def save_project_and_materialize_codegen(
     project,
     project_dir,
     *,
+    sdk_root=None,
+    before_save=None,
     overwrite=False,
     color_depth=16,
     circle_radius=None,
@@ -1745,6 +1770,8 @@ def save_project_and_materialize_codegen(
     save_project_with_designer_scaffold(
         project,
         project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
         overwrite=overwrite,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -1767,6 +1794,8 @@ def save_project_model(
     project,
     project_dir,
     *,
+    sdk_root=None,
+    before_save=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
     color_depth=16,
@@ -1776,13 +1805,12 @@ def save_project_model(
     remove_legacy_designer_files=False,
 ):
     """Save a project model with optional Designer scaffold sidecars."""
-    project_dir = os.path.normpath(project_dir)
-    os.makedirs(project_dir, exist_ok=True)
-    bind_project_storage(project, project_dir)
     if with_designer_scaffold:
         return save_project_with_designer_scaffold(
             project,
             project_dir,
+            sdk_root=sdk_root,
+            before_save=before_save,
             overwrite=overwrite_scaffold,
             color_depth=color_depth,
             circle_radius=circle_radius,
@@ -1790,6 +1818,12 @@ def save_project_model(
             refresh_designer_resource_config=refresh_designer_resource_config,
             remove_legacy_designer_files=remove_legacy_designer_files,
         )
+    project_dir = _prepare_project_save(
+        project,
+        project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+    )
     project.save(project_dir)
     return {}
 

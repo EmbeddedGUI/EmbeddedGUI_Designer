@@ -4591,16 +4591,19 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{e}")
 
     def _persist_designer_state_only(self, project_dir):
-        bind_project_storage(self.project, project_dir, sdk_root=self.project_root)
-        self._load_project_app_local_widgets(project_dir)
-        save_project_model(self.project, project_dir)
+        save_project_model(
+            self.project,
+            project_dir,
+            sdk_root=self.project_root,
+            before_save=self._load_project_app_local_widgets,
+        )
 
     def _save_project_files(self, project_dir, *, reset_scaffold=False):
-        bind_project_storage(self.project, project_dir, sdk_root=self.project_root)
-        self._load_project_app_local_widgets(project_dir)
         materialized = save_project_and_materialize_codegen(
             self.project,
             project_dir,
+            sdk_root=self.project_root,
+            before_save=self._load_project_app_local_widgets,
             overwrite=reset_scaffold,
             remove_legacy_designer_files=True,
             backup=True,
