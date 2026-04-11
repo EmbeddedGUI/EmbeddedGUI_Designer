@@ -1020,8 +1020,8 @@ class TestMainWindowFileFlow:
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
-        nested.add_child(target)
-        container.add_child(nested)
+        _add_widget_children(nested, [target])
+        _add_widget_children(container, [nested])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "TreeRevealDemo",
@@ -1056,8 +1056,8 @@ class TestMainWindowFileFlow:
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
-        nested.add_child(target)
-        container.add_child(nested)
+        _add_widget_children(nested, [target])
+        _add_widget_children(container, [nested])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "TreeCollapseStateDemo",
@@ -1205,8 +1205,7 @@ class TestMainWindowFileFlow:
         container = WidgetModel("group", name="container")
         child_a = WidgetModel("switch", name="child_a")
         child_b = WidgetModel("button", name="child_b")
-        container.add_child(child_a)
-        container.add_child(child_b)
+        _add_widget_children(container, [child_a, child_b])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "TreeSelectActionDemo",

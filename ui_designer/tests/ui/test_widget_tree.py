@@ -1634,7 +1634,7 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         child = WidgetModel("label", name="child")
         tail = WidgetModel("label", name="tail")
-        container.add_child(child)
+        _add_widget_children(container, [child])
         project, _page, root = _build_project_with_widgets(widgets=[container, tail])
 
         panel = WidgetTreePanel()
@@ -1784,8 +1784,8 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         deep_child = WidgetModel("label", name="deep_child")
-        nested.add_child(deep_child)
-        container.add_child(nested)
+        _add_widget_children(nested, [deep_child])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[source, container])
 
         panel = WidgetTreePanel()
@@ -1809,7 +1809,7 @@ class TestWidgetTreePanel:
         sibling = WidgetModel("label", name="sibling")
         container = WidgetModel("group", name="container")
         child = WidgetModel("label", name="child")
-        container.add_child(child)
+        _add_widget_children(container, [child])
         project, _page, root = _build_project_with_widgets(widgets=[source, sibling, container])
 
         panel = WidgetTreePanel()
@@ -2069,8 +2069,8 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("label", name="target")
-        nested.add_child(target)
-        container.add_child(nested)
+        _add_widget_children(nested, [target])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
@@ -2095,7 +2095,7 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         target = WidgetModel("label", name="target_label")
         other = WidgetModel("button", name="other_button")
-        container.add_child(target)
+        _add_widget_children(container, [target])
         project, _page, root = _build_project_with_widgets(widgets=[container, other])
 
         panel = WidgetTreePanel()
@@ -2386,8 +2386,8 @@ class TestWidgetTreePanel:
 
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
-        nested.add_child(WidgetModel("label", name="target"))
-        container.add_child(nested)
+        _add_widget_children(nested, [WidgetModel("label", name="target")])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
@@ -2410,8 +2410,8 @@ class TestWidgetTreePanel:
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("label", name="target")
-        nested.add_child(target)
-        container.add_child(nested)
+        _add_widget_children(nested, [target])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
@@ -2438,8 +2438,8 @@ class TestWidgetTreePanel:
 
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
-        nested.add_child(WidgetModel("label", name="target"))
-        container.add_child(nested)
+        _add_widget_children(nested, [WidgetModel("label", name="target")])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
@@ -2460,8 +2460,8 @@ class TestWidgetTreePanel:
 
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
-        nested.add_child(WidgetModel("label", name="target"))
-        container.add_child(nested)
+        _add_widget_children(nested, [WidgetModel("label", name="target")])
+        _add_widget_children(container, [nested])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
