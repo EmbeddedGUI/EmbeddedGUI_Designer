@@ -197,7 +197,7 @@ class TestMainWindowFileFlow:
         captured = {}
 
         def fake_open_loaded_project(project, project_root, preferred_sdk_root="", silent=False):
-            root = project.get_startup_page().root_widget
+            _page, root = require_project_page_root(project)
             child = root.children[0]
             captured["widget_type"] = child.widget_type
             captured["text"] = child.properties["text"]
@@ -2889,7 +2889,8 @@ class TestMainWindowFileFlow:
         export_dir = tmp_path / "export_out"
         export_dir.mkdir()
         project = _create_project(project_dir, "ExportBlockedDemo", sdk_root)
-        project.get_startup_page().root_widget.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
+        _page, root = require_project_page_root(project)
+        root.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
         project.save(str(project_dir))
 
         warnings = []
@@ -2920,9 +2921,10 @@ class TestMainWindowFileFlow:
         export_dir = tmp_path / "export_out"
         export_dir.mkdir()
         project = _create_project(project_dir, "ExportLegacyDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
         button.on_click = "on_confirm"
-        project.get_startup_page().root_widget.add_child(button)
+        root.add_child(button)
         project.save(str(project_dir))
 
         (export_dir / "main_page.h").write_text(
@@ -3327,7 +3329,8 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CompileBlockedDemo"
         project = _create_project(project_dir, "CompileBlockedDemo", sdk_root)
-        project.get_startup_page().root_widget.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
+        _page, root = require_project_page_root(project)
+        root.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
         project.save(str(project_dir))
 
         class CompileFailIfCalled:
@@ -4849,8 +4852,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditHintsDemo"
         project = _create_project(project_dir, "EditHintsDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow("")
@@ -5086,8 +5090,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditCategoryHintsDemo"
         project = _create_project(project_dir, "EditCategoryHintsDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow("")
@@ -5267,10 +5272,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeCategoryHintsDemo"
         project = _create_project(project_dir, "ArrangeCategoryHintsDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
-        project.get_startup_page().root_widget.add_child(first)
-        project.get_startup_page().root_widget.add_child(second)
+        root.add_child(first)
+        root.add_child(second)
         project.save(str(project_dir))
 
         window = MainWindow("")
@@ -5310,12 +5316,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureCategoryHintsDemo"
         project = _create_project(project_dir, "StructureCategoryHintsDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
         target = WidgetModel("group", name="target_group", x=24, y=72, width=200, height=120)
-        project.get_startup_page().root_widget.add_child(first)
-        project.get_startup_page().root_widget.add_child(second)
-        project.get_startup_page().root_widget.add_child(target)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
         project.save(str(project_dir))
 
         window = MainWindow("")
@@ -9766,14 +9773,14 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project)
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project.get_startup_page().root_widget.add_child(main_button)
-        detail_page.root_widget.add_child(detail_button)
+        main_root.add_child(main_button)
+        detail_root.add_child(detail_button)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
