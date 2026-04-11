@@ -31,7 +31,7 @@ import re
 import subprocess
 import sys
 
-from ui_designer.model.workspace import require_designer_sdk_root, serialize_sdk_root
+from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
@@ -51,6 +51,7 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_designer_project,
+    scaffold_designer_project_with_sdk_root,
     legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,
 )
@@ -265,13 +266,12 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
         return app_dir
 
     print(f"Creating app scaffold: {app_name}")
-    sdk_root_rel = serialize_sdk_root(app_dir, sdk_root)
-    scaffold_designer_project(
+    scaffold_designer_project_with_sdk_root(
         app_dir,
         app_name,
+        sdk_root,
         width,
         height,
-        stored_sdk_root=sdk_root_rel,
         **_helper_scaffold_kwargs(width, height),
     )
     return app_dir
@@ -328,17 +328,14 @@ def cmd_scaffold(args):
     height = args.height
     color_depth = args.color_depth
 
-    # Compute relative sdk_root path from app_dir
-    sdk_root_rel = serialize_sdk_root(app_dir, sdk_root)
-
     # Create directories
     pages = normalize_scaffold_pages(args.pages.split(",") if args.pages else None)
-    scaffold_actions = scaffold_designer_project(
+    scaffold_actions = scaffold_designer_project_with_sdk_root(
         app_dir,
         args.app,
+        sdk_root,
         width,
         height,
-        stored_sdk_root=sdk_root_rel,
         pages=pages,
         **_helper_scaffold_kwargs(width, height, color_depth=color_depth),
     )

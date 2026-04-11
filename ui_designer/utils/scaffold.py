@@ -914,3 +914,37 @@ def scaffold_designer_project(
         )
     )
     return actions
+
+
+def scaffold_designer_project_with_sdk_root(
+    project_dir,
+    app_name,
+    sdk_root,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Apply the complete shared Designer scaffold using a relative stored SDK root."""
+    from ..model.workspace import serialize_sdk_root
+
+    return scaffold_designer_project(
+        project_dir,
+        app_name,
+        screen_width,
+        screen_height,
+        stored_sdk_root=serialize_sdk_root(project_dir, sdk_root),
+        pages=pages,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )

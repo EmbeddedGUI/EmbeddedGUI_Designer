@@ -205,7 +205,7 @@ class TestHelperResourceSync:
         existing_app_dir.mkdir(parents=True)
         calls = []
 
-        monkeypatch.setattr(h, "scaffold_designer_project", lambda *args, **kwargs: calls.append((args, kwargs)))
+        monkeypatch.setattr(h, "scaffold_designer_project_with_sdk_root", lambda *args, **kwargs: calls.append((args, kwargs)))
 
         existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
         created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)
@@ -217,13 +217,10 @@ class TestHelperResourceSync:
         assert args == (
             str(sdk_root / "example" / "NewApp"),
             "NewApp",
+            str(sdk_root),
             320,
             240,
         )
-        assert kwargs["stored_sdk_root"] == os.path.relpath(
-            sdk_root,
-            sdk_root / "example" / "NewApp",
-        ).replace("\\", "/")
         assert kwargs["overwrite"] is True
         assert kwargs["color_depth"] == 16
         assert kwargs["extra_config_macros"] == [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")]

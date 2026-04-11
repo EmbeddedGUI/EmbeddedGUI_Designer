@@ -22,6 +22,7 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_designer_project,
+    scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
@@ -457,3 +458,21 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / ".eguiproject" / "resources" / "images").is_dir()
         assert (project_dir / "resource" / "img").is_dir()
         assert (project_dir / "resource" / "font").is_dir()
+
+    def test_scaffold_designer_project_with_sdk_root_serializes_relative_sdk_path(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        project_dir = sdk_root / "example" / "SdkApp"
+
+        actions = scaffold_designer_project_with_sdk_root(
+            str(project_dir),
+            "SdkApp",
+            str(sdk_root),
+            320,
+            240,
+            overwrite=True,
+        )
+        egui_content = (project_dir / "SdkApp.egui").read_text(encoding="utf-8")
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions["SdkApp.egui"] == "created"
+        assert 'sdk_root="../.."' in egui_content
