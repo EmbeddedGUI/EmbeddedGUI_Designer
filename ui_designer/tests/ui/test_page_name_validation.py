@@ -11,8 +11,7 @@ Covers:
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root
-from ui_designer.tests.project_builders import build_test_project_from_pages
+from ui_designer.tests.project_builders import build_test_project_with_page_root
 
 
 class TestReservedPageNames:
@@ -101,12 +100,8 @@ class TestPageNameGeneratesConflictingSymbol:
     def test_page_init_func_name_follows_pattern(self):
         """Generated init func follows egui_{page}_init pattern."""
         from ui_designer.generator.code_generator import generate_page_user_source
-        from ui_designer.model.widget_model import WidgetModel
 
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        # Use a safe name to verify the pattern
-        page = build_test_page_from_root("my_screen", root=root)
-        proj = build_test_project_from_pages([page])
+        proj, page, _root = build_test_project_with_page_root(page_name="my_screen")
 
         output = generate_page_user_source(page, proj)
         # The user source defines egui_my_screen_user_init(egui_my_screen_t *page)
@@ -118,11 +113,8 @@ class TestPageNameGeneratesConflictingSymbol:
         This confirms the reserved name is necessary.
         """
         from ui_designer.generator.code_generator import generate_page_user_source
-        from ui_designer.model.widget_model import WidgetModel
 
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = build_test_page_from_root("test", root=root)
-        proj = build_test_project_from_pages([page])
+        proj, page, _root = build_test_project_with_page_root(page_name="test")
 
         output = generate_page_user_source(page, proj)
         # This user hook name still collides on the egui_test prefix, which is
