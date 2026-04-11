@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from ui_designer.utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     APP_CONFIG_RELPATH,
@@ -227,6 +229,40 @@ class TestCoreProjectScaffold:
         assert root is page.root_widget
         assert root.width == 320
         assert root.height == 240
+
+    def test_require_project_page_root_raises_when_startup_page_is_missing(self):
+        from ui_designer.model.project import Project
+
+        project = Project(app_name="DemoApp")
+        project.startup_page = "home"
+
+        with pytest.raises(RuntimeError, match="Scaffold project did not create a startup page"):
+            require_project_page_root(project)
+
+    def test_require_project_page_root_raises_when_named_page_is_missing(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        with pytest.raises(RuntimeError, match="Scaffold project did not create page 'settings'"):
+            require_project_page_root(project, "settings")
+
+    def test_require_project_page_root_raises_when_page_root_is_missing(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            pages=["home"],
+        )
+        page = project.get_page_by_name("home")
+        assert page is not None
+        page.root_widget = None
+
+        with pytest.raises(RuntimeError, match="Scaffold page 'home' did not create a root widget"):
+            require_project_page_root(project, "home")
 
     def test_build_empty_project_model_with_root_returns_project_page_and_root(self):
         project, page, root = build_empty_project_model_with_root(
