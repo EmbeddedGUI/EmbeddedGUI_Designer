@@ -806,6 +806,43 @@ def _ensure_and_update_resource_config(
     return created
 
 
+def _sync_app_pngs_and_update_resource_config(
+    sdk_root,
+    app_name,
+    output_dir,
+    filenames,
+    *,
+    image_size,
+    image_format="rgb565",
+    image_alpha="4",
+    reserved_label="asset",
+    entry_label="image",
+    synced_label="assets",
+):
+    """Sync exported PNGs into an app resource/src/ and update its overlay config."""
+    app_dir = _get_app_dir(sdk_root, app_name)
+    src_dir = _get_app_resource_src_dir(app_dir)
+    synced_filenames = _sync_exported_pngs(
+        output_dir,
+        src_dir,
+        filenames,
+        reserved_label=reserved_label,
+    )
+    print(f"  Synced {len(synced_filenames)} {synced_label} to {src_dir}")
+    created = False
+    if synced_filenames:
+        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+        created = _ensure_and_update_resource_config(
+            config_path,
+            synced_filenames,
+            image_size,
+            image_format=image_format,
+            image_alpha=image_alpha,
+            entry_label=entry_label,
+        )
+    return synced_filenames, src_dir, created
+
+
 def cmd_export_icons(args):
     """Extract Material Symbols from HTML, render as PNG, update resource config."""
     html = _read_required_text_file(args.input, error_label="HTML file")
@@ -877,29 +914,30 @@ def cmd_export_icons(args):
 
     # Sync PNGs to resource/src/ if using --app (designer workflow)
     if app_name:
-        app_dir = _get_app_dir(sdk_root, app_name)
-        src_dir = _get_app_resource_src_dir(app_dir)
-        synced_filenames = _sync_exported_pngs(
+        synced_filenames, src_dir, created = _sync_app_pngs_and_update_resource_config(
+            sdk_root,
+            app_name,
             output_dir,
-            src_dir,
             icon_filenames,
+            image_size=size,
+            image_format=getattr(args, "image_format", "alpha"),
             reserved_label="icon",
+            entry_label="icon",
+            synced_label="icons",
         )
-        print(f"  Synced {len(synced_filenames)} icons to {src_dir}")
-        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+        if created:
+            print(f"  Created new: {os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)}")
     else:
         config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
         synced_filenames = list(icon_filenames)
-
-    # Update resource config
-    if _ensure_and_update_resource_config(
-        config_path,
-        synced_filenames,
-        size,
-        image_format=getattr(args, "image_format", "alpha"),
-        entry_label="icon",
-    ):
-        print(f"  Created new: {config_path}")
+        if _ensure_and_update_resource_config(
+            config_path,
+            synced_filenames,
+            size,
+            image_format=getattr(args, "image_format", "alpha"),
+            entry_label="icon",
+        ):
+            print(f"  Created new: {config_path}")
 
     if app_name:
         _print_numbered_steps([
@@ -1302,25 +1340,16 @@ def cmd_export_svgs(args):
 
     # Sync to resource/src/ if using --app
     if app_name and exported_names:
-        app_dir = _get_app_dir(sdk_root, app_name)
-        src_dir = _get_app_resource_src_dir(app_dir)
-        synced_filenames = _sync_exported_pngs(
+        _synced_filenames, _src_dir, _created = _sync_app_pngs_and_update_resource_config(
+            sdk_root,
+            app_name,
             output_dir,
-            src_dir,
             exported_filenames,
+            image_size=size,
+            image_format=getattr(args, "image_format", "rgb565"),
             reserved_label="SVG",
+            synced_label="SVG PNGs",
         )
-        print(f"  Synced {len(synced_filenames)} SVG PNGs to {src_dir}")
-
-        # Update resource config
-        if synced_filenames:
-            config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-            _ensure_and_update_resource_config(
-                config_path,
-                synced_filenames,
-                size,
-                image_format=getattr(args, "image_format", "rgb565"),
-            )
 
 
 # ── Sub-command: extract-text ─────────────────────────────────────

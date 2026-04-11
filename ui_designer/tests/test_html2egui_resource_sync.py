@@ -333,6 +333,33 @@ class TestHelperResourceSync:
         assert saved["img"][0]["format"] == "alpha"
         assert saved["img"][0]["dim"] == "24,24"
 
+    def test_sync_app_pngs_and_update_resource_config_syncs_files_and_updates_overlay(self, tmp_path):
+        sdk_root = tmp_path / "sdk"
+        output_dir = tmp_path / "out"
+        output_dir.mkdir()
+        (output_dir / "icon_alarm.png").write_bytes(b"PNG")
+
+        synced, src_dir, created = h._sync_app_pngs_and_update_resource_config(
+            str(sdk_root),
+            "DemoApp",
+            str(output_dir),
+            ["icon_alarm.png"],
+            image_size=24,
+            image_format="alpha",
+            reserved_label="icon",
+            entry_label="icon",
+            synced_label="icons",
+        )
+
+        config_path = sdk_root / "example" / "DemoApp" / "resource" / "src" / "app_resource_config.json"
+        saved = json.loads(config_path.read_text(encoding="utf-8"))
+        assert synced == ["icon_alarm.png"]
+        assert src_dir == str(sdk_root / "example" / "DemoApp" / "resource" / "src")
+        assert created is True
+        assert (config_path.parent / "icon_alarm.png").is_file()
+        assert saved["img"][0]["file"] == "icon_alarm.png"
+        assert saved["img"][0]["format"] == "alpha"
+
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
         sdk_root = tmp_path / "sdk"
         tools_dir = sdk_root / "scripts" / "tools"
