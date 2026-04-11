@@ -22,7 +22,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from ui_designer.engine.compiler import CompilerEngine
-from ui_designer.generator.code_generator import generate_all_files_preserved
+from ui_designer.generator.code_generator import generate_all_files, generate_all_files_preserved
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
@@ -30,7 +30,9 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
+    cleanup_legacy_designer_codegen_files,
     save_project_model,
+    write_generated_project_files,
 )
 
 
@@ -295,13 +297,19 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
         files = generate_all_files_preserved(project, str(app_dir), backup=False)
         files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)
+        all_generated_files = generate_all_files(project)
+        written = write_generated_project_files(str(app_dir), files, newline="\n")
+        cleanup_legacy_designer_codegen_files(
+            str(app_dir),
+            all_generated_files,
+            remove_stale_strings=not project.string_catalog.has_strings,
+        )
 
         compiler = CompilerEngine(resolved_sdk_root, str(app_dir), APP_NAME)
         compiler.set_screen_size(SCREEN_WIDTH, SCREEN_HEIGHT)
         if not compiler.can_build():
             raise RuntimeError(compiler.get_build_error() or "preview compiler is not buildable")
 
-        written = compiler.write_project_files(files)
         print_status(True, f"generated {len(written)} source files")
 
         success, output = compiler.compile()
