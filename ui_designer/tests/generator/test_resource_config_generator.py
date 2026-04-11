@@ -4,7 +4,7 @@ import json
 import os
 import pytest
 
-from ui_designer.tests.project_builders import build_test_project_with_root
+from ui_designer.tests.project_builders import build_test_project_with_widgets
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
@@ -16,13 +16,11 @@ from ui_designer.utils.resource_config_overlay import (
 
 def _make_project_with_widgets(widgets, screen_w=240, screen_h=320):
     """Helper: create a project with a single page containing given widgets."""
-    project, root = build_test_project_with_root(
+    project, _page, _root = build_test_project_with_widgets(
         screen_width=screen_w,
         screen_height=screen_h,
+        widgets=widgets,
     )
-    root.name = "root"
-    for w in widgets:
-        root.add_child(w)
     return project
 
 
@@ -30,8 +28,7 @@ class TestEmptyProject:
     """Test generation with empty project."""
 
     def test_empty_project_generates_empty_config(self):
-        proj, root = build_test_project_with_root("Empty")
-        root.name = "root"
+        proj, _page, _root = build_test_project_with_widgets("Empty")
 
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
