@@ -45,12 +45,11 @@ class TestXmlSerialization:
     """Tests for XML round-trip serialization."""
 
     def test_to_xml_from_xml_round_trip(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        original, root = build_test_page_with_root("test_page")
         child = WidgetModel("label", name="title_label", x=10, y=10, width=200, height=30)
         child.properties["text"] = "Hello World"
         root.add_child(child)
 
-        original = build_test_page_from_root("test_page", root=root)
         xml_str = original.to_xml_string()
 
         restored = Page.from_xml_string(xml_str, file_path="layout/test_page.xml")
