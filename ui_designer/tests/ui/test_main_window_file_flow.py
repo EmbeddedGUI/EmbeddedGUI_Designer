@@ -14449,7 +14449,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSubtreeTypeContextMenuDemo"
         project = _create_project(project_dir, "PreviewSubtreeTypeContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
@@ -14488,7 +14488,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameDepthContextMenuDemo"
         project = _create_project(project_dir, "PreviewSameDepthContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         branch_a = WidgetModel("group", name="branch_a", x=8, y=8, width=80, height=80)
         branch_b = WidgetModel("group", name="branch_b", x=100, y=8, width=80, height=80)
         leaf_a = WidgetModel("label", name="leaf_a", x=4, y=4, width=40, height=16)
