@@ -15,8 +15,11 @@ Covers scenarios not in test_code_generator.py:
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root
-from ui_designer.tests.project_builders import build_test_project_from_pages
+from ui_designer.tests.page_builders import build_test_pages
+from ui_designer.tests.project_builders import (
+    build_test_project_from_pages,
+    build_test_project_with_page_root,
+)
 from ui_designer.model.widget_model import WidgetModel, AnimationModel
 from ui_designer.generator.code_generator import (
     _gen_widget_init_lines,
@@ -32,10 +35,6 @@ from ui_designer.utils.scaffold import APP_CONFIG_DESIGNER_RELPATH
 
 # ── helpers ─────────────────────────────────────────────────────
 
-def _simple_root():
-    return WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-
-
 # ======================================================================
 # TestMinimalPage
 # ======================================================================
@@ -44,24 +43,18 @@ class TestMinimalPage:
     """Page with root-only (no children) must still generate valid files."""
 
     def test_header_root_only(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("bare_page", root=root)
-        proj = build_test_project_from_pages([pg])
+        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
         h = generate_page_header(pg, proj)
         assert "#ifndef _BARE_PAGE_H_" in h
         assert "egui_view_group_t root_group;" in h
 
     def test_layout_source_root_only(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("bare_page", root=root)
-        proj = build_test_project_from_pages([pg])
+        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
         out = generate_page_layout_source(pg, proj)
         assert "egui_view_group_init" in out
 
     def test_user_source_root_only(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("bare_page", root=root)
-        proj = build_test_project_from_pages([pg])
+        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
         out = generate_page_user_source(pg, proj)
         assert "egui_bare_page_user_on_open" in out
 
@@ -74,13 +67,11 @@ class TestInitWithParamsWidgets:
     """Widgets that use init_with_params pattern."""
 
     def _do(self, widget_type, extra_props=None):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="test_page")
         w = WidgetModel(widget_type, name="wgt", x=10, y=10, width=100, height=40)
         if extra_props:
             w.properties.update(extra_props)
         root.add_child(w)
-        pg = build_test_page_from_root("test_page", root=root)
-        proj = build_test_project_from_pages([pg])
         return generate_page_layout_source(pg, proj)
 
     def test_slider_init_with_params(self):
@@ -128,7 +119,7 @@ class TestWidgetWithBothAnimAndEvent:
     """Widget with both animation and event handler — both must appear in output."""
 
     def test_anim_and_event_both_emitted(self):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="combo_page")
         btn = WidgetModel("button", name="combo_btn", x=0, y=0, width=80, height=40)
         btn.on_click = "on_btn_click"
         anim = AnimationModel()
@@ -137,8 +128,6 @@ class TestWidgetWithBothAnimAndEvent:
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         btn.animations.append(anim)
         root.add_child(btn)
-        pg = build_test_page_from_root("combo_page", root=root)
-        proj = build_test_project_from_pages([pg])
 
         layout = generate_page_layout_source(pg, proj)
         assert "set_on_click_listener" in layout
@@ -154,28 +143,26 @@ class TestUicodeStartupEdgeCases:
     """Startup page index edge cases."""
 
     def test_startup_is_first_page_by_default(self):
-        p1 = build_test_page_from_root("first_page", root=_simple_root())
-        p2 = build_test_page_from_root("second_page", root=_simple_root())
+        p1, p2 = build_test_pages("first_page", "second_page")
         proj = build_test_project_from_pages([p1, p2], startup_page="first_page")
         out = generate_uicode_source(proj)
         assert "current_index = 0" in out
 
     def test_startup_is_second_page(self):
-        p1 = build_test_page_from_root("intro", root=_simple_root())
-        p2 = build_test_page_from_root("main_page", root=_simple_root())
+        p1, p2 = build_test_pages("intro", "main_page")
         proj = build_test_project_from_pages([p1, p2], startup_page="main_page")
         out = generate_uicode_source(proj)
         assert "current_index = 1" in out
 
     def test_uicode_header_page_count_matches(self):
-        pages = [build_test_page_from_root(f"page_{i}", root=_simple_root()) for i in range(4)]
+        pages = list(build_test_pages(*(f"page_{i}" for i in range(4))))
         proj = build_test_project_from_pages(pages)
         out = generate_uicode_header(proj)
         assert "PAGE_COUNT = 4" in out
 
     def test_activity_mode_init_func_name(self):
-        pg = build_test_page_from_root("main_page", root=_simple_root())
-        proj = build_test_project_from_pages([pg], page_mode="activity")
+        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
+        proj.page_mode = "activity"
         out = generate_uicode_source(proj)
         # Activity mode should generate activity registration
         assert "main_page_activity" in out
@@ -189,19 +176,15 @@ class TestAppEguiConfigContent:
     """app_egui_config_designer.h generated with correct dimensions."""
 
     def test_config_has_correct_dimensions_240x320(self):
-        pg = build_test_page_from_root("main_page", root=_simple_root())
-        proj = build_test_project_from_pages([pg], app_name="App")
+        proj, _pg, _root = build_test_project_with_page_root("App")
         files = generate_all_files(proj)
         c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "240" in c
         assert "320" in c
 
     def test_config_has_correct_dimensions_480x272(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=480, height=272)
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages(
-            [pg],
-            app_name="WideApp",
+        proj, _pg, _root = build_test_project_with_page_root(
+            "WideApp",
             screen_width=480,
             screen_height=272,
         )
@@ -211,8 +194,7 @@ class TestAppEguiConfigContent:
         assert "272" in c
 
     def test_config_has_pfb_macros(self):
-        pg = build_test_page_from_root("main_page", root=_simple_root())
-        proj = build_test_project_from_pages([pg], app_name="App")
+        proj, _pg, _root = build_test_project_with_page_root("App")
         files = generate_all_files(proj)
         c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "EGUI_CONFIG_PFB_WIDTH" in c
@@ -249,26 +231,22 @@ class TestSiblingWidgetsSameType:
     """Multiple widgets of the same type on one page must all appear in header struct."""
 
     def test_three_labels_in_header(self):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="multi_label")
         for idx, name in enumerate(["title_lbl", "subtitle_lbl", "desc_lbl"]):
             root.add_child(WidgetModel("label", name=name, x=0, y=idx*40, width=240, height=30))
-        pg = build_test_page_from_root("multi_label", root=root)
-        proj = build_test_project_from_pages([pg])
         h = generate_page_header(pg, proj)
         assert "egui_view_label_t title_lbl;" in h
         assert "egui_view_label_t subtitle_lbl;" in h
         assert "egui_view_label_t desc_lbl;" in h
 
     def test_two_buttons_both_in_layout(self):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="two_btns")
         b1 = WidgetModel("button", name="ok_btn", x=0, y=0, width=80, height=40)
         b2 = WidgetModel("button", name="cancel_btn", x=100, y=0, width=80, height=40)
         b1.properties["text"] = "OK"
         b2.properties["text"] = "Cancel"
         root.add_child(b1)
         root.add_child(b2)
-        pg = build_test_page_from_root("two_btns", root=root)
-        proj = build_test_project_from_pages([pg])
         layout = generate_page_layout_source(pg, proj)
         assert "ok_btn" in layout
         assert "cancel_btn" in layout
@@ -284,17 +262,15 @@ class TestPageHeaderActivityMode:
     """Activity mode pages should have activity-specific declarations."""
 
     def test_header_exists_for_activity_mode(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([pg], page_mode="activity")
+        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
+        proj.page_mode = "activity"
         h = generate_page_header(pg, proj)
         # header guard must always exist
         assert "#ifndef _MAIN_PAGE_H_" in h
 
     def test_user_source_activity_mode(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([pg], page_mode="activity")
+        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
+        proj.page_mode = "activity"
         src = generate_page_user_source(pg, proj)
         # activity mode produces on_create / on_start style
         assert "egui_main_page" in src
@@ -311,32 +287,25 @@ class TestWellFormedCOutput:
         return code.count("{") == code.count("}")
 
     def test_header_balanced_braces(self):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="main_page")
         child = WidgetModel("button", name="btn", x=0, y=0, width=80, height=40)
         root.add_child(child)
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([pg])
         h = generate_page_header(pg, proj)
         assert self._check_balanced_braces(h), "Header has unbalanced braces"
 
     def test_layout_source_balanced_braces(self):
-        root = _simple_root()
+        proj, pg, root = build_test_project_with_page_root(page_name="main_page")
         child = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         root.add_child(child)
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([pg])
         out = generate_page_layout_source(pg, proj)
         assert self._check_balanced_braces(out)
 
     def test_user_source_balanced_braces(self):
-        root = _simple_root()
-        pg = build_test_page_from_root("main_page", root=root)
-        proj = build_test_project_from_pages([pg])
+        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
         out = generate_page_user_source(pg, proj)
         assert self._check_balanced_braces(out)
 
     def test_uicode_source_balanced_braces(self):
-        pg = build_test_page_from_root("main_page", root=_simple_root())
-        proj = build_test_project_from_pages([pg])
+        proj, _pg, _root = build_test_project_with_page_root(page_name="main_page")
         out = generate_uicode_source(proj)
         assert self._check_balanced_braces(out)
