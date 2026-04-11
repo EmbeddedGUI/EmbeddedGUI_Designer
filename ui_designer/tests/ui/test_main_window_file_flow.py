@@ -12869,8 +12869,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         solo = WidgetModel("label", name="solo", x=140, y=24, width=40, height=16)
-        container.add_child(child_a)
-        container.add_child(child_b)
+        _add_widget_children(container, [child_a, child_b])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewSelectMenuRelationshipsDemo",

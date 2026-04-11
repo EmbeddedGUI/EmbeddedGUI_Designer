@@ -128,9 +128,8 @@ class TestWidgetTreePanel:
         nested = WidgetModel("group", name="nested")
         leaf = WidgetModel("label", name="leaf")
         nested_leaf = WidgetModel("button", name="nested_leaf")
-        branch.add_child(leaf)
-        branch.add_child(nested)
-        nested.add_child(nested_leaf)
+        _add_widget_children(branch, [leaf, nested])
+        _add_widget_children(nested, [nested_leaf])
         project, _page, root = _build_project_with_widgets(widgets=[branch])
 
         panel = WidgetTreePanel()
@@ -597,7 +596,7 @@ class TestWidgetTreePanel:
 
         container = WidgetModel("group", name="container")
         child = WidgetModel("label", name="title")
-        container.add_child(child)
+        _add_widget_children(container, [child])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
