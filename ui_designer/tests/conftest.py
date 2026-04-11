@@ -8,6 +8,7 @@ import pytest
 from .page_builders import build_test_page_from_root
 from .project_builders import build_test_project, build_test_project_from_pages
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
+from ui_designer.utils.scaffold import require_project_page_root
 
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
 _TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -181,15 +182,8 @@ def multi_page_project():
     from ui_designer.model.widget_model import WidgetModel
     proj = build_test_project("MultiPageApp", pages=["main_page", "settings"])
 
-    page1 = proj.get_page_by_name("main_page")
-    page2 = proj.get_page_by_name("settings")
-    assert page1 is not None
-    assert page2 is not None
-
-    root1 = page1.root_widget
-    root2 = page2.root_widget
-    assert root1 is not None
-    assert root2 is not None
+    _page1, root1 = require_project_page_root(proj, "main_page")
+    _page2, root2 = require_project_page_root(proj, "settings")
 
     label1 = WidgetModel("label", name="title", x=10, y=10, width=220, height=30)
     label1.properties["text"] = "Page One"

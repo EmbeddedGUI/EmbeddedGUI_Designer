@@ -28,6 +28,7 @@ from ui_designer.utils.scaffold import (
     UICODE_SOURCE_RELPATH,
     designer_page_header_relpath,
     designer_page_layout_relpath,
+    require_project_page_root,
 )
 
 
@@ -118,7 +119,8 @@ class TestUserOwnedFiles:
 
     def test_legacy_designer_managed_user_source_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
-        proj.get_page_by_name("main_page").timers = [
+        page, _root = require_project_page_root(proj)
+        page.timers = [
             {
                 "name": "refresh_timer",
                 "callback": "tick_refresh",
@@ -213,10 +215,10 @@ class TestUserOwnedFiles:
 
     def test_legacy_user_code_callbacks_source_is_rejected(self, tmp_path):
         proj = _make_project_with_page("main_page")
-        page = proj.get_page_by_name("main_page")
+        page, root = require_project_page_root(proj)
         button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
         button.on_click = "on_confirm_button_click"
-        page.root_widget.add_child(button)
+        root.add_child(button)
 
         user_file = tmp_path / "main_page.c"
         user_file.write_text(
