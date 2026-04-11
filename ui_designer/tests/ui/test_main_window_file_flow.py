@@ -13641,8 +13641,7 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
-        container.add_child(child_a)
-        container.add_child(child_b)
+        _add_widget_children(container, [child_a, child_b])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewSelectContextMenuDemo",
@@ -13682,9 +13681,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(child_c)
+        _add_widget_children(container, [child_a, child_b, child_c])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewParentAndSiblingsContextMenuDemo",
@@ -13732,9 +13729,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(child_c)
+        _add_widget_children(container, [child_a, child_b, child_c])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewSiblingTraversalContextMenuDemo",
@@ -13782,9 +13777,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(child_c)
+        _add_widget_children(container, [child_a, child_b, child_c])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewSiblingRangeContextMenuDemo",
@@ -13836,9 +13829,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(child_c)
+        _add_widget_children(container, [child_a, child_b, child_c])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewChildTraversalContextMenuDemo",
@@ -13886,8 +13877,7 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
-        container.add_child(child_a)
-        container.add_child(child_b)
+        _add_widget_children(container, [child_a, child_b])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewTreeTraversalContextMenuDemo",
@@ -13940,9 +13930,8 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(child_a)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [child_a, nested_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewDescendantsContextMenuDemo",
@@ -13981,8 +13970,8 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [nested_group])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewAncestorsContextMenuDemo",
@@ -14021,8 +14010,8 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [nested_group])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewRootContextMenuDemo",
@@ -14061,8 +14050,8 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [nested_group])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewPathContextMenuDemo",
@@ -14102,8 +14091,8 @@ class TestMainWindowCanvasActions:
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         same_type = WidgetModel("button", name="same_type", x=8, y=120, width=48, height=20)
-        nested_group.add_child(nested_leaf)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [nested_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewTopLevelContextMenuDemo",
@@ -14143,9 +14132,8 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(child_a)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [child_a, nested_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewSubtreeContextMenuDemo",
@@ -14186,10 +14174,8 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=52, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [child_a, child_b, nested_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewLeavesContextMenuDemo",
@@ -14229,9 +14215,8 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(child_a)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [child_a, nested_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewContainersContextMenuDemo",
@@ -14276,10 +14261,8 @@ class TestMainWindowCanvasActions:
         locked_group.designer_locked = True
         locked_leaf = WidgetModel("switch", name="locked_leaf", x=2, y=2, width=32, height=16)
         locked_leaf.designer_locked = True
-        locked_group.add_child(locked_leaf)
-        container.add_child(hidden_self)
-        container.add_child(hidden_leaf)
-        container.add_child(locked_group)
+        _add_widget_children(locked_group, [locked_leaf])
+        _add_widget_children(container, [hidden_self, hidden_leaf, locked_group])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewStateContextMenuDemo",
@@ -14585,8 +14568,8 @@ class TestMainWindowCanvasActions:
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
-        nested_group.add_child(nested_leaf)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [nested_group])
         project, _page, root = _create_project_with_widgets(
             project_dir,
             "PreviewSubtreeTypeContextMenuDemo",

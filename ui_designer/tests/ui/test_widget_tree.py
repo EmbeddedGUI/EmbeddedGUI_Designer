@@ -810,8 +810,7 @@ class TestWidgetTreePanel:
         child_a = WidgetModel("switch", name="child_a")
         child_b = WidgetModel("button", name="child_b")
         solo = WidgetModel("label", name="solo")
-        container.add_child(child_a)
-        container.add_child(child_b)
+        _add_widget_children(container, [child_a, child_b])
         project, _page, root = _build_project_with_widgets(widgets=[first, container, solo])
 
         panel = WidgetTreePanel()
@@ -986,10 +985,8 @@ class TestWidgetTreePanel:
         nested_group = WidgetModel("group", name="nested_group")
         nested_leaf = WidgetModel("label", name="nested_leaf")
         same_type = WidgetModel("button", name="same_type")
-        nested_group.add_child(nested_leaf)
-        container.add_child(child_a)
-        container.add_child(child_b)
-        container.add_child(nested_group)
+        _add_widget_children(nested_group, [nested_leaf])
+        _add_widget_children(container, [child_a, child_b, nested_group])
         project, _page, root = _build_project_with_widgets(widgets=[other, container, same_type])
 
         panel = WidgetTreePanel()
@@ -1274,11 +1271,8 @@ class TestWidgetTreePanel:
         locked_leaf = WidgetModel("switch", name="locked_leaf")
         locked_leaf.designer_locked = True
         visible_leaf = WidgetModel("label", name="visible_leaf")
-        locked_self.add_child(locked_leaf)
-        container.add_child(hidden_self)
-        container.add_child(hidden_leaf)
-        container.add_child(locked_self)
-        container.add_child(visible_leaf)
+        _add_widget_children(locked_self, [locked_leaf])
+        _add_widget_children(container, [hidden_self, hidden_leaf, locked_self, visible_leaf])
         project, _page, root = _build_project_with_widgets(widgets=[container])
 
         panel = WidgetTreePanel()
