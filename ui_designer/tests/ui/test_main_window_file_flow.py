@@ -17,7 +17,7 @@ from ui_designer.tests.project_builders import (
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
-from ui_designer.utils.scaffold import require_project_page_root
+from ui_designer.utils.scaffold import require_project_page_root, save_project_model
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -6426,7 +6426,7 @@ class TestMainWindowFileFlow:
 
         timer = {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True}
         page.timers = [timer]
-        project.save(str(project_dir))
+        save_project_model(project, str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6647,7 +6647,7 @@ class TestMainWindowFileFlow:
         xml_page.mockup_image_path = ""
         xml_page.mockup_image_visible = True
         xml_page.mockup_image_opacity = 0.3
-        project.save(str(project_dir))
+        save_project_model(project, str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
