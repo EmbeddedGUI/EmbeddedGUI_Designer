@@ -2566,7 +2566,7 @@ class MainWindow(QMainWindow):
         self._config.save()
 
         if self.project is not None:
-            self.project.sdk_root = path
+            bind_project_storage(self.project, self.project.project_dir, sdk_root=path)
             self._bump_async_generation()
             self._shutdown_async_activity()
             self._recreate_compiler()
@@ -3004,8 +3004,11 @@ class MainWindow(QMainWindow):
             self.project_root,
             self._config.sdk_root,
         )
-        project.sdk_root = resolved_sdk_root or normalize_path(preferred_sdk_root or project.sdk_root)
-        project.project_dir = project_dir
+        bind_project_storage(
+            project,
+            project_dir,
+            sdk_root=resolved_sdk_root or normalize_path(preferred_sdk_root or project.sdk_root),
+        )
 
         self.project = project
         self._project_dir = project_dir
