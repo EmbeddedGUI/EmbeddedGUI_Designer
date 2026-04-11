@@ -29,6 +29,7 @@ from ui_designer.utils.scaffold import (
     build_project_model_with_page_widgets,
     build_project_model_from_pages,
     build_project_model_from_root,
+    build_project_model_only_from_root_with_widgets,
     build_project_model_from_root_with_widgets,
     build_project_model_with_widget,
     build_project_model_with_widgets,
@@ -563,6 +564,26 @@ class TestCoreProjectScaffold:
         assert project.app_name == "LayoutGroupDemo"
         assert page.name == "main_page"
         assert page.root_widget is root
+        assert root.children == [first, second]
+
+    def test_build_project_model_only_from_root_with_widgets_returns_populated_project(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        project = build_project_model_only_from_root_with_widgets(
+            root,
+            page_name="main_page",
+            app_name="LayoutGroupDemo",
+            widgets=[first, second],
+        )
+        page, resolved_root = require_project_page_root(project, "main_page")
+
+        assert project.app_name == "LayoutGroupDemo"
+        assert page.name == "main_page"
+        assert resolved_root is root
         assert root.children == [first, second]
 
     def test_build_project_model_with_widgets_attaches_widgets_and_applies_customizers(self):

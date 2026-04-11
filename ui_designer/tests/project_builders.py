@@ -16,6 +16,7 @@ from ui_designer.utils.scaffold import (
     build_project_model_with_widgets,
     build_project_model_from_pages,
     build_project_model_from_root,
+    build_project_model_only_from_root_with_widgets,
     build_project_model_from_root_with_widgets,
     build_empty_project_model,
     build_empty_project_model_with_root,
@@ -420,6 +421,36 @@ def build_test_project_from_root_with_widgets(
 ):
     """Build a minimal test project from a caller-supplied root widget and attach children."""
     return build_project_model_from_root_with_widgets(
+        root,
+        widgets=widgets,
+        page_name=page_name,
+        app_name=app_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_mode=page_mode,
+        startup=startup,
+        startup_page=startup_page,
+    )
+
+
+def build_test_project_only_from_root_with_widgets(
+    root,
+    *,
+    widgets=None,
+    page_name="main_page",
+    app_name="TestApp",
+    screen_width=None,
+    screen_height=None,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup=None,
+    startup_page=None,
+):
+    """Build a minimal test project from a caller-supplied root widget and return only the populated project."""
+    return build_project_model_only_from_root_with_widgets(
         root,
         widgets=widgets,
         page_name=page_name,

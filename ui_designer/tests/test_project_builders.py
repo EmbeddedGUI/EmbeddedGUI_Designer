@@ -8,6 +8,7 @@ from ui_designer.tests.project_builders import (
     build_test_project,
     build_test_project_and_root_with_widgets,
     build_test_project_from_root,
+    build_test_project_only_from_root_with_widgets,
     build_test_project_from_root_with_widgets,
     build_test_project_and_page_with_widget,
     build_test_project_and_page_with_widgets,
@@ -249,6 +250,25 @@ class TestProjectBuilders:
         assert project.app_name == "LayoutGroupDemo"
         assert page.name == "main_page"
         assert page.root_widget is root
+        assert root.children == [first, second]
+
+    def test_build_test_project_only_from_root_with_widgets_returns_populated_project(self):
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        project = build_test_project_only_from_root_with_widgets(
+            root,
+            page_name="main_page",
+            app_name="LayoutGroupDemo",
+            widgets=[first, second],
+        )
+
+        page, resolved_root = require_project_page_root(project, "main_page")
+
+        assert project.app_name == "LayoutGroupDemo"
+        assert page.name == "main_page"
+        assert resolved_root is root
         assert root.children == [first, second]
 
     def test_build_test_project_with_root_returns_startup_root_widget(self):

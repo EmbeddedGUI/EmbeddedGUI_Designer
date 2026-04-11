@@ -1,4 +1,5 @@
 from ui_designer.tests.project_builders import (
+    build_test_project_only_from_root_with_widgets,
     build_test_project_from_root_with_widgets,
     build_test_project_and_root_with_widgets,
 )
@@ -61,7 +62,7 @@ def test_group_selection_blocks_non_contiguous_layout_siblings():
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
     third = WidgetModel("label", name="third", width=80, height=20)
-    project, _page = build_test_project_from_root_with_widgets(
+    project = build_test_project_only_from_root_with_widgets(
         root,
         page_name="main_page",
         app_name="LayoutGroupDemo",
@@ -250,7 +251,7 @@ def test_describe_structure_actions_reports_group_constraint_for_noncontiguous_l
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
     third = WidgetModel("label", name="third", width=80, height=20)
-    project, _page = build_test_project_from_root_with_widgets(
+    project = build_test_project_only_from_root_with_widgets(
         root,
         page_name="main_page",
         app_name="LayoutGroupStateDemo",
