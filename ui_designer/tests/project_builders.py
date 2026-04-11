@@ -109,12 +109,29 @@ def build_test_project_with_page_widgets(
     sdk_root="",
     project_dir="",
     page_widgets=None,
+    page_customizers=None,
     pages=None,
 ):
     """Build a minimal multi-page project and attach widgets to each named page root."""
     resolved_pages = pages
-    if resolved_pages is None and page_widgets:
-        resolved_pages = list(page_widgets)
+    if resolved_pages is None:
+        resolved_pages = []
+        for page_name in page_widgets or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        for page_name in page_customizers or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        if not resolved_pages:
+            resolved_pages = None
+    else:
+        resolved_pages = list(resolved_pages)
+        for page_name in page_widgets or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
+        for page_name in page_customizers or {}:
+            if page_name not in resolved_pages:
+                resolved_pages.append(page_name)
     project, roots = build_test_project_with_page_roots(
         app_name,
         screen_width,
@@ -123,10 +140,13 @@ def build_test_project_with_page_widgets(
         project_dir=project_dir,
         pages=resolved_pages,
     )
+    pages_by_name = {page.name: page for page in project.pages}
     for page_name, widgets in (page_widgets or {}).items():
         root = roots[page_name]
         for widget in widgets or []:
             root.add_child(widget)
+    for page_name, page_customizer in (page_customizers or {}).items():
+        page_customizer(pages_by_name[page_name], roots[page_name])
     return project, roots
 
 
@@ -139,6 +159,7 @@ def build_test_project_with_widgets(
     sdk_root="",
     project_dir="",
     widgets=None,
+    page_customizer=None,
 ):
     """Build a minimal test project and attach caller-supplied widgets to one page root."""
     project, page, root = build_test_project_with_page_root(
@@ -151,6 +172,8 @@ def build_test_project_with_widgets(
     )
     for widget in widgets or []:
         root.add_child(widget)
+    if page_customizer is not None:
+        page_customizer(page, root)
     return project, page, root
 
 
@@ -295,6 +318,7 @@ def build_saved_test_project_with_widgets(
     screen_width=240,
     screen_height=320,
     widgets=None,
+    page_customizer=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
@@ -309,6 +333,7 @@ def build_saved_test_project_with_widgets(
         sdk_root=sdk_root,
         project_dir=str(project_root),
         widgets=widgets,
+        page_customizer=page_customizer,
     )
     if with_designer_scaffold:
         save_project_with_designer_scaffold(
@@ -330,6 +355,7 @@ def build_saved_test_project_with_page_widgets(
     screen_width=240,
     screen_height=320,
     page_widgets=None,
+    page_customizers=None,
     pages=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
@@ -344,6 +370,7 @@ def build_saved_test_project_with_page_widgets(
         sdk_root=sdk_root,
         project_dir=str(project_root),
         page_widgets=page_widgets,
+        page_customizers=page_customizers,
         pages=pages,
     )
     if with_designer_scaffold:

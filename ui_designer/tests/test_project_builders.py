@@ -104,6 +104,28 @@ class TestProjectBuilders:
         assert (project_dir / "SavedSinglePageWidgetBuilderDemo.egui").is_file()
         assert root.children == [label, button]
 
+    def test_build_saved_test_project_with_widgets_applies_page_customizer(self, tmp_path):
+        project_dir = tmp_path / "SavedSinglePageCustomizerDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        badge = WidgetModel("label", name="badge", x=10, y=40, width=60, height=20)
+
+        def _customize(page, root):
+            page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+            page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "250", "period_ms": "250", "auto_start": False}]
+            root.add_child(badge)
+
+        project, page, root = build_saved_test_project_with_widgets(
+            project_dir,
+            "SavedSinglePageCustomizerDemo",
+            widgets=[label],
+            page_customizer=_customize,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
+        assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "250", "period_ms": "250", "auto_start": False}]
+        assert root.children == [label, badge]
+
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")
 
@@ -222,6 +244,39 @@ class TestProjectBuilders:
         assert list(roots) == ["home", "detail"]
         assert roots["home"].children == [home_label]
         assert roots["detail"].children == [detail_button]
+
+    def test_build_test_project_with_page_widgets_applies_page_customizers(self):
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        def _setup_home(page, root):
+            page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+            assert root.children == [home_label]
+
+        def _setup_detail(page, root):
+            page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
+            assert root.children == [detail_button]
+
+        project, roots = build_test_project_with_page_widgets(
+            "ProjectWidgetDemo",
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+            page_customizers={
+                "home": _setup_home,
+                "detail": _setup_detail,
+            },
+        )
+        home_page, _ = require_project_page_root(project, "home")
+        detail_page, _ = require_project_page_root(project, "detail")
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
+        assert home_page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
+        assert detail_page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
 
     def test_build_test_project_with_widget_attaches_basic_widget_to_selected_page(self):
         project, page, widget = build_test_project_with_widget(

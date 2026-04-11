@@ -6040,20 +6040,24 @@ class TestMainWindowFileFlow:
     def test_page_fields_panel_tracks_current_page_when_switching_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_main_page(page, _root):
+            page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+
+        def _setup_detail_page(page, _root):
+            page.user_fields = [{"name": "state", "type": "bool", "default": "false"}]
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageFieldsSwitchDemo"
-        project = _create_project(
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "PageFieldsSwitchDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_customizers={
+                "main_page": _setup_main_page,
+                "detail_page": _setup_detail_page,
+            },
         )
-        page, _root = require_project_page_root(project)
-        page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
-        detail_page, _detail_root = require_project_page_root(project, "detail_page")
-        detail_page.user_fields = [{"name": "state", "type": "bool", "default": "false"}]
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6152,24 +6156,24 @@ class TestMainWindowFileFlow:
     def test_page_timers_panel_tracks_current_page_when_switching_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_main_page(page, _root):
+            page.timers = [{"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True}]
+
+        def _setup_detail_page(page, _root):
+            page.timers = [{"name": "poll_timer", "callback": "tick_poll", "delay_ms": "250", "period_ms": "250", "auto_start": False}]
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageTimersSwitchDemo"
-        project = _create_project(
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "PageTimersSwitchDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_customizers={
+                "main_page": _setup_main_page,
+                "detail_page": _setup_detail_page,
+            },
         )
-        page, _root = require_project_page_root(project)
-        page.timers = [
-            {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True}
-        ]
-        detail_page, _detail_root = require_project_page_root(project, "detail_page")
-        detail_page.timers = [
-            {"name": "poll_timer", "callback": "tick_poll", "delay_ms": "250", "period_ms": "250", "auto_start": False}
-        ]
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9726,14 +9730,19 @@ class TestMainWindowFileFlow:
     def test_copy_diagnostics_json_classifies_page_metadata_targets(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_page_metadata(page, _root):
+            page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
+            page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonMetadataDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyJsonMetadataDemo", sdk_root)
-        page, _root = require_project_page_root(project)
-        page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
-        page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyJsonMetadataDemo",
+            sdk_root,
+            page_customizer=_setup_page_metadata,
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -10048,13 +10057,18 @@ class TestMainWindowFileFlow:
     def test_page_field_diagnostic_activation_selects_field_row(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_page_fields(page, _root):
+            page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FieldDiagnosticFocusDemo"
-        project = _create_project(project_dir, "FieldDiagnosticFocusDemo", sdk_root)
-        page, _root = require_project_page_root(project)
-        page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "FieldDiagnosticFocusDemo",
+            sdk_root,
+            page_customizer=_setup_page_fields,
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -10078,13 +10092,18 @@ class TestMainWindowFileFlow:
     def test_page_timer_diagnostic_activation_selects_timer_row(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_page_timers(page, _root):
+            page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TimerDiagnosticFocusDemo"
-        project = _create_project(project_dir, "TimerDiagnosticFocusDemo", sdk_root)
-        page, _root = require_project_page_root(project)
-        page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "TimerDiagnosticFocusDemo",
+            sdk_root,
+            page_customizer=_setup_page_timers,
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
