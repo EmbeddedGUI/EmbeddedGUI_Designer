@@ -14,22 +14,22 @@ from ui_designer.model.resource_usage import (
 )
 from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import require_project_page_root
 
 
 class TestResourceUsage:
     def test_collect_page_resource_usages_tracks_all_resource_property_types(self):
         project = build_test_project("UsageDemo")
-        page = project.get_page_by_name("main_page")
-        assert page is not None
+        page, root = require_project_page_root(project)
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"
-        page.root_widget.add_child(image)
+        root.add_child(image)
 
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        page.root_widget.add_child(label)
+        root.add_child(label)
 
         usages = collect_page_resource_usages(page)
         summary = {(entry.resource_type, entry.resource_name, entry.widget_name, entry.property_name) for entry in usages}
@@ -42,22 +42,20 @@ class TestResourceUsage:
 
     def test_collect_project_resource_usages_groups_entries_by_resource_name(self):
         project = build_test_project("UsageDemo", pages=["main_page", "detail_page"])
-        main_page = project.get_page_by_name("main_page")
-        detail_page = project.get_page_by_name("detail_page")
-        assert main_page is not None
-        assert detail_page is not None
+        main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
-        main_page.root_widget.add_child(label_a)
+        main_root.add_child(label_a)
 
         label_b = WidgetModel("label", name="subtitle")
         label_b.properties["font_file"] = "demo.ttf"
-        detail_page.root_widget.add_child(label_b)
+        detail_root.add_child(label_b)
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"
-        detail_page.root_widget.add_child(image)
+        detail_root.add_child(image)
 
         usage_index = collect_project_resource_usages(project)
         font_usages = usage_index[("font", "demo.ttf")]
@@ -138,25 +136,23 @@ class TestResourceUsage:
 
     def test_rewrite_project_resource_references_updates_all_matching_widgets(self):
         project = build_test_project("RewriteDemo", pages=["main_page", "detail_page"])
-        main_page = project.get_page_by_name("main_page")
-        detail_page = project.get_page_by_name("detail_page")
-        assert main_page is not None
-        assert detail_page is not None
+        main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
         label_a.properties["font_text_file"] = "chars.txt"
-        main_page.root_widget.add_child(label_a)
+        main_root.add_child(label_a)
 
         label_b = WidgetModel("label", name="subtitle")
         label_b.properties["font_file"] = "demo.ttf"
         label_b.properties["font_text_file"] = "chars.txt"
-        detail_page.root_widget.add_child(label_b)
+        detail_root.add_child(label_b)
 
         untouched = WidgetModel("label", name="caption")
         untouched.properties["font_file"] = "demo.ttf"
         untouched.properties["font_text_file"] = "other.txt"
-        detail_page.root_widget.add_child(untouched)
+        detail_root.add_child(untouched)
 
         touched_pages, rewrite_count = rewrite_project_resource_references(project, "text", "chars.txt", "chars_new.txt")
 
@@ -168,12 +164,11 @@ class TestResourceUsage:
 
     def test_rewrite_project_resource_references_can_clear_references(self):
         project = build_test_project("RewriteDemo")
-        page = project.get_page_by_name("main_page")
-        assert page is not None
+        page, root = require_project_page_root(project)
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(image)
+        root.add_child(image)
 
         touched_pages, rewrite_count = rewrite_project_resource_references(project, "image", "missing.png", "")
 
@@ -183,18 +178,16 @@ class TestResourceUsage:
 
     def test_collect_and_rewrite_string_references(self):
         project = build_test_project("StringUsageDemo", pages=["main_page", "detail_page"])
-        main_page = project.get_page_by_name("main_page")
-        detail_page = project.get_page_by_name("detail_page")
-        assert main_page is not None
-        assert detail_page is not None
+        main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        main_page.root_widget.add_child(title)
+        main_root.add_child(title)
 
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        detail_page.root_widget.add_child(subtitle)
+        detail_root.add_child(subtitle)
 
         usages = find_resource_usages(project, "string", "greeting")
         assert [(entry.page_name, entry.widget_name, entry.property_name) for entry in usages] == [
@@ -215,12 +208,11 @@ class TestResourceUsage:
 
     def test_rewrite_string_references_to_new_key(self):
         project = build_test_project("StringRenameDemo")
-        page = project.get_page_by_name("main_page")
-        assert page is not None
+        page, root = require_project_page_root(project)
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        page.root_widget.add_child(title)
+        root.add_child(title)
 
         touched_pages, rewrite_count = rewrite_project_string_references(
             project,
