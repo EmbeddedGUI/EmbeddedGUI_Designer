@@ -12547,13 +12547,14 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewArrangeMenuOrderDemo"
-        project = _create_project(project_dir, "PreviewArrangeMenuOrderDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewArrangeMenuOrderDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12590,15 +12591,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewArrangeMenuStateDemo"
-        project = _create_project(project_dir, "PreviewArrangeMenuStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewArrangeMenuStateDemo",
+            sdk_root,
+            widgets=[first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12658,14 +12659,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewEditMenuStateDemo"
-        project = _create_project(project_dir, "PreviewEditMenuStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         locked = WidgetModel("button", name="locked", x=72, y=8, width=60, height=20)
         locked.designer_locked = True
-        root.add_child(first)
-        root.add_child(locked)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewEditMenuStateDemo",
+            sdk_root,
+            widgets=[first, locked],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
