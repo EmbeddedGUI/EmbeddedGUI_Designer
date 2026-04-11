@@ -5,7 +5,9 @@ from ui_designer.tests.page_builders import (
     build_test_page_with_root_widget,
     build_test_page_with_title,
     build_test_page_with_widget,
+    build_test_page_with_widgets,
 )
+from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import require_page_root
 
 
@@ -65,3 +67,24 @@ class TestPageBuilders:
         assert page.name == "detail"
         assert title.name == "heading"
         assert title in root.children
+
+    def test_build_test_page_with_widgets_supports_custom_root_and_children(self):
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        page, root = build_test_page_with_widgets(
+            page_name="detail",
+            screen_width=200,
+            screen_height=120,
+            root_widget_type="linearlayout",
+            root_name="root_layout",
+            widgets=[first, second],
+        )
+
+        assert page.name == "detail"
+        assert root is page.root_widget
+        assert root.widget_type == "linearlayout"
+        assert root.name == "root_layout"
+        assert root.width == 200
+        assert root.height == 120
+        assert root.children == [first, second]

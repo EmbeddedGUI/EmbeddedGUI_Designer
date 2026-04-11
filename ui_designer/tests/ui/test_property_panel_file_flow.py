@@ -5,6 +5,10 @@ import os
 
 import pytest
 
+from ui_designer.tests.page_builders import (
+    build_test_page_with_widget as _build_test_page_with_widget,
+    build_test_page_with_widgets as _build_test_page_with_widgets,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -1242,14 +1246,17 @@ class TestPropertyPanelFileFlow:
         panel.deleteLater()
 
     def test_single_selection_shows_interaction_notes_for_locked_hidden_layout_widget(self, qapp):
-        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
-        root = WidgetModel("linearlayout", name="root")
-        child = WidgetModel("switch", name="child")
+        _page, child = _build_test_page_with_widget(
+            "main_page",
+            "switch",
+            root_widget_type="linearlayout",
+            root_name="root",
+            name="child",
+        )
         child.designer_locked = True
         child.designer_hidden = True
-        root.add_child(child)
 
         panel = PropertyPanel()
         panel.set_widget(child)
@@ -1264,13 +1271,16 @@ class TestPropertyPanelFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
-        root = WidgetModel("linearlayout", name="root")
         first = WidgetModel("label", name="first")
         second = WidgetModel("label", name="second")
         first.designer_locked = True
         second.designer_hidden = True
-        root.add_child(first)
-        root.add_child(second)
+        _page, _root = _build_test_page_with_widgets(
+            "main_page",
+            root_widget_type="linearlayout",
+            root_name="root",
+            widgets=[first, second],
+        )
 
         panel = PropertyPanel()
         panel.set_selection([first, second], primary=second)
@@ -1307,11 +1317,13 @@ class TestPropertyPanelFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.property_panel import PropertyPanel
 
-        root = WidgetModel("group", name="root")
         first = WidgetModel("switch", name="title")
         second = WidgetModel("switch", name="subtitle")
-        root.add_child(first)
-        root.add_child(second)
+        _page, _root = _build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[first, second],
+        )
 
         panel = PropertyPanel()
         messages = []

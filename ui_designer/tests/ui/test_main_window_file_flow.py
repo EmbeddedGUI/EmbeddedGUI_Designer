@@ -14,6 +14,10 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
 )
+from ui_designer.tests.page_builders import (
+    build_test_page_with_widget as _build_test_page_with_widget,
+    build_test_page_with_widgets as _build_test_page_with_widgets,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 from ui_designer.utils.scaffold import require_project_page_root, save_project_model
@@ -733,15 +737,18 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_selection_feedback_status_mentions_locked_hidden_and_layout_managed_widget(self, qapp, isolated_config):
-        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        root = WidgetModel("linearlayout", name="root")
-        child = WidgetModel("switch", name="child")
+        _page, child = _build_test_page_with_widget(
+            "main_page",
+            "switch",
+            root_widget_type="linearlayout",
+            root_name="root",
+            name="child",
+        )
         child.designer_locked = True
         child.designer_hidden = True
-        root.add_child(child)
 
         window._set_selection([child], primary=child, sync_tree=False, sync_preview=False)
 
@@ -757,13 +764,16 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        root = WidgetModel("linearlayout", name="root")
         first = WidgetModel("switch", name="first")
         second = WidgetModel("switch", name="second")
         first.designer_locked = True
         second.designer_hidden = True
-        root.add_child(first)
-        root.add_child(second)
+        _page, _root = _build_test_page_with_widgets(
+            "main_page",
+            root_widget_type="linearlayout",
+            root_name="root",
+            widgets=[first, second],
+        )
 
         window._set_selection([first, second], primary=second, sync_tree=False, sync_preview=False)
 
@@ -775,13 +785,15 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_selection_feedback_status_reports_isolated_structure_limit(self, qapp, isolated_config):
-        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        root = WidgetModel("group", name="root")
-        child = WidgetModel("switch", name="child")
-        root.add_child(child)
+        _page, child = _build_test_page_with_widget(
+            "main_page",
+            "switch",
+            root_name="root",
+            name="child",
+        )
 
         window._set_selection([child], primary=child, sync_tree=False, sync_preview=False)
 

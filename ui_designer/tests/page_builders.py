@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.utils.scaffold import add_page_widget, build_page_model_with_widget, require_page_root
+from ui_designer.utils.scaffold import (
+    add_page_widget,
+    build_page_model_with_root_widget,
+    build_page_model_with_widget,
+    build_page_model_with_widgets,
+    require_page_root,
+)
 
 
 def build_test_page(name="main_page", *, screen_width=240, screen_height=320):
@@ -30,14 +36,15 @@ def build_test_page_with_root_widget(
     height=320,
 ):
     """Build a Page model with a shared custom root widget and return both."""
-    root = WidgetModel(root_widget_type, name=root_name, x=x, y=y, width=width, height=height)
-    page = build_test_page_from_root(
+    return build_page_model_with_root_widget(
         page_name,
-        root=root,
-        screen_width=width,
-        screen_height=height,
+        root_widget_type,
+        root_name=root_name,
+        x=x,
+        y=y,
+        width=width,
+        height=height,
     )
-    return page, root
 
 
 def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, screen_height=320):
@@ -83,6 +90,10 @@ def build_test_page_with_widget(
     *,
     screen_width=240,
     screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
     **widget_kwargs,
 ):
     """Build a default Page with one attached widget."""
@@ -91,7 +102,35 @@ def build_test_page_with_widget(
         widget_type,
         screen_width=screen_width,
         screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
         **widget_kwargs,
+    )
+
+
+def build_test_page_with_widgets(
+    page_name="main_page",
+    *,
+    screen_width=240,
+    screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
+    widgets=None,
+):
+    """Build a default Page with multiple attached widgets."""
+    return build_page_model_with_widgets(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
+        widgets=widgets,
     )
 
 

@@ -14,10 +14,12 @@ from ui_designer.utils.scaffold import (
     add_page_widget,
     apply_designer_project_scaffold,
     build_basic_widget_model,
+    build_page_model_with_root_widget,
     build_project_model_with_page_widgets,
     build_project_model_with_widget,
     build_project_model_with_widgets,
     build_page_model_with_widget,
+    build_page_model_with_widgets,
     build_empty_project_model,
     build_empty_project_model_with_root,
     build_empty_project_xml,
@@ -377,6 +379,42 @@ class TestCoreProjectScaffold:
         assert widget in root.children
         assert widget.name == "cta"
         assert widget.widget_type == "button"
+
+    def test_build_page_model_with_root_widget_supports_custom_root(self):
+        page, root = build_page_model_with_root_widget(
+            "detail",
+            "linearlayout",
+            root_name="root_layout",
+            width=200,
+            height=120,
+        )
+
+        assert page.name == "detail"
+        assert root is page.root_widget
+        assert root.widget_type == "linearlayout"
+        assert root.name == "root_layout"
+        assert root.width == 200
+        assert root.height == 120
+
+    def test_build_page_model_with_widgets_attaches_children_to_custom_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        page, root = build_page_model_with_widgets(
+            "detail",
+            screen_width=200,
+            screen_height=120,
+            root_widget_type="linearlayout",
+            root_name="root_layout",
+            widgets=[first, second],
+        )
+
+        assert page.name == "detail"
+        assert root is page.root_widget
+        assert root.widget_type == "linearlayout"
+        assert root.children == [first, second]
 
     def test_build_project_model_with_widgets_attaches_widgets_and_applies_customizers(self):
         from ui_designer.model.widget_model import WidgetModel
