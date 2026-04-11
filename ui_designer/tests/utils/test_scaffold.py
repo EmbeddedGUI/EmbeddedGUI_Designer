@@ -14,6 +14,7 @@ from ui_designer.utils.scaffold import (
     add_page_widget,
     add_widget_children,
     apply_designer_project_scaffold,
+    bind_project_storage,
     build_basic_widget_model,
     build_page_model_from_root,
     build_page_model_from_root_with_widgets,
@@ -329,6 +330,14 @@ class TestCoreProjectScaffold:
             "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
             "refresh_designer_resource_config": False,
         }
+
+    def test_bind_project_storage_normalizes_project_dir_and_optional_sdk_root(self):
+        project = build_empty_project_model("BindingDemo", 320, 240)
+
+        bind_project_storage(project, "D:/workspace/BindingDemo", sdk_root="D:/sdk")
+
+        assert project.project_dir == os.path.normpath("D:/workspace/BindingDemo")
+        assert project.sdk_root == os.path.normpath("D:/sdk")
 
     def test_build_empty_project_model_creates_default_startup_page(self):
         project = build_empty_project_model(
@@ -1115,6 +1124,7 @@ class TestApplyDesignerProjectScaffold:
         actions = save_project_model(project, str(project_dir))
 
         assert actions == {}
+        assert project.project_dir == os.path.normpath(str(project_dir))
         assert (project_dir / "PlainSaveHelperApp.egui").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").exists() is False
@@ -1137,6 +1147,7 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions[APP_CONFIG_RELPATH] == "created"
+        assert project.project_dir == os.path.normpath(str(project_dir))
         assert (project_dir / "ScaffoldSaveHelperApp.egui").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
 

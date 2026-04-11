@@ -124,6 +124,7 @@ from ..utils.resource_config_overlay import (
 )
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
+    bind_project_storage,
     build_empty_project_model,
     designer_page_header_relpath,
     designer_page_layout_relpath,
@@ -2507,8 +2508,7 @@ class MainWindow(QMainWindow):
             return False
 
         try:
-            self.project.project_dir = self._project_dir
-            self.project.sdk_root = self.project_root
+            bind_project_storage(self.project, self._project_dir, sdk_root=self.project_root)
             self.project.sdk_fingerprint = copy.deepcopy(sdk_fingerprint)
             self._save_project_files(self._project_dir, reset_scaffold=True)
         except Exception as exc:
@@ -4607,14 +4607,12 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to open project:\n{e}")
 
     def _persist_designer_state_only(self, project_dir):
-        self.project.project_dir = project_dir
-        self.project.sdk_root = self.project_root
+        bind_project_storage(self.project, project_dir, sdk_root=self.project_root)
         self._load_project_app_local_widgets(project_dir)
-        self.project.save(project_dir)
+        save_project_model(self.project, project_dir)
 
     def _save_project_files(self, project_dir, *, reset_scaffold=False):
-        self.project.project_dir = project_dir
-        self.project.sdk_root = self.project_root
+        bind_project_storage(self.project, project_dir, sdk_root=self.project_root)
         self._load_project_app_local_widgets(project_dir)
         materialized = save_project_and_materialize_codegen(
             self.project,

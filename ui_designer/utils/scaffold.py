@@ -182,6 +182,14 @@ def default_scaffold_circle_radius(screen_width, screen_height) -> int:
     return min(int(screen_width), int(screen_height)) // 2
 
 
+def bind_project_storage(project, project_dir="", *, sdk_root=None):
+    """Normalize and attach the persisted project directory and optional SDK root."""
+    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+    if sdk_root is not None:
+        project.sdk_root = os.path.normpath(str(sdk_root)) if sdk_root else ""
+    return project
+
+
 def designer_scaffold_kwargs(
     screen_width,
     screen_height,
@@ -829,8 +837,7 @@ def build_empty_project_model(
     from ..model.project import Project
 
     project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
-    project.sdk_root = str(sdk_root or "")
-    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+    bind_project_storage(project, project_dir, sdk_root=sdk_root)
 
     normalized_pages = normalize_scaffold_pages(pages)
     project.startup_page = normalized_pages[0]
@@ -1002,8 +1009,7 @@ def build_project_model_from_pages(
     from ..model.project import Project
 
     project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
-    project.sdk_root = str(sdk_root or "")
-    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+    bind_project_storage(project, project_dir, sdk_root=sdk_root)
     project.page_mode = page_mode
     for page in pages or []:
         project.add_page(page)
@@ -1646,6 +1652,7 @@ def save_project_with_designer_scaffold(
     remove_legacy_designer_files=False,
 ):
     """Apply the shared Designer sidecar scaffold and save a project model."""
+    bind_project_storage(project, project_dir)
     actions = apply_designer_project_scaffold(
         project_dir,
         project.app_name,
@@ -1771,6 +1778,7 @@ def save_project_model(
     """Save a project model with optional Designer scaffold sidecars."""
     project_dir = os.path.normpath(project_dir)
     os.makedirs(project_dir, exist_ok=True)
+    bind_project_storage(project, project_dir)
     if with_designer_scaffold:
         return save_project_with_designer_scaffold(
             project,
