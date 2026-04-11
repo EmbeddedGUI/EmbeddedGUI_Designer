@@ -11,10 +11,13 @@ from ui_designer.utils.scaffold import (
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    add_page_widget,
     apply_designer_project_scaffold,
+    build_basic_widget_model,
     build_project_model_with_page_widgets,
     build_project_model_with_widget,
     build_project_model_with_widgets,
+    build_page_model_with_widget,
     build_empty_project_model,
     build_empty_project_model_with_root,
     build_empty_project_xml,
@@ -321,6 +324,59 @@ class TestCoreProjectScaffold:
         assert root is page.root_widget
         assert root.width == 320
         assert root.height == 240
+
+    def test_build_basic_widget_model_uses_shared_defaults(self):
+        widget = build_basic_widget_model("button")
+
+        assert widget.widget_type == "button"
+        assert widget.name == "title"
+        assert widget.x == 12
+        assert widget.y == 16
+        assert widget.width == 100
+        assert widget.height == 24
+
+    def test_add_page_widget_attaches_widget_to_page_root(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            pages=["home"],
+        )
+        page, root = require_project_page_root(project, "home")
+
+        widget = add_page_widget(
+            page,
+            "label",
+            name="subtitle",
+            x=20,
+            y=24,
+            width=120,
+            height=28,
+        )
+
+        assert widget in root.children
+        assert root.children == [widget]
+
+    def test_build_page_model_with_widget_creates_page_and_attached_widget(self):
+        page, widget = build_page_model_with_widget(
+            "home",
+            "button",
+            screen_width=320,
+            screen_height=240,
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+        )
+        root = require_page_root(page, "home")
+
+        assert page.name == "home"
+        assert root.width == 320
+        assert root.height == 240
+        assert widget in root.children
+        assert widget.name == "cta"
+        assert widget.widget_type == "button"
 
     def test_build_project_model_with_widgets_attaches_widgets_and_applies_customizers(self):
         from ui_designer.model.widget_model import WidgetModel

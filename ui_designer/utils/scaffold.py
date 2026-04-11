@@ -704,6 +704,65 @@ def require_page_root(page, page_name=""):
     return root
 
 
+def build_basic_widget_model(
+    widget_type="label",
+    *,
+    name="title",
+    x=12,
+    y=16,
+    width=100,
+    height=24,
+):
+    """Build a basic widget model with shared scaffold defaults."""
+    from ..model.widget_model import WidgetModel
+
+    return WidgetModel(widget_type, name=name, x=x, y=y, width=width, height=height)
+
+
+def add_page_widget(
+    page,
+    widget_type="label",
+    *,
+    name="title",
+    x=12,
+    y=16,
+    width=100,
+    height=24,
+):
+    """Attach a basic widget to a page scaffold and return it."""
+    widget = build_basic_widget_model(
+        widget_type,
+        name=name,
+        x=x,
+        y=y,
+        width=width,
+        height=height,
+    )
+    root = require_page_root(page)
+    root.add_child(widget)
+    return widget
+
+
+def build_page_model_with_widget(
+    page_name="main_page",
+    widget_type="label",
+    *,
+    screen_width=240,
+    screen_height=320,
+    **widget_kwargs,
+):
+    """Build a default page model with one attached widget."""
+    from ..model.page import Page
+
+    page = Page.create_default(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+    )
+    widget = add_page_widget(page, widget_type, **widget_kwargs)
+    return page, widget
+
+
 def require_project_page_root(project, page_name=""):
     """Return a project page and root widget, raising when either is missing."""
     target_page_name = str(page_name or "").strip()
@@ -842,17 +901,7 @@ def build_project_model_with_widget(
     **widget_kwargs,
 ):
     """Build a single-page project model, attach one widget, and apply optional customizers."""
-    from ..model.widget_model import WidgetModel
-
-    resolved_widget_kwargs = {
-        "name": "title",
-        "x": 12,
-        "y": 16,
-        "width": 100,
-        "height": 24,
-    }
-    resolved_widget_kwargs.update(widget_kwargs)
-    widget = WidgetModel(widget_type, **resolved_widget_kwargs)
+    widget = build_basic_widget_model(widget_type, **widget_kwargs)
     project, page, root = build_project_model_with_widgets(
         app_name,
         screen_width,
