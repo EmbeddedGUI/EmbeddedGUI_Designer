@@ -20,7 +20,6 @@ from ui_designer.tests.project_builders import (
     build_test_project_from_pages,
     build_test_project_with_widget,
     build_test_project_with_widgets,
-    build_test_project_with_page_root,
 )
 from ui_designer.model.widget_model import WidgetModel, AnimationModel
 from ui_designer.generator.code_generator import (
@@ -45,18 +44,18 @@ class TestMinimalPage:
     """Page with root-only (no children) must still generate valid files."""
 
     def test_header_root_only(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
+        proj, pg, _root = build_test_project_with_widgets(page_name="bare_page")
         h = generate_page_header(pg, proj)
         assert "#ifndef _BARE_PAGE_H_" in h
         assert "egui_view_group_t root_group;" in h
 
     def test_layout_source_root_only(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
+        proj, pg, _root = build_test_project_with_widgets(page_name="bare_page")
         out = generate_page_layout_source(pg, proj)
         assert "egui_view_group_init" in out
 
     def test_user_source_root_only(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="bare_page")
+        proj, pg, _root = build_test_project_with_widgets(page_name="bare_page")
         out = generate_page_user_source(pg, proj)
         assert "egui_bare_page_user_on_open" in out
 
@@ -174,8 +173,13 @@ class TestUicodeStartupEdgeCases:
         assert "PAGE_COUNT = 4" in out
 
     def test_activity_mode_init_func_name(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
-        proj.page_mode = "activity"
+        def _setup_project(project):
+            project.page_mode = "activity"
+
+        proj, pg, _root = build_test_project_with_widgets(
+            page_name="main_page",
+            project_customizer=_setup_project,
+        )
         out = generate_uicode_source(proj)
         # Activity mode should generate activity registration
         assert "main_page_activity" in out
@@ -189,14 +193,14 @@ class TestAppEguiConfigContent:
     """app_egui_config_designer.h generated with correct dimensions."""
 
     def test_config_has_correct_dimensions_240x320(self):
-        proj, _pg, _root = build_test_project_with_page_root("App")
+        proj, _pg, _root = build_test_project_with_widgets("App")
         files = generate_all_files(proj)
         c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "240" in c
         assert "320" in c
 
     def test_config_has_correct_dimensions_480x272(self):
-        proj, _pg, _root = build_test_project_with_page_root(
+        proj, _pg, _root = build_test_project_with_widgets(
             "WideApp",
             screen_width=480,
             screen_height=272,
@@ -207,7 +211,7 @@ class TestAppEguiConfigContent:
         assert "272" in c
 
     def test_config_has_pfb_macros(self):
-        proj, _pg, _root = build_test_project_with_page_root("App")
+        proj, _pg, _root = build_test_project_with_widgets("App")
         files = generate_all_files(proj)
         c, _ = files[APP_CONFIG_DESIGNER_RELPATH]
         assert "EGUI_CONFIG_PFB_WIDTH" in c
@@ -281,15 +285,25 @@ class TestPageHeaderActivityMode:
     """Activity mode pages should have activity-specific declarations."""
 
     def test_header_exists_for_activity_mode(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
-        proj.page_mode = "activity"
+        def _setup_project(project):
+            project.page_mode = "activity"
+
+        proj, pg, _root = build_test_project_with_widgets(
+            page_name="main_page",
+            project_customizer=_setup_project,
+        )
         h = generate_page_header(pg, proj)
         # header guard must always exist
         assert "#ifndef _MAIN_PAGE_H_" in h
 
     def test_user_source_activity_mode(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
-        proj.page_mode = "activity"
+        def _setup_project(project):
+            project.page_mode = "activity"
+
+        proj, pg, _root = build_test_project_with_widgets(
+            page_name="main_page",
+            project_customizer=_setup_project,
+        )
         src = generate_page_user_source(pg, proj)
         # activity mode produces on_create / on_start style
         assert "egui_main_page" in src
@@ -332,11 +346,11 @@ class TestWellFormedCOutput:
         assert self._check_balanced_braces(out)
 
     def test_user_source_balanced_braces(self):
-        proj, pg, _root = build_test_project_with_page_root(page_name="main_page")
+        proj, pg, _root = build_test_project_with_widgets(page_name="main_page")
         out = generate_page_user_source(pg, proj)
         assert self._check_balanced_braces(out)
 
     def test_uicode_source_balanced_braces(self):
-        proj, _pg, _root = build_test_project_with_page_root(page_name="main_page")
+        proj, _pg, _root = build_test_project_with_widgets(page_name="main_page")
         out = generate_uicode_source(proj)
         assert self._check_balanced_braces(out)
