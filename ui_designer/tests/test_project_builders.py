@@ -7,6 +7,7 @@ from ui_designer.tests.project_builders import (
     build_test_project_with_root,
     build_test_project_from_pages,
 )
+from ui_designer.utils.scaffold import require_project_page_root
 
 
 class TestProjectBuilders:
@@ -19,12 +20,14 @@ class TestProjectBuilders:
             project_dir="D:/workspace/BuilderDemo",
             pages=["home", "detail"],
         )
+        page, root = require_project_page_root(project)
 
         assert project.app_name == "BuilderDemo"
         assert project.startup_page == "home"
         assert [page.name for page in project.pages] == ["home", "detail"]
-        assert project.get_startup_page().root_widget.width == 320
-        assert project.get_startup_page().root_widget.height == 240
+        assert page.name == "home"
+        assert root.width == 320
+        assert root.height == 240
 
     def test_build_saved_test_project_writes_project_on_disk(self, tmp_path):
         project_dir = tmp_path / "SavedBuilderDemo"
@@ -68,9 +71,11 @@ class TestProjectBuilders:
             screen_width=320,
             screen_height=240,
         )
+        page, startup_root = require_project_page_root(project)
 
         assert project.app_name == "RootBuilderDemo"
         assert project.startup_page == "home"
-        assert root is project.get_startup_page().root_widget
+        assert page.name == "home"
+        assert root is startup_root
         assert root.width == 320
         assert root.height == 240
