@@ -820,12 +820,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteLockedDemo"
-        project = _create_project(project_dir, "DeleteLockedDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        root.add_child(locked)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "DeleteLockedDemo",
+            sdk_root,
+            widgets=[locked],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -851,14 +853,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteMixedDemo"
-        project = _create_project(project_dir, "DeleteMixedDemo", sdk_root)
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        _page, root = require_project_page_root(project)
-        root.add_child(removable)
-        root.add_child(locked)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "DeleteMixedDemo",
+            sdk_root,
+            widgets=[removable, locked],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -886,14 +889,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CutMixedDemo"
-        project = _create_project(project_dir, "CutMixedDemo", sdk_root)
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        _page, root = require_project_page_root(project)
-        root.add_child(removable)
-        root.add_child(locked)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "CutMixedDemo",
+            sdk_root,
+            widgets=[removable, locked],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -956,14 +960,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeDeleteMixedDemo"
-        project = _create_project(project_dir, "TreeDeleteMixedDemo", sdk_root)
         removable = WidgetModel("switch", name="removable")
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        _page, root = require_project_page_root(project)
-        root.add_child(removable)
-        root.add_child(locked)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "TreeDeleteMixedDemo",
+            sdk_root,
+            widgets=[removable, locked],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -987,15 +992,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeRevealDemo"
-        project = _create_project(project_dir, "TreeRevealDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
         nested.add_child(target)
         container.add_child(nested)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "TreeRevealDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1021,15 +1028,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeCollapseStateDemo"
-        project = _create_project(project_dir, "TreeCollapseStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container")
         nested = WidgetModel("group", name="nested")
         target = WidgetModel("switch", name="target")
         nested.add_child(target)
         container.add_child(nested)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "TreeCollapseStateDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
