@@ -29,7 +29,7 @@ from ui_designer.model.widget_model import AnimationModel, BackgroundModel, Widg
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
-    sync_project_scaffold_sidecars,
+    apply_designer_project_scaffold,
 )
 
 
@@ -97,17 +97,6 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
     if offset + 3 > len(frame):
         raise ValueError(f"pixel out of bounds: ({x}, {y})")
     return (frame[offset], frame[offset + 1], frame[offset + 2])
-
-
-def _scaffold_app_directory(app_dir: Path, app_name: str) -> None:
-    sync_project_scaffold_sidecars(
-        str(app_dir),
-        app_name,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        refresh_user_wrappers=True,
-        refresh_designer_resource_config=True,
-    )
 
 
 def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
@@ -281,7 +270,13 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
-        _scaffold_app_directory(app_dir, APP_NAME)
+        apply_designer_project_scaffold(
+            str(app_dir),
+            APP_NAME,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            overwrite=True,
+        )
         project, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
         project.save(str(app_dir))
         loaded = Project.load(str(app_dir / f"{APP_NAME}.egui"))

@@ -127,13 +127,13 @@ from ..utils.resource_config_overlay import (
 )
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
+    apply_designer_project_scaffold,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_designer_codegen_cleanup_relpaths,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     read_app_config_dimensions,
-    sync_project_scaffold_sidecars,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -2709,13 +2709,12 @@ class MainWindow(QMainWindow):
         return project
 
     def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
-        sync_project_scaffold_sidecars(
+        apply_designer_project_scaffold(
             project_dir,
             app_name,
             screen_width,
             screen_height,
-            refresh_user_wrappers=overwrite,
-            refresh_designer_resource_config=overwrite,
+            overwrite=overwrite,
             remove_legacy_designer_files=True,
         )
 

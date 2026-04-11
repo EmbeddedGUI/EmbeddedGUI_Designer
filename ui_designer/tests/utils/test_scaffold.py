@@ -6,6 +6,7 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     RESOURCE_CONFIG_RELPATH,
+    apply_designer_project_scaffold,
     legacy_designer_codegen_cleanup_relpaths,
     sync_project_scaffold_sidecars,
 )
@@ -153,3 +154,46 @@ class TestSyncProjectScaffoldSidecars:
         assert (designer_resource_dir / "app_resource_config_designer.json").read_text(encoding="utf-8") == (
             '{\n    "img": [],\n    "font": []\n}\n'
         )
+
+
+class TestApplyDesignerProjectScaffold:
+    def test_overwrite_defaults_to_refreshing_designer_resource_config(self, tmp_path):
+        project_dir = tmp_path / "SmokeApp"
+        designer_resource_path = (
+            project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+        )
+        designer_resource_path.parent.mkdir(parents=True)
+        designer_resource_path.write_text('{"img": [{"name": "stale"}], "font": []}\n', encoding="utf-8")
+
+        actions = apply_designer_project_scaffold(
+            str(project_dir),
+            "SmokeApp",
+            240,
+            240,
+            overwrite=True,
+        )
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
+        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+
+    def test_can_preserve_designer_resource_config_while_refreshing_wrappers(self, tmp_path):
+        project_dir = tmp_path / "HelperApp"
+        designer_resource_path = (
+            project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+        )
+        designer_resource_path.parent.mkdir(parents=True)
+        designer_resource_path.write_text('{"img": [{"name": "keep_me"}], "font": []}\n', encoding="utf-8")
+
+        actions = apply_designer_project_scaffold(
+            str(project_dir),
+            "HelperApp",
+            320,
+            240,
+            overwrite=True,
+            refresh_designer_resource_config=False,
+        )
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "unchanged"
+        assert '"keep_me"' in designer_resource_path.read_text(encoding="utf-8")

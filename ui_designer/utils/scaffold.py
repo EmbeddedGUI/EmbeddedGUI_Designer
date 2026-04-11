@@ -641,3 +641,34 @@ def sync_project_scaffold_sidecars(
                 actions[relpath] = "removed"
 
     return actions
+
+
+def apply_designer_project_scaffold(
+    project_dir,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Apply the shared split scaffold policy used by Designer entry points."""
+    if refresh_designer_resource_config is None:
+        refresh_designer_resource_config = overwrite
+
+    return sync_project_scaffold_sidecars(
+        project_dir,
+        app_name,
+        screen_width,
+        screen_height,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_user_wrappers=overwrite,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )

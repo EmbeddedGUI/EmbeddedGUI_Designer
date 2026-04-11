@@ -49,9 +49,9 @@ from ui_designer.utils.scaffold import (
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    apply_designer_project_scaffold,
     legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,
-    sync_project_scaffold_sidecars,
 )
 
 
@@ -352,15 +352,15 @@ def cmd_scaffold(args):
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
-    scaffold_actions = sync_project_scaffold_sidecars(
+    scaffold_actions = apply_designer_project_scaffold(
         app_dir,
         args.app,
         width,
         height,
+        overwrite=True,
         color_depth=color_depth,
         circle_radius=circle_radius,
         extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-        refresh_user_wrappers=True,
         refresh_designer_resource_config=False,
     )
     _print_scaffold_status(
@@ -3025,6 +3025,11 @@ _LUCIDE_TO_MATERIAL = {
 }
 
 
+def _pascal_to_snake_case(name):
+    """Convert PascalCase/CamelCase names to snake_case."""
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+
+
 def _lucide_name_to_material(lucide_name):
     """Map a Lucide icon name to Material Symbols name.
 
@@ -3033,9 +3038,7 @@ def _lucide_name_to_material(lucide_name):
     """
     if lucide_name in _LUCIDE_TO_MATERIAL:
         return _LUCIDE_TO_MATERIAL[lucide_name], True
-    # Fallback: PascalCase to snake_case
-    snake = re.sub(r'(?<!^)(?=[A-Z])', '_', lucide_name).lower()
-    return snake, False
+    return _pascal_to_snake_case(lucide_name), False
 
 
 def _extract_lucide_imports(tsx_content):
