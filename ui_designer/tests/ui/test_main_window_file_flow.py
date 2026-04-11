@@ -1794,7 +1794,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PerPageMoveIntoDemo"
-        project = _create_project(project_dir, "PerPageMoveIntoDemo", sdk_root)
+        project = _create_project(
+            project_dir,
+            "PerPageMoveIntoDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         main_page = project.get_page_by_name("main_page")
         main_root = main_page.root_widget
@@ -1805,7 +1810,8 @@ class TestMainWindowFileFlow:
         main_root.add_child(main_first)
         main_root.add_child(main_second)
 
-        detail_page = project.create_new_page("detail_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         detail_root = detail_page.root_widget
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
@@ -13184,7 +13190,12 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewPerPageMoveIntoDemo"
-        project = _create_project(project_dir, "PreviewPerPageMoveIntoDemo", sdk_root)
+        project = _create_project(
+            project_dir,
+            "PreviewPerPageMoveIntoDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         main_page = project.get_page_by_name("main_page")
         main_root = main_page.root_widget
@@ -13195,7 +13206,8 @@ class TestMainWindowCanvasActions:
         main_root.add_child(main_first)
         main_root.add_child(main_second)
 
-        detail_page = project.create_new_page("detail_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         detail_root = detail_page.root_widget
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
