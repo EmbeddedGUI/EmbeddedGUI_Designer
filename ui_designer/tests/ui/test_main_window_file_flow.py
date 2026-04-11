@@ -1067,6 +1067,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -7222,7 +7223,7 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project
+            from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -7259,18 +7260,16 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DeleteStringKeyInspectDemo"
-                project = build_saved_test_project(
+                subtitle = WidgetModel("label", name="subtitle")
+                subtitle.properties["text"] = "@string/greeting"
+                project, _roots = build_saved_test_project_with_page_widgets(
                     project_dir,
                     "DeleteStringKeyInspectDemo",
                     sdk_root,
+                    page_widgets={{"detail_page": [subtitle]}},
                     pages=["main_page", "detail_page"],
                 )
-                _detail_page, detail_root = require_project_page_root(project, "detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-
-                subtitle = WidgetModel("label", name="subtitle")
-                subtitle.properties["text"] = "@string/greeting"
-                detail_root.add_child(subtitle)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
@@ -7339,7 +7338,7 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project
+            from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -7376,18 +7375,16 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "StringUsageNavigationDemo"
-                project = build_saved_test_project(
+                subtitle = WidgetModel("label", name="subtitle")
+                subtitle.properties["text"] = "@string/greeting"
+                project, _roots = build_saved_test_project_with_page_widgets(
                     project_dir,
                     "StringUsageNavigationDemo",
                     sdk_root,
+                    page_widgets={{"detail_page": [subtitle]}},
                     pages=["main_page", "detail_page"],
                 )
-                _detail_page, detail_root = require_project_page_root(project, "detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-
-                subtitle = WidgetModel("label", name="subtitle")
-                subtitle.properties["text"] = "@string/greeting"
-                detail_root.add_child(subtitle)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
