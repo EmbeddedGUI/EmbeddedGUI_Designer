@@ -4515,13 +4515,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureHintDemo"
-        project = _create_project(project_dir, "StructureHintDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "StructureHintDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -4855,11 +4856,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditHintsDemo"
-        project = _create_project(project_dir, "EditHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        root.add_child(widget)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "EditHintsDemo",
+            sdk_root,
+            widgets=[widget],
+        )
 
         window = MainWindow("")
         actions = {
@@ -4918,15 +4921,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeHintsDemo"
-        project = _create_project(project_dir, "ArrangeHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ArrangeHintsDemo",
+            sdk_root,
+            widgets=[first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -4974,14 +4977,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeToggleHintsDemo"
-        project = _create_project(project_dir, "ArrangeToggleHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         second.designer_locked = True
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ArrangeToggleHintsDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -5093,11 +5097,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditCategoryHintsDemo"
-        project = _create_project(project_dir, "EditCategoryHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        root.add_child(widget)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "EditCategoryHintsDemo",
+            sdk_root,
+            widgets=[widget],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
@@ -5275,13 +5281,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeCategoryHintsDemo"
-        project = _create_project(project_dir, "ArrangeCategoryHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ArrangeCategoryHintsDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
@@ -5319,15 +5326,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureCategoryHintsDemo"
-        project = _create_project(project_dir, "StructureCategoryHintsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
         target = WidgetModel("group", name="target_group", x=24, y=72, width=200, height=120)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "StructureCategoryHintsDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
@@ -11062,11 +11069,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ToolbarHintDemo"
-        project = _create_project(project_dir, "ToolbarHintDemo", sdk_root)
-        page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ToolbarHintDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
