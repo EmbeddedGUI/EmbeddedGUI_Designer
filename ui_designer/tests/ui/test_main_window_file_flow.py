@@ -5637,9 +5637,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReloadActionContextDemo"
-        project = _create_project(project_dir, "ReloadActionContextDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "ReloadActionContextDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -5732,9 +5735,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CloseProjectChangeHintDemo"
-        project = _create_project(project_dir, "CloseProjectChangeHintDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "CloseProjectChangeHintDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -5815,9 +5821,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeletePageArchiveDemo"
-        project = _create_project(project_dir, "DeletePageArchiveDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "DeletePageArchiveDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         (project_dir / ".designer").mkdir()
         (project_dir / ".designer" / "detail_page.h").write_text("", encoding="utf-8")
@@ -5850,9 +5859,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteCurrentPageDemo"
-        project = _create_project(project_dir, "DeleteCurrentPageDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "DeleteCurrentPageDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         (project_dir / "detail_page.c").write_text("/* detail user */\n", encoding="utf-8")
         (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
@@ -5882,9 +5894,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteRenamedPageDemo"
-        project = _create_project(project_dir, "DeleteRenamedPageDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "DeleteRenamedPageDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -8048,9 +8063,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SaveProjectDirtyStateDemo"
-        project = _create_project(project_dir, "SaveProjectDirtyStateDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "SaveProjectDirtyStateDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -8229,9 +8247,12 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReloadDemo"
 
-        project = _create_project(project_dir, "ReloadDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "ReloadDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
