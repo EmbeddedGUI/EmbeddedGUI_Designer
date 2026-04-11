@@ -4685,7 +4685,6 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Save As failed: {exc}", 5000)
             return False
         self._project_dir = path
-        self.project.project_dir = path
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
