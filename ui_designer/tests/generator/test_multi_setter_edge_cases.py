@@ -16,7 +16,6 @@ Regression coverage for:
 import pytest
 
 from ui_designer.tests.project_builders import (
-    build_test_project_with_page_root,
     build_test_project_with_widgets,
 )
 from ui_designer.model.widget_model import WidgetModel
@@ -185,11 +184,15 @@ class TestContainerAddChildFunc:
         container = WidgetModel(container_type, name="ctr", x=0, y=0, width=200, height=200)
         child = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         container.add_child(child)
-        proj, page, root = build_test_project_with_widgets(
+
+        def _setup_page(_page, root):
+            root.name = "root"
+
+        proj, page, _root = build_test_project_with_widgets(
             page_name="test_page",
             widgets=[container],
+            page_customizer=_setup_page,
         )
-        root.name = "root"
         return page, proj
 
     def test_linearlayout_add_child(self):
@@ -226,11 +229,15 @@ class TestDeeplyNestedHierarchy:
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        proj, page, root = build_test_project_with_widgets(
+
+        def _setup_page(_page, root):
+            root.name = "root"
+
+        proj, page, _root = build_test_project_with_widgets(
             page_name="deep_page",
             widgets=[lvl1],
+            page_customizer=_setup_page,
         )
-        root.name = "root"
 
         header = generate_page_header(page, proj)
         assert "egui_view_group_t root;" in header
@@ -244,25 +251,34 @@ class TestDeeplyNestedHierarchy:
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        proj, page, root = build_test_project_with_widgets(
+
+        def _setup_page(_page, root):
+            root.name = "root"
+
+        proj, page, _root = build_test_project_with_widgets(
             page_name="deep_page",
             widgets=[lvl1],
+            page_customizer=_setup_page,
         )
-        root.name = "root"
         output = generate_page_layout_source(page, proj)
         assert "egui_view_label_init" in output
         assert "leaf_lbl" in output
 
     def test_five_levels_all_widgets_in_output(self):
-        proj, page, root = build_test_project_with_page_root(page_name="deep5_page")
-        prev = root
-        for i in range(1, 5):
-            child = WidgetModel("group", name=f"g{i}", x=0, y=0, width=200, height=200)
-            prev.add_child(child)
-            prev = child
-        leaf = WidgetModel("button", name="deep_btn", x=0, y=0, width=80, height=40)
-        prev.add_child(leaf)
-        root.name = "g0"
+        def _setup_page(_page, root):
+            prev = root
+            for i in range(1, 5):
+                child = WidgetModel("group", name=f"g{i}", x=0, y=0, width=200, height=200)
+                prev.add_child(child)
+                prev = child
+            leaf = WidgetModel("button", name="deep_btn", x=0, y=0, width=80, height=40)
+            prev.add_child(leaf)
+            root.name = "g0"
+
+        proj, page, _root = build_test_project_with_widgets(
+            page_name="deep5_page",
+            page_customizer=_setup_page,
+        )
         header = generate_page_header(page, proj)
         assert "deep_btn" in header
         layout = generate_page_layout_source(page, proj)
@@ -331,11 +347,15 @@ class TestViewpageChildPageSetup:
         child2 = WidgetModel("group", name="page_b", x=0, y=0, width=240, height=280)
         vp.add_child(child1)
         vp.add_child(child2)
-        proj, page, root = build_test_project_with_widgets(
+
+        def _setup_page(_page, root):
+            root.name = "root"
+
+        proj, page, _root = build_test_project_with_widgets(
             page_name="vp_page",
             widgets=[vp],
+            page_customizer=_setup_page,
         )
-        root.name = "root"
         output = generate_page_layout_source(page, proj)
         # viewpage emits its children
         assert "page_a" in output
