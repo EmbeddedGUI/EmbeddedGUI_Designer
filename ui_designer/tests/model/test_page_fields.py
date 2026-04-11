@@ -1,6 +1,7 @@
 """Tests for ui_designer.model.page_fields."""
 
-from ui_designer.model.page import Page
+from ui_designer.tests.page_builders import build_test_page_with_title
+
 from ui_designer.model.page_fields import (
     collect_page_field_issues,
     page_field_declaration,
@@ -9,16 +10,14 @@ from ui_designer.model.page_fields import (
     valid_page_fields,
     validate_page_fields,
 )
-from ui_designer.model.widget_model import AnimationModel, WidgetModel
+from ui_designer.model.widget_model import AnimationModel
 
 
 def _make_page():
-    page = Page.create_default("main_page", screen_width=240, screen_height=320)
-    title = WidgetModel("label", name="title", x=12, y=16, width=120, height=24)
+    page, title = build_test_page_with_title()
     alpha = AnimationModel()
     alpha.anim_type = "alpha"
     title.animations.append(alpha)
-    page.root_widget.add_child(title)
     return page
 
 

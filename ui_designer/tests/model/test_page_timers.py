@@ -1,6 +1,7 @@
 """Tests for ui_designer.model.page_timers."""
 
-from ui_designer.model.page import Page
+from ui_designer.tests.page_builders import build_test_page_with_title
+
 from ui_designer.model.page_timers import (
     collect_page_timer_issues,
     normalize_page_timer,
@@ -8,13 +9,10 @@ from ui_designer.model.page_timers import (
     suggest_page_timer_name,
     valid_page_timers,
 )
-from ui_designer.model.widget_model import WidgetModel
 
 
 def _make_page():
-    page = Page.create_default("main_page", screen_width=240, screen_height=320)
-    title = WidgetModel("label", name="title", x=10, y=10, width=100, height=20)
-    page.root_widget.add_child(title)
+    page, _title = build_test_page_with_title()
     page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
     return page
 
