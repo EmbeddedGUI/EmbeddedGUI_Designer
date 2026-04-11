@@ -1,10 +1,12 @@
 """Tests for ui_designer.model.page.Page."""
 
-import os
-
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root, build_test_page_with_root
+from ui_designer.tests.page_builders import (
+    build_test_page_with_root,
+    build_test_page_with_widget,
+    build_test_page_with_widgets,
+)
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import require_page_root
@@ -45,10 +47,16 @@ class TestXmlSerialization:
     """Tests for XML round-trip serialization."""
 
     def test_to_xml_from_xml_round_trip(self):
-        original, root = build_test_page_with_root("test_page")
-        child = WidgetModel("label", name="title_label", x=10, y=10, width=200, height=30)
+        original, child = build_test_page_with_widget(
+            "test_page",
+            "label",
+            name="title_label",
+            x=10,
+            y=10,
+            width=200,
+            height=30,
+        )
         child.properties["text"] = "Hello World"
-        root.add_child(child)
 
         xml_str = original.to_xml_string()
 
@@ -121,11 +129,9 @@ class TestGetAllWidgets:
     """Tests for get_all_widgets."""
 
     def test_get_all_widgets(self):
-        page, root = build_test_page_with_root("test_page")
         label = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         button = WidgetModel("button", name="btn", x=0, y=40, width=100, height=40)
-        root.add_child(label)
-        root.add_child(button)
+        page, _root = build_test_page_with_widgets("test_page", widgets=[label, button])
 
         all_widgets = page.get_all_widgets()
 
@@ -138,10 +144,16 @@ class TestFileIO:
 
     @pytest.mark.integration
     def test_save_load_round_trip(self, tmp_path):
-        original, root = build_test_page_with_root("round_trip")
-        label = WidgetModel("label", name="my_label", x=5, y=5, width=100, height=30)
+        original, label = build_test_page_with_widget(
+            "round_trip",
+            "label",
+            name="my_label",
+            x=5,
+            y=5,
+            width=100,
+            height=30,
+        )
         label.properties["text"] = "Saved Label"
-        root.add_child(label)
 
         original.save(str(tmp_path))
 

@@ -8,9 +8,13 @@ from pathlib import Path
 import pytest
 
 from ui_designer.tests.page_builders import build_test_page_with_root, build_test_pages
-from ui_designer.tests.project_builders import build_saved_test_project, build_test_project
+from ui_designer.tests.project_builders import (
+    build_saved_test_project,
+    build_test_project,
+    build_test_project_with_page_widgets,
+    build_test_project_with_widget,
+)
 from ui_designer.model.project import Project
-from ui_designer.model.page import Page
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
@@ -101,13 +105,20 @@ class TestCreateNewPage:
         assert page in proj.pages
 
     def test_duplicate_page_copies_page_content(self):
-        proj = Project(screen_width=320, screen_height=480)
-
-        original = proj.create_new_page("settings")
+        proj, original, label = build_test_project_with_widget(
+            "DuplicateDemo",
+            "label",
+            page_name="settings",
+            screen_width=320,
+            screen_height=480,
+            name="title",
+            x=12,
+            y=18,
+            width=180,
+            height=32,
+        )
         original_root = require_page_root(original, "settings")
-        label = WidgetModel("label", name="title", x=12, y=18, width=180, height=32)
         label.properties["text"] = "Settings"
-        original_root.add_child(label)
         original.user_fields.append({"name": "counter", "type": "int", "default": 3})
         original.timers.append(
             {
@@ -324,19 +335,16 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_save_load_round_trip(self, tmp_path):
-        proj = Project(screen_width=320, screen_height=480, app_name="RoundTripApp")
-        proj.sdk_root = str(tmp_path / "sdk")
-        proj.startup_page = "home"
-
-        page1, root1 = build_test_page_with_root("home", screen_width=320, screen_height=480)
         label1 = WidgetModel("label", name="title", x=10, y=10, width=200, height=30)
         label1.properties["text"] = "Home Page"
-        root1.add_child(label1)
-
-        page2, _root2 = build_test_page_with_root("about", screen_width=320, screen_height=480)
-
-        proj.add_page(page1)
-        proj.add_page(page2)
+        proj, _roots = build_test_project_with_page_widgets(
+            "RoundTripApp",
+            320,
+            480,
+            sdk_root=str(tmp_path / "sdk"),
+            page_widgets={"home": [label1], "about": []},
+            pages=["home", "about"],
+        )
 
         project_dir = str(tmp_path / "RoundTripApp")
         proj.save(project_dir)
