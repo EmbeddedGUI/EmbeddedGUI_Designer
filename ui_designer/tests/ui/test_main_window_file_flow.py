@@ -9411,15 +9411,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9449,15 +9449,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyFilteredDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyFilteredDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyFilteredDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9514,15 +9514,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyJsonDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyJsonDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9579,15 +9579,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonFilteredDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyJsonFilteredDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyJsonFilteredDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9628,15 +9628,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonSelectedDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyJsonSelectedDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsCopyJsonSelectedDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9788,15 +9788,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsExportDemo"
-        project = _create_project(project_dir, "DiagnosticsExportDemo", sdk_root)
-        page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsExportDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         export_path = tmp_path / "exports" / "diagnostics-summary"
 
@@ -9862,15 +9862,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsJsonDemo"
-        project = _create_project(project_dir, "DiagnosticsJsonDemo", sdk_root)
-        page, root = require_project_page_root(project)
-
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        root.add_child(invalid)
-        root.add_child(missing)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DiagnosticsJsonDemo",
+            sdk_root,
+            widgets=[invalid, missing],
+        )
 
         export_path = tmp_path / "exports" / "diagnostics"
 
