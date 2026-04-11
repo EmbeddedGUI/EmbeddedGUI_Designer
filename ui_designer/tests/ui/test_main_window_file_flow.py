@@ -11731,7 +11731,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserInsertDemo"
         project = _create_project(project_dir, "WidgetBrowserInsertDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container", x=0, y=0, width=200, height=200)
         root.add_child(container)
         project.save(str(project_dir))
@@ -11763,7 +11763,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserRevealDemo"
         project = _create_project(project_dir, "WidgetBrowserRevealDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
         button = WidgetModel("button", name="cta", x=10, y=30, width=80, height=24)
         root.add_child(label)
@@ -11793,7 +11793,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserSelectionDemo"
         project = _create_project(project_dir, "WidgetBrowserSelectionDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
         root.add_child(label)
         project.save(str(project_dir))
