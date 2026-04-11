@@ -1374,7 +1374,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RememberMoveIntoDemo"
         project = _create_project(project_dir, "RememberMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
@@ -1430,7 +1430,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DialogRecentMoveIntoDemo"
         project = _create_project(project_dir, "DialogRecentMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
@@ -1493,7 +1493,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureActionStateDemo"
         project = _create_project(project_dir, "StructureActionStateDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         target = WidgetModel("group", name="target_group")
@@ -1559,7 +1559,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureActionDisabledDemo"
         project = _create_project(project_dir, "StructureActionDisabledDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         root.add_child(first)
         project.save(str(project_dir))
@@ -1616,7 +1616,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveIntoDemo"
         project = _create_project(project_dir, "QuickMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
         child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
         root.add_child(target)
@@ -1654,7 +1654,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RepeatMoveIntoDemo"
         project = _create_project(project_dir, "RepeatMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
@@ -1702,7 +1702,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClearMoveTargetHistoryDemo"
         project = _create_project(project_dir, "ClearMoveTargetHistoryDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -1749,7 +1749,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClearMoveHistoryCountDemo"
         project = _create_project(project_dir, "ClearMoveHistoryCountDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
@@ -1874,7 +1874,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RepeatMoveTargetRenameDemo"
         project = _create_project(project_dir, "RepeatMoveTargetRenameDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -1916,7 +1916,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RememberQuickMoveIntoDemo"
         project = _create_project(project_dir, "RememberQuickMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
@@ -1963,7 +1963,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RecentQuickMoveIntoDemo"
         project = _create_project(project_dir, "RecentQuickMoveIntoDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
@@ -2019,7 +2019,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMovePlaceholderDemo"
         project = _create_project(project_dir, "QuickMovePlaceholderDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
         root.add_child(target)
@@ -2060,7 +2060,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveHistoryMenuDemo"
         project = _create_project(project_dir, "QuickMoveHistoryMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -2117,7 +2117,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveHistoryOnlyDemo"
         project = _create_project(project_dir, "QuickMoveHistoryOnlyDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
         root.add_child(target)
@@ -2164,7 +2164,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeGroupSelectionDemo"
         project = _create_project(project_dir, "TreeGroupSelectionDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
         second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
         root.add_child(first)
@@ -2196,7 +2196,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeDropMoveDemo"
         project = _create_project(project_dir, "TreeDropMoveDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("label", name="second")
         third = WidgetModel("label", name="third")
@@ -2251,7 +2251,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MoveToEdgeDemo"
         project = _create_project(project_dir, "MoveToEdgeDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("label", name="second")
         third = WidgetModel("label", name="third")
@@ -2293,7 +2293,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeInvalidDropDemo"
         project = _create_project(project_dir, "TreeInvalidDropDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         root.add_child(first)
         project.save(str(project_dir))
@@ -2321,7 +2321,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DistributeParentDemo"
         project = _create_project(project_dir, "DistributeParentDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         group_a = WidgetModel("group", name="group_a", x=0, y=0, width=120, height=120)
         group_b = WidgetModel("group", name="group_b", x=130, y=0, width=120, height=120)
         first = WidgetModel("switch", name="first", x=10, y=10, width=20, height=20)
@@ -2354,7 +2354,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DistributeLayoutManagedDemo"
         project = _create_project(project_dir, "DistributeLayoutManagedDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=200, height=120)
         first = WidgetModel("switch", name="first", width=20, height=20)
         second = WidgetModel("switch", name="second", width=20, height=20)
@@ -5356,7 +5356,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveHintsDemo"
         project = _create_project(project_dir, "QuickMoveHintsDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -10753,9 +10753,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WorkspaceChipDemo"
         project = _create_project(project_dir, "WorkspaceChipDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        page.root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -10855,9 +10855,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WorkspaceChipNoOpDemo"
         project = _create_project(project_dir, "WorkspaceChipNoOpDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        page.root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -12383,9 +12383,10 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
-        project.get_startup_page().root_widget.add_child(first)
-        project.get_startup_page().root_widget.add_child(second)
-        project.get_startup_page().root_widget.add_child(target)
+        _page, root = require_project_page_root(project)
+        root.add_child(first)
+        root.add_child(second)
+        root.add_child(target)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -12424,7 +12425,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureMenuStateDemo"
         project = _create_project(project_dir, "PreviewStructureMenuStateDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target_group", x=10, y=40, width=120, height=80)
@@ -12506,7 +12507,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureActionDisabledDemo"
         project = _create_project(project_dir, "PreviewStructureActionDisabledDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         child = WidgetModel("label", name="child", x=8, y=8, width=60, height=20)
         root.add_child(child)
         project.save(str(project_dir))
@@ -13015,7 +13016,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMovePlaceholderDemo"
         project = _create_project(project_dir, "PreviewQuickMovePlaceholderDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
         root.add_child(target)
@@ -13060,7 +13061,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistoryOnlyContextMenuDemo"
         project = _create_project(project_dir, "PreviewQuickMoveHistoryOnlyContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
         root.add_child(target)
@@ -13114,7 +13115,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistoryOrderingDemo"
         project = _create_project(project_dir, "PreviewQuickMoveHistoryOrderingDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
@@ -13174,7 +13175,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveRenameDemo"
         project = _create_project(project_dir, "PreviewQuickMoveRenameDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -13308,7 +13309,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveActionsDemo"
         project = _create_project(project_dir, "PreviewQuickMoveActionsDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -13397,7 +13398,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistorySubmenuDemo"
         project = _create_project(project_dir, "PreviewQuickMoveHistorySubmenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
@@ -13472,7 +13473,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewClearMoveHistoryCountDemo"
         project = _create_project(project_dir, "PreviewClearMoveHistoryCountDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
