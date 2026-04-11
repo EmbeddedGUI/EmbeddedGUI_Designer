@@ -17,6 +17,9 @@ Scenarios not covered by test_page_name_validation.py:
 import os
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project_from_pages
+
 
 # ======================================================================
 # TestReservedNamesCaseSensitivity
@@ -227,14 +230,11 @@ class TestCodeGeneratorFunctionNamePattern:
 
     def test_main_page_init_func_name(self):
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.model.page import Page
-        from ui_designer.model.project import Project
         from ui_designer.generator.code_generator import generate_page_user_source
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/main_page.xml", root_widget=root)
-        proj = Project()
-        proj.add_page(page)
+        page = build_test_page_from_root("main_page", root=root)
+        proj = build_test_project_from_pages([page])
 
         output = generate_page_user_source(page, proj)
         assert "egui_main_page_user_init" in output
@@ -242,14 +242,11 @@ class TestCodeGeneratorFunctionNamePattern:
     def test_timer_page_init_func_name_safe(self):
         """'timer_page' generates egui_timer_page_user_init – safe (not timer_init)."""
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.model.page import Page
-        from ui_designer.model.project import Project
         from ui_designer.generator.code_generator import generate_page_user_source
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/timer_page.xml", root_widget=root)
-        proj = Project()
-        proj.add_page(page)
+        page = build_test_page_from_root("timer_page", root=root)
+        proj = build_test_project_from_pages([page])
 
         output = generate_page_user_source(page, proj)
         # Must use timer_page, not just timer
@@ -260,14 +257,11 @@ class TestCodeGeneratorFunctionNamePattern:
     def test_test_page_init_func_name_safe(self):
         """'test_page' generates egui_test_page_user_init – not egui_test_init."""
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.model.page import Page
-        from ui_designer.model.project import Project
         from ui_designer.generator.code_generator import generate_page_user_source
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/test_page.xml", root_widget=root)
-        proj = Project()
-        proj.add_page(page)
+        page = build_test_page_from_root("test_page", root=root)
+        proj = build_test_project_from_pages([page])
 
         output = generate_page_user_source(page, proj)
         assert "egui_test_page_user_init" in output

@@ -2,6 +2,7 @@
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -124,7 +125,6 @@ class TestPreviewPanelFallback:
         _dispose_widget(panel)
 
     def test_show_python_preview_sets_pixmap_and_status(self, qapp):
-        from ui_designer.model.page import Page
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import PreviewPanel
 
@@ -132,7 +132,7 @@ class TestPreviewPanelFallback:
         label = WidgetModel("label", name="label", x=10, y=10, width=100, height=20)
         label.properties["text"] = "Hello"
         root.add_child(label)
-        page = Page(file_path="layout/main_page.xml", root_widget=root)
+        page = build_test_page_from_root("main_page", root=root)
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
         panel.show_python_preview(page, "fallback")
@@ -143,14 +143,13 @@ class TestPreviewPanelFallback:
         _dispose_widget(panel)
 
     def test_preview_summary_metadata_refreshes_with_pointer_and_grid_updates(self, qapp):
-        from ui_designer.model.page import Page
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.preview_panel import PreviewPanel
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         label = WidgetModel("label", name="label", x=10, y=10, width=100, height=20)
         root.add_child(label)
-        page = Page(file_path="layout/main_page.xml", root_widget=root)
+        page = build_test_page_from_root("main_page", root=root)
 
         panel = PreviewPanel(screen_width=240, screen_height=320)
         panel.set_grid_size(12)

@@ -11,6 +11,9 @@ Covers:
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project_from_pages
+
 
 class TestReservedPageNames:
     """Tests for _RESERVED_PAGE_NAMES in project_dock."""
@@ -99,18 +102,15 @@ class TestPageNameGeneratesConflictingSymbol:
         """Generated init func follows egui_{page}_init pattern."""
         from ui_designer.generator.code_generator import generate_page_user_source
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.model.page import Page
-        from ui_designer.model.project import Project
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         # Use a safe name to verify the pattern
-        page = Page(file_path="layout/my_screen.xml", root_widget=root)
-        proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-        proj.add_page(page)
+        page = build_test_page_from_root("my_screen", root=root)
+        proj = build_test_project_from_pages([page])
 
         output = generate_page_user_source(page, proj)
-        # The user source defines egui_my_screen_init(egui_page_base_t *self)
-        assert "egui_my_screen_init(egui_page_base_t *self)" in output
+        # The user source defines egui_my_screen_user_init(egui_my_screen_t *page)
+        assert "egui_my_screen_user_init(egui_my_screen_t *page)" in output
 
     def test_conflicting_pattern_for_test_page(self):
         """Page named 'test' would generate egui_test_init(egui_page_base_t *self)
@@ -119,14 +119,12 @@ class TestPageNameGeneratesConflictingSymbol:
         """
         from ui_designer.generator.code_generator import generate_page_user_source
         from ui_designer.model.widget_model import WidgetModel
-        from ui_designer.model.page import Page
-        from ui_designer.model.project import Project
 
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/test.xml", root_widget=root)
-        proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-        proj.add_page(page)
+        page = build_test_page_from_root("test", root=root)
+        proj = build_test_project_from_pages([page])
 
         output = generate_page_user_source(page, proj)
-        # This function signature conflicts with egui_test.h
-        assert "egui_test_init(egui_page_base_t *self)" in output
+        # This user hook name still collides on the egui_test prefix, which is
+        # why the reserved page name remains necessary.
+        assert "egui_test_user_init(egui_test_t *page)" in output
