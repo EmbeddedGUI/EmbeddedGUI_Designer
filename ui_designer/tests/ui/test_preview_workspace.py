@@ -2,7 +2,7 @@
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_with_widget
+from ui_designer.tests.page_builders import build_test_page_with_widget, build_test_page_with_widgets
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -447,11 +447,15 @@ class TestWidgetOverlaySelection:
         scroll.setWidget(overlay)
         scroll.show()
 
-        root = WidgetModel("group", name="root", x=0, y=0, width=1200, height=1200)
         moving = WidgetModel("label", name="moving", x=10, y=10, width=80, height=24)
         other = WidgetModel("button", name="other", x=300, y=300, width=90, height=28)
-        root.add_child(moving)
-        root.add_child(other)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            screen_width=1200,
+            screen_height=1200,
+            root_name="root",
+            widgets=[moving, other],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -501,15 +505,16 @@ class TestWidgetOverlaySelection:
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         visible_child = WidgetModel("label", name="visible", x=10, y=10, width=80, height=24)
         hidden_child = WidgetModel("button", name="hidden", x=10, y=40, width=80, height=24)
         locked_child = WidgetModel("button", name="locked", x=10, y=70, width=80, height=24)
         hidden_child.designer_hidden = True
         locked_child.designer_locked = True
-        root.add_child(visible_child)
-        root.add_child(hidden_child)
-        root.add_child(locked_child)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[visible_child, hidden_child, locked_child],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -529,13 +534,14 @@ class TestWidgetOverlaySelection:
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
         near_a = WidgetModel("label", name="near_a", x=39, y=40, width=20, height=20)
         near_b = WidgetModel("label", name="near_b", x=42, y=43, width=20, height=20)
-        root.add_child(moving)
-        root.add_child(near_a)
-        root.add_child(near_b)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving, near_a, near_b],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -553,11 +559,13 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
         target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
-        root.add_child(moving)
-        root.add_child(target)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving, target],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -582,11 +590,13 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
         target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
-        root.add_child(moving)
-        root.add_child(target)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving, target],
+        )
 
         guide_updates = []
 
@@ -646,9 +656,12 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
         overlay.set_grid_size(0)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
-        root.add_child(moving)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[moving],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -780,11 +793,13 @@ class TestWidgetOverlaySelection:
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         bottom = WidgetModel("label", name="bottom", x=20, y=20, width=80, height=40)
         top = WidgetModel("button", name="top", x=30, y=30, width=80, height=40)
-        root.add_child(bottom)
-        root.add_child(top)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[bottom, top],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -797,9 +812,14 @@ class TestWidgetOverlaySelection:
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
         wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
-        root.add_child(wide)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            screen_width=320,
+            screen_height=320,
+            root_name="root",
+            widgets=[wide],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -812,11 +832,15 @@ class TestWidgetOverlaySelection:
         from ui_designer.ui.preview_panel import WidgetOverlay
 
         overlay = WidgetOverlay()
-        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
         first = WidgetModel("label", name="first", x=10, y=70, width=180, height=30)
         second = WidgetModel("button", name="second", x=20, y=90, width=40, height=20)
-        root.add_child(first)
-        root.add_child(second)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            screen_width=320,
+            screen_height=320,
+            root_name="root",
+            widgets=[first, second],
+        )
 
         try:
             overlay.set_widgets(root.get_all_widgets_flat())
@@ -848,13 +872,14 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         overlay.set_base_size(240, 320)
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
         first = WidgetModel("label", name="first", x=10, y=10, width=80, height=24)
         second = WidgetModel("button", name="second", x=10, y=60, width=90, height=28)
         third = WidgetModel("switch", name="third", x=120, y=60, width=70, height=24)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            root_name="root",
+            widgets=[first, second, third],
+        )
         overlay.set_widgets(root.get_all_widgets_flat())
         return overlay, root, first, second, third
 
@@ -915,9 +940,14 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         overlay.set_base_size(320, 320)
-        root = WidgetModel("group", name="root", x=0, y=0, width=320, height=320)
         wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
-        root.add_child(wide)
+        _page, root = build_test_page_with_widgets(
+            "main_page",
+            screen_width=320,
+            screen_height=320,
+            root_name="root",
+            widgets=[wide],
+        )
         overlay.set_widgets(root.get_all_widgets_flat())
 
         overlay.mousePressEvent(_mouse_event(QEvent.MouseButtonPress, QPoint(160, 60)))
