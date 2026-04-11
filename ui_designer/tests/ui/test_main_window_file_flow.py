@@ -238,17 +238,23 @@ class TestMainWindowFileFlow:
             def get_build_error(self):
                 return ""
 
+        def _setup_project(project):
+            project.sdk_fingerprint = SdkFingerprint(
+                source_kind="submodule",
+                revision="sdk-old-123",
+                commit="old1234567890",
+                commit_short="old1234",
+            )
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MismatchDemo"
-        project = _create_project(project_dir, "MismatchDemo", sdk_root)
-        project.sdk_fingerprint = SdkFingerprint(
-            source_kind="submodule",
-            revision="sdk-old-123",
-            commit="old1234567890",
-            commit_short="old1234",
+        project = _create_project(
+            project_dir,
+            "MismatchDemo",
+            sdk_root,
+            project_customizer=_setup_project,
         )
-        project.save(str(project_dir))
 
         (project_dir / "build.mk").write_text("# legacy build\n", encoding="utf-8")
         (project_dir / "app_egui_config.h").write_text("#define LEGACY_CONFIG 1\n", encoding="utf-8")
@@ -6871,6 +6877,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.resource_catalog.add_image("star.png")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameResourceSignalDemo"
@@ -6890,9 +6899,8 @@ class TestMainWindowFileFlow:
                 "main_page": [image_a],
                 "detail_page": [image_b],
             },
+            project_customizer=_setup_project,
         )
-        project.resource_catalog.add_image("star.png")
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7365,9 +7373,8 @@ class TestMainWindowFileFlow:
                     sdk_root,
                     page_widgets={{"detail_page": [subtitle]}},
                     pages=["main_page", "detail_page"],
+                    project_customizer=lambda project: project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE),
                 )
-                project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-                project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
@@ -7480,9 +7487,8 @@ class TestMainWindowFileFlow:
                     sdk_root,
                     page_widgets={{"detail_page": [subtitle]}},
                     pages=["main_page", "detail_page"],
+                    project_customizer=lambda project: project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE),
                 )
-                project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-                project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
@@ -8726,7 +8732,6 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageTabMetadataNoOpDemo"
         project = _create_project(project_dir, "PageTabMetadataNoOpDemo", sdk_root)
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -11900,13 +11905,19 @@ class TestMainWindowFileFlow:
     def test_widget_type_drop_clamps_to_project_screen_bounds(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.screen_width = 240
+            project.screen_height = 320
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetDropClampDemo"
-        project = _create_project(project_dir, "WidgetDropClampDemo", sdk_root)
-        project.screen_width = 240
-        project.screen_height = 320
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "WidgetDropClampDemo",
+            sdk_root,
+            project_customizer=_setup_project,
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
