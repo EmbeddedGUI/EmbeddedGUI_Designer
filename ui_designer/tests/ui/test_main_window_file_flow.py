@@ -2388,9 +2388,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FrontLockedDemo"
         project = _create_project(project_dir, "FrontLockedDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project.get_startup_page().root_widget.add_child(locked)
+        root.add_child(locked)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -2413,9 +2414,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "BackLockedDemo"
         project = _create_project(project_dir, "BackLockedDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project.get_startup_page().root_widget.add_child(locked)
+        root.add_child(locked)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -2438,8 +2440,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyStatusDemo"
         project = _create_project(project_dir, "PropertyStatusDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("switch", name="toggle")
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -2464,8 +2467,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMoveStatusDemo"
         project = _create_project(project_dir, "CanvasMoveStatusDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -2491,8 +2495,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMovePerfDemo"
         project = _create_project(project_dir, "CanvasMovePerfDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -2577,8 +2582,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMoveThrottleDemo"
         project = _create_project(project_dir, "CanvasMoveThrottleDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project.get_startup_page().root_widget.add_child(widget)
+        root.add_child(widget)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
