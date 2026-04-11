@@ -19,6 +19,27 @@ def build_test_page_with_root(page_name="main_page", *, screen_width=240, screen
     return page, root
 
 
+def build_test_page_with_root_widget(
+    page_name="main_page",
+    root_widget_type="group",
+    *,
+    root_name="root_group",
+    x=0,
+    y=0,
+    width=240,
+    height=320,
+):
+    """Build a Page model with a shared custom root widget and return both."""
+    root = WidgetModel(root_widget_type, name=root_name, x=x, y=y, width=width, height=height)
+    page = build_test_page_from_root(
+        page_name,
+        root=root,
+        screen_width=width,
+        screen_height=height,
+    )
+    return page, root
+
+
 def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, screen_height=320):
     """Build a Page model with a caller-supplied or default root widget."""
     if root is None:

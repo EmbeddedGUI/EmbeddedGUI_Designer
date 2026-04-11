@@ -2,6 +2,7 @@
 
 from ui_designer.tests.page_builders import (
     build_test_page_with_root,
+    build_test_page_with_root_widget,
     build_test_page_with_title,
     build_test_page_with_widget,
 )
@@ -37,6 +38,22 @@ class TestPageBuilders:
         assert widget in root.children
         assert widget.x == 20
         assert widget.y == 24
+
+    def test_build_test_page_with_root_widget_supports_custom_root_type(self):
+        page, root = build_test_page_with_root_widget(
+            page_name="detail",
+            root_widget_type="linearlayout",
+            root_name="root_layout",
+            width=200,
+            height=120,
+        )
+
+        assert page.name == "detail"
+        assert root is page.root_widget
+        assert root.widget_type == "linearlayout"
+        assert root.name == "root_layout"
+        assert root.width == 200
+        assert root.height == 120
 
     def test_build_test_page_with_title_preserves_custom_widget_name(self):
         page, title = build_test_page_with_title(
