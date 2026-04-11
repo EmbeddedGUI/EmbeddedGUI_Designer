@@ -48,6 +48,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CONFIG_RELPATH,
     designer_conversion_scaffold_kwargs,
     ensure_designer_project_scaffold_with_sdk_root,
+    materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -1531,10 +1532,7 @@ def cmd_generate_code(args):
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
 
     # Generate C code
-    from ui_designer.generator.code_generator import (
-        materialize_project_codegen,
-    )
-    materialized = materialize_project_codegen(
+    materialized = materialize_project_codegen_outputs(
         project,
         app_dir,
         backup=False,
