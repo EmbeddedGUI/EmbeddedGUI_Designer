@@ -55,6 +55,26 @@ def build_test_project_with_root(
     return project, root
 
 
+def build_test_project_with_page_root(
+    app_name="TestApp",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+):
+    """Build a minimal test project and return it with the selected page and root widget."""
+    return build_empty_project_model_with_root(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+    )
+
+
 def build_test_project_with_page_roots(
     app_name="TestApp",
     screen_width=240,

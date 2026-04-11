@@ -2,6 +2,7 @@
 
 from ui_designer.tests.project_builders import (
     build_test_project,
+    build_test_project_with_page_root,
     build_test_project_with_page_roots,
     build_test_project_with_root,
 )
@@ -18,13 +19,10 @@ from ui_designer.model.resource_usage import (
 )
 from ui_designer.model.string_resource import DEFAULT_LOCALE, StringResourceCatalog
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.utils.scaffold import require_project_page_root
-
 
 class TestResourceUsage:
     def test_collect_page_resource_usages_tracks_all_resource_property_types(self):
-        project = build_test_project("UsageDemo")
-        page, root = require_project_page_root(project)
+        project, page, root = build_test_project_with_page_root("UsageDemo")
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"

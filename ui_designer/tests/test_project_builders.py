@@ -4,6 +4,7 @@ from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
     build_test_project,
+    build_test_project_with_page_root,
     build_test_project_with_page_roots,
     build_test_project_with_root,
     build_test_project_from_pages,
@@ -98,6 +99,21 @@ class TestProjectBuilders:
         assert project.startup_page == "home"
         assert page.name == "home"
         assert root is startup_root
+        assert root.width == 320
+        assert root.height == 240
+
+    def test_build_test_project_with_page_root_returns_project_page_and_root(self):
+        project, page, root = build_test_project_with_page_root(
+            "PageRootBuilderDemo",
+            page_name="home",
+            screen_width=320,
+            screen_height=240,
+        )
+
+        assert project.app_name == "PageRootBuilderDemo"
+        assert project.startup_page == "home"
+        assert page.name == "home"
+        assert root is page.root_widget
         assert root.width == 320
         assert root.height == 240
 
