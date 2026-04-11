@@ -6,7 +6,11 @@ import sys
 import pytest
 
 from .page_builders import build_test_page_with_widget
-from .project_builders import build_test_project, build_test_project_from_pages, build_test_project_with_page_roots
+from .project_builders import (
+    build_test_project,
+    build_test_project_from_pages,
+    build_test_project_with_page_widgets,
+)
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
 
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
@@ -183,18 +187,19 @@ def simple_project(simple_page):
 def multi_page_project():
     """Create a Project with two pages for multi-page testing."""
     from ui_designer.model.widget_model import WidgetModel
-    proj, roots = build_test_project_with_page_roots("MultiPageApp", pages=["main_page", "settings"])
-    root1 = roots["main_page"]
-    root2 = roots["settings"]
-
     label1 = WidgetModel("label", name="title", x=10, y=10, width=220, height=30)
     label1.properties["text"] = "Page One"
-    root1.add_child(label1)
 
     btn = WidgetModel("button", name="back_btn", x=10, y=10, width=100, height=40)
     btn.properties["text"] = "Back"
     btn.on_click = "on_back_click"
-    root2.add_child(btn)
+    proj, _roots = build_test_project_with_page_widgets(
+        "MultiPageApp",
+        page_widgets={
+            "main_page": [label1],
+            "settings": [btn],
+        },
+    )
     return proj
 
 
