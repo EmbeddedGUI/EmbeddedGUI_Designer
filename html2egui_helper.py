@@ -50,7 +50,6 @@ from ui_designer.utils.scaffold import (
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
-    scaffold_designer_project,
     scaffold_designer_project_with_sdk_root,
     legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,

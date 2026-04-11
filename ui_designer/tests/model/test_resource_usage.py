@@ -1,6 +1,10 @@
 """Tests for ui_designer.model.resource_usage."""
 
-from ui_designer.tests.project_builders import build_test_project, build_test_project_with_page_roots
+from ui_designer.tests.project_builders import (
+    build_test_project,
+    build_test_project_with_page_roots,
+    build_test_project_with_root,
+)
 from ui_designer.model.resource_usage import (
     collect_unused_resource_names,
     collect_unused_string_keys,
@@ -163,8 +167,7 @@ class TestResourceUsage:
         assert untouched.properties["font_text_file"] == "other.txt"
 
     def test_rewrite_project_resource_references_can_clear_references(self):
-        project = build_test_project("RewriteDemo")
-        page, root = require_project_page_root(project)
+        project, root = build_test_project_with_root("RewriteDemo")
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "missing.png"
@@ -207,8 +210,7 @@ class TestResourceUsage:
         assert subtitle.properties["text"] == "Hello"
 
     def test_rewrite_string_references_to_new_key(self):
-        project = build_test_project("StringRenameDemo")
-        page, root = require_project_page_root(project)
+        project, root = build_test_project_with_root("StringRenameDemo")
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
