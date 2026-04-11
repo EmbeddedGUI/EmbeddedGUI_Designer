@@ -763,8 +763,8 @@ class TestWidgetOverlaySelection:
         right_branch = WidgetModel("group", name="right_branch", x=130, y=20, width=80, height=80)
         moving = WidgetModel("label", name="moving", x=8, y=8, width=20, height=20)
         cousin = WidgetModel("label", name="cousin", x=0, y=0, width=20, height=20)
-        left_branch.add_child(moving)
-        right_branch.add_child(cousin)
+        add_widget_children(left_branch, [moving])
+        add_widget_children(right_branch, [cousin])
         _page, root = build_test_page_with_widgets(
             "main_page",
             root_name="root",

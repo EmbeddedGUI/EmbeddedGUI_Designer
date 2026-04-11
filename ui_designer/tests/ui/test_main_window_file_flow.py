@@ -1537,7 +1537,7 @@ class TestMainWindowFileFlow:
         second = WidgetModel("button", name="second")
         target = WidgetModel("group", name="target_group")
         nested = WidgetModel("switch", name="nested")
-        target.add_child(nested)
+        _add_widget_children(target, [nested])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "StructureActionStateDemo",
@@ -2356,9 +2356,8 @@ class TestMainWindowFileFlow:
         first = WidgetModel("switch", name="first", x=10, y=10, width=20, height=20)
         second = WidgetModel("switch", name="second", x=40, y=10, width=20, height=20)
         third = WidgetModel("switch", name="third", x=10, y=10, width=20, height=20)
-        group_a.add_child(first)
-        group_a.add_child(second)
-        group_b.add_child(third)
+        _add_widget_children(group_a, [first, second])
+        _add_widget_children(group_b, [third])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "DistributeParentDemo",
@@ -12538,7 +12537,7 @@ class TestMainWindowCanvasActions:
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target_group", x=10, y=40, width=120, height=80)
         nested = WidgetModel("switch", name="nested", x=4, y=4, width=32, height=16)
-        target.add_child(nested)
+        _add_widget_children(target, [nested])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewStructureMenuStateDemo",
@@ -14607,9 +14606,8 @@ class TestMainWindowCanvasActions:
         leaf_a = WidgetModel("label", name="leaf_a", x=4, y=4, width=40, height=16)
         leaf_b = WidgetModel("button", name="leaf_b", x=4, y=4, width=48, height=20)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=50, height=30)
-        branch_a.add_child(leaf_a)
-        branch_a.add_child(nested_group)
-        branch_b.add_child(leaf_b)
+        _add_widget_children(branch_a, [leaf_a, nested_group])
+        _add_widget_children(branch_b, [leaf_b])
         project, _page, _root = _create_project_with_widgets(
             project_dir,
             "PreviewSameDepthContextMenuDemo",
