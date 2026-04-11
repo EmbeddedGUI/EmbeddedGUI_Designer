@@ -39,6 +39,26 @@ class TestProjectBuilders:
         assert (project_dir / ".eguiproject" / "layout" / "main_page.xml").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "settings.xml").is_file()
 
+    def test_build_saved_test_project_can_include_designer_scaffold(self, tmp_path):
+        project_dir = tmp_path / "ScaffoldedSavedBuilderDemo"
+
+        project = build_saved_test_project(
+            project_dir,
+            "ScaffoldedSavedBuilderDemo",
+            pages=["main_page", "settings"],
+            with_designer_scaffold=True,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert (project_dir / "ScaffoldedSavedBuilderDemo.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "main_page.xml").is_file()
+        assert (project_dir / "build.mk").is_file()
+        assert (project_dir / "app_egui_config.h").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+        assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
+        assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
+        assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
+
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")
 

@@ -9,6 +9,7 @@ from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import (
     build_empty_project_model,
     build_empty_project_model_with_root,
+    save_project_with_designer_scaffold,
 )
 
 
@@ -89,6 +90,8 @@ def build_saved_test_project(
     screen_width=240,
     screen_height=320,
     pages=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
 ):
     """Build and save a minimal test project to disk."""
     project_root = Path(project_dir)
@@ -101,5 +104,13 @@ def build_saved_test_project(
         project_dir=str(project_root),
         pages=pages,
     )
-    project.save(str(project_root))
+    if with_designer_scaffold:
+        save_project_with_designer_scaffold(
+            project,
+            str(project_root),
+            overwrite=overwrite_scaffold,
+            remove_legacy_designer_files=True,
+        )
+    else:
+        project.save(str(project_root))
     return project
