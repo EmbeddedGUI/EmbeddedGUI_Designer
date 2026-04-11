@@ -1176,17 +1176,18 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeSelectActionDemo"
-        project = _create_project(project_dir, "TreeSelectActionDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other")
         container = WidgetModel("group", name="container")
         child_a = WidgetModel("switch", name="child_a")
         child_b = WidgetModel("button", name="child_b")
         container.add_child(child_a)
         container.add_child(child_b)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "TreeSelectActionDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1219,15 +1220,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeBatchRenameDemo"
-        project = _create_project(project_dir, "TreeBatchRenameDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         existing = WidgetModel("label", name="field_1")
         first = WidgetModel("label", name="title")
         second = WidgetModel("switch", name="cta")
-        root.add_child(existing)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "TreeBatchRenameDemo",
+            sdk_root,
+            widgets=[existing, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1257,14 +1258,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AlignLockedDemo"
-        project = _create_project(project_dir, "AlignLockedDemo", sdk_root)
         first = WidgetModel("switch", name="first", x=10, y=10, width=40, height=20)
         second = WidgetModel("switch", name="second", x=60, y=20, width=40, height=20)
         second.designer_locked = True
-        _page, root = require_project_page_root(project)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "AlignLockedDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1285,15 +1287,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AlignLayoutManagedDemo"
-        project = _create_project(project_dir, "AlignLayoutManagedDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=200, height=80)
         first = WidgetModel("switch", name="first", width=40, height=20)
         second = WidgetModel("switch", name="second", width=40, height=20)
         layout_parent.add_child(first)
         layout_parent.add_child(second)
-        root.add_child(layout_parent)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "AlignLayoutManagedDemo",
+            sdk_root,
+            widgets=[layout_parent],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1317,13 +1321,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "GroupSelectionDemo"
-        project = _create_project(project_dir, "GroupSelectionDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=10, y=20, width=30, height=10)
         second = WidgetModel("button", name="second", x=60, y=40, width=20, height=20)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "GroupSelectionDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1351,13 +1356,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MoveIntoDemo"
-        project = _create_project(project_dir, "MoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
         child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "MoveIntoDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
