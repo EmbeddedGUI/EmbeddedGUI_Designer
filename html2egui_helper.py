@@ -1536,21 +1536,10 @@ def cmd_generate_code(args):
     print(f"Loaded project: {app_name} ({project.screen_width}x{project.screen_height})")
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 
-    # Sync images from .eguiproject/resources/images/ to resource/src/
-    images_dir = _get_app_resource_images_dir(app_dir)
     src_dir = _get_app_resource_src_dir(app_dir)
-    if os.path.isdir(images_dir):
-        import shutil
-        os.makedirs(src_dir, exist_ok=True)
-        synced = 0
-        for fname in os.listdir(images_dir):
-            if is_designer_resource_path(fname):
-                continue
-            if fname.lower().endswith((".png", ".bmp", ".jpg")):
-                shutil.copy2(os.path.join(images_dir, fname), os.path.join(src_dir, fname))
-                synced += 1
-        if synced:
-            print(f"  Synced {synced} images to resource/src/")
+    project.sync_resources_to_src(app_dir)
+    if os.path.isdir(_get_app_config_resource_dir(app_dir)):
+        print("  Synced project resources to resource/src/")
 
     # Sync font files referenced by widgets to resource/src/
     _sync_font_files(project, sdk_root, src_dir)
