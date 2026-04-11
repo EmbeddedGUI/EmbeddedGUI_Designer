@@ -41,6 +41,7 @@ from ..utils.scaffold import (
     UICODE_SOURCE_RELPATH,
     designer_page_header_relpath,
     designer_page_layout_relpath,
+    materialize_generated_project_files,
     make_app_build_designer_mk_content,
     make_app_config_designer_h_content,
 )
@@ -1957,6 +1958,33 @@ def prepare_generated_project_files(project, output_dir, backup=True):
     return PreparedGeneratedProjectFiles(
         files=files,
         all_generated_files=all_files,
+    )
+
+
+def materialize_project_codegen(
+    project,
+    output_dir,
+    *,
+    backup=True,
+    extra_files=None,
+    newline=None,
+    backup_existing=False,
+):
+    """Prepare and materialize project codegen outputs for save/export flows."""
+    prepared = prepare_generated_project_files(project, output_dir, backup=backup)
+    files = dict(prepared.files)
+    files.update(extra_files or {})
+    materialize_generated_project_files(
+        output_dir,
+        files,
+        prepared.all_generated_files,
+        newline=newline,
+        backup_existing=backup_existing,
+        remove_stale_strings=not project.string_catalog.has_strings,
+    )
+    return PreparedGeneratedProjectFiles(
+        files=files,
+        all_generated_files=prepared.all_generated_files,
     )
 
 

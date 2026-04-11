@@ -104,6 +104,7 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
+    materialize_project_codegen,
     prepare_generated_project_files,
     generate_page_user_source,
     generate_uicode,
@@ -131,7 +132,6 @@ from ..utils.scaffold import (
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
-    materialize_generated_project_files,
     read_app_config_dimensions,
     save_project_with_designer_scaffold,
 )
@@ -4622,16 +4622,13 @@ class MainWindow(QMainWindow):
         )
         self._apply_pending_page_rename_outputs(project_dir)
 
-        prepared = prepare_generated_project_files(self.project, project_dir, backup=True)
-        files = prepared.files
-        all_generated_files = prepared.all_generated_files
-        materialize_generated_project_files(
+        materialized = materialize_project_codegen(
+            self.project,
             project_dir,
-            files,
-            all_generated_files,
+            backup=True,
             backup_existing=True,
-            remove_stale_strings=not self.project.string_catalog.has_strings,
         )
+        files = materialized.files
         self._clear_project_dirty()
         return files
 
@@ -4755,9 +4752,13 @@ class MainWindow(QMainWindow):
             return
         self._apply_pending_page_rename_outputs(path)
         try:
-            prepared = prepare_generated_project_files(self.project, path, backup=True)
-            files = prepared.files
-            all_generated_files = prepared.all_generated_files
+            materialized = materialize_project_codegen(
+                self.project,
+                path,
+                backup=True,
+                backup_existing=True,
+            )
+            files = materialized.files
         except Exception as exc:
             self._update_diagnostics_panel()
             self.debug_panel.log_error(f"Export failed: {exc}")
@@ -4765,13 +4766,6 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Export Failed", f"Failed to export generated code:\n{exc}")
             self.statusBar().showMessage(f"Export failed: {exc}", 5000)
             return
-        materialize_generated_project_files(
-            path,
-            files,
-            all_generated_files,
-            backup_existing=True,
-            remove_stale_strings=not self.project.string_catalog.has_strings,
-        )
         self.statusBar().showMessage(
             f"Exported {len(files)} files to {path} (user code preserved)"
         )

@@ -97,6 +97,19 @@ def _left_panel_tab_whats_this(window, panel_key):
     return window._left_panel_stack.tabWhatsThis(_left_panel_tab_index(window, panel_key))
 
 
+def _fake_materialize_project_codegen(filename, content):
+    def _materialize(_project, output_dir, **_kwargs):
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        (output_path / filename).write_text(content, encoding="utf-8")
+        return SimpleNamespace(
+            files={filename: content},
+            all_generated_files={},
+        )
+
+    return _materialize
+
+
 def _menu_target_labels(menu):
     ignored_labels = {"Move Into Last Target", "Clear Move Target History"}
     return [
@@ -408,11 +421,8 @@ class TestMainWindowFileFlow:
 
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.prepare_generated_project_files",
-            lambda *args, **kwargs: SimpleNamespace(
-                files={"generated.c": "// generated\n"},
-                all_generated_files={},
-            ),
+            "ui_designer.ui.main_window.materialize_project_codegen",
+            _fake_materialize_project_codegen("generated.c", "// generated\n"),
         )
 
         window._save_project()
@@ -2730,11 +2740,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.prepare_generated_project_files",
-            lambda *args, **kwargs: SimpleNamespace(
-                files={"generated.c": "// save as\n"},
-                all_generated_files={},
-            ),
+            "ui_designer.ui.main_window.materialize_project_codegen",
+            _fake_materialize_project_codegen("generated.c", "// save as\n"),
         )
 
         window._save_project_as()

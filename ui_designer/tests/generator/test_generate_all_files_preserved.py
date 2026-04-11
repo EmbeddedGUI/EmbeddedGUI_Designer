@@ -22,6 +22,7 @@ from ui_designer.tests.project_builders import (
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
+    materialize_project_codegen,
     prepare_generated_project_files,
     generate_all_files_preserved,
 )
@@ -70,6 +71,21 @@ class TestUserOwnedFiles:
         assert designer_page_layout_relpath("home") in prepared.files
         assert "home.c" in prepared.all_generated_files
         assert designer_page_layout_relpath("home") in prepared.all_generated_files
+
+    def test_materialize_project_codegen_writes_outputs_and_supports_extra_files(self, tmp_path):
+        proj = _make_project_with_page("home")
+
+        materialized = materialize_project_codegen(
+            proj,
+            str(tmp_path),
+            backup=False,
+            extra_files={"home.c": "/* extra override */\n"},
+            newline="\n",
+        )
+
+        assert materialized.files["home.c"] == "/* extra override */\n"
+        assert (tmp_path / "home.c").read_text(encoding="utf-8") == "/* extra override */\n"
+        assert (tmp_path / designer_page_layout_relpath("home")).is_file()
 
     def test_user_owned_created_when_not_on_disk(self, tmp_path):
         """Fresh project: .c skeleton should be produced."""

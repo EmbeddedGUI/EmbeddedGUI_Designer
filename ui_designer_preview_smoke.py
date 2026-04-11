@@ -22,7 +22,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from ui_designer.engine.compiler import CompilerEngine
-from ui_designer.generator.code_generator import prepare_generated_project_files
+from ui_designer.generator.code_generator import materialize_project_codegen
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
@@ -30,7 +30,6 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    materialize_generated_project_files,
     save_project_model,
 )
 
@@ -294,17 +293,15 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
 
-        prepared = prepare_generated_project_files(project, str(app_dir), backup=False)
-        files = dict(prepared.files)
-        files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)
-        all_generated_files = prepared.all_generated_files
-        written, _removed = materialize_generated_project_files(
+        materialized = materialize_project_codegen(
+            project,
             str(app_dir),
-            files,
-            all_generated_files,
+            backup=False,
+            extra_files={f"{PAGE_NAME}.c": build_main_page_user_source(page)},
             newline="\n",
-            remove_stale_strings=not project.string_catalog.has_strings,
         )
+        files = materialized.files
+        written = tuple(files)
 
         compiler = CompilerEngine(resolved_sdk_root, str(app_dir), APP_NAME)
         compiler.set_screen_size(SCREEN_WIDTH, SCREEN_HEIGHT)
