@@ -4,9 +4,9 @@ import json
 import os
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project_from_pages
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.model.page import Page
-from ui_designer.model.project import Project
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
 from ui_designer.utils.resource_config_overlay import (
@@ -20,20 +20,21 @@ def _make_project_with_widgets(widgets, screen_w=240, screen_h=320):
     root = WidgetModel("group", name="root", x=0, y=0, width=screen_w, height=screen_h)
     for w in widgets:
         root.add_child(w)
-    page = Page(file_path="layout/main_page.xml", root_widget=root)
-    proj = Project(screen_width=screen_w, screen_height=screen_h, app_name="TestApp")
-    proj.add_page(page)
-    return proj
+    page = build_test_page_from_root("main_page", root=root)
+    return build_test_project_from_pages(
+        [page],
+        screen_width=screen_w,
+        screen_height=screen_h,
+    )
 
 
 class TestEmptyProject:
     """Test generation with empty project."""
 
     def test_empty_project_generates_empty_config(self):
-        proj = Project(screen_width=240, screen_height=320, app_name="Empty")
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/main_page.xml", root_widget=root)
-        proj.add_page(page)
+        page = build_test_page_from_root("main_page", root=root)
+        proj = build_test_project_from_pages([page], app_name="Empty")
 
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)

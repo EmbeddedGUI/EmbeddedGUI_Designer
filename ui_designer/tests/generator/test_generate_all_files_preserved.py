@@ -13,13 +13,11 @@ import os
 from pathlib import Path
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
+from ui_designer.tests.project_builders import build_test_project_from_pages
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.model.page import Page
-from ui_designer.model.project import Project
 from ui_designer.generator.code_generator import (
     generate_all_files_preserved,
-    GENERATED_ALWAYS,
-    USER_OWNED,
 )
 from ui_designer.utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
@@ -40,10 +38,8 @@ def _make_project_with_page(page_name="main_page"):
     root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     label = WidgetModel("label", name="title_label", x=10, y=10, width=200, height=30)
     root.add_child(label)
-    page = Page(file_path=f"layout/{page_name}.xml", root_widget=root)
-    proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-    proj.add_page(page)
-    return proj
+    page = build_test_page_from_root(page_name, root=root)
+    return build_test_project_from_pages([page])
 
 
 # ======================================================================
@@ -114,9 +110,8 @@ class TestUserOwnedFiles:
     def test_generation_raises_for_unknown_widget_types(self, tmp_path):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
         root.add_child(WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24))
-        page = Page(file_path="layout/main_page.xml", root_widget=root)
-        proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-        proj.add_page(page)
+        page = build_test_page_from_root("main_page", root=root)
+        proj = build_test_project_from_pages([page])
 
         with pytest.raises(ValueError, match="unresolved widget types"):
             generate_all_files_preserved(proj, str(tmp_path), backup=False)
@@ -390,14 +385,8 @@ class TestMultiPageProject:
     """Multi-page project generates files for every page."""
 
     def test_all_pages_get_files(self, tmp_path):
-        root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page1 = Page(file_path="layout/home.xml", root_widget=root1)
-        page2 = Page(file_path="layout/settings.xml", root_widget=root2)
-
-        proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
-        proj.add_page(page1)
-        proj.add_page(page2)
+        page1, page2 = build_test_pages("home", "settings")
+        proj = build_test_project_from_pages([page1, page2], app_name="MultiApp")
 
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
         assert "home.c" in result
@@ -410,14 +399,8 @@ class TestMultiPageProject:
         assert "settings_ext.h" in result
 
     def test_uicode_contains_all_pages(self, tmp_path):
-        root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page1 = Page(file_path="layout/home.xml", root_widget=root1)
-        page2 = Page(file_path="layout/about.xml", root_widget=root2)
-
-        proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
-        proj.add_page(page1)
-        proj.add_page(page2)
+        page1, page2 = build_test_pages("home", "about")
+        proj = build_test_project_from_pages([page1, page2], app_name="MultiApp")
 
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
         assert "PAGE_HOME" in result[UICODE_HEADER_RELPATH]
@@ -425,14 +408,8 @@ class TestMultiPageProject:
 
     def test_second_user_file_not_overwritten(self, tmp_path):
         """Only the non-existent user file skeleton should appear in result."""
-        root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page1 = Page(file_path="layout/page_a.xml", root_widget=root1)
-        page2 = Page(file_path="layout/page_b.xml", root_widget=root2)
-
-        proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
-        proj.add_page(page1)
-        proj.add_page(page2)
+        page1, page2 = build_test_pages("page_a", "page_b")
+        proj = build_test_project_from_pages([page1, page2], app_name="MultiApp")
 
         # page_a.c already has user code on disk
         (tmp_path / "page_a.c").write_text("/* user code page_a */\n", encoding="utf-8")
@@ -441,14 +418,8 @@ class TestMultiPageProject:
         assert "page_a.c" not in result     # existing → not overwritten
         assert "page_b.c" in result          # new → skeleton created
 def test_multi_page_mixed_user_owned_files_preserve_existing_and_create_missing(tmp_path):
-    root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
-    page2 = Page(file_path="layout/detail_page.xml", root_widget=root2)
-
-    proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
-    proj.add_page(page1)
-    proj.add_page(page2)
+    page1, page2 = build_test_pages("main_page", "detail_page")
+    proj = build_test_project_from_pages([page1, page2], app_name="MultiApp")
 
     (tmp_path / "main_page.c").write_text("/* keep main user source */\n", encoding="utf-8")
     (tmp_path / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
@@ -462,14 +433,8 @@ def test_multi_page_mixed_user_owned_files_preserve_existing_and_create_missing(
 
 
 def test_multi_page_legacy_header_is_rejected(tmp_path):
-    root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
-    page2 = Page(file_path="layout/detail_page.xml", root_widget=root2)
-
-    proj = Project(screen_width=240, screen_height=320, app_name="MultiApp")
-    proj.add_page(page1)
-    proj.add_page(page2)
+    page1, page2 = build_test_pages("main_page", "detail_page")
+    proj = build_test_project_from_pages([page1, page2], app_name="MultiApp")
 
     (tmp_path / "main_page.h").write_text(
         (
