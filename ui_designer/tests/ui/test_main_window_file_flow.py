@@ -6148,8 +6148,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsDemo"
         project = _create_project(project_dir, "AnimationsDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
-        project.get_startup_page().root_widget.add_child(card)
+        root.add_child(card)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6196,13 +6197,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsSelectionDemo"
         project = _create_project(project_dir, "AnimationsSelectionDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
         badge = WidgetModel("group", name="badge", x=12, y=88, width=80, height=40)
         card.animations = [create_default_animation("alpha")]
         badge.animations = [create_default_animation("color")]
-        page.root_widget.add_child(card)
-        page.root_widget.add_child(badge)
+        root.add_child(card)
+        root.add_child(badge)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6275,8 +6276,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EventCallbackDemo"
         project = _create_project(project_dir, "EventCallbackDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
-        project.get_startup_page().root_widget.add_child(slider)
+        root.add_child(slider)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6305,9 +6307,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeCreateDemo"
         project = _create_project(project_dir, "UserCodeCreateDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        project.get_startup_page().root_widget.add_child(slider)
+        root.add_child(slider)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6338,7 +6341,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeUpdateDemo"
         project = _create_project(project_dir, "UserCodeUpdateDemo", sdk_root)
-        page = project.get_startup_page()
+        page, _root = require_project_page_root(project)
         source_path = project_dir / "main_page.c"
         source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
 
@@ -6375,10 +6378,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeDuplicateDemo"
         project = _create_project(project_dir, "UserCodeDuplicateDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        page.root_widget.add_child(slider)
+        root.add_child(slider)
         project.save(str(project_dir))
 
         source_path = project_dir / "main_page.c"
@@ -6412,10 +6415,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "BatchEventCallbackDemo"
         project = _create_project(project_dir, "BatchEventCallbackDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         first = WidgetModel("slider", name="volume_slider_a", x=16, y=16, width=160, height=24)
         second = WidgetModel("slider", name="volume_slider_b", x=16, y=48, width=160, height=24)
-        project.get_startup_page().root_widget.add_child(first)
-        project.get_startup_page().root_widget.add_child(second)
+        root.add_child(first)
+        root.add_child(second)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -6480,13 +6484,14 @@ class TestMainWindowFileFlow:
         mockup_dir = project_dir / ".eguiproject" / "mockup"
         mockup_dir.mkdir(parents=True, exist_ok=True)
         (mockup_dir / "existing.png").write_bytes(b"PNG")
-        project.get_startup_page().mockup_image_path = "mockup/existing.png"
+        page, _root = require_project_page_root(project)
+        page.mockup_image_path = "mockup/existing.png"
         captured = {}
 
         window = MainWindow(str(sdk_root))
         window.project = project
         window._project_dir = str(project_dir)
-        window._current_page = project.get_startup_page()
+        window._current_page = page
 
         def fake_get_open_file_name(parent, title, directory, filters):
             captured["title"] = title
@@ -6510,12 +6515,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupDemo"
         project = _create_project(project_dir, "MockupDemo", sdk_root)
+        page, _root = require_project_page_root(project)
         captured = {}
 
         window = MainWindow(str(sdk_root))
         window.project = project
         window._project_dir = str(project_dir)
-        window._current_page = project.get_startup_page()
+        window._current_page = page
 
         def fake_get_open_file_name(parent, title, directory, filters):
             captured["directory"] = directory
@@ -6535,7 +6541,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "XmlMockupDemo"
         project = _create_project(project_dir, "XmlMockupDemo", sdk_root)
-        xml_page = project.get_startup_page()
+        xml_page, _root = require_project_page_root(project)
         xml_page.mockup_image_path = "mockup/design.png"
         xml_page.mockup_image_visible = False
         xml_page.mockup_image_opacity = 0.45
@@ -6569,7 +6575,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupUndoDemo"
         project = _create_project(project_dir, "MockupUndoDemo", sdk_root)
-        page = project.get_startup_page()
+        page, _root = require_project_page_root(project)
         page.mockup_image_path = "mockup/design.png"
         page.mockup_image_visible = True
         project.save(str(project_dir))
