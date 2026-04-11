@@ -1395,17 +1395,16 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RememberMoveIntoDemo"
-        project = _create_project(project_dir, "RememberMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "RememberMoveIntoDemo",
+            sdk_root,
+            widgets=[target_a, target_b, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1451,21 +1450,18 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DialogRecentMoveIntoDemo"
-        project = _create_project(project_dir, "DialogRecentMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(target_c)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DialogRecentMoveIntoDemo",
+            sdk_root,
+            widgets=[target_a, target_b, target_c, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1514,17 +1510,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureActionStateDemo"
-        project = _create_project(project_dir, "StructureActionStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         target = WidgetModel("group", name="target_group")
         nested = WidgetModel("switch", name="nested")
         target.add_child(nested)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "StructureActionStateDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1580,11 +1576,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureActionDisabledDemo"
-        project = _create_project(project_dir, "StructureActionDisabledDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
-        root.add_child(first)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "StructureActionDisabledDemo",
+            sdk_root,
+            widgets=[first],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1637,13 +1635,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveIntoDemo"
-        project = _create_project(project_dir, "QuickMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
         child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "QuickMoveIntoDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1675,17 +1674,16 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RepeatMoveIntoDemo"
-        project = _create_project(project_dir, "RepeatMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "RepeatMoveIntoDemo",
+            sdk_root,
+            widgets=[target_a, target_b, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1723,15 +1721,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClearMoveTargetHistoryDemo"
-        project = _create_project(project_dir, "ClearMoveTargetHistoryDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ClearMoveTargetHistoryDemo",
+            sdk_root,
+            widgets=[target, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1770,19 +1768,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClearMoveHistoryCountDemo"
-        project = _create_project(project_dir, "ClearMoveHistoryCountDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ClearMoveHistoryCountDemo",
+            sdk_root,
+            widgets=[target_a, target_b, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1818,29 +1814,21 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PerPageMoveIntoDemo"
-        project = _create_project(
-            project_dir,
-            "PerPageMoveIntoDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-
-        _main_page, main_root = require_project_page_root(project, "main_page")
         main_target = WidgetModel("group", name="main_target")
         main_first = WidgetModel("label", name="main_first")
         main_second = WidgetModel("button", name="main_second")
-        main_root.add_child(main_target)
-        main_root.add_child(main_first)
-        main_root.add_child(main_second)
-
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
-        detail_root.add_child(detail_target)
-        detail_root.add_child(detail_first)
-        detail_root.add_child(detail_second)
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "PerPageMoveIntoDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [main_target, main_first, main_second],
+                "detail_page": [detail_target, detail_first, detail_second],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1892,15 +1880,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RepeatMoveTargetRenameDemo"
-        project = _create_project(project_dir, "RepeatMoveTargetRenameDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "RepeatMoveTargetRenameDemo",
+            sdk_root,
+            widgets=[target, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1934,17 +1922,16 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RememberQuickMoveIntoDemo"
-        project = _create_project(project_dir, "RememberQuickMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "RememberQuickMoveIntoDemo",
+            sdk_root,
+            widgets=[target_a, target_b, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -1981,21 +1968,18 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RecentQuickMoveIntoDemo"
-        project = _create_project(project_dir, "RecentQuickMoveIntoDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(target_c)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "RecentQuickMoveIntoDemo",
+            sdk_root,
+            widgets=[target_a, target_b, target_c, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -2037,13 +2021,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMovePlaceholderDemo"
-        project = _create_project(project_dir, "QuickMovePlaceholderDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "QuickMovePlaceholderDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -2078,15 +2063,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveHistoryMenuDemo"
-        project = _create_project(project_dir, "QuickMoveHistoryMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "QuickMoveHistoryMenuDemo",
+            sdk_root,
+            widgets=[target, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -2135,13 +2120,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "QuickMoveHistoryOnlyDemo"
-        project = _create_project(project_dir, "QuickMoveHistoryOnlyDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "QuickMoveHistoryOnlyDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
