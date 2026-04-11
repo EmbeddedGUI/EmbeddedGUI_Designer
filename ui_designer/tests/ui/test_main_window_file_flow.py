@@ -1059,8 +1059,8 @@ class TestMainWindowFileFlow:
 
             from PyQt5.QtWidgets import QApplication
 
-            from ui_designer.model.project import Project
             from ui_designer.model.widget_model import WidgetModel
+            from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -1100,10 +1100,9 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "TreeFilterStatusDemo"
                 create_sdk_root(sdk_root)
 
-                project = Project(screen_width=240, screen_height=320, app_name="TreeFilterStatusDemo")
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                page = project.create_new_page("main_page")
+                project = build_saved_test_project(project_dir, "TreeFilterStatusDemo", sdk_root)
+                page = project.get_page_by_name("main_page")
+                assert page is not None
                 page.root_widget.add_child(WidgetModel("label", name="field_label"))
                 page.root_widget.add_child(WidgetModel("button", name="field_button"))
                 project.save(str(project_dir))
@@ -7137,9 +7136,9 @@ class TestMainWindowFileFlow:
 
             from PyQt5.QtWidgets import QApplication
 
-            from ui_designer.model.project import Project
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
+            from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -7147,17 +7146,6 @@ class TestMainWindowFileFlow:
                 (root / "src").mkdir(parents=True)
                 (root / "porting" / "designer").mkdir(parents=True)
                 (root / "Makefile").write_text("all:\\n", encoding="utf-8")
-
-
-            def create_project(project_dir: Path, app_name: str, sdk_root: Path):
-                project = Project(screen_width=240, screen_height=320, app_name=app_name)
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                project.create_new_page("main_page")
-                project.save(str(project_dir))
-                return project
-
-
             class DisabledCompiler:
                 def can_build(self):
                     return False
@@ -7187,7 +7175,7 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DeleteStringKeyInspectDemo"
-                project = create_project(project_dir, "DeleteStringKeyInspectDemo", sdk_root)
+                project = build_saved_test_project(project_dir, "DeleteStringKeyInspectDemo", sdk_root)
                 detail_page = project.create_new_page("detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
@@ -7260,9 +7248,9 @@ class TestMainWindowFileFlow:
 
             from PyQt5.QtWidgets import QApplication
 
-            from ui_designer.model.project import Project
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
+            from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -7270,17 +7258,6 @@ class TestMainWindowFileFlow:
                 (root / "src").mkdir(parents=True)
                 (root / "porting" / "designer").mkdir(parents=True)
                 (root / "Makefile").write_text("all:\\n", encoding="utf-8")
-
-
-            def create_project(project_dir: Path, app_name: str, sdk_root: Path):
-                project = Project(screen_width=240, screen_height=320, app_name=app_name)
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                project.create_new_page("main_page")
-                project.save(str(project_dir))
-                return project
-
-
             class DisabledCompiler:
                 def can_build(self):
                     return False
@@ -7310,7 +7287,7 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "StringUsageNavigationDemo"
-                project = create_project(project_dir, "StringUsageNavigationDemo", sdk_root)
+                project = build_saved_test_project(project_dir, "StringUsageNavigationDemo", sdk_root)
                 detail_page = project.create_new_page("detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
@@ -9937,8 +9914,8 @@ class TestMainWindowFileFlow:
 
             from PyQt5.QtWidgets import QApplication
 
-            from ui_designer.model.project import Project
             from ui_designer.model.widget_model import WidgetModel
+            from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -9946,17 +9923,6 @@ class TestMainWindowFileFlow:
                 (root / "src").mkdir(parents=True)
                 (root / "porting" / "designer").mkdir(parents=True)
                 (root / "Makefile").write_text("all:\\n", encoding="utf-8")
-
-
-            def create_project(project_dir: Path, app_name: str, sdk_root: Path):
-                project = Project(screen_width=240, screen_height=320, app_name=app_name)
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                project.create_new_page("main_page")
-                project.save(str(project_dir))
-                return project
-
-
             class DisabledCompiler:
                 def can_build(self):
                     return False
@@ -9986,7 +9952,7 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingResourceDemo"
-                project = create_project(project_dir, "DiagnosticMissingResourceDemo", sdk_root)
+                project = build_saved_test_project(project_dir, "DiagnosticMissingResourceDemo", sdk_root)
                 missing = WidgetModel("image", name="missing_image", x=16, y=16, width=48, height=48)
                 missing.properties["image_file"] = "ghost.png"
                 project.get_page_by_name("main_page").root_widget.add_child(missing)
@@ -10049,8 +10015,8 @@ class TestMainWindowFileFlow:
 
             from PyQt5.QtWidgets import QApplication
 
-            from ui_designer.model.project import Project
             from ui_designer.model.widget_model import WidgetModel
+            from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
 
 
@@ -10058,17 +10024,6 @@ class TestMainWindowFileFlow:
                 (root / "src").mkdir(parents=True)
                 (root / "porting" / "designer").mkdir(parents=True)
                 (root / "Makefile").write_text("all:\\n", encoding="utf-8")
-
-
-            def create_project(project_dir: Path, app_name: str, sdk_root: Path):
-                project = Project(screen_width=240, screen_height=320, app_name=app_name)
-                project.sdk_root = str(sdk_root)
-                project.project_dir = str(project_dir)
-                project.create_new_page("main_page")
-                project.save(str(project_dir))
-                return project
-
-
             class DisabledCompiler:
                 def can_build(self):
                     return False
@@ -10098,7 +10053,7 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingStringDemo"
-                project = create_project(project_dir, "DiagnosticMissingStringDemo", sdk_root)
+                project = build_saved_test_project(project_dir, "DiagnosticMissingStringDemo", sdk_root)
                 title = WidgetModel("label", name="title", x=16, y=16, width=80, height=20)
                 title.properties["text"] = "@string/missing_key"
                 project.get_page_by_name("main_page").root_widget.add_child(title)
