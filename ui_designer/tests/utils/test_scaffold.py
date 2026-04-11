@@ -1,3 +1,4 @@
+import json
 import os
 
 import pytest
@@ -42,6 +43,7 @@ from ui_designer.utils.scaffold import (
     default_scaffold_circle_radius,
     designer_conversion_scaffold_kwargs,
     designer_scaffold_kwargs,
+    generate_designer_resource_config,
     ensure_conversion_project_scaffold_with_sdk_root,
     require_page_root,
     require_project_page_root,
@@ -1033,6 +1035,29 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
         assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+
+    def test_generate_designer_resource_config_creates_user_overlay_and_designer_file(self, tmp_path):
+        src_dir = tmp_path / "resource" / "src"
+        designer_config_path = src_dir / ".designer" / "app_resource_config_designer.json"
+        project = build_empty_project_model(
+            "GeneratedResourceConfigHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        created, config_path = generate_designer_resource_config(project, str(src_dir))
+        created_again, config_path_again = generate_designer_resource_config(project, str(src_dir))
+
+        assert created is True
+        assert created_again is False
+        assert os.path.normpath(config_path) == os.path.normpath(str(designer_config_path))
+        assert os.path.normpath(config_path_again) == os.path.normpath(str(designer_config_path))
+        assert (src_dir / "app_resource_config.json").read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        assert json.loads(designer_config_path.read_text(encoding="utf-8")) == {
+            "img": [],
+            "font": [],
+        }
 
     def test_save_project_and_materialize_codegen_writes_scaffold_and_generated_outputs(self, tmp_path):
         project_dir = tmp_path / "SavedGeneratedHelperApp"

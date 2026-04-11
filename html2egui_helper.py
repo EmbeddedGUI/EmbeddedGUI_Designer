@@ -48,6 +48,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     ensure_conversion_project_scaffold_with_sdk_root,
+    generate_designer_resource_config,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
@@ -1507,12 +1508,9 @@ def cmd_generate_code(args):
     _sync_font_files(project, sdk_root, src_dir)
 
     # Generate Designer-managed resource config from XML
-    from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
-    rcg = ResourceConfigGenerator()
-    user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-    if ensure_resource_config_file(user_config_path):
+    user_config_created, _designer_config_path = generate_designer_resource_config(project, src_dir)
+    if user_config_created:
         print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
-    rcg.generate_and_save(project, src_dir)
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
 
     # Generate C code

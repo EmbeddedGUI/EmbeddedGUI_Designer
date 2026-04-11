@@ -113,14 +113,12 @@ from ..generator.user_code_preserver import (
     embed_source_hash,
     read_existing_file,
 )
-from ..generator.resource_config_generator import ResourceConfigGenerator
 from ..engine.compiler import CompilerEngine
 from ..engine.layout_engine import compute_layout, compute_page_layout
 from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
-    ensure_resource_config_file,
     is_designer_resource_path,
 )
 from ..utils.scaffold import (
@@ -128,6 +126,7 @@ from ..utils.scaffold import (
     bind_project_storage,
     designer_page_header_relpath,
     designer_page_layout_relpath,
+    generate_designer_resource_config,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
@@ -5262,8 +5261,7 @@ class MainWindow(QMainWindow):
         self.project.sync_resources_to_src(self._project_dir)
 
         try:
-            ensure_resource_config_file(os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME))
-            ResourceConfigGenerator().generate_and_save(self.project, src_dir)
+            generate_designer_resource_config(self.project, src_dir)
         except Exception as exc:
             self.debug_panel.log_error(f"Resource config generation failed: {exc}")
             if not silent:
