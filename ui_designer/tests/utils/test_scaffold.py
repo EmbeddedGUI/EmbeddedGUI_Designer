@@ -12,7 +12,10 @@ from ui_designer.utils.scaffold import (
     apply_designer_project_scaffold,
     build_empty_project_model,
     build_empty_project_xml,
+    default_scaffold_circle_radius,
     normalize_scaffold_pages,
+    project_file_relpath,
+    project_layout_xml_relpath,
     scaffold_designer_project,
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
@@ -168,6 +171,11 @@ class TestCoreProjectScaffold:
     def test_normalize_scaffold_pages_uses_default_and_strips_empty_names(self):
         assert normalize_scaffold_pages() == ["main_page"]
         assert normalize_scaffold_pages(["", " home ", " ", "detail"]) == ["home", "detail"]
+
+    def test_scaffold_relpath_helpers_use_project_layout_conventions(self):
+        assert project_file_relpath("DemoApp") == "DemoApp.egui"
+        assert project_layout_xml_relpath("main_page") == ".eguiproject/layout/main_page.xml"
+        assert default_scaffold_circle_radius(320, 240) == 120
 
     def test_build_empty_project_model_creates_default_startup_page(self):
         project = build_empty_project_model(

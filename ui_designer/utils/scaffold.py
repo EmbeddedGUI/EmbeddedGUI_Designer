@@ -170,6 +170,18 @@ def project_designer_dir(project_dir: str) -> str:
     return os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME)
 
 
+def project_file_relpath(app_name: str) -> str:
+    return f"{app_name}.egui"
+
+
+def project_layout_xml_relpath(page_name: str) -> str:
+    return f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
+
+
+def default_scaffold_circle_radius(screen_width, screen_height) -> int:
+    return min(int(screen_width), int(screen_height)) // 2
+
+
 def designer_codegen_relpath(filename: str) -> str:
     normalized = str(filename or "").replace("\\", "/").lstrip("/")
     return f"{DESIGNER_PROJECT_DIRNAME}/{normalized}"
@@ -733,7 +745,7 @@ def sync_project_scaffold_core_files(
         os.makedirs(os.path.join(project_dir, rel_dir.replace("/", os.sep)), exist_ok=True)
 
     actions = {}
-    project_relpath = f"{app_name}.egui"
+    project_relpath = project_file_relpath(app_name)
     actions[project_relpath] = _write_text_if_changed(
         os.path.join(project_dir, project_relpath),
         build_empty_project_xml(
@@ -749,7 +761,7 @@ def sync_project_scaffold_core_files(
         build_empty_resources_xml(),
     )
     for page_name in normalized_pages:
-        relpath = f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
+        relpath = project_layout_xml_relpath(page_name)
         actions[relpath] = _write_text_if_missing(
             os.path.join(project_dir, relpath.replace("/", os.sep)),
             build_empty_page_xml(page_name, screen_width, screen_height),

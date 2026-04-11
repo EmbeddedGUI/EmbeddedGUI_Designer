@@ -31,7 +31,7 @@ import re
 import subprocess
 import sys
 
-from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.model.workspace import require_designer_sdk_root, serialize_sdk_root
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
@@ -44,8 +44,12 @@ from ui_designer.utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
+    RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    default_scaffold_circle_radius,
     normalize_scaffold_pages,
+    project_file_relpath,
+    project_layout_xml_relpath,
     scaffold_designer_project,
     legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,
@@ -261,18 +265,14 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
         return app_dir
 
     print(f"Creating app scaffold: {app_name}")
-    sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
+    sdk_root_rel = serialize_sdk_root(app_dir, sdk_root)
     scaffold_designer_project(
         app_dir,
         app_name,
         width,
         height,
         stored_sdk_root=sdk_root_rel,
-        overwrite=True,
-        color_depth=16,
-        circle_radius=min(width, height) // 2,
-        extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-        refresh_designer_resource_config=False,
+        **_helper_scaffold_kwargs(width, height),
     )
     return app_dir
 
@@ -295,6 +295,25 @@ def _compute_fit_scale(target_w, target_h, source_w, source_h):
     return min(scale_x, scale_y)
 
 
+def _helper_scaffold_kwargs(width, height, *, color_depth=16):
+    """Return the helper's shared scaffold defaults."""
+    return {
+        "overwrite": True,
+        "color_depth": color_depth,
+        "circle_radius": default_scaffold_circle_radius(width, height),
+        "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+        "refresh_designer_resource_config": False,
+    }
+
+
+def _layout_edit_step(page_name="main_page", *, app_name=None):
+    """Return the standard follow-up hint for editing layout XML."""
+    relpath = project_layout_xml_relpath(page_name)
+    if app_name:
+        return f"Write XML layout: Edit example/{app_name}/{relpath}"
+    return f"Write XML layout: Edit {relpath}"
+
+
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
@@ -308,11 +327,9 @@ def cmd_scaffold(args):
     width = args.width
     height = args.height
     color_depth = args.color_depth
-    # Circle radius support: half of the smaller dimension
-    circle_radius = min(width, height) // 2
 
     # Compute relative sdk_root path from app_dir
-    sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
+    sdk_root_rel = serialize_sdk_root(app_dir, sdk_root)
 
     # Create directories
     pages = normalize_scaffold_pages(args.pages.split(",") if args.pages else None)
@@ -323,11 +340,7 @@ def cmd_scaffold(args):
         height,
         stored_sdk_root=sdk_root_rel,
         pages=pages,
-        overwrite=True,
-        color_depth=color_depth,
-        circle_radius=circle_radius,
-        extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-        refresh_designer_resource_config=False,
+        **_helper_scaffold_kwargs(width, height, color_depth=color_depth),
     )
     _print_scaffold_status(
         BUILD_MK_RELPATH,
@@ -349,19 +362,19 @@ def cmd_scaffold(args):
     )
 
     _print_scaffold_status(
-        f"{args.app}.egui",
-        scaffold_actions.get(f"{args.app}.egui", "unchanged"),
+        project_file_relpath(args.app),
+        scaffold_actions.get(project_file_relpath(args.app), "unchanged"),
     )
     _print_scaffold_status(
         "resources.xml",
-        scaffold_actions.get(".eguiproject/resources/resources.xml", "unchanged"),
+        scaffold_actions.get(RESOURCE_CATALOG_RELPATH, "unchanged"),
     )
 
     # Page XML templates — only create if they do not exist (user/AI-owned)
     for page_name in pages:
         _print_scaffold_status(
-            f".eguiproject/layout/{page_name}.xml",
-            scaffold_actions.get(f".eguiproject/layout/{page_name}.xml", "unchanged"),
+            project_layout_xml_relpath(page_name),
+            scaffold_actions.get(project_layout_xml_relpath(page_name), "unchanged"),
             label=f"{page_name}.xml",
             unchanged_reason="already exists",
         )
@@ -385,7 +398,7 @@ def cmd_scaffold(args):
     _print_numbered_steps([
         "Extract layout:   python html2egui_helper.py extract-layout --input <html>",
         f"Export icons:     python html2egui_helper.py export-icons --input <html> --app {args.app}",
-        "Write XML layout: Edit .eguiproject/layout/main_page.xml",
+        _layout_edit_step(),
         f"Generate code:    {_helper_app_command('generate-code', args.app)}",
         f"Gen resources:    {_helper_app_command('gen-resource', args.app)}",
         f"Build & verify:   {_helper_app_command('verify', args.app)}",
@@ -897,7 +910,7 @@ def cmd_export_icons(args):
 
     if app_name:
         _print_numbered_steps([
-            f"Write XML layout: Edit example/{app_name}/.eguiproject/layout/main_page.xml",
+            _layout_edit_step(app_name=app_name),
             f"Generate code:    {_helper_app_command('generate-code', app_name)}",
             f"Gen resources:    {_helper_app_command('gen-resource', app_name)}",
         ])
