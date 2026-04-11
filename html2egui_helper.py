@@ -784,6 +784,28 @@ def _update_resource_config_files(
     )
 
 
+def _ensure_and_update_resource_config(
+    config_path,
+    filenames,
+    image_size,
+    *,
+    image_format="rgb565",
+    image_alpha="4",
+    entry_label="image",
+):
+    """Ensure a resource config exists, then append any missing image entries."""
+    created = ensure_resource_config_file(config_path)
+    _update_resource_config_files(
+        config_path,
+        filenames,
+        image_size,
+        image_format=image_format,
+        image_alpha=image_alpha,
+        entry_label=entry_label,
+    )
+    return created
+
+
 def cmd_export_icons(args):
     """Extract Material Symbols from HTML, render as PNG, update resource config."""
     html = _read_required_text_file(args.input, error_label="HTML file")
@@ -870,16 +892,14 @@ def cmd_export_icons(args):
         synced_filenames = list(icon_filenames)
 
     # Update resource config
-    if ensure_resource_config_file(config_path):
-        print(f"  Created new: {config_path}")
-
-    _update_resource_config_files(
+    if _ensure_and_update_resource_config(
         config_path,
         synced_filenames,
         size,
         image_format=getattr(args, "image_format", "alpha"),
         entry_label="icon",
-    )
+    ):
+        print(f"  Created new: {config_path}")
 
     if app_name:
         _print_numbered_steps([
@@ -1295,8 +1315,7 @@ def cmd_export_svgs(args):
         # Update resource config
         if synced_filenames:
             config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-            ensure_resource_config_file(config_path)
-            _update_resource_config_files(
+            _ensure_and_update_resource_config(
                 config_path,
                 synced_filenames,
                 size,

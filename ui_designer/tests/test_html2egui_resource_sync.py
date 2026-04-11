@@ -305,6 +305,34 @@ class TestHelperResourceSync:
         assert saved["img"][1]["format"] == "alpha"
         assert saved["img"][1]["dim"] == "24,24"
 
+    def test_ensure_and_update_resource_config_creates_file_and_appends_entries(self, tmp_path):
+        config_path = tmp_path / "app_resource_config.json"
+
+        created = h._ensure_and_update_resource_config(
+            str(config_path),
+            ["icon_alarm.png"],
+            24,
+            image_format="alpha",
+            entry_label="icon",
+        )
+        created_again = h._ensure_and_update_resource_config(
+            str(config_path),
+            ["icon_alarm.png", "icon_wifi.png"],
+            24,
+            image_format="alpha",
+            entry_label="icon",
+        )
+
+        saved = json.loads(config_path.read_text(encoding="utf-8"))
+        assert created is True
+        assert created_again is False
+        assert [entry["file"] for entry in saved["img"]] == [
+            "icon_alarm.png",
+            "icon_wifi.png",
+        ]
+        assert saved["img"][0]["format"] == "alpha"
+        assert saved["img"][0]["dim"] == "24,24"
+
     def test_sync_font_files_skips_reserved_filename(self, tmp_path):
         sdk_root = tmp_path / "sdk"
         tools_dir = sdk_root / "scripts" / "tools"
