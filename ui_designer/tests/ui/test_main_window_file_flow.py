@@ -2729,9 +2729,12 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         src_dir = tmp_path / "SrcMultiDemo"
         dst_dir = tmp_path / "DstMultiDemo"
-        project = _create_project(src_dir, "SaveAsMultiDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(src_dir))
+        project = _create_project(
+            src_dir,
+            "SaveAsMultiDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         window.project = project
@@ -3004,9 +3007,12 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ExportMultiMixedDemo"
         export_dir = tmp_path / "export_multi_mixed_out"
         export_dir.mkdir()
-        project = _create_project(project_dir, "ExportMultiMixedDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "ExportMultiMixedDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         (export_dir / "main_page.c").write_text("/* keep main page user */\n", encoding="utf-8")
         (export_dir / "detail_page_ext.h").write_text("#define KEEP_DETAIL_EXT 1\n", encoding="utf-8")
@@ -5151,9 +5157,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FileCategoryProjectDirtyDemo"
-        project = _create_project(project_dir, "FileCategoryProjectDirtyDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "FileCategoryProjectDirtyDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
@@ -5180,9 +5189,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FileCategoryMixedDirtyDemo"
-        project = _create_project(project_dir, "FileCategoryMixedDirtyDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "FileCategoryMixedDirtyDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
@@ -7244,8 +7256,14 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DeleteStringKeyInspectDemo"
-                project = build_saved_test_project(project_dir, "DeleteStringKeyInspectDemo", sdk_root)
-                detail_page = project.create_new_page("detail_page")
+                project = build_saved_test_project(
+                    project_dir,
+                    "DeleteStringKeyInspectDemo",
+                    sdk_root,
+                    pages=["main_page", "detail_page"],
+                )
+                detail_page = project.get_page_by_name("detail_page")
+                assert detail_page is not None
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
                 subtitle = WidgetModel("label", name="subtitle")
@@ -7356,8 +7374,14 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "StringUsageNavigationDemo"
-                project = build_saved_test_project(project_dir, "StringUsageNavigationDemo", sdk_root)
-                detail_page = project.create_new_page("detail_page")
+                project = build_saved_test_project(
+                    project_dir,
+                    "StringUsageNavigationDemo",
+                    sdk_root,
+                    pages=["main_page", "detail_page"],
+                )
+                detail_page = project.get_page_by_name("detail_page")
+                assert detail_page is not None
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
                 subtitle = WidgetModel("label", name="subtitle")
@@ -8546,9 +8570,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DirtyPagesDemo"
-        project = _create_project(project_dir, "DirtyPagesDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "DirtyPagesDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -8645,9 +8672,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageTabContextMenuDemo"
-        project = _create_project(project_dir, "PageTabContextMenuDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "PageTabContextMenuDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9704,8 +9734,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonProjectTargetsDemo"
-        project = _create_project(project_dir, "DiagnosticsCopyJsonProjectTargetsDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "DiagnosticsCopyJsonProjectTargetsDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
@@ -9937,8 +9973,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticFocusDemo"
-        project = _create_project(project_dir, "DiagnosticFocusDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "DiagnosticFocusDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         target = WidgetModel("label", name="target", x=16, y=16, width=80, height=20)
         detail_page.root_widget.add_child(target)
         project.save(str(project_dir))
@@ -11171,9 +11213,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SaveProjectChangeHintDemo"
-        project = _create_project(project_dir, "SaveProjectChangeHintDemo", sdk_root)
-        project.create_new_page("detail_page")
-        project.save(str(project_dir))
+        project = _create_project(
+            project_dir,
+            "SaveProjectChangeHintDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
 
         window = MainWindow("")
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
