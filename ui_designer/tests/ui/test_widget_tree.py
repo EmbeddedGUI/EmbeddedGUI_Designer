@@ -4,6 +4,7 @@ import pytest
 
 from ui_designer.tests.project_builders import (
     build_test_project_with_root as _build_project_with_root,
+    build_test_project_with_widgets as _build_project_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
@@ -54,9 +55,8 @@ class TestWidgetTreePanel:
         from ui_designer.ui.theme import app_theme_tokens
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="field_label")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -73,11 +73,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         label = WidgetModel("label", name="field_label")
         button = WidgetModel("button", name="field_button")
-        root.add_child(label)
-        root.add_child(button)
+        project, _page, root = _build_project_with_widgets(widgets=[label, button])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -100,11 +98,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         label = WidgetModel("label", name="field_label")
         button = WidgetModel("button", name="field_button")
-        root.add_child(label)
-        root.add_child(button)
+        project, _page, root = _build_project_with_widgets(widgets=[label, button])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -127,15 +123,14 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         branch = WidgetModel("group", name="branch")
         nested = WidgetModel("group", name="nested")
         leaf = WidgetModel("label", name="leaf")
         nested_leaf = WidgetModel("button", name="nested_leaf")
-        root.add_child(branch)
         branch.add_child(leaf)
         branch.add_child(nested)
         nested.add_child(nested_leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[branch])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -157,9 +152,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="leaf")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -224,9 +218,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="leaf")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -258,9 +251,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="leaf")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -292,9 +284,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="leaf")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -336,13 +327,10 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         target = WidgetModel("group", name="target")
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
+        project, _page, root = _build_project_with_widgets(widgets=[first, second, target])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -367,8 +355,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
-        root.add_child(WidgetModel("label", name="first"))
+        project, _page, root = _build_project_with_widgets(
+            widgets=[WidgetModel("label", name="first")]
+        )
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -414,9 +403,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         leaf = WidgetModel("label", name="leaf")
-        root.add_child(leaf)
+        project, _page, root = _build_project_with_widgets(widgets=[leaf])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -463,11 +451,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         first = WidgetModel("label", name="title")
         second = WidgetModel("label", name="subtitle")
-        root.add_child(first)
-        root.add_child(second)
+        project, _page, root = _build_project_with_widgets(widgets=[first, second])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -487,8 +473,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
-        root.add_child(WidgetModel("button", name="button_1"))
+        project, _page, root = _build_project_with_widgets(
+            widgets=[WidgetModel("button", name="button_1")]
+        )
         WidgetModel.reset_counter()
 
         panel = WidgetTreePanel()
@@ -503,9 +490,8 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         widget = WidgetModel("label", name="title")
-        root.add_child(widget)
+        project, _page, root = _build_project_with_widgets(widgets=[widget])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -528,11 +514,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         first = WidgetModel("label", name="title")
         second = WidgetModel("label", name="subtitle")
-        root.add_child(first)
-        root.add_child(second)
+        project, _page, root = _build_project_with_widgets(widgets=[first, second])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -554,13 +538,10 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         existing = WidgetModel("label", name="field_1")
         first = WidgetModel("label", name="title")
         second = WidgetModel("button", name="cta")
-        root.add_child(existing)
-        root.add_child(first)
-        root.add_child(second)
+        project, _page, root = _build_project_with_widgets(widgets=[existing, first, second])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
@@ -586,11 +567,9 @@ class TestWidgetTreePanel:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.widget_tree import WidgetTreePanel
 
-        project, root = _build_project_with_root()
         first = WidgetModel("label", name="title")
         second = WidgetModel("button", name="cta")
-        root.add_child(first)
-        root.add_child(second)
+        project, _page, root = _build_project_with_widgets(widgets=[first, second])
 
         panel = WidgetTreePanel()
         panel.set_project(project)
