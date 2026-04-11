@@ -62,6 +62,7 @@ from ui_designer.utils.scaffold import (
     ensure_designer_project_scaffold_with_sdk_root,
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
+    sync_project_resources_and_generate_designer_resource_config,
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
     sync_project_scaffold_sidecars,
@@ -1058,6 +1059,30 @@ class TestApplyDesignerProjectScaffold:
             "img": [],
             "font": [],
         }
+
+    def test_sync_project_resources_and_generate_designer_resource_config_syncs_resources_first(self, tmp_path):
+        project_dir = tmp_path / "SyncedResourceConfigHelperApp"
+        resources_dir = project_dir / ".eguiproject" / "resources"
+        images_dir = resources_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "icon.png").write_bytes(b"PNG")
+        project = build_empty_project_model(
+            "SyncedResourceConfigHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+
+        created, config_path = sync_project_resources_and_generate_designer_resource_config(
+            project,
+            str(project_dir),
+        )
+
+        assert created is True
+        assert (project_dir / "resource" / "src" / "icon.png").read_bytes() == b"PNG"
+        assert os.path.normpath(config_path) == os.path.normpath(
+            str(project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json")
+        )
 
     def test_save_project_and_materialize_codegen_writes_scaffold_and_generated_outputs(self, tmp_path):
         project_dir = tmp_path / "SavedGeneratedHelperApp"

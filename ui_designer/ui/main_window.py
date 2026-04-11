@@ -126,7 +126,6 @@ from ..utils.scaffold import (
     bind_project_storage,
     designer_page_header_relpath,
     designer_page_layout_relpath,
-    generate_designer_resource_config,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
@@ -135,6 +134,7 @@ from ..utils.scaffold import (
     save_empty_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
     save_project_model,
+    sync_project_resources_and_generate_designer_resource_config,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -5258,10 +5258,12 @@ class MainWindow(QMainWindow):
                 )
             return False
 
-        self.project.sync_resources_to_src(self._project_dir)
-
         try:
-            generate_designer_resource_config(self.project, src_dir)
+            sync_project_resources_and_generate_designer_resource_config(
+                self.project,
+                self._project_dir,
+                src_dir,
+            )
         except Exception as exc:
             self.debug_panel.log_error(f"Resource config generation failed: {exc}")
             if not silent:
