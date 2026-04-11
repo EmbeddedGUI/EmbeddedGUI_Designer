@@ -45,7 +45,7 @@ def add_test_widget(
 
 
 def build_test_page_with_widget(
-    name="main_page",
+    page_name="main_page",
     widget_type="label",
     *,
     screen_width=240,
@@ -53,15 +53,15 @@ def build_test_page_with_widget(
     **widget_kwargs,
 ):
     """Build a default Page with one attached widget."""
-    page = build_test_page(name, screen_width=screen_width, screen_height=screen_height)
+    page = build_test_page(page_name, screen_width=screen_width, screen_height=screen_height)
     widget = add_test_widget(page, widget_type, **widget_kwargs)
     return page, widget
 
 
-def build_test_page_with_title(name="main_page", *, screen_width=240, screen_height=320, **widget_kwargs):
+def build_test_page_with_title(page_name="main_page", *, screen_width=240, screen_height=320, **widget_kwargs):
     """Build a default Page with a title label attached."""
     return build_test_page_with_widget(
-        name,
+        page_name,
         "label",
         screen_width=screen_width,
         screen_height=screen_height,
