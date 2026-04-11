@@ -15,8 +15,7 @@ Regression coverage for:
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root
-from ui_designer.tests.project_builders import build_test_project_from_pages
+from ui_designer.tests.project_builders import build_test_project_with_page_root
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
     _gen_widget_init_lines,
@@ -180,13 +179,12 @@ class TestContainerAddChildFunc:
     """Container widgets must emit add_child calls for their children."""
 
     def _build_page_with_container(self, container_type):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="test_page")
+        root.name = "root"
         container = WidgetModel(container_type, name="ctr", x=0, y=0, width=200, height=200)
         child = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         container.add_child(child)
         root.add_child(container)
-        page = build_test_page_from_root("test_page", root=root)
-        proj = build_test_project_from_pages([page])
         return page, proj
 
     def test_linearlayout_add_child(self):
@@ -218,15 +216,14 @@ class TestDeeplyNestedHierarchy:
     """3+ levels of nesting must all be emitted correctly."""
 
     def test_three_levels_all_in_header(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="deep_page")
+        root.name = "root"
         lvl1 = WidgetModel("group", name="lvl1", x=0, y=0, width=200, height=200)
         lvl2 = WidgetModel("linearlayout", name="lvl2", x=0, y=0, width=180, height=180)
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
         root.add_child(lvl1)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        page = build_test_page_from_root("deep_page", root=root)
-        proj = build_test_project_from_pages([page])
 
         header = generate_page_header(page, proj)
         assert "egui_view_group_t root;" in header
@@ -235,30 +232,28 @@ class TestDeeplyNestedHierarchy:
         assert "egui_view_label_t leaf_lbl;" in header
 
     def test_three_levels_layout_source_no_crash(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="deep_page")
+        root.name = "root"
         lvl1 = WidgetModel("group", name="lvl1", x=0, y=0, width=200, height=200)
         lvl2 = WidgetModel("linearlayout", name="lvl2", x=0, y=0, width=180, height=180)
         leaf = WidgetModel("label", name="leaf_lbl", x=0, y=0, width=100, height=30)
         root.add_child(lvl1)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        page = build_test_page_from_root("deep_page", root=root)
-        proj = build_test_project_from_pages([page])
         output = generate_page_layout_source(page, proj)
         assert "egui_view_label_init" in output
         assert "leaf_lbl" in output
 
     def test_five_levels_all_widgets_in_output(self):
-        prev = WidgetModel("group", name="g0", x=0, y=0, width=240, height=320)
-        root = prev
+        proj, page, root = build_test_project_with_page_root(page_name="deep5_page")
+        root.name = "g0"
+        prev = root
         for i in range(1, 5):
             child = WidgetModel("group", name=f"g{i}", x=0, y=0, width=200, height=200)
             prev.add_child(child)
             prev = child
         leaf = WidgetModel("button", name="deep_btn", x=0, y=0, width=80, height=40)
         prev.add_child(leaf)
-        page = build_test_page_from_root("deep5_page", root=root)
-        proj = build_test_project_from_pages([page])
         header = generate_page_header(page, proj)
         assert "deep_btn" in header
         layout = generate_page_layout_source(page, proj)
@@ -322,15 +317,14 @@ class TestViewpageChildPageSetup:
     """viewpage widget code generation must register child pages."""
 
     def test_viewpage_child_items_in_layout(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="vp_page")
+        root.name = "root"
         vp = WidgetModel("viewpage", name="vp", x=0, y=0, width=240, height=280)
         child1 = WidgetModel("group", name="page_a", x=0, y=0, width=240, height=280)
         child2 = WidgetModel("group", name="page_b", x=0, y=0, width=240, height=280)
         vp.add_child(child1)
         vp.add_child(child2)
         root.add_child(vp)
-        page = build_test_page_from_root("vp_page", root=root)
-        proj = build_test_project_from_pages([page])
         output = generate_page_layout_source(page, proj)
         # viewpage emits its children
         assert "page_a" in output
