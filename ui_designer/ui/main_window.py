@@ -7205,7 +7205,6 @@ class MainWindow(QMainWindow):
             return
 
         self._flush_pending_xml()
-        os.makedirs(self._project_dir, exist_ok=True)
 
         try:
             self._persist_designer_state_only(self._project_dir)
