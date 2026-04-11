@@ -1,9 +1,8 @@
 """Qt UI tests for the project explorer dock."""
 
-from types import SimpleNamespace
-
 import pytest
 
+from ui_designer.tests.project_builders import build_test_project
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -11,25 +10,6 @@ if HAS_PYQT5:
     from PyQt5.QtGui import QFont
 
 _skip_no_qt = skip_if_no_qt
-
-
-def _build_project():
-    pages = [SimpleNamespace(name="main_page"), SimpleNamespace(name="detail_page")]
-
-    def get_page_by_name(name):
-        for page in pages:
-            if page.name == name:
-                return page
-        return None
-
-    return SimpleNamespace(
-        pages=pages,
-        page_mode="easy_page",
-        startup_page="main_page",
-        get_page_by_name=get_page_by_name,
-    )
-
-
 @_skip_no_qt
 class TestProjectExplorerDock:
     def test_compact_mode_uses_dense_page_tree_font(self, qapp):
@@ -38,7 +18,7 @@ class TestProjectExplorerDock:
 
         dock = ProjectExplorerDock()
         dock.set_compact_mode(True)
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
 
         tokens = app_theme_tokens()
         expected_px = int(tokens["fs_body_sm"])
@@ -54,7 +34,7 @@ class TestProjectExplorerDock:
         from ui_designer.ui.project_dock import ProjectExplorerDock
 
         dock = ProjectExplorerDock()
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         dock.set_current_page("main_page")
 
         font = QFont(dock._page_tree.font())
@@ -74,7 +54,7 @@ class TestProjectExplorerDock:
         from ui_designer.ui.project_dock import ProjectExplorerDock
 
         dock = ProjectExplorerDock()
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         dock.set_current_page("main_page")
 
         font = QFont(dock._page_tree.font())
@@ -115,7 +95,7 @@ class TestProjectExplorerDock:
         assert dock._status_label.isHidden() is True
         assert dock._pages_hint.isHidden() is True
 
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         dock.set_current_page("main_page")
         dock.set_dirty_pages({"detail_page"})
 
@@ -154,7 +134,7 @@ class TestProjectExplorerDock:
             "Create the first page for a new project. Current mode: easy_page."
         )
 
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         dock.set_current_page("main_page")
         dock.set_dirty_pages({"detail_page"})
 
@@ -214,7 +194,7 @@ class TestProjectExplorerDock:
         assert empty_actions["New Page..."].statusTip() == empty_actions["New Page..."].toolTip()
         empty_menu.deleteLater()
 
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         dock.set_current_page("main_page")
         dock.set_dirty_pages({"detail_page"})
 
@@ -261,7 +241,7 @@ class TestProjectExplorerDock:
         dock._update_accessibility_summary()
         assert hint_calls == 1
 
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         assert hint_calls == 2
         dock.deleteLater()
 
@@ -287,6 +267,6 @@ class TestProjectExplorerDock:
         dock._update_accessibility_summary()
         assert accessible_calls == 1
 
-        dock.set_project(_build_project())
+        dock.set_project(build_test_project(pages=["main_page", "detail_page"]))
         assert accessible_calls == 2
         dock.deleteLater()

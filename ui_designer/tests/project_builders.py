@@ -29,6 +29,30 @@ def build_test_project(
     )
 
 
+def build_test_project_with_root(
+    app_name="TestApp",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+):
+    """Build a minimal test project and return it with the startup page root widget."""
+    project = build_test_project(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=[page_name],
+    )
+    page = project.get_page_by_name(page_name)
+    assert page is not None
+    assert page.root_widget is not None
+    return project, page.root_widget
+
+
 def build_test_project_from_pages(
     pages=None,
     app_name="TestApp",

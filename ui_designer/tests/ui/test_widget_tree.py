@@ -2,7 +2,9 @@
 
 import pytest
 
-from ui_designer.tests.project_builders import build_test_project
+from ui_designer.tests.project_builders import (
+    build_test_project_with_root as _build_project_with_root,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -11,14 +13,6 @@ if HAS_PYQT5:
     from PyQt5.QtWidgets import QApplication, QAbstractItemView, QToolButton
 
 _skip_no_qt = skip_if_no_qt
-
-
-def _build_project_with_root():
-    project = build_test_project("WidgetTreeDemo")
-    page = project.get_startup_page()
-    assert page is not None
-    assert page.root_widget is not None
-    return project, page.root_widget
 
 
 def _structure_menu_actions(menu):
