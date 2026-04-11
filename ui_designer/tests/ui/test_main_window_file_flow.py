@@ -12399,15 +12399,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureMenuOrderDemo"
-        project = _create_project(project_dir, "PreviewStructureMenuOrderDemo", sdk_root)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
-        _page, root = require_project_page_root(project)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewStructureMenuOrderDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12444,17 +12444,17 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureMenuStateDemo"
-        project = _create_project(project_dir, "PreviewStructureMenuStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target_group", x=10, y=40, width=120, height=80)
         nested = WidgetModel("switch", name="nested", x=4, y=4, width=32, height=16)
         target.add_child(nested)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewStructureMenuStateDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12526,11 +12526,13 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStructureActionDisabledDemo"
-        project = _create_project(project_dir, "PreviewStructureActionDisabledDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         child = WidgetModel("label", name="child", x=8, y=8, width=60, height=20)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewStructureActionDisabledDemo",
+            sdk_root,
+            widgets=[child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13041,13 +13043,14 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMovePlaceholderDemo"
-        project = _create_project(project_dir, "PreviewQuickMovePlaceholderDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMovePlaceholderDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13086,13 +13089,14 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistoryOnlyContextMenuDemo"
-        project = _create_project(project_dir, "PreviewQuickMoveHistoryOnlyContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        root.add_child(target)
-        root.add_child(child)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMoveHistoryOnlyContextMenuDemo",
+            sdk_root,
+            widgets=[target, child],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13140,21 +13144,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistoryOrderingDemo"
-        project = _create_project(project_dir, "PreviewQuickMoveHistoryOrderingDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         target_c = WidgetModel("group", name="target_c")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(target_c)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMoveHistoryOrderingDemo",
+            sdk_root,
+            widgets=[target_a, target_b, target_c, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13200,15 +13201,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveRenameDemo"
-        project = _create_project(project_dir, "PreviewQuickMoveRenameDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMoveRenameDemo",
+            sdk_root,
+            widgets=[target, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13249,29 +13250,21 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewPerPageMoveIntoDemo"
-        project = _create_project(
-            project_dir,
-            "PreviewPerPageMoveIntoDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-
-        _main_page, main_root = require_project_page_root(project, "main_page")
         main_target = WidgetModel("group", name="main_target")
         main_first = WidgetModel("label", name="main_first")
         main_second = WidgetModel("button", name="main_second")
-        main_root.add_child(main_target)
-        main_root.add_child(main_first)
-        main_root.add_child(main_second)
-
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
-        detail_root.add_child(detail_target)
-        detail_root.add_child(detail_first)
-        detail_root.add_child(detail_second)
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "PreviewPerPageMoveIntoDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [main_target, main_first, main_second],
+                "detail_page": [detail_target, detail_first, detail_second],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13331,17 +13324,16 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveActionsDemo"
-        project = _create_project(project_dir, "PreviewQuickMoveActionsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMoveActionsDemo",
+            sdk_root,
+            widgets=[target, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13420,15 +13412,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewQuickMoveHistorySubmenuDemo"
-        project = _create_project(project_dir, "PreviewQuickMoveHistorySubmenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        root.add_child(target)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewQuickMoveHistorySubmenuDemo",
+            sdk_root,
+            widgets=[target, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13495,19 +13487,17 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewClearMoveHistoryCountDemo"
-        project = _create_project(project_dir, "PreviewClearMoveHistoryCountDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         target_a = WidgetModel("group", name="target_a")
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        root.add_child(target_a)
-        root.add_child(target_b)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(third)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewClearMoveHistoryCountDemo",
+            sdk_root,
+            widgets=[target_a, target_b, first, second, third],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
