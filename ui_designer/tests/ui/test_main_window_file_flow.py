@@ -13,6 +13,7 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project as _create_project,
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
+    build_test_project_with_widgets as _build_project_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
@@ -480,12 +481,20 @@ class TestMainWindowFileFlow:
         _close_window(window)
 
     def test_save_project_files_rejects_legacy_page_files(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SaveMigrationDemo"
-        project = _create_project(project_dir, "SaveMigrationDemo", sdk_root)
+        button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
+        button.on_click = "on_confirm"
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "SaveMigrationDemo",
+            sdk_root,
+            widgets=[button],
+        )
 
         (project_dir / "main_page.h").write_text(
             (
@@ -524,12 +533,6 @@ class TestMainWindowFileFlow:
             ),
             encoding="utf-8",
         )
-
-        page, root = require_project_page_root(project)
-        from ui_designer.model.widget_model import WidgetModel
-        button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
-        button.on_click = "on_confirm"
-        root.add_child(button)
 
         window = MainWindow(str(sdk_root))
         window.project = project
@@ -6412,8 +6415,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeUpdateDemo"
-        project = _create_project(project_dir, "UserCodeUpdateDemo", sdk_root)
-        page, _root = require_project_page_root(project)
+        project_dir.mkdir(parents=True, exist_ok=True)
+        project, page, _root = _build_project_with_widgets(
+            "UserCodeUpdateDemo",
+            sdk_root=sdk_root,
+            project_dir=str(project_dir),
+        )
         source_path = project_dir / "main_page.c"
         source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
 
@@ -6629,10 +6636,11 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "XmlMockupDemo"
-        project, xml_page, _root = _create_project_with_widgets(
-            project_dir,
+        project_dir.mkdir(parents=True, exist_ok=True)
+        project, xml_page, _root = _build_project_with_widgets(
             "XmlMockupDemo",
-            sdk_root,
+            sdk_root=sdk_root,
+            project_dir=str(project_dir),
             page_customizer=_setup_mockup_page,
         )
         xml_text = xml_page.to_xml_string()
