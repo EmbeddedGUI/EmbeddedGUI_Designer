@@ -68,6 +68,24 @@ class TestProjectBuilders:
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
 
+    def test_build_saved_test_project_applies_project_customizer(self, tmp_path):
+        project_dir = tmp_path / "SavedProjectCustomizerDemo"
+
+        def _customize_project(project):
+            project.screen_width = 480
+            project.screen_height = 272
+
+        project = build_saved_test_project(
+            project_dir,
+            "SavedProjectCustomizerDemo",
+            project_customizer=_customize_project,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert project.screen_width == 480
+        assert project.screen_height == 272
+        assert (project_dir / "SavedProjectCustomizerDemo.egui").is_file()
+
     def test_build_saved_test_project_with_page_widgets_writes_populated_pages(self, tmp_path):
         project_dir = tmp_path / "SavedWidgetBuilderDemo"
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)

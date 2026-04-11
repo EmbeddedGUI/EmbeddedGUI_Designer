@@ -112,7 +112,7 @@ def build_test_project_with_page_widgets(
     page_customizers=None,
     pages=None,
 ):
-    """Build a minimal multi-page project and attach widgets to each named page root."""
+    """Build a minimal multi-page project, attach widgets, and optionally customize each page."""
     resolved_pages = pages
     if resolved_pages is None:
         resolved_pages = []
@@ -161,7 +161,7 @@ def build_test_project_with_widgets(
     widgets=None,
     page_customizer=None,
 ):
-    """Build a minimal test project and attach caller-supplied widgets to one page root."""
+    """Build a minimal test project, attach widgets, and optionally customize the selected page."""
     project, page, root = build_test_project_with_page_root(
         app_name,
         page_name=page_name,
@@ -287,7 +287,7 @@ def build_saved_test_project(
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
-    """Build and save a minimal test project to disk."""
+    """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
     project_root.mkdir(parents=True, exist_ok=True)
     project = build_test_project(
@@ -326,7 +326,7 @@ def build_saved_test_project_with_widgets(
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
-    """Build, populate, and save a single-page test project to disk."""
+    """Build, populate, optionally customize, and save a single-page test project to disk."""
     project_root = Path(project_dir)
     project_root.mkdir(parents=True, exist_ok=True)
     project, page, root = build_test_project_with_widgets(
@@ -367,7 +367,7 @@ def build_saved_test_project_with_page_widgets(
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
-    """Build, populate, and save a multi-page test project to disk."""
+    """Build, populate, optionally customize, and save a multi-page test project to disk."""
     project_root = Path(project_dir)
     project_root.mkdir(parents=True, exist_ok=True)
     project, roots = build_test_project_with_page_widgets(
