@@ -14,6 +14,7 @@ from ui_designer.model.page import Page
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
+from ui_designer.utils.scaffold import require_page_root
 
 
 class TestProjectDefaults:
@@ -104,9 +105,10 @@ class TestCreateNewPage:
         proj = Project(screen_width=320, screen_height=480)
 
         original = proj.create_new_page("settings")
+        original_root = require_page_root(original, "settings")
         label = WidgetModel("label", name="title", x=12, y=18, width=180, height=32)
         label.properties["text"] = "Settings"
-        original.root_widget.add_child(label)
+        original_root.add_child(label)
         original.user_fields.append({"name": "counter", "type": "int", "default": 3})
         original.timers.append(
             {
@@ -122,15 +124,16 @@ class TestCreateNewPage:
         original.mockup_image_opacity = 0.5
 
         duplicated = proj.duplicate_page("settings", "settings_copy")
+        duplicated_root = require_page_root(duplicated, "settings_copy")
 
         assert duplicated is not original
         assert duplicated.name == "settings_copy"
         assert duplicated.file_path == "layout/settings_copy.xml"
         assert duplicated.dirty is True
-        assert duplicated.root_widget is not original.root_widget
-        assert len(duplicated.root_widget.children) == 1
-        assert duplicated.root_widget.children[0].name == "title"
-        assert duplicated.root_widget.children[0].properties["text"] == "Settings"
+        assert duplicated_root is not original_root
+        assert len(duplicated_root.children) == 1
+        assert duplicated_root.children[0].name == "title"
+        assert duplicated_root.children[0].properties["text"] == "Settings"
         assert duplicated.user_fields == [{"name": "counter", "type": "int", "default": "3"}]
         assert duplicated.timers == [
             {
@@ -352,9 +355,9 @@ class TestSaveLoad:
         assert len(loaded.pages) == 2
 
         home_page = loaded.get_page_by_name("home")
-        assert home_page is not None
-        assert len(home_page.root_widget.children) == 1
-        assert home_page.root_widget.children[0].properties["text"] == "Home Page"
+        home_root = require_page_root(home_page, "home")
+        assert len(home_root.children) == 1
+        assert home_root.children[0].properties["text"] == "Home Page"
 
     @pytest.mark.integration
     def test_save_writes_only_canonical_sdk_root_attribute(self, tmp_path):
@@ -478,10 +481,9 @@ class TestSaveLoad:
 
         assert loaded.app_name == "HelloWidgetFallbackDemo"
         page = loaded.get_page_by_name("main_page")
-        assert page is not None
-        assert page.root_widget is not None
-        assert len(page.root_widget.children) == 2
-        pill = page.root_widget.children[1]
+        root = require_page_root(page, "main_page")
+        assert len(root.children) == 2
+        pill = root.children[1]
         assert pill.widget_type == "fallback_pill"
         assert pill.properties["text"] == "Manual widget active"
         assert pill.properties["emphasis"] is True
