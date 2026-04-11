@@ -4,6 +4,8 @@ import os
 
 import pytest
 
+from ui_designer.tests.sdk_builders import build_test_sdk_root, mark_bundled_test_sdk_root
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
@@ -56,13 +58,11 @@ def bind_ui_config(isolated_config, monkeypatch, tmp_path):
 
 
 def _create_sdk_root(root):
-    (root / "src").mkdir(parents=True)
-    (root / "porting" / "designer").mkdir(parents=True)
-    (root / "Makefile").write_text("all:\n")
+    return build_test_sdk_root(root)
 
 
 def _mark_bundled_sdk(root):
-    (root / ".designer_sdk_bundle.json").write_text('{"source_root": "D:/sdk/EmbeddedGUI"}\n', encoding="utf-8")
+    return mark_bundled_test_sdk_root(root)
 
 
 def _find_label_by_text(root, text):
