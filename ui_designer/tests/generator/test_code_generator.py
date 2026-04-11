@@ -4,10 +4,11 @@ import pytest
 
 from ui_designer.tests.page_builders import build_test_page_from_root as _make_page
 from ui_designer.tests.project_builders import (
+    build_test_project_and_page_with_widget,
+    build_test_project_and_page_with_widgets,
     build_test_project_from_pages as _make_project,
     build_test_project_only_with_widgets,
     build_test_project_with_widget,
-    build_test_project_with_widgets,
 )
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel, AnimationModel
 from ui_designer.model.widget_registry import WidgetRegistry
@@ -246,7 +247,7 @@ class TestGeneratePageHeader:
         WidgetRegistry.instance().clear_app_local_widgets()
 
     def _make_simple_page_and_project(self):
-        proj, page, _label = build_test_project_with_widget(
+        proj, page = build_test_project_and_page_with_widget(
             page_name="main_page",
             widget_type="label",
             name="my_label",
@@ -314,7 +315,7 @@ class TestGeneratePageHeader:
             origin="app_local",
         )
 
-        proj, page, _widget = build_test_project_with_widget(
+        proj, page = build_test_project_and_page_with_widget(
             page_name="main_page",
             widget_type="status_pill",
             name="status_1",
@@ -382,7 +383,7 @@ class TestGeneratePageExtHeader:
     """Tests for generate_page_ext_header."""
 
     def _make_simple_page_and_project(self):
-        proj, page, _root = build_test_project_with_widgets(page_name="main_page")
+        proj, page = build_test_project_and_page_with_widgets(page_name="main_page")
         return page, proj
 
     def test_ext_header_formats_multi_line_fields_and_preserves_user_sections(self):
@@ -421,7 +422,7 @@ class TestGeneratePageLayoutSource:
     def _make_page_with_children(self):
         label = WidgetModel("label", name="title", x=10, y=10, width=100, height=30)
         label.properties["text"] = "Title"
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="main_page",
             widgets=[label],
         )
@@ -449,7 +450,7 @@ class TestGeneratePageLayoutSource:
         def _setup_page(_page, root):
             root.background = _make_bg(bg_type="solid", color="EGUI_COLOR_BLUE")
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="main_page",
             page_customizer=_setup_page,
         )
@@ -460,7 +461,7 @@ class TestGeneratePageLayoutSource:
     def test_layout_source_i18n_includes(self):
         label = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         label.properties["text"] = "@string/greeting"
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="main_page",
             widgets=[label],
         )
@@ -544,7 +545,7 @@ class TestGeneratePageUserSource:
     """Tests for generate_page_user_source."""
 
     def _make_simple(self):
-        proj, page, _root = build_test_project_with_widgets(page_name="main_page")
+        proj, page = build_test_project_and_page_with_widgets(page_name="main_page")
         return page, proj
 
     def test_user_source_on_open(self):
@@ -594,7 +595,7 @@ class TestGeneratePageUserSource:
     def test_user_source_includes_on_click_callback_stub(self):
         button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
         button.on_click = "on_confirm_button_click"
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="main_page",
             widgets=[button],
         )
@@ -607,7 +608,7 @@ class TestGeneratePageUserSource:
     def test_user_source_includes_widget_event_callback_stub(self):
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=120, height=24)
         slider.events = {"onValueChanged": "on_volume_changed"}
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="main_page",
             widgets=[slider],
         )
@@ -751,7 +752,7 @@ class TestAnimationCodeGen:
         anim.duration = 500
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="anim_page",
             widgets=[lbl],
         )
@@ -766,7 +767,7 @@ class TestAnimationCodeGen:
         anim.interpolator = "bounce"
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="anim_page",
             widgets=[lbl],
         )
@@ -788,7 +789,7 @@ class TestAnimationCodeGen:
         anim.repeat_mode = "reverse"
         anim.params = {"from_x": "0", "to_x": "100", "from_y": "0", "to_y": "0"}
         btn.animations.append(anim)
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="move_page",
             widgets=[btn],
         )
@@ -804,7 +805,7 @@ class TestAnimationCodeGen:
         anim.auto_start = False
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="no_start",
             widgets=[lbl],
         )
@@ -865,7 +866,7 @@ class TestEventCallbackCodeGen:
         assert "egui_view_switch_set_on_checked_listener(" in layout
 
     def test_no_event_no_declaration(self):
-        proj, page, _slider = build_test_project_with_widget(
+        proj, page = build_test_project_and_page_with_widget(
             page_name="no_event",
             widget_type="slider",
             name="s1",
@@ -939,7 +940,7 @@ class TestParamOnlyKindWidgets:
     """Widgets with 'param_only'/'param' code_gen kinds must not raise KeyError."""
 
     def _make_page_with(self, widget):
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="test_page",
             widgets=[widget],
         )
@@ -989,7 +990,7 @@ class TestParamOnlyKindWidgets:
         scale = WidgetModel("scale", name="sc", x=0, y=0, width=200, height=30)
         table = WidgetModel("table", name="tbl", x=0, y=100, width=200, height=160)
         cal = WidgetModel("mini_calendar", name="cal", x=0, y=270, width=200, height=200)
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="multi_param",
             widgets=[scale, table, cal],
         )

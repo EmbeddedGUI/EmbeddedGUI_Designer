@@ -1126,6 +1126,33 @@ def build_project_model_with_widgets(
     return project, page, root
 
 
+def build_project_model_and_page_with_widgets(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+    widgets=None,
+    page_customizer=None,
+    project_customizer=None,
+):
+    """Build a single-page project model and return the project with its populated page."""
+    project, page, _root = build_project_model_with_widgets(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+        widgets=widgets,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+    )
+    return project, page
+
+
 def build_project_model_only_with_widgets(
     app_name,
     screen_width=240,
@@ -1180,6 +1207,35 @@ def build_project_model_with_widget(
         project_customizer=project_customizer,
     )
     return project, page, widget
+
+
+def build_project_model_and_page_with_widget(
+    app_name,
+    widget_type="label",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+    page_customizer=None,
+    project_customizer=None,
+    **widget_kwargs,
+):
+    """Build a single-page project model with one widget and return the project with its page."""
+    project, page, _widget = build_project_model_with_widget(
+        app_name,
+        widget_type,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
+        **widget_kwargs,
+    )
+    return project, page
 
 
 def build_project_model_only_with_widget(

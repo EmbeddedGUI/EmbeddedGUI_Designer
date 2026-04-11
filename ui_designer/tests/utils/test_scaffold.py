@@ -18,6 +18,8 @@ from ui_designer.utils.scaffold import (
     build_page_model_from_root,
     build_page_model_from_root_with_widgets,
     build_page_model_with_root_widget,
+    build_project_model_and_page_with_widget,
+    build_project_model_and_page_with_widgets,
     build_project_model_only_with_page_widgets,
     build_project_model_only_with_widget,
     build_project_model_only_with_widgets,
@@ -553,6 +555,23 @@ class TestCoreProjectScaffold:
         assert page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
         assert project.string_catalog.get("greeting", "default") == "Hello"
 
+    def test_build_project_model_and_page_with_widgets_returns_project_and_page(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page = build_project_model_and_page_with_widgets(
+            "DemoApp",
+            320,
+            240,
+            page_name="home",
+            widgets=[label],
+        )
+
+        assert project.app_name == "DemoApp"
+        assert page.name == "home"
+        assert page.root_widget.children == [label]
+
     def test_build_project_model_only_with_widgets_returns_populated_project(self):
         from ui_designer.model.widget_model import WidgetModel
 
@@ -599,6 +618,23 @@ class TestCoreProjectScaffold:
         assert widget in page.root_widget.children
         assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500"}]
         assert project.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_build_project_model_and_page_with_widget_returns_project_and_page(self):
+        project, page = build_project_model_and_page_with_widget(
+            "DemoApp",
+            "button",
+            page_name="home",
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+        )
+
+        assert project.app_name == "DemoApp"
+        assert page.name == "home"
+        assert [child.name for child in page.root_widget.children] == ["cta"]
+        assert page.root_widget.children[0].widget_type == "button"
 
     def test_build_project_model_only_with_widget_returns_project_for_requested_widget(self):
         project = build_project_model_only_with_widget(

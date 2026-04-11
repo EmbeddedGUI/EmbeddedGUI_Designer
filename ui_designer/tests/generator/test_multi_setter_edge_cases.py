@@ -16,7 +16,7 @@ Regression coverage for:
 import pytest
 
 from ui_designer.tests.project_builders import (
-    build_test_project_with_widgets,
+    build_test_project_and_page_with_widgets,
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
@@ -189,7 +189,7 @@ class TestContainerAddChildFunc:
         def _setup_page(_page, root):
             root.name = "root"
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="test_page",
             widgets=[container],
             page_customizer=_setup_page,
@@ -234,7 +234,7 @@ class TestDeeplyNestedHierarchy:
         def _setup_page(_page, root):
             root.name = "root"
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="deep_page",
             widgets=[lvl1],
             page_customizer=_setup_page,
@@ -256,7 +256,7 @@ class TestDeeplyNestedHierarchy:
         def _setup_page(_page, root):
             root.name = "root"
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="deep_page",
             widgets=[lvl1],
             page_customizer=_setup_page,
@@ -276,7 +276,7 @@ class TestDeeplyNestedHierarchy:
             add_widget_children(prev, [leaf])
             root.name = "g0"
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="deep5_page",
             page_customizer=_setup_page,
         )
@@ -351,7 +351,7 @@ class TestViewpageChildPageSetup:
         def _setup_page(_page, root):
             root.name = "root"
 
-        proj, page, _root = build_test_project_with_widgets(
+        proj, page = build_test_project_and_page_with_widgets(
             page_name="vp_page",
             widgets=[vp],
             page_customizer=_setup_page,

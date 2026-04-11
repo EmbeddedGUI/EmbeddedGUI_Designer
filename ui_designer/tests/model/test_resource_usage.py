@@ -1,9 +1,9 @@
 """Tests for ui_designer.model.resource_usage."""
 
 from ui_designer.tests.project_builders import (
+    build_test_project_and_page_with_widgets,
     build_test_project_only_with_page_widgets,
     build_test_project_only_with_widgets,
-    build_test_project_with_widgets,
 )
 from ui_designer.model.resource_usage import (
     collect_unused_resource_names,
@@ -27,7 +27,7 @@ class TestResourceUsage:
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        project, page, _root = build_test_project_with_widgets("UsageDemo", widgets=[image, label])
+        project, page = build_test_project_and_page_with_widgets("UsageDemo", widgets=[image, label])
 
         usages = collect_page_resource_usages(page)
         summary = {(entry.resource_type, entry.resource_name, entry.widget_name, entry.property_name) for entry in usages}

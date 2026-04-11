@@ -11,7 +11,7 @@ Covers:
 
 import pytest
 
-from ui_designer.tests.project_builders import build_test_project_with_widgets
+from ui_designer.tests.project_builders import build_test_project_and_page_with_widgets
 
 
 class TestReservedPageNames:
@@ -101,7 +101,7 @@ class TestPageNameGeneratesConflictingSymbol:
         """Generated init func follows egui_{page}_init pattern."""
         from ui_designer.generator.code_generator import generate_page_user_source
 
-        proj, page, _root = build_test_project_with_widgets(page_name="my_screen")
+        proj, page = build_test_project_and_page_with_widgets(page_name="my_screen")
 
         output = generate_page_user_source(page, proj)
         # The user source defines egui_my_screen_user_init(egui_my_screen_t *page)
@@ -114,7 +114,7 @@ class TestPageNameGeneratesConflictingSymbol:
         """
         from ui_designer.generator.code_generator import generate_page_user_source
 
-        proj, page, _root = build_test_project_with_widgets(page_name="test")
+        proj, page = build_test_project_and_page_with_widgets(page_name="test")
 
         output = generate_page_user_source(page, proj)
         # This user hook name still collides on the egui_test prefix, which is
