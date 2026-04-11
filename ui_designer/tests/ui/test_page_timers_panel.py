@@ -11,17 +11,12 @@ if HAS_PYQT5:
 _skip_no_qt = skip_if_no_qt
 
 
-def _make_page():
-    page, _title = build_test_page_with_title()
-    return page
-
-
 @_skip_no_qt
 class TestPageTimersPanel:
     def test_panel_displays_current_page_timers(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True},
         ]
@@ -125,7 +120,7 @@ class TestPageTimersPanel:
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True},
         ]
@@ -157,7 +152,7 @@ class TestPageTimersPanel:
     def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True},
         ]
@@ -189,7 +184,7 @@ class TestPageTimersPanel:
     def test_panel_add_and_remove_timer_emit_changes(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         panel = PageTimersPanel()
         panel.set_page(page)
         captured = []
@@ -233,7 +228,7 @@ class TestPageTimersPanel:
     def test_panel_open_user_code_emits_selected_timer_callback(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True},
         ]
@@ -251,7 +246,7 @@ class TestPageTimersPanel:
     def test_panel_rejects_conflicting_timer_name(self, qapp):
         from ui_designer.ui.page_timers_panel import PageTimersPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         panel = PageTimersPanel()
         panel.set_page(page)
         messages = []

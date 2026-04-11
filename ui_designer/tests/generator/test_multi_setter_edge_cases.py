@@ -25,14 +25,6 @@ from ui_designer.generator.code_generator import (
 )
 
 
-def _make_page(name, root):
-    return build_test_page_from_root(name, root=root)
-
-
-def _make_project(pages):
-    return build_test_project_from_pages(pages)
-
-
 # ======================================================================
 # TestMultiSetterListFormArgs
 # ======================================================================
@@ -193,8 +185,8 @@ class TestContainerAddChildFunc:
         child = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         container.add_child(child)
         root.add_child(container)
-        page = _make_page("test_page", root)
-        proj = _make_project([page])
+        page = build_test_page_from_root("test_page", root=root)
+        proj = build_test_project_from_pages([page])
         return page, proj
 
     def test_linearlayout_add_child(self):
@@ -233,8 +225,8 @@ class TestDeeplyNestedHierarchy:
         root.add_child(lvl1)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        page = _make_page("deep_page", root)
-        proj = _make_project([page])
+        page = build_test_page_from_root("deep_page", root=root)
+        proj = build_test_project_from_pages([page])
 
         header = generate_page_header(page, proj)
         assert "egui_view_group_t root;" in header
@@ -250,8 +242,8 @@ class TestDeeplyNestedHierarchy:
         root.add_child(lvl1)
         lvl1.add_child(lvl2)
         lvl2.add_child(leaf)
-        page = _make_page("deep_page", root)
-        proj = _make_project([page])
+        page = build_test_page_from_root("deep_page", root=root)
+        proj = build_test_project_from_pages([page])
         output = generate_page_layout_source(page, proj)
         assert "egui_view_label_init" in output
         assert "leaf_lbl" in output
@@ -265,8 +257,8 @@ class TestDeeplyNestedHierarchy:
             prev = child
         leaf = WidgetModel("button", name="deep_btn", x=0, y=0, width=80, height=40)
         prev.add_child(leaf)
-        page = _make_page("deep5_page", root)
-        proj = _make_project([page])
+        page = build_test_page_from_root("deep5_page", root=root)
+        proj = build_test_project_from_pages([page])
         header = generate_page_header(page, proj)
         assert "deep_btn" in header
         layout = generate_page_layout_source(page, proj)
@@ -337,8 +329,8 @@ class TestViewpageChildPageSetup:
         vp.add_child(child1)
         vp.add_child(child2)
         root.add_child(vp)
-        page = _make_page("vp_page", root)
-        proj = _make_project([page])
+        page = build_test_page_from_root("vp_page", root=root)
+        proj = build_test_project_from_pages([page])
         output = generate_page_layout_source(page, proj)
         # viewpage emits its children
         assert "page_a" in output

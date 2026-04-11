@@ -11,17 +11,12 @@ if HAS_PYQT5:
 _skip_no_qt = skip_if_no_qt
 
 
-def _make_page():
-    page, _title = build_test_page_with_title()
-    return page
-
-
 @_skip_no_qt
 class TestPageFieldsPanel:
     def test_panel_displays_current_page_fields(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.user_fields = [
             {"name": "counter", "type": "int", "default": "0"},
             {"name": "buffer", "type": "uint8_t[16]"},
@@ -147,7 +142,7 @@ class TestPageFieldsPanel:
     def test_header_frame_hint_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
 
         panel = PageFieldsPanel()
@@ -177,7 +172,7 @@ class TestPageFieldsPanel:
     def test_header_frame_accessible_name_skips_no_op_rewrites(self, qapp, monkeypatch):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
 
         panel = PageFieldsPanel()
@@ -207,7 +202,7 @@ class TestPageFieldsPanel:
     def test_panel_add_and_remove_field_emits_changes(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         panel = PageFieldsPanel()
         panel.set_page(page)
         captured = []
@@ -246,7 +241,7 @@ class TestPageFieldsPanel:
     def test_panel_rejects_conflicting_field_name(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         panel = PageFieldsPanel()
         panel.set_page(page)
         messages = []
@@ -263,7 +258,7 @@ class TestPageFieldsPanel:
     def test_panel_open_lifecycle_section_emits_request(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         panel = PageFieldsPanel()
         captured = []
         panel.user_code_section_requested.connect(captured.append)
@@ -276,7 +271,7 @@ class TestPageFieldsPanel:
     def test_panel_rejects_duplicate_field_name(self, qapp):
         from ui_designer.ui.page_fields_panel import PageFieldsPanel
 
-        page = _make_page()
+        page, _title = build_test_page_with_title()
         page.user_fields = [
             {"name": "counter", "type": "int", "default": "0"},
             {"name": "buffer", "type": "uint8_t[16]"},
