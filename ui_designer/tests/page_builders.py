@@ -6,6 +6,7 @@ from ui_designer.model.page import Page
 from ui_designer.utils.scaffold import (
     add_page_widget,
     build_page_model_from_root,
+    build_page_model_from_root_with_widgets,
     build_page_model_with_root_widget,
     build_page_model_with_widget,
     build_page_model_with_widgets,
@@ -54,6 +55,24 @@ def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, 
         root=root,
         screen_width=screen_width,
         screen_height=screen_height,
+    )
+
+
+def build_test_page_from_root_with_widgets(
+    name="main_page",
+    root=None,
+    *,
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+):
+    """Build a Page model from a caller-supplied root widget and attach children."""
+    return build_page_model_from_root_with_widgets(
+        name,
+        root=root,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        widgets=widgets,
     )
 
 

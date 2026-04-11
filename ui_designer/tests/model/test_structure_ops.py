@@ -1,5 +1,5 @@
 from ui_designer.tests.project_builders import (
-    build_test_project_from_root,
+    build_test_project_from_root_with_widgets,
     build_test_project_with_widgets,
 )
 from ui_designer.model.structure_ops import (
@@ -57,18 +57,15 @@ def test_group_and_ungroup_selection_round_trip_free_layout():
 def test_group_selection_blocks_non_contiguous_layout_siblings():
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    project, _page = build_test_project_from_root(
-        root,
-        page_name="main_page",
-        app_name="LayoutGroupDemo",
-    )
-
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
     third = WidgetModel("label", name="third", width=80, height=20)
-    root.add_child(first)
-    root.add_child(second)
-    root.add_child(third)
+    project, _page = build_test_project_from_root_with_widgets(
+        root,
+        page_name="main_page",
+        app_name="LayoutGroupDemo",
+        widgets=[first, second, third],
+    )
 
     result = group_selection(project, [first, third])
 
@@ -249,18 +246,15 @@ def test_describe_structure_actions_reports_isolated_widget_block_reason():
 def test_describe_structure_actions_reports_group_constraint_for_noncontiguous_layout_selection():
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    project, _page = build_test_project_from_root(
-        root,
-        page_name="main_page",
-        app_name="LayoutGroupStateDemo",
-    )
-
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
     third = WidgetModel("label", name="third", width=80, height=20)
-    root.add_child(first)
-    root.add_child(second)
-    root.add_child(third)
+    project, _page = build_test_project_from_root_with_widgets(
+        root,
+        page_name="main_page",
+        app_name="LayoutGroupStateDemo",
+        widgets=[first, second, third],
+    )
 
     state = describe_structure_actions(project, [first, third])
 

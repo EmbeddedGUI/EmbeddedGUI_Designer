@@ -12,10 +12,16 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     add_page_widget,
+    add_widget_children,
     apply_designer_project_scaffold,
     build_basic_widget_model,
+    build_page_model_from_root,
+    build_page_model_from_root_with_widgets,
     build_page_model_with_root_widget,
     build_project_model_with_page_widgets,
+    build_project_model_from_pages,
+    build_project_model_from_root,
+    build_project_model_from_root_with_widgets,
     build_project_model_with_widget,
     build_project_model_with_widgets,
     build_page_model_with_widget,
@@ -359,6 +365,45 @@ class TestCoreProjectScaffold:
         assert widget in root.children
         assert root.children == [widget]
 
+    def test_add_widget_children_attaches_widgets_in_order(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("group", name="root")
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        attached_root = add_widget_children(root, [first, second])
+
+        assert attached_root is root
+        assert root.children == [first, second]
+
+    def test_build_page_model_from_root_wraps_supplied_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+
+        page = build_page_model_from_root("detail", root=root)
+
+        assert page.name == "detail"
+        assert page.root_widget is root
+
+    def test_build_page_model_from_root_with_widgets_populates_supplied_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        page, resolved_root = build_page_model_from_root_with_widgets(
+            "detail",
+            root=root,
+            widgets=[first, second],
+        )
+
+        assert page.name == "detail"
+        assert resolved_root is root
+        assert root.children == [first, second]
+
     def test_build_page_model_with_widget_creates_page_and_attached_widget(self):
         page, widget = build_page_model_with_widget(
             "home",
@@ -414,6 +459,66 @@ class TestCoreProjectScaffold:
         assert page.name == "detail"
         assert root is page.root_widget
         assert root.widget_type == "linearlayout"
+        assert root.children == [first, second]
+
+    def test_build_project_model_from_pages_preserves_page_mode_and_startup(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        home_page = build_page_model_from_root("home")
+        detail_page = build_page_model_from_root(
+            "detail",
+            root=WidgetModel("group", name="detail_root", x=0, y=0, width=320, height=240),
+        )
+
+        project = build_project_model_from_pages(
+            [home_page, detail_page],
+            app_name="DemoApp",
+            page_mode="activity",
+            startup_page="detail",
+        )
+
+        assert project.app_name == "DemoApp"
+        assert project.page_mode == "activity"
+        assert project.startup_page == "detail"
+        assert [page.name for page in project.pages] == ["home", "detail"]
+
+    def test_build_project_model_from_root_wraps_supplied_root_as_single_page_project(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+
+        project, page = build_project_model_from_root(
+            root,
+            page_name="main_page",
+            app_name="LayoutGroupDemo",
+            page_mode="activity",
+        )
+
+        assert project.app_name == "LayoutGroupDemo"
+        assert project.page_mode == "activity"
+        assert project.startup_page == "main_page"
+        assert project.screen_width == 200
+        assert project.screen_height == 120
+        assert page.name == "main_page"
+        assert page.root_widget is root
+
+    def test_build_project_model_from_root_with_widgets_populates_supplied_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("label", name="second")
+
+        project, page = build_project_model_from_root_with_widgets(
+            root,
+            page_name="main_page",
+            app_name="LayoutGroupDemo",
+            widgets=[first, second],
+        )
+
+        assert project.app_name == "LayoutGroupDemo"
+        assert page.name == "main_page"
+        assert page.root_widget is root
         assert root.children == [first, second]
 
     def test_build_project_model_with_widgets_attaches_widgets_and_applies_customizers(self):

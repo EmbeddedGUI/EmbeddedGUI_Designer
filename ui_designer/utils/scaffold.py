@@ -743,6 +743,13 @@ def add_page_widget(
     return widget
 
 
+def add_widget_children(parent, widgets=None):
+    """Attach a list of widgets to a parent container in order."""
+    for widget in widgets or []:
+        parent.add_child(widget)
+    return parent
+
+
 def build_page_model_with_widget(
     page_name="main_page",
     widget_type="label",
@@ -880,6 +887,36 @@ def build_project_model_from_root(
     return project, page
 
 
+def build_project_model_from_root_with_widgets(
+    root,
+    *,
+    widgets=None,
+    page_name="main_page",
+    app_name="TestApp",
+    screen_width=None,
+    screen_height=None,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup=None,
+    startup_page=None,
+):
+    """Build a single-page project model around a supplied root widget and attach children."""
+    add_widget_children(root, widgets)
+    return build_project_model_from_root(
+        root,
+        page_name=page_name,
+        app_name=app_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_mode=page_mode,
+        startup=startup,
+        startup_page=startup_page,
+    )
+
+
 def build_page_model_with_root_widget(
     page_name="main_page",
     root_widget_type="group",
@@ -928,6 +965,26 @@ def build_page_model_from_root(
     return Page(file_path=f"layout/{page_name}.xml", root_widget=resolved_root)
 
 
+def build_page_model_from_root_with_widgets(
+    page_name="main_page",
+    root=None,
+    *,
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+):
+    """Build a page model around a supplied root widget and attach children."""
+    page = build_page_model_from_root(
+        page_name,
+        root=root,
+        screen_width=screen_width,
+        screen_height=screen_height,
+    )
+    resolved_root = require_page_root(page, page_name)
+    add_widget_children(resolved_root, widgets)
+    return page, resolved_root
+
+
 def build_page_model_with_widgets(
     page_name="main_page",
     *,
@@ -949,8 +1006,7 @@ def build_page_model_with_widgets(
         width=screen_width,
         height=screen_height,
     )
-    for widget in widgets or []:
-        root.add_child(widget)
+    add_widget_children(root, widgets)
     return page, root
 
 
@@ -1004,8 +1060,7 @@ def build_project_model_with_page_widgets(
 
     for page_name, widgets in (page_widgets or {}).items():
         root = roots[page_name]
-        for widget in widgets or []:
-            root.add_child(widget)
+        add_widget_children(root, widgets)
 
     for page_name, page_customizer in (page_customizers or {}).items():
         page_customizer(pages_by_name[page_name], roots[page_name])

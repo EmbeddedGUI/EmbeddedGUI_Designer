@@ -1,6 +1,7 @@
 """Tests for shared test page builders."""
 
 from ui_designer.tests.page_builders import (
+    build_test_page_from_root_with_widgets,
     build_test_page_with_root,
     build_test_page_with_root_widget,
     build_test_page_with_title,
@@ -56,6 +57,21 @@ class TestPageBuilders:
         assert root.name == "root_layout"
         assert root.width == 200
         assert root.height == 120
+
+    def test_build_test_page_from_root_with_widgets_populates_custom_root(self):
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        page, resolved_root = build_test_page_from_root_with_widgets(
+            "detail",
+            root=root,
+            widgets=[first, second],
+        )
+
+        assert page.name == "detail"
+        assert resolved_root is root
+        assert root.children == [first, second]
 
     def test_build_test_page_with_title_preserves_custom_widget_name(self):
         page, title = build_test_page_with_title(
