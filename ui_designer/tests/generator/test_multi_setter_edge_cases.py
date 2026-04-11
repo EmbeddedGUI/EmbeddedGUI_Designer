@@ -24,6 +24,7 @@ from ui_designer.generator.code_generator import (
     generate_page_layout_source,
     generate_page_header,
 )
+from ui_designer.utils.scaffold import add_widget_children
 
 
 # ======================================================================
@@ -183,7 +184,7 @@ class TestContainerAddChildFunc:
     def _build_page_with_container(self, container_type):
         container = WidgetModel(container_type, name="ctr", x=0, y=0, width=200, height=200)
         child = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
-        container.add_child(child)
+        add_widget_children(container, [child])
 
         def _setup_page(_page, root):
             root.name = "root"

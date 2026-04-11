@@ -4,6 +4,7 @@ import pytest
 
 from ui_designer.tests.page_builders import build_test_page_with_widget, build_test_page_with_widgets
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
+from ui_designer.utils.scaffold import add_widget_children
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, Qt
@@ -723,7 +724,7 @@ class TestWidgetOverlaySelection:
         overlay.set_grid_size(0)
         container = WidgetModel("group", name="container", x=40, y=50, width=120, height=120)
         child = WidgetModel("label", name="child", x=10, y=10, width=20, height=20)
-        container.add_child(child)
+        add_widget_children(container, [child])
         _page, root = build_test_page_with_widgets(
             "main_page",
             root_name="root",

@@ -15,6 +15,7 @@ from ui_designer.model.structure_ops import (
     validate_move_widgets_to_parent_index,
 )
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import add_widget_children
 
 
 def test_group_and_ungroup_selection_round_trip_free_layout():
@@ -94,7 +95,7 @@ def test_move_into_container_preserves_absolute_position_for_free_layout():
 def test_lift_to_parent_moves_widgets_after_their_container():
     container = WidgetModel("group", name="container", x=40, y=50, width=100, height=100)
     child = WidgetModel("label", name="child", x=10, y=12, width=20, height=10)
-    container.add_child(child)
+    add_widget_children(container, [child])
     project, _page, root = build_test_project_with_widgets(
         "StructureOpsDemo",
         widgets=[container],
