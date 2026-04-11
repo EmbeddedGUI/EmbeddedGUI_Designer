@@ -2,6 +2,7 @@
 
 import pytest
 
+from ui_designer.tests.project_builders import build_test_project
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -13,11 +14,11 @@ _skip_no_qt = skip_if_no_qt
 
 
 def _build_project_with_root():
-    from ui_designer.model.project import Project
-
-    project = Project(screen_width=240, screen_height=320, app_name="WidgetTreeDemo")
-    project.create_new_page("main_page")
-    return project, project.get_startup_page().root_widget
+    project = build_test_project("WidgetTreeDemo")
+    page = project.get_startup_page()
+    assert page is not None
+    assert page.root_widget is not None
+    return project, page.root_widget
 
 
 def _structure_menu_actions(menu):

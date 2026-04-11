@@ -6,6 +6,7 @@ from ui_designer.tests.page_builders import (
     build_test_page_with_title,
     build_test_pages,
 )
+from ui_designer.tests.project_builders import build_test_project_from_pages
 
 from ui_designer.model.diagnostics import (
     analyze_page,
@@ -14,7 +15,6 @@ from ui_designer.model.diagnostics import (
     diagnostic_entry_payload,
     diagnostic_target_payload,
 )
-from ui_designer.model.project import Project
 from ui_designer.model.resource_catalog import ResourceCatalog
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.model.widget_model import WidgetModel
@@ -145,14 +145,12 @@ class TestSelectionDiagnostics:
 
 class TestProjectDiagnostics:
     def test_analyze_project_reports_duplicate_callbacks_across_pages(self):
-        project = Project(screen_width=240, screen_height=320, app_name="DiagApp")
         main_page, detail_page = build_test_pages("main_page", "detail_page")
         main_button = add_test_widget(main_page, "button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = add_test_widget(detail_page, "button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project.add_page(main_page)
-        project.add_page(detail_page)
+        project = build_test_project_from_pages([main_page, detail_page], app_name="DiagApp")
 
         entries = analyze_project_callback_conflicts(project)
 
@@ -163,14 +161,12 @@ class TestProjectDiagnostics:
         assert entries[0].target_widget_name == "confirm_button_2"
 
     def test_analyze_project_reports_callback_signature_conflicts_across_pages(self):
-        project = Project(screen_width=240, screen_height=320, app_name="DiagApp")
         main_page, detail_page = build_test_pages("main_page", "detail_page")
         main_button = add_test_widget(main_page, "button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_slider = add_test_widget(detail_page, "slider", name="volume_slider", x=8, y=8, width=120, height=24)
         main_button.on_click = "on_shared_action"
         detail_slider.events["onValueChanged"] = "on_shared_action"
-        project.add_page(main_page)
-        project.add_page(detail_page)
+        project = build_test_project_from_pages([main_page, detail_page], app_name="DiagApp")
 
         entries = analyze_project_callback_conflicts(project)
 

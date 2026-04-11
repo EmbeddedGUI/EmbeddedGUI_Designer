@@ -1,4 +1,5 @@
-from ui_designer.model.project import Project
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project, build_test_project_from_pages
 from ui_designer.model.structure_ops import (
     can_move_widgets_to_parent_index,
     describe_structure_actions,
@@ -15,8 +16,10 @@ from ui_designer.model.widget_model import WidgetModel
 
 
 def _build_project(app_name="StructureOpsDemo"):
-    project = Project(screen_width=240, screen_height=320, app_name=app_name)
-    page = project.create_new_page("main_page")
+    project = build_test_project(app_name)
+    page = project.get_startup_page()
+    assert page is not None
+    assert page.root_widget is not None
     return project, page.root_widget
 
 
@@ -57,11 +60,10 @@ def test_group_and_ungroup_selection_round_trip_free_layout():
 
 
 def test_group_selection_blocks_non_contiguous_layout_siblings():
-    project = Project(screen_width=240, screen_height=320, app_name="LayoutGroupDemo")
-    page = project.create_new_page("main_page")
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    page.root_widget = root
+    page = build_test_page_from_root("main_page", root=root)
+    project = build_test_project_from_pages([page], app_name="LayoutGroupDemo")
 
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
@@ -242,11 +244,10 @@ def test_describe_structure_actions_reports_isolated_widget_block_reason():
 
 
 def test_describe_structure_actions_reports_group_constraint_for_noncontiguous_layout_selection():
-    project = Project(screen_width=240, screen_height=320, app_name="LayoutGroupStateDemo")
-    page = project.create_new_page("main_page")
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    page.root_widget = root
+    page = build_test_page_from_root("main_page", root=root)
+    project = build_test_project_from_pages([page], app_name="LayoutGroupStateDemo")
 
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
