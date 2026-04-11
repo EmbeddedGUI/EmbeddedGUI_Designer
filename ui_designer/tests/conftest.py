@@ -5,7 +5,7 @@ import os
 import sys
 import pytest
 
-from .page_builders import build_test_page_from_root
+from .page_builders import build_test_page_with_widget
 from .project_builders import build_test_project, build_test_project_from_pages, build_test_project_with_page_roots
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
 
@@ -160,13 +160,17 @@ def linearlayout_horizontal():
 @pytest.fixture
 def simple_page():
     """Create a Page with a root group containing one label."""
-    from ui_designer.model.widget_model import WidgetModel
-
-    root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    label = WidgetModel("label", name="my_label", x=10, y=10, width=100, height=30)
+    page, label = build_test_page_with_widget(
+        "main_page",
+        "label",
+        name="my_label",
+        x=10,
+        y=10,
+        width=100,
+        height=30,
+    )
     label.properties["text"] = "Hello"
-    root.add_child(label)
-    return build_test_page_from_root("main_page", root=root)
+    return page
 
 
 @pytest.fixture
