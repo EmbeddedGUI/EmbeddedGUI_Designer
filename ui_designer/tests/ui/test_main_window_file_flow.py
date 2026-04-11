@@ -8252,10 +8252,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReloadDemo"
 
-        project = Project(screen_width=240, screen_height=320, app_name="ReloadDemo")
-        project.sdk_root = str(sdk_root)
-        project.project_dir = str(project_dir)
-        project.create_new_page("main_page")
+        project = _create_project(project_dir, "ReloadDemo", sdk_root)
         project.create_new_page("detail_page")
         project.save(str(project_dir))
 

@@ -1,6 +1,6 @@
 """Tests for ui_designer.model.resource_usage."""
 
-from ui_designer.model.project import Project
+from ui_designer.tests.project_builders import build_test_project
 from ui_designer.model.resource_usage import (
     collect_unused_resource_names,
     collect_unused_string_keys,
@@ -18,8 +18,9 @@ from ui_designer.model.widget_model import WidgetModel
 
 class TestResourceUsage:
     def test_collect_page_resource_usages_tracks_all_resource_property_types(self):
-        project = Project(app_name="UsageDemo")
-        page = project.create_new_page("main_page")
+        project = build_test_project("UsageDemo")
+        page = project.get_page_by_name("main_page")
+        assert page is not None
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"
@@ -40,9 +41,11 @@ class TestResourceUsage:
         }
 
     def test_collect_project_resource_usages_groups_entries_by_resource_name(self):
-        project = Project(app_name="UsageDemo")
-        main_page = project.create_new_page("main_page")
-        detail_page = project.create_new_page("detail_page")
+        project = build_test_project("UsageDemo", pages=["main_page", "detail_page"])
+        main_page = project.get_page_by_name("main_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert main_page is not None
+        assert detail_page is not None
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
@@ -134,9 +137,11 @@ class TestResourceUsage:
         ) == ["debug", "notes"]
 
     def test_rewrite_project_resource_references_updates_all_matching_widgets(self):
-        project = Project(app_name="RewriteDemo")
-        main_page = project.create_new_page("main_page")
-        detail_page = project.create_new_page("detail_page")
+        project = build_test_project("RewriteDemo", pages=["main_page", "detail_page"])
+        main_page = project.get_page_by_name("main_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert main_page is not None
+        assert detail_page is not None
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
@@ -162,8 +167,9 @@ class TestResourceUsage:
         assert untouched.properties["font_text_file"] == "other.txt"
 
     def test_rewrite_project_resource_references_can_clear_references(self):
-        project = Project(app_name="RewriteDemo")
-        page = project.create_new_page("main_page")
+        project = build_test_project("RewriteDemo")
+        page = project.get_page_by_name("main_page")
+        assert page is not None
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "missing.png"
@@ -176,9 +182,11 @@ class TestResourceUsage:
         assert image.properties["image_file"] == ""
 
     def test_collect_and_rewrite_string_references(self):
-        project = Project(app_name="StringUsageDemo")
-        main_page = project.create_new_page("main_page")
-        detail_page = project.create_new_page("detail_page")
+        project = build_test_project("StringUsageDemo", pages=["main_page", "detail_page"])
+        main_page = project.get_page_by_name("main_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert main_page is not None
+        assert detail_page is not None
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
@@ -206,8 +214,9 @@ class TestResourceUsage:
         assert subtitle.properties["text"] == "Hello"
 
     def test_rewrite_string_references_to_new_key(self):
-        project = Project(app_name="StringRenameDemo")
-        page = project.create_new_page("main_page")
+        project = build_test_project("StringRenameDemo")
+        page = project.get_page_by_name("main_page")
+        assert page is not None
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
