@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from ui_designer.tests.project_builders import build_saved_test_project
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
@@ -91,14 +93,7 @@ def _create_sdk_root(root):
 
 
 def _create_project(project_dir, app_name, sdk_root=""):
-    from ui_designer.model.project import Project
-
-    project = Project(screen_width=240, screen_height=320, app_name=app_name)
-    project.sdk_root = str(sdk_root)
-    project.project_dir = str(project_dir)
-    project.create_new_page("main_page")
-    project.save(str(project_dir))
-    return project
+    return build_saved_test_project(project_dir, app_name, sdk_root=sdk_root)
 
 
 def _close_window(window):

@@ -5,6 +5,8 @@ import os
 import sys
 import pytest
 
+from .project_builders import build_test_project
+
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
 _TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 _UI_DESIGNER_DIR = os.path.dirname(_TESTS_DIR)
@@ -175,10 +177,9 @@ def simple_page():
 @pytest.fixture
 def simple_project(simple_page):
     """Create a Project with one page."""
-    from ui_designer.model.project import Project
-    proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-    proj.add_page(simple_page)
-    proj.startup_page = "main_page"
+    proj = build_test_project("TestApp")
+    proj.pages = [simple_page]
+    proj.startup_page = simple_page.name
     return proj
 
 
@@ -186,27 +187,26 @@ def simple_project(simple_page):
 def multi_page_project():
     """Create a Project with two pages for multi-page testing."""
     from ui_designer.model.widget_model import WidgetModel
-    from ui_designer.model.page import Page
-    from ui_designer.model.project import Project
+    proj = build_test_project("MultiPageApp", pages=["main_page", "settings"])
 
-    proj = Project(screen_width=240, screen_height=320, app_name="MultiPageApp")
+    page1 = proj.get_page_by_name("main_page")
+    page2 = proj.get_page_by_name("settings")
+    assert page1 is not None
+    assert page2 is not None
 
-    root1 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    root1 = page1.root_widget
+    root2 = page2.root_widget
+    assert root1 is not None
+    assert root2 is not None
+
     label1 = WidgetModel("label", name="title", x=10, y=10, width=220, height=30)
     label1.properties["text"] = "Page One"
     root1.add_child(label1)
-    page1 = Page(file_path="layout/main_page.xml", root_widget=root1)
 
-    root2 = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     btn = WidgetModel("button", name="back_btn", x=10, y=10, width=100, height=40)
     btn.properties["text"] = "Back"
     btn.on_click = "on_back_click"
     root2.add_child(btn)
-    page2 = Page(file_path="layout/settings.xml", root_widget=root2)
-
-    proj.add_page(page1)
-    proj.add_page(page2)
-    proj.startup_page = "main_page"
     return proj
 
 
