@@ -7047,26 +7047,21 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameTextResourceDemo"
-        project = _create_project(
-            project_dir,
-            "RenameTextResourceDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
-
         label_a = WidgetModel("label", name="label_a")
         label_a.properties["font_file"] = "demo.ttf"
         label_a.properties["font_text_file"] = "chars.txt"
-        main_root.add_child(label_a)
-
         label_b = WidgetModel("label", name="label_b")
         label_b.properties["font_file"] = "demo.ttf"
         label_b.properties["font_text_file"] = "chars.txt"
-        detail_root.add_child(label_b)
-
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "RenameTextResourceDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [label_a],
+                "detail_page": [label_b],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7123,24 +7118,21 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteStringKeyDemo"
-        project = _create_project(
+        title = WidgetModel("label", name="title")
+        title.properties["text"] = "@string/greeting"
+        subtitle = WidgetModel("label", name="subtitle")
+        subtitle.properties["text"] = "@string/greeting"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "DeleteStringKeyDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [title],
+                "detail_page": [subtitle],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
-
-        title = WidgetModel("label", name="title")
-        title.properties["text"] = "@string/greeting"
-        main_root.add_child(title)
-
-        subtitle = WidgetModel("label", name="subtitle")
-        subtitle.properties["text"] = "@string/greeting"
-        detail_root.add_child(subtitle)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7170,24 +7162,21 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameStringKeyDemo"
-        project = _create_project(
+        title = WidgetModel("label", name="title")
+        title.properties["text"] = "@string/greeting"
+        subtitle = WidgetModel("label", name="subtitle")
+        subtitle.properties["text"] = "@string/greeting"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "RenameStringKeyDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [title],
+                "detail_page": [subtitle],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
-
-        title = WidgetModel("label", name="title")
-        title.properties["text"] = "@string/greeting"
-        main_root.add_child(title)
-
-        subtitle = WidgetModel("label", name="subtitle")
-        subtitle.properties["text"] = "@string/greeting"
-        detail_root.add_child(subtitle)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
