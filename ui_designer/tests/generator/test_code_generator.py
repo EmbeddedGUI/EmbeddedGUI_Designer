@@ -307,10 +307,8 @@ class TestGeneratePageHeader:
             origin="app_local",
         )
 
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="main_page")
         root.add_child(WidgetModel("status_pill", name="status_1", x=10, y=10, width=100, height=24))
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
 
         output = generate_page_header(page, proj)
 
@@ -432,21 +430,17 @@ class TestGeneratePageLayoutSource:
         assert "local->title" in output
 
     def test_layout_source_background(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="main_page")
         root.background = _make_bg(bg_type="solid", color="EGUI_COLOR_BLUE")
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
         output = generate_page_layout_source(page, proj)
         assert "egui_background_color_t" in output
         assert "EGUI_BACKGROUND_COLOR_PARAM_INIT_SOLID" in output
 
     def test_layout_source_i18n_includes(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="main_page")
         label = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         label.properties["text"] = "@string/greeting"
         root.add_child(label)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
         output = generate_page_layout_source(page, proj)
         assert '#include "egui_strings.h"' in output
 
@@ -658,9 +652,7 @@ class TestGenerateAllFiles:
     """Tests for generate_all_files."""
 
     def test_all_files_single_page(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
+        proj, _page, _root = build_test_project_with_page_root(page_name="main_page")
         files = generate_all_files(proj)
         assert designer_page_header_relpath("main_page") in files
         assert designer_page_layout_relpath("main_page") in files
@@ -672,9 +664,7 @@ class TestGenerateAllFiles:
         assert APP_CONFIG_DESIGNER_RELPATH in files
 
     def test_all_files_categories(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
+        proj, _page, _root = build_test_project_with_page_root(page_name="main_page")
         files = generate_all_files(proj)
         _, cat_h = files[designer_page_header_relpath("main_page")]
         assert cat_h == GENERATED_ALWAYS
@@ -706,9 +696,7 @@ class TestGenerateAllFiles:
         assert "settings_ext.h" in files
 
     def test_all_files_with_i18n(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
+        proj, _page, _root = build_test_project_with_page_root(page_name="main_page")
         # Add string catalog with strings
         from ui_designer.model.string_resource import StringResourceCatalog
         cat = StringResourceCatalog()
@@ -727,7 +715,7 @@ class TestAnimationCodeGen:
     """Animation code generation in header and layout source."""
 
     def test_header_contains_animation_struct(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="anim_page")
         lbl = WidgetModel("label", name="title", x=10, y=10, width=100, height=30)
         anim = AnimationModel()
         anim.anim_type = "alpha"
@@ -735,13 +723,11 @@ class TestAnimationCodeGen:
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
         root.add_child(lbl)
-        page = _make_page("anim_page", root)
-        proj = _make_project([page])
         header = generate_page_header(page, proj)
         assert "egui_animation_alpha_t anim_title_alpha;" in header
 
     def test_layout_contains_animation_params(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="anim_page")
         lbl = WidgetModel("label", name="title", x=10, y=10, width=100, height=30)
         anim = AnimationModel()
         anim.anim_type = "alpha"
@@ -750,8 +736,6 @@ class TestAnimationCodeGen:
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
         root.add_child(lbl)
-        page = _make_page("anim_page", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "EGUI_ANIMATION_ALPHA_PARAMS_INIT(anim_title_alpha_params, 0, 255);" in layout
         assert "egui_interpolator_bounce_t anim_title_alpha_interpolator;" in layout
@@ -761,7 +745,7 @@ class TestAnimationCodeGen:
         assert "egui_animation_start(" in layout
 
     def test_layout_translate_animation(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="move_page")
         btn = WidgetModel("button", name="btn1", x=0, y=0, width=80, height=40)
         anim = AnimationModel()
         anim.anim_type = "translate"
@@ -772,15 +756,13 @@ class TestAnimationCodeGen:
         anim.params = {"from_x": "0", "to_x": "100", "from_y": "0", "to_y": "0"}
         btn.animations.append(anim)
         root.add_child(btn)
-        page = _make_page("move_page", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "EGUI_ANIMATION_TRANSLATE_PARAMS_INIT(anim_btn1_translate_params, 0, 100, 0, 0);" in layout
         assert "egui_animation_repeat_count_set(" in layout
         assert "EGUI_ANIMATION_REPEAT_MODE_REVERSE" in layout
 
     def test_no_auto_start(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="no_start")
         lbl = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         anim = AnimationModel()
         anim.anim_type = "alpha"
@@ -788,8 +770,6 @@ class TestAnimationCodeGen:
         anim.params = {"from_alpha": "0", "to_alpha": "255"}
         lbl.animations.append(anim)
         root.add_child(lbl)
-        page = _make_page("no_start", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "egui_animation_start(" not in layout
 
@@ -803,43 +783,35 @@ class TestEventCallbackCodeGen:
     """Tests for event callback code generation."""
 
     def test_slider_event_forward_declaration(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="event_page")
         slider = WidgetModel("slider", name="vol_slider", x=0, y=0, width=200, height=30)
         slider.events = {"onValueChanged": "on_volume_changed"}
         root.add_child(slider)
-        page = _make_page("event_page", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "extern void on_volume_changed(egui_view_t *self, uint8_t value);" in layout
 
     def test_slider_event_listener_registration(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="event_page")
         slider = WidgetModel("slider", name="vol_slider", x=0, y=0, width=200, height=30)
         slider.events = {"onValueChanged": "on_volume_changed"}
         root.add_child(slider)
-        page = _make_page("event_page", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "egui_view_slider_set_on_value_changed_listener(" in layout
         assert "on_volume_changed);" in layout
 
     def test_switch_event_code_gen(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="sw_page")
         sw = WidgetModel("switch", name="sw1", x=0, y=0, width=60, height=30)
         sw.events = {"onCheckedChanged": "on_switch_changed"}
         root.add_child(sw)
-        page = _make_page("sw_page", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "extern void on_switch_changed(egui_view_t *self, int is_checked);" in layout
         assert "egui_view_switch_set_on_checked_listener(" in layout
 
     def test_no_event_no_declaration(self):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="no_event")
         slider = WidgetModel("slider", name="s1", x=0, y=0, width=200, height=30)
         root.add_child(slider)
-        page = _make_page("no_event", root)
-        proj = _make_project([page])
         layout = generate_page_layout_source(page, proj)
         assert "event callbacks" not in layout
         assert "set_on_value_changed_listener" not in layout
@@ -905,10 +877,8 @@ class TestParamOnlyKindWidgets:
     """Widgets with 'param_only'/'param' code_gen kinds must not raise KeyError."""
 
     def _make_page_with(self, widget):
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="test_page")
         root.add_child(widget)
-        page = _make_page("test_page", root)
-        proj = _make_project([page])
         return page, proj
 
     def test_scale_widget_no_key_error(self):
@@ -952,15 +922,13 @@ class TestParamOnlyKindWidgets:
 
     def test_multiple_param_kind_widgets_on_same_page(self):
         """Multiple param_only widgets on one page - all must succeed."""
-        root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="multi_param")
         scale = WidgetModel("scale", name="sc", x=0, y=0, width=200, height=30)
         table = WidgetModel("table", name="tbl", x=0, y=100, width=200, height=160)
         cal = WidgetModel("mini_calendar", name="cal", x=0, y=270, width=200, height=200)
         root.add_child(scale)
         root.add_child(table)
         root.add_child(cal)
-        page = _make_page("multi_param", root)
-        proj = _make_project([page])
         # Must not raise
         output = generate_page_layout_source(page, proj)
         assert "egui_view_scale_init" in output
