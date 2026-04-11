@@ -1542,11 +1542,11 @@ def cmd_generate_code(args):
 
     # Generate C code
     from ui_designer.generator.code_generator import (
-        generate_all_files,
-        generate_all_files_preserved,
+        prepare_generated_project_files,
     )
-    files = generate_all_files_preserved(project, app_dir, backup=False)
-    all_generated_files = generate_all_files(project)
+    prepared = prepare_generated_project_files(project, app_dir, backup=False)
+    files = prepared.files
+    all_generated_files = prepared.all_generated_files
     write_generated_project_files(app_dir, files, newline="\n")
     cleanup_legacy_designer_codegen_files(
         app_dir,

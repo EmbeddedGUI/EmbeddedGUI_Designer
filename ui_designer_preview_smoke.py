@@ -22,7 +22,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from ui_designer.engine.compiler import CompilerEngine
-from ui_designer.generator.code_generator import generate_all_files, generate_all_files_preserved
+from ui_designer.generator.code_generator import prepare_generated_project_files
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
@@ -295,9 +295,10 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
 
-        files = generate_all_files_preserved(project, str(app_dir), backup=False)
+        prepared = prepare_generated_project_files(project, str(app_dir), backup=False)
+        files = dict(prepared.files)
         files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)
-        all_generated_files = generate_all_files(project)
+        all_generated_files = prepared.all_generated_files
         written = write_generated_project_files(str(app_dir), files, newline="\n")
         cleanup_legacy_designer_codegen_files(
             str(app_dir),

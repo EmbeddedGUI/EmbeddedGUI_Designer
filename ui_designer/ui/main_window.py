@@ -104,8 +104,7 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
-    generate_all_files,
-    generate_all_files_preserved,
+    prepare_generated_project_files,
     generate_page_user_source,
     generate_uicode,
     render_page_callback_stub,
@@ -4623,8 +4622,9 @@ class MainWindow(QMainWindow):
         )
         self._apply_pending_page_rename_outputs(project_dir)
 
-        files = generate_all_files_preserved(self.project, project_dir, backup=True)
-        all_generated_files = generate_all_files(self.project)
+        prepared = prepare_generated_project_files(self.project, project_dir, backup=True)
+        files = prepared.files
+        all_generated_files = prepared.all_generated_files
         write_generated_project_files(project_dir, files)
         cleanup_legacy_designer_codegen_files(
             project_dir,
@@ -4755,10 +4755,9 @@ class MainWindow(QMainWindow):
             return
         self._apply_pending_page_rename_outputs(path)
         try:
-            files = generate_all_files_preserved(
-                self.project, path, backup=True,
-            )
-            all_generated_files = generate_all_files(self.project)
+            prepared = prepare_generated_project_files(self.project, path, backup=True)
+            files = prepared.files
+            all_generated_files = prepared.all_generated_files
         except Exception as exc:
             self._update_diagnostics_panel()
             self.debug_panel.log_error(f"Export failed: {exc}")
@@ -7355,8 +7354,13 @@ class MainWindow(QMainWindow):
             self.project.startup_page = self._current_page.name
         try:
             try:
-                files = generate_all_files_preserved(self.project, preview_output_dir, backup=False)
-                all_generated_files = generate_all_files(self.project)
+                prepared = prepare_generated_project_files(
+                    self.project,
+                    preview_output_dir,
+                    backup=False,
+                )
+                files = prepared.files
+                all_generated_files = prepared.all_generated_files
             except Exception as exc:
                 failure_summary = self._compile_failure_summary(
                     exc,

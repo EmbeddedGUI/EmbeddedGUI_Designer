@@ -6,6 +6,7 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -406,7 +407,13 @@ class TestMainWindowFileFlow:
         window._undo_manager.get_stack("main_page").push("<Page />")
 
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
-        monkeypatch.setattr("ui_designer.ui.main_window.generate_all_files_preserved", lambda *args, **kwargs: {"generated.c": "// generated\n"})
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.prepare_generated_project_files",
+            lambda *args, **kwargs: SimpleNamespace(
+                files={"generated.c": "// generated\n"},
+                all_generated_files={},
+            ),
+        )
 
         window._save_project()
 
@@ -2722,7 +2729,13 @@ class TestMainWindowFileFlow:
 
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
-        monkeypatch.setattr("ui_designer.ui.main_window.generate_all_files_preserved", lambda *args, **kwargs: {"generated.c": "// save as\n"})
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.prepare_generated_project_files",
+            lambda *args, **kwargs: SimpleNamespace(
+                files={"generated.c": "// save as\n"},
+                all_generated_files={},
+            ),
+        )
 
         window._save_project_as()
 
@@ -3485,14 +3498,20 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: preview_stop_calls.append("stop"))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.generate_all_files_preserved",
-            lambda project_obj, output_dir, backup=True: generated.update(
-                {
-                    "project": project_obj,
-                    "output_dir": output_dir,
-                    "backup": backup,
-                }
-            ) or {".designer/uicode.c": "// rebuild test\n"},
+            "ui_designer.ui.main_window.prepare_generated_project_files",
+            lambda project_obj, output_dir, backup=True: (
+                generated.update(
+                    {
+                        "project": project_obj,
+                        "output_dir": output_dir,
+                        "backup": backup,
+                    }
+                )
+                or SimpleNamespace(
+                    files={".designer/uicode.c": "// rebuild test\n"},
+                    all_generated_files={".designer/uicode.c": ("// rebuild test\n", "generated_always")},
+                )
+            ),
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
@@ -3574,8 +3593,11 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: None)
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.generate_all_files_preserved",
-            lambda project_obj, output_dir, backup=True: {".designer/uicode.c": "// rebuild button test\n"},
+            "ui_designer.ui.main_window.prepare_generated_project_files",
+            lambda project_obj, output_dir, backup=True: SimpleNamespace(
+                files={".designer/uicode.c": "// rebuild button test\n"},
+                all_generated_files={".designer/uicode.c": ("// rebuild button test\n", "generated_always")},
+            ),
         )
 
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)

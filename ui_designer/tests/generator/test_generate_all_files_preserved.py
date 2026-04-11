@@ -22,6 +22,7 @@ from ui_designer.tests.project_builders import (
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
+    prepare_generated_project_files,
     generate_all_files_preserved,
 )
 from ui_designer.utils.scaffold import (
@@ -59,6 +60,16 @@ def _make_project_with_page(page_name="main_page", *, page_customizer=None, proj
 
 class TestUserOwnedFiles:
     """USER_OWNED (*.c) file semantics."""
+
+    def test_prepare_generated_project_files_returns_manifest_and_filtered_outputs(self, tmp_path):
+        proj = _make_project_with_page("home")
+
+        prepared = prepare_generated_project_files(proj, str(tmp_path), backup=False)
+
+        assert "home.c" in prepared.files
+        assert designer_page_layout_relpath("home") in prepared.files
+        assert "home.c" in prepared.all_generated_files
+        assert designer_page_layout_relpath("home") in prepared.all_generated_files
 
     def test_user_owned_created_when_not_on_disk(self, tmp_path):
         """Fresh project: .c skeleton should be produced."""

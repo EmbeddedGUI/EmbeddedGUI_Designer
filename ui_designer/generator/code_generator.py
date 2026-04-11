@@ -16,6 +16,7 @@ This keeps always-generated Designer outputs under ``.designer/`` while
 leaving business logic in root ``*.c`` / ``*_ext.h`` files.
 """
 
+from dataclasses import dataclass
 import re
 
 # Current page split:
@@ -1830,6 +1831,14 @@ USER_OWNED = "user_owned"
 # GENERATED_PRESERVED remains as a compatibility constant for older callers/tests.
 
 
+@dataclass(frozen=True)
+class PreparedGeneratedProjectFiles:
+    """Prepared project codegen outputs for save/export/preview flows."""
+
+    files: dict[str, str]
+    all_generated_files: dict[str, tuple[str, str]]
+
+
 def generate_all_files(project):
     """Generate all C files for the project.
 
@@ -1873,13 +1882,8 @@ def generate_all_files(project):
     return files
 
 
-def generate_all_files_preserved(project, output_dir, backup=True):
-    """Generate all C files with proper ownership semantics.
-
-    Generated files are always rewritten when the generated hash changes.
-    User-owned files are only created when missing. Unsupported legacy page
-    source/header layouts are rejected with an actionable error.
-    """
+def _generate_all_files_preserved_from_manifest(project, output_dir, all_files, *, backup=True):
+    """Filter a full generated manifest to the files that should be written now."""
     import os
     from .user_code_preserver import (
         read_existing_file,
@@ -1890,14 +1894,6 @@ def generate_all_files_preserved(project, output_dir, backup=True):
         compute_source_hash,
     )
 
-    registry_errors = _collect_project_widget_registry_errors(project)
-    if registry_errors:
-        summary = "\n".join(f"- {line}" for line in registry_errors[:10])
-        if len(registry_errors) > 10:
-            summary += f"\n- ... and {len(registry_errors) - 10} more issue(s)"
-        raise ValueError(f"Code generation blocked by unresolved widget types:\n{summary}")
-
-    all_files = generate_all_files(project)
     result = {}
     pages_by_name = {page.name: page for page in project.pages}
 
@@ -1940,6 +1936,38 @@ def generate_all_files_preserved(project, output_dir, backup=True):
         cleanup_old_backups(backup_root, keep=20)
 
     return result
+
+
+def prepare_generated_project_files(project, output_dir, backup=True):
+    """Return preserved write outputs together with the full generated manifest."""
+    registry_errors = _collect_project_widget_registry_errors(project)
+    if registry_errors:
+        summary = "\n".join(f"- {line}" for line in registry_errors[:10])
+        if len(registry_errors) > 10:
+            summary += f"\n- ... and {len(registry_errors) - 10} more issue(s)"
+        raise ValueError(f"Code generation blocked by unresolved widget types:\n{summary}")
+
+    all_files = generate_all_files(project)
+    files = _generate_all_files_preserved_from_manifest(
+        project,
+        output_dir,
+        all_files,
+        backup=backup,
+    )
+    return PreparedGeneratedProjectFiles(
+        files=files,
+        all_generated_files=all_files,
+    )
+
+
+def generate_all_files_preserved(project, output_dir, backup=True):
+    """Generate all C files with proper ownership semantics.
+
+    Generated files are always rewritten when the generated hash changes.
+    User-owned files are only created when missing. Unsupported legacy page
+    source/header layouts are rejected with an actionable error.
+    """
+    return prepare_generated_project_files(project, output_dir, backup=backup).files
 
 
 def _page_name_from_user_owned_filename(filename):
