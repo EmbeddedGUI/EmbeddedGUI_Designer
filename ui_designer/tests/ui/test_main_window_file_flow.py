@@ -1103,10 +1103,9 @@ class TestMainWindowFileFlow:
                 create_sdk_root(sdk_root)
 
                 project = build_saved_test_project(project_dir, "TreeFilterStatusDemo", sdk_root)
-                page = project.get_page_by_name("main_page")
-                assert page is not None
-                page.root_widget.add_child(WidgetModel("label", name="field_label"))
-                page.root_widget.add_child(WidgetModel("button", name="field_button"))
+                _page, root = require_project_page_root(project, "main_page")
+                root.add_child(WidgetModel("label", name="field_label"))
+                root.add_child(WidgetModel("button", name="field_button"))
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
@@ -1803,8 +1802,7 @@ class TestMainWindowFileFlow:
             pages=["main_page", "detail_page"],
         )
 
-        main_page = project.get_page_by_name("main_page")
-        main_root = main_page.root_widget
+        _main_page, main_root = require_project_page_root(project, "main_page")
         main_target = WidgetModel("group", name="main_target")
         main_first = WidgetModel("label", name="main_first")
         main_second = WidgetModel("button", name="main_second")
@@ -1812,9 +1810,7 @@ class TestMainWindowFileFlow:
         main_root.add_child(main_first)
         main_root.add_child(main_second)
 
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
-        detail_root = detail_page.root_widget
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
@@ -5800,10 +5796,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DuplicateDemo"
         project = _create_project(project_dir, "DuplicateDemo", sdk_root)
-        source_page = project.get_page_by_name("main_page")
+        source_page, source_root = require_project_page_root(project, "main_page")
         label = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         label.properties["text"] = "Original Title"
-        source_page.root_widget.add_child(label)
+        source_root.add_child(label)
         source_page.user_fields.append({"name": "counter", "type": "int", "default": 7})
         source_page.timers.append(
             {
@@ -5825,12 +5821,11 @@ class TestMainWindowFileFlow:
         window._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
         window.project_dock._duplicate_page("main_page")
 
-        duplicated = window.project.get_page_by_name("main_page_copy")
-        assert duplicated is not None
+        duplicated, duplicated_root = require_project_page_root(window.project, "main_page_copy")
         assert window._current_page is duplicated
-        assert duplicated.root_widget is not source_page.root_widget
-        assert len(duplicated.root_widget.children) == 1
-        assert duplicated.root_widget.children[0].properties["text"] == "Original Title"
+        assert duplicated_root is not source_root
+        assert len(duplicated_root.children) == 1
+        assert duplicated_root.children[0].properties["text"] == "Original Title"
         assert duplicated.user_fields == [{"name": "counter", "type": "int", "default": "7"}]
         assert duplicated.timers == [
             {
@@ -6013,9 +6008,9 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        project.get_startup_page().user_fields = [{"name": "counter", "type": "int", "default": "0"}]
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        page, _root = require_project_page_root(project)
+        page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
+        detail_page, _detail_root = require_project_page_root(project, "detail_page")
         detail_page.user_fields = [{"name": "state", "type": "bool", "default": "false"}]
         project.save(str(project_dir))
 
@@ -6125,11 +6120,11 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        project.get_startup_page().timers = [
+        page, _root = require_project_page_root(project)
+        page.timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True}
         ]
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        detail_page, _detail_root = require_project_page_root(project, "detail_page")
         detail_page.timers = [
             {"name": "poll_timer", "callback": "tick_poll", "delay_ms": "250", "period_ms": "250", "auto_start": False}
         ]
@@ -6210,7 +6205,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsSelectionDemo"
         project = _create_project(project_dir, "AnimationsSelectionDemo", sdk_root)
-        page, root = require_project_page_root(project)
+        _page, root = require_project_page_root(project)
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
         badge = WidgetModel("group", name="badge", x=12, y=88, width=80, height=40)
         card.animations = [create_default_animation("alpha")]
@@ -7295,13 +7290,12 @@ class TestMainWindowFileFlow:
                     sdk_root,
                     pages=["main_page", "detail_page"],
                 )
-                detail_page = project.get_page_by_name("detail_page")
-                assert detail_page is not None
+                _detail_page, detail_root = require_project_page_root(project, "detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
                 subtitle = WidgetModel("label", name="subtitle")
                 subtitle.properties["text"] = "@string/greeting"
-                detail_page.root_widget.add_child(subtitle)
+                detail_root.add_child(subtitle)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
@@ -7413,13 +7407,12 @@ class TestMainWindowFileFlow:
                     sdk_root,
                     pages=["main_page", "detail_page"],
                 )
-                detail_page = project.get_page_by_name("detail_page")
-                assert detail_page is not None
+                _detail_page, detail_root = require_project_page_root(project, "detail_page")
                 project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
 
                 subtitle = WidgetModel("label", name="subtitle")
                 subtitle.properties["text"] = "@string/greeting"
-                detail_page.root_widget.add_child(subtitle)
+                detail_root.add_child(subtitle)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
@@ -8588,11 +8581,10 @@ class TestMainWindowFileFlow:
         assert window._current_page.name == "main_page_copy"
 
         window._on_page_add_from_template("detail", "main_page")
-        template_page = window.project.get_page_by_name("detail_page")
-        assert template_page is not None
+        _template_page, template_root = require_project_page_root(window.project, "detail_page")
         assert "detail_page" in window.page_navigator._pages
         assert window._current_page.name == "detail_page"
-        assert [child.name for child in template_page.root_widget.children] == ["title", "hero_image", "description"]
+        assert [child.name for child in template_root.children] == ["title", "hero_image", "description"]
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
@@ -8785,7 +8777,7 @@ class TestMainWindowFileFlow:
         window._copy_selection()
         window._paste_selection()
 
-        label_names = [child.name for child in page.root_widget.children if child.widget_type == "label"]
+        label_names = [child.name for child in root.children if child.widget_type == "label"]
         assert label_names == ["title", "title_2"]
         assert window._selection_state.primary.name == "title_2"
         window._undo_manager.mark_all_saved()
@@ -13233,8 +13225,7 @@ class TestMainWindowCanvasActions:
             pages=["main_page", "detail_page"],
         )
 
-        main_page = project.get_page_by_name("main_page")
-        main_root = main_page.root_widget
+        _main_page, main_root = require_project_page_root(project, "main_page")
         main_target = WidgetModel("group", name="main_target")
         main_first = WidgetModel("label", name="main_first")
         main_second = WidgetModel("button", name="main_second")
@@ -13242,9 +13233,7 @@ class TestMainWindowCanvasActions:
         main_root.add_child(main_first)
         main_root.add_child(main_second)
 
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
-        detail_root = detail_page.root_widget
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
