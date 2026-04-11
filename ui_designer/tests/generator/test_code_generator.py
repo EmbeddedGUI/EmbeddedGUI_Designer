@@ -3,7 +3,10 @@
 import pytest
 
 from ui_designer.tests.page_builders import build_test_page_from_root as _make_page
-from ui_designer.tests.project_builders import build_test_project_from_pages as _make_project
+from ui_designer.tests.project_builders import (
+    build_test_project_from_pages as _make_project,
+    build_test_project_with_page_root,
+)
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel, AnimationModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.generator.code_generator import (
@@ -242,11 +245,9 @@ class TestGeneratePageHeader:
         WidgetRegistry.instance().clear_app_local_widgets()
 
     def _make_simple_page_and_project(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="main_page")
         label = WidgetModel("label", name="my_label", x=10, y=10, width=100, height=30)
         root.add_child(label)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
         return page, proj
 
     def test_header_guard(self):
@@ -369,9 +370,7 @@ class TestGeneratePageExtHeader:
     """Tests for generate_page_ext_header."""
 
     def _make_simple_page_and_project(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
+        proj, page, _root = build_test_project_with_page_root(page_name="main_page")
         return page, proj
 
     def test_ext_header_formats_multi_line_fields_and_preserves_user_sections(self):
@@ -408,12 +407,10 @@ class TestGeneratePageLayoutSource:
     """Tests for generate_page_layout_source."""
 
     def _make_page_with_children(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        proj, page, root = build_test_project_with_page_root(page_name="main_page")
         label = WidgetModel("label", name="title", x=10, y=10, width=100, height=30)
         label.properties["text"] = "Title"
         root.add_child(label)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
         return page, proj
 
     def test_layout_source_auto_generated_header(self):
@@ -530,9 +527,7 @@ class TestGeneratePageUserSource:
     """Tests for generate_page_user_source."""
 
     def _make_simple(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = _make_page("main_page", root)
-        proj = _make_project([page])
+        proj, page, _root = build_test_project_with_page_root(page_name="main_page")
         return page, proj
 
     def test_user_source_on_open(self):
