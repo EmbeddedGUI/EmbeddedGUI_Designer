@@ -9827,13 +9827,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsExportDemo"
         project = _create_project(project_dir, "DiagnosticsExportDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         export_path = tmp_path / "exports" / "diagnostics-summary"
@@ -9901,13 +9901,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsJsonDemo"
         project = _create_project(project_dir, "DiagnosticsJsonDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         export_path = tmp_path / "exports" / "diagnostics"
@@ -9999,10 +9999,9 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         target = WidgetModel("label", name="target", x=16, y=16, width=80, height=20)
-        detail_page.root_widget.add_child(target)
+        detail_root.add_child(target)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -10038,7 +10037,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FieldDiagnosticFocusDemo"
         project = _create_project(project_dir, "FieldDiagnosticFocusDemo", sdk_root)
-        page = project.get_startup_page()
+        page, _root = require_project_page_root(project)
         page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
         project.save(str(project_dir))
 
@@ -10068,7 +10067,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TimerDiagnosticFocusDemo"
         project = _create_project(project_dir, "TimerDiagnosticFocusDemo", sdk_root)
-        page = project.get_startup_page()
+        page, _root = require_project_page_root(project)
         page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
         project.save(str(project_dir))
 
