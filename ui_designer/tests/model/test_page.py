@@ -7,6 +7,7 @@ import pytest
 from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import require_page_root
 
 
 class TestPageNameProperties:
@@ -53,13 +54,13 @@ class TestXmlSerialization:
         xml_str = original.to_xml_string()
 
         restored = Page.from_xml_string(xml_str, file_path="layout/test_page.xml")
+        restored_root = require_page_root(restored, "test_page")
 
         assert restored.name == "test_page"
-        assert restored.root_widget is not None
-        assert restored.root_widget.widget_type == "group"
-        assert len(restored.root_widget.children) == 1
-        assert restored.root_widget.children[0].name == "title_label"
-        assert restored.root_widget.children[0].properties["text"] == "Hello World"
+        assert restored_root.widget_type == "group"
+        assert len(restored_root.children) == 1
+        assert restored_root.children[0].name == "title_label"
+        assert restored_root.children[0].properties["text"] == "Hello World"
 
     def test_user_fields_preserved(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
@@ -151,12 +152,12 @@ class TestFileIO:
         original.save(str(tmp_path))
 
         loaded = Page.load(str(tmp_path), "layout/round_trip.xml")
+        loaded_root = require_page_root(loaded, "round_trip")
 
         assert loaded.name == "round_trip"
-        assert loaded.root_widget is not None
-        assert loaded.root_widget.widget_type == "group"
-        assert len(loaded.root_widget.children) == 1
-        assert loaded.root_widget.children[0].properties["text"] == "Saved Label"
+        assert loaded_root.widget_type == "group"
+        assert len(loaded_root.children) == 1
+        assert loaded_root.children[0].properties["text"] == "Saved Label"
 
 
 class TestDirtyTracking:
