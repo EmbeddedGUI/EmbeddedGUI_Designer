@@ -12714,8 +12714,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectMenuRelationshipsDemo"
-        project = _create_project(project_dir, "PreviewSelectMenuRelationshipsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -12723,10 +12721,12 @@ class TestMainWindowCanvasActions:
         solo = WidgetModel("label", name="solo", x=140, y=24, width=40, height=16)
         container.add_child(child_a)
         container.add_child(child_b)
-        root.add_child(first)
-        root.add_child(container)
-        root.add_child(solo)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSelectMenuRelationshipsDemo",
+            sdk_root,
+            widgets=[first, container, solo],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12880,10 +12880,12 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuDemo"
-        project = _create_project(project_dir, "PreviewNoWidgetContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-        root.add_child(WidgetModel("label", name="first"))
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewNoWidgetContextMenuDemo",
+            sdk_root,
+            widgets=[WidgetModel("label", name="first")],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12913,10 +12915,12 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuStateDemo"
-        project = _create_project(project_dir, "PreviewNoWidgetContextMenuStateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-        root.add_child(WidgetModel("label", name="first"))
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewNoWidgetContextMenuStateDemo",
+            sdk_root,
+            widgets=[WidgetModel("label", name="first")],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13494,17 +13498,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSelectContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         container.add_child(child_a)
         container.add_child(child_b)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSelectContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13533,8 +13538,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewParentAndSiblingsContextMenuDemo"
-        project = _create_project(project_dir, "PreviewParentAndSiblingsContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -13543,9 +13546,12 @@ class TestMainWindowCanvasActions:
         container.add_child(child_a)
         container.add_child(child_b)
         container.add_child(child_c)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewParentAndSiblingsContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13583,8 +13589,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSiblingTraversalContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSiblingTraversalContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
@@ -13592,8 +13596,12 @@ class TestMainWindowCanvasActions:
         container.add_child(child_a)
         container.add_child(child_b)
         container.add_child(child_c)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSiblingTraversalContextMenuDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13631,8 +13639,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSiblingRangeContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSiblingRangeContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
@@ -13640,8 +13646,12 @@ class TestMainWindowCanvasActions:
         container.add_child(child_a)
         container.add_child(child_b)
         container.add_child(child_c)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSiblingRangeContextMenuDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13683,8 +13693,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewChildTraversalContextMenuDemo"
-        project = _create_project(project_dir, "PreviewChildTraversalContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
@@ -13692,8 +13700,12 @@ class TestMainWindowCanvasActions:
         container.add_child(child_a)
         container.add_child(child_b)
         container.add_child(child_c)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewChildTraversalContextMenuDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13731,17 +13743,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewTreeTraversalContextMenuDemo"
-        project = _create_project(project_dir, "PreviewTreeTraversalContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         container.add_child(child_a)
         container.add_child(child_b)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewTreeTraversalContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13783,8 +13796,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewDescendantsContextMenuDemo"
-        project = _create_project(project_dir, "PreviewDescendantsContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -13793,9 +13804,12 @@ class TestMainWindowCanvasActions:
         nested_group.add_child(nested_leaf)
         container.add_child(child_a)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewDescendantsContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13824,17 +13838,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewAncestorsContextMenuDemo"
-        project = _create_project(project_dir, "PreviewAncestorsContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         nested_group.add_child(nested_leaf)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewAncestorsContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13863,17 +13878,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewRootContextMenuDemo"
-        project = _create_project(project_dir, "PreviewRootContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         nested_group.add_child(nested_leaf)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewRootContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13902,17 +13918,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewPathContextMenuDemo"
-        project = _create_project(project_dir, "PreviewPathContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         nested_group.add_child(nested_leaf)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewPathContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13941,8 +13958,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewTopLevelContextMenuDemo"
-        project = _create_project(project_dir, "PreviewTopLevelContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
@@ -13950,10 +13965,12 @@ class TestMainWindowCanvasActions:
         same_type = WidgetModel("button", name="same_type", x=8, y=120, width=48, height=20)
         nested_group.add_child(nested_leaf)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        root.add_child(same_type)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewTopLevelContextMenuDemo",
+            sdk_root,
+            widgets=[other, container, same_type],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -13982,8 +13999,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSubtreeContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSubtreeContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -13992,9 +14007,12 @@ class TestMainWindowCanvasActions:
         nested_group.add_child(nested_leaf)
         container.add_child(child_a)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSubtreeContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14023,8 +14041,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewLeavesContextMenuDemo"
-        project = _create_project(project_dir, "PreviewLeavesContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -14035,9 +14051,12 @@ class TestMainWindowCanvasActions:
         container.add_child(child_a)
         container.add_child(child_b)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewLeavesContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14066,8 +14085,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewContainersContextMenuDemo"
-        project = _create_project(project_dir, "PreviewContainersContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -14076,9 +14093,12 @@ class TestMainWindowCanvasActions:
         nested_group.add_child(nested_leaf)
         container.add_child(child_a)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewContainersContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14107,8 +14127,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStateContextMenuDemo"
-        project = _create_project(project_dir, "PreviewStateContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         hidden_self = WidgetModel("button", name="hidden_self", x=4, y=4, width=48, height=20)
@@ -14123,9 +14141,12 @@ class TestMainWindowCanvasActions:
         container.add_child(hidden_self)
         container.add_child(hidden_leaf)
         container.add_child(locked_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewStateContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14183,8 +14204,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewLayoutContainersContextMenuDemo"
-        project = _create_project(project_dir, "PreviewLayoutContainersContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14195,9 +14214,12 @@ class TestMainWindowCanvasActions:
         layout_parent.add_child(managed_group)
         container.add_child(layout_parent)
         container.add_child(unmanaged_leaf)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewLayoutContainersContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14237,8 +14259,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewManagedContextMenuDemo"
-        project = _create_project(project_dir, "PreviewManagedContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14251,9 +14271,12 @@ class TestMainWindowCanvasActions:
         layout_parent.add_child(managed_button)
         container.add_child(layout_parent)
         container.add_child(unmanaged_leaf)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewManagedContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14293,8 +14316,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewFreePositionContextMenuDemo"
-        project = _create_project(project_dir, "PreviewFreePositionContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14307,9 +14328,12 @@ class TestMainWindowCanvasActions:
         layout_parent.add_child(managed_button)
         container.add_child(layout_parent)
         container.add_child(unmanaged_leaf)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewFreePositionContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14349,15 +14373,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameTypeContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSameTypeContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         first = WidgetModel("button", name="first", x=8, y=28, width=56, height=20)
         second = WidgetModel("button", name="second", x=8, y=56, width=56, height=20)
-        root.add_child(other)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSameTypeContextMenuDemo",
+            sdk_root,
+            widgets=[other, first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14386,15 +14410,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameParentTypeContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSameParentTypeContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
         second = WidgetModel("label", name="second", x=8, y=28, width=40, height=16)
         other = WidgetModel("button", name="other", x=8, y=56, width=56, height=20)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(other)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSameParentTypeContextMenuDemo",
+            sdk_root,
+            widgets=[first, second, other],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14423,17 +14447,18 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSubtreeTypeContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSubtreeTypeContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=60, height=40)
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         nested_group.add_child(nested_leaf)
         container.add_child(nested_group)
-        root.add_child(other)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSubtreeTypeContextMenuDemo",
+            sdk_root,
+            widgets=[other, container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -14462,8 +14487,6 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameDepthContextMenuDemo"
-        project = _create_project(project_dir, "PreviewSameDepthContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         branch_a = WidgetModel("group", name="branch_a", x=8, y=8, width=80, height=80)
         branch_b = WidgetModel("group", name="branch_b", x=100, y=8, width=80, height=80)
         leaf_a = WidgetModel("label", name="leaf_a", x=4, y=4, width=40, height=16)
@@ -14472,9 +14495,12 @@ class TestMainWindowCanvasActions:
         branch_a.add_child(leaf_a)
         branch_a.add_child(nested_group)
         branch_b.add_child(leaf_b)
-        root.add_child(branch_a)
-        root.add_child(branch_b)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSameDepthContextMenuDemo",
+            sdk_root,
+            widgets=[branch_a, branch_b],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
