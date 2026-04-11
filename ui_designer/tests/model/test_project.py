@@ -10,8 +10,8 @@ import pytest
 from ui_designer.tests.page_builders import build_test_page_with_root, build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
+    build_test_project_only_with_page_widgets,
     build_test_project,
-    build_test_project_with_page_widgets,
     build_test_project_with_widget,
 )
 from ui_designer.model.project import Project
@@ -337,7 +337,7 @@ class TestSaveLoad:
     def test_save_load_round_trip(self, tmp_path):
         label1 = WidgetModel("label", name="title", x=10, y=10, width=200, height=30)
         label1.properties["text"] = "Home Page"
-        proj, _roots = build_test_project_with_page_widgets(
+        proj = build_test_project_only_with_page_widgets(
             "RoundTripApp",
             320,
             480,

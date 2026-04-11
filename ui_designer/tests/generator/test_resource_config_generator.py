@@ -4,7 +4,7 @@ import json
 import os
 import pytest
 
-from ui_designer.tests.project_builders import build_test_project_with_widgets
+from ui_designer.tests.project_builders import build_test_project_only_with_widgets
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
@@ -14,22 +14,11 @@ from ui_designer.utils.resource_config_overlay import (
 )
 
 
-def _make_project_with_widgets(widgets, screen_w=240, screen_h=320, *, project_customizer=None):
-    """Helper: create a project with a single page containing given widgets."""
-    project, _page, _root = build_test_project_with_widgets(
-        screen_width=screen_w,
-        screen_height=screen_h,
-        widgets=widgets,
-        project_customizer=project_customizer,
-    )
-    return project
-
-
 class TestEmptyProject:
     """Test generation with empty project."""
 
     def test_empty_project_generates_empty_config(self):
-        proj, _page, _root = build_test_project_with_widgets("Empty")
+        proj = build_test_project_only_with_widgets("Empty")
 
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
@@ -46,7 +35,7 @@ class TestImageCollection:
         img.properties["image_format"] = "rgb565"
         img.properties["image_alpha"] = "4"
 
-        proj = _make_project_with_widgets([img])
+        proj = build_test_project_only_with_widgets(widgets=[img])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
 
@@ -57,7 +46,7 @@ class TestImageCollection:
     def test_image_without_file_skipped(self):
         img = WidgetModel("image", name="empty", x=0, y=0, width=24, height=24)
         # No image_file set
-        proj = _make_project_with_widgets([img])
+        proj = build_test_project_only_with_widgets(widgets=[img])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert config["img"] == []
@@ -67,7 +56,7 @@ class TestImageCollection:
         img.properties["image_file"] = "star.png"
         img.properties["image_dim"] = "48,48"
 
-        proj = _make_project_with_widgets([img])
+        proj = build_test_project_only_with_widgets(widgets=[img])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert config["img"][0]["dim"] == "48,48"
@@ -85,7 +74,7 @@ class TestImageDeduplication:
         img2.properties["image_file"] = "star.png"
         img2.properties["image_format"] = "rgb565"
 
-        proj = _make_project_with_widgets([img1, img2])
+        proj = build_test_project_only_with_widgets(widgets=[img1, img2])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert len(config["img"]) == 1
@@ -99,7 +88,7 @@ class TestImageDeduplication:
         img2.properties["image_file"] = "star.png"
         img2.properties["image_dim"] = "48,48"
 
-        proj = _make_project_with_widgets([img1, img2])
+        proj = build_test_project_only_with_widgets(widgets=[img1, img2])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert len(config["img"]) == 2
@@ -119,7 +108,7 @@ class TestFontCollection:
         lbl.properties["font_pixelsize"] = "18"
         lbl.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl])
+        proj = build_test_project_only_with_widgets(widgets=[lbl])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
 
@@ -131,7 +120,7 @@ class TestFontCollection:
         lbl = WidgetModel("label", name="title", x=0, y=0, width=100, height=30)
         lbl.properties["text"] = "Hello"
         # No font_file set
-        proj = _make_project_with_widgets([lbl])
+        proj = build_test_project_only_with_widgets(widgets=[lbl])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert config["font"] == []
@@ -143,7 +132,7 @@ class TestFontCollection:
         btn.properties["font_pixelsize"] = "14"
         btn.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([btn])
+        proj = build_test_project_only_with_widgets(widgets=[btn])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert len(config["font"]) == 1
@@ -166,7 +155,7 @@ class TestFontCollection:
         if "text" in widget.properties:
             widget.properties["text"] = expected_inline_char
 
-        proj = _make_project_with_widgets([widget])
+        proj = build_test_project_only_with_widgets(widgets=[widget])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
 
@@ -193,7 +182,7 @@ class TestFontMerging:
         lbl2.properties["font_pixelsize"] = "16"
         lbl2.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl1, lbl2])
+        proj = build_test_project_only_with_widgets(widgets=[lbl1, lbl2])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
 
@@ -217,7 +206,7 @@ class TestFontMerging:
         lbl2.properties["font_pixelsize"] = "24"
         lbl2.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl1, lbl2])
+        proj = build_test_project_only_with_widgets(widgets=[lbl1, lbl2])
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
         assert len(config["font"]) == 2
@@ -239,7 +228,7 @@ class TestStringRefResolution:
             string_cat.set("greeting", "Hola", "es")
             project.string_catalog = string_cat
 
-        proj = _make_project_with_widgets([lbl], project_customizer=_setup_project)
+        proj = build_test_project_only_with_widgets(widgets=[lbl], project_customizer=_setup_project)
 
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)
@@ -260,7 +249,7 @@ class TestGenerateAndSave:
         img = WidgetModel("image", name="icon", x=0, y=0, width=24, height=24)
         img.properties["image_file"] = "star.png"
 
-        proj = _make_project_with_widgets([img])
+        proj = build_test_project_only_with_widgets(widgets=[img])
         gen = ResourceConfigGenerator()
         gen.generate_and_save(proj, str(tmp_path))
 
@@ -279,7 +268,7 @@ class TestGenerateAndSave:
         lbl.properties["font_pixelsize"] = "16"
         lbl.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl])
+        proj = build_test_project_only_with_widgets(widgets=[lbl])
         gen = ResourceConfigGenerator()
         gen.generate_and_save(proj, str(tmp_path))
 
@@ -295,7 +284,7 @@ class TestGenerateAndSave:
         lbl.properties["font_pixelsize"] = "16"
         lbl.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl])
+        proj = build_test_project_only_with_widgets(widgets=[lbl])
         gen = ResourceConfigGenerator()
         gen.generate_and_save(proj, str(tmp_path))
 
@@ -314,13 +303,13 @@ class TestGenerateAndSave:
         lbl.properties["font_fontbitsize"] = "4"
 
         gen = ResourceConfigGenerator()
-        gen.generate_and_save(_make_project_with_widgets([lbl]), str(tmp_path))
+        gen.generate_and_save(build_test_project_only_with_widgets(widgets=[lbl]), str(tmp_path))
 
         txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
         txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
         assert len(txt_files) == 1
 
-        gen.generate_and_save(_make_project_with_widgets([]), str(tmp_path))
+        gen.generate_and_save(build_test_project_only_with_widgets(widgets=[]), str(tmp_path))
 
         txt_files = [f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_")]
         assert txt_files == []
@@ -339,14 +328,14 @@ class TestGenerateAndSave:
         subtitle.properties["font_fontbitsize"] = "4"
 
         gen = ResourceConfigGenerator()
-        gen.generate_and_save(_make_project_with_widgets([title, subtitle]), str(tmp_path))
+        gen.generate_and_save(build_test_project_only_with_widgets(widgets=[title, subtitle]), str(tmp_path))
 
         txt_root = tmp_path / DESIGNER_RESOURCE_DIRNAME
         generated_before = sorted(f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_"))
         assert len(generated_before) == 2
         (txt_root / "notes.txt").write_text("keep me\n", encoding="utf-8")
 
-        gen.generate_and_save(_make_project_with_widgets([title]), str(tmp_path))
+        gen.generate_and_save(build_test_project_only_with_widgets(widgets=[title]), str(tmp_path))
 
         generated_after = sorted(f for f in os.listdir(str(txt_root)) if f.startswith("_generated_text_"))
         assert len(generated_after) == 1

@@ -16,8 +16,9 @@ import pytest
 from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
 from ui_designer.tests.project_builders import (
     build_test_project_from_pages,
+    build_test_project_only_with_widget,
+    build_test_project_only_with_widgets,
     build_test_project_with_widget,
-    build_test_project_with_widgets,
 )
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
@@ -39,7 +40,7 @@ from ui_designer.utils.scaffold import (
 
 
 def _make_project_with_page(page_name="main_page", *, page_customizer=None, project_customizer=None):
-    project, _page, _widget = build_test_project_with_widget(
+    return build_test_project_only_with_widget(
         page_name=page_name,
         name="title_label",
         x=10,
@@ -49,7 +50,6 @@ def _make_project_with_page(page_name="main_page", *, page_customizer=None, proj
         page_customizer=page_customizer,
         project_customizer=project_customizer,
     )
-    return project
 
 
 # ======================================================================
@@ -119,7 +119,7 @@ class TestUserOwnedFiles:
 
     def test_generation_raises_for_unknown_widget_types(self, tmp_path):
         missing_widget = WidgetModel("missing_widget", name="missing_1", x=10, y=10, width=80, height=24)
-        proj, _page, _root = build_test_project_with_widgets(
+        proj = build_test_project_only_with_widgets(
             page_name="main_page",
             widgets=[missing_widget],
         )

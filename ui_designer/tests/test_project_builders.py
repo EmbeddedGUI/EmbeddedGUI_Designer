@@ -8,6 +8,9 @@ from ui_designer.tests.project_builders import (
     build_test_project,
     build_test_project_from_root,
     build_test_project_from_root_with_widgets,
+    build_test_project_only_with_page_widgets,
+    build_test_project_only_with_widget,
+    build_test_project_only_with_widgets,
     build_test_project_with_page_widgets,
     build_test_project_with_widget,
     build_test_project_with_widgets,
@@ -321,6 +324,20 @@ class TestProjectBuilders:
         assert root.children == [label]
         assert project.string_catalog.get("greeting", "default") == "Hello"
 
+    def test_build_test_project_only_with_widgets_returns_populated_project(self):
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project = build_test_project_only_with_widgets(
+            "ProjectWidgetDemo",
+            page_name="home",
+            widgets=[label],
+        )
+        page, root = require_project_page_root(project, "home")
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert page.name == "home"
+        assert root.children == [label]
+
     def test_build_test_project_with_page_widgets_attaches_widgets_per_named_page(self):
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
         detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
@@ -393,6 +410,24 @@ class TestProjectBuilders:
         assert roots["detail"].children == [detail_button]
         assert project.resource_catalog.has_image("hero.png") is True
 
+    def test_build_test_project_only_with_page_widgets_returns_populated_project(self):
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project = build_test_project_only_with_page_widgets(
+            "ProjectWidgetDemo",
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+        )
+        _home_page, home_root = require_project_page_root(project, "home")
+        _detail_page, detail_root = require_project_page_root(project, "detail")
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert home_root.children == [home_label]
+        assert detail_root.children == [detail_button]
+
     def test_build_test_project_with_widget_attaches_basic_widget_to_selected_page(self):
         project, page, widget = build_test_project_with_widget(
             "ProjectWidgetDemo",
@@ -437,3 +472,21 @@ class TestProjectBuilders:
         assert widget.name == "cta"
         assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
         assert project.string_catalog.get("greeting", "default") == "Hello"
+
+    def test_build_test_project_only_with_widget_returns_project_for_requested_widget(self):
+        project = build_test_project_only_with_widget(
+            "ProjectWidgetDemo",
+            "button",
+            page_name="home",
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+        )
+        page, root = require_project_page_root(project, "home")
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert page.name == "home"
+        assert [child.name for child in root.children] == ["cta"]
+        assert root.children[0].widget_type == "button"

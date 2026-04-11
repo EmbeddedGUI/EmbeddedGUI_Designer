@@ -5,6 +5,7 @@ import pytest
 from ui_designer.tests.page_builders import build_test_page_from_root as _make_page
 from ui_designer.tests.project_builders import (
     build_test_project_from_pages as _make_project,
+    build_test_project_only_with_widgets,
     build_test_project_with_widget,
     build_test_project_with_widgets,
 )
@@ -676,7 +677,7 @@ class TestGenerateAllFiles:
     """Tests for generate_all_files."""
 
     def test_all_files_single_page(self):
-        proj, _page, _root = build_test_project_with_widgets(page_name="main_page")
+        proj = build_test_project_only_with_widgets(page_name="main_page")
         files = generate_all_files(proj)
         assert designer_page_header_relpath("main_page") in files
         assert designer_page_layout_relpath("main_page") in files
@@ -688,7 +689,7 @@ class TestGenerateAllFiles:
         assert APP_CONFIG_DESIGNER_RELPATH in files
 
     def test_all_files_categories(self):
-        proj, _page, _root = build_test_project_with_widgets(page_name="main_page")
+        proj = build_test_project_only_with_widgets(page_name="main_page")
         files = generate_all_files(proj)
         _, cat_h = files[designer_page_header_relpath("main_page")]
         assert cat_h == GENERATED_ALWAYS
@@ -728,7 +729,7 @@ class TestGenerateAllFiles:
             cat.set("greeting", "Hello", "")
             project.string_catalog = cat
 
-        proj, _page, _root = build_test_project_with_widgets(
+        proj = build_test_project_only_with_widgets(
             page_name="main_page",
             project_customizer=_setup_project,
         )

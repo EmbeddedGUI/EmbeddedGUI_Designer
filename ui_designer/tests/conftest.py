@@ -9,7 +9,7 @@ from .page_builders import build_test_page_with_widget
 from .project_builders import (
     build_test_project,
     build_test_project_from_pages,
-    build_test_project_with_page_widgets,
+    build_test_project_only_with_page_widgets,
 )
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
 from ui_designer.utils.scaffold import add_widget_children
@@ -197,7 +197,7 @@ def multi_page_project():
     btn = WidgetModel("button", name="back_btn", x=10, y=10, width=100, height=40)
     btn.properties["text"] = "Back"
     btn.on_click = "on_back_click"
-    proj, _roots = build_test_project_with_page_widgets(
+    proj = build_test_project_only_with_page_widgets(
         "MultiPageApp",
         page_widgets={
             "main_page": [label1],

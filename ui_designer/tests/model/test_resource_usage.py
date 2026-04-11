@@ -1,7 +1,8 @@
 """Tests for ui_designer.model.resource_usage."""
 
 from ui_designer.tests.project_builders import (
-    build_test_project_with_page_widgets,
+    build_test_project_only_with_page_widgets,
+    build_test_project_only_with_widgets,
     build_test_project_with_widgets,
 )
 from ui_designer.model.resource_usage import (
@@ -46,7 +47,7 @@ class TestResourceUsage:
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"
-        project, _roots = build_test_project_with_page_widgets(
+        project = build_test_project_only_with_page_widgets(
             "UsageDemo",
             page_widgets={
                 "main_page": [label_a],
@@ -143,7 +144,7 @@ class TestResourceUsage:
         untouched = WidgetModel("label", name="caption")
         untouched.properties["font_file"] = "demo.ttf"
         untouched.properties["font_text_file"] = "other.txt"
-        project, _roots = build_test_project_with_page_widgets(
+        project = build_test_project_only_with_page_widgets(
             "RewriteDemo",
             page_widgets={
                 "main_page": [label_a],
@@ -162,7 +163,7 @@ class TestResourceUsage:
     def test_rewrite_project_resource_references_can_clear_references(self):
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "missing.png"
-        project, _page, _root = build_test_project_with_widgets("RewriteDemo", widgets=[image])
+        project = build_test_project_only_with_widgets("RewriteDemo", widgets=[image])
 
         touched_pages, rewrite_count = rewrite_project_resource_references(project, "image", "missing.png", "")
 
@@ -176,7 +177,7 @@ class TestResourceUsage:
 
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        project, _roots = build_test_project_with_page_widgets(
+        project = build_test_project_only_with_page_widgets(
             "StringUsageDemo",
             page_widgets={
                 "main_page": [title],
@@ -204,7 +205,7 @@ class TestResourceUsage:
     def test_rewrite_string_references_to_new_key(self):
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        project, _page, _root = build_test_project_with_widgets("StringRenameDemo", widgets=[title])
+        project = build_test_project_only_with_widgets("StringRenameDemo", widgets=[title])
 
         touched_pages, rewrite_count = rewrite_project_string_references(
             project,
