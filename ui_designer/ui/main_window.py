@@ -127,7 +127,7 @@ from ..utils.resource_config_overlay import (
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
     build_empty_project_model,
-    cleanup_legacy_designer_codegen_files as _cleanup_shared_legacy_designer_codegen_files,
+    cleanup_legacy_designer_codegen_files,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
@@ -264,21 +264,6 @@ def delete_page_generated_files(project_dir, page_name):
         if src is None:
             continue
         _archive_page_user_file(project_dir, page_name, src)
-
-
-def _cleanup_legacy_designer_codegen_files(
-    project_dir,
-    generated_files,
-    *,
-    backup_existing=False,
-    remove_stale_strings=False,
-):
-    return _cleanup_shared_legacy_designer_codegen_files(
-        project_dir,
-        generated_files,
-        backup_existing=backup_existing,
-        remove_stale_strings=remove_stale_strings,
-    )
 
 
 def _callback_definition_exists(content, callback_name):
@@ -4641,7 +4626,7 @@ class MainWindow(QMainWindow):
         files = generate_all_files_preserved(self.project, project_dir, backup=True)
         all_generated_files = generate_all_files(self.project)
         write_generated_project_files(project_dir, files)
-        _cleanup_legacy_designer_codegen_files(
+        cleanup_legacy_designer_codegen_files(
             project_dir,
             all_generated_files,
             backup_existing=True,
@@ -4781,12 +4766,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Export Failed", f"Failed to export generated code:\n{exc}")
             self.statusBar().showMessage(f"Export failed: {exc}", 5000)
             return
-        for filename, content in files.items():
-            filepath = os.path.join(path, filename)
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(content)
-        _cleanup_legacy_designer_codegen_files(
+        write_generated_project_files(path, files)
+        cleanup_legacy_designer_codegen_files(
             path,
             all_generated_files,
             backup_existing=True,
@@ -7394,7 +7375,7 @@ class MainWindow(QMainWindow):
             # Restore the persisted startup page even when preview generation fails.
             self.project.startup_page = original_startup
 
-        _cleanup_legacy_designer_codegen_files(
+        cleanup_legacy_designer_codegen_files(
             preview_output_dir,
             all_generated_files,
             backup_existing=False,
