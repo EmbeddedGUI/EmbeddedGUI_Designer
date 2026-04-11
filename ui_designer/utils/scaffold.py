@@ -182,6 +182,35 @@ def default_scaffold_circle_radius(screen_width, screen_height) -> int:
     return min(int(screen_width), int(screen_height)) // 2
 
 
+def designer_scaffold_kwargs(
+    screen_width,
+    screen_height,
+    *,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Return normalized scaffold keyword arguments for shared Designer helpers."""
+    if circle_radius is None:
+        circle_radius = default_scaffold_circle_radius(screen_width, screen_height)
+
+    kwargs = {
+        "overwrite": overwrite,
+        "color_depth": color_depth,
+        "circle_radius": circle_radius,
+    }
+    if extra_config_macros is not None:
+        kwargs["extra_config_macros"] = list(extra_config_macros)
+    if refresh_designer_resource_config is not None:
+        kwargs["refresh_designer_resource_config"] = refresh_designer_resource_config
+    if remove_legacy_designer_files:
+        kwargs["remove_legacy_designer_files"] = True
+    return kwargs
+
+
 def designer_codegen_relpath(filename: str) -> str:
     normalized = str(filename or "").replace("\\", "/").lstrip("/")
     return f"{DESIGNER_PROJECT_DIRNAME}/{normalized}"
@@ -1761,3 +1790,27 @@ def scaffold_designer_project_with_sdk_root(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
+
+
+def ensure_designer_project_scaffold_with_sdk_root(
+    project_dir,
+    app_name,
+    sdk_root,
+    screen_width=240,
+    screen_height=320,
+    **kwargs,
+):
+    """Create a Designer scaffold only when the target directory is missing."""
+    project_dir = os.path.normpath(project_dir)
+    if os.path.exists(project_dir):
+        return False, {}
+
+    actions = scaffold_designer_project_with_sdk_root(
+        project_dir,
+        app_name,
+        sdk_root,
+        screen_width,
+        screen_height,
+        **kwargs,
+    )
+    return True, actions

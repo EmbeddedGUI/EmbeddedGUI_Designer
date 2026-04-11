@@ -46,7 +46,8 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
-    default_scaffold_circle_radius,
+    designer_scaffold_kwargs,
+    ensure_designer_project_scaffold_with_sdk_root,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -260,18 +261,23 @@ def _write_figma_page_xml(
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
     app_dir = _get_app_dir(sdk_root, app_name)
-    if os.path.exists(app_dir):
-        return app_dir
-
-    print(f"Creating app scaffold: {app_name}")
-    scaffold_designer_project_with_sdk_root(
+    created, _actions = ensure_designer_project_scaffold_with_sdk_root(
         app_dir,
         app_name,
         sdk_root,
         width,
         height,
-        **_helper_scaffold_kwargs(width, height),
+        **designer_scaffold_kwargs(
+            width,
+            height,
+            overwrite=True,
+            color_depth=16,
+            extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+            refresh_designer_resource_config=False,
+        ),
     )
+    if created:
+        print(f"Creating app scaffold: {app_name}")
     return app_dir
 
 
@@ -291,17 +297,6 @@ def _compute_fit_scale(target_w, target_h, source_w, source_h):
     scale_x = target_w / source_w if source_w > 0 else 1.0
     scale_y = target_h / source_h if source_h > 0 else 1.0
     return min(scale_x, scale_y)
-
-
-def _helper_scaffold_kwargs(width, height, *, color_depth=16):
-    """Return the helper's shared scaffold defaults."""
-    return {
-        "overwrite": True,
-        "color_depth": color_depth,
-        "circle_radius": default_scaffold_circle_radius(width, height),
-        "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
-        "refresh_designer_resource_config": False,
-    }
 
 
 def _layout_edit_step(page_name="main_page", *, app_name=None):
@@ -335,7 +330,14 @@ def cmd_scaffold(args):
         width,
         height,
         pages=pages,
-        **_helper_scaffold_kwargs(width, height, color_depth=color_depth),
+        **designer_scaffold_kwargs(
+            width,
+            height,
+            overwrite=True,
+            color_depth=color_depth,
+            extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+            refresh_designer_resource_config=False,
+        ),
     )
     _print_scaffold_status(
         BUILD_MK_RELPATH,

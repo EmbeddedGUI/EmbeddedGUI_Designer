@@ -39,6 +39,7 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model_with_root,
     build_empty_project_xml,
     default_scaffold_circle_radius,
+    designer_scaffold_kwargs,
     require_page_root,
     require_project_page_root,
     normalize_scaffold_pages,
@@ -49,6 +50,7 @@ from ui_designer.utils.scaffold import (
     save_project_model,
     save_project_and_materialize_codegen,
     scaffold_designer_project,
+    ensure_designer_project_scaffold_with_sdk_root,
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
     sync_project_scaffold_core_files,
@@ -293,6 +295,24 @@ class TestCoreProjectScaffold:
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert project_layout_xml_relpath("main_page") == ".eguiproject/layout/main_page.xml"
         assert default_scaffold_circle_radius(320, 240) == 120
+
+    def test_designer_scaffold_kwargs_normalizes_shared_defaults(self):
+        kwargs = designer_scaffold_kwargs(
+            320,
+            240,
+            overwrite=True,
+            color_depth=32,
+            extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+            refresh_designer_resource_config=False,
+        )
+
+        assert kwargs == {
+            "overwrite": True,
+            "color_depth": 32,
+            "circle_radius": 120,
+            "extra_config_macros": [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+            "refresh_designer_resource_config": False,
+        }
 
     def test_build_empty_project_model_creates_default_startup_page(self):
         project = build_empty_project_model(
@@ -1095,3 +1115,41 @@ class TestApplyDesignerProjectScaffold:
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions["SdkApp.egui"] == "created"
         assert 'sdk_root="../.."' in egui_content
+
+    def test_ensure_designer_project_scaffold_with_sdk_root_only_creates_missing_dirs(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        existing_dir = sdk_root / "example" / "ExistingApp"
+        new_dir = sdk_root / "example" / "NewApp"
+        existing_dir.mkdir(parents=True)
+
+        existing_created, existing_actions = ensure_designer_project_scaffold_with_sdk_root(
+            str(existing_dir),
+            "ExistingApp",
+            str(sdk_root),
+            320,
+            240,
+            **designer_scaffold_kwargs(
+                320,
+                240,
+                overwrite=True,
+            ),
+        )
+        new_created, new_actions = ensure_designer_project_scaffold_with_sdk_root(
+            str(new_dir),
+            "NewApp",
+            str(sdk_root),
+            320,
+            240,
+            **designer_scaffold_kwargs(
+                320,
+                240,
+                overwrite=True,
+            ),
+        )
+
+        assert existing_created is False
+        assert existing_actions == {}
+        assert new_created is True
+        assert new_actions[BUILD_MK_RELPATH] == "created"
+        assert new_actions["NewApp.egui"] == "created"
+        assert (new_dir / ".designer" / "build_designer.mk").is_file()
