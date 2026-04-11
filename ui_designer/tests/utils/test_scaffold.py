@@ -48,6 +48,7 @@ from ui_designer.utils.scaffold import (
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
     materialize_generated_project_files,
+    materialize_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
     scaffold_designer_project,
@@ -1048,6 +1049,29 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / ".designer" / "home_layout.c").is_file()
         assert (project_dir / "home.c").read_text(encoding="utf-8") == "// custom home source\n"
         assert "home_ext.h" in materialized.files
+
+    def test_materialize_project_codegen_outputs_runs_before_materialize_hook(self, tmp_path):
+        project_dir = tmp_path / "MaterializeHookHelperApp"
+        project = build_empty_project_model(
+            "MaterializeHookHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+        hook_calls = []
+
+        materialized = materialize_project_codegen_outputs(
+            project,
+            str(project_dir),
+            backup=False,
+            before_materialize=lambda output_dir: hook_calls.append(output_dir),
+        )
+
+        assert hook_calls == [str(project_dir)]
+        assert (project_dir / ".designer" / "home.h").is_file()
+        assert "home.c" in materialized.files
 
     def test_save_project_model_saves_project_without_scaffold_when_disabled(self, tmp_path):
         project_dir = tmp_path / "PlainSaveHelperApp"

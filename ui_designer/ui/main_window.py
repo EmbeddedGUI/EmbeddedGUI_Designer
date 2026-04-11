@@ -104,7 +104,6 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
-    materialize_project_codegen,
     prepare_generated_project_files,
     generate_page_user_source,
     generate_uicode,
@@ -132,6 +131,7 @@ from ..utils.scaffold import (
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
+    materialize_project_codegen_outputs,
     read_app_config_dimensions,
     save_project_and_materialize_codegen,
     save_project_with_designer_scaffold,
@@ -4746,13 +4746,13 @@ class MainWindow(QMainWindow):
         self._update_diagnostics_panel()
         if not self._ensure_codegen_preflight("Export", show_dialog=True, switch_to_python_preview=False):
             return
-        self._apply_pending_page_rename_outputs(path)
         try:
-            materialized = materialize_project_codegen(
+            materialized = materialize_project_codegen_outputs(
                 self.project,
                 path,
                 backup=True,
                 backup_existing=True,
+                before_materialize=self._apply_pending_page_rename_outputs,
             )
             files = materialized.files
         except Exception as exc:

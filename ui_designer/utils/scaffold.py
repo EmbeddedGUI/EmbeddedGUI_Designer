@@ -1662,6 +1662,32 @@ def save_project_with_designer_scaffold(
     return actions
 
 
+def materialize_project_codegen_outputs(
+    project,
+    project_dir,
+    *,
+    backup=True,
+    extra_files=None,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Materialize project codegen outputs with an optional pre-write hook."""
+    if callable(before_materialize):
+        before_materialize(project_dir)
+
+    from ..generator.code_generator import materialize_project_codegen
+
+    return materialize_project_codegen(
+        project,
+        project_dir,
+        backup=backup,
+        extra_files=extra_files,
+        newline=newline,
+        backup_existing=backup_existing,
+    )
+
+
 def save_project_and_materialize_codegen(
     project,
     project_dir,
@@ -1689,18 +1715,14 @@ def save_project_and_materialize_codegen(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
-    if callable(before_materialize):
-        before_materialize(project_dir)
-
-    from ..generator.code_generator import materialize_project_codegen
-
-    return materialize_project_codegen(
+    return materialize_project_codegen_outputs(
         project,
         project_dir,
         backup=backup,
         extra_files=extra_files,
         newline=newline,
         backup_existing=backup_existing,
+        before_materialize=before_materialize,
     )
 
 
