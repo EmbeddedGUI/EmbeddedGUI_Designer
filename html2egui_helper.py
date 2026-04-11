@@ -386,11 +386,6 @@ def cmd_scaffold(args):
         f"Build & verify:   {_helper_app_command('verify', args.app)}",
     ])
 
-def _ensure_resource_config_file(path):
-    """Create the default resource config file when it is missing."""
-    return ensure_resource_config_file(path)
-
-
 def _print_scaffold_status(relpath, status, *, label=None, unchanged_reason="already up to date"):
     display = label or os.path.basename(relpath)
     if status == "created":
@@ -874,7 +869,7 @@ def cmd_export_icons(args):
         synced_filenames = list(icon_filenames)
 
     # Update resource config
-    if _ensure_resource_config_file(config_path):
+    if ensure_resource_config_file(config_path):
         print(f"  Created new: {config_path}")
 
     _update_resource_config_files(
@@ -1299,7 +1294,7 @@ def cmd_export_svgs(args):
         # Update resource config
         if synced_filenames:
             config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-            _ensure_resource_config_file(config_path)
+            ensure_resource_config_file(config_path)
             _update_resource_config_files(
                 config_path,
                 synced_filenames,
@@ -1515,7 +1510,7 @@ def cmd_generate_code(args):
     from ui_designer.generator.resource_config_generator import ResourceConfigGenerator
     rcg = ResourceConfigGenerator()
     user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
-    if _ensure_resource_config_file(user_config_path):
+    if ensure_resource_config_file(user_config_path):
         print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
     rcg.generate_and_save(project, src_dir)
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
