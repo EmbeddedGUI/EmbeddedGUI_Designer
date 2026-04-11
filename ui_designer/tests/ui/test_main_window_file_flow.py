@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from ui_designer.tests.project_builders import build_saved_test_project
+from ui_designer.tests.project_builders import build_saved_test_project as _create_project
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
-from ui_designer.tests.sdk_builders import build_test_sdk_root
+from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -65,14 +65,6 @@ def bind_designer_runtime(monkeypatch, tmp_path):
     monkeypatch.setattr(main_window_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
     monkeypatch.setattr(new_project_dialog_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
     yield designer_root
-
-
-def _create_sdk_root(root):
-    return build_test_sdk_root(root)
-
-
-def _create_project(project_dir, app_name, sdk_root=""):
-    return build_saved_test_project(project_dir, app_name, sdk_root=sdk_root)
 
 
 def _close_window(window):

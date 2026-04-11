@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from ui_designer.tests.sdk_builders import build_test_sdk_root
+from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 
 import ui_designer.model.workspace as workspace_module
 from ui_designer.model.workspace import (
@@ -30,12 +30,6 @@ from ui_designer.model.workspace import (
     resolve_sdk_root_candidate,
     serialize_sdk_root,
 )
-
-
-def _create_sdk_root(root: Path):
-    return build_test_sdk_root(root)
-
-
 class TestWorkspaceHelpers:
     def test_normalize_path_empty(self):
         assert normalize_path("") == ""
@@ -43,7 +37,7 @@ class TestWorkspaceHelpers:
 
     def test_is_valid_sdk_root(self, tmp_path):
         sdk_root = tmp_path / "EmbeddedGUI"
-        build_test_sdk_root(sdk_root)
+        _create_sdk_root(sdk_root)
         assert is_valid_sdk_root(str(sdk_root))
         assert describe_sdk_root(str(sdk_root)) == "ready"
         assert describe_sdk_root(str(tmp_path / "missing")) == "invalid"
@@ -60,7 +54,7 @@ class TestWorkspaceHelpers:
 
     def test_infer_sdk_root_from_project_dir(self, tmp_path):
         sdk_root = tmp_path / "sdk"
-        build_test_sdk_root(sdk_root)
+        _create_sdk_root(sdk_root)
         app_dir = sdk_root / "example" / "HelloApp"
         app_dir.mkdir(parents=True)
         assert infer_sdk_root_from_project_dir(str(app_dir)) == normalize_path(str(sdk_root))

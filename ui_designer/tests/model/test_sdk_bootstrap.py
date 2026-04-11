@@ -1,8 +1,12 @@
 """Tests for ui_designer.model.sdk_bootstrap."""
 
+from functools import partial
 from pathlib import Path
 
-from ui_designer.tests.sdk_builders import build_test_sdk_root, mark_bundled_test_sdk_root
+from ui_designer.tests.sdk_builders import (
+    build_test_sdk_root as _create_sdk_root,
+    mark_bundled_test_sdk_root,
+)
 
 from ui_designer.model.sdk_bootstrap import (
     BUNDLED_SDK_METADATA_NAME,
@@ -15,13 +19,10 @@ from ui_designer.model.sdk_bootstrap import (
 )
 from ui_designer.model.workspace import normalize_path
 
-
-def _create_sdk_root(root: Path):
-    return build_test_sdk_root(root)
-
-
-def _mark_bundled_sdk(root: Path):
-    return mark_bundled_test_sdk_root(root, metadata_name=BUNDLED_SDK_METADATA_NAME)
+_mark_bundled_sdk = partial(
+    mark_bundled_test_sdk_root,
+    metadata_name=BUNDLED_SDK_METADATA_NAME,
+)
 
 
 class TestSdkBootstrap:
@@ -35,8 +36,8 @@ class TestSdkBootstrap:
         runtime_dir = tmp_path / "EmbeddedGUI-Designer"
         bundled_sdk_root = runtime_dir / "sdk" / "EmbeddedGUI-main"
         runtime_dir.mkdir(parents=True)
-        build_test_sdk_root(bundled_sdk_root)
-        mark_bundled_test_sdk_root(bundled_sdk_root, metadata_name=BUNDLED_SDK_METADATA_NAME)
+        _create_sdk_root(bundled_sdk_root)
+        _mark_bundled_sdk(bundled_sdk_root)
 
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.frozen", True, raising=False)
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))
@@ -57,7 +58,7 @@ class TestSdkBootstrap:
 
     def test_is_bundled_sdk_root_false_when_not_frozen(self, tmp_path, monkeypatch):
         sdk_root = tmp_path / "sdk"
-        build_test_sdk_root(sdk_root)
+        _create_sdk_root(sdk_root)
         monkeypatch.delattr("ui_designer.model.sdk_bootstrap.sys.frozen", raising=False)
 
         assert is_bundled_sdk_root(str(sdk_root)) is False
@@ -65,7 +66,7 @@ class TestSdkBootstrap:
     def test_runtime_local_sdk_without_bundle_metadata_is_not_reported_as_bundled(self, tmp_path, monkeypatch):
         runtime_dir = tmp_path / "EmbeddedGUI-Designer"
         sdk_root = runtime_dir / "sdk" / "EmbeddedGUI"
-        build_test_sdk_root(sdk_root)
+        _create_sdk_root(sdk_root)
 
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.frozen", True, raising=False)
         monkeypatch.setattr("ui_designer.model.sdk_bootstrap.sys.executable", str(runtime_dir / "EmbeddedGUI-Designer.exe"))
@@ -76,7 +77,7 @@ class TestSdkBootstrap:
     def test_describe_sdk_source_hint_includes_bundled_revision(self, tmp_path, monkeypatch):
         runtime_dir = tmp_path / "EmbeddedGUI-Designer"
         sdk_root = runtime_dir / "sdk" / "EmbeddedGUI"
-        build_test_sdk_root(sdk_root)
+        _create_sdk_root(sdk_root)
         (sdk_root / BUNDLED_SDK_METADATA_NAME).write_text(
             '{"source_root": "D:/sdk/EmbeddedGUI", "git_describe": "sdk-main-416d576"}\n',
             encoding="utf-8",

@@ -4,7 +4,10 @@ import os
 
 import pytest
 
-from ui_designer.tests.sdk_builders import build_test_sdk_root, mark_bundled_test_sdk_root
+from ui_designer.tests.sdk_builders import (
+    build_test_sdk_root as _create_sdk_root,
+    mark_bundled_test_sdk_root as _mark_bundled_sdk,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -27,14 +30,6 @@ def bind_ui_config(isolated_config, monkeypatch, tmp_path):
     monkeypatch.setattr(new_project_dialog_module, "get_config", lambda: isolated_config)
     monkeypatch.setattr(new_project_dialog_module, "designer_runtime_root", lambda repo_root=None: str(designer_root))
     monkeypatch.setattr(welcome_page_module, "get_config", lambda: isolated_config)
-
-
-def _create_sdk_root(root):
-    return build_test_sdk_root(root)
-
-
-def _mark_bundled_sdk(root):
-    return mark_bundled_test_sdk_root(root)
 
 
 def _find_label_by_text(root, text):
