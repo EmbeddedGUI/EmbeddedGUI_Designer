@@ -5974,9 +5974,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageFieldsSwitchDemo"
-        project = _create_project(project_dir, "PageFieldsSwitchDemo", sdk_root)
+        project = _create_project(
+            project_dir,
+            "PageFieldsSwitchDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
         project.get_startup_page().user_fields = [{"name": "counter", "type": "int", "default": "0"}]
-        detail_page = project.create_new_page("detail_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         detail_page.user_fields = [{"name": "state", "type": "bool", "default": "false"}]
         project.save(str(project_dir))
 
@@ -6080,11 +6086,17 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageTimersSwitchDemo"
-        project = _create_project(project_dir, "PageTimersSwitchDemo", sdk_root)
+        project = _create_project(
+            project_dir,
+            "PageTimersSwitchDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
         project.get_startup_page().timers = [
             {"name": "refresh_timer", "callback": "tick_refresh", "delay_ms": "500", "period_ms": "1000", "auto_start": True}
         ]
-        detail_page = project.create_new_page("detail_page")
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         detail_page.timers = [
             {"name": "poll_timer", "callback": "tick_poll", "delay_ms": "250", "period_ms": "250", "auto_start": False}
         ]
@@ -6571,8 +6583,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameResourceDemo"
-        project = _create_project(project_dir, "RenameResourceDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "RenameResourceDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
@@ -6609,8 +6627,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingResourceDemo"
-        project = _create_project(project_dir, "ReplaceMissingResourceDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ReplaceMissingResourceDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.resource_catalog.add_image("star.png")
 
         image_a = WidgetModel("image", name="image_a")
@@ -6663,8 +6687,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingBatchPreviewDemo"
-        project = _create_project(project_dir, "ReplaceMissingBatchPreviewDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ReplaceMissingBatchPreviewDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.resource_catalog.add_image("star.png")
 
         image_a = WidgetModel("image", name="image_a")
@@ -6738,8 +6768,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameResourceSignalDemo"
-        project = _create_project(project_dir, "RenameResourceSignalDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "RenameResourceSignalDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.resource_catalog.add_image("star.png")
 
         images_dir = project_dir / ".eguiproject" / "resources" / "images"
@@ -6986,8 +7022,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameTextResourceDemo"
-        project = _create_project(project_dir, "RenameTextResourceDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "RenameTextResourceDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
 
         label_a = WidgetModel("label", name="label_a")
         label_a.properties["font_file"] = "demo.ttf"
@@ -7055,8 +7097,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteStringKeyDemo"
-        project = _create_project(project_dir, "DeleteStringKeyDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "DeleteStringKeyDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
 
@@ -7096,8 +7144,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameStringKeyDemo"
-        project = _create_project(project_dir, "RenameStringKeyDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "RenameStringKeyDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
         project.string_catalog.set("greeting", "Ni Hao", "zh")
 
