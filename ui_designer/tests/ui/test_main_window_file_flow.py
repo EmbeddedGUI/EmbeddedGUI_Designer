@@ -7410,8 +7410,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageNavigationDemo"
-        project = _create_project(project_dir, "ResourceUsageNavigationDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ResourceUsageNavigationDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.resource_catalog.add_image("star.png")
 
         hero = WidgetModel("image", name="hero")
@@ -7448,8 +7454,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageFilterDemo"
-        project = _create_project(project_dir, "ResourceUsageFilterDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ResourceUsageFilterDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         project.resource_catalog.add_image("star.png")
 
         hero_main = WidgetModel("image", name="hero_main")
@@ -8777,8 +8789,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ProjectCallbackDiagnosticsDemo"
-        project = _create_project(project_dir, "ProjectCallbackDiagnosticsDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ProjectCallbackDiagnosticsDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
@@ -8810,8 +8828,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ProjectCallbackDiagnosticFocusDemo"
-        project = _create_project(project_dir, "ProjectCallbackDiagnosticFocusDemo", sdk_root)
-        detail_page = project.create_new_page("detail_page")
+        project = _create_project(
+            project_dir,
+            "ProjectCallbackDiagnosticFocusDemo",
+            sdk_root,
+            pages=["main_page", "detail_page"],
+        )
+        detail_page = project.get_page_by_name("detail_page")
+        assert detail_page is not None
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
