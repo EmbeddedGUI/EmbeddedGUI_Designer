@@ -1,8 +1,7 @@
 """Tests for ui_designer.model.resource_usage."""
 
 from ui_designer.tests.project_builders import (
-    build_test_project,
-    build_test_project_with_page_roots,
+    build_test_project_with_page_widgets,
     build_test_project_with_widgets,
 )
 from ui_designer.model.resource_usage import (
@@ -39,21 +38,21 @@ class TestResourceUsage:
         }
 
     def test_collect_project_resource_usages_groups_entries_by_resource_name(self):
-        project, roots = build_test_project_with_page_roots("UsageDemo", pages=["main_page", "detail_page"])
-        main_root = roots["main_page"]
-        detail_root = roots["detail_page"]
-
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
-        main_root.add_child(label_a)
 
         label_b = WidgetModel("label", name="subtitle")
         label_b.properties["font_file"] = "demo.ttf"
-        detail_root.add_child(label_b)
 
         image = WidgetModel("image", name="hero")
         image.properties["image_file"] = "hero.png"
-        detail_root.add_child(image)
+        project, _roots = build_test_project_with_page_widgets(
+            "UsageDemo",
+            page_widgets={
+                "main_page": [label_a],
+                "detail_page": [label_b, image],
+            },
+        )
 
         usage_index = collect_project_resource_usages(project)
         font_usages = usage_index[("font", "demo.ttf")]
@@ -133,24 +132,24 @@ class TestResourceUsage:
         ) == ["debug", "notes"]
 
     def test_rewrite_project_resource_references_updates_all_matching_widgets(self):
-        project, roots = build_test_project_with_page_roots("RewriteDemo", pages=["main_page", "detail_page"])
-        main_root = roots["main_page"]
-        detail_root = roots["detail_page"]
-
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
         label_a.properties["font_text_file"] = "chars.txt"
-        main_root.add_child(label_a)
 
         label_b = WidgetModel("label", name="subtitle")
         label_b.properties["font_file"] = "demo.ttf"
         label_b.properties["font_text_file"] = "chars.txt"
-        detail_root.add_child(label_b)
 
         untouched = WidgetModel("label", name="caption")
         untouched.properties["font_file"] = "demo.ttf"
         untouched.properties["font_text_file"] = "other.txt"
-        detail_root.add_child(untouched)
+        project, _roots = build_test_project_with_page_widgets(
+            "RewriteDemo",
+            page_widgets={
+                "main_page": [label_a],
+                "detail_page": [label_b, untouched],
+            },
+        )
 
         touched_pages, rewrite_count = rewrite_project_resource_references(project, "text", "chars.txt", "chars_new.txt")
 
@@ -172,17 +171,18 @@ class TestResourceUsage:
         assert image.properties["image_file"] == ""
 
     def test_collect_and_rewrite_string_references(self):
-        project, roots = build_test_project_with_page_roots("StringUsageDemo", pages=["main_page", "detail_page"])
-        main_root = roots["main_page"]
-        detail_root = roots["detail_page"]
-
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"
-        main_root.add_child(title)
 
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        detail_root.add_child(subtitle)
+        project, _roots = build_test_project_with_page_widgets(
+            "StringUsageDemo",
+            page_widgets={
+                "main_page": [title],
+                "detail_page": [subtitle],
+            },
+        )
 
         usages = find_resource_usages(project, "string", "greeting")
         assert [(entry.page_name, entry.widget_name, entry.property_name) for entry in usages] == [

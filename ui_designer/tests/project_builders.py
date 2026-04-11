@@ -101,6 +101,35 @@ def build_test_project_with_page_roots(
     return project, roots
 
 
+def build_test_project_with_page_widgets(
+    app_name="TestApp",
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_widgets=None,
+    pages=None,
+):
+    """Build a minimal multi-page project and attach widgets to each named page root."""
+    resolved_pages = pages
+    if resolved_pages is None and page_widgets:
+        resolved_pages = list(page_widgets)
+    project, roots = build_test_project_with_page_roots(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=resolved_pages,
+    )
+    for page_name, widgets in (page_widgets or {}).items():
+        root = roots[page_name]
+        for widget in widgets or []:
+            root.add_child(widget)
+    return project, roots
+
+
 def build_test_project_with_widgets(
     app_name="TestApp",
     *,

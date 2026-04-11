@@ -5,6 +5,7 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project,
     build_test_project,
     build_test_project_from_root,
+    build_test_project_with_page_widgets,
     build_test_project_with_widget,
     build_test_project_with_widgets,
     build_test_project_with_page_root,
@@ -165,6 +166,24 @@ class TestProjectBuilders:
         assert project.app_name == "ProjectWidgetDemo"
         assert page.name == "home"
         assert root.children == [label, button]
+
+    def test_build_test_project_with_page_widgets_attaches_widgets_per_named_page(self):
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project, roots = build_test_project_with_page_widgets(
+            "ProjectWidgetDemo",
+            pages=["home", "detail"],
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+        )
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
 
     def test_build_test_project_with_widget_attaches_basic_widget_to_selected_page(self):
         project, page, widget = build_test_project_with_widget(
