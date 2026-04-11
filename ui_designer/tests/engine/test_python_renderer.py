@@ -11,6 +11,7 @@ from ui_designer.engine.python_renderer import (
     render_page,
     render_page_to_bytes,
 )
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel
 from ui_designer.model.page import Page
 
@@ -83,7 +84,7 @@ class TestRenderPage:
         label = WidgetModel("label", name="lbl", x=10, y=10, width=100, height=30)
         label.properties["text"] = "Hello"
         root.add_child(label)
-        page = Page(file_path="test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         img = render_page(page, 240, 320)
         assert img.size == (240, 320)
 
@@ -92,7 +93,7 @@ class TestRenderPage:
         btn = WidgetModel("button", name="btn", x=10, y=50, width=100, height=40)
         btn.properties["text"] = "Click"
         root.add_child(btn)
-        page = Page(file_path="test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         img = render_page(page, 240, 320)
         assert img.size == (240, 320)
 
@@ -101,7 +102,7 @@ class TestRenderPage:
         pb = WidgetModel("progress_bar", name="pb", x=10, y=100, width=200, height=20)
         pb.properties["value"] = 75
         root.add_child(pb)
-        page = Page(file_path="test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         img = render_page(page, 240, 320)
         assert img.size == (240, 320)
 
@@ -110,7 +111,7 @@ class TestRenderPage:
         root.background = BackgroundModel()
         root.background.bg_type = "solid"
         root.background.color = "EGUI_COLOR_BLUE"
-        page = Page(file_path="test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         img = render_page(page, 240, 320)
         assert img.size == (240, 320)
         assert img.getpixel((20, 20))[:3] == (0, 0, 255)
@@ -152,7 +153,7 @@ class TestRenderPage:
 
     def test_render_to_bytes(self):
         root = WidgetModel("group", name="root", x=0, y=0, width=240, height=320)
-        page = Page(file_path="test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         data = render_page_to_bytes(page, 240, 320)
         assert isinstance(data, bytes)
         assert len(data) > 0

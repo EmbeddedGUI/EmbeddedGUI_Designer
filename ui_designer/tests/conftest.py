@@ -5,7 +5,8 @@ import os
 import sys
 import pytest
 
-from .project_builders import build_test_project
+from .page_builders import build_test_page_from_root
+from .project_builders import build_test_project, build_test_project_from_pages
 from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
 
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
@@ -160,22 +161,18 @@ def linearlayout_horizontal():
 def simple_page():
     """Create a Page with a root group containing one label."""
     from ui_designer.model.widget_model import WidgetModel
-    from ui_designer.model.page import Page
+
     root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
     label = WidgetModel("label", name="my_label", x=10, y=10, width=100, height=30)
     label.properties["text"] = "Hello"
     root.add_child(label)
-    page = Page(file_path="layout/main_page.xml", root_widget=root)
-    return page
+    return build_test_page_from_root("main_page", root=root)
 
 
 @pytest.fixture
 def simple_project(simple_page):
     """Create a Project with one page."""
-    proj = build_test_project("TestApp")
-    proj.pages = [simple_page]
-    proj.startup_page = simple_page.name
-    return proj
+    return build_test_project_from_pages([simple_page], app_name="TestApp")
 
 
 @pytest.fixture

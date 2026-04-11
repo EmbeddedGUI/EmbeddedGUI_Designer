@@ -15,6 +15,7 @@ from ui_designer.engine.layout_engine import (
     ALIGN_MAP,
     _layout_linearlayout_children,
 )
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
@@ -211,7 +212,7 @@ class TestComputeLayout:
         root = WidgetModel("group", name="root", x=10, y=20, width=240, height=320)
         child = WidgetModel("label", name="lbl", x=5, y=15, width=100, height=30)
         root.add_child(child)
-        page = Page(file_path="layout/test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         compute_page_layout(page)
         assert root.display_x == 10
         assert root.display_y == 20
@@ -227,7 +228,7 @@ class TestComputeLayout:
         c2 = WidgetModel("label", name="c2", x=99, y=99, width=100, height=40)
         root.add_child(c1)
         root.add_child(c2)
-        page = Page(file_path="layout/test.xml", root_widget=root)
+        page = build_test_page_from_root("test", root=root)
         compute_page_layout(page)
         # Model x/y (99) should be ignored; layout engine computes positions
         # total_child_height = 80, base_y = (200-80)>>1 = 60
@@ -246,7 +247,7 @@ class TestComputeLayout:
         inner = WidgetModel("label", name="inner", x=10, y=10, width=50, height=20)
         group.add_child(inner)
         ll.add_child(group)
-        page = Page(file_path="layout/test.xml", root_widget=ll)
+        page = build_test_page_from_root("test", root=ll)
         compute_page_layout(page)
         # group: base_x = (200-100)>>1 = 50, base_y = (200-80)>>1 = 60
         assert group.display_x == 50
