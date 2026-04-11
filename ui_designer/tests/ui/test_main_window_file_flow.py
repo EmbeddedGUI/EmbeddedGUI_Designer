@@ -5833,27 +5833,33 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        label = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
+        label.properties["text"] = "Original Title"
+
+        def _setup_source_page(page, _root):
+            page.user_fields.append({"name": "counter", "type": "int", "default": 7})
+            page.timers.append(
+                {
+                    "name": "refresh_timer",
+                    "callback": "tick_refresh",
+                    "delay_ms": "500",
+                    "period_ms": "1000",
+                    "auto_start": True,
+                }
+            )
+            page.mockup_image_path = "mockup/main.png"
+            page.mockup_image_opacity = 0.6
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DuplicateDemo"
-        project = _create_project(project_dir, "DuplicateDemo", sdk_root)
-        source_page, source_root = require_project_page_root(project, "main_page")
-        label = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        label.properties["text"] = "Original Title"
-        source_root.add_child(label)
-        source_page.user_fields.append({"name": "counter", "type": "int", "default": 7})
-        source_page.timers.append(
-            {
-                "name": "refresh_timer",
-                "callback": "tick_refresh",
-                "delay_ms": "500",
-                "period_ms": "1000",
-                "auto_start": True,
-            }
+        project, source_page, source_root = _create_project_with_widgets(
+            project_dir,
+            "DuplicateDemo",
+            sdk_root,
+            widgets=[label],
+            page_customizer=_setup_source_page,
         )
-        source_page.mockup_image_path = "mockup/main.png"
-        source_page.mockup_image_opacity = 0.6
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6540,15 +6546,21 @@ class TestMainWindowFileFlow:
     def test_load_background_image_uses_existing_mockup_dir_as_initial_directory(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_mockup_page(page, _root):
+            page.mockup_image_path = "mockup/existing.png"
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupDemo"
-        project = _create_project(project_dir, "MockupDemo", sdk_root)
+        project, page, _root = _create_project_with_widgets(
+            project_dir,
+            "MockupDemo",
+            sdk_root,
+            page_customizer=_setup_mockup_page,
+        )
         mockup_dir = project_dir / ".eguiproject" / "mockup"
         mockup_dir.mkdir(parents=True, exist_ok=True)
         (mockup_dir / "existing.png").write_bytes(b"PNG")
-        page, _root = require_project_page_root(project)
-        page.mockup_image_path = "mockup/existing.png"
         captured = {}
 
         window = MainWindow(str(sdk_root))
@@ -6577,8 +6589,11 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupDemo"
-        project = _create_project(project_dir, "MockupDemo", sdk_root)
-        page, _root = require_project_page_root(project)
+        project, page, _root = _create_project_with_widgets(
+            project_dir,
+            "MockupDemo",
+            sdk_root,
+        )
         captured = {}
 
         window = MainWindow(str(sdk_root))
@@ -6600,14 +6615,20 @@ class TestMainWindowFileFlow:
     def test_xml_edit_updates_page_mockup_metadata(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_mockup_page(page, _root):
+            page.mockup_image_path = "mockup/design.png"
+            page.mockup_image_visible = False
+            page.mockup_image_opacity = 0.45
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "XmlMockupDemo"
-        project = _create_project(project_dir, "XmlMockupDemo", sdk_root)
-        xml_page, _root = require_project_page_root(project)
-        xml_page.mockup_image_path = "mockup/design.png"
-        xml_page.mockup_image_visible = False
-        xml_page.mockup_image_opacity = 0.45
+        project, xml_page, _root = _create_project_with_widgets(
+            project_dir,
+            "XmlMockupDemo",
+            sdk_root,
+            page_customizer=_setup_mockup_page,
+        )
         xml_text = xml_page.to_xml_string()
         xml_page.mockup_image_path = ""
         xml_page.mockup_image_visible = True
@@ -6634,14 +6655,19 @@ class TestMainWindowFileFlow:
     def test_toggle_background_image_marks_dirty_and_supports_undo(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_mockup_page(page, _root):
+            page.mockup_image_path = "mockup/design.png"
+            page.mockup_image_visible = True
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupUndoDemo"
-        project = _create_project(project_dir, "MockupUndoDemo", sdk_root)
-        page, _root = require_project_page_root(project)
-        page.mockup_image_path = "mockup/design.png"
-        page.mockup_image_visible = True
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "MockupUndoDemo",
+            sdk_root,
+            page_customizer=_setup_mockup_page,
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
