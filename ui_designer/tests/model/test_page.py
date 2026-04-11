@@ -4,6 +4,7 @@ import os
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
 
@@ -48,7 +49,7 @@ class TestXmlSerialization:
         child.properties["text"] = "Hello World"
         root.add_child(child)
 
-        original = Page(file_path="layout/test_page.xml", root_widget=root)
+        original = build_test_page_from_root("test_page", root=root)
         xml_str = original.to_xml_string()
 
         restored = Page.from_xml_string(xml_str, file_path="layout/test_page.xml")
@@ -62,7 +63,7 @@ class TestXmlSerialization:
 
     def test_user_fields_preserved(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/test_page.xml", root_widget=root)
+        page = build_test_page_from_root("test_page", root=root)
         page.user_fields = [
             {"name": "counter", "type": "int", "default": "0"},
             {"name": "timer_id", "type": "int"},
@@ -80,7 +81,7 @@ class TestXmlSerialization:
 
     def test_timers_preserved(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/test_page.xml", root_widget=root)
+        page = build_test_page_from_root("test_page", root=root)
         page.timers = [
             {
                 "name": "refresh_timer",
@@ -106,7 +107,7 @@ class TestXmlSerialization:
 
     def test_mockup_attributes_preserved(self):
         root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = Page(file_path="layout/test_page.xml", root_widget=root)
+        page = build_test_page_from_root("test_page", root=root)
         page.mockup_image_path = "mockup/design.png"
         page.mockup_image_visible = False
         page.mockup_image_opacity = 0.5
@@ -129,7 +130,7 @@ class TestGetAllWidgets:
         root.add_child(label)
         root.add_child(button)
 
-        page = Page(file_path="layout/test_page.xml", root_widget=root)
+        page = build_test_page_from_root("test_page", root=root)
         all_widgets = page.get_all_widgets()
 
         # root + 2 children = 3
@@ -146,7 +147,7 @@ class TestFileIO:
         label.properties["text"] = "Saved Label"
         root.add_child(label)
 
-        original = Page(file_path="layout/round_trip.xml", root_widget=root)
+        original = build_test_page_from_root("round_trip", root=root)
         original.save(str(tmp_path))
 
         loaded = Page.load(str(tmp_path), "layout/round_trip.xml")
