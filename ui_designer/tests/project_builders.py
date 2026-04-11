@@ -500,16 +500,21 @@ def build_saved_test_project(
 ):
     """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
-    if project_customizer is None and with_designer_scaffold:
+    if with_designer_scaffold:
+        scaffold_kwargs = {
+            "sdk_root": str(sdk_root or ""),
+            "pages": pages,
+            "overwrite_scaffold": overwrite_scaffold,
+            "remove_legacy_designer_files": True,
+        }
+        if project_customizer is not None:
+            scaffold_kwargs["project_customizer"] = project_customizer
         return save_empty_project_with_designer_scaffold(
             app_name,
             str(project_root),
             screen_width,
             screen_height,
-            sdk_root=str(sdk_root or ""),
-            pages=pages,
-            overwrite_scaffold=overwrite_scaffold,
-            remove_legacy_designer_files=True,
+            **scaffold_kwargs,
         )
     project = build_test_project(
         app_name,

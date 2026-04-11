@@ -1238,6 +1238,19 @@ class TestApplyDesignerProjectScaffold:
         assert (project_dir / ".eguiproject" / "layout" / "settings.xml").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
 
+    def test_save_empty_project_with_designer_scaffold_applies_project_customizer(self, tmp_path):
+        project_dir = tmp_path / "CustomizedEmptyScaffoldHelperApp"
+
+        project = save_empty_project_with_designer_scaffold(
+            "CustomizedEmptyScaffoldHelperApp",
+            str(project_dir),
+            project_customizer=lambda project: project.string_catalog.set("greeting", "Hello", "default"),
+        )
+
+        assert project.string_catalog.get("greeting", "default") == "Hello"
+        reloaded = project.__class__.load(str(project_dir))
+        assert reloaded.string_catalog.get("greeting", "default") == "Hello"
+
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
         project_dir = tmp_path / "FullApp"
 

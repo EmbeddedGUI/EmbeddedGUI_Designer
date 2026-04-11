@@ -1836,6 +1836,7 @@ def save_empty_project_with_designer_scaffold(
     *,
     sdk_root="",
     pages=None,
+    project_customizer=None,
     overwrite_scaffold=False,
     color_depth=16,
     circle_radius=None,
@@ -1852,6 +1853,8 @@ def save_empty_project_with_designer_scaffold(
         project_dir=project_dir,
         pages=pages,
     )
+    if callable(project_customizer):
+        project_customizer(project)
     save_project_model(
         project,
         project_dir,
