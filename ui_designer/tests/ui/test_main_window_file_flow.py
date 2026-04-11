@@ -9,7 +9,10 @@ from pathlib import Path
 
 import pytest
 
-from ui_designer.tests.project_builders import build_saved_test_project as _create_project
+from ui_designer.tests.project_builders import (
+    build_saved_test_project as _create_project,
+    build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 from ui_designer.utils.scaffold import require_project_page_root
@@ -6617,24 +6620,19 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameResourceDemo"
-        project = _create_project(
+        image_a = WidgetModel("image", name="image_a")
+        image_a.properties["image_file"] = "star.png"
+        image_b = WidgetModel("image", name="image_b")
+        image_b.properties["image_file"] = "star.png"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "RenameResourceDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [image_a],
+                "detail_page": [image_b],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
-
-        image_a = WidgetModel("image", name="image_a")
-        image_a.properties["image_file"] = "star.png"
-        main_root.add_child(image_a)
-
-        image_b = WidgetModel("image", name="image_b")
-        image_b.properties["image_file"] = "star.png"
-        detail_root.add_child(image_b)
-
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6661,24 +6659,20 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingResourceDemo"
-        project = _create_project(
+        image_a = WidgetModel("image", name="image_a")
+        image_a.properties["image_file"] = "star.png"
+        image_b = WidgetModel("image", name="image_b")
+        image_b.properties["image_file"] = "star.png"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "ReplaceMissingResourceDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [image_a],
+                "detail_page": [image_b],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
-
-        image_a = WidgetModel("image", name="image_a")
-        image_a.properties["image_file"] = "star.png"
-        main_root.add_child(image_a)
-
-        image_b = WidgetModel("image", name="image_b")
-        image_b.properties["image_file"] = "star.png"
-        detail_root.add_child(image_b)
-
         project.save(str(project_dir))
 
         replacement_dir = tmp_path / "external_images"
@@ -6721,24 +6715,20 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingBatchPreviewDemo"
-        project = _create_project(
+        image_a = WidgetModel("image", name="image_a")
+        image_a.properties["image_file"] = "star.png"
+        image_b = WidgetModel("image", name="image_b")
+        image_b.properties["image_file"] = "star.png"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "ReplaceMissingBatchPreviewDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [image_a],
+                "detail_page": [image_b],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
-
-        image_a = WidgetModel("image", name="image_a")
-        image_a.properties["image_file"] = "star.png"
-        main_root.add_child(image_a)
-
-        image_b = WidgetModel("image", name="image_b")
-        image_b.properties["image_file"] = "star.png"
-        detail_root.add_child(image_b)
-
         project.save(str(project_dir))
 
         replacement_dir = tmp_path / "external_images"
@@ -6802,28 +6792,24 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameResourceSignalDemo"
-        project = _create_project(
-            project_dir,
-            "RenameResourceSignalDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
-        project.resource_catalog.add_image("star.png")
-
         images_dir = project_dir / ".eguiproject" / "resources" / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
         (images_dir / "star.png").write_bytes(b"PNG")
 
         image_a = WidgetModel("image", name="image_a")
         image_a.properties["image_file"] = "star.png"
-        main_root.add_child(image_a)
-
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        detail_root.add_child(image_b)
-
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "RenameResourceSignalDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [image_a],
+                "detail_page": [image_b],
+            },
+        )
+        project.resource_catalog.add_image("star.png")
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))

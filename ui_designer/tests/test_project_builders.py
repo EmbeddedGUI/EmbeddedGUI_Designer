@@ -3,6 +3,7 @@
 from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
+    build_saved_test_project_with_page_widgets,
     build_test_project,
     build_test_project_from_root,
     build_test_project_with_page_widgets,
@@ -65,6 +66,25 @@ class TestProjectBuilders:
         assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
+
+    def test_build_saved_test_project_with_page_widgets_writes_populated_pages(self, tmp_path):
+        project_dir = tmp_path / "SavedWidgetBuilderDemo"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        project, roots = build_saved_test_project_with_page_widgets(
+            project_dir,
+            "SavedWidgetBuilderDemo",
+            page_widgets={
+                "main_page": [home_label],
+                "detail_page": [detail_button],
+            },
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert (project_dir / "SavedWidgetBuilderDemo.egui").is_file()
+        assert roots["main_page"].children == [home_label]
+        assert roots["detail_page"].children == [detail_button]
 
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")
