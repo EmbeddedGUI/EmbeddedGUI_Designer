@@ -18,15 +18,6 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
-@pytest.fixture
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
-
-
 @_skip_no_qt
 class TestResourcePanelFileFlow:
     def test_preview_widget_font_sizes_follow_designer_font_preference(self, qapp):

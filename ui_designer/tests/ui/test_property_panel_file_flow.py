@@ -9,22 +9,13 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget, QToolButton
+    from PyQt5.QtWidgets import QFormLayout, QFrame, QGroupBox, QHBoxLayout, QLabel, QWidget, QToolButton
 
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
 
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
-
-
-@pytest.fixture
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
 
 
 def _find_group(panel, title):

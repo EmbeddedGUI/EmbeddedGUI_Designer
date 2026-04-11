@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from ui_designer.tests.project_builders import build_saved_test_project
+from ui_designer.tests.qt_test_utils import close_widget_safely
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -97,28 +98,7 @@ def _create_project(project_dir, app_name, sdk_root=""):
 
 
 def _close_window(window):
-    undo_manager = getattr(window, "_undo_manager", None)
-    if undo_manager is not None:
-        try:
-            # Avoid headless test teardown entering the unsaved-changes dialog path.
-            undo_manager.mark_all_saved()
-        except Exception:
-            pass
-    clear_project_dirty = getattr(window, "_clear_project_dirty", None)
-    if callable(clear_project_dirty):
-        try:
-            clear_project_dirty()
-        except Exception:
-            pass
-    window.close()
-    window.deleteLater()
-    app = QApplication.instance()
-    if app is not None:
-        try:
-            app.sendPostedEvents()
-        except Exception:
-            pass
-        app.processEvents()
+    close_widget_safely(window, stop_rendering=False)
 
 
 def _left_panel_tab_index(window, panel_key):

@@ -6,6 +6,7 @@ import sys
 import pytest
 
 from .project_builders import build_test_project
+from .qt_test_utils import close_widget_safely, drain_qt_events, ensure_qapp
 
 # Ensure the repository root is on sys.path so `ui_designer` and root scripts import correctly
 _TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,19 +16,6 @@ if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
 TEST_DATA_DIR = os.path.join(_TESTS_DIR, "test_data")
-
-
-def _drain_qt_events(app):
-    if app is None:
-        return
-    try:
-        app.sendPostedEvents()
-    except Exception:
-        pass
-    try:
-        app.processEvents()
-    except Exception:
-        pass
 
 
 def _cleanup_qt_state():
@@ -46,33 +34,16 @@ def _cleanup_qt_state():
     except Exception:
         pass
 
-    _drain_qt_events(app)
+    drain_qt_events(app)
     for widget in list(QApplication.topLevelWidgets()):
-        try:
-            undo_manager = getattr(widget, "_undo_manager", None)
-            if undo_manager is not None:
-                undo_manager.mark_all_saved()
-        except Exception:
-            pass
-        try:
-            widget.hide()
-        except Exception:
-            pass
-        try:
-            widget.close()
-        except Exception:
-            pass
-        try:
-            widget.deleteLater()
-        except Exception:
-            pass
-    _drain_qt_events(app)
+        close_widget_safely(widget)
+    drain_qt_events(app)
     try:
         QPixmapCache.clear()
     except Exception:
         pass
     gc.collect()
-    _drain_qt_events(app)
+    drain_qt_events(app)
 
 
 @pytest.fixture
@@ -96,6 +67,14 @@ def cleanup_qt_widgets():
     _cleanup_qt_state()
     yield
     _cleanup_qt_state()
+
+
+@pytest.fixture
+def qapp():
+    """Return the shared QApplication for Qt UI tests."""
+    app = ensure_qapp()
+    yield app
+    drain_qt_events(app)
 
 
 @pytest.fixture

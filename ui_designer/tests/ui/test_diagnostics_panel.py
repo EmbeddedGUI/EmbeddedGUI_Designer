@@ -8,7 +8,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication
 
     _has_pyqt5 = True
 except ImportError:
@@ -17,15 +16,6 @@ except ImportError:
 from ui_designer.model.diagnostics import DiagnosticEntry
 
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
-
-
-@pytest.fixture
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
 
 
 def _sample_entries():

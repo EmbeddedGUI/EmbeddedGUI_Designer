@@ -18,15 +18,6 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
-@pytest.fixture
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
-
-
 def _build_project_with_root():
     from ui_designer.model.project import Project
 

@@ -75,20 +75,6 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
-@pytest.fixture
-def qapp():
-    if not _has_pyqt5:
-        yield None
-        return
-    from PyQt5.QtWidgets import QApplication
-
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
-
-
 @_skip_no_qt
 class TestEguiColorToQColor:
     """Test egui_color_to_qcolor conversion (requires PyQt5)."""

@@ -4,12 +4,14 @@ import os
 
 import pytest
 
+from ui_designer.tests.qt_test_utils import close_widget_safely
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
     from PyQt5.QtCore import QEvent, QPoint, QPointF, QRect, Qt
     from PyQt5.QtGui import QContextMenuEvent, QMouseEvent
-    from PyQt5.QtWidgets import QApplication, QScrollArea
+    from PyQt5.QtWidgets import QScrollArea
     _has_pyqt5 = True
 except ImportError:
     _has_pyqt5 = False
@@ -17,39 +19,8 @@ except ImportError:
 _skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
 
 
-@pytest.fixture
-def qapp():
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.processEvents()
-
-
 def _dispose_widget(widget):
-    if widget is None:
-        return
-    stop_rendering = getattr(widget, "stop_rendering", None)
-    if callable(stop_rendering):
-        try:
-            stop_rendering()
-        except Exception:
-            pass
-    try:
-        widget.close()
-    except Exception:
-        pass
-    try:
-        widget.deleteLater()
-    except Exception:
-        pass
-    app = QApplication.instance()
-    if app is not None:
-        try:
-            app.sendPostedEvents()
-        except Exception:
-            pass
-        app.processEvents()
+    close_widget_safely(widget)
 
 
 def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton, modifiers=Qt.NoModifier):
