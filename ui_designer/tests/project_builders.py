@@ -283,6 +283,7 @@ def build_saved_test_project(
     screen_width=240,
     screen_height=320,
     pages=None,
+    project_customizer=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
@@ -297,6 +298,8 @@ def build_saved_test_project(
         project_dir=str(project_root),
         pages=pages,
     )
+    if project_customizer is not None:
+        project_customizer(project)
     if with_designer_scaffold:
         save_project_with_designer_scaffold(
             project,
@@ -319,6 +322,7 @@ def build_saved_test_project_with_widgets(
     screen_height=320,
     widgets=None,
     page_customizer=None,
+    project_customizer=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
@@ -335,6 +339,8 @@ def build_saved_test_project_with_widgets(
         widgets=widgets,
         page_customizer=page_customizer,
     )
+    if project_customizer is not None:
+        project_customizer(project)
     if with_designer_scaffold:
         save_project_with_designer_scaffold(
             project,
@@ -357,6 +363,7 @@ def build_saved_test_project_with_page_widgets(
     page_widgets=None,
     page_customizers=None,
     pages=None,
+    project_customizer=None,
     with_designer_scaffold=False,
     overwrite_scaffold=False,
 ):
@@ -373,6 +380,8 @@ def build_saved_test_project_with_page_widgets(
         page_customizers=page_customizers,
         pages=pages,
     )
+    if project_customizer is not None:
+        project_customizer(project)
     if with_designer_scaffold:
         save_project_with_designer_scaffold(
             project,

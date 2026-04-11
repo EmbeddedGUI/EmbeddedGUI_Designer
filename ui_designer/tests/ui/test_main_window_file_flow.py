@@ -6734,6 +6734,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.resource_catalog.add_image("star.png")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingResourceDemo"
@@ -6749,9 +6752,8 @@ class TestMainWindowFileFlow:
                 "main_page": [image_a],
                 "detail_page": [image_b],
             },
+            project_customizer=_setup_project,
         )
-        project.resource_catalog.add_image("star.png")
-        project.save(str(project_dir))
 
         replacement_dir = tmp_path / "external_images"
         replacement_dir.mkdir()
@@ -6790,6 +6792,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.resource_catalog.add_image("star.png")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ReplaceMissingBatchPreviewDemo"
@@ -6805,9 +6810,8 @@ class TestMainWindowFileFlow:
                 "main_page": [image_a],
                 "detail_page": [image_b],
             },
+            project_customizer=_setup_project,
         )
-        project.resource_catalog.add_image("star.png")
-        project.save(str(project_dir))
 
         replacement_dir = tmp_path / "external_images"
         replacement_dir.mkdir()
@@ -7205,6 +7209,10 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+            project.string_catalog.set("greeting", "Ni Hao", "zh")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteStringKeyDemo"
@@ -7220,10 +7228,8 @@ class TestMainWindowFileFlow:
                 "main_page": [title],
                 "detail_page": [subtitle],
             },
+            project_customizer=_setup_project,
         )
-        project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-        project.string_catalog.set("greeting", "Ni Hao", "zh")
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7249,6 +7255,10 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
+            project.string_catalog.set("greeting", "Ni Hao", "zh")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "RenameStringKeyDemo"
@@ -7264,10 +7274,8 @@ class TestMainWindowFileFlow:
                 "main_page": [title],
                 "detail_page": [subtitle],
             },
+            project_customizer=_setup_project,
         )
-        project.string_catalog.set("greeting", "Hello", DEFAULT_LOCALE)
-        project.string_catalog.set("greeting", "Ni Hao", "zh")
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7518,6 +7526,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.resource_catalog.add_image("star.png")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageNavigationDemo"
@@ -7529,9 +7540,8 @@ class TestMainWindowFileFlow:
             sdk_root,
             page_widgets={"detail_page": [hero]},
             pages=["main_page", "detail_page"],
+            project_customizer=_setup_project,
         )
-        project.resource_catalog.add_image("star.png")
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7559,6 +7569,9 @@ class TestMainWindowFileFlow:
         from ui_designer.model.widget_model import WidgetModel
         from ui_designer.ui.main_window import MainWindow
 
+        def _setup_project(project):
+            project.resource_catalog.add_image("star.png")
+
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageFilterDemo"
@@ -7574,9 +7587,8 @@ class TestMainWindowFileFlow:
                 "main_page": [hero_main],
                 "detail_page": [hero_detail],
             },
+            project_customizer=_setup_project,
         )
-        project.resource_catalog.add_image("star.png")
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))

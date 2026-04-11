@@ -87,6 +87,29 @@ class TestProjectBuilders:
         assert roots["main_page"].children == [home_label]
         assert roots["detail_page"].children == [detail_button]
 
+    def test_build_saved_test_project_with_page_widgets_applies_project_customizer(self, tmp_path):
+        project_dir = tmp_path / "SavedMultiPageProjectCustomizerDemo"
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        def _customize_project(project):
+            project.resource_catalog.add_image("hero.png")
+
+        project, roots = build_saved_test_project_with_page_widgets(
+            project_dir,
+            "SavedMultiPageProjectCustomizerDemo",
+            page_widgets={
+                "main_page": [home_label],
+                "detail_page": [detail_button],
+            },
+            project_customizer=_customize_project,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert roots["main_page"].children == [home_label]
+        assert roots["detail_page"].children == [detail_button]
+        assert project.resource_catalog.has_image("hero.png") is True
+
     def test_build_saved_test_project_with_widgets_writes_populated_startup_page(self, tmp_path):
         project_dir = tmp_path / "SavedSinglePageWidgetBuilderDemo"
         label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
@@ -125,6 +148,24 @@ class TestProjectBuilders:
         assert page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
         assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "250", "period_ms": "250", "auto_start": False}]
         assert root.children == [label, badge]
+
+    def test_build_saved_test_project_with_widgets_applies_project_customizer(self, tmp_path):
+        project_dir = tmp_path / "SavedSinglePageProjectCustomizerDemo"
+
+        def _customize_project(project):
+            project.string_catalog.set("greeting", "Hello", "default")
+
+        project, page, root = build_saved_test_project_with_widgets(
+            project_dir,
+            "SavedSinglePageProjectCustomizerDemo",
+            widgets=[],
+            project_customizer=_customize_project,
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "main_page"
+        assert root.children == []
+        assert project.string_catalog.get("greeting", "default") == "Hello"
 
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")
