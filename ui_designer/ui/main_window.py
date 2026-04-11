@@ -4125,7 +4125,6 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.Yes:
             return
 
-        WidgetModel.reset_counter()
         screen_w, screen_h = read_app_config_dimensions(os.path.join(app_dir, "app_egui_config.h"))
         save_empty_project_with_designer_scaffold(
             app_name,
