@@ -107,7 +107,6 @@ def _fake_save_project_and_materialize_codegen(filename, content):
             remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", False),
         )
         output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
         (output_path / filename).write_text(content, encoding="utf-8")
         return SimpleNamespace(
             files={filename: content},
