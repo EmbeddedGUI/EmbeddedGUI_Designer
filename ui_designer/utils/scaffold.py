@@ -1616,6 +1616,48 @@ def save_project_with_designer_scaffold(
     return actions
 
 
+def save_project_and_materialize_codegen(
+    project,
+    project_dir,
+    *,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+    backup=True,
+    extra_files=None,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Save a project with the shared scaffold policy, then materialize codegen outputs."""
+    save_project_with_designer_scaffold(
+        project,
+        project_dir,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    if callable(before_materialize):
+        before_materialize(project_dir)
+
+    from ..generator.code_generator import materialize_project_codegen
+
+    return materialize_project_codegen(
+        project,
+        project_dir,
+        backup=backup,
+        extra_files=extra_files,
+        newline=newline,
+        backup_existing=backup_existing,
+    )
+
+
 def save_project_model(
     project,
     project_dir,

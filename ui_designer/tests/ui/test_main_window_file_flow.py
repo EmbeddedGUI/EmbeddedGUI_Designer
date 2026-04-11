@@ -25,6 +25,7 @@ from ui_designer.utils.scaffold import (
     add_widget_children as _add_widget_children,
     require_project_page_root,
     save_project_model,
+    save_project_with_designer_scaffold,
 )
 
 if HAS_PYQT5:
@@ -97,8 +98,14 @@ def _left_panel_tab_whats_this(window, panel_key):
     return window._left_panel_stack.tabWhatsThis(_left_panel_tab_index(window, panel_key))
 
 
-def _fake_materialize_project_codegen(filename, content):
-    def _materialize(_project, output_dir, **_kwargs):
+def _fake_save_project_and_materialize_codegen(filename, content):
+    def _materialize(project, output_dir, **kwargs):
+        save_project_with_designer_scaffold(
+            project,
+            output_dir,
+            overwrite=kwargs.get("overwrite", False),
+            remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", False),
+        )
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         (output_path / filename).write_text(content, encoding="utf-8")
@@ -421,8 +428,8 @@ class TestMainWindowFileFlow:
 
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.materialize_project_codegen",
-            _fake_materialize_project_codegen("generated.c", "// generated\n"),
+            "ui_designer.ui.main_window.save_project_and_materialize_codegen",
+            _fake_save_project_and_materialize_codegen("generated.c", "// generated\n"),
         )
 
         window._save_project()
@@ -2740,8 +2747,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(dst_dir))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: None)
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.materialize_project_codegen",
-            _fake_materialize_project_codegen("generated.c", "// save as\n"),
+            "ui_designer.ui.main_window.save_project_and_materialize_codegen",
+            _fake_save_project_and_materialize_codegen("generated.c", "// save as\n"),
         )
 
         window._save_project_as()

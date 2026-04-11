@@ -133,6 +133,7 @@ from ..utils.scaffold import (
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     read_app_config_dimensions,
+    save_project_and_materialize_codegen,
     save_project_with_designer_scaffold,
 )
 from .theme import apply_theme, theme_tokens
@@ -4614,19 +4615,14 @@ class MainWindow(QMainWindow):
         self.project.project_dir = project_dir
         self.project.sdk_root = self.project_root
         self._load_project_app_local_widgets(project_dir)
-        save_project_with_designer_scaffold(
+        materialized = save_project_and_materialize_codegen(
             self.project,
             project_dir,
             overwrite=reset_scaffold,
             remove_legacy_designer_files=True,
-        )
-        self._apply_pending_page_rename_outputs(project_dir)
-
-        materialized = materialize_project_codegen(
-            self.project,
-            project_dir,
             backup=True,
             backup_existing=True,
+            before_materialize=self._apply_pending_page_rename_outputs,
         )
         files = materialized.files
         self._clear_project_dirty()

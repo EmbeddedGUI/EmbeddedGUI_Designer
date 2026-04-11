@@ -47,6 +47,7 @@ from ui_designer.utils.scaffold import (
     cleanup_legacy_designer_codegen_files,
     materialize_generated_project_files,
     save_project_model,
+    save_project_and_materialize_codegen,
     scaffold_designer_project,
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
@@ -986,6 +987,35 @@ class TestApplyDesignerProjectScaffold:
 
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
         assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+
+    def test_save_project_and_materialize_codegen_writes_scaffold_and_generated_outputs(self, tmp_path):
+        project_dir = tmp_path / "SavedGeneratedHelperApp"
+        project = build_empty_project_model(
+            "SavedGeneratedHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+        callback_calls = []
+
+        materialized = save_project_and_materialize_codegen(
+            project,
+            str(project_dir),
+            overwrite=True,
+            backup=False,
+            extra_files={"home.c": "// custom home source\n"},
+            before_materialize=lambda output_dir: callback_calls.append(output_dir),
+        )
+
+        assert callback_calls == [str(project_dir)]
+        assert (project_dir / "SavedGeneratedHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+        assert (project_dir / ".designer" / "home.h").is_file()
+        assert (project_dir / ".designer" / "home_layout.c").is_file()
+        assert (project_dir / "home.c").read_text(encoding="utf-8") == "// custom home source\n"
+        assert "home_ext.h" in materialized.files
 
     def test_save_project_model_saves_project_without_scaffold_when_disabled(self, tmp_path):
         project_dir = tmp_path / "PlainSaveHelperApp"

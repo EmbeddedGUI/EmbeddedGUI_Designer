@@ -22,7 +22,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from ui_designer.engine.compiler import CompilerEngine
-from ui_designer.generator.code_generator import materialize_project_codegen
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
@@ -30,7 +29,7 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    save_project_model,
+    save_project_and_materialize_codegen,
 )
 
 
@@ -282,24 +281,19 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
         project, page, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
-        save_project_model(
+        materialized = save_project_and_materialize_codegen(
             project,
             str(app_dir),
-            with_designer_scaffold=True,
-            overwrite_scaffold=True,
+            overwrite=True,
+            backup=False,
+            extra_files={f"{PAGE_NAME}.c": build_main_page_user_source(page)},
+            newline="\n",
         )
         loaded = Project.load(str(app_dir / f"{APP_NAME}.egui"))
         if loaded.sdk_root != resolved_sdk_root:
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
 
-        materialized = materialize_project_codegen(
-            project,
-            str(app_dir),
-            backup=False,
-            extra_files={f"{PAGE_NAME}.c": build_main_page_user_source(page)},
-            newline="\n",
-        )
         files = materialized.files
         written = tuple(files)
 
