@@ -14,7 +14,10 @@ from pathlib import Path
 import pytest
 
 from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
-from ui_designer.tests.project_builders import build_test_project_from_pages
+from ui_designer.tests.project_builders import (
+    build_test_project_from_pages,
+    build_test_project_with_page_root,
+)
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.generator.code_generator import (
     generate_all_files_preserved,
@@ -36,11 +39,10 @@ from ui_designer.utils.scaffold import (
 
 
 def _make_project_with_page(page_name="main_page"):
-    root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+    project, _page, root = build_test_project_with_page_root(page_name=page_name)
     label = WidgetModel("label", name="title_label", x=10, y=10, width=200, height=30)
     root.add_child(label)
-    page = build_test_page_from_root(page_name, root=root)
-    return build_test_project_from_pages([page])
+    return project
 
 
 # ======================================================================
