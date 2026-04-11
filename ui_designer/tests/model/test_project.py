@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
+from ui_designer.tests.page_builders import build_test_page_with_root, build_test_pages
 from ui_designer.tests.project_builders import build_saved_test_project, build_test_project
 from ui_designer.model.project import Project
 from ui_designer.model.page import Page
@@ -78,8 +78,7 @@ class TestStartupPage:
         proj = Project()
         proj.startup_page = "nonexistent_page"
 
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        fallback_page = build_test_page_from_root("fallback", root=root)
+        fallback_page, _root = build_test_page_with_root("fallback")
         proj.add_page(fallback_page)
 
         startup = proj.get_startup_page()
@@ -329,14 +328,12 @@ class TestSaveLoad:
         proj.sdk_root = str(tmp_path / "sdk")
         proj.startup_page = "home"
 
-        root1 = WidgetModel("group", name="root_group", x=0, y=0, width=320, height=480)
+        page1, root1 = build_test_page_with_root("home", screen_width=320, screen_height=480)
         label1 = WidgetModel("label", name="title", x=10, y=10, width=200, height=30)
         label1.properties["text"] = "Home Page"
         root1.add_child(label1)
-        page1 = build_test_page_from_root("home", root=root1)
 
-        root2 = WidgetModel("group", name="root_group", x=0, y=0, width=320, height=480)
-        page2 = build_test_page_from_root("about", root=root2)
+        page2, _root2 = build_test_page_with_root("about", screen_width=320, screen_height=480)
 
         proj.add_page(page1)
         proj.add_page(page2)
