@@ -13,7 +13,6 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project as _create_project,
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
-    build_test_project_with_widgets as _build_project_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
@@ -6415,11 +6414,10 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeUpdateDemo"
-        project_dir.mkdir(parents=True, exist_ok=True)
-        project, page, _root = _build_project_with_widgets(
+        project, page, _root = _create_project_with_widgets(
+            project_dir,
             "UserCodeUpdateDemo",
-            sdk_root=sdk_root,
-            project_dir=str(project_dir),
+            sdk_root,
         )
         source_path = project_dir / "main_page.c"
         source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
@@ -6636,11 +6634,10 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "XmlMockupDemo"
-        project_dir.mkdir(parents=True, exist_ok=True)
-        project, xml_page, _root = _build_project_with_widgets(
+        project, xml_page, _root = _create_project_with_widgets(
+            project_dir,
             "XmlMockupDemo",
-            sdk_root=sdk_root,
-            project_dir=str(project_dir),
+            sdk_root,
             page_customizer=_setup_mockup_page,
         )
         xml_text = xml_page.to_xml_string()
