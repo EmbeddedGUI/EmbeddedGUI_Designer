@@ -127,7 +127,6 @@ from ..utils.resource_config_overlay import (
 )
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
-    apply_designer_project_scaffold,
     build_empty_project_model,
     designer_page_header_relpath,
     designer_page_layout_relpath,
@@ -135,6 +134,7 @@ from ..utils.scaffold import (
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     read_app_config_dimensions,
+    save_project_with_designer_scaffold,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -2711,16 +2711,6 @@ class MainWindow(QMainWindow):
             project_dir=project_dir,
         )
 
-    def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
-        apply_designer_project_scaffold(
-            project_dir,
-            app_name,
-            screen_width,
-            screen_height,
-            overwrite=overwrite,
-            remove_legacy_designer_files=True,
-        )
-
     def _copy_project_sidecar_files(self, src_dir, dst_dir):
         if not src_dir or not os.path.isdir(src_dir) or normalize_path(src_dir) == normalize_path(dst_dir):
             return
@@ -4176,8 +4166,11 @@ class MainWindow(QMainWindow):
             return
 
         project = self._create_standard_project_model(app_name, sdk_root, app_dir)
-        self._scaffold_project_directory(app_dir, app_name, project.screen_width, project.screen_height)
-        project.save(app_dir)
+        save_project_with_designer_scaffold(
+            project,
+            app_dir,
+            remove_legacy_designer_files=True,
+        )
         self._open_project_path(project_path, preferred_sdk_root=sdk_root)
 
     def _update_window_title(self):
@@ -4608,8 +4601,11 @@ class MainWindow(QMainWindow):
             sdk_root=sdk_root,
             project_dir=project_dir,
         )
-        self._scaffold_project_directory(project_dir, dialog.app_name, dialog.screen_width, dialog.screen_height)
-        project.save(project_dir)
+        save_project_with_designer_scaffold(
+            project,
+            project_dir,
+            remove_legacy_designer_files=True,
+        )
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)
         self.statusBar().showMessage(f"Created project: {dialog.app_name}")
 
@@ -4646,14 +4642,12 @@ class MainWindow(QMainWindow):
         self.project.project_dir = project_dir
         self.project.sdk_root = self.project_root
         self._load_project_app_local_widgets(project_dir)
-        self._scaffold_project_directory(
+        save_project_with_designer_scaffold(
+            self.project,
             project_dir,
-            self.project.app_name,
-            self.project.screen_width,
-            self.project.screen_height,
             overwrite=reset_scaffold,
+            remove_legacy_designer_files=True,
         )
-        self.project.save(project_dir)
         self._apply_pending_page_rename_outputs(project_dir)
 
         files = generate_all_files_preserved(self.project, project_dir, backup=True)

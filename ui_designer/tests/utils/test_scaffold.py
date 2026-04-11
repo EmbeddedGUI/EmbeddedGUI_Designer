@@ -22,6 +22,7 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_designer_project,
+    save_project_with_designer_scaffold,
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
     sync_project_scaffold_sidecars,
@@ -391,6 +392,47 @@ class TestApplyDesignerProjectScaffold:
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "unchanged"
         assert '"keep_me"' in designer_resource_path.read_text(encoding="utf-8")
+
+    def test_save_project_with_designer_scaffold_writes_sidecars_and_project_files(self, tmp_path):
+        project_dir = tmp_path / "SavedHelperApp"
+        project = build_empty_project_model(
+            "SavedHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+
+        actions = save_project_with_designer_scaffold(project, str(project_dir))
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions[APP_CONFIG_RELPATH] == "created"
+        assert actions[BUILD_DESIGNER_RELPATH] == "created"
+        assert actions[APP_CONFIG_DESIGNER_RELPATH] == "created"
+        assert (project_dir / "SavedHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+        assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
+
+    def test_save_project_with_designer_scaffold_refreshes_designer_resource_config_on_overwrite(self, tmp_path):
+        project_dir = tmp_path / "OverwriteHelperApp"
+        designer_resource_path = (
+            project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+        )
+        designer_resource_path.parent.mkdir(parents=True)
+        designer_resource_path.write_text('{"img": [{"name": "stale"}], "font": []}\n', encoding="utf-8")
+        project = build_empty_project_model(
+            "OverwriteHelperApp",
+            320,
+            240,
+            pages=["main_page"],
+        )
+
+        actions = save_project_with_designer_scaffold(project, str(project_dir), overwrite=True)
+
+        assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "updated"
+        assert designer_resource_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
 
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
         project_dir = tmp_path / "FullApp"

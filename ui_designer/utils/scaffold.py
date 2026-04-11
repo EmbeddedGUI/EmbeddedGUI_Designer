@@ -847,6 +847,34 @@ def apply_designer_project_scaffold(
     )
 
 
+def save_project_with_designer_scaffold(
+    project,
+    project_dir,
+    *,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Apply the shared Designer sidecar scaffold and save a project model."""
+    actions = apply_designer_project_scaffold(
+        project_dir,
+        project.app_name,
+        project.screen_width,
+        project.screen_height,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    project.save(project_dir)
+    return actions
+
+
 def scaffold_designer_project(
     project_dir,
     app_name,
