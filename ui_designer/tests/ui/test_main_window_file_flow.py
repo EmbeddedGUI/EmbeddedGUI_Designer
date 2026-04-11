@@ -25,7 +25,6 @@ from ui_designer.utils.scaffold import (
     add_widget_children as _add_widget_children,
     require_project_page_root,
     save_project_model,
-    save_project_with_designer_scaffold,
 )
 
 if HAS_PYQT5:
@@ -100,10 +99,11 @@ def _left_panel_tab_whats_this(window, panel_key):
 
 def _fake_save_project_and_materialize_codegen(filename, content):
     def _materialize(project, output_dir, **kwargs):
-        save_project_with_designer_scaffold(
+        save_project_model(
             project,
             output_dir,
-            overwrite=kwargs.get("overwrite", False),
+            with_designer_scaffold=True,
+            overwrite_scaffold=kwargs.get("overwrite", False),
             remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", False),
         )
         output_path = Path(output_dir)
