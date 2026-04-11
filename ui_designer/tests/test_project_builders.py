@@ -4,11 +4,13 @@ from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
     build_test_project,
+    build_test_project_from_root,
     build_test_project_with_page_root,
     build_test_project_with_page_roots,
     build_test_project_with_root,
     build_test_project_from_pages,
 )
+from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import require_project_page_root
 
 
@@ -85,6 +87,23 @@ class TestProjectBuilders:
         )
 
         assert project.startup_page == "detail"
+
+    def test_build_test_project_from_root_wraps_custom_root_as_single_page_project(self):
+        root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
+        project, page = build_test_project_from_root(
+            root,
+            page_name="main_page",
+            app_name="LayoutGroupDemo",
+            page_mode="activity",
+        )
+
+        assert project.app_name == "LayoutGroupDemo"
+        assert project.page_mode == "activity"
+        assert project.startup_page == "main_page"
+        assert project.screen_width == 200
+        assert project.screen_height == 120
+        assert page.name == "main_page"
+        assert page.root_widget is root
 
     def test_build_test_project_with_root_returns_startup_root_widget(self):
         project, root = build_test_project_with_root(

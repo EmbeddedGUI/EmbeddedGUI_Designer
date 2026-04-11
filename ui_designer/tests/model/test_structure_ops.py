@@ -1,6 +1,5 @@
-from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.tests.project_builders import (
-    build_test_project_from_pages,
+    build_test_project_from_root,
     build_test_project_with_root,
 )
 from ui_designer.model.structure_ops import (
@@ -57,8 +56,11 @@ def test_group_and_ungroup_selection_round_trip_free_layout():
 def test_group_selection_blocks_non_contiguous_layout_siblings():
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    page = build_test_page_from_root("main_page", root=root)
-    project = build_test_project_from_pages([page], app_name="LayoutGroupDemo")
+    project, _page = build_test_project_from_root(
+        root,
+        page_name="main_page",
+        app_name="LayoutGroupDemo",
+    )
 
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)
@@ -241,8 +243,11 @@ def test_describe_structure_actions_reports_isolated_widget_block_reason():
 def test_describe_structure_actions_reports_group_constraint_for_noncontiguous_layout_selection():
     root = WidgetModel("linearlayout", name="root_layout", x=0, y=0, width=200, height=120)
     root.properties["orientation"] = "vertical"
-    page = build_test_page_from_root("main_page", root=root)
-    project = build_test_project_from_pages([page], app_name="LayoutGroupStateDemo")
+    project, _page = build_test_project_from_root(
+        root,
+        page_name="main_page",
+        app_name="LayoutGroupStateDemo",
+    )
 
     first = WidgetModel("label", name="first", width=80, height=20)
     second = WidgetModel("label", name="second", width=80, height=20)

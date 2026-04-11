@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from ui_designer.tests.page_builders import build_test_page_from_root
 from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import (
     build_empty_project_model,
@@ -126,6 +127,52 @@ def build_test_project_from_pages(
     elif project.pages:
         project.startup_page = project.pages[0].name
     return project
+
+
+def build_test_project_from_root(
+    root,
+    *,
+    page_name="main_page",
+    app_name="TestApp",
+    screen_width=None,
+    screen_height=None,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup=None,
+    startup_page=None,
+):
+    """Build a minimal test project from a caller-supplied page root widget."""
+    resolved_screen_width = screen_width
+    if resolved_screen_width is None:
+        resolved_screen_width = getattr(root, "width", None)
+    if resolved_screen_width is None:
+        resolved_screen_width = 240
+
+    resolved_screen_height = screen_height
+    if resolved_screen_height is None:
+        resolved_screen_height = getattr(root, "height", None)
+    if resolved_screen_height is None:
+        resolved_screen_height = 320
+
+    page = build_test_page_from_root(
+        page_name,
+        root=root,
+        screen_width=resolved_screen_width,
+        screen_height=resolved_screen_height,
+    )
+    project = build_test_project_from_pages(
+        [page],
+        app_name=app_name,
+        screen_width=resolved_screen_width,
+        screen_height=resolved_screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_mode=page_mode,
+        startup=startup,
+        startup_page=startup_page,
+    )
+    return project, page
 
 
 def build_saved_test_project(
