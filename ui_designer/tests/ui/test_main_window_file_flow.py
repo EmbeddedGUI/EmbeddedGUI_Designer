@@ -8752,9 +8752,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ClipboardDemo"
         project = _create_project(project_dir, "ClipboardDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=10, y=10, width=80, height=20)
-        page.root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8787,7 +8787,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsDemo"
         project = _create_project(project_dir, "DiagnosticsDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
@@ -8800,11 +8800,11 @@ class TestMainWindowFileFlow:
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
 
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(duplicate_a)
-        page.root_widget.add_child(duplicate_b)
-        page.root_widget.add_child(layout_parent)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(duplicate_a)
+        root.add_child(duplicate_b)
+        root.add_child(layout_parent)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8845,14 +8845,14 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project.get_startup_page().root_widget.add_child(main_button)
-        detail_page.root_widget.add_child(detail_button)
+        main_root.add_child(main_button)
+        detail_root.add_child(detail_button)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8884,14 +8884,14 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project.get_startup_page().root_widget.add_child(main_button)
-        detail_page.root_widget.add_child(detail_button)
+        main_root.add_child(main_button)
+        detail_root.add_child(detail_button)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8928,7 +8928,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsFilterDemo"
         project = _create_project(project_dir, "DiagnosticsFilterDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
@@ -8941,11 +8941,11 @@ class TestMainWindowFileFlow:
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
 
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(duplicate_a)
-        page.root_widget.add_child(duplicate_b)
-        page.root_widget.add_child(layout_parent)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(duplicate_a)
+        root.add_child(duplicate_b)
+        root.add_child(layout_parent)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8989,7 +8989,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsResetViewDemo"
         project = _create_project(project_dir, "DiagnosticsResetViewDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         duplicate_a = WidgetModel("label", name="dup_name", x=20, y=40, width=60, height=20)
@@ -9002,11 +9002,11 @@ class TestMainWindowFileFlow:
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
 
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(duplicate_a)
-        page.root_widget.add_child(duplicate_b)
-        page.root_widget.add_child(layout_parent)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(duplicate_a)
+        root.add_child(duplicate_b)
+        root.add_child(layout_parent)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9045,13 +9045,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsRestoreFilterDemo"
         project = _create_project(project_dir, "DiagnosticsRestoreFilterDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9089,13 +9089,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsOpenFirstErrorDemo"
         project = _create_project(project_dir, "DiagnosticsOpenFirstErrorDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9134,11 +9134,11 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsNoErrorOpenDemo"
         project = _create_project(project_dir, "DiagnosticsNoErrorOpenDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(missing)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9161,13 +9161,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsOpenFirstWarningDemo"
         project = _create_project(project_dir, "DiagnosticsOpenFirstWarningDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9207,10 +9207,10 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsNoWarningOpenDemo"
         project = _create_project(project_dir, "DiagnosticsNoWarningOpenDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
-        page.root_widget.add_child(invalid)
+        root.add_child(invalid)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9233,13 +9233,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsOpenSelectedDemo"
         project = _create_project(project_dir, "DiagnosticsOpenSelectedDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9281,13 +9281,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsSelectionFilterDemo"
         project = _create_project(project_dir, "DiagnosticsSelectionFilterDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
