@@ -16,6 +16,7 @@ from ui_designer.model.widget_model import (
     parse_legacy_font_expr,
 )
 from ui_designer.model.widget_registry import WidgetRegistry
+from ui_designer.utils.scaffold import add_widget_children
 
 
 # ── TestWidgetModelCreation ──────────────────────────────────────
@@ -116,8 +117,7 @@ class TestWidgetModelTree:
         c1 = WidgetModel("label", name="c1")
         c2 = WidgetModel("group", name="c2")
         c2_1 = WidgetModel("button", name="c2_1")
-        root.add_child(c1)
-        root.add_child(c2)
+        add_widget_children(root, [c1, c2])
         c2.add_child(c2_1)
         flat = root.get_all_widgets_flat()
         assert len(flat) == 4

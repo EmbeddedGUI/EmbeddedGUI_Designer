@@ -5,6 +5,7 @@ import pytest
 from ui_designer.engine.auto_fixer import AutoFixer, FixReport
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import add_widget_children
 
 import os
 
@@ -74,7 +75,7 @@ class TestContainerOverflowFix:
     def test_child_exceeds_parent(self):
         parent = WidgetModel("group", "grp", width=100, height=50)
         child = WidgetModel("label", "lbl", x=10, y=10, width=50, height=60)
-        parent.add_child(child)
+        add_widget_children(parent, [child])
         fixer = AutoFixer()
         report = fixer.fix_widgets([parent])
         assert parent.height >= 70
@@ -83,7 +84,7 @@ class TestContainerOverflowFix:
     def test_no_overflow(self):
         parent = WidgetModel("group", "grp", width=100, height=100)
         child = WidgetModel("label", "lbl", x=10, y=10, width=50, height=20)
-        parent.add_child(child)
+        add_widget_children(parent, [child])
         fixer = AutoFixer()
         report = fixer.fix_widgets([parent])
         assert parent.height == 100
@@ -96,8 +97,7 @@ class TestOverlapDetection:
         parent = WidgetModel("group", "grp", width=200, height=200)
         child1 = WidgetModel("label", "lbl1", x=10, y=10, width=80, height=30)
         child2 = WidgetModel("label", "lbl2", x=50, y=20, width=80, height=30)
-        parent.add_child(child1)
-        parent.add_child(child2)
+        add_widget_children(parent, [child1, child2])
         fixer = AutoFixer()
         report = fixer.fix_widgets([parent])
         assert len(report.warnings) >= 1
@@ -107,8 +107,7 @@ class TestOverlapDetection:
         parent = WidgetModel("group", "grp", width=200, height=200)
         child1 = WidgetModel("label", "lbl1", x=10, y=10, width=40, height=30)
         child2 = WidgetModel("label", "lbl2", x=60, y=10, width=40, height=30)
-        parent.add_child(child1)
-        parent.add_child(child2)
+        add_widget_children(parent, [child1, child2])
         fixer = AutoFixer()
         report = fixer.fix_widgets([parent])
         assert len(report.warnings) == 0

@@ -18,6 +18,7 @@ from ui_designer.model.diagnostics import (
 from ui_designer.model.resource_catalog import ResourceCatalog
 from ui_designer.model.string_resource import StringResourceCatalog
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import add_widget_children
 
 
 class TestPageDiagnostics:
@@ -127,7 +128,7 @@ class TestSelectionDiagnostics:
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
-        layout_parent.add_child(managed)
+        add_widget_children(layout_parent, [managed])
 
         entries = analyze_selection([managed])
 

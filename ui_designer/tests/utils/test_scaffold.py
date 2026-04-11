@@ -529,7 +529,7 @@ class TestCoreProjectScaffold:
 
         def _customize_page(page, root):
             page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
-            root.add_child(badge)
+            add_widget_children(root, [badge])
 
         def _customize_project(project):
             project.string_catalog.set("greeting", "Hello", "default")

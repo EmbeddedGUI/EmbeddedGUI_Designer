@@ -17,7 +17,7 @@ from ui_designer.tests.project_builders import (
     build_test_project_from_pages,
 )
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.utils.scaffold import require_project_page_root
+from ui_designer.utils.scaffold import add_widget_children, require_project_page_root
 
 
 class TestProjectBuilders:
@@ -154,7 +154,7 @@ class TestProjectBuilders:
         def _customize(page, root):
             page.user_fields = [{"name": "counter", "type": "int", "default": "0"}]
             page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "250", "period_ms": "250", "auto_start": False}]
-            root.add_child(badge)
+            add_widget_children(root, [badge])
 
         project, page, root = build_saved_test_project_with_widgets(
             project_dir,
