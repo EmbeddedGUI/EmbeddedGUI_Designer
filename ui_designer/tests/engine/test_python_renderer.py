@@ -11,10 +11,9 @@ from ui_designer.engine.python_renderer import (
     render_page,
     render_page_to_bytes,
 )
-from ui_designer.tests.page_builders import build_test_page, build_test_page_with_widget
+from ui_designer.tests.page_builders import build_test_page, build_test_page_with_root, build_test_page_with_widget
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel
 from ui_designer.model.page import Page
-from ui_designer.utils.scaffold import require_page_root
 
 
 class TestResolveColor:
@@ -122,8 +121,7 @@ class TestRenderPage:
         assert img.size == (240, 320)
 
     def test_page_with_background(self):
-        page = build_test_page("test")
-        root = require_page_root(page, "test")
+        page, root = build_test_page_with_root("test")
         root.name = "root"
         root.background = BackgroundModel()
         root.background.bg_type = "solid"
