@@ -718,11 +718,19 @@ def generate_designer_resource_config(project, src_dir):
     return user_config_created, config_path
 
 
-def sync_project_resources_and_generate_designer_resource_config(project, project_dir, src_dir=None):
+def sync_project_resources_and_generate_designer_resource_config(
+    project,
+    project_dir,
+    src_dir=None,
+    *,
+    before_generate=None,
+):
     """Sync project resources into ``resource/src`` and regenerate resource configs."""
     project_dir = os.path.normpath(project_dir)
     src_dir = os.path.normpath(src_dir or os.path.join(project_dir, "resource", "src"))
     project.sync_resources_to_src(project_dir)
+    if callable(before_generate):
+        before_generate(project_dir)
     return generate_designer_resource_config(project, src_dir)
 
 

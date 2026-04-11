@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -1083,6 +1084,34 @@ class TestApplyDesignerProjectScaffold:
         assert os.path.normpath(config_path) == os.path.normpath(
             str(project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json")
         )
+
+    def test_sync_project_resources_and_generate_designer_resource_config_runs_before_generate_hook_after_sync(
+        self,
+        tmp_path,
+    ):
+        project_dir = tmp_path / "HookedResourceConfigHelperApp"
+        resources_dir = project_dir / ".eguiproject" / "resources"
+        images_dir = resources_dir / "images"
+        images_dir.mkdir(parents=True)
+        (images_dir / "icon.png").write_bytes(b"PNG")
+        project = build_empty_project_model(
+            "HookedResourceConfigHelperApp",
+            320,
+            240,
+            pages=["home"],
+        )
+        hook_calls = []
+
+        created, _config_path = sync_project_resources_and_generate_designer_resource_config(
+            project,
+            str(project_dir),
+            before_generate=lambda output_dir: hook_calls.append(
+                ((Path(output_dir) / "resource" / "src" / "icon.png").read_bytes(), output_dir)
+            ),
+        )
+
+        assert created is True
+        assert hook_calls == [(b"PNG", str(project_dir))]
 
     def test_save_project_and_materialize_codegen_writes_scaffold_and_generated_outputs(self, tmp_path):
         project_dir = tmp_path / "SavedGeneratedHelperApp"

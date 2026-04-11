@@ -48,12 +48,12 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     ensure_conversion_project_scaffold_with_sdk_root,
-    generate_designer_resource_config,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
+    sync_project_resources_and_generate_designer_resource_config,
 )
 
 
@@ -1537,15 +1537,16 @@ def cmd_generate_code(args):
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 
     src_dir = _get_app_resource_src_dir(app_dir)
-    project.sync_resources_to_src(app_dir)
+    user_config_created, _designer_config_path = (
+        sync_project_resources_and_generate_designer_resource_config(
+            project,
+            app_dir,
+            src_dir,
+            before_generate=lambda _project_dir: _sync_font_files(project, sdk_root, src_dir),
+        )
+    )
     if os.path.isdir(_get_app_config_resource_dir(app_dir)):
         print("  Synced project resources to resource/src/")
-
-    # Sync font files referenced by widgets to resource/src/
-    _sync_font_files(project, sdk_root, src_dir)
-
-    # Generate Designer-managed resource config from XML
-    user_config_created, _designer_config_path = generate_designer_resource_config(project, src_dir)
     if user_config_created:
         print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
     print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
