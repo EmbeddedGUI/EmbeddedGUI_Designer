@@ -12570,10 +12570,11 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewArrangeMenuOrderDemo"
         project = _create_project(project_dir, "PreviewArrangeMenuOrderDemo", sdk_root)
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
-        project.get_startup_page().root_widget.add_child(first)
-        project.get_startup_page().root_widget.add_child(second)
+        root.add_child(first)
+        root.add_child(second)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -12612,7 +12613,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewArrangeMenuStateDemo"
         project = _create_project(project_dir, "PreviewArrangeMenuStateDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
@@ -12680,7 +12681,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewEditMenuStateDemo"
         project = _create_project(project_dir, "PreviewEditMenuStateDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         locked = WidgetModel("button", name="locked", x=72, y=8, width=60, height=20)
         locked.designer_locked = True
@@ -12736,7 +12737,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectMenuRelationshipsDemo"
         project = _create_project(project_dir, "PreviewSelectMenuRelationshipsDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -12902,7 +12903,8 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuDemo"
         project = _create_project(project_dir, "PreviewNoWidgetContextMenuDemo", sdk_root)
-        project.get_startup_page().root_widget.add_child(WidgetModel("label", name="first"))
+        _page, root = require_project_page_root(project)
+        root.add_child(WidgetModel("label", name="first"))
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -12934,7 +12936,8 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuStateDemo"
         project = _create_project(project_dir, "PreviewNoWidgetContextMenuStateDemo", sdk_root)
-        project.get_startup_page().root_widget.add_child(WidgetModel("label", name="first"))
+        _page, root = require_project_page_root(project)
+        root.add_child(WidgetModel("label", name="first"))
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -13517,7 +13520,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectContextMenuDemo"
         project = _create_project(project_dir, "PreviewSelectContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -14089,7 +14092,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewContainersContextMenuDemo"
         project = _create_project(project_dir, "PreviewContainersContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
@@ -14130,7 +14133,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewStateContextMenuDemo"
         project = _create_project(project_dir, "PreviewStateContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=120, height=80)
         hidden_self = WidgetModel("button", name="hidden_self", x=4, y=4, width=48, height=20)
@@ -14206,7 +14209,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewLayoutContainersContextMenuDemo"
         project = _create_project(project_dir, "PreviewLayoutContainersContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14260,7 +14263,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewManagedContextMenuDemo"
         project = _create_project(project_dir, "PreviewManagedContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14316,7 +14319,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewFreePositionContextMenuDemo"
         project = _create_project(project_dir, "PreviewFreePositionContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         container = WidgetModel("group", name="container", x=10, y=24, width=140, height=100)
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=4, y=4, width=100, height=60)
@@ -14372,7 +14375,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameTypeContextMenuDemo"
         project = _create_project(project_dir, "PreviewSameTypeContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         first = WidgetModel("button", name="first", x=8, y=28, width=56, height=20)
         second = WidgetModel("button", name="second", x=8, y=56, width=56, height=20)
@@ -14409,7 +14412,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSameParentTypeContextMenuDemo"
         project = _create_project(project_dir, "PreviewSameParentTypeContextMenuDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
         second = WidgetModel("label", name="second", x=8, y=28, width=40, height=16)
         other = WidgetModel("button", name="other", x=8, y=56, width=56, height=20)
