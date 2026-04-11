@@ -1,3 +1,5 @@
+import os
+
 from ui_designer.utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     APP_CONFIG_RELPATH,
@@ -5,8 +7,14 @@ from ui_designer.utils.scaffold import (
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
+    RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     apply_designer_project_scaffold,
+    build_empty_project_model,
+    build_empty_project_xml,
+    normalize_scaffold_pages,
+    scaffold_designer_project,
+    sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
     sync_project_scaffold_sidecars,
 )
@@ -156,6 +164,62 @@ class TestSyncProjectScaffoldSidecars:
         )
 
 
+class TestCoreProjectScaffold:
+    def test_normalize_scaffold_pages_uses_default_and_strips_empty_names(self):
+        assert normalize_scaffold_pages() == ["main_page"]
+        assert normalize_scaffold_pages(["", " home ", " ", "detail"]) == ["home", "detail"]
+
+    def test_build_empty_project_model_creates_default_startup_page(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir="D:/workspace/DemoApp",
+            pages=["home", "settings"],
+        )
+
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.project_dir == os.path.normpath("D:/workspace/DemoApp")
+        assert project.startup_page == "home"
+        assert [page.name for page in project.pages] == ["home", "settings"]
+        assert project.get_startup_page().root_widget.width == 320
+        assert project.get_startup_page().root_widget.height == 240
+
+    def test_build_empty_project_xml_uses_canonical_sdk_root_attribute(self):
+        xml = build_empty_project_xml(
+            "DemoApp",
+            320,
+            240,
+            stored_sdk_root="../../sdk/EmbeddedGUI",
+            pages=["main_page"],
+        )
+
+        assert 'sdk_root="../../sdk/EmbeddedGUI"' in xml
+        assert 'egui_root="' not in xml
+
+    def test_sync_project_scaffold_core_files_preserves_existing_page_templates(self, tmp_path):
+        project_dir = tmp_path / "CoreApp"
+        page_path = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        page_path.parent.mkdir(parents=True)
+        page_path.write_text("<Page><Legacy /></Page>\n", encoding="utf-8")
+
+        actions = sync_project_scaffold_core_files(
+            str(project_dir),
+            "CoreApp",
+            320,
+            240,
+            stored_sdk_root="../../sdk/EmbeddedGUI",
+        )
+
+        assert actions["CoreApp.egui"] == "created"
+        assert actions[RESOURCE_CATALOG_RELPATH] == "created"
+        assert actions[".eguiproject/layout/main_page.xml"] == "unchanged"
+        assert 'sdk_root="../../sdk/EmbeddedGUI"' in (project_dir / "CoreApp.egui").read_text(encoding="utf-8")
+        assert (project_dir / ".eguiproject" / "resources" / "resources.xml").is_file()
+        assert page_path.read_text(encoding="utf-8") == "<Page><Legacy /></Page>\n"
+
+
 class TestApplyDesignerProjectScaffold:
     def test_overwrite_defaults_to_refreshing_designer_resource_config(self, tmp_path):
         project_dir = tmp_path / "SmokeApp"
@@ -197,3 +261,27 @@ class TestApplyDesignerProjectScaffold:
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions[DESIGNER_RESOURCE_CONFIG_RELPATH] == "unchanged"
         assert '"keep_me"' in designer_resource_path.read_text(encoding="utf-8")
+
+    def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):
+        project_dir = tmp_path / "FullApp"
+
+        actions = scaffold_designer_project(
+            str(project_dir),
+            "FullApp",
+            320,
+            240,
+            stored_sdk_root="../../sdk/EmbeddedGUI",
+            pages=["home", "settings"],
+            overwrite=True,
+        )
+
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions["FullApp.egui"] == "created"
+        assert actions[RESOURCE_CATALOG_RELPATH] == "created"
+        assert actions[".eguiproject/layout/home.xml"] == "created"
+        assert actions[".eguiproject/layout/settings.xml"] == "created"
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".eguiproject" / "resources" / "images").is_dir()
+        assert (project_dir / "resource" / "img").is_dir()
+        assert (project_dir / "resource" / "font").is_dir()

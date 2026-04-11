@@ -31,10 +31,6 @@ import re
 import subprocess
 import sys
 
-from ui_designer.model.page import Page
-from ui_designer.model.project import Project
-from ui_designer.model.resource_catalog import ResourceCatalog
-from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
@@ -49,7 +45,8 @@ from ui_designer.utils.scaffold import (
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
-    apply_designer_project_scaffold,
+    normalize_scaffold_pages,
+    scaffold_designer_project,
     legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,
 )
@@ -187,31 +184,6 @@ def _emit_json_output(output_path, output_json, *, written_message):
 
 # ── Sub-command: scaffold ─────────────────────────────────────────
 
-def _build_egui_project_xml(app_name, width, height, sdk_root, pages=None):
-    """Build .egui project XML with multiple page refs."""
-    if pages is None:
-        pages = ["main_page"]
-    project = Project(screen_width=width, screen_height=height, app_name=app_name)
-    project.startup_page = pages[0]
-    for page_name in pages:
-        page = Page(file_path=f"layout/{page_name}.xml")
-        page.root_widget = WidgetModel("group", name="root", x=0, y=0, width=width, height=height)
-        project.add_page(page)
-    return project.to_xml_string(stored_sdk_root=sdk_root)
-
-
-def _build_empty_page_xml(page_name, width, height):
-    """Build an empty page layout XML using the shared page serializer."""
-    page = Page(file_path=f"layout/{page_name}.xml")
-    page.root_widget = WidgetModel("group", name="root", x=0, y=0, width=width, height=height)
-    return page.to_xml_string()
-
-
-def _build_empty_resources_xml():
-    """Build an empty resources.xml using the shared catalog serializer."""
-    return ResourceCatalog().to_xml_string()
-
-
 def _build_root_page_xml(width, height, child_xml_blocks=None, *, background_hex=None, root_name="root"):
     """Build a minimal page XML string with a single root group wrapper."""
     xml_lines = ['<?xml version="1.0" encoding="utf-8"?>', "<Page>"]
@@ -289,14 +261,19 @@ def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
         return app_dir
 
     print(f"Creating app scaffold: {app_name}")
-    scaffold_args = argparse.Namespace(
-        app=app_name,
-        width=width,
-        height=height,
+    sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
+    scaffold_designer_project(
+        app_dir,
+        app_name,
+        width,
+        height,
+        stored_sdk_root=sdk_root_rel,
+        overwrite=True,
         color_depth=16,
-        force=False,
+        circle_radius=min(width, height) // 2,
+        extra_config_macros=[("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")],
+        refresh_designer_resource_config=False,
     )
-    cmd_scaffold(scaffold_args)
     return app_dir
 
 
@@ -338,25 +315,14 @@ def cmd_scaffold(args):
     sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
 
     # Create directories
-    config_dir = _get_app_config_dir(app_dir)
-    dirs = [
-        app_dir,
-        os.path.join(app_dir, ".designer"),
-        _get_app_layout_dir(app_dir),
-        _get_app_resource_images_dir(app_dir),
-        _get_app_generated_resource_dir(app_dir),
-        _get_app_resource_src_dir(app_dir),
-        os.path.join(app_dir, "resource", "img"),
-        os.path.join(app_dir, "resource", "font"),
-    ]
-    for d in dirs:
-        os.makedirs(d, exist_ok=True)
-
-    scaffold_actions = apply_designer_project_scaffold(
+    pages = normalize_scaffold_pages(args.pages.split(",") if args.pages else None)
+    scaffold_actions = scaffold_designer_project(
         app_dir,
         args.app,
         width,
         height,
+        stored_sdk_root=sdk_root_rel,
+        pages=pages,
         overwrite=True,
         color_depth=color_depth,
         circle_radius=circle_radius,
@@ -382,26 +348,23 @@ def cmd_scaffold(args):
         scaffold_actions.get(APP_CONFIG_DESIGNER_RELPATH, "unchanged"),
     )
 
-    # .egui project file (always overwrite)
-    pages = [p.strip() for p in args.pages.split(",")] if args.pages else ["main_page"]
-    _write_file(os.path.join(app_dir, f"{args.app}.egui"),
-                _build_egui_project_xml(
-                    app_name=args.app, width=width, height=height,
-                    sdk_root=sdk_root_rel, pages=pages))
-
-    # resources.xml (always overwrite)
-    _write_file(os.path.join(config_dir, "resources", "resources.xml"),
-                _build_empty_resources_xml())
+    _print_scaffold_status(
+        f"{args.app}.egui",
+        scaffold_actions.get(f"{args.app}.egui", "unchanged"),
+    )
+    _print_scaffold_status(
+        "resources.xml",
+        scaffold_actions.get(".eguiproject/resources/resources.xml", "unchanged"),
+    )
 
     # Page XML templates — only create if they do not exist (user/AI-owned)
     for page_name in pages:
-        page_xml_path = os.path.join(config_dir, "layout", f"{page_name}.xml")
-        if not os.path.exists(page_xml_path):
-            _write_file(page_xml_path,
-                         _build_empty_page_xml(page_name, width, height))
-            print(f"  Created: {page_name}.xml (empty template)")
-        else:
-            print(f"  Skipped: {page_name}.xml (already exists)")
+        _print_scaffold_status(
+            f".eguiproject/layout/{page_name}.xml",
+            scaffold_actions.get(f".eguiproject/layout/{page_name}.xml", "unchanged"),
+            label=f"{page_name}.xml",
+            unchanged_reason="already exists",
+        )
 
     # Resource config split — preserve user overlay, create designer scaffold.
     _print_scaffold_status(
@@ -427,15 +390,6 @@ def cmd_scaffold(args):
         f"Gen resources:    {_helper_app_command('gen-resource', args.app)}",
         f"Build & verify:   {_helper_app_command('verify', args.app)}",
     ])
-
-
-def _write_file(path, content, *, action="Created"):
-    """Write content to file, creating parent dirs if needed."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(content)
-    print(f"  {action}: {os.path.basename(path)}")
-
 
 def _ensure_resource_config_file(path):
     """Create the default resource config file when it is missing."""

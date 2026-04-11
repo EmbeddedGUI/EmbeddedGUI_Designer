@@ -19,6 +19,13 @@ from .resource_config_overlay import (
 )
 
 DESIGNER_PROJECT_DIRNAME = ".designer"
+EGUIPROJECT_DIRNAME = ".eguiproject"
+LAYOUT_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/layout"
+RESOURCE_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/resources"
+RESOURCE_IMAGES_DIR_RELPATH = f"{RESOURCE_DIR_RELPATH}/images"
+RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/resources.xml"
+RESOURCE_IMG_DIR_RELPATH = "resource/img"
+RESOURCE_FONT_DIR_RELPATH = "resource/font"
 BUILD_DESIGNER_FILENAME = "build_designer.mk"
 APP_CONFIG_DESIGNER_FILENAME = "app_egui_config_designer.h"
 UICODE_HEADER_FILENAME = "uicode.h"
@@ -643,6 +650,113 @@ def sync_project_scaffold_sidecars(
     return actions
 
 
+def normalize_scaffold_pages(pages=None):
+    """Return normalized scaffold page names with a stable default."""
+    normalized = [str(page_name).strip() for page_name in (pages or []) if str(page_name).strip()]
+    return normalized or ["main_page"]
+
+
+def build_empty_project_model(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    pages=None,
+):
+    """Build a minimal Designer project model with default empty pages."""
+    from ..model.project import Project
+
+    project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
+    project.sdk_root = str(sdk_root or "")
+    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+
+    normalized_pages = normalize_scaffold_pages(pages)
+    project.startup_page = normalized_pages[0]
+    for page_name in normalized_pages:
+        project.create_new_page(page_name)
+    return project
+
+
+def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
+    """Build an empty ``.egui`` project XML using the shared project model."""
+    project = build_empty_project_model(
+        app_name,
+        screen_width,
+        screen_height,
+        pages=pages,
+    )
+    return project.to_xml_string(stored_sdk_root=stored_sdk_root)
+
+
+def build_empty_page_xml(page_name, screen_width=240, screen_height=320):
+    """Build an empty page layout XML using the shared default page model."""
+    from ..model.page import Page
+
+    page = Page.create_default(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+    )
+    return page.to_xml_string()
+
+
+def build_empty_resources_xml():
+    """Build an empty resources.xml using the shared resource catalog serializer."""
+    from ..model.resource_catalog import ResourceCatalog
+
+    return ResourceCatalog().to_xml_string()
+
+
+def sync_project_scaffold_core_files(
+    project_dir,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    stored_sdk_root="",
+    pages=None,
+):
+    """Create or refresh the core scaffold files for a Designer project."""
+    project_dir = os.path.normpath(project_dir)
+    normalized_pages = normalize_scaffold_pages(pages)
+
+    for rel_dir in (
+        EGUIPROJECT_DIRNAME,
+        LAYOUT_DIR_RELPATH,
+        RESOURCE_DIR_RELPATH,
+        RESOURCE_IMAGES_DIR_RELPATH,
+        RESOURCE_IMG_DIR_RELPATH,
+        RESOURCE_FONT_DIR_RELPATH,
+    ):
+        os.makedirs(os.path.join(project_dir, rel_dir.replace("/", os.sep)), exist_ok=True)
+
+    actions = {}
+    project_relpath = f"{app_name}.egui"
+    actions[project_relpath] = _write_text_if_changed(
+        os.path.join(project_dir, project_relpath),
+        build_empty_project_xml(
+            app_name,
+            screen_width,
+            screen_height,
+            stored_sdk_root=stored_sdk_root,
+            pages=normalized_pages,
+        ),
+    )
+    actions[RESOURCE_CATALOG_RELPATH] = _write_text_if_changed(
+        os.path.join(project_dir, RESOURCE_CATALOG_RELPATH.replace("/", os.sep)),
+        build_empty_resources_xml(),
+    )
+    for page_name in normalized_pages:
+        relpath = f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
+        actions[relpath] = _write_text_if_missing(
+            os.path.join(project_dir, relpath.replace("/", os.sep)),
+            build_empty_page_xml(page_name, screen_width, screen_height),
+        )
+    return actions
+
+
 def apply_designer_project_scaffold(
     project_dir,
     app_name,
@@ -672,3 +786,44 @@ def apply_designer_project_scaffold(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
+
+
+def scaffold_designer_project(
+    project_dir,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    stored_sdk_root="",
+    pages=None,
+    overwrite=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Apply the complete shared Designer project scaffold to a directory."""
+    actions = apply_designer_project_scaffold(
+        project_dir,
+        app_name,
+        screen_width,
+        screen_height,
+        overwrite=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    actions.update(
+        sync_project_scaffold_core_files(
+            project_dir,
+            app_name,
+            screen_width,
+            screen_height,
+            stored_sdk_root=stored_sdk_root,
+            pages=pages,
+        )
+    )
+    return actions

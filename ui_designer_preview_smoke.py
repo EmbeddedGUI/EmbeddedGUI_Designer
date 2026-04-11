@@ -30,6 +30,7 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     apply_designer_project_scaffold,
+    build_empty_project_model,
 )
 
 
@@ -104,10 +105,17 @@ def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple
     WidgetRegistry.instance()
     WidgetModel.reset_counter()
 
-    project = Project(screen_width=SCREEN_WIDTH, screen_height=SCREEN_HEIGHT, app_name=app_name)
-    project.sdk_root = str(sdk_root)
-    project.project_dir = str(project_dir)
-    page = project.create_new_page(PAGE_NAME)
+    project = build_empty_project_model(
+        app_name,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        sdk_root=str(sdk_root),
+        project_dir=str(project_dir),
+        pages=[PAGE_NAME],
+    )
+    page = project.get_startup_page()
+    if page is None:
+        raise RuntimeError("Smoke project did not create a startup page")
     root = page.root_widget
     if root is None:
         raise RuntimeError("Smoke project did not create a root widget")

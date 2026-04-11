@@ -128,6 +128,7 @@ from ..utils.resource_config_overlay import (
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
     apply_designer_project_scaffold,
+    build_empty_project_model,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_designer_codegen_cleanup_relpaths,
@@ -2702,11 +2703,13 @@ class MainWindow(QMainWindow):
     def _create_standard_project_model(self, app_name, sdk_root, project_dir):
         WidgetModel.reset_counter()
         screen_w, screen_h = self._read_app_dimensions(project_dir)
-        project = Project(screen_width=screen_w, screen_height=screen_h, app_name=app_name)
-        project.sdk_root = sdk_root
-        project.project_dir = project_dir
-        project.create_new_page("main_page")
-        return project
+        return build_empty_project_model(
+            app_name,
+            screen_w,
+            screen_h,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+        )
 
     def _scaffold_project_directory(self, project_dir, app_name, screen_width, screen_height, *, overwrite=False):
         apply_designer_project_scaffold(
@@ -4598,10 +4601,13 @@ class MainWindow(QMainWindow):
             return
 
         os.makedirs(project_dir, exist_ok=True)
-        project = Project(screen_width=dialog.screen_width, screen_height=dialog.screen_height, app_name=dialog.app_name)
-        project.sdk_root = sdk_root
-        project.project_dir = project_dir
-        project.create_new_page("main_page")
+        project = build_empty_project_model(
+            dialog.app_name,
+            dialog.screen_width,
+            dialog.screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+        )
         self._scaffold_project_directory(project_dir, dialog.app_name, dialog.screen_width, dialog.screen_height)
         project.save(project_dir)
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)
