@@ -777,6 +777,33 @@ def build_page_model_with_widget(
     return page, widget
 
 
+def build_page_model_only_with_widget(
+    page_name="main_page",
+    widget_type="label",
+    *,
+    screen_width=240,
+    screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
+    **widget_kwargs,
+):
+    """Build a default page model with one attached widget and return only the widget."""
+    _page, widget = build_page_model_with_widget(
+        page_name,
+        widget_type,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
+        **widget_kwargs,
+    )
+    return widget
+
+
 def require_project_page_root(project, page_name=""):
     """Return a project page and root widget, raising when either is missing."""
     target_page_name = str(page_name or "").strip()
@@ -1008,6 +1035,31 @@ def build_page_model_with_widgets(
     )
     add_widget_children(root, widgets)
     return page, root
+
+
+def build_page_model_root_with_widgets(
+    page_name="main_page",
+    *,
+    screen_width=240,
+    screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
+    widgets=None,
+):
+    """Build a page model with attached children and return only the populated root widget."""
+    _page, root = build_page_model_with_widgets(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
+        widgets=widgets,
+    )
+    return root
 
 
 def build_project_model_with_page_widgets(

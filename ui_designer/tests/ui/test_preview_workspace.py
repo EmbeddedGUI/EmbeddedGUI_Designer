@@ -2,7 +2,10 @@
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_with_widget, build_test_page_with_widgets
+from ui_designer.tests.page_builders import (
+    build_test_page_root_with_widgets,
+    build_test_page_with_widget,
+)
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.utils.scaffold import add_widget_children
 
@@ -450,7 +453,7 @@ class TestWidgetOverlaySelection:
 
         moving = WidgetModel("label", name="moving", x=10, y=10, width=80, height=24)
         other = WidgetModel("button", name="other", x=300, y=300, width=90, height=28)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             screen_width=1200,
             screen_height=1200,
@@ -511,7 +514,7 @@ class TestWidgetOverlaySelection:
         locked_child = WidgetModel("button", name="locked", x=10, y=70, width=80, height=24)
         hidden_child.designer_hidden = True
         locked_child.designer_locked = True
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[visible_child, hidden_child, locked_child],
@@ -538,7 +541,7 @@ class TestWidgetOverlaySelection:
         moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
         near_a = WidgetModel("label", name="near_a", x=39, y=40, width=20, height=20)
         near_b = WidgetModel("label", name="near_b", x=42, y=43, width=20, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[moving, near_a, near_b],
@@ -562,7 +565,7 @@ class TestWidgetOverlaySelection:
         overlay.set_base_size(240, 320)
         moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
         target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[moving, target],
@@ -593,7 +596,7 @@ class TestWidgetOverlaySelection:
         overlay.set_base_size(240, 320)
         moving = WidgetModel("label", name="moving", x=12, y=12, width=20, height=20)
         target = WidgetModel("label", name="target", x=58, y=80, width=24, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[moving, target],
@@ -658,7 +661,7 @@ class TestWidgetOverlaySelection:
         overlay.set_base_size(240, 320)
         overlay.set_grid_size(0)
         moving = WidgetModel("label", name="moving", x=10, y=10, width=20, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[moving],
@@ -689,7 +692,7 @@ class TestWidgetOverlaySelection:
         overlay.set_base_size(240, 320)
         moving = WidgetModel("label", name="moving", x=20, y=20, width=20, height=20)
         target = WidgetModel("label", name="target", x=60, y=80, width=24, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[moving, target],
@@ -725,7 +728,7 @@ class TestWidgetOverlaySelection:
         container = WidgetModel("group", name="container", x=40, y=50, width=120, height=120)
         child = WidgetModel("label", name="child", x=10, y=10, width=20, height=20)
         add_widget_children(container, [child])
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[container],
@@ -765,7 +768,7 @@ class TestWidgetOverlaySelection:
         cousin = WidgetModel("label", name="cousin", x=0, y=0, width=20, height=20)
         add_widget_children(left_branch, [moving])
         add_widget_children(right_branch, [cousin])
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[left_branch, right_branch],
@@ -803,7 +806,7 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         bottom = WidgetModel("label", name="bottom", x=20, y=20, width=80, height=40)
         top = WidgetModel("button", name="top", x=30, y=30, width=80, height=40)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[bottom, top],
@@ -821,7 +824,7 @@ class TestWidgetOverlaySelection:
 
         overlay = WidgetOverlay()
         wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             screen_width=320,
             screen_height=320,
@@ -842,7 +845,7 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         first = WidgetModel("label", name="first", x=10, y=70, width=180, height=30)
         second = WidgetModel("button", name="second", x=20, y=90, width=40, height=20)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             screen_width=320,
             screen_height=320,
@@ -883,7 +886,7 @@ class TestWidgetOverlaySelection:
         first = WidgetModel("label", name="first", x=10, y=10, width=80, height=24)
         second = WidgetModel("button", name="second", x=10, y=60, width=90, height=28)
         third = WidgetModel("switch", name="third", x=120, y=60, width=70, height=24)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[first, second, third],
@@ -949,7 +952,7 @@ class TestWidgetOverlaySelection:
         overlay = WidgetOverlay()
         overlay.set_base_size(320, 320)
         wide = WidgetModel("group", name="wide", x=10, y=70, width=180, height=30)
-        _page, root = build_test_page_with_widgets(
+        root = build_test_page_root_with_widgets(
             "main_page",
             screen_width=320,
             screen_height=320,

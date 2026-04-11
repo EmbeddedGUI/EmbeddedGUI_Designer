@@ -7,6 +7,8 @@ from ui_designer.utils.scaffold import (
     add_page_widget,
     build_page_model_from_root,
     build_page_model_from_root_with_widgets,
+    build_page_model_only_with_widget,
+    build_page_model_root_with_widgets,
     build_page_model_with_root_widget,
     build_page_model_with_widget,
     build_page_model_with_widgets,
@@ -132,6 +134,32 @@ def build_test_page_with_widget(
     )
 
 
+def build_test_page_only_with_widget(
+    page_name="main_page",
+    widget_type="label",
+    *,
+    screen_width=240,
+    screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
+    **widget_kwargs,
+):
+    """Build a default Page with one attached widget and return only the widget."""
+    return build_page_model_only_with_widget(
+        page_name,
+        widget_type,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
+        **widget_kwargs,
+    )
+
+
 def build_test_page_with_widgets(
     page_name="main_page",
     *,
@@ -145,6 +173,30 @@ def build_test_page_with_widgets(
 ):
     """Build a default Page with multiple attached widgets."""
     return build_page_model_with_widgets(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        root_widget_type=root_widget_type,
+        root_name=root_name,
+        root_x=root_x,
+        root_y=root_y,
+        widgets=widgets,
+    )
+
+
+def build_test_page_root_with_widgets(
+    page_name="main_page",
+    *,
+    screen_width=240,
+    screen_height=320,
+    root_widget_type="group",
+    root_name="root_group",
+    root_x=0,
+    root_y=0,
+    widgets=None,
+):
+    """Build a default Page with multiple attached widgets and return only the root widget."""
+    return build_page_model_root_with_widgets(
         page_name,
         screen_width=screen_width,
         screen_height=screen_height,

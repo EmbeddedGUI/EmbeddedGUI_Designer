@@ -2,6 +2,8 @@
 
 from ui_designer.tests.page_builders import (
     build_test_page_from_root_with_widgets,
+    build_test_page_only_with_widget,
+    build_test_page_root_with_widgets,
     build_test_page_with_root,
     build_test_page_with_root_widget,
     build_test_page_with_title,
@@ -41,6 +43,20 @@ class TestPageBuilders:
         assert widget in root.children
         assert widget.x == 20
         assert widget.y == 24
+
+    def test_build_test_page_only_with_widget_returns_attached_widget(self):
+        widget = build_test_page_only_with_widget(
+            page_name="home",
+            name="subtitle",
+            x=20,
+            y=24,
+            width=120,
+            height=28,
+        )
+
+        assert widget.name == "subtitle"
+        assert widget.widget_type == "label"
+        assert widget.parent is not None
 
     def test_build_test_page_with_root_widget_supports_custom_root_type(self):
         page, root = build_test_page_with_root_widget(
@@ -99,6 +115,25 @@ class TestPageBuilders:
 
         assert page.name == "detail"
         assert root is page.root_widget
+        assert root.widget_type == "linearlayout"
+        assert root.name == "root_layout"
+        assert root.width == 200
+        assert root.height == 120
+        assert root.children == [first, second]
+
+    def test_build_test_page_root_with_widgets_returns_populated_root(self):
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        root = build_test_page_root_with_widgets(
+            page_name="detail",
+            screen_width=200,
+            screen_height=120,
+            root_widget_type="linearlayout",
+            root_name="root_layout",
+            widgets=[first, second],
+        )
+
         assert root.widget_type == "linearlayout"
         assert root.name == "root_layout"
         assert root.width == 200

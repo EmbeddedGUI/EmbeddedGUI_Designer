@@ -6,8 +6,8 @@ import os
 import pytest
 
 from ui_designer.tests.page_builders import (
-    build_test_page_with_widget as _build_test_page_with_widget,
-    build_test_page_with_widgets as _build_test_page_with_widgets,
+    build_test_page_only_with_widget as _build_test_page_only_with_widget,
+    build_test_page_root_with_widgets as _build_test_page_root_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
@@ -1248,7 +1248,7 @@ class TestPropertyPanelFileFlow:
     def test_single_selection_shows_interaction_notes_for_locked_hidden_layout_widget(self, qapp):
         from ui_designer.ui.property_panel import PropertyPanel
 
-        _page, child = _build_test_page_with_widget(
+        child = _build_test_page_only_with_widget(
             "main_page",
             "switch",
             root_widget_type="linearlayout",
@@ -1275,7 +1275,7 @@ class TestPropertyPanelFileFlow:
         second = WidgetModel("label", name="second")
         first.designer_locked = True
         second.designer_hidden = True
-        _page, _root = _build_test_page_with_widgets(
+        _root = _build_test_page_root_with_widgets(
             "main_page",
             root_widget_type="linearlayout",
             root_name="root",
@@ -1319,7 +1319,7 @@ class TestPropertyPanelFileFlow:
 
         first = WidgetModel("switch", name="title")
         second = WidgetModel("switch", name="subtitle")
-        _page, _root = _build_test_page_with_widgets(
+        _root = _build_test_page_root_with_widgets(
             "main_page",
             root_name="root",
             widgets=[first, second],

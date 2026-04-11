@@ -17,6 +17,8 @@ from ui_designer.utils.scaffold import (
     build_basic_widget_model,
     build_page_model_from_root,
     build_page_model_from_root_with_widgets,
+    build_page_model_only_with_widget,
+    build_page_model_root_with_widgets,
     build_page_model_with_root_widget,
     build_project_model_and_page_with_widget,
     build_project_model_and_page_with_widgets,
@@ -430,6 +432,23 @@ class TestCoreProjectScaffold:
         assert widget.name == "cta"
         assert widget.widget_type == "button"
 
+    def test_build_page_model_only_with_widget_returns_attached_widget(self):
+        widget = build_page_model_only_with_widget(
+            "home",
+            "button",
+            screen_width=320,
+            screen_height=240,
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+        )
+
+        assert widget.name == "cta"
+        assert widget.widget_type == "button"
+        assert widget.parent is not None
+
     def test_build_page_model_with_root_widget_supports_custom_root(self):
         page, root = build_page_model_with_root_widget(
             "detail",
@@ -464,6 +483,25 @@ class TestCoreProjectScaffold:
         assert page.name == "detail"
         assert root is page.root_widget
         assert root.widget_type == "linearlayout"
+        assert root.children == [first, second]
+
+    def test_build_page_model_root_with_widgets_returns_populated_root(self):
+        from ui_designer.model.widget_model import WidgetModel
+
+        first = WidgetModel("label", name="first")
+        second = WidgetModel("button", name="second")
+
+        root = build_page_model_root_with_widgets(
+            "detail",
+            screen_width=200,
+            screen_height=120,
+            root_widget_type="linearlayout",
+            root_name="root_layout",
+            widgets=[first, second],
+        )
+
+        assert root.widget_type == "linearlayout"
+        assert root.name == "root_layout"
         assert root.children == [first, second]
 
     def test_build_project_model_from_pages_preserves_page_mode_and_startup(self):

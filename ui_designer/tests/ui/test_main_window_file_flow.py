@@ -15,8 +15,8 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
 )
 from ui_designer.tests.page_builders import (
-    build_test_page_with_widget as _build_test_page_with_widget,
-    build_test_page_with_widgets as _build_test_page_with_widgets,
+    build_test_page_only_with_widget as _build_test_page_only_with_widget,
+    build_test_page_root_with_widgets as _build_test_page_root_with_widgets,
 )
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
@@ -744,7 +744,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        _page, child = _build_test_page_with_widget(
+        child = _build_test_page_only_with_widget(
             "main_page",
             "switch",
             root_widget_type="linearlayout",
@@ -772,7 +772,7 @@ class TestMainWindowFileFlow:
         second = WidgetModel("switch", name="second")
         first.designer_locked = True
         second.designer_hidden = True
-        _page, _root = _build_test_page_with_widgets(
+        _root = _build_test_page_root_with_widgets(
             "main_page",
             root_widget_type="linearlayout",
             root_name="root",
@@ -792,7 +792,7 @@ class TestMainWindowFileFlow:
         from ui_designer.ui.main_window import MainWindow
 
         window = MainWindow("")
-        _page, child = _build_test_page_with_widget(
+        child = _build_test_page_only_with_widget(
             "main_page",
             "switch",
             root_name="root",
