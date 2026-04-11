@@ -30,7 +30,6 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_empty_project_model_with_root,
-    require_project_page_root,
     save_project_with_designer_scaffold,
 )
 
@@ -101,12 +100,21 @@ def frame_pixel(frame: bytes, width: int, x: int, y: int) -> tuple[int, int, int
     return (frame[offset], frame[offset + 1], frame[offset + 2])
 
 
-def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple[Project, dict[str, tuple[int, int, int, int] | tuple[int, int]]]:
+def build_smoke_project(
+    app_name: str,
+    sdk_root: str,
+    project_dir: str,
+) -> tuple[
+    Project,
+    Page,
+    WidgetModel,
+    dict[str, tuple[int, int, int, int] | tuple[int, int]],
+]:
     """Build the minimal project model used by the smoke test."""
     WidgetRegistry.instance()
     WidgetModel.reset_counter()
 
-    project, _page, root = build_empty_project_model_with_root(
+    project, page, root = build_empty_project_model_with_root(
         app_name,
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
@@ -164,7 +172,7 @@ def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple
         "bg_sample": BG_SAMPLE,
         "chip_sample": CHIP_SAMPLE,
     }
-    return project, meta
+    return project, page, root, meta
 
 
 def build_main_page_user_source(page: Page) -> str:
@@ -273,14 +281,12 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
-        project, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
+        project, page, _root, meta = build_smoke_project(APP_NAME, resolved_sdk_root, str(app_dir))
         save_project_with_designer_scaffold(project, str(app_dir), overwrite=True)
         loaded = Project.load(str(app_dir / f"{APP_NAME}.egui"))
         if loaded.sdk_root != resolved_sdk_root:
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
-
-        page, _root = require_project_page_root(project)
 
         files = generate_all_files_preserved(project, str(app_dir), backup=False)
         files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)

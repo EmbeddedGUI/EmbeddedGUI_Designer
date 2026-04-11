@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from ui_designer.utils.scaffold import require_project_page_root
 from ui_designer_preview_smoke import (
     APP_NAME,
     DEFAULT_WORK_ROOT,
@@ -31,12 +30,15 @@ class TestPreviewSmokeHelpers:
         assert region == expected
 
     def test_build_smoke_project_creates_expected_widgets_and_metadata(self):
-        project, meta = build_smoke_project(APP_NAME, "D:/sdk", "D:/workspace/DesignerPreviewSmoke")
+        project, page, _root, meta = build_smoke_project(
+            APP_NAME,
+            "D:/sdk",
+            "D:/workspace/DesignerPreviewSmoke",
+        )
 
         assert project.screen_width == SCREEN_WIDTH
         assert project.screen_height == SCREEN_HEIGHT
         assert project.startup_page == PAGE_NAME
-        page, _root = require_project_page_root(project)
         widgets = {widget.name: widget for widget in page.get_all_widgets()}
 
         assert "status_label" in widgets
@@ -46,8 +48,11 @@ class TestPreviewSmokeHelpers:
         assert meta["status_region"] == (20, 62, 200, 28)
 
     def test_build_main_page_user_source_wires_callback_and_text_updates(self):
-        project, _ = build_smoke_project(APP_NAME, "D:/sdk", str(Path("D:/workspace") / APP_NAME))
-        page, _root = require_project_page_root(project)
+        _project, page, _root, _meta = build_smoke_project(
+            APP_NAME,
+            "D:/sdk",
+            str(Path("D:/workspace") / APP_NAME),
+        )
 
         source = build_main_page_user_source(page)
 
