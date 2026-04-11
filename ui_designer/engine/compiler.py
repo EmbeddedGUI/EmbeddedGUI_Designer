@@ -17,7 +17,7 @@ from ..utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
     UICODE_SOURCE_RELPATH,
-    legacy_designer_codegen_cleanup_relpaths,
+    cleanup_legacy_designer_codegen_files,
 )
 
 
@@ -393,14 +393,7 @@ class CompilerEngine:
 
     def _cleanup_legacy_designer_root_copies(self, generated_relpaths):
         """Remove legacy root copies for any designer-owned files."""
-        cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(generated_relpaths)
-        for relpath in cleanup_relpaths:
-            legacy_path = os.path.join(self.app_dir, relpath.replace("/", os.sep))
-            try:
-                if os.path.isfile(legacy_path):
-                    os.remove(legacy_path)
-            except OSError:
-                pass
+        cleanup_legacy_designer_codegen_files(self.app_dir, generated_relpaths)
 
     def write_project_files(self, files_dict, generated_relpaths=None):
         """Write multiple generated C files to the app directory.

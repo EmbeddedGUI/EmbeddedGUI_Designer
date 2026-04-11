@@ -46,13 +46,14 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    cleanup_legacy_designer_codegen_files,
     default_scaffold_circle_radius,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_designer_project_with_sdk_root,
-    legacy_designer_codegen_cleanup_relpaths,
     make_empty_resource_config_content,
+    write_generated_project_files,
 )
 
 
@@ -1546,23 +1547,12 @@ def cmd_generate_code(args):
     )
     files = generate_all_files_preserved(project, app_dir, backup=False)
     all_generated_files = generate_all_files(project)
-    for filename, content in files.items():
-        filepath = os.path.join(app_dir, filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "w", encoding="utf-8", newline="\n") as f:
-            f.write(content)
-
-    cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(
+    write_generated_project_files(app_dir, files, newline="\n")
+    cleanup_legacy_designer_codegen_files(
+        app_dir,
         all_generated_files,
         remove_stale_strings=not project.string_catalog.has_strings,
     )
-    for relpath in cleanup_relpaths:
-        legacy_path = os.path.join(app_dir, relpath.replace("/", os.sep))
-        try:
-            if os.path.isfile(legacy_path):
-                os.remove(legacy_path)
-        except OSError:
-            pass
 
     print(f"\nGenerated {len(files)} C files:")
     for filename in sorted(files.keys()):

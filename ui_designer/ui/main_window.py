@@ -111,7 +111,6 @@ from ..generator.code_generator import (
     render_page_callback_stub,
 )
 from ..generator.user_code_preserver import (
-    backup_file,
     compute_source_hash,
     embed_source_hash,
     read_existing_file,
@@ -128,13 +127,14 @@ from ..utils.resource_config_overlay import (
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
     build_empty_project_model,
+    cleanup_legacy_designer_codegen_files as _cleanup_shared_legacy_designer_codegen_files,
     designer_page_header_relpath,
     designer_page_layout_relpath,
-    legacy_designer_codegen_cleanup_relpaths,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     read_app_config_dimensions,
     save_project_with_designer_scaffold,
+    write_generated_project_files,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -273,24 +273,12 @@ def _cleanup_legacy_designer_codegen_files(
     backup_existing=False,
     remove_stale_strings=False,
 ):
-    if not project_dir:
-        return
-    cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(
+    return _cleanup_shared_legacy_designer_codegen_files(
+        project_dir,
         generated_files,
+        backup_existing=backup_existing,
         remove_stale_strings=remove_stale_strings,
     )
-
-    backup_root = os.path.join(project_dir, ".eguiproject", "backup")
-    for relpath in sorted(cleanup_relpaths):
-        path = _project_child_realpath(project_dir, relpath)
-        if path is None or not os.path.isfile(path):
-            continue
-        try:
-            if backup_existing:
-                backup_file(path, backup_root)
-            os.remove(path)
-        except OSError:
-            pass
 
 
 def _callback_definition_exists(content, callback_name):
@@ -4652,11 +4640,7 @@ class MainWindow(QMainWindow):
 
         files = generate_all_files_preserved(self.project, project_dir, backup=True)
         all_generated_files = generate_all_files(self.project)
-        for filename, content in files.items():
-            filepath = os.path.join(project_dir, filename)
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(content)
+        write_generated_project_files(project_dir, files)
         _cleanup_legacy_designer_codegen_files(
             project_dir,
             all_generated_files,

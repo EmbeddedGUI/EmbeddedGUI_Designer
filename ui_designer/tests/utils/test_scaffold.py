@@ -44,6 +44,7 @@ from ui_designer.utils.scaffold import (
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
+    cleanup_legacy_designer_codegen_files,
     save_project_model,
     scaffold_designer_project,
     scaffold_designer_project_with_sdk_root,
@@ -51,6 +52,7 @@ from ui_designer.utils.scaffold import (
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
     sync_project_scaffold_sidecars,
+    write_generated_project_files,
 )
 
 
@@ -115,6 +117,70 @@ class TestLegacyDesignerCodegenCleanupRelpaths:
             DESIGNER_CODEGEN_STALE_STRING_RELPATHS[2],
             DESIGNER_CODEGEN_STALE_STRING_RELPATHS[3],
         }.issubset(set(cleanup))
+
+
+class TestGeneratedProjectFileHelpers:
+    def test_write_generated_project_files_creates_nested_outputs(self, tmp_path):
+        project_dir = tmp_path / "GeneratedFilesDemo"
+
+        written = write_generated_project_files(
+            str(project_dir),
+            {
+                ".designer/uicode.c": "int generated(void) { return 1; }\n",
+                "main_page.c": "// user skeleton\n",
+            },
+            newline="\n",
+        )
+
+        assert written == (".designer/uicode.c", "main_page.c")
+        assert (project_dir / ".designer" / "uicode.c").read_text(encoding="utf-8") == (
+            "int generated(void) { return 1; }\n"
+        )
+        assert (project_dir / "main_page.c").read_text(encoding="utf-8") == "// user skeleton\n"
+
+    def test_cleanup_legacy_designer_codegen_files_removes_root_copies_and_stale_strings(self, tmp_path):
+        project_dir = tmp_path / "CleanupDemo"
+        designer_dir = project_dir / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "uicode.c").write_text("// nested ui\n", encoding="utf-8")
+        (designer_dir / "egui_strings.h").write_text("// stale string header\n", encoding="utf-8")
+        (designer_dir / "egui_strings.c").write_text("// stale string source\n", encoding="utf-8")
+        (project_dir / "uicode.c").write_text("// legacy root copy\n", encoding="utf-8")
+
+        removed = cleanup_legacy_designer_codegen_files(
+            str(project_dir),
+            [".designer/uicode.c"],
+            remove_stale_strings=True,
+        )
+
+        assert removed == (
+            ".designer/egui_strings.c",
+            ".designer/egui_strings.h",
+            "uicode.c",
+        )
+        assert not (project_dir / "uicode.c").exists()
+        assert not (designer_dir / "egui_strings.h").exists()
+        assert not (designer_dir / "egui_strings.c").exists()
+        assert (designer_dir / "uicode.c").is_file()
+
+    def test_cleanup_legacy_designer_codegen_files_can_backup_removed_files(self, tmp_path):
+        project_dir = tmp_path / "CleanupBackupDemo"
+        designer_dir = project_dir / ".designer"
+        designer_dir.mkdir(parents=True)
+        (designer_dir / "uicode.c").write_text("// nested ui\n", encoding="utf-8")
+        (project_dir / "uicode.c").write_text("// legacy root copy\n", encoding="utf-8")
+
+        removed = cleanup_legacy_designer_codegen_files(
+            str(project_dir),
+            [".designer/uicode.c"],
+            backup_existing=True,
+        )
+
+        backup_matches = list((project_dir / ".eguiproject" / "backup").glob("*/uicode.c"))
+
+        assert removed == ("uicode.c",)
+        assert not (project_dir / "uicode.c").exists()
+        assert len(backup_matches) == 1
 
 
 class TestSyncProjectScaffoldSidecars:

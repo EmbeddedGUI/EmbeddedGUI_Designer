@@ -222,6 +222,84 @@ def legacy_designer_codegen_cleanup_relpaths(generated_files, *, remove_stale_st
     return tuple(sorted(relpath for relpath in cleanup_relpaths if relpath))
 
 
+def _resolve_project_output_path(project_dir, relpath):
+    project_root = os.path.realpath(os.path.normpath(str(project_dir or "")))
+    normalized_relpath = str(relpath or "").replace("\\", "/").lstrip("/")
+    if not project_root or not normalized_relpath:
+        return None, normalized_relpath
+
+    candidate = os.path.realpath(
+        os.path.join(project_root, normalized_relpath.replace("/", os.sep))
+    )
+    try:
+        common = os.path.commonpath([project_root, candidate])
+    except ValueError:
+        return None, normalized_relpath
+    if common != project_root:
+        return None, normalized_relpath
+    return candidate, normalized_relpath
+
+
+def write_generated_project_files(project_dir, generated_files, *, newline=None):
+    """Write generated project files under ``project_dir`` and return their relpaths."""
+    written = []
+    for relpath, content in (generated_files or {}).items():
+        path, normalized_relpath = _resolve_project_output_path(project_dir, relpath)
+        if path is None:
+            raise ValueError(f"Generated file path escapes project directory: {relpath}")
+        parent_dir = os.path.dirname(path)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline=newline) as f:
+            f.write(content)
+        written.append(normalized_relpath)
+    return tuple(written)
+
+
+def cleanup_legacy_designer_codegen_files(
+    project_dir,
+    generated_files,
+    *,
+    backup_existing=False,
+    remove_stale_strings=False,
+):
+    """Remove legacy designer codegen copies under ``project_dir``."""
+    if not project_dir:
+        return ()
+    cleanup_relpaths = legacy_designer_codegen_cleanup_relpaths(
+        generated_files,
+        remove_stale_strings=remove_stale_strings,
+    )
+    if not cleanup_relpaths:
+        return ()
+
+    backup_file = None
+    backup_root = ""
+    if backup_existing:
+        from ..generator.user_code_preserver import backup_file as _backup_file
+
+        backup_file = _backup_file
+        backup_root = os.path.join(
+            os.path.realpath(os.path.normpath(str(project_dir or ""))),
+            EGUIPROJECT_DIRNAME,
+            "backup",
+        )
+
+    removed = []
+    for relpath in cleanup_relpaths:
+        path, _normalized_relpath = _resolve_project_output_path(project_dir, relpath)
+        if path is None or not os.path.isfile(path):
+            continue
+        try:
+            if backup_file is not None:
+                backup_file(path, backup_root)
+            os.remove(path)
+            removed.append(relpath)
+        except OSError:
+            pass
+    return tuple(removed)
+
+
 def build_designer_path(project_dir: str) -> str:
     return os.path.join(project_dir, BUILD_DESIGNER_RELPATH.replace("/", os.sep))
 
