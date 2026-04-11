@@ -125,7 +125,6 @@ from ..utils.resource_config_overlay import (
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
     bind_project_storage,
-    build_empty_project_model,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
@@ -133,6 +132,7 @@ from ..utils.scaffold import (
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
     read_app_config_dimensions,
+    save_empty_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
     save_project_model,
 )
@@ -2668,21 +2668,6 @@ class MainWindow(QMainWindow):
             self._config.save()
         self._update_recent_menu()
 
-    def _read_app_dimensions(self, app_dir):
-        config_h = os.path.join(app_dir, "app_egui_config.h")
-        return read_app_config_dimensions(config_h)
-
-    def _create_standard_project_model(self, app_name, sdk_root, project_dir):
-        WidgetModel.reset_counter()
-        screen_w, screen_h = self._read_app_dimensions(project_dir)
-        return build_empty_project_model(
-            app_name,
-            screen_w,
-            screen_h,
-            sdk_root=sdk_root,
-            project_dir=project_dir,
-        )
-
     def _copy_project_sidecar_files(self, src_dir, dst_dir):
         if not src_dir or not os.path.isdir(src_dir) or normalize_path(src_dir) == normalize_path(dst_dir):
             return
@@ -4140,11 +4125,14 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.Yes:
             return
 
-        project = self._create_standard_project_model(app_name, sdk_root, app_dir)
-        save_project_model(
-            project,
+        WidgetModel.reset_counter()
+        screen_w, screen_h = read_app_config_dimensions(os.path.join(app_dir, "app_egui_config.h"))
+        save_empty_project_with_designer_scaffold(
+            app_name,
             app_dir,
-            with_designer_scaffold=True,
+            screen_w,
+            screen_h,
+            sdk_root=sdk_root,
             remove_legacy_designer_files=True,
         )
         self._open_project_path(project_path, preferred_sdk_root=sdk_root)
@@ -4569,18 +4557,12 @@ class MainWindow(QMainWindow):
             self._show_directory_conflict(project_dir, "The target directory already exists")
             return
 
-        os.makedirs(project_dir, exist_ok=True)
-        project = build_empty_project_model(
+        project = save_empty_project_with_designer_scaffold(
             dialog.app_name,
+            project_dir,
             dialog.screen_width,
             dialog.screen_height,
             sdk_root=sdk_root,
-            project_dir=project_dir,
-        )
-        save_project_model(
-            project,
-            project_dir,
-            with_designer_scaffold=True,
             remove_legacy_designer_files=True,
         )
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)

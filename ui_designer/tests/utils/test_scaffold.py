@@ -54,6 +54,7 @@ from ui_designer.utils.scaffold import (
     prepare_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
+    save_empty_project_with_designer_scaffold,
     scaffold_conversion_project_with_sdk_root,
     scaffold_designer_project,
     ensure_designer_project_scaffold_with_sdk_root,
@@ -1149,6 +1150,28 @@ class TestApplyDesignerProjectScaffold:
         assert actions[APP_CONFIG_RELPATH] == "created"
         assert project.project_dir == os.path.normpath(str(project_dir))
         assert (project_dir / "ScaffoldSaveHelperApp.egui").is_file()
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_save_empty_project_with_designer_scaffold_builds_and_saves_project(self, tmp_path):
+        project_dir = tmp_path / "EmptyScaffoldHelperApp"
+
+        project = save_empty_project_with_designer_scaffold(
+            "EmptyScaffoldHelperApp",
+            str(project_dir),
+            480,
+            272,
+            sdk_root="D:/sdk",
+            pages=["home", "settings"],
+            remove_legacy_designer_files=True,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.screen_width == 480
+        assert project.screen_height == 272
+        assert (project_dir / "EmptyScaffoldHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "settings.xml").is_file()
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
 
     def test_scaffold_designer_project_combines_sidecars_and_core_templates(self, tmp_path):

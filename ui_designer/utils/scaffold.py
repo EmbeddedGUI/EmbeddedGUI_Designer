@@ -1794,6 +1794,44 @@ def save_project_model(
     return {}
 
 
+def save_empty_project_with_designer_scaffold(
+    app_name,
+    project_dir,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    pages=None,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+):
+    """Build and save an empty project model with the shared Designer scaffold policy."""
+    project = build_empty_project_model(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=pages,
+    )
+    save_project_model(
+        project,
+        project_dir,
+        with_designer_scaffold=True,
+        overwrite_scaffold=overwrite_scaffold,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    return project
+
+
 def scaffold_designer_project(
     project_dir,
     app_name,
