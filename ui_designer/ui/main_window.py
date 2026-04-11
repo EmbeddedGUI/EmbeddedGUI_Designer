@@ -2508,7 +2508,6 @@ class MainWindow(QMainWindow):
             return False
 
         try:
-            bind_project_storage(self.project, self._project_dir, sdk_root=self.project_root)
             self.project.sdk_fingerprint = copy.deepcopy(sdk_fingerprint)
             self._save_project_files(self._project_dir, reset_scaffold=True)
         except Exception as exc:
@@ -4624,7 +4623,6 @@ class MainWindow(QMainWindow):
         if not self._project_dir:
             return self._save_project_as()
 
-        os.makedirs(self._project_dir, exist_ok=True)
         try:
             files = self._save_project_files(self._project_dir)
         except Exception as exc:
@@ -4660,7 +4658,6 @@ class MainWindow(QMainWindow):
             return False
 
         old_project_dir = self._project_dir
-        os.makedirs(path, exist_ok=True)
         self._copy_project_sidecar_files(old_project_dir, path)
         try:
             files = self._save_project_files(path)
