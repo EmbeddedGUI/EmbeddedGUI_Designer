@@ -1,6 +1,6 @@
 """Tests for ui_designer.model.resource_usage."""
 
-from ui_designer.tests.project_builders import build_test_project
+from ui_designer.tests.project_builders import build_test_project, build_test_project_with_page_roots
 from ui_designer.model.resource_usage import (
     collect_unused_resource_names,
     collect_unused_string_keys,
@@ -41,9 +41,9 @@ class TestResourceUsage:
         }
 
     def test_collect_project_resource_usages_groups_entries_by_resource_name(self):
-        project = build_test_project("UsageDemo", pages=["main_page", "detail_page"])
-        main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
+        project, roots = build_test_project_with_page_roots("UsageDemo", pages=["main_page", "detail_page"])
+        main_root = roots["main_page"]
+        detail_root = roots["detail_page"]
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
@@ -135,9 +135,9 @@ class TestResourceUsage:
         ) == ["debug", "notes"]
 
     def test_rewrite_project_resource_references_updates_all_matching_widgets(self):
-        project = build_test_project("RewriteDemo", pages=["main_page", "detail_page"])
-        main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
+        project, roots = build_test_project_with_page_roots("RewriteDemo", pages=["main_page", "detail_page"])
+        main_root = roots["main_page"]
+        detail_root = roots["detail_page"]
 
         label_a = WidgetModel("label", name="title")
         label_a.properties["font_file"] = "demo.ttf"
@@ -177,9 +177,9 @@ class TestResourceUsage:
         assert image.properties["image_file"] == ""
 
     def test_collect_and_rewrite_string_references(self):
-        project = build_test_project("StringUsageDemo", pages=["main_page", "detail_page"])
-        main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
+        project, roots = build_test_project_with_page_roots("StringUsageDemo", pages=["main_page", "detail_page"])
+        main_root = roots["main_page"]
+        detail_root = roots["detail_page"]
 
         title = WidgetModel("label", name="title")
         title.properties["text"] = "@string/greeting"

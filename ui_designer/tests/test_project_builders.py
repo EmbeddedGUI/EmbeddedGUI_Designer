@@ -4,6 +4,7 @@ from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
     build_test_project,
+    build_test_project_with_page_roots,
     build_test_project_with_root,
     build_test_project_from_pages,
 )
@@ -99,3 +100,17 @@ class TestProjectBuilders:
         assert root is startup_root
         assert root.width == 320
         assert root.height == 240
+
+    def test_build_test_project_with_page_roots_returns_all_named_roots(self):
+        project, roots = build_test_project_with_page_roots(
+            "MultiRootBuilderDemo",
+            pages=["home", "detail"],
+            screen_width=320,
+            screen_height=240,
+        )
+
+        assert project.app_name == "MultiRootBuilderDemo"
+        assert project.startup_page == "home"
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].width == 320
+        assert roots["detail"].height == 240

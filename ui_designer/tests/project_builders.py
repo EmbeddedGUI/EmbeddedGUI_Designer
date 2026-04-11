@@ -9,6 +9,7 @@ from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import (
     build_empty_project_model,
     build_empty_project_model_with_root,
+    require_project_page_root,
     save_project_with_designer_scaffold,
 )
 
@@ -52,6 +53,31 @@ def build_test_project_with_root(
         page_name=page_name,
     )
     return project, root
+
+
+def build_test_project_with_page_roots(
+    app_name="TestApp",
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    pages=None,
+):
+    """Build a minimal test project and return a map of page names to root widgets."""
+    project = build_test_project(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=pages,
+    )
+    roots = {}
+    for page in project.pages:
+        _page, root = require_project_page_root(project, page.name)
+        roots[page.name] = root
+    return project, roots
 
 
 def build_test_project_from_pages(
