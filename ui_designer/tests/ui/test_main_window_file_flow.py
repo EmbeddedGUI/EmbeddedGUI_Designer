@@ -11696,11 +11696,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserInsertDemo"
-        project = _create_project(project_dir, "WidgetBrowserInsertDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         container = WidgetModel("group", name="container", x=0, y=0, width=200, height=200)
-        root.add_child(container)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "WidgetBrowserInsertDemo",
+            sdk_root,
+            widgets=[container],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -11728,13 +11730,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserRevealDemo"
-        project = _create_project(project_dir, "WidgetBrowserRevealDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
         button = WidgetModel("button", name="cta", x=10, y=30, width=80, height=24)
-        root.add_child(label)
-        root.add_child(button)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "WidgetBrowserRevealDemo",
+            sdk_root,
+            widgets=[label, button],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -11758,11 +11761,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserSelectionDemo"
-        project = _create_project(project_dir, "WidgetBrowserSelectionDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "WidgetBrowserSelectionDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12092,16 +12097,16 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SelectAllDemo"
-        project = _create_project(project_dir, "SelectAllDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=16, y=40, width=80, height=24)
         hidden = WidgetModel("switch", name="hidden", x=24, y=72, width=60, height=20)
         hidden.designer_hidden = True
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(hidden)
-        project.save(str(project_dir))
+        project, _page, root = _create_project_with_widgets(
+            project_dir,
+            "SelectAllDemo",
+            sdk_root,
+            widgets=[first, second, hidden],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12122,11 +12127,13 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SelectAllFilterDemo"
-        project = _create_project(project_dir, "SelectAllFilterDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        root.add_child(first)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "SelectAllFilterDemo",
+            sdk_root,
+            widgets=[first],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12151,11 +12158,13 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewContextMenuDemo"
-        project = _create_project(project_dir, "PreviewContextMenuDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        root.add_child(first)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewContextMenuDemo",
+            sdk_root,
+            widgets=[first],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12224,11 +12233,13 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectMenuOrderDemo"
-        project = _create_project(project_dir, "PreviewSelectMenuOrderDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        root.add_child(first)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewSelectMenuOrderDemo",
+            sdk_root,
+            widgets=[first],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -12281,15 +12292,15 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewContextMenuShortcutDemo"
-        project = _create_project(project_dir, "PreviewContextMenuShortcutDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
-        root.add_child(first)
-        root.add_child(second)
-        root.add_child(target)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PreviewContextMenuShortcutDemo",
+            sdk_root,
+            widgets=[first, second, target],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
