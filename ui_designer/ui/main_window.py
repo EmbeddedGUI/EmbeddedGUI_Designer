@@ -133,7 +133,7 @@ from ..utils.scaffold import (
     prepare_project_codegen_outputs,
     read_app_config_dimensions,
     save_project_and_materialize_codegen,
-    save_project_with_designer_scaffold,
+    save_project_model,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -4138,9 +4138,10 @@ class MainWindow(QMainWindow):
             return
 
         project = self._create_standard_project_model(app_name, sdk_root, app_dir)
-        save_project_with_designer_scaffold(
+        save_project_model(
             project,
             app_dir,
+            with_designer_scaffold=True,
             remove_legacy_designer_files=True,
         )
         self._open_project_path(project_path, preferred_sdk_root=sdk_root)
@@ -4573,9 +4574,10 @@ class MainWindow(QMainWindow):
             sdk_root=sdk_root,
             project_dir=project_dir,
         )
-        save_project_with_designer_scaffold(
+        save_project_model(
             project,
             project_dir,
+            with_designer_scaffold=True,
             remove_legacy_designer_files=True,
         )
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)
