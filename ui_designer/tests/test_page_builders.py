@@ -1,10 +1,26 @@
 """Tests for shared test page builders."""
 
-from ui_designer.tests.page_builders import build_test_page_with_title, build_test_page_with_widget
+from ui_designer.tests.page_builders import (
+    build_test_page_with_root,
+    build_test_page_with_title,
+    build_test_page_with_widget,
+)
 from ui_designer.utils.scaffold import require_page_root
 
 
 class TestPageBuilders:
+    def test_build_test_page_with_root_returns_page_and_root(self):
+        page, root = build_test_page_with_root(
+            page_name="home",
+            screen_width=320,
+            screen_height=240,
+        )
+
+        assert page.name == "home"
+        assert root is page.root_widget
+        assert root.width == 320
+        assert root.height == 240
+
     def test_build_test_page_with_widget_accepts_page_name_and_widget_name(self):
         page, widget = build_test_page_with_widget(
             page_name="home",

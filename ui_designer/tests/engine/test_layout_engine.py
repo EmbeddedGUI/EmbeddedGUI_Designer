@@ -15,7 +15,7 @@ from ui_designer.engine.layout_engine import (
     ALIGN_MAP,
     _layout_linearlayout_children,
 )
-from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.page_builders import build_test_page_from_root, build_test_page_with_root
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.page import Page
 from ui_designer.model.project import Project
@@ -209,10 +209,12 @@ class TestComputeLayout:
 
     def test_group_children_use_model_xy(self):
         """Group children should be positioned at parent_display + child.x/y."""
-        root = WidgetModel("group", name="root", x=10, y=20, width=240, height=320)
+        page, root = build_test_page_with_root("test")
+        root.name = "root"
+        root.x = 10
+        root.y = 20
         child = WidgetModel("label", name="lbl", x=5, y=15, width=100, height=30)
         root.add_child(child)
-        page = build_test_page_from_root("test", root=root)
         compute_page_layout(page)
         assert root.display_x == 10
         assert root.display_y == 20

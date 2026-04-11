@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.page_builders import build_test_page_from_root, build_test_page_with_root
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.utils.scaffold import require_page_root
@@ -63,8 +63,7 @@ class TestXmlSerialization:
         assert restored_root.children[0].properties["text"] == "Hello World"
 
     def test_user_fields_preserved(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = build_test_page_from_root("test_page", root=root)
+        page, _root = build_test_page_with_root("test_page")
         page.user_fields = [
             {"name": "counter", "type": "int", "default": "0"},
             {"name": "timer_id", "type": "int"},
@@ -81,8 +80,7 @@ class TestXmlSerialization:
         assert restored.user_fields[1]["type"] == "int"
 
     def test_timers_preserved(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = build_test_page_from_root("test_page", root=root)
+        page, _root = build_test_page_with_root("test_page")
         page.timers = [
             {
                 "name": "refresh_timer",
@@ -107,8 +105,7 @@ class TestXmlSerialization:
         ]
 
     def test_mockup_attributes_preserved(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = build_test_page_from_root("test_page", root=root)
+        page, _root = build_test_page_with_root("test_page")
         page.mockup_image_path = "mockup/design.png"
         page.mockup_image_visible = False
         page.mockup_image_opacity = 0.5
@@ -125,13 +122,12 @@ class TestGetAllWidgets:
     """Tests for get_all_widgets."""
 
     def test_get_all_widgets(self):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        page, root = build_test_page_with_root("test_page")
         label = WidgetModel("label", name="lbl", x=0, y=0, width=100, height=30)
         button = WidgetModel("button", name="btn", x=0, y=40, width=100, height=40)
         root.add_child(label)
         root.add_child(button)
 
-        page = build_test_page_from_root("test_page", root=root)
         all_widgets = page.get_all_widgets()
 
         # root + 2 children = 3
@@ -143,12 +139,11 @@ class TestFileIO:
 
     @pytest.mark.integration
     def test_save_load_round_trip(self, tmp_path):
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
+        original, root = build_test_page_with_root("round_trip")
         label = WidgetModel("label", name="my_label", x=5, y=5, width=100, height=30)
         label.properties["text"] = "Saved Label"
         root.add_child(label)
 
-        original = build_test_page_from_root("round_trip", root=root)
         original.save(str(tmp_path))
 
         loaded = Page.load(str(tmp_path), "layout/round_trip.xml")

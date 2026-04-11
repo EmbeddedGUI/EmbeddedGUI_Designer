@@ -12,6 +12,13 @@ def build_test_page(name="main_page", *, screen_width=240, screen_height=320):
     return Page.create_default(name, screen_width=screen_width, screen_height=screen_height)
 
 
+def build_test_page_with_root(page_name="main_page", *, screen_width=240, screen_height=320):
+    """Build a default Page model and return it with its root widget."""
+    page = build_test_page(page_name, screen_width=screen_width, screen_height=screen_height)
+    root = require_page_root(page, page_name)
+    return page, root
+
+
 def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, screen_height=320):
     """Build a Page model with a caller-supplied or default root widget."""
     if root is None:
@@ -53,7 +60,11 @@ def build_test_page_with_widget(
     **widget_kwargs,
 ):
     """Build a default Page with one attached widget."""
-    page = build_test_page(page_name, screen_width=screen_width, screen_height=screen_height)
+    page, _root = build_test_page_with_root(
+        page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+    )
     widget = add_test_widget(page, widget_type, **widget_kwargs)
     return page, widget
 
