@@ -691,6 +691,19 @@ def build_empty_project_model(
     return project
 
 
+def require_page_root(page, page_name=""):
+    """Return a page root widget, raising when the page or root widget is missing."""
+    target_page_name = str(page_name or getattr(page, "name", "") or "").strip()
+    if page is None:
+        if target_page_name:
+            raise RuntimeError(f"Scaffold page '{target_page_name}' was not created")
+        raise RuntimeError("Scaffold page was not created")
+    root = page.root_widget
+    if root is None:
+        raise RuntimeError(f"Scaffold page '{page.name}' did not create a root widget")
+    return root
+
+
 def require_project_page_root(project, page_name=""):
     """Return a project page and root widget, raising when either is missing."""
     target_page_name = str(page_name or "").strip()
@@ -699,9 +712,7 @@ def require_project_page_root(project, page_name=""):
         if target_page_name:
             raise RuntimeError(f"Scaffold project did not create page '{target_page_name}'")
         raise RuntimeError("Scaffold project did not create a startup page")
-    root = page.root_widget
-    if root is None:
-        raise RuntimeError(f"Scaffold page '{page.name}' did not create a root widget")
+    root = require_page_root(page, target_page_name)
     return page, root
 
 

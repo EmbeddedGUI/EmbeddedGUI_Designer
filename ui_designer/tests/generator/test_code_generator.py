@@ -31,6 +31,7 @@ from ui_designer.utils.scaffold import (
     UICODE_SOURCE_RELPATH,
     designer_page_header_relpath,
     designer_page_layout_relpath,
+    require_page_root,
 )
 
 
@@ -580,9 +581,10 @@ class TestGeneratePageUserSource:
 
     def test_user_source_includes_on_click_callback_stub(self):
         page, proj = self._make_simple()
+        root = require_page_root(page)
         button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
         button.on_click = "on_confirm_button_click"
-        page.root_widget.add_child(button)
+        root.add_child(button)
 
         output = generate_page_user_source(page, proj)
 
@@ -591,9 +593,10 @@ class TestGeneratePageUserSource:
 
     def test_user_source_includes_widget_event_callback_stub(self):
         page, proj = self._make_simple()
+        root = require_page_root(page)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=120, height=24)
         slider.events = {"onValueChanged": "on_volume_changed"}
-        page.root_widget.add_child(slider)
+        root.add_child(slider)
 
         output = generate_page_user_source(page, proj)
 

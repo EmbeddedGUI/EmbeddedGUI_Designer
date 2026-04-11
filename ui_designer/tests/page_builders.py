@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ui_designer.model.page import Page
 from ui_designer.model.widget_model import WidgetModel
+from ui_designer.utils.scaffold import require_page_root
 
 
 def build_test_page(name="main_page", *, screen_width=240, screen_height=320):
@@ -38,7 +39,8 @@ def add_test_widget(
 ):
     """Attach a basic widget to a test page and return it."""
     widget = WidgetModel(widget_type, name=name, x=x, y=y, width=width, height=height)
-    page.root_widget.add_child(widget)
+    root = require_page_root(page)
+    root.add_child(widget)
     return widget
 
 
