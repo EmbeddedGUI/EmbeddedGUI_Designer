@@ -30,9 +30,8 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    cleanup_legacy_designer_codegen_files,
+    materialize_generated_project_files,
     save_project_model,
-    write_generated_project_files,
 )
 
 
@@ -299,10 +298,11 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
         files = dict(prepared.files)
         files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)
         all_generated_files = prepared.all_generated_files
-        written = write_generated_project_files(str(app_dir), files, newline="\n")
-        cleanup_legacy_designer_codegen_files(
+        written, _removed = materialize_generated_project_files(
             str(app_dir),
+            files,
             all_generated_files,
+            newline="\n",
             remove_stale_strings=not project.string_catalog.has_strings,
         )
 

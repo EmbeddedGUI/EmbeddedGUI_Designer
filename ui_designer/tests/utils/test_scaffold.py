@@ -45,6 +45,7 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
+    materialize_generated_project_files,
     save_project_model,
     scaffold_designer_project,
     scaffold_designer_project_with_sdk_root,
@@ -181,6 +182,24 @@ class TestGeneratedProjectFileHelpers:
         assert removed == ("uicode.c",)
         assert not (project_dir / "uicode.c").exists()
         assert len(backup_matches) == 1
+
+    def test_materialize_generated_project_files_writes_outputs_and_cleans_legacy_copies(self, tmp_path):
+        project_dir = tmp_path / "MaterializeDemo"
+        designer_dir = project_dir / ".designer"
+        designer_dir.mkdir(parents=True)
+        (project_dir / "uicode.c").write_text("// legacy root copy\n", encoding="utf-8")
+
+        written, removed = materialize_generated_project_files(
+            str(project_dir),
+            {".designer/uicode.c": "int generated(void) { return 1; }\n"},
+            [".designer/uicode.c"],
+            newline="\n",
+        )
+
+        assert written == (".designer/uicode.c",)
+        assert removed == ("uicode.c",)
+        assert (designer_dir / "uicode.c").read_text(encoding="utf-8") == "int generated(void) { return 1; }\n"
+        assert not (project_dir / "uicode.c").exists()
 
 
 class TestSyncProjectScaffoldSidecars:

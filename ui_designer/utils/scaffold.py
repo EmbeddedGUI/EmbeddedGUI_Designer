@@ -300,6 +300,30 @@ def cleanup_legacy_designer_codegen_files(
     return tuple(removed)
 
 
+def materialize_generated_project_files(
+    project_dir,
+    generated_files,
+    all_generated_files,
+    *,
+    newline=None,
+    backup_existing=False,
+    remove_stale_strings=False,
+):
+    """Write generated project files and remove legacy designer codegen copies."""
+    written = write_generated_project_files(
+        project_dir,
+        generated_files,
+        newline=newline,
+    )
+    removed = cleanup_legacy_designer_codegen_files(
+        project_dir,
+        all_generated_files,
+        backup_existing=backup_existing,
+        remove_stale_strings=remove_stale_strings,
+    )
+    return written, removed
+
+
 def build_designer_path(project_dir: str) -> str:
     return os.path.join(project_dir, BUILD_DESIGNER_RELPATH.replace("/", os.sep))
 

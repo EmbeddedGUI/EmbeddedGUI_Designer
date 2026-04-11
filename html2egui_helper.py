@@ -46,14 +46,13 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
-    cleanup_legacy_designer_codegen_files,
     default_scaffold_circle_radius,
+    materialize_generated_project_files,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_designer_project_with_sdk_root,
     make_empty_resource_config_content,
-    write_generated_project_files,
 )
 
 
@@ -1547,10 +1546,11 @@ def cmd_generate_code(args):
     prepared = prepare_generated_project_files(project, app_dir, backup=False)
     files = prepared.files
     all_generated_files = prepared.all_generated_files
-    write_generated_project_files(app_dir, files, newline="\n")
-    cleanup_legacy_designer_codegen_files(
+    materialize_generated_project_files(
         app_dir,
+        files,
         all_generated_files,
+        newline="\n",
         remove_stale_strings=not project.string_catalog.has_strings,
     )
 

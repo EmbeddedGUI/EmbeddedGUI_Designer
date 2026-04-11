@@ -131,9 +131,9 @@ from ..utils.scaffold import (
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
+    materialize_generated_project_files,
     read_app_config_dimensions,
     save_project_with_designer_scaffold,
-    write_generated_project_files,
 )
 from .theme import apply_theme, theme_tokens
 
@@ -4625,9 +4625,9 @@ class MainWindow(QMainWindow):
         prepared = prepare_generated_project_files(self.project, project_dir, backup=True)
         files = prepared.files
         all_generated_files = prepared.all_generated_files
-        write_generated_project_files(project_dir, files)
-        cleanup_legacy_designer_codegen_files(
+        materialize_generated_project_files(
             project_dir,
+            files,
             all_generated_files,
             backup_existing=True,
             remove_stale_strings=not self.project.string_catalog.has_strings,
@@ -4765,9 +4765,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Export Failed", f"Failed to export generated code:\n{exc}")
             self.statusBar().showMessage(f"Export failed: {exc}", 5000)
             return
-        write_generated_project_files(path, files)
-        cleanup_legacy_designer_codegen_files(
+        materialize_generated_project_files(
             path,
+            files,
             all_generated_files,
             backup_existing=True,
             remove_stale_strings=not self.project.string_catalog.has_strings,
