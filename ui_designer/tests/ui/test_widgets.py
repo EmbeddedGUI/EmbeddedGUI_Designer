@@ -6,6 +6,8 @@ Qt-independent tests run always. Qt-dependent tests are skipped if PyQt5 is miss
 import re
 import pytest
 
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
+
 
 # ── Qt-independent tests (regex patterns) ─────────────────────
 
@@ -66,13 +68,7 @@ class TestFontDisplayInfo:
 
 # ── Qt-dependent tests ────────────────────────────────────────
 
-try:
-    import PyQt5
-    _has_pyqt5 = True
-except ImportError:
-    _has_pyqt5 = False
-
-_skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
+_skip_no_qt = skip_if_no_qt
 
 
 @_skip_no_qt

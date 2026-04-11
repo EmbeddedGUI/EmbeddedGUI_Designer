@@ -2,6 +2,22 @@
 
 from __future__ import annotations
 
+import os
+
+import pytest
+
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+try:
+    import PyQt5  # noqa: F401
+
+    HAS_PYQT5 = True
+except ImportError:
+    HAS_PYQT5 = False
+
+skip_if_no_qt = pytest.mark.skipif(not HAS_PYQT5, reason="PyQt5 not available")
+
 
 def ensure_qapp():
     """Return the shared QApplication instance, creating it when available."""

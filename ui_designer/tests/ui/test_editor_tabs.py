@@ -1,19 +1,13 @@
 """Qt UI tests for editor tab accessibility metadata."""
 
-import os
-
 import pytest
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
-try:
+if HAS_PYQT5:
     from PyQt5.QtWidgets import QWidget
 
-    _has_pyqt5 = True
-except ImportError:
-    _has_pyqt5 = False
-
-_skip_no_qt = pytest.mark.skipif(not _has_pyqt5, reason="PyQt5 not available")
+_skip_no_qt = skip_if_no_qt
 
 
 @_skip_no_qt
