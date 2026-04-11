@@ -3,6 +3,7 @@
 from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
+    build_saved_test_project_with_widgets,
     build_saved_test_project_with_page_widgets,
     build_test_project,
     build_test_project_from_root,
@@ -85,6 +86,23 @@ class TestProjectBuilders:
         assert (project_dir / "SavedWidgetBuilderDemo.egui").is_file()
         assert roots["main_page"].children == [home_label]
         assert roots["detail_page"].children == [detail_button]
+
+    def test_build_saved_test_project_with_widgets_writes_populated_startup_page(self, tmp_path):
+        project_dir = tmp_path / "SavedSinglePageWidgetBuilderDemo"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+        button = WidgetModel("button", name="confirm", x=10, y=48, width=80, height=32)
+
+        project, page, root = build_saved_test_project_with_widgets(
+            project_dir,
+            "SavedSinglePageWidgetBuilderDemo",
+            page_name="home",
+            widgets=[label, button],
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert page.name == "home"
+        assert (project_dir / "SavedSinglePageWidgetBuilderDemo.egui").is_file()
+        assert root.children == [label, button]
 
     def test_build_test_project_from_pages_preserves_page_mode_and_startup(self):
         home_page, detail_page = build_test_pages("home", "detail")

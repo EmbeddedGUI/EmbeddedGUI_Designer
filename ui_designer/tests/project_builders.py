@@ -286,6 +286,42 @@ def build_saved_test_project(
     return project
 
 
+def build_saved_test_project_with_widgets(
+    project_dir,
+    app_name,
+    sdk_root="",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    widgets=None,
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Build, populate, and save a single-page test project to disk."""
+    project_root = Path(project_dir)
+    project_root.mkdir(parents=True, exist_ok=True)
+    project, page, root = build_test_project_with_widgets(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=str(project_root),
+        widgets=widgets,
+    )
+    if with_designer_scaffold:
+        save_project_with_designer_scaffold(
+            project,
+            str(project_root),
+            overwrite=overwrite_scaffold,
+            remove_legacy_designer_files=True,
+        )
+    else:
+        project.save(str(project_root))
+    return project, page, root
+
+
 def build_saved_test_project_with_page_widgets(
     project_dir,
     app_name,

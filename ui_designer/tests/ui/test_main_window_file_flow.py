@@ -1065,9 +1065,8 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project
+            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
-            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -1106,11 +1105,15 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "TreeFilterStatusDemo"
                 create_sdk_root(sdk_root)
 
-                project = build_saved_test_project(project_dir, "TreeFilterStatusDemo", sdk_root)
-                _page, root = require_project_page_root(project, "main_page")
-                root.add_child(WidgetModel("label", name="field_label"))
-                root.add_child(WidgetModel("button", name="field_button"))
-                project.save(str(project_dir))
+                project, _page, _root = build_saved_test_project_with_widgets(
+                    project_dir,
+                    "TreeFilterStatusDemo",
+                    sdk_root,
+                    widgets=[
+                        WidgetModel("label", name="field_label"),
+                        WidgetModel("button", name="field_button"),
+                    ],
+                )
 
                 window = MainWindow(str(sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
@@ -10071,9 +10074,8 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project
+            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
-            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -10109,12 +10111,14 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingResourceDemo"
-                project = build_saved_test_project(project_dir, "DiagnosticMissingResourceDemo", sdk_root)
-                _page, root = require_project_page_root(project)
                 missing = WidgetModel("image", name="missing_image", x=16, y=16, width=48, height=48)
                 missing.properties["image_file"] = "ghost.png"
-                root.add_child(missing)
-                project.save(str(project_dir))
+                project, _page, _root = build_saved_test_project_with_widgets(
+                    project_dir,
+                    "DiagnosticMissingResourceDemo",
+                    sdk_root,
+                    widgets=[missing],
+                )
 
                 window = MainWindow(str(sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
@@ -10174,9 +10178,8 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project
+            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
             from ui_designer.ui.main_window import MainWindow
-            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -10212,12 +10215,14 @@ class TestMainWindowFileFlow:
                 sdk_root = temp_root / "sdk"
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingStringDemo"
-                project = build_saved_test_project(project_dir, "DiagnosticMissingStringDemo", sdk_root)
-                _page, root = require_project_page_root(project)
                 title = WidgetModel("label", name="title", x=16, y=16, width=80, height=20)
                 title.properties["text"] = "@string/missing_key"
-                root.add_child(title)
-                project.save(str(project_dir))
+                project, _page, _root = build_saved_test_project_with_widgets(
+                    project_dir,
+                    "DiagnosticMissingStringDemo",
+                    sdk_root,
+                    widgets=[title],
+                )
 
                 window = MainWindow(str(sdk_root))
                 window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
