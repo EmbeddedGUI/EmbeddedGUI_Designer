@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
+from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import build_empty_project_model
 
 
@@ -25,6 +27,31 @@ def build_test_project(
         project_dir=str(project_dir or ""),
         pages=pages,
     )
+
+
+def build_test_project_from_pages(
+    pages=None,
+    app_name="TestApp",
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_mode="easy_page",
+    startup_page=None,
+):
+    """Build a minimal test project from preconstructed Page models."""
+    project = Project(screen_width=screen_width, screen_height=screen_height, app_name=app_name)
+    project.sdk_root = str(sdk_root or "")
+    project.project_dir = os.path.normpath(str(project_dir)) if project_dir else ""
+    project.page_mode = page_mode
+    for page in pages or []:
+        project.add_page(page)
+    if startup_page is not None:
+        project.startup_page = startup_page
+    elif project.pages:
+        project.startup_page = project.pages[0].name
+    return project
 
 
 def build_saved_test_project(

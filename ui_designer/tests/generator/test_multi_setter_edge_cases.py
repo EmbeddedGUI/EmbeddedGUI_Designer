@@ -15,9 +15,9 @@ Regression coverage for:
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project_from_pages
 from ui_designer.model.widget_model import WidgetModel
-from ui_designer.model.page import Page
-from ui_designer.model.project import Project
 from ui_designer.generator.code_generator import (
     _gen_widget_init_lines,
     generate_page_layout_source,
@@ -26,14 +26,11 @@ from ui_designer.generator.code_generator import (
 
 
 def _make_page(name, root):
-    return Page(file_path=f"layout/{name}.xml", root_widget=root)
+    return build_test_page_from_root(name, root=root)
 
 
 def _make_project(pages):
-    proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-    for p in pages:
-        proj.add_page(p)
-    return proj
+    return build_test_project_from_pages(pages)
 
 
 # ======================================================================

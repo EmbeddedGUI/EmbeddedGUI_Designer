@@ -2,9 +2,9 @@
 
 import pytest
 
+from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.project_builders import build_test_project_from_pages
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel, AnimationModel
-from ui_designer.model.page import Page
-from ui_designer.model.project import Project
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.generator.code_generator import (
     _simple_init_func,
@@ -40,20 +40,16 @@ from ui_designer.utils.scaffold import (
 
 def _make_page(name="main_page", root=None):
     """Create a Page with the given name and optional root widget."""
-    if root is None:
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-    return Page(file_path=f"layout/{name}.xml", root_widget=root)
+    return build_test_page_from_root(name, root=root)
 
 
 def _make_project(pages=None, page_mode="easy_page", startup="main_page"):
     """Create a minimal Project."""
-    proj = Project(screen_width=240, screen_height=320, app_name="TestApp")
-    proj.page_mode = page_mode
-    proj.startup_page = startup
-    if pages:
-        for p in pages:
-            proj.add_page(p)
-    return proj
+    return build_test_project_from_pages(
+        pages or [],
+        page_mode=page_mode,
+        startup_page=startup,
+    )
 
 
 def _make_bg(bg_type="solid", color="EGUI_COLOR_WHITE", alpha="EGUI_ALPHA_100",

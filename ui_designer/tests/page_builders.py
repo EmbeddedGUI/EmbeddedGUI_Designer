@@ -11,6 +11,13 @@ def build_test_page(name="main_page", *, screen_width=240, screen_height=320):
     return Page.create_default(name, screen_width=screen_width, screen_height=screen_height)
 
 
+def build_test_page_from_root(name="main_page", root=None, *, screen_width=240, screen_height=320):
+    """Build a Page model with a caller-supplied or default root widget."""
+    if root is None:
+        root = WidgetModel("group", name="root_group", x=0, y=0, width=screen_width, height=screen_height)
+    return Page(file_path=f"layout/{name}.xml", root_widget=root)
+
+
 def build_test_pages(*names, screen_width=240, screen_height=320):
     """Build multiple default Page models for tests."""
     return tuple(
