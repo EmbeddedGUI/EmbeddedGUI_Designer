@@ -41,6 +41,7 @@ from ui_designer.utils.scaffold import (
     default_scaffold_circle_radius,
     designer_conversion_scaffold_kwargs,
     designer_scaffold_kwargs,
+    ensure_conversion_project_scaffold_with_sdk_root,
     require_page_root,
     require_project_page_root,
     normalize_scaffold_pages,
@@ -52,6 +53,7 @@ from ui_designer.utils.scaffold import (
     prepare_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
+    scaffold_conversion_project_with_sdk_root,
     scaffold_designer_project,
     ensure_designer_project_scaffold_with_sdk_root,
     scaffold_designer_project_with_sdk_root,
@@ -1180,6 +1182,28 @@ class TestApplyDesignerProjectScaffold:
         assert actions["SdkApp.egui"] == "created"
         assert 'sdk_root="../.."' in egui_content
 
+    def test_scaffold_conversion_project_with_sdk_root_applies_conversion_defaults(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        project_dir = sdk_root / "example" / "ConversionApp"
+
+        actions = scaffold_conversion_project_with_sdk_root(
+            str(project_dir),
+            "ConversionApp",
+            str(sdk_root),
+            320,
+            240,
+            pages=["home", "detail"],
+            color_depth=32,
+        )
+
+        designer_config = (project_dir / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8")
+        assert actions[BUILD_MK_RELPATH] == "created"
+        assert actions["ConversionApp.egui"] == "created"
+        assert actions[".eguiproject/layout/home.xml"] == "created"
+        assert actions[".eguiproject/layout/detail.xml"] == "created"
+        assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
+        assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config
+
     def test_ensure_designer_project_scaffold_with_sdk_root_only_creates_missing_dirs(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
         existing_dir = sdk_root / "example" / "ExistingApp"
@@ -1217,3 +1241,34 @@ class TestApplyDesignerProjectScaffold:
         assert new_actions[BUILD_MK_RELPATH] == "created"
         assert new_actions["NewApp.egui"] == "created"
         assert (new_dir / ".designer" / "build_designer.mk").is_file()
+
+    def test_ensure_conversion_project_scaffold_with_sdk_root_only_creates_missing_dirs(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        existing_dir = sdk_root / "example" / "ExistingConversionApp"
+        new_dir = sdk_root / "example" / "NewConversionApp"
+        existing_dir.mkdir(parents=True)
+
+        existing_created, existing_actions = ensure_conversion_project_scaffold_with_sdk_root(
+            str(existing_dir),
+            "ExistingConversionApp",
+            str(sdk_root),
+            320,
+            240,
+        )
+        new_created, new_actions = ensure_conversion_project_scaffold_with_sdk_root(
+            str(new_dir),
+            "NewConversionApp",
+            str(sdk_root),
+            320,
+            240,
+            color_depth=32,
+        )
+
+        assert existing_created is False
+        assert existing_actions == {}
+        assert new_created is True
+        assert new_actions[BUILD_MK_RELPATH] == "created"
+        assert new_actions["NewConversionApp.egui"] == "created"
+        designer_config = (new_dir / ".designer" / "app_egui_config_designer.h").read_text(encoding="utf-8")
+        assert "#define EGUI_CONFIG_COLOR_DEPTH 32" in designer_config
+        assert "#define EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW 1" in designer_config

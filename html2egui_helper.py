@@ -46,13 +46,12 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
-    designer_conversion_scaffold_kwargs,
-    ensure_designer_project_scaffold_with_sdk_root,
+    ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
-    scaffold_designer_project_with_sdk_root,
+    scaffold_conversion_project_with_sdk_root,
     make_empty_resource_config_content,
 )
 
@@ -262,13 +261,12 @@ def _write_figma_page_xml(
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
     app_dir = _get_app_dir(sdk_root, app_name)
-    created, _actions = ensure_designer_project_scaffold_with_sdk_root(
+    created, _actions = ensure_conversion_project_scaffold_with_sdk_root(
         app_dir,
         app_name,
         sdk_root,
         width,
         height,
-        **designer_conversion_scaffold_kwargs(width, height),
     )
     if created:
         print(f"Creating app scaffold: {app_name}")
@@ -317,18 +315,14 @@ def cmd_scaffold(args):
 
     # Create directories
     pages = normalize_scaffold_pages(args.pages.split(",") if args.pages else None)
-    scaffold_actions = scaffold_designer_project_with_sdk_root(
+    scaffold_actions = scaffold_conversion_project_with_sdk_root(
         app_dir,
         args.app,
         sdk_root,
         width,
         height,
         pages=pages,
-        **designer_conversion_scaffold_kwargs(
-            width,
-            height,
-            color_depth=color_depth,
-        ),
+        color_depth=color_depth,
     )
     _print_scaffold_status(
         BUILD_MK_RELPATH,

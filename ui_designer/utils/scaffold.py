@@ -1861,6 +1861,32 @@ def scaffold_designer_project_with_sdk_root(
     )
 
 
+def scaffold_conversion_project_with_sdk_root(
+    project_dir,
+    app_name,
+    sdk_root,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Apply the shared conversion/import scaffold defaults using a relative SDK root."""
+    return scaffold_designer_project_with_sdk_root(
+        project_dir,
+        app_name,
+        sdk_root,
+        screen_width,
+        screen_height,
+        pages=pages,
+        **designer_conversion_scaffold_kwargs(
+            screen_width,
+            screen_height,
+            color_depth=color_depth,
+        ),
+    )
+
+
 def ensure_designer_project_scaffold_with_sdk_root(
     project_dir,
     app_name,
@@ -1883,3 +1909,27 @@ def ensure_designer_project_scaffold_with_sdk_root(
         **kwargs,
     )
     return True, actions
+
+
+def ensure_conversion_project_scaffold_with_sdk_root(
+    project_dir,
+    app_name,
+    sdk_root,
+    screen_width=240,
+    screen_height=320,
+    *,
+    color_depth=16,
+):
+    """Create a conversion/import scaffold only when the target directory is missing."""
+    return ensure_designer_project_scaffold_with_sdk_root(
+        project_dir,
+        app_name,
+        sdk_root,
+        screen_width,
+        screen_height,
+        **designer_conversion_scaffold_kwargs(
+            screen_width,
+            screen_height,
+            color_depth=color_depth,
+        ),
+    )

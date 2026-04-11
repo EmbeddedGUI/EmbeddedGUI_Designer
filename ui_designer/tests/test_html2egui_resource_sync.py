@@ -209,7 +209,7 @@ class TestHelperResourceSync:
             calls.append((args, kwargs))
             return args[1] == "NewApp", {}
 
-        monkeypatch.setattr(h, "ensure_designer_project_scaffold_with_sdk_root", fake_ensure)
+        monkeypatch.setattr(h, "ensure_conversion_project_scaffold_with_sdk_root", fake_ensure)
 
         existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
         created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)
@@ -226,11 +226,7 @@ class TestHelperResourceSync:
             320,
             240,
         )
-        assert existing_kwargs["overwrite"] is True
-        assert existing_kwargs["color_depth"] == 16
-        assert existing_kwargs["circle_radius"] == 120
-        assert existing_kwargs["extra_config_macros"] == [("EGUI_CONFIG_FUNCTION_SUPPORT_SHADOW", "1")]
-        assert existing_kwargs["refresh_designer_resource_config"] is False
+        assert existing_kwargs == {}
 
         created_args, created_kwargs = calls[1]
         assert created_args == (
@@ -240,7 +236,7 @@ class TestHelperResourceSync:
             320,
             240,
         )
-        assert created_kwargs == existing_kwargs
+        assert created_kwargs == {}
 
     def test_ensure_resource_config_file_uses_shared_default_content(self, tmp_path):
         config_path = tmp_path / "resource" / "src" / "app_resource_config.json"
