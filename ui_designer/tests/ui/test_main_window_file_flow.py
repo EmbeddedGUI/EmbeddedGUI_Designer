@@ -3504,6 +3504,7 @@ class TestMainWindowFileFlow:
         compiler.app_dir = str(project_dir)
         preview_stop_calls = []
         generated = {}
+        rename_hook_calls = []
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
@@ -3511,22 +3512,27 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
         monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: preview_stop_calls.append("stop"))
+        rename_hook = lambda output_dir: rename_hook_calls.append(output_dir)
+        monkeypatch.setattr(window, "_apply_pending_page_rename_outputs", rename_hook)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.prepare_project_codegen_outputs",
             lambda project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False: (
-                generated.update(
-                    {
-                        "project": project_obj,
-                        "output_dir": output_dir,
-                        "backup": backup,
-                        "before_prepare": before_prepare,
-                        "cleanup_legacy": cleanup_legacy,
-                    }
-                )
-                or SimpleNamespace(
-                    files={".designer/uicode.c": "// rebuild test\n"},
-                    all_generated_files={".designer/uicode.c": ("// rebuild test\n", "generated_always")},
-                )
+                before_prepare(output_dir)
+                if callable(before_prepare)
+                else None
+            )
+            or generated.update(
+                {
+                    "project": project_obj,
+                    "output_dir": output_dir,
+                    "backup": backup,
+                    "before_prepare": before_prepare,
+                    "cleanup_legacy": cleanup_legacy,
+                }
+            )
+            or SimpleNamespace(
+                files={".designer/uicode.c": "// rebuild test\n"},
+                all_generated_files={".designer/uicode.c": ("// rebuild test\n", "generated_always")},
             ),
         )
 
@@ -3543,8 +3549,9 @@ class TestMainWindowFileFlow:
         assert generated["project"] is project
         assert generated["output_dir"] == os.path.normpath(os.path.abspath(project_dir))
         assert generated["backup"] is False
-        assert generated["before_prepare"] == window._apply_pending_page_rename_outputs
+        assert generated["before_prepare"] == rename_hook
         assert generated["cleanup_legacy"] is True
+        assert rename_hook_calls == [os.path.normpath(os.path.abspath(project_dir))]
         assert window.preview_panel.status_label.text() == "Rebuilding..."
         window._undo_manager.mark_all_saved()
         _close_window(window)

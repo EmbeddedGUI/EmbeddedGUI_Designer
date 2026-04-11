@@ -7318,7 +7318,6 @@ class MainWindow(QMainWindow):
         self._ensure_resources_generated()
 
         preview_output_dir = self.compiler.app_dir if self.compiler is not None else (self._project_dir or "")
-        self._apply_pending_page_rename_outputs(preview_output_dir)
 
         # Temporarily set startup_page to current page for preview
         original_startup = self.project.startup_page
