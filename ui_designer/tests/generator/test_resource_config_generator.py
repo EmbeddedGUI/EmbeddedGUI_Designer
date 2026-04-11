@@ -14,12 +14,13 @@ from ui_designer.utils.resource_config_overlay import (
 )
 
 
-def _make_project_with_widgets(widgets, screen_w=240, screen_h=320):
+def _make_project_with_widgets(widgets, screen_w=240, screen_h=320, *, project_customizer=None):
     """Helper: create a project with a single page containing given widgets."""
     project, _page, _root = build_test_project_with_widgets(
         screen_width=screen_w,
         screen_height=screen_h,
         widgets=widgets,
+        project_customizer=project_customizer,
     )
     return project
 
@@ -232,12 +233,13 @@ class TestStringRefResolution:
         lbl.properties["font_pixelsize"] = "16"
         lbl.properties["font_fontbitsize"] = "4"
 
-        proj = _make_project_with_widgets([lbl])
-        # Add string catalog
-        string_cat = StringResourceCatalog()
-        string_cat.set("greeting", "Hello", "")
-        string_cat.set("greeting", "Hola", "es")
-        proj.string_catalog = string_cat
+        def _setup_project(project):
+            string_cat = StringResourceCatalog()
+            string_cat.set("greeting", "Hello", "")
+            string_cat.set("greeting", "Hola", "es")
+            project.string_catalog = string_cat
+
+        proj = _make_project_with_widgets([lbl], project_customizer=_setup_project)
 
         gen = ResourceConfigGenerator()
         config = gen.generate(proj)

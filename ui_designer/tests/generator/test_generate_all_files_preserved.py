@@ -32,14 +32,13 @@ from ui_designer.utils.scaffold import (
     UICODE_SOURCE_RELPATH,
     designer_page_header_relpath,
     designer_page_layout_relpath,
-    require_project_page_root,
 )
 
 
 # ── Fixtures ─────────────────────────────────────────────────────
 
 
-def _make_project_with_page(page_name="main_page"):
+def _make_project_with_page(page_name="main_page", *, page_customizer=None, project_customizer=None):
     project, _page, _widget = build_test_project_with_widget(
         page_name=page_name,
         name="title_label",
@@ -47,6 +46,8 @@ def _make_project_with_page(page_name="main_page"):
         y=10,
         width=200,
         height=30,
+        page_customizer=page_customizer,
+        project_customizer=project_customizer,
     )
     return project
 
@@ -124,17 +125,18 @@ class TestUserOwnedFiles:
             generate_all_files_preserved(proj, str(tmp_path), backup=False)
 
     def test_legacy_designer_managed_user_source_is_rejected(self, tmp_path):
-        proj = _make_project_with_page("main_page")
-        page, _root = require_project_page_root(proj)
-        page.timers = [
-            {
-                "name": "refresh_timer",
-                "callback": "tick_refresh",
-                "delay_ms": "500",
-                "period_ms": "1000",
-                "auto_start": True,
-            }
-        ]
+        def _setup_page(page, _root):
+            page.timers = [
+                {
+                    "name": "refresh_timer",
+                    "callback": "tick_refresh",
+                    "delay_ms": "500",
+                    "period_ms": "1000",
+                    "auto_start": True,
+                }
+            ]
+
+        proj = _make_project_with_page("main_page", page_customizer=_setup_page)
         output_dir = str(tmp_path)
 
         user_file = tmp_path / "main_page.c"
@@ -300,10 +302,12 @@ class TestGeneratedAlwaysFiles:
     def test_i18n_string_files_use_designer_paths(self, tmp_path):
         from ui_designer.model.string_resource import StringResourceCatalog
 
-        proj = _make_project_with_page("main_page")
-        catalog = StringResourceCatalog()
-        catalog.set("title", "Hello", "")
-        proj.string_catalog = catalog
+        def _setup_project(project):
+            catalog = StringResourceCatalog()
+            catalog.set("title", "Hello", "")
+            project.string_catalog = catalog
+
+        proj = _make_project_with_page("main_page", project_customizer=_setup_project)
 
         result = generate_all_files_preserved(proj, str(tmp_path), backup=False)
 

@@ -286,6 +286,23 @@ class TestProjectBuilders:
         assert page.name == "home"
         assert root.children == [label, button]
 
+    def test_build_test_project_with_widgets_applies_project_customizer(self):
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        def _customize_project(project):
+            project.string_catalog.set("greeting", "Hello", "default")
+
+        project, page, root = build_test_project_with_widgets(
+            "ProjectWidgetDemo",
+            widgets=[label],
+            project_customizer=_customize_project,
+        )
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert page.name == "main_page"
+        assert root.children == [label]
+        assert project.string_catalog.get("greeting", "default") == "Hello"
+
     def test_build_test_project_with_page_widgets_attaches_widgets_per_named_page(self):
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
         detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
@@ -337,6 +354,27 @@ class TestProjectBuilders:
         assert home_page.user_fields == [{"name": "counter", "type": "int", "default": "0"}]
         assert detail_page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
 
+    def test_build_test_project_with_page_widgets_applies_project_customizer(self):
+        home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
+        detail_button = WidgetModel("button", name="detail_cta", x=10, y=48, width=80, height=32)
+
+        def _customize_project(project):
+            project.resource_catalog.add_image("hero.png")
+
+        project, roots = build_test_project_with_page_widgets(
+            "ProjectWidgetDemo",
+            page_widgets={
+                "home": [home_label],
+                "detail": [detail_button],
+            },
+            project_customizer=_customize_project,
+        )
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert roots["home"].children == [home_label]
+        assert roots["detail"].children == [detail_button]
+        assert project.resource_catalog.has_image("hero.png") is True
+
     def test_build_test_project_with_widget_attaches_basic_widget_to_selected_page(self):
         project, page, widget = build_test_project_with_widget(
             "ProjectWidgetDemo",
@@ -354,3 +392,30 @@ class TestProjectBuilders:
         assert widget.name == "cta"
         assert widget.widget_type == "button"
         assert widget in page.root_widget.children
+
+    def test_build_test_project_with_widget_applies_page_and_project_customizers(self):
+        def _customize_page(page, root):
+            assert [child.name for child in root.children] == ["cta"]
+            page.timers = [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
+
+        def _customize_project(project):
+            project.string_catalog.set("greeting", "Hello", "default")
+
+        project, page, widget = build_test_project_with_widget(
+            "ProjectWidgetDemo",
+            "button",
+            page_name="home",
+            name="cta",
+            x=16,
+            y=24,
+            width=96,
+            height=40,
+            page_customizer=_customize_page,
+            project_customizer=_customize_project,
+        )
+
+        assert project.app_name == "ProjectWidgetDemo"
+        assert page.name == "home"
+        assert widget.name == "cta"
+        assert page.timers == [{"name": "tick", "callback": "on_tick", "delay_ms": "500", "period_ms": "500", "auto_start": True}]
+        assert project.string_catalog.get("greeting", "default") == "Hello"
