@@ -1,5 +1,7 @@
 """Tests for shared test project builders."""
 
+import ui_designer.tests.project_builders as project_builders_module
+
 from ui_designer.tests.page_builders import build_test_pages
 from ui_designer.tests.project_builders import (
     build_saved_test_project,
@@ -75,6 +77,60 @@ class TestProjectBuilders:
         assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
+
+    def test_build_saved_test_project_reuses_empty_scaffold_save_helper(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedScaffoldedSavedBuilderDemo"
+        captured = {}
+
+        def fake_save_empty_project_with_designer_scaffold(
+            app_name,
+            project_dir_arg,
+            screen_width=240,
+            screen_height=320,
+            **kwargs,
+        ):
+            captured["app_name"] = app_name
+            captured["project_dir"] = project_dir_arg
+            captured["screen_width"] = screen_width
+            captured["screen_height"] = screen_height
+            captured["kwargs"] = kwargs
+            return build_test_project(
+                app_name,
+                screen_width,
+                screen_height,
+                sdk_root=kwargs.get("sdk_root", ""),
+                project_dir=project_dir_arg,
+                pages=kwargs.get("pages"),
+            )
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "save_empty_project_with_designer_scaffold",
+            fake_save_empty_project_with_designer_scaffold,
+        )
+
+        project = build_saved_test_project(
+            project_dir,
+            "SharedScaffoldedSavedBuilderDemo",
+            pages=["main_page", "settings"],
+            sdk_root="D:/sdk",
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+        )
+
+        assert project.app_name == "SharedScaffoldedSavedBuilderDemo"
+        assert captured == {
+            "app_name": "SharedScaffoldedSavedBuilderDemo",
+            "project_dir": str(project_dir),
+            "screen_width": 240,
+            "screen_height": 320,
+            "kwargs": {
+                "sdk_root": "D:/sdk",
+                "pages": ["main_page", "settings"],
+                "overwrite_scaffold": True,
+                "remove_legacy_designer_files": True,
+            },
+        }
 
     def test_build_saved_test_project_applies_project_customizer(self, tmp_path):
         project_dir = tmp_path / "SavedProjectCustomizerDemo"

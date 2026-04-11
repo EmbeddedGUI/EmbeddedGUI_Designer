@@ -21,6 +21,7 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model,
     build_empty_project_model_with_root,
     require_project_page_root,
+    save_empty_project_with_designer_scaffold,
     save_project_model,
 )
 
@@ -43,6 +44,26 @@ def build_test_project(
         project_dir=str(project_dir or ""),
         pages=pages,
     )
+
+
+def _save_test_project_model(
+    project,
+    project_root,
+    *,
+    sdk_root="",
+    with_designer_scaffold=False,
+    overwrite_scaffold=False,
+):
+    """Save a test project using the shared Designer save defaults."""
+    save_project_model(
+        project,
+        str(project_root),
+        sdk_root=str(sdk_root or ""),
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
+        remove_legacy_designer_files=True,
+    )
+    return project
 
 
 def build_test_project_with_root(
@@ -479,6 +500,17 @@ def build_saved_test_project(
 ):
     """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
+    if project_customizer is None and with_designer_scaffold:
+        return save_empty_project_with_designer_scaffold(
+            app_name,
+            str(project_root),
+            screen_width,
+            screen_height,
+            sdk_root=str(sdk_root or ""),
+            pages=pages,
+            overwrite_scaffold=overwrite_scaffold,
+            remove_legacy_designer_files=True,
+        )
     project = build_test_project(
         app_name,
         screen_width,
@@ -489,14 +521,13 @@ def build_saved_test_project(
     )
     if project_customizer is not None:
         project_customizer(project)
-    save_project_model(
+    return _save_test_project_model(
         project,
-        str(project_root),
+        project_root,
+        sdk_root=sdk_root,
         with_designer_scaffold=with_designer_scaffold,
         overwrite_scaffold=overwrite_scaffold,
-        remove_legacy_designer_files=True,
     )
-    return project
 
 
 def build_saved_test_project_with_widgets(
@@ -526,12 +557,12 @@ def build_saved_test_project_with_widgets(
         page_customizer=page_customizer,
         project_customizer=project_customizer,
     )
-    save_project_model(
+    _save_test_project_model(
         project,
-        str(project_root),
+        project_root,
+        sdk_root=sdk_root,
         with_designer_scaffold=with_designer_scaffold,
         overwrite_scaffold=overwrite_scaffold,
-        remove_legacy_designer_files=True,
     )
     return project, page, root
 
@@ -563,11 +594,11 @@ def build_saved_test_project_with_page_widgets(
         pages=pages,
         project_customizer=project_customizer,
     )
-    save_project_model(
+    _save_test_project_model(
         project,
-        str(project_root),
+        project_root,
+        sdk_root=sdk_root,
         with_designer_scaffold=with_designer_scaffold,
         overwrite_scaffold=overwrite_scaffold,
-        remove_legacy_designer_files=True,
     )
     return project, roots
