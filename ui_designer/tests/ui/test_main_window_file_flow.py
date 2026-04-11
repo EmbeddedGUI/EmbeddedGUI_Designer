@@ -7435,18 +7435,16 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageNavigationDemo"
-        project = _create_project(
+        hero = WidgetModel("image", name="hero")
+        hero.properties["image_file"] = "star.png"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "ResourceUsageNavigationDemo",
             sdk_root,
+            page_widgets={"detail_page": [hero]},
             pages=["main_page", "detail_page"],
         )
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
-
-        hero = WidgetModel("image", name="hero")
-        hero.properties["image_file"] = "star.png"
-        detail_root.add_child(hero)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7478,23 +7476,20 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ResourceUsageFilterDemo"
-        project = _create_project(
+        hero_main = WidgetModel("image", name="hero_main")
+        hero_main.properties["image_file"] = "star.png"
+        hero_detail = WidgetModel("image", name="hero_detail")
+        hero_detail.properties["image_file"] = "star.png"
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "ResourceUsageFilterDemo",
             sdk_root,
-            pages=["main_page", "detail_page"],
+            page_widgets={
+                "main_page": [hero_main],
+                "detail_page": [hero_detail],
+            },
         )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
-
-        hero_main = WidgetModel("image", name="hero_main")
-        hero_main.properties["image_file"] = "star.png"
-        main_root.add_child(hero_main)
-
-        hero_detail = WidgetModel("image", name="hero_detail")
-        hero_detail.properties["image_file"] = "star.png"
-        detail_root.add_child(hero_detail)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -8818,21 +8813,19 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ProjectCallbackDiagnosticsDemo"
-        project = _create_project(
-            project_dir,
-            "ProjectCallbackDiagnosticsDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        main_root.add_child(main_button)
-        detail_root.add_child(detail_button)
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "ProjectCallbackDiagnosticsDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [main_button],
+                "detail_page": [detail_button],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -8857,21 +8850,19 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ProjectCallbackDiagnosticFocusDemo"
-        project = _create_project(
-            project_dir,
-            "ProjectCallbackDiagnosticFocusDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-        _main_page, main_root = require_project_page_root(project, "main_page")
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        main_root.add_child(main_button)
-        detail_root.add_child(detail_button)
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "ProjectCallbackDiagnosticFocusDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [main_button],
+                "detail_page": [detail_button],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9733,21 +9724,19 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonProjectTargetsDemo"
-        project = _create_project(
-            project_dir,
-            "DiagnosticsCopyJsonProjectTargetsDemo",
-            sdk_root,
-            pages=["main_page", "detail_page"],
-        )
-        _main_page, main_root = require_project_page_root(project)
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
         main_button = WidgetModel("button", name="confirm_button", x=8, y=8, width=80, height=28)
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        main_root.add_child(main_button)
-        detail_root.add_child(detail_button)
-        project.save(str(project_dir))
+        project, _roots = _create_project_with_page_widgets(
+            project_dir,
+            "DiagnosticsCopyJsonProjectTargetsDemo",
+            sdk_root,
+            page_widgets={
+                "main_page": [main_button],
+                "detail_page": [detail_button],
+            },
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -9972,16 +9961,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticFocusDemo"
-        project = _create_project(
+        target = WidgetModel("label", name="target", x=16, y=16, width=80, height=20)
+        project, _roots = _create_project_with_page_widgets(
             project_dir,
             "DiagnosticFocusDemo",
             sdk_root,
+            page_widgets={"detail_page": [target]},
             pages=["main_page", "detail_page"],
         )
-        detail_page, detail_root = require_project_page_root(project, "detail_page")
-        target = WidgetModel("label", name="target", x=16, y=16, width=80, height=20)
-        detail_root.add_child(target)
-        project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
