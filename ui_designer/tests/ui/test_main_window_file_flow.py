@@ -3512,13 +3512,15 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_update_diagnostics_panel", lambda: None)
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: preview_stop_calls.append("stop"))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.prepare_generated_project_files",
-            lambda project_obj, output_dir, backup=True: (
+            "ui_designer.ui.main_window.prepare_project_codegen_outputs",
+            lambda project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False: (
                 generated.update(
                     {
                         "project": project_obj,
                         "output_dir": output_dir,
                         "backup": backup,
+                        "before_prepare": before_prepare,
+                        "cleanup_legacy": cleanup_legacy,
                     }
                 )
                 or SimpleNamespace(
@@ -3541,6 +3543,8 @@ class TestMainWindowFileFlow:
         assert generated["project"] is project
         assert generated["output_dir"] == os.path.normpath(os.path.abspath(project_dir))
         assert generated["backup"] is False
+        assert generated["before_prepare"] == window._apply_pending_page_rename_outputs
+        assert generated["cleanup_legacy"] is True
         assert window.preview_panel.status_label.text() == "Rebuilding..."
         window._undo_manager.mark_all_saved()
         _close_window(window)
@@ -3607,8 +3611,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window.preview_panel, "stop_rendering", lambda: None)
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         monkeypatch.setattr(
-            "ui_designer.ui.main_window.prepare_generated_project_files",
-            lambda project_obj, output_dir, backup=True: SimpleNamespace(
+            "ui_designer.ui.main_window.prepare_project_codegen_outputs",
+            lambda project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False: SimpleNamespace(
                 files={".designer/uicode.c": "// rebuild button test\n"},
                 all_generated_files={".designer/uicode.c": ("// rebuild button test\n", "generated_always")},
             ),

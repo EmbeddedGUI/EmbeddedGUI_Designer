@@ -1688,6 +1688,36 @@ def materialize_project_codegen_outputs(
     )
 
 
+def prepare_project_codegen_outputs(
+    project,
+    project_dir,
+    *,
+    backup=True,
+    before_prepare=None,
+    cleanup_legacy=False,
+    backup_existing=False,
+):
+    """Prepare project codegen outputs with optional pre-prepare and cleanup hooks."""
+    if callable(before_prepare):
+        before_prepare(project_dir)
+
+    from ..generator.code_generator import prepare_generated_project_files
+
+    prepared = prepare_generated_project_files(
+        project,
+        project_dir,
+        backup=backup,
+    )
+    if cleanup_legacy:
+        cleanup_legacy_designer_codegen_files(
+            project_dir,
+            prepared.all_generated_files,
+            backup_existing=backup_existing,
+            remove_stale_strings=not project.string_catalog.has_strings,
+        )
+    return prepared
+
+
 def save_project_and_materialize_codegen(
     project,
     project_dir,

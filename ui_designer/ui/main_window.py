@@ -104,7 +104,6 @@ from ..model.diagnostics import (
 from ..model.undo_manager import UndoManager
 from ..generator.code_generator import (
     collect_page_callback_stubs,
-    prepare_generated_project_files,
     generate_page_user_source,
     generate_uicode,
     render_page_callback_stub,
@@ -126,12 +125,12 @@ from ..utils.resource_config_overlay import (
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
     build_empty_project_model,
-    cleanup_legacy_designer_codegen_files,
     designer_page_header_relpath,
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
+    prepare_project_codegen_outputs,
     read_app_config_dimensions,
     save_project_and_materialize_codegen,
     save_project_with_designer_scaffold,
@@ -7344,10 +7343,12 @@ class MainWindow(QMainWindow):
             self.project.startup_page = self._current_page.name
         try:
             try:
-                prepared = prepare_generated_project_files(
+                prepared = prepare_project_codegen_outputs(
                     self.project,
                     preview_output_dir,
                     backup=False,
+                    before_prepare=self._apply_pending_page_rename_outputs,
+                    cleanup_legacy=True,
                 )
                 files = prepared.files
                 all_generated_files = prepared.all_generated_files
@@ -7368,13 +7369,6 @@ class MainWindow(QMainWindow):
         finally:
             # Restore the persisted startup page even when preview generation fails.
             self.project.startup_page = original_startup
-
-        cleanup_legacy_designer_codegen_files(
-            preview_output_dir,
-            all_generated_files,
-            backup_existing=False,
-            remove_stale_strings=not self.project.string_catalog.has_strings,
-        )
 
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
         if force_rebuild:

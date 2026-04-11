@@ -49,6 +49,7 @@ from ui_designer.utils.scaffold import (
     cleanup_legacy_designer_codegen_files,
     materialize_generated_project_files,
     materialize_project_codegen_outputs,
+    prepare_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
     scaffold_designer_project,
@@ -1072,6 +1073,33 @@ class TestApplyDesignerProjectScaffold:
         assert hook_calls == [str(project_dir)]
         assert (project_dir / ".designer" / "home.h").is_file()
         assert "home.c" in materialized.files
+
+    def test_prepare_project_codegen_outputs_runs_before_prepare_hook_and_cleans_legacy(self, tmp_path):
+        project_dir = tmp_path / "PrepareHookHelperApp"
+        project = build_empty_project_model(
+            "PrepareHookHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            pages=["home"],
+        )
+        hook_calls = []
+        legacy_root_uicode = project_dir / "uicode.c"
+        legacy_root_uicode.parent.mkdir(parents=True, exist_ok=True)
+        legacy_root_uicode.write_text("// stale legacy root uicode\n", encoding="utf-8")
+
+        prepared = prepare_project_codegen_outputs(
+            project,
+            str(project_dir),
+            backup=False,
+            before_prepare=lambda output_dir: hook_calls.append(output_dir),
+            cleanup_legacy=True,
+        )
+
+        assert hook_calls == [str(project_dir)]
+        assert "home.c" in prepared.files
+        assert not legacy_root_uicode.exists()
 
     def test_save_project_model_saves_project_without_scaffold_when_disabled(self, tmp_path):
         project_dir = tmp_path / "PlainSaveHelperApp"
