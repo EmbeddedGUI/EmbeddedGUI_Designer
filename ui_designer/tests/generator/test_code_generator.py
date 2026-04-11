@@ -2,8 +2,8 @@
 
 import pytest
 
-from ui_designer.tests.page_builders import build_test_page_from_root
-from ui_designer.tests.project_builders import build_test_project_from_pages
+from ui_designer.tests.page_builders import build_test_page_from_root as _make_page
+from ui_designer.tests.project_builders import build_test_project_from_pages as _make_project
 from ui_designer.model.widget_model import WidgetModel, BackgroundModel, AnimationModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.generator.code_generator import (
@@ -20,7 +20,6 @@ from ui_designer.generator.code_generator import (
     generate_uicode_source,
     generate_all_files,
     GENERATED_ALWAYS,
-    GENERATED_PRESERVED,
     USER_OWNED,
 )
 from ui_designer.utils.scaffold import (
@@ -36,21 +35,6 @@ from ui_designer.utils.scaffold import (
 
 
 # ── Fixture helpers ───────────────────────────────────────────────
-
-
-def _make_page(name="main_page", root=None):
-    """Create a Page with the given name and optional root widget."""
-    return build_test_page_from_root(name, root=root)
-
-
-def _make_project(pages=None, page_mode="easy_page", startup="main_page"):
-    """Create a minimal Project."""
-    return build_test_project_from_pages(
-        pages or [],
-        page_mode=page_mode,
-        startup_page=startup,
-    )
-
 
 def _make_bg(bg_type="solid", color="EGUI_COLOR_WHITE", alpha="EGUI_ALPHA_100",
              radius=0, stroke_width=0, stroke_color="EGUI_COLOR_BLACK",

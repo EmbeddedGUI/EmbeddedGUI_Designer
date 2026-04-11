@@ -38,6 +38,7 @@ def build_test_project_from_pages(
     sdk_root="",
     project_dir="",
     page_mode="easy_page",
+    startup=None,
     startup_page=None,
 ):
     """Build a minimal test project from preconstructed Page models."""
@@ -49,6 +50,8 @@ def build_test_project_from_pages(
         project.add_page(page)
     if startup_page is not None:
         project.startup_page = startup_page
+    elif startup is not None:
+        project.startup_page = startup
     elif project.pages:
         project.startup_page = project.pages[0].name
     return project

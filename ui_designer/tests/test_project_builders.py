@@ -49,3 +49,13 @@ class TestProjectBuilders:
         assert project.page_mode == "activity"
         assert project.startup_page == "detail"
         assert [page.name for page in project.pages] == ["home", "detail"]
+
+    def test_build_test_project_from_pages_accepts_legacy_startup_alias(self):
+        home_page, detail_page = build_test_pages("home", "detail")
+
+        project = build_test_project_from_pages(
+            [home_page, detail_page],
+            startup="detail",
+        )
+
+        assert project.startup_page == "detail"
