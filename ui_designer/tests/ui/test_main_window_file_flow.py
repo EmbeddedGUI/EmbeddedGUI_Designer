@@ -2925,10 +2925,12 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ExportBlockedDemo"
         export_dir = tmp_path / "export_out"
         export_dir.mkdir()
-        project = _create_project(project_dir, "ExportBlockedDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-        root.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ExportBlockedDemo",
+            sdk_root,
+            widgets=[WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)],
+        )
 
         warnings = []
         window = MainWindow(str(sdk_root))
@@ -2957,12 +2959,14 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ExportLegacyDemo"
         export_dir = tmp_path / "export_out"
         export_dir.mkdir()
-        project = _create_project(project_dir, "ExportLegacyDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
         button.on_click = "on_confirm"
-        root.add_child(button)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "ExportLegacyDemo",
+            sdk_root,
+            widgets=[button],
+        )
 
         (export_dir / "main_page.h").write_text(
             (
@@ -3365,10 +3369,12 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CompileBlockedDemo"
-        project = _create_project(project_dir, "CompileBlockedDemo", sdk_root)
-        _page, root = require_project_page_root(project)
-        root.add_child(WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20))
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "CompileBlockedDemo",
+            sdk_root,
+            widgets=[WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)],
+        )
 
         class CompileFailIfCalled:
             app_root_arg = "app"
