@@ -4503,7 +4503,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "StructureHintDemo"
         project = _create_project(project_dir, "StructureHintDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         root.add_child(first)
@@ -4905,7 +4905,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeHintsDemo"
         project = _create_project(project_dir, "ArrangeHintsDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
@@ -4961,7 +4961,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ArrangeToggleHintsDemo"
         project = _create_project(project_dir, "ArrangeToggleHintsDemo", sdk_root)
-        root = project.get_startup_page().root_widget
+        _page, root = require_project_page_root(project)
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         second.designer_locked = True
