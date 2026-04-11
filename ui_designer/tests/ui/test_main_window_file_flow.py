@@ -515,11 +515,11 @@ class TestMainWindowFileFlow:
             encoding="utf-8",
         )
 
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
         from ui_designer.model.widget_model import WidgetModel
         button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
         button.on_click = "on_confirm"
-        page.root_widget.add_child(button)
+        root.add_child(button)
 
         window = MainWindow(str(sdk_root))
         window.project = project
@@ -9358,13 +9358,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsSelectionRefreshDemo"
         project = _create_project(project_dir, "DiagnosticsSelectionRefreshDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9416,14 +9416,14 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsNonNavigableDemo"
         project = _create_project(project_dir, "DiagnosticsNonNavigableDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         layout_parent = WidgetModel("linearlayout", name="layout_parent", x=0, y=0, width=240, height=80)
         managed = WidgetModel("label", name="managed_widget", x=12, y=8, width=80, height=20)
         managed.designer_locked = True
         managed.designer_hidden = True
         layout_parent.add_child(managed)
-        page.root_widget.add_child(layout_parent)
+        root.add_child(layout_parent)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9461,13 +9461,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyDemo"
         project = _create_project(project_dir, "DiagnosticsCopyDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9499,13 +9499,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyFilteredDemo"
         project = _create_project(project_dir, "DiagnosticsCopyFilteredDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9564,13 +9564,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonDemo"
         project = _create_project(project_dir, "DiagnosticsCopyJsonDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9629,13 +9629,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonFilteredDemo"
         project = _create_project(project_dir, "DiagnosticsCopyJsonFilteredDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9678,13 +9678,13 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonSelectedDemo"
         project = _create_project(project_dir, "DiagnosticsCopyJsonSelectedDemo", sdk_root)
-        page = project.get_startup_page()
+        _page, root = require_project_page_root(project)
 
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        page.root_widget.add_child(invalid)
-        page.root_widget.add_child(missing)
+        root.add_child(invalid)
+        root.add_child(missing)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -9724,7 +9724,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonMetadataDemo"
         project = _create_project(project_dir, "DiagnosticsCopyJsonMetadataDemo", sdk_root)
-        page = project.get_startup_page()
+        page, _root = require_project_page_root(project)
         page.user_fields = [{"name": "bad-name", "type": "int", "default": "0"}]
         page.timers = [{"name": "refresh_timer", "callback": "", "delay_ms": "1000", "period_ms": "1000", "auto_start": False}]
         project.save(str(project_dir))
@@ -11110,9 +11110,9 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ToolbarHintDemo"
         project = _create_project(project_dir, "ToolbarHintDemo", sdk_root)
-        page = project.get_startup_page()
+        page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        page.root_widget.add_child(label)
+        root.add_child(label)
         project.save(str(project_dir))
 
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
