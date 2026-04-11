@@ -7473,13 +7473,12 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
 
         hero = WidgetModel("image", name="hero")
         hero.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(hero)
+        detail_root.add_child(hero)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -7517,17 +7516,17 @@ class TestMainWindowFileFlow:
             sdk_root,
             pages=["main_page", "detail_page"],
         )
-        detail_page = project.get_page_by_name("detail_page")
-        assert detail_page is not None
+        _main_page, main_root = require_project_page_root(project, "main_page")
+        detail_page, detail_root = require_project_page_root(project, "detail_page")
         project.resource_catalog.add_image("star.png")
 
         hero_main = WidgetModel("image", name="hero_main")
         hero_main.properties["image_file"] = "star.png"
-        project.get_page_by_name("main_page").root_widget.add_child(hero_main)
+        main_root.add_child(hero_main)
 
         hero_detail = WidgetModel("image", name="hero_detail")
         hero_detail.properties["image_file"] = "star.png"
-        detail_page.root_widget.add_child(hero_detail)
+        detail_root.add_child(hero_detail)
         project.save(str(project_dir))
 
         window = MainWindow(str(sdk_root))
@@ -10123,6 +10122,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -10159,9 +10159,10 @@ class TestMainWindowFileFlow:
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingResourceDemo"
                 project = build_saved_test_project(project_dir, "DiagnosticMissingResourceDemo", sdk_root)
+                _page, root = require_project_page_root(project)
                 missing = WidgetModel("image", name="missing_image", x=16, y=16, width=48, height=48)
                 missing.properties["image_file"] = "ghost.png"
-                project.get_page_by_name("main_page").root_widget.add_child(missing)
+                root.add_child(missing)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
@@ -10224,6 +10225,7 @@ class TestMainWindowFileFlow:
             from ui_designer.model.widget_model import WidgetModel
             from ui_designer.tests.project_builders import build_saved_test_project
             from ui_designer.ui.main_window import MainWindow
+            from ui_designer.utils.scaffold import require_project_page_root
 
 
             def create_sdk_root(root: Path):
@@ -10260,9 +10262,10 @@ class TestMainWindowFileFlow:
                 create_sdk_root(sdk_root)
                 project_dir = temp_root / "DiagnosticMissingStringDemo"
                 project = build_saved_test_project(project_dir, "DiagnosticMissingStringDemo", sdk_root)
+                _page, root = require_project_page_root(project)
                 title = WidgetModel("label", name="title", x=16, y=16, width=80, height=20)
                 title.properties["text"] = "@string/missing_key"
-                project.get_page_by_name("main_page").root_widget.add_child(title)
+                root.add_child(title)
                 project.save(str(project_dir))
 
                 window = MainWindow(str(sdk_root))
