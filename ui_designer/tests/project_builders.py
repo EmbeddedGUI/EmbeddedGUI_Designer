@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from ui_designer.tests.page_builders import build_test_page_from_root
+from ui_designer.tests.page_builders import add_test_widget, build_test_page_from_root
 from ui_designer.model.project import Project
 from ui_designer.utils.scaffold import (
     build_empty_project_model,
@@ -99,6 +99,54 @@ def build_test_project_with_page_roots(
         _page, root = require_project_page_root(project, page.name)
         roots[page.name] = root
     return project, roots
+
+
+def build_test_project_with_widgets(
+    app_name="TestApp",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+    widgets=None,
+):
+    """Build a minimal test project and attach caller-supplied widgets to one page root."""
+    project, page, root = build_test_project_with_page_root(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+    )
+    for widget in widgets or []:
+        root.add_child(widget)
+    return project, page, root
+
+
+def build_test_project_with_widget(
+    app_name="TestApp",
+    widget_type="label",
+    *,
+    page_name="main_page",
+    screen_width=240,
+    screen_height=320,
+    sdk_root="",
+    project_dir="",
+    **widget_kwargs,
+):
+    """Build a minimal test project and attach one basic widget to the selected page."""
+    project, page, _root = build_test_project_with_page_root(
+        app_name,
+        page_name=page_name,
+        screen_width=screen_width,
+        screen_height=screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+    )
+    widget = add_test_widget(page, widget_type, **widget_kwargs)
+    return project, page, widget
 
 
 def build_test_project_from_pages(

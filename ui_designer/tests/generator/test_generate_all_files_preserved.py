@@ -16,6 +16,7 @@ import pytest
 from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
 from ui_designer.tests.project_builders import (
     build_test_project_from_pages,
+    build_test_project_with_widget,
     build_test_project_with_page_root,
 )
 from ui_designer.model.widget_model import WidgetModel
@@ -39,9 +40,14 @@ from ui_designer.utils.scaffold import (
 
 
 def _make_project_with_page(page_name="main_page"):
-    project, _page, root = build_test_project_with_page_root(page_name=page_name)
-    label = WidgetModel("label", name="title_label", x=10, y=10, width=200, height=30)
-    root.add_child(label)
+    project, _page, _widget = build_test_project_with_widget(
+        page_name=page_name,
+        name="title_label",
+        x=10,
+        y=10,
+        width=200,
+        height=30,
+    )
     return project
 
 
@@ -214,11 +220,16 @@ class TestUserOwnedFiles:
             generate_all_files_preserved(proj, str(tmp_path), backup=False)
 
     def test_legacy_user_code_callbacks_source_is_rejected(self, tmp_path):
-        proj = _make_project_with_page("main_page")
-        page, root = require_project_page_root(proj)
-        button = WidgetModel("button", name="confirm_button", x=16, y=16, width=80, height=32)
+        proj, page, button = build_test_project_with_widget(
+            page_name="main_page",
+            widget_type="button",
+            name="confirm_button",
+            x=16,
+            y=16,
+            width=80,
+            height=32,
+        )
         button.on_click = "on_confirm_button_click"
-        root.add_child(button)
 
         user_file = tmp_path / "main_page.c"
         user_file.write_text(
