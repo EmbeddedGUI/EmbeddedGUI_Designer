@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from ui_designer.tests.page_builders import build_test_page_from_root, build_test_pages
+from ui_designer.tests.project_builders import build_saved_test_project, build_test_project
 from ui_designer.model.project import Project
 from ui_designer.model.page import Page
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
@@ -258,9 +259,13 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_save_load_round_trip_preserves_sdk_version_metadata(self, tmp_path, monkeypatch):
-        proj = Project(screen_width=320, screen_height=480, app_name="VersionedApp")
-        proj.sdk_root = str(tmp_path / "sdk")
-        proj.create_new_page("main_page")
+        proj = build_test_project(
+            "VersionedApp",
+            320,
+            480,
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
 
         monkeypatch.setattr(
             "ui_designer.model.project.collect_sdk_fingerprint",
@@ -284,15 +289,17 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_save_preserves_existing_sdk_version_metadata(self, tmp_path, monkeypatch):
-        proj = Project(app_name="PinnedSdkApp")
-        proj.sdk_root = str(tmp_path / "sdk")
+        proj = build_test_project(
+            "PinnedSdkApp",
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
         proj.sdk_fingerprint = SdkFingerprint(
             source_kind="submodule",
             revision="sdk-old-111",
             commit="1111111111111111",
             commit_short="1111111",
         )
-        proj.create_new_page("main_page")
 
         monkeypatch.setattr(
             "ui_designer.model.project.collect_sdk_fingerprint",
@@ -351,9 +358,11 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_save_writes_only_canonical_sdk_root_attribute(self, tmp_path):
-        proj = Project(app_name="CanonicalSdkAttrApp")
-        proj.sdk_root = str(tmp_path / "sdk")
-        proj.create_new_page("main_page")
+        proj = build_test_project(
+            "CanonicalSdkAttrApp",
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
 
         project_dir = str(tmp_path / "CanonicalSdkAttrApp")
         proj.save(project_dir)
@@ -366,12 +375,13 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_load_ignores_legacy_egui_root_project_attribute(self, tmp_path):
-        proj = Project(app_name="LegacyProjectAttrIgnored")
-        proj.sdk_root = str(tmp_path / "sdk")
-        proj.create_new_page("main_page")
-
         project_dir = Path(tmp_path) / "LegacyProjectAttrIgnored"
-        proj.save(str(project_dir))
+        build_saved_test_project(
+            project_dir,
+            "LegacyProjectAttrIgnored",
+            sdk_root=str(tmp_path / "sdk"),
+            pages=["main_page"],
+        )
 
         egui_file = project_dir / "LegacyProjectAttrIgnored.egui"
         tree = ET.parse(str(egui_file))
@@ -390,11 +400,7 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_save_creates_files(self, tmp_path):
-        proj = Project(app_name="FileCheckApp")
-
-        root = WidgetModel("group", name="root_group", x=0, y=0, width=240, height=320)
-        page = build_test_page_from_root("main_page", root=root)
-        proj.add_page(page)
+        proj = build_test_project("FileCheckApp", pages=["main_page"])
 
         project_dir = str(tmp_path / "FileCheckApp")
         proj.save(project_dir)
@@ -409,11 +415,8 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_load_ignores_legacy_resource_src_inputs(self, tmp_path):
-        proj = Project(app_name="LegacySrcIgnored")
-        proj.create_new_page("main_page")
-
         project_dir = tmp_path / "LegacySrcIgnored"
-        proj.save(str(project_dir))
+        build_saved_test_project(project_dir, "LegacySrcIgnored", pages=["main_page"])
 
         legacy_src_dir = project_dir / "resource" / "src"
         (legacy_src_dir / "legacy.png").write_bytes(b"PNG")
@@ -437,11 +440,8 @@ class TestSaveLoad:
 
     @pytest.mark.integration
     def test_load_ignores_legacy_eguiproject_root_resources(self, tmp_path):
-        proj = Project(app_name="LegacyEguiprojectIgnored")
-        proj.create_new_page("main_page")
-
         project_dir = tmp_path / "LegacyEguiprojectIgnored"
-        proj.save(str(project_dir))
+        build_saved_test_project(project_dir, "LegacyEguiprojectIgnored", pages=["main_page"])
 
         shutil.rmtree(project_dir / ".eguiproject" / "resources")
         (project_dir / ".eguiproject" / "resources.xml").write_text(
