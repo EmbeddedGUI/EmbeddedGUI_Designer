@@ -30,7 +30,8 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     apply_designer_project_scaffold,
-    build_empty_project_model,
+    build_empty_project_model_with_root,
+    require_project_page_root,
 )
 
 
@@ -105,20 +106,14 @@ def build_smoke_project(app_name: str, sdk_root: str, project_dir: str) -> tuple
     WidgetRegistry.instance()
     WidgetModel.reset_counter()
 
-    project = build_empty_project_model(
+    project, _page, root = build_empty_project_model_with_root(
         app_name,
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
         sdk_root=str(sdk_root),
         project_dir=str(project_dir),
-        pages=[PAGE_NAME],
+        page_name=PAGE_NAME,
     )
-    page = project.get_startup_page()
-    if page is None:
-        raise RuntimeError("Smoke project did not create a startup page")
-    root = page.root_widget
-    if root is None:
-        raise RuntimeError("Smoke project did not create a root widget")
 
     root_bg = BackgroundModel()
     root_bg.bg_type = "solid"
@@ -292,9 +287,7 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
 
-        page = project.get_startup_page()
-        if page is None:
-            raise RuntimeError("smoke project has no startup page")
+        page, _root = require_project_page_root(project)
 
         files = generate_all_files_preserved(project, str(app_dir), backup=False)
         files[f"{PAGE_NAME}.c"] = build_main_page_user_source(page)

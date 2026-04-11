@@ -11,8 +11,10 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CONFIG_RELPATH,
     apply_designer_project_scaffold,
     build_empty_project_model,
+    build_empty_project_model_with_root,
     build_empty_project_xml,
     default_scaffold_circle_radius,
+    require_project_page_root,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -193,6 +195,39 @@ class TestCoreProjectScaffold:
         assert [page.name for page in project.pages] == ["home", "settings"]
         assert project.get_startup_page().root_widget.width == 320
         assert project.get_startup_page().root_widget.height == 240
+
+    def test_require_project_page_root_returns_named_page_and_root(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            pages=["home", "settings"],
+        )
+
+        page, root = require_project_page_root(project, "settings")
+
+        assert page.name == "settings"
+        assert root is page.root_widget
+        assert root.width == 320
+        assert root.height == 240
+
+    def test_build_empty_project_model_with_root_returns_project_page_and_root(self):
+        project, page, root = build_empty_project_model_with_root(
+            "DemoApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir="D:/workspace/DemoApp",
+            page_name="home",
+        )
+
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.project_dir == os.path.normpath("D:/workspace/DemoApp")
+        assert project.startup_page == "home"
+        assert page.name == "home"
+        assert root is page.root_widget
+        assert root.width == 320
+        assert root.height == 240
 
     def test_build_empty_project_xml_uses_canonical_sdk_root_attribute(self):
         xml = build_empty_project_xml(

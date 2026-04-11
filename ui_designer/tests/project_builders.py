@@ -6,7 +6,10 @@ import os
 from pathlib import Path
 
 from ui_designer.model.project import Project
-from ui_designer.utils.scaffold import build_empty_project_model
+from ui_designer.utils.scaffold import (
+    build_empty_project_model,
+    build_empty_project_model_with_root,
+)
 
 
 def build_test_project(
@@ -39,18 +42,15 @@ def build_test_project_with_root(
     project_dir="",
 ):
     """Build a minimal test project and return it with the startup page root widget."""
-    project = build_test_project(
+    project, _page, root = build_empty_project_model_with_root(
         app_name,
         screen_width,
         screen_height,
         sdk_root=sdk_root,
         project_dir=project_dir,
-        pages=[page_name],
+        page_name=page_name,
     )
-    page = project.get_page_by_name(page_name)
-    assert page is not None
-    assert page.root_widget is not None
-    return project, page.root_widget
+    return project, root
 
 
 def build_test_project_from_pages(

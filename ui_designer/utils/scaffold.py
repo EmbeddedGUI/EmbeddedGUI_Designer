@@ -691,6 +691,42 @@ def build_empty_project_model(
     return project
 
 
+def require_project_page_root(project, page_name=""):
+    """Return a project page and root widget, raising when either is missing."""
+    target_page_name = str(page_name or "").strip()
+    page = project.get_page_by_name(target_page_name) if target_page_name else project.get_startup_page()
+    if page is None:
+        if target_page_name:
+            raise RuntimeError(f"Scaffold project did not create page '{target_page_name}'")
+        raise RuntimeError("Scaffold project did not create a startup page")
+    root = page.root_widget
+    if root is None:
+        raise RuntimeError(f"Scaffold page '{page.name}' did not create a root widget")
+    return page, root
+
+
+def build_empty_project_model_with_root(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+):
+    """Build a minimal Designer project model and return it with its page root widget."""
+    project = build_empty_project_model(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=[page_name],
+    )
+    page, root = require_project_page_root(project, page_name)
+    return project, page, root
+
+
 def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
     """Build an empty ``.egui`` project XML using the shared project model."""
     project = build_empty_project_model(
