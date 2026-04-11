@@ -6209,11 +6209,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsDemo"
-        project = _create_project(project_dir, "AnimationsDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
-        root.add_child(card)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "AnimationsDemo",
+            sdk_root,
+            widgets=[card],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6258,15 +6260,16 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsSelectionDemo"
-        project = _create_project(project_dir, "AnimationsSelectionDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
         badge = WidgetModel("group", name="badge", x=12, y=88, width=80, height=40)
         card.animations = [create_default_animation("alpha")]
         badge.animations = [create_default_animation("color")]
-        root.add_child(card)
-        root.add_child(badge)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "AnimationsSelectionDemo",
+            sdk_root,
+            widgets=[card, badge],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6337,11 +6340,13 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EventCallbackDemo"
-        project = _create_project(project_dir, "EventCallbackDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
-        root.add_child(slider)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "EventCallbackDemo",
+            sdk_root,
+            widgets=[slider],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6368,12 +6373,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeCreateDemo"
-        project = _create_project(project_dir, "UserCodeCreateDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        root.add_child(slider)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "UserCodeCreateDemo",
+            sdk_root,
+            widgets=[slider],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6439,12 +6446,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "UserCodeDuplicateDemo"
-        project = _create_project(project_dir, "UserCodeDuplicateDemo", sdk_root)
-        page, root = require_project_page_root(project)
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        root.add_child(slider)
-        project.save(str(project_dir))
+        project, page, _root = _create_project_with_widgets(
+            project_dir,
+            "UserCodeDuplicateDemo",
+            sdk_root,
+            widgets=[slider],
+        )
 
         source_path = project_dir / "main_page.c"
         source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
@@ -6476,13 +6485,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "BatchEventCallbackDemo"
-        project = _create_project(project_dir, "BatchEventCallbackDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         first = WidgetModel("slider", name="volume_slider_a", x=16, y=16, width=160, height=24)
         second = WidgetModel("slider", name="volume_slider_b", x=16, y=48, width=160, height=24)
-        root.add_child(first)
-        root.add_child(second)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "BatchEventCallbackDemo",
+            sdk_root,
+            widgets=[first, second],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6891,12 +6901,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteResourceDemo"
-        project = _create_project(project_dir, "DeleteResourceDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DeleteResourceDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6921,12 +6933,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AssignTextResourceDemo"
-        project = _create_project(project_dir, "AssignTextResourceDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "AssignTextResourceDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -6950,12 +6964,14 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "GenerateCharsetDemo"
-        project = _create_project(project_dir, "GenerateCharsetDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "GenerateCharsetDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7028,13 +7044,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyCharsetDemo"
-        project = _create_project(project_dir, "PropertyCharsetDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo_font.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PropertyCharsetDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7063,13 +7081,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyCharsetPresetDemo"
-        project = _create_project(project_dir, "PropertyCharsetPresetDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "simhei.ttf"
         label.properties["font_text_file"] = "charset_ascii_printable.txt"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "PropertyCharsetPresetDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
@@ -7138,13 +7158,15 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DeleteTextResourceDemo"
-        project = _create_project(project_dir, "DeleteTextResourceDemo", sdk_root)
-        _page, root = require_project_page_root(project)
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        root.add_child(label)
-        project.save(str(project_dir))
+        project, _page, _root = _create_project_with_widgets(
+            project_dir,
+            "DeleteTextResourceDemo",
+            sdk_root,
+            widgets=[label],
+        )
 
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
