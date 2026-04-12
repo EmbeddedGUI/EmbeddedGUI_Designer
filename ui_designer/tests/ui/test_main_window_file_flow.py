@@ -3668,7 +3668,6 @@ class TestMainWindowFileFlow:
             "ui_designer.ui.main_window.prepare_project_codegen_outputs",
             _fake_prepare_project_codegen_outputs(
                 {".designer/uicode.c": "// rebuild test\n"},
-                all_generated_files={".designer/uicode.c": ("// rebuild test\n", "generated_always")},
                 capture=generated,
             ),
         )
@@ -3758,7 +3757,6 @@ class TestMainWindowFileFlow:
             "ui_designer.ui.main_window.prepare_project_codegen_outputs",
             _fake_prepare_project_codegen_outputs(
                 {".designer/uicode.c": "// rebuild button test\n"},
-                all_generated_files={".designer/uicode.c": ("// rebuild button test\n", "generated_always")},
             ),
         )
 

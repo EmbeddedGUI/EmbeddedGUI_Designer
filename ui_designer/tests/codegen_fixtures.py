@@ -25,6 +25,14 @@ def build_materialized_codegen_result(files=None, *, all_generated_files=None):
     )
 
 
+def build_generated_always_codegen_files(files=None):
+    """Return fake all_generated_files metadata for generated-always outputs."""
+    return {
+        relpath: (text, "generated_always")
+        for relpath, text in dict(files or {}).items()
+    }
+
+
 def build_fake_save_project_and_materialize_codegen(
     files_or_filename,
     content=None,
@@ -67,9 +75,14 @@ def build_fake_prepare_project_codegen_outputs(
     capture=None,
 ):
     """Return a fake prepare callable that records args and runs the prepare hook."""
+    normalized_files = dict(files or {})
     prepared = build_materialized_codegen_result(
-        files,
-        all_generated_files=all_generated_files,
+        normalized_files,
+        all_generated_files=(
+            build_generated_always_codegen_files(normalized_files)
+            if all_generated_files is None
+            else all_generated_files
+        ),
     )
 
     def _prepare(project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False):

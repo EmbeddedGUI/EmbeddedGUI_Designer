@@ -3,6 +3,7 @@
 from ui_designer.tests.codegen_fixtures import (
     build_fake_prepare_project_codegen_outputs,
     build_fake_save_project_and_materialize_codegen,
+    build_generated_always_codegen_files,
     build_materialized_codegen_result,
 )
 from ui_designer.utils.scaffold import build_empty_project_model
@@ -17,6 +18,13 @@ class TestCodegenFixtures:
 
         assert result.files == {"main_page.c": "// generated\n"}
         assert result.all_generated_files == {
+            ".designer/uicode.c": ("// generated\n", "generated_always")
+        }
+
+    def test_build_generated_always_codegen_files_maps_content_to_generated_always(self):
+        assert build_generated_always_codegen_files(
+            {".designer/uicode.c": "// generated\n"}
+        ) == {
             ".designer/uicode.c": ("// generated\n", "generated_always")
         }
 
@@ -61,7 +69,6 @@ class TestCodegenFixtures:
         seen = {}
         fake_prepare = build_fake_prepare_project_codegen_outputs(
             {".designer/uicode.c": "// rebuild\n"},
-            all_generated_files={".designer/uicode.c": ("// rebuild\n", "generated_always")},
             capture=seen,
         )
 
