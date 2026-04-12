@@ -33,6 +33,8 @@ from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from ..utils.scaffold import (
     project_config_dir,
+    project_config_images_dir,
+    project_config_resource_dir,
     project_file_path,
     project_generated_resource_dir,
     project_resource_src_dir,
@@ -213,7 +215,7 @@ class Project:
         eguiproject_dir = self.get_eguiproject_dir()
         if not eguiproject_dir:
             return ""
-        return os.path.join(eguiproject_dir, "resources")
+        return project_config_resource_dir(self.get_app_dir())
 
     def get_eguiproject_images_dir(self):
         """Get the .eguiproject/resources/images/ directory path.
@@ -223,7 +225,7 @@ class Project:
         res_dir = self.get_eguiproject_resource_dir()
         if not res_dir:
             return ""
-        return os.path.join(res_dir, "images")
+        return project_config_images_dir(self.get_app_dir())
 
     # 鈹€鈹€ Widgets 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -285,7 +287,7 @@ class Project:
             page.save(eguiproject_dir)
 
         # Save resource catalog to .eguiproject/resources/resources.xml
-        resources_dir = os.path.join(eguiproject_dir, "resources")
+        resources_dir = project_config_resource_dir(project_dir)
         os.makedirs(resources_dir, exist_ok=True)
         self.resource_catalog.save(resources_dir)
 
@@ -352,8 +354,8 @@ class Project:
         proj.startup_page = root.get("startup", "main_page")
 
         # Determine canonical resource directories
-        eguiproject_res_dir = os.path.join(config_dir, "resources")
-        eguiproject_images_dir = os.path.join(eguiproject_res_dir, "images")
+        eguiproject_res_dir = project_config_resource_dir(project_dir)
+        eguiproject_images_dir = project_config_images_dir(project_dir)
 
         # Load resource catalog
         catalog = ResourceCatalog.load(eguiproject_res_dir)
@@ -401,8 +403,8 @@ class Project:
         Only copies if source is newer or destination doesn't exist.
         """
         config_dir = project_config_dir(project_dir)
-        eguiproject_res_dir = os.path.join(config_dir, "resources")
-        images_dir = os.path.join(eguiproject_res_dir, "images")
+        eguiproject_res_dir = project_config_resource_dir(project_dir)
+        images_dir = project_config_images_dir(project_dir)
         target_src_dir = project_resource_src_dir(project_dir)
 
         if not os.path.isdir(eguiproject_res_dir):

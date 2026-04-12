@@ -131,6 +131,8 @@ from ..utils.scaffold import (
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
     project_config_dir,
+    project_config_images_dir,
+    project_config_resource_dir,
     project_generated_resource_dir,
     project_file_path,
     project_resource_src_dir,
@@ -2778,7 +2780,7 @@ class MainWindow(QMainWindow):
             os.path.join(project_resource_src_dir(self._project_dir), APP_RESOURCE_CONFIG_FILENAME),
             os.path.join(project_resource_src_dir(self._project_dir), DESIGNER_RESOURCE_DIRNAME),
             os.path.join(eguiproject_dir, "layout"),
-            os.path.join(eguiproject_dir, "resources"),
+            project_config_resource_dir(self._project_dir),
             os.path.join(eguiproject_dir, "mockup"),
             WidgetRegistry.instance().app_local_plugin_dir(self._project_dir),
         ]
@@ -5048,7 +5050,7 @@ class MainWindow(QMainWindow):
         Used by the resource panel for browsing and importing.
         """
         if self._project_dir:
-            return os.path.join(project_config_dir(self._project_dir), "resources")
+            return project_config_resource_dir(self._project_dir)
         return ""
 
     def _get_eguiproject_images_dir(self):
@@ -5057,8 +5059,9 @@ class MainWindow(QMainWindow):
         Authoritative directory for source image files.
         Used for Page XML image path resolution.
         """
-        res_dir = self._get_eguiproject_resource_dir()
-        return os.path.join(res_dir, "images") if res_dir else ""
+        if self._project_dir:
+            return project_config_images_dir(self._project_dir)
+        return ""
 
     def _on_resource_selected(self, res_type, filename):
         """User selected/assigned a resource from the ResourcePanel."""

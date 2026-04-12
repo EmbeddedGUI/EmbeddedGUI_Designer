@@ -184,6 +184,14 @@ def project_resource_src_dir(project_dir: str) -> str:
     return os.path.join(project_generated_resource_dir(project_dir), "src")
 
 
+def project_config_resource_dir(project_dir: str) -> str:
+    return os.path.join(project_config_dir(project_dir), "resources")
+
+
+def project_config_images_dir(project_dir: str) -> str:
+    return os.path.join(project_config_resource_dir(project_dir), "images")
+
+
 def project_file_relpath(app_name: str) -> str:
     return f"{app_name}.egui"
 

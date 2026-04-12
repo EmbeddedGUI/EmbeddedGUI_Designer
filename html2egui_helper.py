@@ -51,6 +51,8 @@ from ui_designer.utils.scaffold import (
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_config_dir,
+    project_config_images_dir,
+    project_config_resource_dir,
     project_generated_resource_dir,
     project_file_path,
     project_resource_src_dir,
@@ -91,12 +93,12 @@ def _get_app_layout_dir(app_dir):
 
 def _get_app_config_resource_dir(app_dir):
     """Return the authoritative .eguiproject resource directory."""
-    return os.path.join(_get_app_config_dir(app_dir), "resources")
+    return project_config_resource_dir(app_dir)
 
 
 def _get_app_resource_images_dir(app_dir):
     """Return the authoritative image source directory."""
-    return os.path.join(_get_app_config_resource_dir(app_dir), "images")
+    return project_config_images_dir(app_dir)
 
 
 def _get_app_generated_resource_dir(app_dir):
