@@ -2633,12 +2633,12 @@ class MainWindow(QMainWindow):
             self._bump_async_generation()
             self._shutdown_async_activity()
             self._recreate_compiler()
-            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(
+            preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
                 clear_when_available=True,
                 preload_preview_error=True,
+                probe_preview_availability=True,
             )
             if preview_unavailable_reason:
-                self._switch_to_python_preview(preview_unavailable_reason)
                 editing_only_message = f"Editing-only mode: {preview_unavailable_reason}"
                 if status_message:
                     editing_only_message = f"{status_message} | {editing_only_message}"
@@ -3053,7 +3053,24 @@ class MainWindow(QMainWindow):
                 self._clear_auto_compile_retry_block()
         return reason
 
-    def _sync_preview_after_compiler_recreation(self, *, clear_when_available=False, preload_preview_error=False):
+    def _sync_preview_after_compiler_recreation(
+        self,
+        *,
+        clear_when_available=False,
+        preload_preview_error=False,
+        probe_environmental_recovery=False,
+        probe_preview_availability=False,
+    ):
+        previous_reason = str(self._auto_compile_retry_block_reason or "").strip()
+        if self.compiler is not None and self.compiler.can_build():
+            ensure_available = getattr(self.compiler, "ensure_preview_build_available", None)
+            should_probe = probe_preview_availability or (
+                probe_environmental_recovery
+                and previous_reason
+                and self._preview_retry_block_reason_is_environmental(previous_reason)
+            )
+            if should_probe and callable(ensure_available):
+                ensure_available(force=True)
         reason = self._sync_auto_compile_retry_block_for_preview_state(
             clear_when_available=clear_when_available,
             preload_preview_error=preload_preview_error,
@@ -4718,7 +4735,10 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
-        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            preload_preview_error=True,
+            probe_environmental_recovery=True,
+        )
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
@@ -4759,7 +4779,10 @@ class MainWindow(QMainWindow):
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._recreate_compiler()
-        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            preload_preview_error=True,
+            probe_environmental_recovery=True,
+        )
         self._undo_manager.mark_all_saved()
         self._persist_current_project_to_config()
         self._refresh_project_watch_snapshot()
@@ -7392,7 +7415,10 @@ class MainWindow(QMainWindow):
             return
 
         self._recreate_compiler()
-        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(preload_preview_error=True)
+        preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
+            preload_preview_error=True,
+            probe_environmental_recovery=True,
+        )
         self._undo_manager.mark_all_saved()
         self._refresh_project_watch_snapshot()
         self._update_window_title()

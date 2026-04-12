@@ -792,6 +792,77 @@ class TestMainWindowFileFlow:
         assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
         _close_window(window)
 
+    def test_save_project_reprobes_environmental_preview_block_after_compiler_recreation(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _ReprobeCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.preview_error = ""
+                self.ensure_calls = []
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return self.preview_error
+
+            def ensure_preview_build_available(self, force=False):
+                self.ensure_calls.append(force)
+                self.preview_error = "make: *** No rule to make target 'main.exe'.  Stop."
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                return _IdleWorker()
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "SaveReprobePreviewDemo"
+        project = _create_project(project_dir, "SaveReprobePreviewDemo", sdk_root)
+        compiler = _ReprobeCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        window.project = project
+        window.project_root = str(sdk_root)
+        window._project_dir = str(project_dir)
+        window.app_name = "SaveReprobePreviewDemo"
+        window._block_auto_compile_retry("make: *** No rule to make target 'main.exe'.  Stop.")
+
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.save_project_and_materialize_codegen",
+            _fake_save_project_and_materialize_codegen("generated.c", "// generated\n"),
+        )
+
+        assert window._save_project() is True
+
+        assert compiler.ensure_calls == [True]
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
+        _close_window(window)
+
     def test_save_project_files_writes_split_page_outputs_on_disk(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
@@ -4285,6 +4356,70 @@ class TestMainWindowFileFlow:
 
         assert compile_cycle_calls == [False]
         assert window._auto_compile_retry_block_reason == ""
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_apply_sdk_root_probes_preview_availability_before_clearing_state(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _DelayedProbeCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+                self.preview_error = ""
+                self.ensure_calls = []
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return self.preview_error
+
+            def ensure_preview_build_available(self, force=False):
+                self.ensure_calls.append(force)
+                self.preview_error = "make: *** No rule to make target 'main.exe'.  Stop."
+                return False
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ApplySdkRootDelayedProbeDemo"
+        project = _create_project(project_dir, "ApplySdkRootDelayedProbeDemo", sdk_root)
+        compiler = _DelayedProbeCompiler(project_dir)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        window._apply_sdk_root(str(sdk_root))
+
+        assert compiler.ensure_calls == [True]
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        assert window._compile_action.isEnabled() is False
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
