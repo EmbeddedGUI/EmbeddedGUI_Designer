@@ -40,10 +40,10 @@ from html2egui_helper import (
     _get_app_resource_src_dir,
 )
 from figmamake_anim_extractor import AnimExtractor
+from ui_designer.model.workspace import sdk_example_project_path
 from ui_designer.utils.scaffold import (
     build_empty_project_xml,
     build_empty_resources_xml,
-    project_file_path,
     project_resource_catalog_path,
 )
 from ui_designer.utils.xml_utils import write_xml_file
@@ -588,7 +588,7 @@ class FigmaMakeCodegen:
             stored_sdk_root=sdk_root_rel,
             pages=page_names,
         )
-        egui_file = project_file_path(app_dir, self.app_name)
+        egui_file = sdk_example_project_path(sdk_root, self.app_name)
         with open(egui_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(project_xml)
         print(f"  Created: {self.app_name}.egui")

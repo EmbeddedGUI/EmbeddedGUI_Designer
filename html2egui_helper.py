@@ -34,6 +34,7 @@ import sys
 from ui_designer.model.workspace import (
     require_designer_sdk_root,
     sdk_example_app_dir,
+    sdk_example_project_path,
     sdk_output_dir,
     sdk_resource_generator_path,
     sdk_runtime_check_output_dir,
@@ -63,7 +64,6 @@ from ui_designer.utils.scaffold import (
     project_config_resource_dir,
     project_designer_resource_config_path,
     project_generated_resource_dir,
-    project_file_path,
     project_resource_src_dir,
     project_supported_text_path,
     project_user_resource_config_path,
@@ -1541,7 +1541,7 @@ def cmd_generate_code(args):
     sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     # Find .egui project file
-    egui_file = project_file_path(app_dir, app_name)
+    egui_file = sdk_example_project_path(sdk_root, app_name)
     if not os.path.isfile(egui_file):
         print(f"ERROR: Project file not found: {egui_file}")
         print("Run 'scaffold' first to create the project structure.")

@@ -76,6 +76,7 @@ from ..model.workspace import (
     resolve_sdk_root_candidate,
     sdk_output_dir,
     sdk_output_path,
+    sdk_example_project_path,
     sdk_resource_generator_path,
 )
 from ..model.resource_binding import assign_resource_to_widget
@@ -4087,7 +4088,7 @@ class MainWindow(QMainWindow):
     def _initialize_unmanaged_sdk_example(self, entry, sdk_root):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
-        project_path = normalize_path(project_file_path(app_dir, app_name))
+        project_path = sdk_example_project_path(sdk_root, app_name)
         eguiproject_dir = project_config_dir(app_dir)
 
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):

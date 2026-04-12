@@ -267,6 +267,15 @@ def sdk_example_app_dir(sdk_root: str | None, app_name: str | None) -> str:
     return normalize_path(os.path.join(examples_dir, app_name))
 
 
+def sdk_example_project_path(sdk_root: str | None, app_name: str | None) -> str:
+    """Return the absolute SDK example ``.egui`` project file path."""
+    app_name = str(app_name or "").strip()
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir or not app_name:
+        return ""
+    return normalize_path(os.path.join(app_dir, f"{app_name}.egui"))
+
+
 def compute_make_app_root_arg(sdk_root: str, app_dir: str, app_name: str) -> str:
     """Compute ``EGUI_APP_ROOT_PATH`` for make."""
     sdk_root = normalize_path(sdk_root)

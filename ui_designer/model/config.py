@@ -6,13 +6,14 @@ import json
 import os
 import sys
 
-from ..utils.scaffold import project_build_mk_path, project_file_path
+from ..utils.scaffold import project_build_mk_path
 from .workspace import (
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
     normalize_path,
     resolve_available_sdk_root,
     sdk_example_app_dir,
+    sdk_example_project_path,
     sdk_examples_dir,
 )
 
@@ -315,11 +316,9 @@ class DesignerConfig:
 
     def get_project_path(self, app_name=None, sdk_root=None):
         """Get the default SDK example project path for an app."""
-        app_dir = self.get_app_dir(app_name, sdk_root)
-        if not app_dir:
-            return ""
         app_name = app_name or self.last_app
-        return project_file_path(app_dir, app_name)
+        sdk_root = self._resolve_sdk_root(sdk_root)
+        return sdk_example_project_path(sdk_root, app_name)
 
     def list_available_app_entries(self, sdk_root=None, include_unmanaged=False):
         """List all available app entries in the SDK ``example/`` directory."""
@@ -333,13 +332,13 @@ class DesignerConfig:
 
         entries = []
         for name in os.listdir(example_dir):
-            app_path = os.path.join(example_dir, name)
+            app_path = sdk_example_app_dir(sdk_root, name)
             if not os.path.isdir(app_path):
                 continue
             if not os.path.isfile(project_build_mk_path(app_path)):
                 continue
 
-            project_path = project_file_path(app_path, name)
+            project_path = sdk_example_project_path(sdk_root, name)
             has_project = os.path.isfile(project_path)
             if not has_project and not include_unmanaged:
                 continue

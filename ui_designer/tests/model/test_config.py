@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import patch
 
 from ui_designer.model.config import DesignerConfig, _get_config_dir, _get_config_path
-from ui_designer.model.workspace import normalize_path
+from ui_designer.model.workspace import normalize_path, sdk_example_project_path
 
 
 @pytest.fixture(autouse=True)
@@ -304,7 +304,7 @@ class TestPathManagement:
         config.sdk_root = "/project"
         config.last_app = "MyApp"
         result = config.get_project_path()
-        assert result == os.path.join(normalize_path("/project"), "example", "MyApp", "MyApp.egui")
+        assert result == sdk_example_project_path("/project", "MyApp")
 
     def test_get_project_path_empty(self, config):
         config.sdk_root = ""
@@ -329,6 +329,40 @@ class TestPathManagement:
             apps = config.list_available_apps()
         assert "ValidApp" in apps
         assert "InvalidApp" not in apps
+
+    def test_list_available_app_entries(self, config, tmp_path):
+        config.sdk_root = str(tmp_path)
+        example_dir = tmp_path / "example"
+        example_dir.mkdir()
+
+        managed_app_dir = example_dir / "ManagedApp"
+        managed_app_dir.mkdir()
+        (managed_app_dir / "build.mk").write_text("")
+        (managed_app_dir / "ManagedApp.egui").write_text("")
+
+        unmanaged_app_dir = example_dir / "UnmanagedApp"
+        unmanaged_app_dir.mkdir()
+        (unmanaged_app_dir / "build.mk").write_text("")
+
+        with patch("ui_designer.model.config.resolve_available_sdk_root", side_effect=_resolve_without_workspace_discovery):
+            entries = config.list_available_app_entries(include_unmanaged=True)
+
+        assert entries == [
+            {
+                "app_name": "ManagedApp",
+                "app_dir": normalize_path(str(managed_app_dir)),
+                "project_path": sdk_example_project_path(str(tmp_path), "ManagedApp"),
+                "has_project": True,
+                "is_unmanaged": False,
+            },
+            {
+                "app_name": "UnmanagedApp",
+                "app_dir": normalize_path(str(unmanaged_app_dir)),
+                "project_path": "",
+                "has_project": False,
+                "is_unmanaged": True,
+            },
+        ]
 
     def test_list_available_apps_empty_root(self, config):
         config.sdk_root = ""

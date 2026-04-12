@@ -29,7 +29,6 @@ from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    project_file_path,
     save_project_and_materialize_codegen,
 )
 
@@ -290,7 +289,7 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
             extra_files={f"{PAGE_NAME}.c": build_main_page_user_source(page)},
             newline="\n",
         )
-        loaded = Project.load(project_file_path(str(app_dir), APP_NAME))
+        loaded = Project.load(str(app_dir))
         if loaded.sdk_root != resolved_sdk_root:
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
