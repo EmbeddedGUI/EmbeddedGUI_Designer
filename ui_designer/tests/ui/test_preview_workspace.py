@@ -6,7 +6,8 @@ from ui_designer.tests.page_builders import (
     build_test_page_root_with_widgets,
     build_test_page_with_widget,
 )
-from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip_if_no_qt
+from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
+from ui_designer.tests.ui.window_test_helpers import close_test_window as _dispose_widget
 from ui_designer.utils.scaffold import add_widget_children
 
 if HAS_PYQT5:
@@ -15,12 +16,6 @@ if HAS_PYQT5:
     from PyQt5.QtWidgets import QScrollArea
 
 _skip_no_qt = skip_if_no_qt
-
-
-def _dispose_widget(widget):
-    close_widget_safely(widget)
-
-
 def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton, modifiers=Qt.NoModifier):
     return QMouseEvent(event_type, QPointF(pos), button, buttons, modifiers)
 

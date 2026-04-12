@@ -488,7 +488,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_trigger_compile", lambda: compile_calls.append("compile"))
 
         loaded = _load_project(project_dir)
-        window._open_loaded_project(loaded, str(project_dir), preferred_sdk_root=str(sdk_root), silent=False)
+        _open_project_window(window, loaded, project_dir, sdk_root, silent=False)
 
         reloaded = _load_project(project_dir)
         assert prompts
@@ -3520,7 +3520,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(window, "_trigger_compile", lambda: None)
 
-        window._open_loaded_project(_load_project(project_dir), str(project_dir), preferred_sdk_root="", silent=True)
+        _open_project_window(window, _load_project(project_dir), project_dir)
 
         assert window.project_root == os.path.normpath(os.path.abspath(sdk_root))
         assert window.project.sdk_root == os.path.normpath(os.path.abspath(sdk_root))
@@ -9407,7 +9407,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(restored, "_recreate_compiler", lambda: setattr(restored, "compiler", _DisabledCompiler()))
         monkeypatch.setattr(restored, "_trigger_compile", lambda: None)
 
-        restored._open_loaded_project(project, str(project_dir), preferred_sdk_root=str(sdk_root), silent=True)
+        _open_project_window(restored, project, project_dir, sdk_root)
         restored._update_diagnostics_panel()
 
         assert restored.diagnostics_panel._severity_filter_combo.currentData() == "warning"
