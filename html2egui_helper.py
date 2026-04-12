@@ -33,8 +33,6 @@ import sys
 
 from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.resource_config_overlay import (
-    APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
-    APP_RESOURCE_CONFIG_FILENAME,
     ensure_resource_config_file,
     is_designer_resource_path,
     user_resource_config_path,
@@ -1554,10 +1552,10 @@ def cmd_generate_code(args):
         )
     )
     if os.path.isdir(_get_app_config_resource_dir(app_dir)):
-        print("  Synced project resources to resource/src/")
+        print(f"  Synced project resources to {os.path.dirname(RESOURCE_CONFIG_RELPATH)}/")
     if user_config_created:
-        print(f"  Created: resource/src/{APP_RESOURCE_CONFIG_FILENAME}")
-    print(f"  Generated: resource/src/.designer/{APP_RESOURCE_CONFIG_DESIGNER_FILENAME}")
+        print(f"  Created: {RESOURCE_CONFIG_RELPATH}")
+    print(f"  Generated: {DESIGNER_RESOURCE_CONFIG_RELPATH}")
 
     # Generate C code
     materialized = materialize_project_codegen_outputs(

@@ -121,7 +121,11 @@ from ..utils.resource_config_overlay import (
     DESIGNER_RESOURCE_DIRNAME,
 )
 from ..utils.scaffold import (
+    APP_CONFIG_DESIGNER_RELPATH,
+    BUILD_DESIGNER_RELPATH,
+    DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
+    RESOURCE_DIR_RELPATH,
     bind_project_storage,
     copy_project_sidecar_files,
     designer_page_header_relpath,
@@ -2557,8 +2561,8 @@ class MainWindow(QMainWindow):
             "The project was created or last reset against a different SDK revision.\n\n"
             f"Recorded SDK revision:\n{recorded_revision}\n\n"
             f"Current SDK revision:\n{current_revision}\n\n"
-            "Reset the project scaffold now? This regenerates .designer/build_designer.mk, "
-            ".designer/app_egui_config_designer.h, resource/src/.designer/app_resource_config_designer.json, "
+            f"Reset the project scaffold now? This regenerates {BUILD_DESIGNER_RELPATH}, "
+            f"{APP_CONFIG_DESIGNER_RELPATH}, {DESIGNER_RESOURCE_CONFIG_RELPATH}, "
             "and updates the .egui SDK version metadata while preserving user wrapper/overlay files.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
@@ -5229,7 +5233,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(
                     self,
                     "Error",
-                    "No .eguiproject/resources directory found.\nPlease import resources first.",
+                    f"No {RESOURCE_DIR_RELPATH} directory found.\nPlease import resources first.",
                 )
             return False
 
