@@ -61,6 +61,7 @@ from ui_designer.utils.scaffold import (
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
+    copy_project_sidecar_files,
     materialize_generated_project_files,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
@@ -223,6 +224,49 @@ class TestGeneratedProjectFileHelpers:
         assert removed == ("uicode.c",)
         assert (designer_dir / "uicode.c").read_text(encoding="utf-8") == "int generated(void) { return 1; }\n"
         assert not (project_dir / "uicode.c").exists()
+
+
+class TestProjectSidecarCopyHelpers:
+    def test_copy_project_sidecar_files_copies_user_sidecars_and_filters_designer_resources(self, tmp_path):
+        src_dir = tmp_path / "SrcDemo"
+        dst_dir = tmp_path / "DstDemo"
+        resource_dir = src_dir / ".eguiproject" / "resources"
+        images_dir = resource_dir / "images"
+        mockup_dir = src_dir / ".eguiproject" / "mockup"
+        resource_src_dir = src_dir / "resource" / "src"
+
+        images_dir.mkdir(parents=True)
+        mockup_dir.mkdir(parents=True)
+        resource_src_dir.mkdir(parents=True)
+        dst_dir.mkdir(parents=True)
+
+        (src_dir / "build.mk").write_text("# custom build\n", encoding="utf-8")
+        (src_dir / "app_egui_config.h").write_text("#define CUSTOM_CFG 1\n", encoding="utf-8")
+        (resource_src_dir / "app_resource_config.json").write_text(
+            json.dumps({"img": [{"file": "legacy.png"}], "font": []}, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        (images_dir / "legacy.png").write_bytes(b"PNG")
+        (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
+        (resource_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
+        (resource_dir / "keep.txt").write_text("keep\n", encoding="utf-8")
+        (mockup_dir / "legacy.txt").write_text("mock\n", encoding="utf-8")
+
+        (dst_dir / "build.mk").write_text("# existing build\n", encoding="utf-8")
+
+        copy_project_sidecar_files(str(src_dir), str(dst_dir))
+
+        assert (dst_dir / "build.mk").read_text(encoding="utf-8") == "# existing build\n"
+        assert (dst_dir / "app_egui_config.h").read_text(encoding="utf-8") == "#define CUSTOM_CFG 1\n"
+        assert json.loads((dst_dir / "resource" / "src" / "app_resource_config.json").read_text(encoding="utf-8")) == {
+            "img": [{"file": "legacy.png"}],
+            "font": [],
+        }
+        assert (dst_dir / ".eguiproject" / "resources" / "images" / "legacy.png").read_bytes() == b"PNG"
+        assert not (dst_dir / ".eguiproject" / "resources" / "images" / "_generated_text_preview.png").exists()
+        assert not (dst_dir / ".eguiproject" / "resources" / "_generated_text_demo_16_4.txt").exists()
+        assert (dst_dir / ".eguiproject" / "resources" / "keep.txt").read_text(encoding="utf-8") == "keep\n"
+        assert (dst_dir / ".eguiproject" / "mockup" / "legacy.txt").read_text(encoding="utf-8") == "mock\n"
 
 
 class TestSyncProjectScaffoldSidecars:

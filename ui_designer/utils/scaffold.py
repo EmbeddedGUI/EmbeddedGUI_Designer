@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 
 from .resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
@@ -17,6 +18,7 @@ from .resource_config_overlay import (
     DESIGNER_RESOURCE_DIRNAME,
     designer_resource_config_path,
     ensure_resource_config_file,
+    is_designer_resource_path,
     make_empty_resource_config_content,
     user_resource_config_path,
 )
@@ -215,6 +217,60 @@ def project_file_path(project_dir: str, app_name: str) -> str:
 
 def project_layout_xml_relpath(page_name: str) -> str:
     return f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
+
+
+def _normalize_project_copy_dir(path: str) -> str:
+    return os.path.normpath(os.path.abspath(path)) if path else ""
+
+
+def _copy_file_if_missing(src_path: str, dst_path: str) -> None:
+    if not os.path.isfile(src_path) or os.path.exists(dst_path):
+        return
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+    shutil.copy2(src_path, dst_path)
+
+
+def _copy_project_resource_tree(src_dir: str, dst_dir: str) -> None:
+    for walk_root, dir_names, file_names in os.walk(src_dir):
+        dir_names[:] = [name for name in dir_names if not is_designer_resource_path(name)]
+        rel_root = os.path.relpath(walk_root, src_dir)
+        walk_dst = dst_dir if rel_root in ("", ".") else os.path.join(dst_dir, rel_root)
+        os.makedirs(walk_dst, exist_ok=True)
+        for file_name in file_names:
+            if is_designer_resource_path(file_name):
+                continue
+            shutil.copy2(
+                os.path.join(walk_root, file_name),
+                os.path.join(walk_dst, file_name),
+            )
+
+
+def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
+    """Copy user-owned Save As sidecars while skipping Designer-reserved resources."""
+    src_dir = _normalize_project_copy_dir(src_dir)
+    dst_dir = _normalize_project_copy_dir(dst_dir)
+    if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:
+        return
+
+    for rel_path in (
+        BUILD_MK_RELPATH,
+        APP_CONFIG_RELPATH,
+        RESOURCE_CONFIG_RELPATH,
+    ):
+        _copy_file_if_missing(
+            os.path.join(src_dir, rel_path),
+            os.path.join(dst_dir, rel_path),
+        )
+
+    src_resource_dir = project_config_resource_dir(src_dir)
+    dst_resource_dir = project_config_resource_dir(dst_dir)
+    if os.path.isdir(src_resource_dir):
+        _copy_project_resource_tree(src_resource_dir, dst_resource_dir)
+
+    src_mockup_dir = project_config_mockup_dir(src_dir)
+    dst_mockup_dir = project_config_mockup_dir(dst_dir)
+    if os.path.isdir(src_mockup_dir):
+        shutil.copytree(src_mockup_dir, dst_mockup_dir, dirs_exist_ok=True)
 
 
 def default_scaffold_circle_radius(screen_width, screen_height) -> int:
