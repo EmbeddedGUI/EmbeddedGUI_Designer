@@ -383,6 +383,7 @@ class MainWindow(QMainWindow):
         self._project_dirty = False
         self._project_dirty_sources = []
         self._last_runtime_error_text = ""
+        self._auto_compile_retry_block_reason = ""
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -2973,6 +2974,17 @@ class MainWindow(QMainWindow):
         self._update_workspace_chips()
         self._update_workspace_tab_metadata()
 
+    def _is_auto_compile_retry_blocked(self):
+        return bool(self._auto_compile_retry_block_reason)
+
+    def _block_auto_compile_retry(self, reason=""):
+        self._auto_compile_retry_block_reason = str(reason or "").strip()
+        self._compile_timer.stop()
+        self._pending_compile = False
+
+    def _clear_auto_compile_retry_block(self):
+        self._auto_compile_retry_block_reason = ""
+
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
@@ -4556,6 +4568,7 @@ class MainWindow(QMainWindow):
             sdk_root=sdk_root,
             remove_legacy_designer_files=True,
         )
+        self._clear_auto_compile_retry_block()
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)
         self.statusBar().showMessage(f"Created project: {dialog.app_name}")
 
@@ -4568,6 +4581,7 @@ class MainWindow(QMainWindow):
 
         project = load_saved_project_model(path)
         project_dir = path if os.path.isdir(path) else os.path.dirname(path)
+        self._clear_auto_compile_retry_block()
         self._open_loaded_project(project, project_dir, preferred_sdk_root=preferred_sdk_root, silent=silent)
 
     def _open_project(self):
@@ -4938,6 +4952,8 @@ class MainWindow(QMainWindow):
             return
         if self._is_closing:
             return
+        if self._is_auto_compile_retry_blocked():
+            return
         if self.compiler is None or not self.compiler.can_build():
             reason = "SDK unavailable, compile preview disabled"
             if self.compiler is not None and self.compiler.get_build_error():
@@ -4967,6 +4983,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Ready (precompiled)", 3000)
             self.debug_panel.log_success("Background precompile completed")
         else:
+            self._block_auto_compile_retry(self._compile_failure_summary(message, "Precompile failed"))
             self.statusBar().showMessage("Precompile failed", 5000)
             self.debug_panel.log_error("Background precompile failed")
             self.debug_panel.log_compile_output(False, message)
@@ -7190,6 +7207,8 @@ class MainWindow(QMainWindow):
             return
         if not self.auto_compile:
             return
+        if self._is_auto_compile_retry_blocked():
+            return
         if self.compiler is None:
             self._refresh_python_preview("SDK unavailable, compile preview disabled")
             return
@@ -7203,10 +7222,12 @@ class MainWindow(QMainWindow):
 
     def _do_compile_and_run(self):
         """Execute compile and run cycle (async, multi-file)."""
+        self._clear_auto_compile_retry_block()
         self._start_compile_cycle(force_rebuild=False)
 
     def _do_rebuild_egui_project(self):
         """Run a clean rebuild for the current EGUI project and restart preview."""
+        self._clear_auto_compile_retry_block()
         self._start_compile_cycle(force_rebuild=True)
 
     def _clean_all_confirmation_text(self):
@@ -7281,6 +7302,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(summary, 5000)
 
         if self.compiler is not None and self.compiler.can_build():
+            self._clear_auto_compile_retry_block()
             self._start_compile_cycle(force_rebuild=True)
 
     @staticmethod
@@ -7381,6 +7403,7 @@ class MainWindow(QMainWindow):
                     exc,
                     "Rebuild failed" if force_rebuild else "Compile failed",
                 )
+                self._block_auto_compile_retry(failure_summary)
                 self._last_runtime_error_text = failure_summary
                 self.debug_panel.log_error(f"Code generation failed: {exc}")
                 self._show_bottom_panel("Debug Output")
@@ -7453,6 +7476,7 @@ class MainWindow(QMainWindow):
                 message,
                 "Rebuild failed" if force_rebuild else "Compile failed",
             )
+            self._block_auto_compile_retry(failure_summary)
             self._last_runtime_error_text = failure_summary
             if force_rebuild:
                 self.statusBar().showMessage("EGUI clean rebuild failed, switched to Python fallback (see Debug Output)")

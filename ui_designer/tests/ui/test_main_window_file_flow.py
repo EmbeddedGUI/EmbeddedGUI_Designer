@@ -310,6 +310,59 @@ class _DisabledCompiler:
         return False
 
 
+class _DummySignal:
+    def connect(self, _handler):
+        return None
+
+
+class _IdleWorker:
+    def __init__(self):
+        self.log = _DummySignal()
+
+    def isRunning(self):
+        return False
+
+
+class _AutoRetryCompiler:
+    app_root_arg = "example"
+
+    def __init__(self, app_dir, *, exe_ready=True):
+        self.app_dir = str(app_dir)
+        self._exe_ready = bool(exe_ready)
+        self.precompile_calls = 0
+        self.stop_calls = 0
+        self.precompile_callback = None
+
+    def can_build(self):
+        return True
+
+    def get_build_error(self):
+        return ""
+
+    def set_screen_size(self, width, height):
+        return None
+
+    def is_preview_running(self):
+        return False
+
+    def is_exe_ready(self):
+        return self._exe_ready
+
+    def stop_exe(self):
+        self.stop_calls += 1
+
+    def cleanup(self):
+        return None
+
+    def precompile_async(self, callback):
+        self.precompile_calls += 1
+        self.precompile_callback = callback
+        return _IdleWorker()
+
+    def compile_and_run_async(self, *args, **kwargs):
+        return _IdleWorker()
+
+
 @_skip_no_qt
 class TestMainWindowFileFlow:
     def test_open_project_path_accepts_directory(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -3732,6 +3785,141 @@ class TestMainWindowFileFlow:
         window.debug_panel._rebuild_btn.click()
 
         assert compiler.force_rebuild is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_precompile_failure_blocks_auto_precompile_after_external_reload(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PrecompileRetryBlockDemo"
+        project = _create_project(project_dir, "PrecompileRetryBlockDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=False)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert compiler.precompile_calls == 1
+
+        worker = window._precompile_worker
+        window._on_precompile_done(worker, window._async_generation, False, "Compilation failed:\nboom")
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- blocked precompile retry -->\n", encoding="utf-8")
+
+        assert window._poll_project_files() is None
+        assert compiler.precompile_calls == 1
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_compile_failure_blocks_auto_retry_after_external_reload(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CompileRetryBlockDemo"
+        project = _create_project(project_dir, "CompileRetryBlockDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        compile_cycle_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window.auto_compile = True
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(0)
+
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- blocked compile retry -->\n", encoding="utf-8")
+
+        assert window._poll_project_files() is None
+        qapp.processEvents()
+        assert compile_cycle_calls == []
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_manual_rebuild_clears_auto_retry_block(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ManualRetryResumeDemo"
+        project = _create_project(project_dir, "ManualRetryResumeDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        captured = {}
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(
+            window,
+            "_start_compile_cycle",
+            lambda *, force_rebuild=False: captured.update(
+                force_rebuild=force_rebuild,
+                blocked=window._is_auto_compile_retry_blocked(),
+            ),
+        )
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+
+        assert window._is_auto_compile_retry_blocked() is True
+
+        window._do_rebuild_egui_project()
+
+        assert captured == {"force_rebuild": True, "blocked": False}
+        assert window._auto_compile_retry_block_reason == ""
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_clean_rebuild_failure_blocks_auto_precompile_after_external_reload(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanRebuildRetryBlockDemo"
+        project = _create_project(project_dir, "CleanRebuildRetryBlockDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=False)
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        compiler.precompile_calls = 0
+        window._precompile_worker = None
+
+        window._on_compile_finished(None, window._async_generation, True, False, "Rebuild failed:\nboom", None)
+
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(
+            layout_file.read_text(encoding="utf-8") + "\n<!-- blocked clean rebuild retry -->\n",
+            encoding="utf-8",
+        )
+
+        assert window._poll_project_files() is None
+        assert compiler.precompile_calls == 0
+        assert window._auto_compile_retry_block_reason == "boom"
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
