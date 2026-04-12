@@ -8,6 +8,7 @@ all available source files (images, fonts, text files) in
 import os
 import xml.etree.ElementTree as ET
 
+from ..utils.scaffold import resource_catalog_path
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
 
@@ -134,19 +135,19 @@ class ResourceCatalog:
 
         return element_to_xml_string(root)
 
-    def save(self, project_dir):
-        """Save catalog to resources.xml in project directory."""
-        xml_path = os.path.join(project_dir, "resources.xml")
+    def save(self, resource_dir):
+        """Save catalog to resources.xml in the canonical resource directory."""
+        xml_path = resource_catalog_path(resource_dir)
         with open(xml_path, "w", encoding="utf-8") as f:
             f.write(self.to_xml_string())
 
     @classmethod
-    def load(cls, project_dir):
-        """Load catalog from resources.xml in project directory.
+    def load(cls, resource_dir):
+        """Load catalog from resources.xml in the canonical resource directory.
 
         Returns None if resources.xml does not exist.
         """
-        xml_path = os.path.join(project_dir, "resources.xml")
+        xml_path = resource_catalog_path(resource_dir)
         if not os.path.isfile(xml_path):
             return None
 

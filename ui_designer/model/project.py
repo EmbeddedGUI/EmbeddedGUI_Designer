@@ -32,6 +32,7 @@ from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from ..utils.scaffold import (
+    RESOURCE_CATALOG_FILENAME,
     project_config_dir,
     project_config_images_dir,
     project_config_resource_dir,
@@ -264,7 +265,7 @@ class Project:
             ref.set("file", page.file_path)
 
         res = ET.SubElement(root, "Resources")
-        res.set("catalog", "resources.xml")
+        res.set("catalog", RESOURCE_CATALOG_FILENAME)
 
         return element_to_xml_string(root)
 
@@ -273,7 +274,7 @@ class Project:
 
         Creates:
             project_dir/{app_name}.egui        - project metadata
-            project_dir/.eguiproject/resources.xml  - resource catalog
+            project_dir/.eguiproject/resources/resources.xml  - resource catalog
             project_dir/.eguiproject/layout/*.xml   - one file per page
         """
         project_dir = normalize_path(project_dir)
@@ -434,8 +435,8 @@ class Project:
                 continue
             if is_designer_resource_path(fname):
                 continue
-            # Skip resources.xml (not a source file)
-            if fname == "resources.xml":
+            # Skip the catalog index (not a source file)
+            if fname == RESOURCE_CATALOG_FILENAME:
                 continue
             _sync_file(src_path, os.path.join(target_src_dir, fname))
 

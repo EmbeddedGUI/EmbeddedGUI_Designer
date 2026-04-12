@@ -10,6 +10,7 @@ from ui_designer.model.resource_catalog import (
     FONT_EXTENSIONS,
     TEXT_EXTENSIONS,
 )
+from ui_designer.utils.scaffold import resource_catalog_path
 
 
 class TestResourceCatalogInit:
@@ -216,7 +217,7 @@ class TestXmlSerialization:
         cat = ResourceCatalog()
         cat.add_image("test.png")
         cat.save(str(tmp_path))
-        assert os.path.isfile(os.path.join(str(tmp_path), "resources.xml"))
+        assert os.path.isfile(resource_catalog_path(str(tmp_path)))
 
     def test_save_skips_designer_generated_text_files(self, tmp_path):
         cat = ResourceCatalog()
@@ -230,7 +231,7 @@ class TestXmlSerialization:
         assert loaded.text_files == ["supported_text.txt"]
 
     def test_load_skips_designer_generated_text_files(self, tmp_path):
-        (tmp_path / "resources.xml").write_text(
+        (tmp_path / os.path.basename(resource_catalog_path(str(tmp_path)))).write_text(
             (
                 '<?xml version="1.0" encoding="utf-8"?>\n'
                 "<Resources>\n"

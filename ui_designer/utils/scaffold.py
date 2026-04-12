@@ -31,7 +31,8 @@ RESOURCE_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/resources"
 MOCKUP_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/mockup"
 RELEASE_CONFIG_RELPATH = f"{EGUIPROJECT_DIRNAME}/release.json"
 RESOURCE_IMAGES_DIR_RELPATH = f"{RESOURCE_DIR_RELPATH}/images"
-RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/resources.xml"
+RESOURCE_CATALOG_FILENAME = "resources.xml"
+RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/{RESOURCE_CATALOG_FILENAME}"
 RESOURCE_SRC_DIR_RELPATH = "resource/src"
 SUPPORTED_TEXT_FILENAME = "supported_text.txt"
 SUPPORTED_TEXT_RELPATH = f"{RESOURCE_SRC_DIR_RELPATH}/{SUPPORTED_TEXT_FILENAME}"
@@ -215,6 +216,14 @@ def project_supported_text_path(project_dir: str) -> str:
 
 def project_config_resource_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "resources")
+
+
+def resource_catalog_path(resource_dir: str) -> str:
+    return os.path.join(resource_dir, RESOURCE_CATALOG_FILENAME) if resource_dir else ""
+
+
+def project_resource_catalog_path(project_dir: str) -> str:
+    return resource_catalog_path(project_config_resource_dir(project_dir))
 
 
 def project_config_images_dir(project_dir: str) -> str:
@@ -1756,7 +1765,7 @@ def sync_project_scaffold_core_files(
         ),
     )
     actions[RESOURCE_CATALOG_RELPATH] = _write_text_if_changed(
-        os.path.join(project_dir, RESOURCE_CATALOG_RELPATH.replace("/", os.sep)),
+        project_resource_catalog_path(project_dir),
         build_empty_resources_xml(),
     )
     for page_name in normalized_pages:

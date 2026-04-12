@@ -15,6 +15,7 @@ from ui_designer.utils.scaffold import (
     MOCKUP_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
+    RESOURCE_CATALOG_FILENAME,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
@@ -67,9 +68,11 @@ from ui_designer.utils.scaffold import (
     project_designer_resource_dir,
     project_file_path,
     project_generated_resource_dir,
+    project_resource_catalog_path,
     project_resource_src_dir,
     project_supported_text_path,
     project_user_resource_config_path,
+    resource_catalog_path,
     resource_images_dir,
     resource_source_path,
     project_file_relpath,
@@ -385,6 +388,12 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_config_resource_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/resources"
         )
+        assert os.path.normpath(resource_catalog_path("D:/workspace/DemoApp/.eguiproject/resources")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/resources/resources.xml"
+        )
+        assert os.path.normpath(project_resource_catalog_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/resources/resources.xml"
+        )
         assert os.path.normpath(project_config_images_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/resources/images"
         )
@@ -423,6 +432,7 @@ class TestCoreProjectScaffold:
         )
         assert EGUIPROJECT_DIRNAME == ".eguiproject"
         assert RESOURCE_DIR_RELPATH == ".eguiproject/resources"
+        assert RESOURCE_CATALOG_FILENAME == "resources.xml"
         assert MOCKUP_DIR_RELPATH == ".eguiproject/mockup"
         assert RELEASE_CONFIG_RELPATH == ".eguiproject/release.json"
         assert RESOURCE_SRC_DIR_RELPATH == "resource/src"
