@@ -12,6 +12,8 @@ import pytest
 
 from ui_designer.tests.project_builders import (
     build_saved_test_project as _create_project,
+    build_saved_test_project_only_with_page_widgets as _create_project_only_with_page_widgets,
+    build_saved_test_project_only_with_widgets as _create_project_only_with_widgets,
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
 )
@@ -681,7 +683,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "SaveMigrationDemo"
         button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
         button.on_click = "on_confirm"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "SaveMigrationDemo",
             sdk_root,
@@ -1002,7 +1004,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target")
         first = WidgetModel("switch", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "SelectionRepeatMoveTargetDemo",
             sdk_root,
@@ -1207,7 +1209,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("switch", name="target")
         _add_widget_children(nested, [target])
         _add_widget_children(container, [nested])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TreeRevealDemo",
             sdk_root,
@@ -1243,7 +1245,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("switch", name="target")
         _add_widget_children(nested, [target])
         _add_widget_children(container, [nested])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TreeCollapseStateDemo",
             sdk_root,
@@ -1284,7 +1286,7 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
+            from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -1325,7 +1327,7 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "TreeFilterStatusDemo"
                 create_sdk_root(sdk_root)
 
-                project, _page, _root = build_saved_test_project_with_widgets(
+                project = build_saved_test_project_only_with_widgets(
                     project_dir,
                     "TreeFilterStatusDemo",
                     sdk_root,
@@ -1391,7 +1393,7 @@ class TestMainWindowFileFlow:
         child_a = WidgetModel("switch", name="child_a")
         child_b = WidgetModel("button", name="child_b")
         _add_widget_children(container, [child_a, child_b])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TreeSelectActionDemo",
             sdk_root,
@@ -1432,7 +1434,7 @@ class TestMainWindowFileFlow:
         existing = WidgetModel("label", name="field_1")
         first = WidgetModel("label", name="title")
         second = WidgetModel("switch", name="cta")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TreeBatchRenameDemo",
             sdk_root,
@@ -1470,7 +1472,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("switch", name="first", x=10, y=10, width=40, height=20)
         second = WidgetModel("switch", name="second", x=60, y=20, width=40, height=20)
         second.designer_locked = True
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "AlignLockedDemo",
             sdk_root,
@@ -1500,7 +1502,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("switch", name="first", width=40, height=20)
         second = WidgetModel("switch", name="second", width=40, height=20)
         _add_widget_children(layout_parent, [first, second])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "AlignLayoutManagedDemo",
             sdk_root,
@@ -1566,7 +1568,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "MoveIntoDemo"
         target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
         child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "MoveIntoDemo",
             sdk_root,
@@ -1607,7 +1609,7 @@ class TestMainWindowFileFlow:
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "RememberMoveIntoDemo",
             sdk_root,
@@ -1664,7 +1666,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DialogRecentMoveIntoDemo",
             sdk_root,
@@ -1723,7 +1725,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target_group")
         nested = WidgetModel("switch", name="nested")
         _add_widget_children(target, [nested])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "StructureActionStateDemo",
             sdk_root,
@@ -1845,7 +1847,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "QuickMoveIntoDemo"
         target = WidgetModel("group", name="target_group", x=90, y=20, width=100, height=80)
         child = WidgetModel("switch", name="child", x=10, y=15, width=20, height=10)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "QuickMoveIntoDemo",
             sdk_root,
@@ -1886,7 +1888,7 @@ class TestMainWindowFileFlow:
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "RepeatMoveIntoDemo",
             sdk_root,
@@ -1932,7 +1934,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ClearMoveTargetHistoryDemo",
             sdk_root,
@@ -1981,7 +1983,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ClearMoveHistoryCountDemo",
             sdk_root,
@@ -2028,7 +2030,7 @@ class TestMainWindowFileFlow:
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "PerPageMoveIntoDemo",
             sdk_root,
@@ -2091,7 +2093,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "RepeatMoveTargetRenameDemo",
             sdk_root,
@@ -2134,7 +2136,7 @@ class TestMainWindowFileFlow:
         target_b = WidgetModel("group", name="target_b")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "RememberQuickMoveIntoDemo",
             sdk_root,
@@ -2182,7 +2184,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "RecentQuickMoveIntoDemo",
             sdk_root,
@@ -2231,7 +2233,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "QuickMovePlaceholderDemo"
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "QuickMovePlaceholderDemo",
             sdk_root,
@@ -2274,7 +2276,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "QuickMoveHistoryMenuDemo",
             sdk_root,
@@ -2330,7 +2332,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "QuickMoveHistoryOnlyDemo"
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "QuickMoveHistoryOnlyDemo",
             sdk_root,
@@ -2507,7 +2509,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TreeInvalidDropDemo"
         first = WidgetModel("label", name="first")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TreeInvalidDropDemo",
             sdk_root,
@@ -2543,7 +2545,7 @@ class TestMainWindowFileFlow:
         third = WidgetModel("switch", name="third", x=10, y=10, width=20, height=20)
         _add_widget_children(group_a, [first, second])
         _add_widget_children(group_b, [third])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DistributeParentDemo",
             sdk_root,
@@ -2574,7 +2576,7 @@ class TestMainWindowFileFlow:
         second = WidgetModel("switch", name="second", width=20, height=20)
         third = WidgetModel("switch", name="third", width=20, height=20)
         _add_widget_children(layout_parent, [first, second, third])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DistributeLayoutManagedDemo",
             sdk_root,
@@ -2605,7 +2607,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "FrontLockedDemo"
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "FrontLockedDemo",
             sdk_root,
@@ -2633,7 +2635,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "BackLockedDemo"
         locked = WidgetModel("switch", name="locked_widget")
         locked.designer_locked = True
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "BackLockedDemo",
             sdk_root,
@@ -2660,7 +2662,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PropertyStatusDemo"
         widget = WidgetModel("switch", name="toggle")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PropertyStatusDemo",
             sdk_root,
@@ -2689,7 +2691,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMoveStatusDemo"
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "CanvasMoveStatusDemo",
             sdk_root,
@@ -2719,7 +2721,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMovePerfDemo"
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "CanvasMovePerfDemo",
             sdk_root,
@@ -2808,7 +2810,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CanvasMoveThrottleDemo"
         widget = WidgetModel("switch", name="toggle", x=10, y=10, width=50, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "CanvasMoveThrottleDemo",
             sdk_root,
@@ -3119,7 +3121,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ExportBlockedDemo"
         export_dir = tmp_path / "export_out"
         export_dir.mkdir()
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ExportBlockedDemo",
             sdk_root,
@@ -3155,7 +3157,7 @@ class TestMainWindowFileFlow:
         export_dir.mkdir()
         button = WidgetModel("button", name="confirm_button", x=10, y=10, width=80, height=32)
         button.on_click = "on_confirm"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ExportLegacyDemo",
             sdk_root,
@@ -3563,7 +3565,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "CompileBlockedDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "CompileBlockedDemo",
             sdk_root,
@@ -4575,6 +4577,7 @@ class TestMainWindowFileFlow:
         window.project_root = str(sdk_root)
         window.compiler = _DisabledCompiler()
         window._update_compile_availability()
+        project_resources_dir = project.get_eguiproject_resource_dir()
 
         assert actions["Build EXE && Run"].toolTip() == (
             "Compile the current project and run the preview (F5). "
@@ -4596,7 +4599,7 @@ class TestMainWindowFileFlow:
         assert build_action.toolTip() == (
             "Compile previews, generate resources, or reconstruct a project from Designer sources. "
             "Project: open. SDK: valid. Compile: unavailable. Recovery: unavailable. Auto compile: on. "
-            "Preview: stopped. Source resources: missing. Resource directory: none."
+            f"Preview: stopped. Source resources: available. Resource directory: {project_resources_dir}."
         )
 
         class _BuildReadyCompiler:
@@ -4770,7 +4773,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "StructureHintDemo"
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "StructureHintDemo",
             sdk_root,
@@ -5110,7 +5113,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditHintsDemo"
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "EditHintsDemo",
             sdk_root,
@@ -5177,7 +5180,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ArrangeHintsDemo",
             sdk_root,
@@ -5233,7 +5236,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         second.designer_locked = True
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ArrangeToggleHintsDemo",
             sdk_root,
@@ -5351,7 +5354,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EditCategoryHintsDemo"
         widget = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "EditCategoryHintsDemo",
             sdk_root,
@@ -5536,7 +5539,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ArrangeCategoryHintsDemo"
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ArrangeCategoryHintsDemo",
             sdk_root,
@@ -5582,7 +5585,7 @@ class TestMainWindowFileFlow:
         first = WidgetModel("label", name="title", x=12, y=16, width=100, height=24)
         second = WidgetModel("button", name="action", x=132, y=16, width=100, height=24)
         target = WidgetModel("group", name="target_group", x=24, y=72, width=200, height=120)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "StructureCategoryHintsDemo",
             sdk_root,
@@ -5622,7 +5625,7 @@ class TestMainWindowFileFlow:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "QuickMoveHintsDemo",
             sdk_root,
@@ -6282,7 +6285,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageFieldsSwitchDemo"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "PageFieldsSwitchDemo",
             sdk_root,
@@ -6398,7 +6401,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PageTimersSwitchDemo"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "PageTimersSwitchDemo",
             sdk_root,
@@ -6434,7 +6437,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "AnimationsDemo"
         card = WidgetModel("group", name="card", x=12, y=16, width=100, height=60)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "AnimationsDemo",
             sdk_root,
@@ -6488,7 +6491,7 @@ class TestMainWindowFileFlow:
         badge = WidgetModel("group", name="badge", x=12, y=88, width=80, height=40)
         card.animations = [create_default_animation("alpha")]
         badge.animations = [create_default_animation("color")]
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "AnimationsSelectionDemo",
             sdk_root,
@@ -6596,7 +6599,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "EventCallbackDemo"
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "EventCallbackDemo",
             sdk_root,
@@ -6630,7 +6633,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "UserCodeCreateDemo"
         slider = WidgetModel("slider", name="volume_slider", x=16, y=16, width=160, height=24)
         slider.events["onValueChanged"] = "on_volume_changed"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "UserCodeCreateDemo",
             sdk_root,
@@ -6745,7 +6748,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "BatchEventCallbackDemo"
         first = WidgetModel("slider", name="volume_slider_a", x=16, y=16, width=160, height=24)
         second = WidgetModel("slider", name="volume_slider_b", x=16, y=48, width=160, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "BatchEventCallbackDemo",
             sdk_root,
@@ -6960,7 +6963,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "MockupUndoDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "MockupUndoDemo",
             sdk_root,
@@ -7000,7 +7003,7 @@ class TestMainWindowFileFlow:
         image_a.properties["image_file"] = "star.png"
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "RenameResourceDemo",
             sdk_root,
@@ -7042,7 +7045,7 @@ class TestMainWindowFileFlow:
         image_a.properties["image_file"] = "star.png"
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ReplaceMissingResourceDemo",
             sdk_root,
@@ -7100,7 +7103,7 @@ class TestMainWindowFileFlow:
         image_a.properties["image_file"] = "star.png"
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ReplaceMissingBatchPreviewDemo",
             sdk_root,
@@ -7183,7 +7186,7 @@ class TestMainWindowFileFlow:
         image_a.properties["image_file"] = "star.png"
         image_b = WidgetModel("image", name="image_b")
         image_b.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "RenameResourceSignalDemo",
             sdk_root,
@@ -7224,7 +7227,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "DeleteResourceDemo"
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DeleteResourceDemo",
             sdk_root,
@@ -7256,7 +7259,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "AssignTextResourceDemo"
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "AssignTextResourceDemo",
             sdk_root,
@@ -7287,7 +7290,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "GenerateCharsetDemo"
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "GenerateCharsetDemo",
             sdk_root,
@@ -7368,7 +7371,7 @@ class TestMainWindowFileFlow:
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo_font.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PropertyCharsetDemo",
             sdk_root,
@@ -7405,7 +7408,7 @@ class TestMainWindowFileFlow:
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "simhei.ttf"
         label.properties["font_text_file"] = "charset_ascii_printable.txt"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PropertyCharsetPresetDemo",
             sdk_root,
@@ -7445,7 +7448,7 @@ class TestMainWindowFileFlow:
         label_b = WidgetModel("label", name="label_b")
         label_b.properties["font_file"] = "demo.ttf"
         label_b.properties["font_text_file"] = "chars.txt"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "RenameTextResourceDemo",
             sdk_root,
@@ -7482,7 +7485,7 @@ class TestMainWindowFileFlow:
         label = WidgetModel("label", name="title")
         label.properties["font_file"] = "demo.ttf"
         label.properties["font_text_file"] = "chars.txt"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DeleteTextResourceDemo",
             sdk_root,
@@ -7520,7 +7523,7 @@ class TestMainWindowFileFlow:
         title.properties["text"] = "@string/greeting"
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "DeleteStringKeyDemo",
             sdk_root,
@@ -7566,7 +7569,7 @@ class TestMainWindowFileFlow:
         title.properties["text"] = "@string/greeting"
         subtitle = WidgetModel("label", name="subtitle")
         subtitle.properties["text"] = "@string/greeting"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "RenameStringKeyDemo",
             sdk_root,
@@ -7619,7 +7622,7 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
+            from ui_designer.tests.project_builders import build_saved_test_project_only_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -7659,7 +7662,7 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "DeleteStringKeyInspectDemo"
                 subtitle = WidgetModel("label", name="subtitle")
                 subtitle.properties["text"] = "@string/greeting"
-                project, _roots = build_saved_test_project_with_page_widgets(
+                project = build_saved_test_project_only_with_page_widgets(
                     project_dir,
                     "DeleteStringKeyInspectDemo",
                     sdk_root,
@@ -7733,7 +7736,7 @@ class TestMainWindowFileFlow:
 
             from ui_designer.model.string_resource import DEFAULT_LOCALE
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project_with_page_widgets
+            from ui_designer.tests.project_builders import build_saved_test_project_only_with_page_widgets
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -7773,7 +7776,7 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "StringUsageNavigationDemo"
                 subtitle = WidgetModel("label", name="subtitle")
                 subtitle.properties["text"] = "@string/greeting"
-                project, _roots = build_saved_test_project_with_page_widgets(
+                project = build_saved_test_project_only_with_page_widgets(
                     project_dir,
                     "StringUsageNavigationDemo",
                     sdk_root,
@@ -7832,7 +7835,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "ResourceUsageNavigationDemo"
         hero = WidgetModel("image", name="hero")
         hero.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ResourceUsageNavigationDemo",
             sdk_root,
@@ -7877,7 +7880,7 @@ class TestMainWindowFileFlow:
         hero_main.properties["image_file"] = "star.png"
         hero_detail = WidgetModel("image", name="hero_detail")
         hero_detail.properties["image_file"] = "star.png"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ResourceUsageFilterDemo",
             sdk_root,
@@ -9167,7 +9170,7 @@ class TestMainWindowFileFlow:
         _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsDemo",
             sdk_root,
@@ -9210,7 +9213,7 @@ class TestMainWindowFileFlow:
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ProjectCallbackDiagnosticsDemo",
             sdk_root,
@@ -9247,7 +9250,7 @@ class TestMainWindowFileFlow:
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "ProjectCallbackDiagnosticFocusDemo",
             sdk_root,
@@ -9300,7 +9303,7 @@ class TestMainWindowFileFlow:
         _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsFilterDemo",
             sdk_root,
@@ -9357,7 +9360,7 @@ class TestMainWindowFileFlow:
         _add_widget_children(layout_parent, [managed])
         missing = WidgetModel("image", name="missing_image", x=16, y=220, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsResetViewDemo",
             sdk_root,
@@ -9402,7 +9405,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsRestoreFilterDemo",
             sdk_root,
@@ -9446,7 +9449,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsOpenFirstErrorDemo",
             sdk_root,
@@ -9490,7 +9493,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "DiagnosticsNoErrorOpenDemo"
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsNoErrorOpenDemo",
             sdk_root,
@@ -9519,7 +9522,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsOpenFirstWarningDemo",
             sdk_root,
@@ -9563,7 +9566,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsNoWarningOpenDemo"
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsNoWarningOpenDemo",
             sdk_root,
@@ -9592,7 +9595,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsOpenSelectedDemo",
             sdk_root,
@@ -9640,7 +9643,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsSelectionFilterDemo",
             sdk_root,
@@ -9704,7 +9707,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsSelectionRefreshDemo",
             sdk_root,
@@ -9764,7 +9767,7 @@ class TestMainWindowFileFlow:
         managed.designer_locked = True
         managed.designer_hidden = True
         _add_widget_children(layout_parent, [managed])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsNonNavigableDemo",
             sdk_root,
@@ -9808,7 +9811,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyDemo",
             sdk_root,
@@ -9846,7 +9849,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyFilteredDemo",
             sdk_root,
@@ -9911,7 +9914,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyJsonDemo",
             sdk_root,
@@ -9976,7 +9979,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyJsonFilteredDemo",
             sdk_root,
@@ -10025,7 +10028,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyJsonSelectedDemo",
             sdk_root,
@@ -10072,7 +10075,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticsCopyJsonMetadataDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsCopyJsonMetadataDemo",
             sdk_root,
@@ -10121,7 +10124,7 @@ class TestMainWindowFileFlow:
         detail_button = WidgetModel("button", name="confirm_button_2", x=8, y=8, width=80, height=28)
         main_button.on_click = "on_confirm"
         detail_button.on_click = "on_confirm"
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "DiagnosticsCopyJsonProjectTargetsDemo",
             sdk_root,
@@ -10190,7 +10193,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsExportDemo",
             sdk_root,
@@ -10264,7 +10267,7 @@ class TestMainWindowFileFlow:
         invalid = WidgetModel("label", name="bad-name", x=8, y=8, width=60, height=20)
         missing = WidgetModel("image", name="missing_image", x=16, y=48, width=48, height=48)
         missing.properties["image_file"] = "missing.png"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "DiagnosticsJsonDemo",
             sdk_root,
@@ -10355,7 +10358,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "DiagnosticFocusDemo"
         target = WidgetModel("label", name="target", x=16, y=16, width=80, height=20)
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "DiagnosticFocusDemo",
             sdk_root,
@@ -10398,7 +10401,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "FieldDiagnosticFocusDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "FieldDiagnosticFocusDemo",
             sdk_root,
@@ -10433,7 +10436,7 @@ class TestMainWindowFileFlow:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "TimerDiagnosticFocusDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "TimerDiagnosticFocusDemo",
             sdk_root,
@@ -10476,7 +10479,7 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
+            from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -10516,7 +10519,7 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "DiagnosticMissingResourceDemo"
                 missing = WidgetModel("image", name="missing_image", x=16, y=16, width=48, height=48)
                 missing.properties["image_file"] = "ghost.png"
-                project, _page, _root = build_saved_test_project_with_widgets(
+                project = build_saved_test_project_only_with_widgets(
                     project_dir,
                     "DiagnosticMissingResourceDemo",
                     sdk_root,
@@ -10580,7 +10583,7 @@ class TestMainWindowFileFlow:
             from PyQt5.QtWidgets import QApplication
 
             from ui_designer.model.widget_model import WidgetModel
-            from ui_designer.tests.project_builders import build_saved_test_project_with_widgets
+            from ui_designer.tests.project_builders import build_saved_test_project_only_with_widgets
             from ui_designer.ui.main_window import MainWindow
             from ui_designer.utils.runtime_temp import create_repo_temp_workspace
 
@@ -10620,7 +10623,7 @@ class TestMainWindowFileFlow:
                 project_dir = temp_root / "DiagnosticMissingStringDemo"
                 title = WidgetModel("label", name="title", x=16, y=16, width=80, height=20)
                 title.properties["text"] = "@string/missing_key"
-                project, _page, _root = build_saved_test_project_with_widgets(
+                project = build_saved_test_project_only_with_widgets(
                     project_dir,
                     "DiagnosticMissingStringDemo",
                     sdk_root,
@@ -11115,7 +11118,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WorkspaceChipDemo"
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "WorkspaceChipDemo",
             sdk_root,
@@ -11219,7 +11222,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WorkspaceChipNoOpDemo"
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "WorkspaceChipNoOpDemo",
             sdk_root,
@@ -11476,7 +11479,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "ToolbarHintDemo"
         label = WidgetModel("label", name="title", x=8, y=8, width=80, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "ToolbarHintDemo",
             sdk_root,
@@ -12112,7 +12115,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserInsertDemo"
         container = WidgetModel("group", name="container", x=0, y=0, width=200, height=200)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "WidgetBrowserInsertDemo",
             sdk_root,
@@ -12147,7 +12150,7 @@ class TestMainWindowFileFlow:
         project_dir = tmp_path / "WidgetBrowserRevealDemo"
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
         button = WidgetModel("button", name="cta", x=10, y=30, width=80, height=24)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "WidgetBrowserRevealDemo",
             sdk_root,
@@ -12177,7 +12180,7 @@ class TestMainWindowFileFlow:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "WidgetBrowserSelectionDemo"
         label = WidgetModel("label", name="title", x=4, y=4, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "WidgetBrowserSelectionDemo",
             sdk_root,
@@ -12549,7 +12552,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "SelectAllFilterDemo"
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "SelectAllFilterDemo",
             sdk_root,
@@ -12580,7 +12583,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewContextMenuDemo"
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewContextMenuDemo",
             sdk_root,
@@ -12655,7 +12658,7 @@ class TestMainWindowCanvasActions:
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewSelectMenuOrderDemo"
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSelectMenuOrderDemo",
             sdk_root,
@@ -12716,7 +12719,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewContextMenuShortcutDemo",
             sdk_root,
@@ -12767,7 +12770,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         target = WidgetModel("group", name="target", x=10, y=40, width=120, height=80)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewStructureMenuOrderDemo",
             sdk_root,
@@ -12814,7 +12817,7 @@ class TestMainWindowCanvasActions:
         target = WidgetModel("group", name="target_group", x=10, y=40, width=120, height=80)
         nested = WidgetModel("switch", name="nested", x=4, y=4, width=32, height=16)
         _add_widget_children(target, [nested])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewStructureMenuStateDemo",
             sdk_root,
@@ -12972,7 +12975,7 @@ class TestMainWindowCanvasActions:
         project_dir = tmp_path / "PreviewArrangeMenuOrderDemo"
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewArrangeMenuOrderDemo",
             sdk_root,
@@ -13017,7 +13020,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         second = WidgetModel("button", name="second", x=72, y=8, width=60, height=20)
         third = WidgetModel("switch", name="third", x=136, y=8, width=60, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewArrangeMenuStateDemo",
             sdk_root,
@@ -13085,7 +13088,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=60, height=20)
         locked = WidgetModel("button", name="locked", x=72, y=8, width=60, height=20)
         locked.designer_locked = True
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewEditMenuStateDemo",
             sdk_root,
@@ -13304,7 +13307,7 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewNoWidgetContextMenuDemo",
             sdk_root,
@@ -13339,7 +13342,7 @@ class TestMainWindowCanvasActions:
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
         project_dir = tmp_path / "PreviewNoWidgetContextMenuStateDemo"
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewNoWidgetContextMenuStateDemo",
             sdk_root,
@@ -13409,7 +13412,7 @@ class TestMainWindowCanvasActions:
         project_dir = tmp_path / "PreviewQuickMovePlaceholderDemo"
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMovePlaceholderDemo",
             sdk_root,
@@ -13455,7 +13458,7 @@ class TestMainWindowCanvasActions:
         project_dir = tmp_path / "PreviewQuickMoveHistoryOnlyContextMenuDemo"
         target = WidgetModel("group", name="target")
         child = WidgetModel("label", name="child")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMoveHistoryOnlyContextMenuDemo",
             sdk_root,
@@ -13514,7 +13517,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMoveHistoryOrderingDemo",
             sdk_root,
@@ -13568,7 +13571,7 @@ class TestMainWindowCanvasActions:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMoveRenameDemo",
             sdk_root,
@@ -13620,7 +13623,7 @@ class TestMainWindowCanvasActions:
         detail_target = WidgetModel("group", name="detail_target")
         detail_first = WidgetModel("label", name="detail_first")
         detail_second = WidgetModel("button", name="detail_second")
-        project, _roots = _create_project_with_page_widgets(
+        project = _create_project_only_with_page_widgets(
             project_dir,
             "PreviewPerPageMoveIntoDemo",
             sdk_root,
@@ -13692,7 +13695,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMoveActionsDemo",
             sdk_root,
@@ -13779,7 +13782,7 @@ class TestMainWindowCanvasActions:
         target = WidgetModel("group", name="target")
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewQuickMoveHistorySubmenuDemo",
             sdk_root,
@@ -13856,7 +13859,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first")
         second = WidgetModel("button", name="second")
         third = WidgetModel("switch", name="third")
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewClearMoveHistoryCountDemo",
             sdk_root,
@@ -13915,7 +13918,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         _add_widget_children(container, [child_a, child_b])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSelectContextMenuDemo",
             sdk_root,
@@ -13955,7 +13958,7 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
         _add_widget_children(container, [child_a, child_b, child_c])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewParentAndSiblingsContextMenuDemo",
             sdk_root,
@@ -14003,7 +14006,7 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
         _add_widget_children(container, [child_a, child_b, child_c])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSiblingTraversalContextMenuDemo",
             sdk_root,
@@ -14051,7 +14054,7 @@ class TestMainWindowCanvasActions:
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         child_c = WidgetModel("label", name="child_c", x=4, y=52, width=48, height=16)
         _add_widget_children(container, [child_a, child_b, child_c])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSiblingRangeContextMenuDemo",
             sdk_root,
@@ -14151,7 +14154,7 @@ class TestMainWindowCanvasActions:
         child_a = WidgetModel("switch", name="child_a", x=4, y=4, width=32, height=16)
         child_b = WidgetModel("button", name="child_b", x=4, y=28, width=48, height=20)
         _add_widget_children(container, [child_a, child_b])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewTreeTraversalContextMenuDemo",
             sdk_root,
@@ -14205,7 +14208,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [child_a, nested_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewDescendantsContextMenuDemo",
             sdk_root,
@@ -14366,7 +14369,7 @@ class TestMainWindowCanvasActions:
         same_type = WidgetModel("button", name="same_type", x=8, y=120, width=48, height=20)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [nested_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewTopLevelContextMenuDemo",
             sdk_root,
@@ -14407,7 +14410,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [child_a, nested_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSubtreeContextMenuDemo",
             sdk_root,
@@ -14449,7 +14452,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [child_a, child_b, nested_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewLeavesContextMenuDemo",
             sdk_root,
@@ -14490,7 +14493,7 @@ class TestMainWindowCanvasActions:
         nested_leaf = WidgetModel("label", name="nested_leaf", x=2, y=2, width=32, height=16)
         _add_widget_children(nested_group, [nested_leaf])
         _add_widget_children(container, [child_a, nested_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewContainersContextMenuDemo",
             sdk_root,
@@ -14536,7 +14539,7 @@ class TestMainWindowCanvasActions:
         locked_leaf.designer_locked = True
         _add_widget_children(locked_group, [locked_leaf])
         _add_widget_children(container, [hidden_self, hidden_leaf, locked_group])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewStateContextMenuDemo",
             sdk_root,
@@ -14608,7 +14611,7 @@ class TestMainWindowCanvasActions:
         _add_widget_children(managed_group, [managed_leaf])
         _add_widget_children(layout_parent, [managed_group])
         _add_widget_children(container, [layout_parent, unmanaged_leaf])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewLayoutContainersContextMenuDemo",
             sdk_root,
@@ -14663,7 +14666,7 @@ class TestMainWindowCanvasActions:
         _add_widget_children(managed_group, [managed_leaf])
         _add_widget_children(layout_parent, [managed_group, managed_button])
         _add_widget_children(container, [layout_parent, unmanaged_leaf])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewManagedContextMenuDemo",
             sdk_root,
@@ -14718,7 +14721,7 @@ class TestMainWindowCanvasActions:
         _add_widget_children(managed_group, [managed_leaf])
         _add_widget_children(layout_parent, [managed_group, managed_button])
         _add_widget_children(container, [layout_parent, unmanaged_leaf])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewFreePositionContextMenuDemo",
             sdk_root,
@@ -14766,7 +14769,7 @@ class TestMainWindowCanvasActions:
         other = WidgetModel("label", name="other", x=8, y=8, width=40, height=16)
         first = WidgetModel("button", name="first", x=8, y=28, width=56, height=20)
         second = WidgetModel("button", name="second", x=8, y=56, width=56, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSameTypeContextMenuDemo",
             sdk_root,
@@ -14803,7 +14806,7 @@ class TestMainWindowCanvasActions:
         first = WidgetModel("label", name="first", x=8, y=8, width=40, height=16)
         second = WidgetModel("label", name="second", x=8, y=28, width=40, height=16)
         other = WidgetModel("button", name="other", x=8, y=56, width=56, height=20)
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSameParentTypeContextMenuDemo",
             sdk_root,
@@ -14884,7 +14887,7 @@ class TestMainWindowCanvasActions:
         nested_group = WidgetModel("group", name="nested_group", x=4, y=28, width=50, height=30)
         _add_widget_children(branch_a, [leaf_a, nested_group])
         _add_widget_children(branch_b, [leaf_b])
-        project, _page, _root = _create_project_with_widgets(
+        project = _create_project_only_with_widgets(
             project_dir,
             "PreviewSameDepthContextMenuDemo",
             sdk_root,
