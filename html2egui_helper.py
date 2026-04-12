@@ -35,7 +35,6 @@ from ui_designer.model.workspace import require_designer_sdk_root
 from ui_designer.utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
-    designer_resource_config_path,
     ensure_resource_config_file,
     is_designer_resource_path,
     user_resource_config_path,
@@ -55,9 +54,11 @@ from ui_designer.utils.scaffold import (
     project_config_images_dir,
     project_config_layout_dir,
     project_config_resource_dir,
+    project_designer_resource_config_path,
     project_generated_resource_dir,
     project_file_path,
     project_resource_src_dir,
+    project_user_resource_config_path,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
@@ -839,7 +840,7 @@ def _sync_app_pngs_and_update_resource_config(
     print(f"  Synced {len(synced_filenames)} {synced_label} to {src_dir}")
     created = False
     if synced_filenames:
-        config_path = user_resource_config_path(src_dir)
+        config_path = project_user_resource_config_path(app_dir)
         created = _ensure_and_update_resource_config(
             config_path,
             synced_filenames,
@@ -934,7 +935,7 @@ def cmd_export_icons(args):
             synced_label="icons",
         )
         if created:
-            print(f"  Created new: {user_resource_config_path(src_dir)}")
+            print(f"  Created new: {project_user_resource_config_path(_get_app_dir(sdk_root, app_name))}")
     else:
         config_path = user_resource_config_path(output_dir)
         synced_filenames = list(icon_filenames)
@@ -1457,9 +1458,8 @@ def cmd_gen_resource(args):
     sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     resource_dir = _get_app_generated_resource_dir(app_dir)
-    src_dir = _get_app_resource_src_dir(app_dir)
-    user_config_path = user_resource_config_path(src_dir)
-    designer_config_path = designer_resource_config_path(src_dir)
+    user_config_path = project_user_resource_config_path(app_dir)
+    designer_config_path = project_designer_resource_config_path(app_dir)
 
     if not os.path.isfile(user_config_path) and not os.path.isfile(designer_config_path):
         print(f"ERROR: Resource config not found: {user_config_path}")

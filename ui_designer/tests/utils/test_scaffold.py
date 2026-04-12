@@ -62,9 +62,12 @@ from ui_designer.utils.scaffold import (
     project_config_resource_dir,
     project_app_config_path,
     project_build_mk_path,
+    project_designer_resource_config_path,
+    project_designer_resource_dir,
     project_file_path,
     project_generated_resource_dir,
     project_resource_src_dir,
+    project_user_resource_config_path,
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
@@ -386,6 +389,15 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(project_resource_src_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource/src"
+        )
+        assert os.path.normpath(project_user_resource_config_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/src/app_resource_config.json"
+        )
+        assert os.path.normpath(project_designer_resource_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/src/.designer"
+        )
+        assert os.path.normpath(project_designer_resource_config_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/src/.designer/app_resource_config_designer.json"
         )
         assert os.path.normpath(project_build_mk_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/build.mk"

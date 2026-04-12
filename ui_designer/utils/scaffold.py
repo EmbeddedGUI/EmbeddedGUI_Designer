@@ -17,6 +17,7 @@ from .resource_config_overlay import (
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
     designer_resource_config_path,
+    designer_resource_dir,
     ensure_resource_config_file,
     is_designer_resource_path,
     make_empty_resource_config_content,
@@ -192,6 +193,18 @@ def project_generated_resource_dir(project_dir: str) -> str:
 
 def project_resource_src_dir(project_dir: str) -> str:
     return os.path.join(project_generated_resource_dir(project_dir), "src")
+
+
+def project_user_resource_config_path(project_dir: str) -> str:
+    return user_resource_config_path(project_resource_src_dir(project_dir))
+
+
+def project_designer_resource_dir(project_dir: str) -> str:
+    return designer_resource_dir(project_resource_src_dir(project_dir))
+
+
+def project_designer_resource_config_path(project_dir: str) -> str:
+    return designer_resource_config_path(project_resource_src_dir(project_dir))
 
 
 def project_config_resource_dir(project_dir: str) -> str:
