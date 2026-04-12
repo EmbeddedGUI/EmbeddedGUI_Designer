@@ -59,14 +59,7 @@ from ui_designer.utils.scaffold import (
     project_layout_xml_path,
     project_layout_xml_relpath,
     scaffold_sdk_example_conversion_project,
-    sdk_example_config_resource_dir,
-    sdk_example_designer_resource_config_path,
-    sdk_example_generated_resource_dir,
     sdk_example_paths,
-    sdk_example_resource_images_dir,
-    sdk_example_supported_text_path,
-    sdk_example_resource_src_dir,
-    sdk_example_user_resource_config_path,
     sync_project_resources_and_generate_designer_resource_config,
 )
 
@@ -118,12 +111,19 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
 
 def _resolve_existing_app_dir(app_name):
     """Resolve an existing app directory under the SDK example tree."""
+    sdk_root, app_dir, _example_paths = _resolve_existing_app_context(app_name)
+    return sdk_root, app_dir
+
+
+def _resolve_existing_app_context(app_name):
+    """Resolve an existing SDK example app and return its shared path bundle."""
     sdk_root = _find_sdk_root()
-    app_dir = sdk_example_paths(sdk_root, app_name)["app_dir"]
+    example_paths = sdk_example_paths(sdk_root, app_name)
+    app_dir = example_paths["app_dir"]
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
         sys.exit(1)
-    return sdk_root, app_dir
+    return sdk_root, app_dir, example_paths
 
 
 def _require_existing_file(path, *, error_label="File", error_file=None):
@@ -794,7 +794,8 @@ def _sync_app_pngs_and_update_resource_config(
     synced_label="assets",
 ):
     f"""Sync exported PNGs into an app {RESOURCE_SRC_DIR_RELPATH}/ and update its overlay config."""
-    src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
+    example_paths = sdk_example_paths(sdk_root, app_name)
+    src_dir = example_paths["resource_src_dir"]
     synced_filenames = _sync_exported_pngs(
         output_dir,
         src_dir,
@@ -804,7 +805,7 @@ def _sync_app_pngs_and_update_resource_config(
     print(f"  Synced {len(synced_filenames)} {synced_label} to {src_dir}")
     created = False
     if synced_filenames:
-        config_path = sdk_example_user_resource_config_path(sdk_root, app_name)
+        config_path = example_paths["user_resource_config_path"]
         created = _ensure_and_update_resource_config(
             config_path,
             synced_filenames,
@@ -899,7 +900,7 @@ def cmd_export_icons(args):
             synced_label="icons",
         )
         if created:
-            print(f"  Created new: {sdk_example_user_resource_config_path(sdk_root, app_name)}")
+            print(f"  Created new: {user_resource_config_path(src_dir)}")
     else:
         config_path = user_resource_config_path(output_dir)
         synced_filenames = list(icon_filenames)
@@ -1419,8 +1420,7 @@ def cmd_extract_text(args):
 def cmd_gen_resource(args):
     """Run resource generation (wraps make resource)."""
     app_name = args.app
-    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
-    example_paths = sdk_example_paths(sdk_root, app_name)
+    sdk_root, app_dir, example_paths = _resolve_existing_app_context(app_name)
 
     resource_dir = example_paths["generated_resource_dir"]
     user_config_path = example_paths["user_resource_config_path"]
@@ -1494,8 +1494,7 @@ def _sync_font_files(project, sdk_root, src_dir):
 def cmd_generate_code(args):
     """Generate C code from UI Designer XML project."""
     app_name = args.app
-    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
-    example_paths = sdk_example_paths(sdk_root, app_name)
+    sdk_root, app_dir, example_paths = _resolve_existing_app_context(app_name)
 
     # Find .egui project file
     egui_file = example_paths["project_path"]
@@ -2044,7 +2043,7 @@ def cmd_extract_layout(args):
 def cmd_verify(args):
     """Build and run runtime check for an app."""
     app_name = args.app
-    sdk_root, app_dir = _resolve_existing_app_dir(app_name)
+    sdk_root, app_dir, _example_paths = _resolve_existing_app_context(app_name)
 
     bits_flag = "BITS=64" if args.bits64 else ""
 
@@ -2738,6 +2737,7 @@ def cmd_figma2xml(args):
     # Setup app directory
     sdk_root = _find_sdk_root()
     app_name = args.app
+    example_paths = sdk_example_paths(sdk_root, app_name)
     app_dir = _ensure_app_scaffold_exists(sdk_root, app_name, target_w, target_h)
 
     # Convert node tree to XML
@@ -2771,7 +2771,7 @@ def cmd_figma2xml(args):
     # Export vector images if any
     if vector_nodes and not args.no_export:
         print(f"\nExporting {len(vector_nodes)} vector node(s) as PNG...")
-        images_dir = sdk_example_resource_images_dir(sdk_root, app_name)
+        images_dir = example_paths["resource_images_dir"]
         _figma_export_images(file_key, vector_nodes, token, images_dir, scale=2)
 
     print(f"\nFigma conversion complete: {app_name}")

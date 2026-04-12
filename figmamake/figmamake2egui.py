@@ -34,12 +34,7 @@ from ui_designer.model.workspace import (
     require_designer_sdk_root_for_path,
     sdk_runtime_check_output_dir,
 )
-from ui_designer.utils.scaffold import (
-    sdk_example_paths,
-    sdk_example_reference_frames_dir,
-    sdk_example_regression_report_path,
-    sdk_example_regression_results_path,
-)
+from ui_designer.utils.scaffold import sdk_example_paths
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
@@ -68,7 +63,8 @@ def stage_capture(figma_url, app_name, width, height, sdk_root):
     print("STAGE 1: CAPTURE — Reference frames from Figma Make")
     print("=" * 60)
 
-    ref_dir = sdk_example_reference_frames_dir(sdk_root, app_name)
+    example_paths = sdk_example_paths(sdk_root, app_name)
+    ref_dir = example_paths["reference_frames_dir"]
     os.makedirs(ref_dir, exist_ok=True)
 
     capture_script = os.path.join(SCRIPT_DIR, "figmamake_capture.py")
@@ -172,11 +168,12 @@ def stage_verify(ref_dir, rendered_dir, app_name, sdk_root):
         print(f"  [{status:4s}] {r['name']:30s}  SSIM={r['ssim']:.4f}")
 
     # Generate HTML report
-    report_path = sdk_example_regression_report_path(sdk_root, app_name)
+    example_paths = sdk_example_paths(sdk_root, app_name)
+    report_path = example_paths["regression_report_path"]
     generate_html_report(summary, report_path)
 
     # Generate JSON results
-    json_path = sdk_example_regression_results_path(sdk_root, app_name)
+    json_path = example_paths["regression_results_path"]
     os.makedirs(os.path.dirname(json_path), exist_ok=True)
     with open(json_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(summary, f, indent=2)
@@ -219,7 +216,8 @@ def main():
     print(f"  SDK root: {sdk_root}")
 
     # Stage 1: Capture
-    ref_dir = sdk_example_reference_frames_dir(sdk_root, args.app)
+    example_paths = sdk_example_paths(sdk_root, args.app)
+    ref_dir = example_paths["reference_frames_dir"]
     if args.figma_url and not args.skip_capture:
         success, ref_dir = stage_capture(
             args.figma_url, args.app, args.width, args.height, sdk_root
@@ -247,7 +245,7 @@ def main():
     if args.convert_only:
         elapsed = time.time() - start_time
         print(f"\nConversion complete in {elapsed:.1f}s")
-        print(f"  App dir: {sdk_example_paths(sdk_root, args.app)['app_dir']}")
+        print(f"  App dir: {example_paths['app_dir']}")
         sys.exit(0)
 
     # Stage 3: Build & Run

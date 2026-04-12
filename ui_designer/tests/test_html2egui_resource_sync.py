@@ -16,6 +16,7 @@ from ui_designer.utils.scaffold import (
     project_config_layout_dir,
     sdk_example_config_resource_dir,
     sdk_example_generated_resource_dir,
+    sdk_example_paths,
     sdk_example_resource_images_dir,
     sdk_example_resource_src_dir,
     sdk_example_supported_text_path,
@@ -141,6 +142,20 @@ class TestHelperResourceSync:
 
         assert resolved_sdk_root == str(sdk_root)
         assert resolved_app_dir == str(app_dir)
+
+    def test_resolve_existing_app_context_returns_sdk_app_and_bundle(self, tmp_path, monkeypatch):
+        sdk_root = tmp_path / "sdk"
+        app_dir = sdk_root / "example" / "DemoApp"
+        app_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(h, "_find_sdk_root", lambda: str(sdk_root))
+
+        resolved_sdk_root, resolved_app_dir, example_paths = h._resolve_existing_app_context("DemoApp")
+
+        assert resolved_sdk_root == str(sdk_root)
+        assert resolved_app_dir == str(app_dir)
+        assert example_paths["app_dir"] == str(app_dir)
+        assert example_paths["resource_src_dir"] == str(app_dir / "resource" / "src")
 
     def test_resolve_existing_app_dir_exits_when_app_missing(self, tmp_path, monkeypatch):
         sdk_root = tmp_path / "sdk"
@@ -450,3 +465,80 @@ class TestHelperResourceSync:
         assert (output_dir / "_generated_text_demo_16_4.png").is_file()
         assert not (src_dir / "_generated_text_demo_16_4.png").exists()
         assert not (src_dir / "app_resource_config.json").exists()
+
+    def test_figma2xml_exports_vectors_to_shared_app_images_dir(self, tmp_path, monkeypatch):
+        sdk_root = tmp_path / "sdk"
+        app_dir = sdk_root / "example" / "DemoApp"
+        app_dir.mkdir(parents=True)
+        seen = {}
+
+        monkeypatch.setattr(h, "_find_sdk_root", lambda: str(sdk_root))
+        monkeypatch.setattr(
+            h,
+            "_ensure_app_scaffold_exists",
+            lambda sdk_root_arg, app_name, width, height: str(app_dir),
+        )
+        monkeypatch.setattr(
+            h,
+            "_fetch_figma_nodes",
+            lambda file_key, node_ids, token: {
+                "nodes": {
+                    "1:1": {
+                        "document": {
+                            "id": "1:1",
+                            "name": "RootFrame",
+                            "type": "FRAME",
+                            "absoluteBoundingBox": {"x": 0, "y": 0, "width": 320, "height": 240},
+                            "children": [
+                                {
+                                    "id": "2:2",
+                                    "name": "VectorNode",
+                                    "type": "VECTOR",
+                                    "absoluteBoundingBox": {"x": 8, "y": 8, "width": 24, "height": 24},
+                                    "children": [],
+                                }
+                            ],
+                        }
+                    }
+                }
+            },
+        )
+        monkeypatch.setattr(
+            h,
+            "_write_figma_page_xml",
+            lambda *args, **kwargs: str(app_dir / ".eguiproject" / "layout" / "main_page.xml"),
+        )
+        monkeypatch.setattr(
+            h,
+            "_figma_export_images",
+            lambda file_key, node_ids, token, output_dir, scale=1: seen.update(
+                {
+                    "file_key": file_key,
+                    "node_ids": list(node_ids),
+                    "token": token,
+                    "output_dir": output_dir,
+                    "scale": scale,
+                }
+            ) or {},
+        )
+
+        h.cmd_figma2xml(
+            SimpleNamespace(
+                token="demo-token",
+                url=None,
+                file_key="demo-file",
+                node_id="1:1",
+                target=None,
+                app="DemoApp",
+                page=None,
+                no_export=False,
+            )
+        )
+
+        assert seen == {
+            "file_key": "demo-file",
+            "node_ids": ["2:2"],
+            "token": "demo-token",
+            "output_dir": sdk_example_paths(str(sdk_root), "DemoApp")["resource_images_dir"],
+            "scale": 2,
+        }
