@@ -2633,16 +2633,19 @@ class MainWindow(QMainWindow):
             self._bump_async_generation()
             self._shutdown_async_activity()
             self._recreate_compiler()
-            self._update_compile_availability()
             preview_unavailable_reason = self._preview_unavailable_reason()
             if preview_unavailable_reason:
+                self._block_auto_compile_retry(preview_unavailable_reason)
                 self._switch_to_python_preview(preview_unavailable_reason)
                 editing_only_message = f"Editing-only mode: {preview_unavailable_reason}"
                 if status_message:
                     editing_only_message = f"{status_message} | {editing_only_message}"
                 self.statusBar().showMessage(editing_only_message)
-            elif self.auto_compile:
-                self._trigger_compile()
+            else:
+                self._clear_auto_compile_retry_block()
+                if self.auto_compile:
+                    self._trigger_compile()
+            self._update_compile_availability()
 
         self._welcome_page.refresh()
         self._update_sdk_status_label()

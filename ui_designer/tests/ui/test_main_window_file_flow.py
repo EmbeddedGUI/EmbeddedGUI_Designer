@@ -3957,6 +3957,81 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_apply_sdk_root_clears_auto_retry_block_when_preview_recovers(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _ProbeFailCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        bad_sdk_root = tmp_path / "sdk_bad"
+        good_sdk_root = tmp_path / "sdk_good"
+        _create_sdk_root(bad_sdk_root)
+        _create_sdk_root(good_sdk_root)
+        project_dir = tmp_path / "ApplySdkRootRetryRecoveryDemo"
+        project = _create_project(project_dir, "ApplySdkRootRetryRecoveryDemo", bad_sdk_root)
+        good_compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(bad_sdk_root))
+        compile_cycle_calls = []
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(0)
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+
+        def _recreate_compiler():
+            if window.project_root == os.path.normpath(os.path.abspath(good_sdk_root)):
+                window.compiler = good_compiler
+            else:
+                window.compiler = _ProbeFailCompiler(project_dir)
+
+        monkeypatch.setattr(window, "_recreate_compiler", _recreate_compiler)
+
+        _open_project_window(window, project, project_dir, bad_sdk_root)
+
+        assert "main.exe" in window._auto_compile_retry_block_reason
+
+        window._apply_sdk_root(str(good_sdk_root))
+        qapp.processEvents()
+
+        assert compile_cycle_calls == [False]
+        assert window._auto_compile_retry_block_reason == ""
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_precompile_failure_blocks_auto_precompile_after_external_reload(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
