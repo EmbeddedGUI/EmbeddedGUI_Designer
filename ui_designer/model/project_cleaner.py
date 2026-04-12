@@ -6,34 +6,58 @@ import os
 import shutil
 from dataclasses import dataclass, field
 
-from ..utils.resource_config_overlay import APP_RESOURCE_CONFIG_FILENAME
+from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME
+from ..utils.scaffold import (
+    APP_CONFIG_RELPATH,
+    BUILD_MK_RELPATH,
+    DESIGNER_PROJECT_DIRNAME,
+    EGUIPROJECT_DIRNAME,
+    LAYOUT_DIR_RELPATH,
+    MOCKUP_DIR_RELPATH,
+    RELEASE_CONFIG_RELPATH,
+    RESOURCE_CONFIG_RELPATH,
+    RESOURCE_DIR_RELPATH,
+    RESOURCE_FONT_DIR_RELPATH,
+    RESOURCE_IMG_DIR_RELPATH,
+    RESOURCE_SRC_DIR_RELPATH,
+)
 from .workspace import normalize_path
 
 
 DESIGNER_SOURCE_PRESERVE_SUMMARY = (
     "*.egui project metadata",
-    "build.mk and app_egui_config.h user override wrappers",
-    "resource/src/app_resource_config.json user overlay config",
-    ".eguiproject/layout/*.xml page layouts",
-    ".eguiproject/resources/** source assets and resource metadata",
-    ".eguiproject/mockup/** preview mockups",
-    ".eguiproject/release.json release packaging profiles",
+    f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers",
+    f"{RESOURCE_CONFIG_RELPATH} user overlay config",
+    f"{LAYOUT_DIR_RELPATH}/*.xml page layouts",
+    f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata",
+    f"{MOCKUP_DIR_RELPATH}/** preview mockups",
+    f"{RELEASE_CONFIG_RELPATH} release packaging profiles",
     "widgets/** app-local widget sources",
     "custom_widgets/** app-local widget descriptors",
 )
 
 DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     "user-owned page files in the project root (*.c, *_ext.h)",
-    "resource/img, resource/font, and other synced/generated resource outputs",
-    "resource/src/.designer/** designer-generated resource metadata",
-    ".designer/** generated code and scaffold files (legacy root designer files also removed)",
+    f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
+    f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
+    f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
     ".eguiproject/backup, orphaned_user_code, and other generated caches",
 )
 
 _PRESERVED_TOP_LEVEL_DIRS = {"widgets", "custom_widgets"}
-_PRESERVED_EGUIPROJECT_DIRS = {"layout", "resources", "mockup"}
-_PRESERVED_EGUIPROJECT_FILES = {"release.json"}
-_PRESERVED_TOP_LEVEL_FILES = {"build.mk", "app_egui_config.h"}
+_PRESERVED_EGUIPROJECT_DIRS = {
+    os.path.basename(LAYOUT_DIR_RELPATH),
+    os.path.basename(RESOURCE_DIR_RELPATH),
+    os.path.basename(MOCKUP_DIR_RELPATH),
+}
+_PRESERVED_EGUIPROJECT_FILES = {os.path.basename(RELEASE_CONFIG_RELPATH)}
+_PRESERVED_TOP_LEVEL_FILES = {
+    os.path.basename(BUILD_MK_RELPATH),
+    os.path.basename(APP_CONFIG_RELPATH),
+}
+_PRESERVED_RESOURCE_SRC_FILES = {os.path.basename(RESOURCE_CONFIG_RELPATH)}
+_RESOURCE_DIRNAME = os.path.basename(os.path.dirname(RESOURCE_SRC_DIR_RELPATH))
+_RESOURCE_SRC_DIRNAME = os.path.basename(RESOURCE_SRC_DIR_RELPATH)
 
 
 @dataclass(frozen=True)
@@ -110,7 +134,7 @@ def _clean_resource_src_dir(project_dir: str, src_dir: str, removed_paths: list[
     for name in os.listdir(src_dir):
         child_path = os.path.join(src_dir, name)
         rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
-        if os.path.isfile(child_path) and name == APP_RESOURCE_CONFIG_FILENAME:
+        if os.path.isfile(child_path) and name in _PRESERVED_RESOURCE_SRC_FILES:
             preserved_paths.append(rel_path)
             continue
         files, dirs = _remove_path(project_dir, child_path, removed_paths)
@@ -125,7 +149,7 @@ def _clean_resource_dir(project_dir: str, resource_dir: str, removed_paths: list
     for name in os.listdir(resource_dir):
         child_path = os.path.join(resource_dir, name)
         rel_path = os.path.relpath(child_path, project_dir).replace("\\", "/")
-        if os.path.isdir(child_path) and name == "src":
+        if os.path.isdir(child_path) and name == _RESOURCE_SRC_DIRNAME:
             preserved_paths.append(rel_path)
             files, dirs = _clean_resource_src_dir(project_dir, child_path, removed_paths, preserved_paths)
             removed_files += files
@@ -163,14 +187,14 @@ def clean_project_for_reconstruct(project_dir: str) -> ProjectCleanReport:
             preserved_paths.append(rel_path)
             continue
 
-        if os.path.isdir(child_path) and name == ".eguiproject":
+        if os.path.isdir(child_path) and name == EGUIPROJECT_DIRNAME:
             preserved_paths.append(rel_path)
             files, dirs = _clean_eguiproject_dir(project_dir, child_path, removed_paths, preserved_paths)
             removed_files += files
             removed_dirs += dirs
             continue
 
-        if os.path.isdir(child_path) and name == "resource":
+        if os.path.isdir(child_path) and name == _RESOURCE_DIRNAME:
             preserved_paths.append(rel_path)
             files, dirs = _clean_resource_dir(project_dir, child_path, removed_paths, preserved_paths)
             removed_files += files

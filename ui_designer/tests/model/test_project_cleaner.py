@@ -3,10 +3,49 @@
 import os
 import pytest
 
-from ui_designer.model.project_cleaner import clean_project_for_reconstruct, _remove_path
+from ui_designer.model.project_cleaner import (
+    DESIGNER_RECONSTRUCT_DELETE_SUMMARY,
+    DESIGNER_SOURCE_PRESERVE_SUMMARY,
+    clean_project_for_reconstruct,
+    _remove_path,
+)
+from ui_designer.utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME
+from ui_designer.utils.scaffold import (
+    APP_CONFIG_RELPATH,
+    BUILD_MK_RELPATH,
+    DESIGNER_PROJECT_DIRNAME,
+    LAYOUT_DIR_RELPATH,
+    MOCKUP_DIR_RELPATH,
+    RELEASE_CONFIG_RELPATH,
+    RESOURCE_CONFIG_RELPATH,
+    RESOURCE_DIR_RELPATH,
+    RESOURCE_FONT_DIR_RELPATH,
+    RESOURCE_IMG_DIR_RELPATH,
+    RESOURCE_SRC_DIR_RELPATH,
+)
 
 
 class TestProjectCleaner:
+    def test_cleanup_summaries_stay_aligned_with_shared_scaffold_paths(self):
+        assert f"{BUILD_MK_RELPATH} and {APP_CONFIG_RELPATH} user override wrappers" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{RESOURCE_CONFIG_RELPATH} user overlay config" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{LAYOUT_DIR_RELPATH}/*.xml page layouts" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{RESOURCE_DIR_RELPATH}/** source assets and resource metadata" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{MOCKUP_DIR_RELPATH}/** preview mockups" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert f"{RELEASE_CONFIG_RELPATH} release packaging profiles" in DESIGNER_SOURCE_PRESERVE_SUMMARY
+        assert (
+            f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
+            f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
+            f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+
     def test_clean_project_for_reconstruct_preserves_designer_state_and_deletes_outputs(self, tmp_path):
         project_dir = tmp_path / "CleanAllDemo"
         (project_dir / ".eguiproject" / "layout").mkdir(parents=True)

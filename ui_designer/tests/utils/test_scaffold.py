@@ -11,8 +11,13 @@ from ui_designer.utils.scaffold import (
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
+    EGUIPROJECT_DIRNAME,
+    MOCKUP_DIR_RELPATH,
+    RELEASE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    RESOURCE_DIR_RELPATH,
+    RESOURCE_SRC_DIR_RELPATH,
     add_page_widget,
     add_widget_children,
     apply_designer_project_scaffold,
@@ -388,6 +393,11 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_app_config_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/app_egui_config.h"
         )
+        assert EGUIPROJECT_DIRNAME == ".eguiproject"
+        assert RESOURCE_DIR_RELPATH == ".eguiproject/resources"
+        assert MOCKUP_DIR_RELPATH == ".eguiproject/mockup"
+        assert RELEASE_CONFIG_RELPATH == ".eguiproject/release.json"
+        assert RESOURCE_SRC_DIR_RELPATH == "resource/src"
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"
