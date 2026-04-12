@@ -57,8 +57,8 @@ from ui_designer.utils.scaffold import (
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
-    project_config_layout_dir,
     project_file_relpath,
+    project_layout_xml_path,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
     sdk_example_config_resource_dir,
@@ -221,10 +221,8 @@ def _write_figma_page_xml(
     scale=1.0,
 ):
     """Build and write a Figma-derived page XML into the app layout directory."""
-    layout_dir = project_config_layout_dir(app_dir)
-    os.makedirs(layout_dir, exist_ok=True)
-
-    xml_path = os.path.join(layout_dir, f"{page_name}.xml")
+    xml_path = project_layout_xml_path(app_dir, page_name)
+    os.makedirs(os.path.dirname(xml_path), exist_ok=True)
     xml_content = _build_figma_page_xml(
         root_node,
         target_w,

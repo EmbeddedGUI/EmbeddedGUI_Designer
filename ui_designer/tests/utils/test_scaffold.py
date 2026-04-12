@@ -74,6 +74,7 @@ from ui_designer.utils.scaffold import (
     project_designer_resource_dir,
     project_file_path,
     project_generated_resource_dir,
+    project_layout_xml_path,
     project_resource_catalog_path,
     project_resource_src_dir,
     project_supported_text_path,
@@ -99,6 +100,7 @@ from ui_designer.utils.scaffold import (
     sdk_example_reference_frames_dir,
     sdk_example_config_dir,
     sdk_example_layout_dir,
+    sdk_example_layout_xml_path,
     sdk_example_config_resource_dir,
     sdk_example_resource_images_dir,
     sdk_example_generated_resource_dir,
@@ -402,6 +404,9 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_config_layout_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/layout"
         )
+        assert os.path.normpath(project_layout_xml_path("D:/workspace/DemoApp", "main_page")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/layout/main_page.xml"
+        )
         assert os.path.normpath(project_config_mockup_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/mockup"
         )
@@ -482,6 +487,9 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(sdk_example_layout_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/layout"
+        )
+        assert os.path.normpath(sdk_example_layout_xml_path(sdk_root, "DemoApp", "main_page")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/layout/main_page.xml"
         )
         assert os.path.normpath(sdk_example_config_resource_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources"

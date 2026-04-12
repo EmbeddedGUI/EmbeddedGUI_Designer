@@ -40,6 +40,7 @@ from ui_designer.model.workspace import sdk_example_app_dir, sdk_example_project
 from ui_designer.utils.scaffold import (
     build_empty_project_xml,
     build_empty_resources_xml,
+    sdk_example_layout_xml_path,
     sdk_example_resource_catalog_path,
     sdk_example_layout_dir,
     sdk_example_resource_images_dir,
@@ -570,7 +571,7 @@ class FigmaMakeCodegen:
             gen.cleanup_xml(xml_root)
 
             # Write XML
-            xml_path = os.path.join(layout_dir, f"{page_name}.xml")
+            xml_path = sdk_example_layout_xml_path(sdk_root, self.app_name, page_name)
             write_xml_file(xml_path, xml_root)
             print(f"  Generated: {page_name}.xml")
 

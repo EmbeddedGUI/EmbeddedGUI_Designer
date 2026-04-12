@@ -345,8 +345,23 @@ def project_file_path(project_dir: str, app_name: str) -> str:
     return os.path.join(project_dir, project_file_relpath(app_name))
 
 
+def _layout_xml_filename(page_name: str) -> str:
+    return f"{page_name}.xml"
+
+
+def project_layout_xml_path(project_dir: str, page_name: str) -> str:
+    return project_config_path(project_dir, "layout", _layout_xml_filename(page_name))
+
+
+def sdk_example_layout_xml_path(sdk_root: str | None, app_name: str | None, page_name: str) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_layout_xml_path(app_dir, page_name)
+
+
 def project_layout_xml_relpath(page_name: str) -> str:
-    return f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
+    return f"{LAYOUT_DIR_RELPATH}/{_layout_xml_filename(page_name)}"
 
 
 def _normalize_project_copy_dir(path: str) -> str:
