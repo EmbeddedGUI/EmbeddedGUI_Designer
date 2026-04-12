@@ -24,6 +24,7 @@ from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_ro
 from ui_designer.utils.scaffold import (
     add_widget_children as _add_widget_children,
     project_file_path,
+    RESOURCE_DIR_RELPATH,
     require_project_page_root,
     save_project_model,
 )
@@ -4347,7 +4348,7 @@ class TestMainWindowFileFlow:
 
         assert action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
             "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
         assert action.statusTip() == action.toolTip()
@@ -4399,7 +4400,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Generate Resources"].toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
             "Project: none. SDK: invalid. Source resources: missing. Resource directory: none."
         )
         assert build_action.toolTip() == (
@@ -4479,7 +4480,7 @@ class TestMainWindowFileFlow:
         )
         assert actions["Generate Resources"].toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
             f"Project: open. SDK: valid. Source resources: available. Resource directory: {resources_dir}."
         )
         assert build_action.toolTip() == (
@@ -4683,7 +4684,7 @@ class TestMainWindowFileFlow:
         assert tooltip_calls == 1
         assert window._generate_resources_action.toolTip() == (
             "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
             f"Project: open. SDK: valid. Source resources: available. Resource directory: {window._get_eguiproject_resource_dir()}."
         )
         assert window._generate_resources_action.statusTip() == window._generate_resources_action.toolTip()

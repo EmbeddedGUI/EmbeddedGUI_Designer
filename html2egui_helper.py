@@ -45,6 +45,7 @@ from ui_designer.utils.scaffold import (
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
+    RESOURCE_IMAGES_DIR_RELPATH,
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
@@ -3716,7 +3717,7 @@ See README.md for the standalone conversion workflow.
     p_icons = sub.add_parser("export-icons", help="Export Material Symbols icons from HTML")
     p_icons.add_argument("--input", "-i", required=True, help="Input HTML file path")
     p_icons.add_argument("--output", "-o", default=None, help="Output directory for PNG files (default: auto from --app)")
-    p_icons.add_argument("--app", "-n", default=None, help="App name (auto-sets output to .eguiproject/resources/images/)")
+    p_icons.add_argument("--app", "-n", default=None, help=f"App name (auto-sets output to {RESOURCE_IMAGES_DIR_RELPATH}/)")
     p_icons.add_argument("--size", "-s", type=int, default=24, help="Icon size in pixels (default: 24)")
     p_icons.add_argument("--color", "-c", default="FFFFFF", help="Icon color hex (default: FFFFFF = white)")
     p_icons.add_argument("--font", "-f", default=None, help="Path to MaterialSymbolsOutlined TTF file")
@@ -3729,7 +3730,7 @@ See README.md for the standalone conversion workflow.
     p_svgs = sub.add_parser("export-svgs", help="Extract inline SVGs from HTML and convert to PNG")
     p_svgs.add_argument("--input", "-i", required=True, help="Input HTML file path")
     p_svgs.add_argument("--output", "-o", default=None, help="Output directory for PNG files (default: auto from --app)")
-    p_svgs.add_argument("--app", "-n", default=None, help="App name (auto-sets output to .eguiproject/resources/images/)")
+    p_svgs.add_argument("--app", "-n", default=None, help=f"App name (auto-sets output to {RESOURCE_IMAGES_DIR_RELPATH}/)")
     p_svgs.add_argument("--size", "-s", type=int, default=64, help="Output PNG size in pixels (default: 64)")
     p_svgs.add_argument("--prefix", default="svg_", help="Filename prefix (default: svg_)")
     p_svgs.add_argument("--image-format", default="rgb565", help="Image format for resource config (default: rgb565)")

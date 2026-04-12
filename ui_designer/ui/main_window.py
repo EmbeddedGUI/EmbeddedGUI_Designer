@@ -162,6 +162,10 @@ _SPACE_XS = int(_DEFAULT_UI_TOKENS.get("space_xs", 4))
 _SPACE_SM = int(_DEFAULT_UI_TOKENS.get("space_sm", 8))
 _SPACE_MD = int(_DEFAULT_UI_TOKENS.get("space_md", 12))
 _SPACE_LG = int(_DEFAULT_UI_TOKENS.get("space_lg", 16))
+_GENERATE_RESOURCES_HINT_PREFIX = (
+    "Run resource generation (app_resource_generate.py) to produce\n"
+    f"C source files from {RESOURCE_DIR_RELPATH}/ assets and widget config. "
+)
 from .widgets.page_navigator import PageNavigator, PAGE_TEMPLATES
 from ..settings.ui_prefs import UIPreferences
 from ..core.state_store import StateStore
@@ -1423,8 +1427,7 @@ class MainWindow(QMainWindow):
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         resource_dir_label = resources_dir or "none"
         hint = (
-            "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config. "
+            f"{_GENERATE_RESOURCES_HINT_PREFIX}"
             f"Project: {project_state}. SDK: {sdk_state}. Source resources: {resources_state}. Resource directory: {resource_dir_label}."
         )
         self._apply_action_hint(self._generate_resources_action, hint)
@@ -3441,8 +3444,7 @@ class MainWindow(QMainWindow):
         self._generate_resources_action = QAction("Generate Resources", self)
         self._apply_action_hint(
             self._generate_resources_action,
-            "Run resource generation (app_resource_generate.py) to produce\n"
-            "C source files from .eguiproject/resources/ assets and widget config.",
+            _GENERATE_RESOURCES_HINT_PREFIX.rstrip(),
         )
         self._generate_resources_action.triggered.connect(self._generate_resources)
         build_menu.addAction(self._generate_resources_action)

@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 import html2egui_helper as h
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
+from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH
 
 
 class _FakePage:
@@ -22,6 +23,14 @@ class _FakePage:
 
 
 class TestHelperResourceSync:
+    def test_export_asset_help_uses_shared_image_resource_relpath(self, monkeypatch, capsys):
+        monkeypatch.setattr(sys, "argv", ["html2egui_helper.py", "export-icons", "--help"])
+
+        with pytest.raises(SystemExit, match="0"):
+            h.main()
+
+        assert RESOURCE_IMAGES_DIR_RELPATH in capsys.readouterr().out
+
     def test_app_path_helpers_use_shared_project_layout(self, tmp_path):
         sdk_root = tmp_path / "sdk"
 
