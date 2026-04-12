@@ -4482,6 +4482,43 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_toggle_auto_compile_off_cancels_pending_timer_and_cycle(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "AutoCompileToggleCancelDemo"
+        project = _create_project(project_dir, "AutoCompileToggleCancelDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        compile_cycle_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window.auto_compile = True
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(10)
+        window._compile_timer.start()
+        window._pending_compile = True
+
+        window._toggle_auto_compile(False)
+        QTest.qWait(30)
+        qapp.processEvents()
+        window._run_auto_compile_cycle()
+
+        assert compile_cycle_calls == []
+        assert window.auto_compile is False
+        assert window._compile_timer.isActive() is False
+        assert window._pending_compile is False
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_apply_sdk_root_reports_editing_only_mode_without_status_prefix(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):

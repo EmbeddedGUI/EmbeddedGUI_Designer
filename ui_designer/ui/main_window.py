@@ -7372,6 +7372,9 @@ class MainWindow(QMainWindow):
 
     def _toggle_auto_compile(self, enabled):
         self.auto_compile = enabled
+        if not enabled:
+            self._compile_timer.stop()
+            self._pending_compile = False
         self._update_build_menu_metadata()
 
     def _trigger_compile(self):
@@ -7406,6 +7409,8 @@ class MainWindow(QMainWindow):
         self._start_compile_cycle(force_rebuild=False)
 
     def _run_auto_compile_cycle(self):
+        if not self.auto_compile:
+            return
         if self._is_auto_compile_retry_blocked():
             return
         preview_unavailable_reason = self._effective_preview_unavailable_reason()
