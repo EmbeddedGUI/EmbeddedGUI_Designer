@@ -96,6 +96,9 @@ from ui_designer.utils.scaffold import (
     ensure_designer_project_scaffold_with_sdk_root,
     scaffold_designer_project_with_sdk_root,
     save_project_with_designer_scaffold,
+    sdk_example_reference_frames_dir,
+    sdk_example_regression_report_path,
+    sdk_example_regression_results_path,
     sync_project_resources_and_generate_designer_resource_config,
     sync_project_scaffold_core_files,
     legacy_designer_codegen_cleanup_relpaths,
@@ -458,6 +461,19 @@ class TestCoreProjectScaffold:
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"
+        )
+
+    def test_sdk_example_scaffold_path_helpers_use_sdk_example_layout(self):
+        sdk_root = "D:/sdk/EmbeddedGUI"
+
+        assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"
+        )
+        assert os.path.normpath(sdk_example_regression_report_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/regression_report.html"
+        )
+        assert os.path.normpath(sdk_example_regression_results_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/regression_results.json"
         )
         assert project_layout_xml_relpath("main_page") == ".eguiproject/layout/main_page.xml"
         assert default_scaffold_circle_radius(320, 240) == 120

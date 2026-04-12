@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 
+from ..model.workspace import sdk_example_app_dir
 from .resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
@@ -263,6 +264,27 @@ def project_config_regression_report_path(project_dir: str) -> str:
 
 def project_config_regression_results_path(project_dir: str) -> str:
     return project_config_path(project_dir, "regression_results.json")
+
+
+def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_reference_frames_dir(app_dir)
+
+
+def sdk_example_regression_report_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_regression_report_path(app_dir)
+
+
+def sdk_example_regression_results_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_config_regression_results_path(app_dir)
 
 
 def project_file_relpath(app_name: str) -> str:
