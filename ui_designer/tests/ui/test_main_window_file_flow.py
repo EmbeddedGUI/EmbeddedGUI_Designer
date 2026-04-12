@@ -9284,7 +9284,86 @@ class TestMainWindowFileFlow:
         assert window._poll_project_files() is None
         assert window._external_reload_pending is False
         assert window._external_reload_changed_paths == []
-        assert window.statusBar().currentMessage() == "Reloaded external changes: main_page.xml"
+        assert window.statusBar().currentMessage() == (
+            "Reloaded external changes: main_page.xml | Editing-only mode: preview disabled for test"
+        )
+        _close_window(window)
+
+    def test_pending_external_reload_preserves_editing_only_reason_after_successful_reload(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _BusyWorker:
+            def isRunning(self):
+                return True
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "PendingReloadEditingOnlyDemo"
+        project = _create_project(project_dir, "PendingReloadEditingOnlyDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._compile_worker = _BusyWorker()
+        layout_file = project_dir / ".eguiproject" / "layout" / "main_page.xml"
+        layout_file.write_text(layout_file.read_text(encoding="utf-8") + "\n<!-- reload editing only -->\n", encoding="utf-8")
+
+        window._poll_project_files()
+        assert window._external_reload_pending is True
+        assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
+
+        window._compile_worker = None
+        monkeypatch.setattr(
+            window,
+            "_recreate_compiler",
+            lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler(project_dir)),
+        )
+
+        assert window._poll_project_files() is None
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
+        message = window.statusBar().currentMessage()
+        assert "Reloaded external changes: main_page.xml" in message
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in message
         _close_window(window)
 
     def test_pending_external_reload_recomputes_changed_paths_before_retry(self, qapp, isolated_config, tmp_path, monkeypatch):

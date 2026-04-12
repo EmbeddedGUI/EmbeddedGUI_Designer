@@ -2975,11 +2975,24 @@ class MainWindow(QMainWindow):
                 self._switch_page(current_page_name)
 
         summary = self._summarize_changed_paths(changed_paths or [])
+        preview_unavailable_reason = self._preview_unavailable_reason()
         if auto:
             self.debug_panel.log_info(f"Project reloaded from disk: {summary or 'external changes applied'}")
-            self.statusBar().showMessage(f"Reloaded external changes: {summary or 'project updated'}", 5000)
+            self.statusBar().showMessage(
+                self._status_message_with_editing_only_mode(
+                    f"Reloaded external changes: {summary or 'project updated'}",
+                    preview_unavailable_reason,
+                ),
+                5000,
+            )
         else:
-            self.statusBar().showMessage("Project reloaded from disk", 4000)
+            self.statusBar().showMessage(
+                self._status_message_with_editing_only_mode(
+                    "Project reloaded from disk",
+                    preview_unavailable_reason,
+                ),
+                4000,
+            )
         return True
 
     def _clear_editor_state(self):
