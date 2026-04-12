@@ -124,6 +124,7 @@ from ui_designer.utils.scaffold import (
     sdk_example_config_resource_dir,
     sdk_example_generated_font_dir,
     sdk_example_generated_img_dir,
+    sdk_example_paths,
     sdk_example_resource_images_dir,
     sdk_example_generated_resource_dir,
     sdk_example_resource_src_dir,
@@ -557,6 +558,7 @@ class TestCoreProjectScaffold:
 
     def test_sdk_example_scaffold_path_helpers_use_sdk_example_layout(self):
         sdk_root = "D:/sdk/EmbeddedGUI"
+        example_paths = sdk_example_paths(sdk_root, "DemoApp")
 
         assert os.path.normpath(sdk_example_config_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject"
@@ -608,6 +610,14 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(sdk_example_project_file_path(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/DemoApp.egui"
         )
+        assert example_paths == {
+            "app_name": "DemoApp",
+            "app_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp"),
+            "config_dir": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject"),
+            "app_config_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/app_egui_config.h"),
+            "build_mk_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/build.mk"),
+            "project_path": os.path.normpath("D:/sdk/EmbeddedGUI/example/DemoApp/DemoApp.egui"),
+        }
         assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"
         )

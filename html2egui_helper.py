@@ -32,7 +32,6 @@ import sys
 
 from ui_designer.model.workspace import (
     require_designer_sdk_root_for_path,
-    sdk_example_app_dir,
     sdk_output_dir,
     sdk_resource_generator_path,
     sdk_runtime_check_output_dir,
@@ -63,7 +62,7 @@ from ui_designer.utils.scaffold import (
     sdk_example_config_resource_dir,
     sdk_example_designer_resource_config_path,
     sdk_example_generated_resource_dir,
-    sdk_example_project_file_path,
+    sdk_example_paths,
     sdk_example_resource_images_dir,
     sdk_example_supported_text_path,
     sdk_example_resource_src_dir,
@@ -119,7 +118,7 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
 def _resolve_existing_app_dir(app_name):
     """Resolve an existing app directory under the SDK example tree."""
     sdk_root = _find_sdk_root()
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    app_dir = sdk_example_paths(sdk_root, app_name)["app_dir"]
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
         sys.exit(1)
@@ -278,7 +277,7 @@ def _layout_edit_step(page_name="main_page", *, app_name=None):
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
-    app_dir = sdk_example_app_dir(sdk_root, args.app)
+    app_dir = sdk_example_paths(sdk_root, args.app)["app_dir"]
 
     if os.path.exists(app_dir) and not args.force:
         print(f"ERROR: Directory already exists: {app_dir}")
@@ -1494,9 +1493,10 @@ def cmd_generate_code(args):
     """Generate C code from UI Designer XML project."""
     app_name = args.app
     sdk_root, app_dir = _resolve_existing_app_dir(app_name)
+    example_paths = sdk_example_paths(sdk_root, app_name)
 
     # Find .egui project file
-    egui_file = sdk_example_project_file_path(sdk_root, app_name)
+    egui_file = example_paths["project_path"]
     if not os.path.isfile(egui_file):
         print(f"ERROR: Project file not found: {egui_file}")
         print("Run 'scaffold' first to create the project structure.")

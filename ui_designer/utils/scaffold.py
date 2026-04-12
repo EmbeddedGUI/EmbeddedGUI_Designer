@@ -390,6 +390,29 @@ def sdk_example_project_file_path(sdk_root: str | None, app_name: str | None) ->
     )
 
 
+def sdk_example_paths(sdk_root: str | None, app_name: str | None) -> dict[str, str]:
+    """Return the canonical SDK example app paths used across Designer helpers."""
+    normalized_app_name = str(app_name or "").strip()
+    app_dir = sdk_example_app_dir(sdk_root, normalized_app_name)
+    if not app_dir or not normalized_app_name:
+        return {
+            "app_name": normalized_app_name,
+            "app_dir": "",
+            "config_dir": "",
+            "app_config_path": "",
+            "build_mk_path": "",
+            "project_path": "",
+        }
+    return {
+        "app_name": normalized_app_name,
+        "app_dir": app_dir,
+        "config_dir": sdk_example_config_dir(sdk_root, normalized_app_name),
+        "app_config_path": sdk_example_app_config_path(sdk_root, normalized_app_name),
+        "build_mk_path": sdk_example_build_mk_path(sdk_root, normalized_app_name),
+        "project_path": sdk_example_project_file_path(sdk_root, normalized_app_name),
+    }
+
+
 def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
     return _sdk_example_path(sdk_root, app_name, project_config_reference_frames_dir)
 
@@ -2234,13 +2257,14 @@ def save_empty_sdk_example_project_with_designer_scaffold(
     remove_legacy_designer_files=False,
 ):
     """Build and save an empty Designer project for an SDK example app."""
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    project_path = sdk_example_project_file_path(sdk_root, app_name)
+    paths = sdk_example_paths(sdk_root, app_name)
+    app_dir = paths["app_dir"]
+    project_path = paths["project_path"]
     if not app_dir or not project_path:
         raise ValueError("sdk_root and app_name are required")
 
     screen_width, screen_height = read_app_config_dimensions(
-        sdk_example_app_config_path(sdk_root, app_name),
+        paths["app_config_path"],
         default_width,
         default_height,
     )
@@ -2373,7 +2397,7 @@ def scaffold_sdk_example_conversion_project(
     color_depth=16,
 ):
     """Apply conversion/import scaffold defaults to an SDK example app."""
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    app_dir = sdk_example_paths(sdk_root, app_name)["app_dir"]
     if not app_dir:
         return "", {}
     return app_dir, scaffold_conversion_project_with_sdk_root(
@@ -2447,7 +2471,7 @@ def ensure_sdk_example_conversion_project_scaffold(
     color_depth=16,
 ):
     """Create a conversion/import scaffold for an SDK example app when missing."""
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    app_dir = sdk_example_paths(sdk_root, app_name)["app_dir"]
     if not app_dir:
         return "", False, {}
     created, actions = ensure_conversion_project_scaffold_with_sdk_root(
