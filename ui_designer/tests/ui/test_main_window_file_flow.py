@@ -2682,7 +2682,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         calls = {
             "property_panel_refresh_live_geometry": 0,
@@ -2771,7 +2771,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         calls = {"property_panel_refresh_live_geometry": 0}
         monkeypatch.setattr(
@@ -3545,10 +3545,9 @@ class TestMainWindowFileFlow:
 
         window = MainWindow(str(sdk_root))
         preview_reasons = []
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_ensure_resources_generated", lambda: (_ for _ in ()).throw(AssertionError("resource generation should not run")))
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window.compiler = CompileFailIfCalled()
