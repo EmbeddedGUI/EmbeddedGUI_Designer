@@ -82,3 +82,24 @@ class TestWindowTestHelpers:
         window._recreate_compiler()
         assert isinstance(window.compiler, _Compiler)
         assert window._trigger_compile() is None
+
+    def test_disable_main_window_compile_replaces_existing_compiler_immediately(self):
+        calls = []
+
+        class _ExistingCompiler:
+            def cleanup(self):
+                calls.append("cleanup")
+
+        class _Compiler:
+            pass
+
+        class _FakeWindow:
+            def __init__(self):
+                self.compiler = _ExistingCompiler()
+
+        window = _FakeWindow()
+
+        disable_main_window_compile(window, _Compiler)
+
+        assert calls == ["cleanup"]
+        assert isinstance(window.compiler, _Compiler)

@@ -10,6 +10,10 @@ def close_test_window(window, *, stop_rendering=False):
 
 
 def disable_main_window_compile(window, compiler_factory):
+    existing_compiler = getattr(window, "compiler", None)
+    if existing_compiler is not None and hasattr(existing_compiler, "cleanup"):
+        existing_compiler.cleanup()
+    window.compiler = compiler_factory()
     window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", compiler_factory())
     window._trigger_compile = lambda: None
     return window
