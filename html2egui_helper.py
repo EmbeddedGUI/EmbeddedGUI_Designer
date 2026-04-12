@@ -31,7 +31,7 @@ import re
 import subprocess
 import sys
 
-from ui_designer.model.workspace import require_designer_sdk_root
+from ui_designer.model.workspace import require_designer_sdk_root, sdk_output_dir, sdk_resource_generator_path
 from ui_designer.utils.resource_config_overlay import (
     ensure_resource_config_file,
     is_designer_resource_path,
@@ -1477,8 +1477,8 @@ def cmd_gen_resource(args):
         if os.path.exists(cached_path):
             os.remove(cached_path)
 
-    gen_script = os.path.join(sdk_root, "scripts", "tools", "app_resource_generate.py")
-    output_dir = os.path.join(sdk_root, "output")
+    gen_script = sdk_resource_generator_path(sdk_root)
+    output_dir = sdk_output_dir(sdk_root)
     os.makedirs(output_dir, exist_ok=True)
 
     cmd = [sys.executable, gen_script, "-r", resource_dir, "-o", output_dir]

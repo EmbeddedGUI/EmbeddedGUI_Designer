@@ -28,6 +28,9 @@ from ui_designer.model.workspace import (
     resolve_preferred_sdk_root,
     resolve_project_sdk_root,
     resolve_sdk_root_candidate,
+    sdk_output_dir,
+    sdk_output_path,
+    sdk_resource_generator_path,
     serialize_sdk_root,
 )
 class TestWorkspaceHelpers:
@@ -71,6 +74,20 @@ class TestWorkspaceHelpers:
         app_dir = app_root / "HelloApp"
         app_dir.mkdir(parents=True)
         assert compute_make_app_root_arg(str(sdk_root), str(app_dir), "HelloApp") == os.path.relpath(str(app_root), str(sdk_root)).replace("\\", "/")
+
+    def test_sdk_resource_generator_and_output_helpers(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+
+        assert sdk_resource_generator_path(str(sdk_root)) == normalize_path(
+            str(sdk_root / "scripts" / "tools" / "app_resource_generate.py")
+        )
+        assert sdk_output_dir(str(sdk_root)) == normalize_path(str(sdk_root / "output"))
+        assert sdk_output_path(str(sdk_root), "app_egui_resource_merge.bin") == normalize_path(
+            str(sdk_root / "output" / "app_egui_resource_merge.bin")
+        )
+        assert sdk_resource_generator_path("") == ""
+        assert sdk_output_dir("") == ""
+        assert sdk_output_path("", "app_egui_resource_merge.bin") == ""
 
     def test_find_sdk_root_prefers_cli_and_project(self, tmp_path):
         sdk_root = tmp_path / "sdk"

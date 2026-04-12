@@ -73,6 +73,9 @@ from ..model.workspace import (
     normalize_path,
     resolve_available_sdk_root,
     resolve_sdk_root_candidate,
+    sdk_output_dir,
+    sdk_output_path,
+    sdk_resource_generator_path,
 )
 from ..model.resource_binding import assign_resource_to_widget
 from ..model.resource_usage import (
@@ -5254,14 +5257,14 @@ class MainWindow(QMainWindow):
         import subprocess
         import sys
 
-        gen_script = os.path.join(self.project_root, "scripts", "tools", "app_resource_generate.py")
+        gen_script = sdk_resource_generator_path(self.project_root)
         if not os.path.isfile(gen_script):
             if not silent:
                 QMessageBox.warning(self, "Error", f"Cannot find resource generator:\n{gen_script}")
             self.debug_panel.log_error(f"Resource generation skipped: missing generator {gen_script}")
             return False
 
-        output_dir = os.path.join(self.project_root, "output")
+        output_dir = sdk_output_dir(self.project_root)
         os.makedirs(output_dir, exist_ok=True)
         cmd = [
             sys.executable,
@@ -5328,7 +5331,7 @@ class MainWindow(QMainWindow):
         Skips entirely when resources haven't changed since last generation.
         Runs silently 鈥?errors are logged to debug panel only.
         """
-        output_resource_bin = os.path.join(self.project_root, "output", "app_egui_resource_merge.bin") if self.project_root else ""
+        output_resource_bin = sdk_output_path(self.project_root, "app_egui_resource_merge.bin")
         resource_output_missing = bool(output_resource_bin) and not os.path.exists(output_resource_bin)
         if not self._resources_need_regen and not resource_output_missing:
             return
