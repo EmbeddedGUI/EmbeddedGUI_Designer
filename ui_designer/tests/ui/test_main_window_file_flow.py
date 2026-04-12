@@ -4229,6 +4229,45 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clean_rebuild_failure_missing_clean_target_keeps_compile_available(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MissingCleanTargetDemo"
+        project = _create_project(project_dir, "MissingCleanTargetDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        preview_reasons = []
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._on_compile_finished(
+            None,
+            window._async_generation,
+            True,
+            False,
+            "Rebuild failed:\nmake: *** No rule to make target 'clean'.  Stop.",
+            None,
+        )
+
+        assert preview_reasons == ["make: *** No rule to make target 'clean'.  Stop."]
+        assert "clean" in window.statusBar().currentMessage()
+        assert "Regular Compile remains available" in window.debug_panel._output.toPlainText()
+        assert window._effective_preview_unavailable_reason() == ""
+        assert window._auto_compile_retry_block_reason == ""
+        assert window._compile_action.isEnabled() is True
+        assert window._rebuild_action.isEnabled() is False
+        assert "clean" in window._rebuild_action.toolTip()
+        assert window.debug_panel._rebuild_btn.isHidden() is True
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_debug_rebuild_button_hides_after_environmental_preview_block(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -4274,6 +4313,17 @@ class TestMainWindowFileFlow:
 
         assert status == "Preview build is unavailable, switched to Python fallback."
         assert "cannot recover missing preview build availability" in guidance
+
+    def test_compile_failure_feedback_handles_missing_clean_target(self):
+        from ui_designer.ui.main_window import MainWindow
+
+        status, guidance = MainWindow._compile_failure_feedback(
+            "Rebuild failed:\nmake: *** No rule to make target 'clean'.  Stop.",
+            force_rebuild=True,
+        )
+
+        assert status == "Clean rebuild target 'clean' is unavailable, switched to Python fallback."
+        assert "Regular Compile remains available" in guidance
 
     def test_compile_failure_feedback_handles_preview_probe_timeout(self):
         from ui_designer.ui.main_window import MainWindow

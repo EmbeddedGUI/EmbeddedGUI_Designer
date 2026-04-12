@@ -384,6 +384,7 @@ class MainWindow(QMainWindow):
         self._project_dirty_sources = []
         self._last_runtime_error_text = ""
         self._auto_compile_retry_block_reason = ""
+        self._rebuild_retry_block_reason = ""
 
         self._project_watch_timer = QTimer(self)
         self._project_watch_timer.setInterval(1000)
@@ -408,7 +409,7 @@ class MainWindow(QMainWindow):
             self.debug_panel.set_rebuild_action_state(visible=False, enabled=False)
             return
         enabled = bool(self._rebuild_action.isEnabled())
-        reason = self._compile_action_blocked_reason() if not enabled else ""
+        reason = self._rebuild_action_blocked_reason() if not enabled else ""
         if reason and not self._should_offer_debug_rebuild_action(reason):
             self.debug_panel.set_rebuild_action_state(visible=False, enabled=False)
             return
@@ -1658,6 +1659,18 @@ class MainWindow(QMainWindow):
             return preview_unavailable_reason
         return "compile preview is unavailable"
 
+    def _rebuild_action_blocked_reason(self):
+        if self.project is None:
+            return "open a project first"
+        if not self._has_valid_sdk_root():
+            return "set a valid SDK root first"
+        if self.compiler is None:
+            return "save the project to a valid SDK workspace first"
+        rebuild_unavailable_reason = self._effective_rebuild_unavailable_reason()
+        if rebuild_unavailable_reason:
+            return rebuild_unavailable_reason
+        return "clean rebuild is unavailable"
+
     def _clean_all_action_blocked_reason(self):
         if self.project is None:
             return "open a project first"
@@ -1752,7 +1765,7 @@ class MainWindow(QMainWindow):
             if self._rebuild_action.isEnabled():
                 rebuild_hint = f"{base_text} {rebuild_context}"
             else:
-                rebuild_hint = f"{base_text} {rebuild_context} Unavailable: {self._compile_action_blocked_reason()}."
+                rebuild_hint = f"{base_text} {rebuild_context} Unavailable: {self._rebuild_action_blocked_reason()}."
             self._apply_action_hint(self._rebuild_action, rebuild_hint)
             self._update_debug_rebuild_action()
         if hasattr(self, "_clean_all_action"):
@@ -2177,11 +2190,29 @@ class MainWindow(QMainWindow):
             return reason
         return ""
 
+    def _rebuild_retry_block_reason_is_environmental(self, reason=""):
+        normalized = str(reason or "").strip()
+        if not normalized:
+            return False
+        return self._missing_make_target_name(normalized).lower() == "clean"
+
+    def _rebuild_retry_blocked_reason(self):
+        reason = str(getattr(self, "_rebuild_retry_block_reason", "") or "").strip()
+        if self._rebuild_retry_block_reason_is_environmental(reason):
+            return reason
+        return ""
+
     def _effective_preview_unavailable_reason(self):
         reason = self._preview_unavailable_reason()
         if reason:
             return reason
         return self._preview_retry_blocked_reason()
+
+    def _effective_rebuild_unavailable_reason(self):
+        reason = self._effective_preview_unavailable_reason()
+        if reason:
+            return reason
+        return self._rebuild_retry_blocked_reason()
 
     def _preview_mode_text(self):
         if getattr(self, "project", None) is None:
@@ -2650,6 +2681,7 @@ class MainWindow(QMainWindow):
             bind_project_storage(self.project, self.project.project_dir, sdk_root=path)
             self._bump_async_generation()
             self._shutdown_async_activity()
+            self._clear_rebuild_retry_block()
             self._recreate_compiler()
             preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
                 clear_when_available=True,
@@ -2700,17 +2732,19 @@ class MainWindow(QMainWindow):
 
     def _update_compile_availability(self):
         preview_error = self._effective_preview_unavailable_reason()
-        can_compile = (
+        rebuild_error = self._effective_rebuild_unavailable_reason()
+        can_build = (
             self.project is not None
             and self.compiler is not None
             and self._has_valid_sdk_root()
             and self.compiler.can_build()
-            and not preview_error
         )
+        can_compile = can_build and not preview_error
+        can_rebuild = can_build and not rebuild_error
         resources_dir = self._get_eguiproject_resource_dir()
         resources_state = "available" if resources_dir and os.path.isdir(resources_dir) else "missing"
         self._compile_action.setEnabled(can_compile)
-        self._rebuild_action.setEnabled(can_compile)
+        self._rebuild_action.setEnabled(can_rebuild)
         if hasattr(self, "_clean_all_action"):
             self._clean_all_action.setEnabled(self.project is not None and bool(self._project_dir))
         self.auto_compile_action.setEnabled(can_compile)
@@ -3017,6 +3051,7 @@ class MainWindow(QMainWindow):
         self._stop_background_timers()
         self.preview_panel.stop_rendering()
         self._last_runtime_error_text = ""
+        self._clear_rebuild_retry_block()
         self._project_watch_snapshot = {}
         self._clear_external_reload_pending()
         self._pending_page_renames = {}
@@ -3054,8 +3089,14 @@ class MainWindow(QMainWindow):
         self._compile_timer.stop()
         self._pending_compile = False
 
+    def _block_rebuild_retry(self, reason=""):
+        self._rebuild_retry_block_reason = str(reason or "").strip()
+
     def _clear_auto_compile_retry_block(self):
         self._auto_compile_retry_block_reason = ""
+
+    def _clear_rebuild_retry_block(self):
+        self._rebuild_retry_block_reason = ""
 
     def _preview_retry_block_reason_is_environmental(self, reason=""):
         normalized = str(reason or "").strip()
@@ -3121,13 +3162,17 @@ class MainWindow(QMainWindow):
         return f"Editing-only mode: {reason}"
 
     def _should_offer_debug_rebuild_action(self, reason=""):
-        return not self._preview_retry_block_reason_is_environmental(reason)
+        return not (
+            self._preview_retry_block_reason_is_environmental(reason)
+            or self._rebuild_retry_block_reason_is_environmental(reason)
+        )
 
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
         self._shutdown_async_activity()
         self._last_runtime_error_text = ""
+        self._clear_rebuild_retry_block()
         self._load_project_app_local_widgets(project_dir)
         resolved_sdk_root = self._resolve_ui_sdk_root(
             preferred_sdk_root or project.sdk_root,
@@ -4785,6 +4830,7 @@ class MainWindow(QMainWindow):
             return False
         self._bump_async_generation()
         self._shutdown_async_activity()
+        self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
             preload_preview_error=True,
@@ -4832,6 +4878,7 @@ class MainWindow(QMainWindow):
         self._project_dir = path
         self._bump_async_generation()
         self._shutdown_async_activity()
+        self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
             preload_preview_error=True,
@@ -7484,6 +7531,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"Clean all failed: {exc}", 5000)
             return
 
+        self._clear_rebuild_retry_block()
         self._recreate_compiler()
         preview_unavailable_reason = self._sync_preview_after_compiler_recreation(
             preload_preview_error=True,
@@ -7557,9 +7605,10 @@ class MainWindow(QMainWindow):
             )
         if missing_target == "clean":
             return (
-                "Preview clean target 'clean' is unavailable, switched to Python fallback.",
+                "Clean rebuild target 'clean' is unavailable, switched to Python fallback.",
                 "Build system does not define the 'clean' target. Verify the SDK/designer Makefile setup. "
-                "Build > Clean All && Reconstruct cannot recover missing build targets.",
+                "Regular Compile remains available, but Rebuild EGUI Project is disabled until the build "
+                "environment changes.",
             )
         if "make not found" in lowered:
             return (
@@ -7773,7 +7822,10 @@ class MainWindow(QMainWindow):
                 message,
                 "Rebuild failed" if force_rebuild else "Compile failed",
             )
-            self._block_auto_compile_retry(failure_summary)
+            if force_rebuild and self._rebuild_retry_block_reason_is_environmental(failure_summary):
+                self._block_rebuild_retry(failure_summary)
+            else:
+                self._block_auto_compile_retry(failure_summary)
             self._last_runtime_error_text = failure_summary
             status_message, guidance_message = self._compile_failure_feedback(message, force_rebuild=force_rebuild)
             self.statusBar().showMessage(status_message)
