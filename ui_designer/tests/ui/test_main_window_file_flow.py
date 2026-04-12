@@ -4921,6 +4921,71 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_clean_all_and_reconstruct_skips_force_rebuild_when_preview_target_is_still_unavailable(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.model.project_cleaner import ProjectCleanReport
+        from ui_designer.ui.main_window import MainWindow
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def is_preview_running(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "CleanAllPreviewTargetMissingDemo"
+        project = _create_project(project_dir, "CleanAllPreviewTargetMissingDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        preview_reasons = []
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: QMessageBox.Yes)
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.clean_project_for_reconstruct",
+            lambda project_path: ProjectCleanReport(removed_files=1, removed_dirs=0),
+        )
+        monkeypatch.setattr(window, "_persist_designer_state_only", lambda project_path: None)
+        monkeypatch.setattr(window, "_shutdown_async_activity", lambda wait_ms=500: None)
+        monkeypatch.setattr(window, "_cleanup_compiler", lambda stop_exe=False: None)
+        monkeypatch.setattr(
+            window,
+            "_save_project_files",
+            lambda project_path, reset_scaffold=False: {".designer/uicode.c": "// reconstructed\n"},
+        )
+        monkeypatch.setattr(window, "_ensure_resources_generated", lambda: None)
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler()))
+        monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: None)
+        monkeypatch.setattr(window, "_update_window_title", lambda: None)
+        monkeypatch.setattr(window, "_update_compile_availability", lambda: None)
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: pytest.fail("_start_compile_cycle should not run"))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+
+        window._do_clean_all_and_reconstruct()
+
+        assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in window.statusBar().currentMessage()
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_clean_all_and_reconstruct_stops_when_user_declines(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
