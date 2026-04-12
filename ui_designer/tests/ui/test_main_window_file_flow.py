@@ -28,6 +28,7 @@ from ui_designer.utils.scaffold import (
     require_project_page_root,
     save_project_model,
 )
+from ui_designer.model.workspace import sdk_output_path
 
 if HAS_PYQT5:
     from PyQt5.QtCore import QByteArray, Qt, QPoint
@@ -6374,7 +6375,7 @@ class TestMainWindowFileFlow:
 
         sdk_root = tmp_path / "sdk"
         _create_sdk_root(sdk_root)
-        output_bin = sdk_root / "output" / "app_egui_resource_merge.bin"
+        output_bin = Path(sdk_output_path(str(sdk_root), "app_egui_resource_merge.bin"))
         output_bin.parent.mkdir(parents=True, exist_ok=True)
 
         window = MainWindow(str(sdk_root))

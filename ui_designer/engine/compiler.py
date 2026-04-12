@@ -12,7 +12,7 @@ import hashlib
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from .designer_bridge import DesignerBridge
-from ..model.workspace import compute_make_app_root_arg, normalize_path
+from ..model.workspace import compute_make_app_root_arg, normalize_path, sdk_output_path
 from ..utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
@@ -672,9 +672,7 @@ class CompilerEngine:
             return False, f"Failed to copy exe: {e}", None
 
         try:
-            resource_path = os.path.join(
-                self.project_root, "output", "app_egui_resource_merge.bin"
-            )
+            resource_path = sdk_output_path(self.project_root, "app_egui_resource_merge.bin")
             # Start new bridge first (old one still running, serves frames)
             new_bridge = DesignerBridge()
             new_bridge.start(new_path, resource_path,

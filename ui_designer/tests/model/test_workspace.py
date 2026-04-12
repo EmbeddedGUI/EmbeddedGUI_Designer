@@ -31,6 +31,7 @@ from ui_designer.model.workspace import (
     sdk_output_dir,
     sdk_output_path,
     sdk_resource_generator_path,
+    sdk_runtime_check_output_dir,
     serialize_sdk_root,
 )
 class TestWorkspaceHelpers:
@@ -85,9 +86,13 @@ class TestWorkspaceHelpers:
         assert sdk_output_path(str(sdk_root), "app_egui_resource_merge.bin") == normalize_path(
             str(sdk_root / "output" / "app_egui_resource_merge.bin")
         )
+        assert sdk_runtime_check_output_dir(str(sdk_root), "DemoApp") == normalize_path(
+            str(sdk_root / "runtime_check_output" / "DemoApp")
+        )
         assert sdk_resource_generator_path("") == ""
         assert sdk_output_dir("") == ""
         assert sdk_output_path("", "app_egui_resource_merge.bin") == ""
+        assert sdk_runtime_check_output_dir("", "DemoApp") == ""
 
     def test_find_sdk_root_prefers_cli_and_project(self, tmp_path):
         sdk_root = tmp_path / "sdk"

@@ -31,7 +31,12 @@ import re
 import subprocess
 import sys
 
-from ui_designer.model.workspace import require_designer_sdk_root, sdk_output_dir, sdk_resource_generator_path
+from ui_designer.model.workspace import (
+    require_designer_sdk_root,
+    sdk_output_dir,
+    sdk_resource_generator_path,
+    sdk_runtime_check_output_dir,
+)
 from ui_designer.utils.resource_config_overlay import (
     ensure_resource_config_file,
     is_designer_resource_path,
@@ -2117,7 +2122,7 @@ def cmd_verify(args):
     print("\nRUNTIME CHECK OK")
 
     # Step 4: Report screenshot location
-    screenshot_dir = os.path.join(sdk_root, "runtime_check_output", app_name)
+    screenshot_dir = sdk_runtime_check_output_dir(sdk_root, app_name)
     if os.path.isdir(screenshot_dir):
         pngs = [f for f in os.listdir(screenshot_dir) if f.endswith(".png")]
         if pngs:

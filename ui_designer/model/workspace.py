@@ -14,6 +14,7 @@ DEFAULT_DESIGNER_SDK_DIRNAME = "EmbeddedGUI"
 DEFAULT_DESIGNER_EXAMPLES_DIRNAME = "examples"
 SDK_RESOURCE_GENERATOR_RELPATH = os.path.join("scripts", "tools", "app_resource_generate.py")
 SDK_OUTPUT_DIRNAME = "output"
+SDK_RUNTIME_CHECK_OUTPUT_DIRNAME = "runtime_check_output"
 
 
 def normalize_path(path: str | None) -> str:
@@ -336,6 +337,14 @@ def sdk_output_path(sdk_root: str | None, *parts: str) -> str:
     if not output_dir:
         return ""
     return normalize_path(os.path.join(output_dir, *parts))
+
+
+def sdk_runtime_check_output_dir(sdk_root: str | None, *parts: str) -> str:
+    """Return a path under the SDK ``runtime_check_output`` directory."""
+    root = normalize_path(sdk_root)
+    if not root:
+        return ""
+    return normalize_path(os.path.join(root, SDK_RUNTIME_CHECK_OUTPUT_DIRNAME, *parts))
 
 
 def designer_runtime_root(repo_root: str | None = None) -> str:
