@@ -55,6 +55,8 @@ from ui_designer.utils.scaffold import (
     project_config_mockup_dir,
     project_config_path,
     project_config_resource_dir,
+    project_app_config_path,
+    project_build_mk_path,
     project_file_path,
     project_generated_resource_dir,
     project_resource_src_dir,
@@ -379,6 +381,12 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(project_resource_src_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource/src"
+        )
+        assert os.path.normpath(project_build_mk_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/build.mk"
+        )
+        assert os.path.normpath(project_app_config_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/app_egui_config.h"
         )
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(

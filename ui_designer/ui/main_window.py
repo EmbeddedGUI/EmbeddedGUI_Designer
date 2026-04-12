@@ -119,6 +119,8 @@ from ..utils.resource_config_overlay import (
     APP_RESOURCE_CONFIG_DESIGNER_FILENAME,
     APP_RESOURCE_CONFIG_FILENAME,
     DESIGNER_RESOURCE_DIRNAME,
+    designer_resource_dir,
+    user_resource_config_path,
 )
 from ..utils.scaffold import (
     DESIGNER_PROJECT_DIRNAME,
@@ -136,6 +138,8 @@ from ..utils.scaffold import (
     project_config_mockup_dir,
     project_config_path,
     project_config_resource_dir,
+    project_app_config_path,
+    project_build_mk_path,
     project_generated_resource_dir,
     project_file_path,
     project_resource_src_dir,
@@ -2735,13 +2739,13 @@ class MainWindow(QMainWindow):
         eguiproject_dir = project_config_dir(self._project_dir)
         watch_roots = [
             project_file,
-            os.path.join(self._project_dir, "build.mk"),
-            os.path.join(self._project_dir, "app_egui_config.h"),
+            project_build_mk_path(self._project_dir),
+            project_app_config_path(self._project_dir),
             os.path.join(self._project_dir, DESIGNER_PROJECT_DIRNAME),
             legacy_build_designer_path(self._project_dir),
             legacy_app_config_designer_path(self._project_dir),
-            os.path.join(project_resource_src_dir(self._project_dir), APP_RESOURCE_CONFIG_FILENAME),
-            os.path.join(project_resource_src_dir(self._project_dir), DESIGNER_RESOURCE_DIRNAME),
+            user_resource_config_path(project_resource_src_dir(self._project_dir)),
+            designer_resource_dir(project_resource_src_dir(self._project_dir)),
             project_config_layout_dir(self._project_dir),
             project_config_resource_dir(self._project_dir),
             project_config_mockup_dir(self._project_dir),
@@ -4097,7 +4101,7 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.Yes:
             return
 
-        screen_w, screen_h = read_app_config_dimensions(os.path.join(app_dir, "app_egui_config.h"))
+        screen_w, screen_h = read_app_config_dimensions(project_app_config_path(app_dir))
         save_empty_project_with_designer_scaffold(
             app_name,
             app_dir,

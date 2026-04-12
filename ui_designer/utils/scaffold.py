@@ -211,6 +211,14 @@ def project_file_relpath(app_name: str) -> str:
     return f"{app_name}.egui"
 
 
+def project_build_mk_path(project_dir: str) -> str:
+    return os.path.join(project_dir, BUILD_MK_RELPATH)
+
+
+def project_app_config_path(project_dir: str) -> str:
+    return os.path.join(project_dir, APP_CONFIG_RELPATH)
+
+
 def project_file_path(project_dir: str, app_name: str) -> str:
     return os.path.join(project_dir, project_file_relpath(app_name))
 
@@ -252,15 +260,15 @@ def copy_project_sidecar_files(src_dir: str, dst_dir: str) -> None:
     if not src_dir or not os.path.isdir(src_dir) or not dst_dir or src_dir == dst_dir:
         return
 
-    for rel_path in (
-        BUILD_MK_RELPATH,
-        APP_CONFIG_RELPATH,
-        RESOURCE_CONFIG_RELPATH,
+    for src_path, dst_path in (
+        (project_build_mk_path(src_dir), project_build_mk_path(dst_dir)),
+        (project_app_config_path(src_dir), project_app_config_path(dst_dir)),
+        (
+            os.path.join(src_dir, RESOURCE_CONFIG_RELPATH),
+            os.path.join(dst_dir, RESOURCE_CONFIG_RELPATH),
+        ),
     ):
-        _copy_file_if_missing(
-            os.path.join(src_dir, rel_path),
-            os.path.join(dst_dir, rel_path),
-        )
+        _copy_file_if_missing(src_path, dst_path)
 
     src_resource_dir = project_config_resource_dir(src_dir)
     dst_resource_dir = project_config_resource_dir(dst_dir)
@@ -855,7 +863,7 @@ def sync_project_scaffold_sidecars(
 
     actions = {}
 
-    build_mk_path = os.path.join(project_dir, BUILD_MK_RELPATH)
+    build_mk_path = project_build_mk_path(project_dir)
     build_mk_existing = _read_text_file(build_mk_path)
     if build_mk_existing is None:
         actions[BUILD_MK_RELPATH] = _write_text_if_changed(
@@ -870,7 +878,7 @@ def sync_project_scaffold_sidecars(
     else:
         actions[BUILD_MK_RELPATH] = "unchanged"
 
-    config_h_path = os.path.join(project_dir, APP_CONFIG_RELPATH)
+    config_h_path = project_app_config_path(project_dir)
     config_h_existing = _read_text_file(config_h_path)
     if config_h_existing is None:
         actions[APP_CONFIG_RELPATH] = _write_text_if_changed(
