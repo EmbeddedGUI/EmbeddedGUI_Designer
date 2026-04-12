@@ -2637,10 +2637,10 @@ class MainWindow(QMainWindow):
             preview_unavailable_reason = self._preview_unavailable_reason()
             if preview_unavailable_reason:
                 self._switch_to_python_preview(preview_unavailable_reason)
+                editing_only_message = f"Editing-only mode: {preview_unavailable_reason}"
                 if status_message:
-                    self.statusBar().showMessage(
-                        f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
-                    )
+                    editing_only_message = f"{status_message} | {editing_only_message}"
+                self.statusBar().showMessage(editing_only_message)
             elif self.auto_compile:
                 self._trigger_compile()
 

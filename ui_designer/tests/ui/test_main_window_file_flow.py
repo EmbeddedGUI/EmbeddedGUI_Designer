@@ -3897,6 +3897,66 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_apply_sdk_root_reports_editing_only_mode_without_status_prefix(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ApplySdkRootEditingOnlyDemo"
+        project = _create_project(project_dir, "ApplySdkRootEditingOnlyDemo", sdk_root)
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        monkeypatch.setattr(
+            window,
+            "_recreate_compiler",
+            lambda: setattr(window, "compiler", _PreviewIncompatibleCompiler(project_dir)),
+        )
+
+        window._apply_sdk_root(str(sdk_root))
+
+        assert window.statusBar().currentMessage() == (
+            "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop."
+        )
+        assert "Preview: Editing Only" in window._workspace_status_label.text()
+        assert "main.exe" in window._compile_action.toolTip()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_precompile_failure_blocks_auto_precompile_after_external_reload(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
