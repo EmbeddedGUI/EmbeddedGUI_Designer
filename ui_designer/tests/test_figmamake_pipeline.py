@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
 from ui_designer.model.workspace import sdk_runtime_check_output_dir
-from ui_designer.utils.scaffold import project_resource_catalog_path
+from ui_designer.utils.scaffold import project_config_path, project_resource_catalog_path
 
 
 class _FakeAnimExtractor:
@@ -163,3 +163,56 @@ def test_figmamake_stage_build_and_run_uses_shared_runtime_output_dir(tmp_path, 
         "duration": 5,
         "speed": 1,
     }
+
+
+def test_figmamake_stage_capture_uses_shared_project_config_dir(tmp_path, monkeypatch):
+    sdk_root = tmp_path / "sdk"
+    sdk_root.mkdir(parents=True)
+    expected_ref_dir = project_config_path(str(sdk_root / "example" / "DemoApp"), "reference_frames")
+    seen = {}
+
+    monkeypatch.setattr(
+        pipeline.subprocess,
+        "run",
+        lambda cmd, **kwargs: seen.update({"cmd": cmd, "kwargs": kwargs}) or SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+
+    success, ref_dir = pipeline.stage_capture("https://example.test/file", "DemoApp", 320, 240, str(sdk_root))
+
+    assert success is True
+    assert ref_dir == expected_ref_dir
+    assert seen["cmd"][5] == expected_ref_dir
+
+
+def test_figmamake_stage_verify_writes_report_files_under_shared_project_config_dir(tmp_path, monkeypatch):
+    sdk_root = tmp_path / "sdk"
+    app_dir = sdk_root / "example" / "DemoApp"
+    app_dir.mkdir(parents=True)
+    expected_report_path = project_config_path(str(app_dir), "regression_report.html")
+    expected_json_path = project_config_path(str(app_dir), "regression_results.json")
+    seen = {}
+
+    monkeypatch.setitem(
+        sys.modules,
+        "figmamake_regression",
+        SimpleNamespace(
+            RegressionVerifier=lambda ref_dir, rendered_dir: SimpleNamespace(
+                verify_all=lambda: {
+                    "results": [{"name": "frame_000", "status": "PASS", "ssim": 0.99}],
+                    "passed": 1,
+                    "failed": 0,
+                    "warned": 0,
+                    "total": 1,
+                }
+            ),
+            generate_html_report=lambda summary, output_path: seen.update(
+                {"summary": summary, "report_path": output_path}
+            ),
+        ),
+    )
+
+    summary = pipeline.stage_verify("ref-dir", "render-dir", "DemoApp", str(sdk_root))
+
+    assert seen["report_path"] == expected_report_path
+    assert summary["passed"] == 1
+    assert Path(expected_json_path).is_file()
