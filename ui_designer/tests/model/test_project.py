@@ -23,10 +23,12 @@ from ui_designer.utils.scaffold import (
     project_config_images_dir,
     project_config_layout_dir,
     project_config_mockup_dir,
+    project_designer_resource_dir,
     project_config_resource_dir,
     project_generated_font_dir,
     project_generated_img_dir,
     project_resource_src_dir,
+    project_user_resource_config_path,
     require_page_root,
     resource_catalog_path,
 )
@@ -218,6 +220,18 @@ class TestPathHelpers:
         proj.sdk_root = "/home/user/EmbeddedGUI"
 
         assert proj.get_resource_src_dir() == project_resource_src_dir(proj.get_app_dir())
+
+    def test_get_user_resource_config_path(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_user_resource_config_path() == project_user_resource_config_path(proj.get_app_dir())
+
+    def test_get_designer_resource_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_designer_resource_dir() == project_designer_resource_dir(proj.get_app_dir())
 
     def test_get_eguiproject_dir(self):
         proj = Project(app_name="TestApp")

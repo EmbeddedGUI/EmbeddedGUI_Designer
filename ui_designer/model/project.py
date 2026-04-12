@@ -38,12 +38,14 @@ from ..utils.scaffold import (
     project_config_layout_dir,
     project_config_layout_xml_relpath,
     project_config_mockup_dir,
+    project_designer_resource_dir,
     project_config_resource_dir,
     project_file_path,
     project_generated_font_dir,
     project_generated_img_dir,
     project_generated_resource_dir,
     project_resource_src_dir,
+    project_user_resource_config_path,
 )
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
@@ -225,6 +227,20 @@ class Project:
         if not app_dir:
             return ""
         return project_resource_src_dir(app_dir)
+
+    def get_user_resource_config_path(self):
+        """Get the user-owned resource overlay config path."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_user_resource_config_path(app_dir)
+
+    def get_designer_resource_dir(self):
+        """Get the designer-managed resource metadata directory path."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_designer_resource_dir(app_dir)
 
     def get_eguiproject_dir(self):
         """Get the .eguiproject config directory path."""

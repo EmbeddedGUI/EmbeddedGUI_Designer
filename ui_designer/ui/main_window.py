@@ -2767,8 +2767,8 @@ class MainWindow(QMainWindow):
             os.path.join(self._project_dir, DESIGNER_PROJECT_DIRNAME),
             legacy_build_designer_path(self._project_dir),
             legacy_app_config_designer_path(self._project_dir),
-            project_user_resource_config_path(self._project_dir),
-            project_designer_resource_dir(self._project_dir),
+            self._get_user_resource_config_path(),
+            self._get_designer_resource_dir(),
             self._get_eguiproject_layout_dir(),
             self._get_eguiproject_resource_dir(),
             self._get_eguiproject_mockup_dir(),
@@ -5041,6 +5041,26 @@ class MainWindow(QMainWindow):
                 return path
         if self._project_dir:
             return project_resource_src_dir(self._project_dir)
+        return ""
+
+    def _get_user_resource_config_path(self):
+        """Compute the user-owned resource overlay config path."""
+        if self.project:
+            path = self.project.get_user_resource_config_path()
+            if path:
+                return path
+        if self._project_dir:
+            return project_user_resource_config_path(self._project_dir)
+        return ""
+
+    def _get_designer_resource_dir(self):
+        """Compute the designer-managed resource metadata directory path."""
+        if self.project:
+            path = self.project.get_designer_resource_dir()
+            if path:
+                return path
+        if self._project_dir:
+            return project_designer_resource_dir(self._project_dir)
         return ""
 
     def _get_eguiproject_resource_dir(self):
