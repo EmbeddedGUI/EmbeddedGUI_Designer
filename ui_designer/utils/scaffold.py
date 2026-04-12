@@ -221,6 +221,18 @@ def project_config_images_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "resources", "images")
 
 
+def resource_images_dir(resource_dir: str) -> str:
+    return os.path.join(resource_dir, "images") if resource_dir else ""
+
+
+def resource_source_path(resource_dir: str, resource_type: str, filename: str) -> str:
+    if not resource_dir or not filename:
+        return ""
+    if str(resource_type or "").strip().lower() in {"image", "image_file"}:
+        return os.path.join(resource_images_dir(resource_dir), filename)
+    return os.path.join(resource_dir, filename)
+
+
 def project_config_layout_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "layout")
 

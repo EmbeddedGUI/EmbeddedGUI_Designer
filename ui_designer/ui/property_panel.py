@@ -32,6 +32,7 @@ from ..model.widget_name import resolve_widget_name, sanitize_widget_name, is_va
 from ..model.widget_registry import WidgetRegistry
 from ..settings.ui_prefs import _normalize_inspector_group_expanded
 from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.scaffold import resource_images_dir, resource_source_path
 from .widgets.collapsible_group import CollapsibleGroupBox
 from .widgets.color_picker import EguiColorPicker
 from .widgets.font_selector import EguiFontSelector
@@ -1985,11 +1986,7 @@ class PropertyPanel(QWidget):
             return ""
 
         ptype = prop_info.get("type", "")
-        if ptype == "image_file":
-            return os.path.join(self._source_resource_dir, "images", value)
-        if ptype in {"font_file", "text_file"}:
-            return os.path.join(self._source_resource_dir, value)
-        return ""
+        return resource_source_path(self._source_resource_dir, ptype, value)
 
     def _missing_file_property_reason(self, prop_name, prop_info, value):
         del prop_name
@@ -2730,7 +2727,7 @@ class PropertyPanel(QWidget):
                 # Images go in images/ subfolder, fonts/text go in root
                 ext = os.path.splitext(filename)[1].lower()
                 if ext in ('.png', '.bmp', '.jpg', '.jpeg'):
-                    dest_dir = os.path.join(self._source_resource_dir, "images")
+                    dest_dir = resource_images_dir(self._source_resource_dir)
                 else:
                     dest_dir = self._source_resource_dir
                 dest = os.path.join(dest_dir, filename)
@@ -2767,7 +2764,7 @@ class PropertyPanel(QWidget):
 
         lower_filter = (file_filter or "").lower()
         if any(ext in lower_filter for ext in (".png", ".bmp", ".jpg", ".jpeg")):
-            images_dir = os.path.join(src_dir, "images")
+            images_dir = resource_images_dir(src_dir)
             if os.path.isdir(images_dir):
                 return images_dir
 

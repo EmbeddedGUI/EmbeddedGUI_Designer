@@ -70,6 +70,8 @@ from ui_designer.utils.scaffold import (
     project_resource_src_dir,
     project_supported_text_path,
     project_user_resource_config_path,
+    resource_images_dir,
+    resource_source_path,
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
@@ -404,6 +406,15 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_supported_text_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/resource/src/supported_text.txt"
         )
+        assert os.path.normpath(resource_images_dir("D:/workspace/DemoApp/.eguiproject/resources")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/resources/images"
+        )
+        assert os.path.normpath(
+            resource_source_path("D:/workspace/DemoApp/.eguiproject/resources", "image_file", "hero.png")
+        ) == os.path.normpath("D:/workspace/DemoApp/.eguiproject/resources/images/hero.png")
+        assert os.path.normpath(
+            resource_source_path("D:/workspace/DemoApp/.eguiproject/resources", "font_file", "demo.ttf")
+        ) == os.path.normpath("D:/workspace/DemoApp/.eguiproject/resources/demo.ttf")
         assert os.path.normpath(project_build_mk_path("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/build.mk"
         )

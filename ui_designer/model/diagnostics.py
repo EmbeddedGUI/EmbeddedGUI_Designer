@@ -10,6 +10,7 @@ from .page_timers import collect_page_timer_issues
 from .string_resource import parse_string_ref
 from .widget_name import is_valid_widget_name
 from .widget_registry import WidgetRegistry
+from ..utils.scaffold import resource_source_path
 
 
 _RESOURCE_PROP_TYPES = {
@@ -162,21 +163,21 @@ def _missing_resource_reason(prop_type, value, resource_catalog=None, source_res
     if prop_type == "image_file":
         if resource_catalog is not None and not resource_catalog.has_image(value):
             return "catalog"
-        if source_resource_dir and not os.path.isfile(os.path.join(source_resource_dir, "images", value)):
+        if source_resource_dir and not os.path.isfile(resource_source_path(source_resource_dir, prop_type, value)):
             return "disk"
         return ""
 
     if prop_type == "font_file":
         if resource_catalog is not None and not resource_catalog.has_font(value):
             return "catalog"
-        if source_resource_dir and not os.path.isfile(os.path.join(source_resource_dir, value)):
+        if source_resource_dir and not os.path.isfile(resource_source_path(source_resource_dir, prop_type, value)):
             return "disk"
         return ""
 
     if prop_type == "text_file":
         if resource_catalog is not None and not resource_catalog.has_text_file(value):
             return "catalog"
-        if source_resource_dir and not os.path.isfile(os.path.join(source_resource_dir, value)):
+        if source_resource_dir and not os.path.isfile(resource_source_path(source_resource_dir, prop_type, value)):
             return "disk"
         return ""
 

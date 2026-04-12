@@ -59,6 +59,7 @@ from ..services.font_charset_presets import (
     summarize_charset_diff,
 )
 from ..utils.resource_config_overlay import is_designer_resource_path
+from ..utils.scaffold import resource_images_dir
 from .theme import designer_font_scale, designer_monospace_font, designer_ui_font, scaled_point_size
 
 
@@ -2938,7 +2939,7 @@ class ResourcePanel(QWidget):
         selected_name = self._current_resource_name
         self._resource_dir = resource_dir or ""
         self._src_dir = resource_dir or ""
-        self._images_dir = os.path.join(resource_dir, "images") if resource_dir else ""
+        self._images_dir = resource_images_dir(resource_dir)
         self._image_list.clear()
         self._font_list.clear()
         self._text_list.clear()
@@ -3893,7 +3894,7 @@ class ResourcePanel(QWidget):
                                 "Please save the project first or open an existing project.")
             return False
         self._src_dir = self._resource_dir
-        self._images_dir = os.path.join(self._resource_dir, "images")
+        self._images_dir = resource_images_dir(self._resource_dir)
         os.makedirs(self._src_dir, exist_ok=True)
         os.makedirs(self._images_dir, exist_ok=True)
         return True
