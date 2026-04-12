@@ -18,6 +18,7 @@ from .resource_config_overlay import (
     designer_resource_config_path,
     ensure_resource_config_file,
     make_empty_resource_config_content,
+    user_resource_config_path,
 )
 
 DESIGNER_PROJECT_DIRNAME = ".designer"
@@ -733,7 +734,7 @@ def _remove_file_if_exists(path):
 
 def generate_designer_resource_config(project, src_dir):
     """Ensure the user overlay exists and regenerate the Designer resource config."""
-    user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+    user_config_path = user_resource_config_path(src_dir)
     user_config_created = ensure_resource_config_file(user_config_path)
 
     from ..generator.resource_config_generator import ResourceConfigGenerator

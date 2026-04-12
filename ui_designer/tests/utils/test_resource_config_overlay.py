@@ -8,6 +8,7 @@ from ui_designer.utils.resource_config_overlay import (
     load_merged_resource_config,
     make_empty_resource_config_content,
     merge_resource_configs,
+    user_resource_config_path,
 )
 
 
@@ -250,6 +251,9 @@ class TestLoadMergedResourceConfig:
 
 
 class TestEnsureResourceConfigFile:
+    def test_user_resource_config_path_points_at_overlay_file(self, tmp_path):
+        assert user_resource_config_path(str(tmp_path)) == str(tmp_path / APP_RESOURCE_CONFIG_FILENAME)
+
     def test_creates_default_overlay_config_once(self, tmp_path):
         config_path = tmp_path / "resource" / "src" / APP_RESOURCE_CONFIG_FILENAME
 

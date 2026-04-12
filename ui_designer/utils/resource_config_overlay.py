@@ -75,6 +75,10 @@ def designer_resource_relpath(name: str) -> str:
     return f"{DESIGNER_RESOURCE_DIRNAME}/{name}".replace("\\", "/")
 
 
+def user_resource_config_path(src_dir: str) -> str:
+    return os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+
+
 def designer_resource_config_path(src_dir: str) -> str:
     return os.path.join(designer_resource_dir(src_dir), APP_RESOURCE_CONFIG_DESIGNER_FILENAME)
 
@@ -125,7 +129,7 @@ def merge_resource_configs(designer_config: dict | None, user_config: dict | Non
 
 def load_merged_resource_config(src_dir: str) -> dict | None:
     """Load and merge split config files from ``resource/src``."""
-    user_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+    user_path = user_resource_config_path(src_dir)
     designer_config = load_resource_config(designer_resource_config_path(src_dir))
     user_config = load_resource_config(user_path)
     if designer_config is None and user_config is None:

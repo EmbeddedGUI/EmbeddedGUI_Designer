@@ -38,6 +38,7 @@ from ui_designer.utils.resource_config_overlay import (
     designer_resource_config_path,
     ensure_resource_config_file,
     is_designer_resource_path,
+    user_resource_config_path,
 )
 from ui_designer.utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
@@ -837,7 +838,7 @@ def _sync_app_pngs_and_update_resource_config(
     print(f"  Synced {len(synced_filenames)} {synced_label} to {src_dir}")
     created = False
     if synced_filenames:
-        config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+        config_path = user_resource_config_path(src_dir)
         created = _ensure_and_update_resource_config(
             config_path,
             synced_filenames,
@@ -932,7 +933,7 @@ def cmd_export_icons(args):
             synced_label="icons",
         )
         if created:
-            print(f"  Created new: {os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)}")
+            print(f"  Created new: {user_resource_config_path(src_dir)}")
     else:
         config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
         synced_filenames = list(icon_filenames)
@@ -1456,7 +1457,7 @@ def cmd_gen_resource(args):
 
     resource_dir = _get_app_generated_resource_dir(app_dir)
     src_dir = _get_app_resource_src_dir(app_dir)
-    user_config_path = os.path.join(src_dir, APP_RESOURCE_CONFIG_FILENAME)
+    user_config_path = user_resource_config_path(src_dir)
     designer_config_path = designer_resource_config_path(src_dir)
 
     if not os.path.isfile(user_config_path) and not os.path.isfile(designer_config_path):
