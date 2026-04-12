@@ -853,7 +853,7 @@ def sync_project_scaffold_sidecars(
     )
 
     actions[RESOURCE_CONFIG_RELPATH] = _write_text_if_missing(
-        os.path.join(resource_src_dir, APP_RESOURCE_CONFIG_FILENAME),
+        user_resource_config_path(resource_src_dir),
         make_empty_resource_config_content(),
     )
     designer_resource_cfg = designer_resource_config_path(resource_src_dir)

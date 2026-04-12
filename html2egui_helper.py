@@ -936,7 +936,7 @@ def cmd_export_icons(args):
         if created:
             print(f"  Created new: {user_resource_config_path(src_dir)}")
     else:
-        config_path = os.path.join(output_dir, APP_RESOURCE_CONFIG_FILENAME)
+        config_path = user_resource_config_path(output_dir)
         synced_filenames = list(icon_filenames)
         if _ensure_and_update_resource_config(
             config_path,
