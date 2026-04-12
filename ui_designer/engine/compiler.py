@@ -15,6 +15,7 @@ from .designer_bridge import DesignerBridge
 from ..model.workspace import (
     compute_make_app_root_arg,
     normalize_path,
+    sdk_example_app_dir,
     sdk_output_executable_name,
     sdk_output_executable_path,
     sdk_output_path,
@@ -295,7 +296,7 @@ class CompilerEngine:
     def uicode_path(self):
         app_dir = getattr(self, "app_dir", "")
         if not app_dir:
-            app_dir = os.path.join(self.project_root, "example", self.app_name)
+            app_dir = sdk_example_app_dir(self.project_root, self.app_name)
         return os.path.join(app_dir, UICODE_SOURCE_RELPATH.replace("/", os.sep))
 
     @property

@@ -400,6 +400,18 @@ class TestCompilerRuntime:
         assert engine.exe_path == os.path.join(str(tmp_path), "output", main_name)
         assert engine._run_exe_path(1) == os.path.join(str(tmp_path), "output", run_name)
 
+    def test_uicode_path_falls_back_to_shared_example_app_dir(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine.app_dir = ""
+
+        assert engine.uicode_path == os.path.join(
+            str(tmp_path),
+            "example",
+            "TestApp",
+            ".designer",
+            "uicode.c",
+        )
+
     def test_validate_preview_accepts_correct_frame(self, tmp_path):
         engine = self._make_engine(tmp_path)
         engine.bridge.is_running = True
