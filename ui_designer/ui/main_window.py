@@ -7536,6 +7536,20 @@ class MainWindow(QMainWindow):
                 "Build system does not define a compatible preview build target. Verify the SDK/designer Makefile "
                 "setup. Build > Clean All && Reconstruct cannot recover missing build targets.",
             )
+        if "preview build target probe timed out" in lowered:
+            return (
+                "Preview build target probe timed out, switched to Python fallback.",
+                "Designer could not verify the preview build target before timeout. Check the SDK/designer "
+                "Makefile setup and local toolchain responsiveness. Build > Clean All && Reconstruct cannot "
+                "recover probe timeouts caused by the environment.",
+            )
+        if lowered.startswith("preview build unavailable"):
+            return (
+                "Preview build is unavailable, switched to Python fallback.",
+                "Designer could not verify a usable preview build target. Check the SDK/designer Makefile setup "
+                "and toolchain state. Build > Clean All && Reconstruct cannot recover missing preview build "
+                "availability caused by the environment.",
+            )
         if missing_target == "clean":
             return (
                 "Preview clean target 'clean' is unavailable, switched to Python fallback.",

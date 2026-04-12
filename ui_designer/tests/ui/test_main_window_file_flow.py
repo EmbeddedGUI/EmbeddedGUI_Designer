@@ -4267,6 +4267,22 @@ class TestMainWindowFileFlow:
         assert "Preview build target is unavailable" in status
         assert "cannot recover missing build targets" in guidance
 
+    def test_compile_failure_feedback_handles_generic_preview_build_unavailable(self):
+        from ui_designer.ui.main_window import MainWindow
+
+        status, guidance = MainWindow._compile_failure_feedback("Preview build unavailable")
+
+        assert status == "Preview build is unavailable, switched to Python fallback."
+        assert "cannot recover missing preview build availability" in guidance
+
+    def test_compile_failure_feedback_handles_preview_probe_timeout(self):
+        from ui_designer.ui.main_window import MainWindow
+
+        status, guidance = MainWindow._compile_failure_feedback("Preview build target probe timed out")
+
+        assert status == "Preview build target probe timed out, switched to Python fallback."
+        assert "cannot recover probe timeouts caused by the environment" in guidance
+
     def test_open_project_skips_precompile_when_preview_target_probe_fails(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
