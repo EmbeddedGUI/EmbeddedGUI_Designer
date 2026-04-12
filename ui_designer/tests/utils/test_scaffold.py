@@ -13,7 +13,10 @@ from ui_designer.utils.scaffold import (
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     EGUIPROJECT_DIRNAME,
     MOCKUP_DIR_RELPATH,
+    REFERENCE_FRAMES_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
+    REGRESSION_REPORT_RELPATH,
+    REGRESSION_RESULTS_RELPATH,
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CATALOG_FILENAME,
     RESOURCE_CONFIG_RELPATH,
@@ -61,6 +64,9 @@ from ui_designer.utils.scaffold import (
     project_config_layout_dir,
     project_config_mockup_dir,
     project_config_path,
+    project_config_reference_frames_dir,
+    project_config_regression_report_path,
+    project_config_regression_results_path,
     project_config_resource_dir,
     project_app_config_path,
     project_build_mk_path,
@@ -385,6 +391,15 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_config_mockup_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/mockup"
         )
+        assert os.path.normpath(project_config_reference_frames_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/reference_frames"
+        )
+        assert os.path.normpath(project_config_regression_report_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/regression_report.html"
+        )
+        assert os.path.normpath(project_config_regression_results_path("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/regression_results.json"
+        )
         assert os.path.normpath(project_config_resource_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/resources"
         )
@@ -434,7 +449,10 @@ class TestCoreProjectScaffold:
         assert RESOURCE_DIR_RELPATH == ".eguiproject/resources"
         assert RESOURCE_CATALOG_FILENAME == "resources.xml"
         assert MOCKUP_DIR_RELPATH == ".eguiproject/mockup"
+        assert REFERENCE_FRAMES_DIR_RELPATH == ".eguiproject/reference_frames"
         assert RELEASE_CONFIG_RELPATH == ".eguiproject/release.json"
+        assert REGRESSION_REPORT_RELPATH == ".eguiproject/regression_report.html"
+        assert REGRESSION_RESULTS_RELPATH == ".eguiproject/regression_results.json"
         assert RESOURCE_SRC_DIR_RELPATH == "resource/src"
         assert SUPPORTED_TEXT_RELPATH == "resource/src/supported_text.txt"
         assert project_file_relpath("DemoApp") == "DemoApp.egui"

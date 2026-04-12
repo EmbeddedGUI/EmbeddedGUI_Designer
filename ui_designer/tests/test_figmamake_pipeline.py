@@ -12,7 +12,12 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
 from ui_designer.model.workspace import sdk_runtime_check_output_dir
-from ui_designer.utils.scaffold import project_config_path, project_resource_catalog_path
+from ui_designer.utils.scaffold import (
+    project_config_reference_frames_dir,
+    project_config_regression_report_path,
+    project_config_regression_results_path,
+    project_resource_catalog_path,
+)
 
 
 class _FakeAnimExtractor:
@@ -168,7 +173,7 @@ def test_figmamake_stage_build_and_run_uses_shared_runtime_output_dir(tmp_path, 
 def test_figmamake_stage_capture_uses_shared_project_config_dir(tmp_path, monkeypatch):
     sdk_root = tmp_path / "sdk"
     sdk_root.mkdir(parents=True)
-    expected_ref_dir = project_config_path(str(sdk_root / "example" / "DemoApp"), "reference_frames")
+    expected_ref_dir = project_config_reference_frames_dir(str(sdk_root / "example" / "DemoApp"))
     seen = {}
 
     monkeypatch.setattr(
@@ -188,8 +193,8 @@ def test_figmamake_stage_verify_writes_report_files_under_shared_project_config_
     sdk_root = tmp_path / "sdk"
     app_dir = sdk_root / "example" / "DemoApp"
     app_dir.mkdir(parents=True)
-    expected_report_path = project_config_path(str(app_dir), "regression_report.html")
-    expected_json_path = project_config_path(str(app_dir), "regression_results.json")
+    expected_report_path = project_config_regression_report_path(str(app_dir))
+    expected_json_path = project_config_regression_results_path(str(app_dir))
     seen = {}
 
     monkeypatch.setitem(

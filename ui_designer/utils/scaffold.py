@@ -29,7 +29,10 @@ EGUIPROJECT_DIRNAME = ".eguiproject"
 LAYOUT_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/layout"
 RESOURCE_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/resources"
 MOCKUP_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/mockup"
+REFERENCE_FRAMES_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/reference_frames"
 RELEASE_CONFIG_RELPATH = f"{EGUIPROJECT_DIRNAME}/release.json"
+REGRESSION_REPORT_RELPATH = f"{EGUIPROJECT_DIRNAME}/regression_report.html"
+REGRESSION_RESULTS_RELPATH = f"{EGUIPROJECT_DIRNAME}/regression_results.json"
 RESOURCE_IMAGES_DIR_RELPATH = f"{RESOURCE_DIR_RELPATH}/images"
 RESOURCE_CATALOG_FILENAME = "resources.xml"
 RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/{RESOURCE_CATALOG_FILENAME}"
@@ -248,6 +251,18 @@ def project_config_layout_dir(project_dir: str) -> str:
 
 def project_config_mockup_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "mockup")
+
+
+def project_config_reference_frames_dir(project_dir: str) -> str:
+    return project_config_path(project_dir, "reference_frames")
+
+
+def project_config_regression_report_path(project_dir: str) -> str:
+    return project_config_path(project_dir, "regression_report.html")
+
+
+def project_config_regression_results_path(project_dir: str) -> str:
+    return project_config_path(project_dir, "regression_results.json")
 
 
 def project_file_relpath(app_name: str) -> str:
