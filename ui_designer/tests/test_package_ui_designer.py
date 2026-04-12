@@ -6,10 +6,10 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
+from ui_designer.tests.process_fixtures import build_completed_process_result
 from ui_designer.tests.sdk_builders import build_test_sdk_root
 
 
@@ -108,8 +108,8 @@ def test_collect_sdk_git_metadata_reads_revision_fields(tmp_path, monkeypatch):
     def fake_run(cmd, capture_output, text, check):
         git_args = tuple(cmd[5:])
         if git_args not in responses:
-            return SimpleNamespace(returncode=1, stdout="", stderr="git failed")
-        return SimpleNamespace(returncode=0, stdout=responses[git_args] + "\n", stderr="")
+            return build_completed_process_result(returncode=1, stderr="git failed")
+        return build_completed_process_result(stdout=responses[git_args] + "\n")
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 

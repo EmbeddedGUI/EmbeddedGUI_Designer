@@ -6,7 +6,6 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -23,6 +22,7 @@ from ui_designer.tests.codegen_fixtures import (
     build_fake_prepare_project_codegen_outputs as _fake_prepare_project_codegen_outputs,
     build_fake_save_project_and_materialize_codegen as _fake_save_project_and_materialize_codegen,
 )
+from ui_designer.tests.process_fixtures import build_completed_process_result
 from ui_designer.tests.page_builders import (
     build_test_page_only_with_widget as _build_test_page_only_with_widget,
     build_test_page_root_with_widgets as _build_test_page_root_with_widgets,
@@ -6556,7 +6556,7 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(
             subprocess,
             "run",
-            lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+            lambda *args, **kwargs: build_completed_process_result(),
         )
 
         assert window._run_resource_generation(silent=True) is True

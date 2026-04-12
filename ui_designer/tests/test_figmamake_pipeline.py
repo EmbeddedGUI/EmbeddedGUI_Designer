@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
 from ui_designer.tests.codegen_fixtures import build_materialized_codegen_result
+from ui_designer.tests.process_fixtures import build_completed_process_result
 from ui_designer.model.workspace import sdk_runtime_check_output_dir
 from ui_designer.utils.scaffold import (
     project_config_reference_frames_dir,
@@ -168,7 +169,7 @@ def test_figmamake_stage_build_and_run_uses_shared_runtime_output_dir(tmp_path, 
     monkeypatch.setattr(
         pipeline.subprocess,
         "run",
-        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+        lambda *args, **kwargs: build_completed_process_result(),
     )
     monkeypatch.setitem(
         sys.modules,
@@ -214,7 +215,7 @@ def test_figmamake_stage_capture_uses_shared_project_config_dir(tmp_path, monkey
     monkeypatch.setattr(
         pipeline.subprocess,
         "run",
-        lambda cmd, **kwargs: seen.update({"cmd": cmd, "kwargs": kwargs}) or SimpleNamespace(returncode=0, stdout="", stderr=""),
+        lambda cmd, **kwargs: seen.update({"cmd": cmd, "kwargs": kwargs}) or build_completed_process_result(),
     )
 
     success, ref_dir = pipeline.stage_capture("https://example.test/file", "DemoApp", 320, 240, str(sdk_root))

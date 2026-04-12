@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
-from types import SimpleNamespace
+
+from ui_designer.tests.process_fixtures import build_completed_process_result
 
 
 def _load_module():
@@ -52,7 +53,7 @@ def test_run_pytest_sets_safe_temp_env_and_cleans_directory(tmp_path, monkeypatc
         captured["basetemp"] = Path(command[command.index("--basetemp") + 1])
         captured["basetemp"].mkdir(parents=True, exist_ok=True)
         (captured["basetemp"] / "touch.txt").write_text("ok", encoding="utf-8")
-        return SimpleNamespace(returncode=0)
+        return build_completed_process_result()
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
