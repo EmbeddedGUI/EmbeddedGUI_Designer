@@ -136,6 +136,7 @@ from ..utils.scaffold import (
     designer_page_layout_relpath,
     legacy_app_config_designer_path,
     legacy_build_designer_path,
+    load_saved_project_model,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
     project_config_images_dir,
@@ -2911,7 +2912,7 @@ class MainWindow(QMainWindow):
         current_page_name = self._current_page.name if self._current_page else ""
 
         try:
-            project = Project.load(self._project_dir)
+            project = load_saved_project_model(self._project_dir)
         except Exception as exc:
             self._set_external_reload_pending(changed_paths or getattr(self, "_external_reload_changed_paths", []))
             self.debug_panel.log_error(f"Project reload failed: {exc}")
@@ -4565,7 +4566,7 @@ class MainWindow(QMainWindow):
         if not os.path.exists(path):
             raise FileNotFoundError(path)
 
-        project = Project.load(path)
+        project = load_saved_project_model(path)
         project_dir = path if os.path.isdir(path) else os.path.dirname(path)
         self._open_loaded_project(project, project_dir, preferred_sdk_root=preferred_sdk_root, silent=silent)
 

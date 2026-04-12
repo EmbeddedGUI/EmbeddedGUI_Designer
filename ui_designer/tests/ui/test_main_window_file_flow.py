@@ -313,6 +313,7 @@ class _DisabledCompiler:
 @_skip_no_qt
 class TestMainWindowFileFlow:
     def test_open_project_path_accepts_directory(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.model.project import Project
         from ui_designer.ui.main_window import MainWindow
 
         sdk_root = tmp_path / "sdk"
@@ -322,6 +323,12 @@ class TestMainWindowFileFlow:
 
         window = MainWindow(str(sdk_root))
         captured = {}
+        loaded_paths = []
+
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.load_saved_project_model",
+            lambda path: loaded_paths.append(os.path.normpath(os.path.abspath(path))) or Project.load(path),
+        )
 
         def fake_open_loaded_project(project, project_root, preferred_sdk_root="", silent=False):
             captured["app_name"] = project.app_name
@@ -339,6 +346,7 @@ class TestMainWindowFileFlow:
             "preferred_sdk_root": os.path.normpath(os.path.abspath(sdk_root)),
             "silent": True,
         }
+        assert loaded_paths == [os.path.normpath(os.path.abspath(project_dir))]
         _close_window(window)
 
     def test_open_project_path_registers_app_local_widgets_before_loading_pages(self, qapp, isolated_config, tmp_path, monkeypatch):
@@ -8312,15 +8320,17 @@ class TestMainWindowFileFlow:
         assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
 
         window._compile_worker = None
-        original_load = Project.load
-        monkeypatch.setattr("ui_designer.ui.main_window.Project.load", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.load_saved_project_model",
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+        )
 
         assert window._poll_project_files() is None
         assert window._external_reload_pending is True
         assert window._external_reload_changed_paths == [os.path.normpath(os.path.abspath(layout_file))]
         assert window.statusBar().currentMessage() == "Project reload failed: boom"
 
-        monkeypatch.setattr("ui_designer.ui.main_window.Project.load", original_load)
+        monkeypatch.setattr("ui_designer.ui.main_window.load_saved_project_model", lambda path: Project.load(path))
 
         assert window._poll_project_files() is None
         assert window._external_reload_pending is False
