@@ -1350,18 +1350,20 @@ def build_page_model_only_with_widget(
     **widget_kwargs,
 ):
     """Build a default page model with one attached widget and return only the widget."""
-    _page, widget = build_page_model_with_widget(
-        page_name,
-        widget_type,
-        screen_width=screen_width,
-        screen_height=screen_height,
-        root_widget_type=root_widget_type,
-        root_name=root_name,
-        root_x=root_x,
-        root_y=root_y,
-        **widget_kwargs,
+    return _pick_result_items(
+        build_page_model_with_widget(
+            page_name,
+            widget_type,
+            screen_width=screen_width,
+            screen_height=screen_height,
+            root_widget_type=root_widget_type,
+            root_name=root_name,
+            root_x=root_x,
+            root_y=root_y,
+            **widget_kwargs,
+        ),
+        1,
     )
-    return widget
 
 
 def require_project_page_root(project, page_name=""):
@@ -1417,15 +1419,18 @@ def build_empty_project_model_and_root(
     page_name="main_page",
 ):
     """Build a minimal Designer project model and return it with only its page root widget."""
-    project, _page, root = build_empty_project_model_with_root(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
+    return _pick_result_items(
+        build_empty_project_model_with_root(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+        ),
+        0,
+        2,
     )
-    return project, root
 
 
 def build_empty_project_model_with_page_roots(
@@ -1569,20 +1574,22 @@ def build_project_model_only_from_root_with_widgets(
     startup_page=None,
 ):
     """Build a root-backed single-page project model and return only the populated project."""
-    project, _page = build_project_model_from_root_with_widgets(
-        root,
-        widgets=widgets,
-        page_name=page_name,
-        app_name=app_name,
-        screen_width=screen_width,
-        screen_height=screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_mode=page_mode,
-        startup=startup,
-        startup_page=startup_page,
+    return _pick_result_items(
+        build_project_model_from_root_with_widgets(
+            root,
+            widgets=widgets,
+            page_name=page_name,
+            app_name=app_name,
+            screen_width=screen_width,
+            screen_height=screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_mode=page_mode,
+            startup=startup,
+            startup_page=startup_page,
+        ),
+        0,
     )
-    return project
 
 
 def build_page_model_with_root_widget(
@@ -1775,18 +1782,20 @@ def build_project_model_only_with_page_widgets(
     project_customizer=None,
 ):
     """Build a multi-page project model and return only the populated project."""
-    project, _roots = build_project_model_with_page_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_widgets=page_widgets,
-        page_customizers=page_customizers,
-        pages=pages,
-        project_customizer=project_customizer,
+    return _pick_result_items(
+        build_project_model_with_page_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_widgets=page_widgets,
+            page_customizers=page_customizers,
+            pages=pages,
+            project_customizer=project_customizer,
+        ),
+        0,
     )
-    return project
 
 
 def build_project_model_with_widgets(
@@ -1830,18 +1839,21 @@ def build_project_model_and_page_with_widgets(
     project_customizer=None,
 ):
     """Build a single-page project model and return the project with its populated page."""
-    project, page, _root = build_project_model_with_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
-        widgets=widgets,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
+    return _pick_result_items(
+        build_project_model_with_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+        ),
+        0,
+        1,
     )
-    return project, page
 
 
 def build_project_model_and_root_with_widgets(
@@ -1857,18 +1869,21 @@ def build_project_model_and_root_with_widgets(
     project_customizer=None,
 ):
     """Build a single-page project model and return the project with its populated root widget."""
-    project, _page, root = build_project_model_with_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
-        widgets=widgets,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
+    return _pick_result_items(
+        build_project_model_with_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+        ),
+        0,
+        2,
     )
-    return project, root
 
 
 def _save_built_project_model(
@@ -1939,10 +1954,17 @@ def _drop_result_tail(result):
     """Return a helper result with its trailing metadata item removed."""
     if not isinstance(result, tuple):
         return result
-    trimmed = result[:-1]
-    if len(trimmed) == 1:
-        return trimmed[0]
-    return trimmed
+    return _pick_result_items(result, *range(len(result) - 1))
+
+
+def _pick_result_items(result, *indexes):
+    """Return selected items from a helper result, collapsing single-item picks."""
+    if not isinstance(result, tuple):
+        return result
+    picked = tuple(result[index] for index in indexes)
+    if len(picked) == 1:
+        return picked[0]
+    return picked
 
 
 def _save_built_project_and_materialize_codegen(
@@ -2168,31 +2190,35 @@ def build_project_model_and_page_with_widgets_and_materialize_codegen(
     before_materialize=None,
 ):
     """Build a single-page project, materialize outputs, and return only the project and page."""
-    project, page, _root, materialized = build_project_model_with_widgets_and_materialize_codegen(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
-        widgets=widgets,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
-        before_save=before_save,
-        overwrite=overwrite,
-        color_depth=color_depth,
-        circle_radius=circle_radius,
-        extra_config_macros=extra_config_macros,
-        refresh_designer_resource_config=refresh_designer_resource_config,
-        remove_legacy_designer_files=remove_legacy_designer_files,
-        backup=backup,
-        extra_files=extra_files,
-        extra_files_builder=extra_files_builder,
-        newline=newline,
-        backup_existing=backup_existing,
-        before_materialize=before_materialize,
+    return _pick_result_items(
+        build_project_model_with_widgets_and_materialize_codegen(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+            before_save=before_save,
+            overwrite=overwrite,
+            color_depth=color_depth,
+            circle_radius=circle_radius,
+            extra_config_macros=extra_config_macros,
+            refresh_designer_resource_config=refresh_designer_resource_config,
+            remove_legacy_designer_files=remove_legacy_designer_files,
+            backup=backup,
+            extra_files=extra_files,
+            extra_files_builder=extra_files_builder,
+            newline=newline,
+            backup_existing=backup_existing,
+            before_materialize=before_materialize,
+        ),
+        0,
+        1,
+        3,
     )
-    return project, page, materialized
 
 
 def build_project_model_only_with_widgets(
@@ -2208,18 +2234,20 @@ def build_project_model_only_with_widgets(
     project_customizer=None,
 ):
     """Build a single-page project model and return only the populated project."""
-    project, _page, _root = build_project_model_with_widgets(
-        app_name,
-        screen_width,
-        screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_name=page_name,
-        widgets=widgets,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
+    return _pick_result_items(
+        build_project_model_with_widgets(
+            app_name,
+            screen_width,
+            screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_name=page_name,
+            widgets=widgets,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+        ),
+        0,
     )
-    return project
 
 
 def build_project_model_with_widget(
@@ -2265,19 +2293,22 @@ def build_project_model_and_page_with_widget(
     **widget_kwargs,
 ):
     """Build a single-page project model with one widget and return the project with its page."""
-    project, page, _widget = build_project_model_with_widget(
-        app_name,
-        widget_type,
-        page_name=page_name,
-        screen_width=screen_width,
-        screen_height=screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
-        **widget_kwargs,
+    return _pick_result_items(
+        build_project_model_with_widget(
+            app_name,
+            widget_type,
+            page_name=page_name,
+            screen_width=screen_width,
+            screen_height=screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+            **widget_kwargs,
+        ),
+        0,
+        1,
     )
-    return project, page
 
 
 def build_project_model_only_with_widget(
@@ -2294,19 +2325,21 @@ def build_project_model_only_with_widget(
     **widget_kwargs,
 ):
     """Build a single-page project model with one widget and return only the project."""
-    project, _page, _widget = build_project_model_with_widget(
-        app_name,
-        widget_type,
-        page_name=page_name,
-        screen_width=screen_width,
-        screen_height=screen_height,
-        sdk_root=sdk_root,
-        project_dir=project_dir,
-        page_customizer=page_customizer,
-        project_customizer=project_customizer,
-        **widget_kwargs,
+    return _pick_result_items(
+        build_project_model_with_widget(
+            app_name,
+            widget_type,
+            page_name=page_name,
+            screen_width=screen_width,
+            screen_height=screen_height,
+            sdk_root=sdk_root,
+            project_dir=project_dir,
+            page_customizer=page_customizer,
+            project_customizer=project_customizer,
+            **widget_kwargs,
+        ),
+        0,
     )
-    return project
 
 
 def build_empty_project_xml(app_name, screen_width=240, screen_height=320, *, stored_sdk_root="", pages=None):
@@ -2791,7 +2824,7 @@ def save_empty_project_with_designer_scaffold(
     remove_legacy_designer_files=False,
 ):
     """Build and save an empty project model with the shared Designer scaffold policy."""
-    project, _actions = build_empty_project_model_and_save(
+    return build_saved_project_model(
         app_name,
         project_dir,
         screen_width,
@@ -2807,7 +2840,6 @@ def save_empty_project_with_designer_scaffold(
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
     )
-    return project
 
 
 def save_empty_sdk_example_project_with_designer_scaffold(
@@ -3001,6 +3033,28 @@ def scaffold_sdk_example_conversion_project_context(
     return sdk_example_paths(sdk_root, app_name), actions
 
 
+def scaffold_sdk_example_conversion_paths(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Apply conversion/import scaffold defaults and return only the SDK example path bundle."""
+    return _drop_result_tail(
+        scaffold_sdk_example_conversion_project_context(
+            sdk_root,
+            app_name,
+            screen_width,
+            screen_height,
+            pages=pages,
+            color_depth=color_depth,
+        )
+    )
+
+
 def ensure_designer_project_scaffold_with_sdk_root(
     project_dir,
     app_name,
@@ -3095,3 +3149,25 @@ def ensure_sdk_example_conversion_project_context(
         color_depth=color_depth,
     )
     return sdk_example_paths(sdk_root, app_name), created, actions
+
+
+def ensure_sdk_example_conversion_paths(
+    sdk_root,
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    pages=None,
+    color_depth=16,
+):
+    """Ensure conversion/import scaffold and return the SDK example path bundle plus create state."""
+    return _drop_result_tail(
+        ensure_sdk_example_conversion_project_context(
+            sdk_root,
+            app_name,
+            screen_width,
+            screen_height,
+            pages=pages,
+            color_depth=color_depth,
+        )
+    )

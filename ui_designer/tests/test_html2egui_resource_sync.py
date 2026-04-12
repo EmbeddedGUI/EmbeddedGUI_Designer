@@ -245,10 +245,9 @@ class TestHelperResourceSync:
             return (
                 sdk_example_paths(str(sdk_root), args[1]),
                 args[1] == "NewApp",
-                {},
             )
 
-        monkeypatch.setattr(h, "ensure_sdk_example_conversion_project_context", fake_ensure)
+        monkeypatch.setattr(h, "ensure_sdk_example_conversion_paths", fake_ensure)
 
         existing = h._ensure_app_scaffold_exists(str(sdk_root), "ExistingApp", 320, 240)
         created = h._ensure_app_scaffold_exists(str(sdk_root), "NewApp", 320, 240)

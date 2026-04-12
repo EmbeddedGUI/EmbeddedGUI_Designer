@@ -37,7 +37,7 @@ from html2egui_helper import (
 )
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.utils.scaffold import (
-    scaffold_sdk_example_conversion_project_context,
+    scaffold_sdk_example_conversion_paths,
     sdk_example_layout_xml_path,
 )
 from ui_designer.utils.xml_utils import write_xml_file
@@ -522,7 +522,7 @@ class FigmaMakeCodegen:
             print(f"  WARNING: {ext_count} animations need framework extensions")
 
         print(f"[3/5] Applying shared conversion scaffold...")
-        example_paths, _scaffold_actions = scaffold_sdk_example_conversion_project_context(
+        example_paths = scaffold_sdk_example_conversion_paths(
             sdk_root,
             self.app_name,
             self.width,

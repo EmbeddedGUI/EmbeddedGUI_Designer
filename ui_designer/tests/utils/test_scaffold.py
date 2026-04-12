@@ -68,6 +68,7 @@ from ui_designer.utils.scaffold import (
     designer_scaffold_kwargs,
     generate_designer_resource_config,
     ensure_conversion_project_scaffold_with_sdk_root,
+    ensure_sdk_example_conversion_paths,
     ensure_sdk_example_conversion_project_context,
     ensure_sdk_example_conversion_project_scaffold,
     require_page_root,
@@ -123,6 +124,7 @@ from ui_designer.utils.scaffold import (
     save_project_and_materialize_codegen,
     save_empty_project_with_designer_scaffold,
     save_empty_sdk_example_project_with_designer_scaffold,
+    scaffold_sdk_example_conversion_paths,
     scaffold_sdk_example_conversion_project_context,
     scaffold_sdk_example_conversion_project,
     scaffold_conversion_project_with_sdk_root,
@@ -2129,6 +2131,23 @@ class TestApplyDesignerProjectScaffold:
         assert actions[BUILD_MK_RELPATH] == "created"
         assert actions["SdkExampleApp.egui"] == "created"
 
+    def test_scaffold_sdk_example_conversion_paths_returns_paths_without_actions(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+
+        example_paths = scaffold_sdk_example_conversion_paths(
+            str(sdk_root),
+            "SdkExampleApp",
+            320,
+            240,
+            pages=["home", "detail"],
+            color_depth=32,
+        )
+
+        project_dir = sdk_root / "example" / "SdkExampleApp"
+        assert example_paths["app_dir"] == str(project_dir)
+        assert example_paths["layout_dir"] == str(project_dir / ".eguiproject" / "layout")
+        assert (project_dir / ".designer" / "build_designer.mk").is_file()
+
     def test_ensure_designer_project_scaffold_with_sdk_root_only_creates_missing_dirs(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
         existing_dir = sdk_root / "example" / "ExistingApp"
@@ -2228,6 +2247,32 @@ class TestApplyDesignerProjectScaffold:
         assert new_created is True
         assert new_actions[BUILD_MK_RELPATH] == "created"
         assert new_actions["NewConversionApp.egui"] == "created"
+
+    def test_ensure_sdk_example_conversion_paths_returns_paths_and_create_state_without_actions(self, tmp_path):
+        sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        existing_dir = sdk_root / "example" / "ExistingConversionApp"
+        existing_dir.mkdir(parents=True)
+
+        existing_paths, existing_created = ensure_sdk_example_conversion_paths(
+            str(sdk_root),
+            "ExistingConversionApp",
+            320,
+            240,
+        )
+        new_paths, new_created = ensure_sdk_example_conversion_paths(
+            str(sdk_root),
+            "NewConversionApp",
+            320,
+            240,
+            pages=["home", "detail"],
+            color_depth=32,
+        )
+
+        assert existing_paths["app_dir"] == str(existing_dir)
+        assert existing_created is False
+        assert new_paths["app_dir"] == str(sdk_root / "example" / "NewConversionApp")
+        assert new_created is True
+        assert (sdk_root / "example" / "NewConversionApp" / ".designer" / "build_designer.mk").is_file()
 
     def test_ensure_sdk_example_conversion_project_scaffold_returns_sdk_example_dir_and_create_state(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"

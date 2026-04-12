@@ -52,12 +52,13 @@ from ui_designer.utils.scaffold import (
     RESOURCE_IMAGES_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
-    ensure_sdk_example_conversion_project_context,
+    ensure_sdk_example_conversion_paths,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_path,
     project_layout_xml_relpath,
+    scaffold_sdk_example_conversion_paths,
     scaffold_sdk_example_conversion_project_context,
     sdk_example_paths,
     sync_project_resources_and_generate_designer_resource_config,
@@ -238,7 +239,7 @@ def _write_figma_page_xml(
 
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
-    example_paths, created, _actions = ensure_sdk_example_conversion_project_context(
+    example_paths, created = ensure_sdk_example_conversion_paths(
         sdk_root,
         app_name,
         width,
