@@ -28,10 +28,41 @@ from ..utils.scaffold import (
 )
 
 
-def _run_make_dry_run_main_target(project_root, app_name, app_root_arg):
+def _missing_make_target_name(message):
+    match = re.search(r"No rule to make target ['`\"]?([^'`\"\r\n]+)", str(message or ""), flags=re.IGNORECASE)
+    if not match:
+        return ""
+    return match.group(1).rstrip("'.:;!, ")
+
+
+def _preview_make_targets(preferred_target=""):
+    targets = []
+    for target_name in (
+        preferred_target,
+        sdk_output_executable_name("main"),
+        "main.exe",
+        "main",
+    ):
+        normalized = str(target_name or "").strip()
+        if normalized and normalized not in targets:
+            targets.append(normalized)
+    return tuple(targets)
+
+
+def _preview_make_target_error(target_names):
+    unique_targets = [str(name or "").strip() for name in target_names if str(name or "").strip()]
+    if not unique_targets:
+        return "Preview build target unavailable"
+    if len(unique_targets) == 1:
+        return f"Preview build target unavailable: make defines no rule for '{unique_targets[0]}'."
+    joined = " or ".join(f"'{name}'" for name in unique_targets)
+    return f"Preview build target unavailable: make defines neither {joined}."
+
+
+def _run_make_dry_run_target(project_root, app_name, app_root_arg, target_name):
     return subprocess.run(
         [
-            "make", "V=1", "--dry-run", "--always-make", "main.exe",
+            "make", "V=1", "--dry-run", "--always-make", target_name,
             f"APP={app_name}", "PORT=designer",
             f"EGUI_APP_ROOT_PATH={app_root_arg}",
             "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0",
@@ -41,6 +72,43 @@ def _run_make_dry_run_main_target(project_root, app_name, app_root_arg):
         text=True,
         timeout=30,
     )
+
+
+def _run_make_build_target(project_root, app_name, app_root_arg, target_name, *, force_rebuild=False):
+    args = ["make"]
+    if force_rebuild:
+        args.append("-B")
+    args.extend(
+        [
+            "-j",
+            target_name,
+            f"APP={app_name}",
+            "PORT=designer",
+            f"EGUI_APP_ROOT_PATH={app_root_arg}",
+            "COMPILE_DEBUG=",
+            "COMPILE_OPT_LEVEL=-O0",
+        ]
+    )
+    return subprocess.run(args, cwd=project_root, capture_output=True, text=True, timeout=60)
+
+
+def _run_make_preview_target(make_runner, *, preferred_target=""):
+    missing_targets = []
+    last_result = None
+    for target_name in _preview_make_targets(preferred_target):
+        result = make_runner(target_name)
+        if result.returncode == 0:
+            return target_name, result, ""
+
+        combined = (result.stderr or "") + (result.stdout or "")
+        missing_target = _missing_make_target_name(combined).lower()
+        if missing_target == target_name.lower():
+            missing_targets.append(target_name)
+            last_result = result
+            continue
+        return "", result, combined
+
+    return "", last_result, _preview_make_target_error(missing_targets)
 
 
 class BuildConfig:
@@ -70,14 +138,17 @@ class BuildConfig:
         return bool(self._makefile_mtimes)
 
     @staticmethod
-    def extract(project_root, app_name, app_root_arg="example"):
+    def extract(project_root, app_name, app_root_arg="example", target_name=""):
         """Run ``make V=1 --dry-run`` and parse gcc commands.
 
         Returns a populated BuildConfig, or None on failure.
         """
         try:
-            result = _run_make_dry_run_main_target(project_root, app_name, app_root_arg)
-            if result.returncode != 0:
+            selected_target, result, _error = _run_make_preview_target(
+                lambda candidate: _run_make_dry_run_target(project_root, app_name, app_root_arg, candidate),
+                preferred_target=target_name,
+            )
+            if not selected_target or result is None or result.returncode != 0:
                 return None
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return None
@@ -267,6 +338,7 @@ class CompilerEngine:
         self._last_runtime_error = ""
         self._preview_build_probe_ran = False
         self._preview_build_error = ""
+        self._preview_make_target = ""
 
         # Clean up any stale processes from previous abnormal exits
         self._cleanup_stale_processes()
@@ -539,17 +611,23 @@ class CompilerEngine:
             return not bool(getattr(self, "_preview_build_error", ""))
 
         try:
-            result = _run_make_dry_run_main_target(self.project_root, self.app_name, self.app_root_arg)
+            target_name, result, error_message = _run_make_preview_target(
+                lambda candidate: _run_make_dry_run_target(self.project_root, self.app_name, self.app_root_arg, candidate),
+                preferred_target=getattr(self, "_preview_make_target", ""),
+            )
         except subprocess.TimeoutExpired:
             self._preview_build_error = "Preview build target probe timed out"
+            self._preview_make_target = ""
         except FileNotFoundError:
             self._preview_build_error = "make not found in PATH"
+            self._preview_make_target = ""
         else:
-            if result.returncode == 0:
+            if target_name:
+                self._preview_make_target = target_name
                 self._preview_build_error = ""
             else:
-                combined = (result.stderr or "") + (result.stdout or "")
-                self._preview_build_error = self._probe_output_summary(combined)
+                self._preview_make_target = ""
+                self._preview_build_error = self._probe_output_summary(error_message)
 
         self._preview_build_probe_ran = True
         return not bool(self._preview_build_error)
@@ -557,6 +635,10 @@ class CompilerEngine:
     def reset_preview_build_probe(self):
         self._preview_build_probe_ran = False
         self._preview_build_error = ""
+        self._preview_make_target = ""
+
+    def get_preview_make_target_name(self):
+        return getattr(self, "_preview_make_target", "") or _preview_make_targets()[0]
 
     def _make_compile(self, force_rebuild=False):
         """Full make-based compilation (slow path). Also refreshes BuildConfig."""
@@ -576,19 +658,29 @@ class CompilerEngine:
             pass
 
         try:
-            args = ["make"]
-            if force_rebuild:
-                args.append("-B")
-            args.extend(
-                [
-                    "-j", "main.exe", f"APP={self.app_name}",
-                    "PORT=designer",
-                    f"EGUI_APP_ROOT_PATH={self.app_root_arg}",
-                    "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0",
-                ]
+            target_name, result, error_message = _run_make_preview_target(
+                lambda candidate: _run_make_build_target(
+                    self.project_root,
+                    self.app_name,
+                    self.app_root_arg,
+                    candidate,
+                    force_rebuild=force_rebuild,
+                ),
+                preferred_target=getattr(self, "_preview_make_target", ""),
             )
-            result = subprocess.run(args, cwd=self.project_root, capture_output=True, text=True, timeout=60)
             self._compile_count += 1
+            if not target_name:
+                preview_target_error = str(error_message or "")
+                if (
+                    "preview build target unavailable" in preview_target_error.lower()
+                    or _missing_make_target_name(preview_target_error)
+                ):
+                    self._preview_make_target = ""
+                    self._preview_build_probe_ran = True
+                    self._preview_build_error = self._probe_output_summary(preview_target_error)
+                return False, error_message.strip()
+
+            self._preview_make_target = target_name
             success = result.returncode == 0
             output = (result.stdout + result.stderr).strip()
 
@@ -596,7 +688,12 @@ class CompilerEngine:
             if success:
                 self._preview_build_probe_ran = True
                 self._preview_build_error = ""
-                cfg = BuildConfig.extract(self.project_root, self.app_name, self.app_root_arg)
+                cfg = BuildConfig.extract(
+                    self.project_root,
+                    self.app_name,
+                    self.app_root_arg,
+                    target_name=target_name,
+                )
                 if cfg:
                     self._build_config = cfg
 

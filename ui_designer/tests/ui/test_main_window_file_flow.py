@@ -3820,6 +3820,16 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_compile_failure_feedback_handles_generic_preview_target_unavailable(self):
+        from ui_designer.ui.main_window import MainWindow
+
+        status, guidance = MainWindow._compile_failure_feedback(
+            "Preview build target unavailable: make defines neither 'main.exe' nor 'main'."
+        )
+
+        assert "Preview build target is unavailable" in status
+        assert "cannot recover missing build targets" in guidance
+
     def test_open_project_skips_precompile_when_preview_target_probe_fails(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):

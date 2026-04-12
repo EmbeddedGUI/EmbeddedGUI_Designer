@@ -4981,8 +4981,11 @@ class MainWindow(QMainWindow):
         if not self.compiler.is_exe_ready():
             self.statusBar().showMessage("Background compiling...")
             self.debug_panel.log_action("Starting background precompile...")
+            target_name_getter = getattr(self.compiler, "get_preview_make_target_name", None)
+            target_name = target_name_getter() if callable(target_name_getter) else "main.exe"
             self.debug_panel.log_cmd(
-                f"make -j main.exe APP={self.app_name} PORT=designer EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
+                f"make -j {target_name} APP={self.app_name} PORT=designer "
+                f"EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
             )
             generation = self._async_generation
             worker = self.compiler.precompile_async(
@@ -7357,11 +7360,17 @@ class MainWindow(QMainWindow):
         lowered = str(message or "").lower()
         missing_target = cls._missing_make_target_name(message).lower()
 
-        if missing_target == "main.exe":
+        if missing_target in {"main.exe", "main"}:
             return (
-                "Preview build target 'main.exe' is unavailable, switched to Python fallback.",
-                "Build system does not define the required 'main.exe' preview target. Verify the SDK/designer "
+                f"Preview build target '{missing_target}' is unavailable, switched to Python fallback.",
+                f"Build system does not define the required '{missing_target}' preview target. Verify the SDK/designer "
                 "Makefile setup. Build > Clean All && Reconstruct cannot recover missing build targets.",
+            )
+        if "preview build target unavailable" in lowered:
+            return (
+                "Preview build target is unavailable, switched to Python fallback.",
+                "Build system does not define a compatible preview build target. Verify the SDK/designer Makefile "
+                "setup. Build > Clean All && Reconstruct cannot recover missing build targets.",
             )
         if missing_target == "clean":
             return (
@@ -7520,8 +7529,10 @@ class MainWindow(QMainWindow):
 
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
         make_prefix = "make -B -j" if force_rebuild else "make -j"
+        target_name_getter = getattr(self.compiler, "get_preview_make_target_name", None)
+        target_name = target_name_getter() if callable(target_name_getter) else "main.exe"
         self.debug_panel.log_cmd(
-            f"{make_prefix} main.exe APP={self.app_name} PORT=designer "
+            f"{make_prefix} {target_name} APP={self.app_name} PORT=designer "
             f"EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
         )
 

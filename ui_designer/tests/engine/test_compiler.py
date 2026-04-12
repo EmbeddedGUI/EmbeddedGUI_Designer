@@ -81,6 +81,21 @@ class TestBuildConfigExtract:
 
     @patch("subprocess.run")
     @patch("os.path.getmtime", return_value=1000.0)
+    def test_extract_retries_without_exe_suffix_when_preferred_target_missing(self, mock_mtime, mock_run):
+        mock_run.side_effect = [
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            self._make_result(MAKE_DRYRUN_OUTPUT_NO_EXE_SUFFIX),
+        ]
+
+        cfg = BuildConfig.extract("/project", "HelloDesigner_1", "example", target_name="main.exe")
+
+        assert cfg is not None
+        assert "output/main" in cfg.link_cmd
+        assert mock_run.call_args_list[0][0][0][4] == "main.exe"
+        assert mock_run.call_args_list[1][0][0][4] == "main"
+
+    @patch("subprocess.run")
+    @patch("os.path.getmtime", return_value=1000.0)
     def test_extract_generates_presplit_args(self, mock_mtime, mock_run):
         mock_run.return_value = self._make_result(MAKE_DRYRUN_OUTPUT)
         cfg = BuildConfig.extract("/project", "HelloDesigner_1", "example")
@@ -153,6 +168,9 @@ class TestCompilerFastPath:
         engine._screen_width = 240
         engine._screen_height = 320
         engine._last_runtime_error = ""
+        engine._preview_build_probe_ran = False
+        engine._preview_build_error = ""
+        engine._preview_make_target = ""
         engine.bridge = MagicMock()
         return engine
 
@@ -306,9 +324,28 @@ class TestCompilerFastPath:
             success, output = engine.compile(force_rebuild=True)
 
         assert success
-        assert mock_run.call_args_list[0][0][0][:4] == ["make", "-B", "-j", "main.exe"]
+        assert mock_run.call_args_list[0][0][0][:4] == ["make", "-B", "-j", engine.get_preview_make_target_name()]
         assert "build ok" in output
         assert engine._build_config is not None
+
+    @patch("subprocess.run")
+    def test_make_compile_falls_back_to_bare_main_target(self, mock_run, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine._preview_make_target = "main.exe"
+        mock_run.side_effect = [
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            MagicMock(returncode=0, stdout="build ok\n", stderr=""),
+            MagicMock(returncode=0, stdout=MAKE_DRYRUN_OUTPUT_NO_EXE_SUFFIX, stderr=""),
+        ]
+
+        with patch("os.path.getmtime", return_value=1000.0):
+            success, output = engine.compile(force_rebuild=True)
+
+        assert success
+        assert "build ok" in output
+        assert engine.get_preview_make_target_name() == "main"
+        assert mock_run.call_args_list[0][0][0][:4] == ["make", "-B", "-j", "main.exe"]
+        assert mock_run.call_args_list[1][0][0][:4] == ["make", "-B", "-j", "main"]
 
     @patch("subprocess.run")
     def test_force_rebuild_returns_build_failure_output(self, mock_run, tmp_path):
@@ -379,6 +416,9 @@ class TestCompilerRuntime:
         engine._screen_width = 240
         engine._screen_height = 320
         engine._last_runtime_error = ""
+        engine._preview_build_probe_ran = False
+        engine._preview_build_error = ""
+        engine._preview_make_target = ""
         engine.bridge = MagicMock()
         return engine
 
@@ -389,35 +429,52 @@ class TestCompilerRuntime:
         assert not ready
         assert "not running" in err
 
-    @patch("ui_designer.engine.compiler._run_make_dry_run_main_target")
+    @patch("ui_designer.engine.compiler._run_make_dry_run_target")
     def test_preview_build_probe_reports_missing_main_target(self, mock_dry_run, tmp_path):
         engine = self._make_engine(tmp_path)
-        mock_dry_run.return_value = MagicMock(
-            returncode=2,
-            stdout="",
-            stderr="make: *** No rule to make target 'main.exe'.  Stop.\n",
-        )
-
-        assert engine.ensure_preview_build_available() is False
-        assert "main.exe" in engine.get_preview_build_error()
-        assert engine.ensure_preview_build_available() is False
-        assert mock_dry_run.call_count == 1
-
-    @patch("ui_designer.engine.compiler._run_make_dry_run_main_target")
-    def test_reset_preview_build_probe_allows_retry(self, mock_dry_run, tmp_path):
-        engine = self._make_engine(tmp_path)
+        engine._preview_make_target = "main.exe"
         mock_dry_run.side_effect = [
             MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main'.  Stop.\n"),
+        ]
+
+        assert engine.ensure_preview_build_available() is False
+        assert "preview build target unavailable" in engine.get_preview_build_error().lower()
+        assert engine.ensure_preview_build_available() is False
+        assert mock_dry_run.call_count == 2
+
+    @patch("ui_designer.engine.compiler._run_make_dry_run_target")
+    def test_preview_build_probe_falls_back_to_bare_main_target(self, mock_dry_run, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine._preview_make_target = "main.exe"
+        mock_dry_run.side_effect = [
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            MagicMock(returncode=0, stdout="dry run ok\n", stderr=""),
+        ]
+
+        assert engine.ensure_preview_build_available() is True
+        assert engine.get_preview_build_error() == ""
+        assert engine.get_preview_make_target_name() == "main"
+        assert mock_dry_run.call_count == 2
+
+    @patch("ui_designer.engine.compiler._run_make_dry_run_target")
+    def test_reset_preview_build_probe_allows_retry(self, mock_dry_run, tmp_path):
+        engine = self._make_engine(tmp_path)
+        engine._preview_make_target = "main.exe"
+        mock_dry_run.side_effect = [
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main.exe'.  Stop.\n"),
+            MagicMock(returncode=2, stdout="", stderr="make: *** No rule to make target 'main'.  Stop.\n"),
             MagicMock(returncode=0, stdout="dry run ok\n", stderr=""),
         ]
 
         assert engine.ensure_preview_build_available() is False
 
         engine.reset_preview_build_probe()
+        engine._preview_make_target = "main.exe"
 
         assert engine.ensure_preview_build_available() is True
         assert engine.get_preview_build_error() == ""
-        assert mock_dry_run.call_count == 2
+        assert mock_dry_run.call_count == 3
 
     def test_executable_paths_use_shared_output_helpers(self, tmp_path):
         engine = self._make_engine(tmp_path)
