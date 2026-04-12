@@ -7728,6 +7728,10 @@ class MainWindow(QMainWindow):
                 "Headless preview restarted after clean rebuild" if force_rebuild else "Headless preview started"
             )
             self._update_debug_rebuild_action(show=False)
+            if pending_rebuild:
+                self._start_compile_cycle(force_rebuild=True)
+            elif pending_compile:
+                self._trigger_compile()
         else:
             failure_summary = self._compile_failure_summary(
                 message,
@@ -7745,10 +7749,6 @@ class MainWindow(QMainWindow):
             # Show debug dock on compile failure
             self._show_bottom_panel("Debug Output")
             self._update_debug_rebuild_action(show=self._should_offer_debug_rebuild_action(failure_summary))
-        if pending_rebuild:
-            self._start_compile_cycle(force_rebuild=True)
-        elif pending_compile:
-            self._trigger_compile()
         self._update_compile_availability()
 
     def _on_preview_runtime_failed(self, reason):

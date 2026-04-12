@@ -4600,6 +4600,63 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_compile_failure_drops_queued_compile_retry(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QueuedCompileRetryDropDemo"
+        project = _create_project(project_dir, "QueuedCompileRetryDropDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        trigger_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window.auto_compile = True
+        monkeypatch.setattr(window, "_trigger_compile", lambda: trigger_calls.append("compile"))
+        window._pending_compile = True
+        window._pending_rebuild = False
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+
+        assert trigger_calls == []
+        assert window._pending_compile is False
+        assert window._pending_rebuild is False
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
+    def test_compile_failure_drops_queued_rebuild_retry(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "QueuedRebuildRetryDropDemo"
+        project = _create_project(project_dir, "QueuedRebuildRetryDropDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        compile_cycle_calls = []
+
+        window = MainWindow(str(sdk_root))
+        window.auto_compile = False
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._pending_compile = False
+        window._pending_rebuild = True
+        window._on_compile_finished(None, window._async_generation, False, False, "Compilation failed:\nboom", None)
+
+        assert compile_cycle_calls == []
+        assert window._pending_compile is False
+        assert window._pending_rebuild is False
+        assert window._auto_compile_retry_block_reason == "boom"
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_manual_rebuild_clears_auto_retry_block(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 
