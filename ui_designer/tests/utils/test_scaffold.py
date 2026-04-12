@@ -54,6 +54,7 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_widget,
     build_page_model_with_widgets,
     build_empty_project_model,
+    build_empty_project_model_and_save,
     build_empty_project_model_with_root,
     build_empty_project_xml,
     default_scaffold_circle_radius,
@@ -1183,6 +1184,30 @@ class TestCoreProjectScaffold:
         assert actions[BUILD_MK_RELPATH] == "created"
         assert (project_dir / ".designer" / "build_designer.mk").is_file()
         assert (project_dir / "BuiltSavedMultiPageHelperApp.egui").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
+        assert (project_dir / ".eguiproject" / "layout" / "detail.xml").is_file()
+
+    def test_build_empty_project_model_and_save_writes_project_and_applies_customizer(self, tmp_path):
+        project_dir = tmp_path / "BuiltEmptySavedHelperApp"
+        hook_calls = []
+
+        project, actions = build_empty_project_model_and_save(
+            "BuiltEmptySavedHelperApp",
+            str(project_dir),
+            320,
+            240,
+            sdk_root="D:/sdk",
+            pages=["home", "detail"],
+            project_customizer=lambda project: project.string_catalog.set("greeting", "Hello", "default"),
+            before_save=lambda output_dir: hook_calls.append(output_dir),
+        )
+
+        assert actions == {}
+        assert hook_calls == [os.path.normpath(str(project_dir))]
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.string_catalog.get("greeting", "default") == "Hello"
+        assert (project_dir / "BuiltEmptySavedHelperApp.egui").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "home.xml").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "detail.xml").is_file()
 

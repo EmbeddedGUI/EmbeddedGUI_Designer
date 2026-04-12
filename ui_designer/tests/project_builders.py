@@ -21,10 +21,10 @@ from ui_designer.utils.scaffold import (
     build_project_model_only_from_root_with_widgets,
     build_project_model_from_root_with_widgets,
     build_empty_project_model,
+    build_empty_project_model_and_save,
     build_empty_project_model_with_root,
     require_project_page_root,
     save_empty_project_with_designer_scaffold,
-    save_project_model,
 )
 
 
@@ -46,28 +46,6 @@ def build_test_project(
         project_dir=str(project_dir or ""),
         pages=pages,
     )
-
-
-def _save_test_project_model(
-    project,
-    project_root,
-    *,
-    sdk_root="",
-    with_designer_scaffold=False,
-    overwrite_scaffold=False,
-):
-    """Save a test project using the shared Designer save defaults."""
-    save_project_model(
-        project,
-        str(project_root),
-        sdk_root=str(sdk_root or ""),
-        with_designer_scaffold=with_designer_scaffold,
-        overwrite_scaffold=overwrite_scaffold,
-        remove_legacy_designer_files=True,
-    )
-    return project
-
-
 def build_test_project_with_root(
     app_name="TestApp",
     *,
@@ -518,23 +496,17 @@ def build_saved_test_project(
             screen_height,
             **scaffold_kwargs,
         )
-    project = build_test_project(
+    project, _actions = build_empty_project_model_and_save(
         app_name,
+        str(project_root),
         screen_width,
         screen_height,
         sdk_root=sdk_root,
-        project_dir=str(project_root),
         pages=pages,
+        project_customizer=project_customizer,
+        remove_legacy_designer_files=True,
     )
-    if project_customizer is not None:
-        project_customizer(project)
-    return _save_test_project_model(
-        project,
-        project_root,
-        sdk_root=sdk_root,
-        with_designer_scaffold=with_designer_scaffold,
-        overwrite_scaffold=overwrite_scaffold,
-    )
+    return project
 
 
 def build_saved_test_project_with_widgets(

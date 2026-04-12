@@ -194,6 +194,61 @@ class TestProjectBuilders:
         assert project.screen_height == 272
         assert (project_dir / "SavedProjectCustomizerDemo.egui").is_file()
 
+    def test_build_saved_test_project_reuses_shared_empty_build_save_helper(self, tmp_path, monkeypatch):
+        project_dir = tmp_path / "SharedSavedBuilderDemo"
+        captured = {}
+
+        def fake_build_empty_project_model_and_save(
+            app_name,
+            project_dir_arg,
+            screen_width=240,
+            screen_height=320,
+            **kwargs,
+        ):
+            captured["app_name"] = app_name
+            captured["project_dir"] = project_dir_arg
+            captured["screen_width"] = screen_width
+            captured["screen_height"] = screen_height
+            captured["kwargs"] = kwargs
+            return (
+                build_test_project(
+                    app_name,
+                    screen_width,
+                    screen_height,
+                    sdk_root=kwargs.get("sdk_root", ""),
+                    project_dir=project_dir_arg,
+                    pages=kwargs.get("pages"),
+                ),
+                {},
+            )
+
+        monkeypatch.setattr(
+            project_builders_module,
+            "build_empty_project_model_and_save",
+            fake_build_empty_project_model_and_save,
+        )
+
+        project = build_saved_test_project(
+            project_dir,
+            "SharedSavedBuilderDemo",
+            sdk_root="D:/sdk",
+            pages=["main_page", "settings"],
+        )
+
+        assert project.app_name == "SharedSavedBuilderDemo"
+        assert captured == {
+            "app_name": "SharedSavedBuilderDemo",
+            "project_dir": str(project_dir),
+            "screen_width": 240,
+            "screen_height": 320,
+            "kwargs": {
+                "sdk_root": "D:/sdk",
+                "pages": ["main_page", "settings"],
+                "project_customizer": None,
+                "remove_legacy_designer_files": True,
+            },
+        }
+
     def test_build_saved_test_project_with_page_widgets_writes_populated_pages(self, tmp_path):
         project_dir = tmp_path / "SavedWidgetBuilderDemo"
         home_label = WidgetModel("label", name="home_title", x=10, y=10, width=120, height=24)
