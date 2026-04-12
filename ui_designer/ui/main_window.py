@@ -132,6 +132,9 @@ from ..utils.scaffold import (
     prepare_project_codegen_outputs,
     project_config_dir,
     project_config_images_dir,
+    project_config_layout_dir,
+    project_config_mockup_dir,
+    project_config_path,
     project_config_resource_dir,
     project_generated_resource_dir,
     project_file_path,
@@ -2779,9 +2782,9 @@ class MainWindow(QMainWindow):
             legacy_app_config_designer_path(self._project_dir),
             os.path.join(project_resource_src_dir(self._project_dir), APP_RESOURCE_CONFIG_FILENAME),
             os.path.join(project_resource_src_dir(self._project_dir), DESIGNER_RESOURCE_DIRNAME),
-            os.path.join(eguiproject_dir, "layout"),
+            project_config_layout_dir(self._project_dir),
             project_config_resource_dir(self._project_dir),
-            os.path.join(eguiproject_dir, "mockup"),
+            project_config_mockup_dir(self._project_dir),
             WidgetRegistry.instance().app_local_plugin_dir(self._project_dir),
         ]
         for root in watch_roots:
@@ -4536,13 +4539,13 @@ class MainWindow(QMainWindow):
 
     def _default_mockup_open_dir(self):
         if self._current_page and self._current_page.mockup_image_path and self._project_dir:
-            mockup_path = os.path.join(self._project_dir, ".eguiproject", self._current_page.mockup_image_path)
+            mockup_path = project_config_path(self._project_dir, self._current_page.mockup_image_path)
             mockup_dir = normalize_path(os.path.dirname(mockup_path))
             if os.path.isdir(mockup_dir):
                 return mockup_dir
 
         if self._project_dir:
-            mockup_dir = os.path.join(self._project_dir, ".eguiproject", "mockup")
+            mockup_dir = project_config_mockup_dir(self._project_dir)
             if os.path.isdir(mockup_dir):
                 return normalize_path(mockup_dir)
             existing_dir = self._nearest_existing_directory(self._project_dir)
@@ -4794,8 +4797,7 @@ class MainWindow(QMainWindow):
             pixmap = pixmap.scaled(sw, sh, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
 
         # Copy image to .eguiproject/mockup/
-        eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
-        mockup_dir = os.path.join(eguiproject_dir, "mockup")
+        mockup_dir = project_config_mockup_dir(self._project_dir)
         os.makedirs(mockup_dir, exist_ok=True)
         filename = os.path.basename(path)
         dest = os.path.join(mockup_dir, filename)
@@ -4841,8 +4843,7 @@ class MainWindow(QMainWindow):
         if self._current_page and self._current_page.mockup_image_path:
             # Delete file from .eguiproject/mockup/
             if self._project_dir:
-                eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
-                full_path = os.path.join(eguiproject_dir, self._current_page.mockup_image_path)
+                full_path = project_config_path(self._project_dir, self._current_page.mockup_image_path)
                 if os.path.isfile(full_path):
                     try:
                         os.remove(full_path)
@@ -4881,8 +4882,7 @@ class MainWindow(QMainWindow):
         self._set_background_toggle_state(self._current_page.mockup_image_visible)
         self._sync_background_opacity_actions(self._current_page.mockup_image_opacity)
         if path and self._project_dir:
-            eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
-            full_path = os.path.join(eguiproject_dir, path)
+            full_path = project_config_path(self._project_dir, path)
             if os.path.isfile(full_path):
                 from PyQt5.QtGui import QPixmap
                 pixmap = QPixmap(full_path)

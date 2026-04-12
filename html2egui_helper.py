@@ -53,6 +53,7 @@ from ui_designer.utils.scaffold import (
     normalize_scaffold_pages,
     project_config_dir,
     project_config_images_dir,
+    project_config_layout_dir,
     project_config_resource_dir,
     project_generated_resource_dir,
     project_file_path,
@@ -89,7 +90,7 @@ def _get_app_config_dir(app_dir):
 
 def _get_app_layout_dir(app_dir):
     """Return the app layout directory."""
-    return os.path.join(_get_app_config_dir(app_dir), "layout")
+    return project_config_layout_dir(app_dir)
 
 
 def _get_app_config_resource_dir(app_dir):

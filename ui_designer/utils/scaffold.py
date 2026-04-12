@@ -177,6 +177,10 @@ def project_config_dir(project_dir: str) -> str:
     return os.path.join(project_dir, EGUIPROJECT_DIRNAME)
 
 
+def project_config_path(project_dir: str, *parts: str) -> str:
+    return os.path.join(project_config_dir(project_dir), *parts)
+
+
 def project_generated_resource_dir(project_dir: str) -> str:
     return os.path.join(project_dir, "resource")
 
@@ -186,11 +190,19 @@ def project_resource_src_dir(project_dir: str) -> str:
 
 
 def project_config_resource_dir(project_dir: str) -> str:
-    return os.path.join(project_config_dir(project_dir), "resources")
+    return project_config_path(project_dir, "resources")
 
 
 def project_config_images_dir(project_dir: str) -> str:
-    return os.path.join(project_config_resource_dir(project_dir), "images")
+    return project_config_path(project_dir, "resources", "images")
+
+
+def project_config_layout_dir(project_dir: str) -> str:
+    return project_config_path(project_dir, "layout")
+
+
+def project_config_mockup_dir(project_dir: str) -> str:
+    return project_config_path(project_dir, "mockup")
 
 
 def project_file_relpath(app_name: str) -> str:
