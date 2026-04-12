@@ -5041,6 +5041,16 @@ class MainWindow(QMainWindow):
             return project_generated_resource_dir(self._project_dir)
         return ""
 
+    def _get_resource_src_dir(self):
+        """Compute the generated resource source directory (resource/src/)."""
+        if self.project:
+            path = self.project.get_resource_src_dir()
+            if path:
+                return path
+        if self._project_dir:
+            return project_resource_src_dir(self._project_dir)
+        return ""
+
     def _get_eguiproject_resource_dir(self):
         """Compute the .eguiproject/resources/ path for the current project.
 
@@ -5265,7 +5275,7 @@ class MainWindow(QMainWindow):
 
         res_dir = self._get_resource_dir()
         eguiproject_res_dir = self._get_eguiproject_resource_dir()
-        src_dir = project_resource_src_dir(self._project_dir) if res_dir else ""
+        src_dir = self._get_resource_src_dir() if res_dir else ""
         if not res_dir or not eguiproject_res_dir or not os.path.isdir(eguiproject_res_dir):
             if not silent:
                 QMessageBox.warning(
