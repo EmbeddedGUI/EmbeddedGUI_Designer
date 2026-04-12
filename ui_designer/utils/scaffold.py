@@ -1376,6 +1376,15 @@ def require_project_page_root(project, page_name=""):
     return page, root
 
 
+def require_project_page_roots(project):
+    """Return all project page roots keyed by page name, raising when any root is missing."""
+    roots = {}
+    for page in project.pages:
+        _resolved_page, root = require_project_page_root(project, page.name)
+        roots[page.name] = root
+    return roots
+
+
 def build_empty_project_model_with_root(
     app_name,
     screen_width=240,
@@ -1396,6 +1405,48 @@ def build_empty_project_model_with_root(
     )
     page, root = require_project_page_root(project, page_name)
     return project, page, root
+
+
+def build_empty_project_model_and_root(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    page_name="main_page",
+):
+    """Build a minimal Designer project model and return it with only its page root widget."""
+    project, _page, root = build_empty_project_model_with_root(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        page_name=page_name,
+    )
+    return project, root
+
+
+def build_empty_project_model_with_page_roots(
+    app_name,
+    screen_width=240,
+    screen_height=320,
+    *,
+    sdk_root="",
+    project_dir="",
+    pages=None,
+):
+    """Build a minimal Designer project model and return all page roots keyed by page name."""
+    project = build_empty_project_model(
+        app_name,
+        screen_width,
+        screen_height,
+        sdk_root=sdk_root,
+        project_dir=project_dir,
+        pages=pages,
+    )
+    return project, require_project_page_roots(project)
 
 
 def build_project_model_from_pages(
@@ -1693,12 +1744,10 @@ def build_project_model_with_page_widgets(
         project_dir=project_dir,
         pages=resolved_pages,
     )
-    roots = {}
     pages_by_name = {}
+    roots = require_project_page_roots(project)
     for page in project.pages:
-        resolved_page, root = require_project_page_root(project, page.name)
-        pages_by_name[page.name] = resolved_page
-        roots[page.name] = root
+        pages_by_name[page.name] = page
 
     for page_name, widgets in (page_widgets or {}).items():
         root = roots[page_name]

@@ -55,7 +55,9 @@ from ui_designer.utils.scaffold import (
     build_page_model_with_widget,
     build_page_model_with_widgets,
     build_empty_project_model,
+    build_empty_project_model_and_root,
     build_empty_project_model_and_save,
+    build_empty_project_model_with_page_roots,
     build_saved_project_model,
     build_saved_project_model_with_page_widgets,
     build_saved_project_model_with_widgets,
@@ -70,6 +72,7 @@ from ui_designer.utils.scaffold import (
     ensure_sdk_example_conversion_project_scaffold,
     require_page_root,
     require_project_page_root,
+    require_project_page_roots,
     normalize_scaffold_pages,
     project_config_dir,
     project_config_backup_dir,
@@ -826,6 +829,52 @@ class TestCoreProjectScaffold:
         assert root is page.root_widget
         assert root.width == 320
         assert root.height == 240
+
+    def test_build_empty_project_model_and_root_returns_project_and_root_only(self):
+        project, root = build_empty_project_model_and_root(
+            "DemoApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir="D:/workspace/DemoApp",
+            page_name="home",
+        )
+        page, resolved_root = require_project_page_root(project, "home")
+
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.project_dir == os.path.normpath("D:/workspace/DemoApp")
+        assert page.name == "home"
+        assert root is resolved_root
+
+    def test_require_project_page_roots_returns_all_named_roots(self):
+        project = build_empty_project_model(
+            "DemoApp",
+            320,
+            240,
+            pages=["home", "detail"],
+        )
+
+        roots = require_project_page_roots(project)
+
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].width == 320
+        assert roots["detail"].height == 240
+
+    def test_build_empty_project_model_with_page_roots_returns_project_and_roots(self):
+        project, roots = build_empty_project_model_with_page_roots(
+            "DemoApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir="D:/workspace/DemoApp",
+            pages=["home", "detail"],
+        )
+
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert project.project_dir == os.path.normpath("D:/workspace/DemoApp")
+        assert list(roots) == ["home", "detail"]
+        assert roots["home"].width == 320
+        assert roots["detail"].height == 240
 
     def test_build_basic_widget_model_uses_shared_defaults(self):
         widget = build_basic_widget_model("button")

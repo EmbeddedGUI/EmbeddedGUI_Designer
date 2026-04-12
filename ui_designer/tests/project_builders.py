@@ -19,11 +19,12 @@ from ui_designer.utils.scaffold import (
     build_project_model_only_from_root_with_widgets,
     build_project_model_from_root_with_widgets,
     build_empty_project_model,
+    build_empty_project_model_and_root,
+    build_empty_project_model_with_root,
+    build_empty_project_model_with_page_roots,
     build_saved_project_model,
     build_saved_project_model_with_page_widgets,
     build_saved_project_model_with_widgets,
-    build_empty_project_model_with_root,
-    require_project_page_root,
 )
 
 
@@ -57,7 +58,7 @@ def build_test_project_with_root(
     project_dir="",
 ):
     """Build a minimal test project and return it with the startup page root widget."""
-    project, _page, root = build_empty_project_model_with_root(
+    return build_empty_project_model_and_root(
         app_name,
         screen_width,
         screen_height,
@@ -65,7 +66,6 @@ def build_test_project_with_root(
         project_dir=project_dir,
         page_name=page_name,
     )
-    return project, root
 
 
 def build_test_project_with_page_root(
@@ -98,7 +98,7 @@ def build_test_project_with_page_roots(
     pages=None,
 ):
     """Build a minimal test project and return a map of page names to root widgets."""
-    project = build_test_project(
+    return build_empty_project_model_with_page_roots(
         app_name,
         screen_width,
         screen_height,
@@ -106,11 +106,6 @@ def build_test_project_with_page_roots(
         project_dir=project_dir,
         pages=pages,
     )
-    roots = {}
-    for page in project.pages:
-        _page, root = require_project_page_root(project, page.name)
-        roots[page.name] = root
-    return project, roots
 
 
 def build_test_project_with_page_widgets(
