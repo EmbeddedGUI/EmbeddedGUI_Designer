@@ -18,7 +18,16 @@ from ui_designer.model.project import Project
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
-from ui_designer.utils.scaffold import RESOURCE_CATALOG_FILENAME, require_page_root, resource_catalog_path
+from ui_designer.utils.scaffold import (
+    RESOURCE_CATALOG_FILENAME,
+    project_config_images_dir,
+    project_config_resource_dir,
+    project_generated_font_dir,
+    project_generated_img_dir,
+    project_resource_src_dir,
+    require_page_root,
+    resource_catalog_path,
+)
 
 
 class TestProjectDefaults:
@@ -190,12 +199,42 @@ class TestPathHelpers:
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp", "resource")
         assert proj.get_resource_dir() == expected
 
+    def test_get_generated_img_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_generated_img_dir() == project_generated_img_dir(proj.get_app_dir())
+
+    def test_get_generated_font_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_generated_font_dir() == project_generated_font_dir(proj.get_app_dir())
+
+    def test_get_resource_src_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_resource_src_dir() == project_resource_src_dir(proj.get_app_dir())
+
     def test_get_eguiproject_dir(self):
         proj = Project(app_name="TestApp")
         proj.sdk_root = "/home/user/EmbeddedGUI"
 
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp", ".eguiproject")
         assert proj.get_eguiproject_dir() == expected
+
+    def test_get_eguiproject_resource_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_eguiproject_resource_dir() == project_config_resource_dir(proj.get_app_dir())
+
+    def test_get_eguiproject_images_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_eguiproject_images_dir() == project_config_images_dir(proj.get_app_dir())
 
     def test_get_app_dir_prefers_project_dir(self):
         proj = Project(app_name="TestApp")

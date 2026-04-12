@@ -38,6 +38,8 @@ from ..utils.scaffold import (
     project_config_layout_xml_relpath,
     project_config_resource_dir,
     project_file_path,
+    project_generated_font_dir,
+    project_generated_img_dir,
     project_generated_resource_dir,
     project_resource_src_dir,
 )
@@ -201,6 +203,27 @@ class Project:
             return ""
         return project_generated_resource_dir(app_dir)
 
+    def get_generated_img_dir(self):
+        """Get the generated image output directory (resource/img/)."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_generated_img_dir(app_dir)
+
+    def get_generated_font_dir(self):
+        """Get the generated font output directory (resource/font/)."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_generated_font_dir(app_dir)
+
+    def get_resource_src_dir(self):
+        """Get the generated resource source directory (resource/src/)."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_resource_src_dir(app_dir)
+
     def get_eguiproject_dir(self):
         """Get the .eguiproject config directory path."""
         app_dir = self.get_app_dir()
@@ -214,20 +237,20 @@ class Project:
         This is the authoritative location for all resource files.
         Contains: resources.xml, images/, values*/, fonts, text files.
         """
-        eguiproject_dir = self.get_eguiproject_dir()
-        if not eguiproject_dir:
+        app_dir = self.get_app_dir()
+        if not app_dir:
             return ""
-        return project_config_resource_dir(self.get_app_dir())
+        return project_config_resource_dir(app_dir)
 
     def get_eguiproject_images_dir(self):
         """Get the .eguiproject/resources/images/ directory path.
 
         Authoritative location for source image files.
         """
-        res_dir = self.get_eguiproject_resource_dir()
-        if not res_dir:
+        app_dir = self.get_app_dir()
+        if not app_dir:
             return ""
-        return project_config_images_dir(self.get_app_dir())
+        return project_config_images_dir(app_dir)
 
     # 鈹€鈹€ Widgets 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
@@ -281,7 +304,7 @@ class Project:
         project_dir = normalize_path(project_dir)
         self.project_dir = project_dir
         os.makedirs(project_dir, exist_ok=True)
-        eguiproject_dir = project_config_dir(project_dir)
+        eguiproject_dir = self.get_eguiproject_dir()
         os.makedirs(eguiproject_dir, exist_ok=True)
 
         # Save each page XML to .eguiproject/layout/
@@ -289,7 +312,7 @@ class Project:
             page.save(eguiproject_dir)
 
         # Save resource catalog to .eguiproject/resources/resources.xml
-        resources_dir = project_config_resource_dir(project_dir)
+        resources_dir = self.get_eguiproject_resource_dir()
         os.makedirs(resources_dir, exist_ok=True)
         self.resource_catalog.save(resources_dir)
 
@@ -336,7 +359,6 @@ class Project:
             project_file = project_path
 
         project_dir = os.path.dirname(os.path.abspath(project_file))
-        config_dir = project_config_dir(project_dir)
 
         from .widget_registry import WidgetRegistry
         WidgetRegistry.instance().load_app_local_widgets(project_dir)
@@ -356,8 +378,9 @@ class Project:
         proj.startup_page = root.get("startup", "main_page")
 
         # Determine canonical resource directories
-        eguiproject_res_dir = project_config_resource_dir(project_dir)
-        eguiproject_images_dir = project_config_images_dir(project_dir)
+        config_dir = proj.get_eguiproject_dir()
+        eguiproject_res_dir = proj.get_eguiproject_resource_dir()
+        eguiproject_images_dir = proj.get_eguiproject_images_dir()
 
         # Load resource catalog
         catalog = ResourceCatalog.load(eguiproject_res_dir)
@@ -404,7 +427,7 @@ class Project:
         live in the resources/ root.
         Only copies if source is newer or destination doesn't exist.
         """
-        config_dir = project_config_dir(project_dir)
+        project_dir = normalize_path(project_dir)
         eguiproject_res_dir = project_config_resource_dir(project_dir)
         images_dir = project_config_images_dir(project_dir)
         target_src_dir = project_resource_src_dir(project_dir)
