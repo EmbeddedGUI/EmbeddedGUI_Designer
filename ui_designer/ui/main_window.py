@@ -157,6 +157,8 @@ from ..utils.scaffold import (
     save_empty_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
     save_project_model,
+    sdk_example_app_config_path,
+    sdk_example_config_dir,
     sync_project_resources_and_generate_designer_resource_config,
 )
 from .theme import apply_theme, theme_tokens
@@ -4089,7 +4091,7 @@ class MainWindow(QMainWindow):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
         project_path = sdk_example_project_path(sdk_root, app_name)
-        eguiproject_dir = project_config_dir(app_dir)
+        eguiproject_dir = sdk_example_config_dir(sdk_root, app_name)
 
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):
             QMessageBox.warning(
@@ -4114,7 +4116,7 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.Yes:
             return
 
-        screen_w, screen_h = read_app_config_dimensions(project_app_config_path(app_dir))
+        screen_w, screen_h = read_app_config_dimensions(sdk_example_app_config_path(sdk_root, app_name))
         save_empty_project_with_designer_scaffold(
             app_name,
             app_dir,

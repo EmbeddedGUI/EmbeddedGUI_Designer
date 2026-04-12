@@ -40,7 +40,7 @@ from ui_designer.model.workspace import sdk_example_app_dir, sdk_example_project
 from ui_designer.utils.scaffold import (
     build_empty_project_xml,
     build_empty_resources_xml,
-    project_resource_catalog_path,
+    sdk_example_resource_catalog_path,
     sdk_example_layout_dir,
     sdk_example_resource_images_dir,
     sdk_example_resource_src_dir,
@@ -594,7 +594,7 @@ class FigmaMakeCodegen:
         print(f"  Created: {self.app_name}.egui")
 
         # Write resources.xml
-        res_xml_path = project_resource_catalog_path(app_dir)
+        res_xml_path = sdk_example_resource_catalog_path(sdk_root, self.app_name)
         if not os.path.exists(res_xml_path):
             with open(res_xml_path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(build_empty_resources_xml())

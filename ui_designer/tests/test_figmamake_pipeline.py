@@ -16,7 +16,7 @@ from ui_designer.utils.scaffold import (
     project_config_reference_frames_dir,
     project_config_regression_report_path,
     project_config_regression_results_path,
-    project_resource_catalog_path,
+    sdk_example_resource_catalog_path,
 )
 
 
@@ -66,7 +66,7 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
 
     egui_path = sdk_root / "example" / "DemoApp" / "DemoApp.egui"
     xml = egui_path.read_text(encoding="utf-8")
-    resources_xml_path = Path(project_resource_catalog_path(str(sdk_root / "example" / "DemoApp")))
+    resources_xml_path = Path(sdk_example_resource_catalog_path(str(sdk_root), "DemoApp"))
     resources_xml = resources_xml_path.read_text(encoding="utf-8")
 
     assert result["pages"] == ["home_page"]

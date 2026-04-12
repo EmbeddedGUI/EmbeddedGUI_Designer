@@ -104,6 +104,10 @@ from ui_designer.utils.scaffold import (
     sdk_example_generated_resource_dir,
     sdk_example_resource_src_dir,
     sdk_example_supported_text_path,
+    sdk_example_resource_catalog_path,
+    sdk_example_user_resource_config_path,
+    sdk_example_designer_resource_config_path,
+    sdk_example_app_config_path,
     sdk_example_regression_report_path,
     sdk_example_regression_results_path,
     sync_project_resources_and_generate_designer_resource_config,
@@ -493,6 +497,20 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(sdk_example_supported_text_path(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/supported_text.txt"
+        )
+        assert os.path.normpath(sdk_example_resource_catalog_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/resources/resources.xml"
+        )
+        assert os.path.normpath(sdk_example_user_resource_config_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/app_resource_config.json"
+        )
+        assert os.path.normpath(
+            sdk_example_designer_resource_config_path(sdk_root, "DemoApp")
+        ) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/resource/src/.designer/app_resource_config_designer.json"
+        )
+        assert os.path.normpath(sdk_example_app_config_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/app_egui_config.h"
         )
         assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"

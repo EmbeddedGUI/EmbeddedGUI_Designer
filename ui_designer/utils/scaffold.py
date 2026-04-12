@@ -315,6 +315,34 @@ def sdk_example_supported_text_path(sdk_root: str | None, app_name: str | None) 
     return project_supported_text_path(app_dir)
 
 
+def sdk_example_resource_catalog_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_resource_catalog_path(app_dir)
+
+
+def sdk_example_user_resource_config_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_user_resource_config_path(app_dir)
+
+
+def sdk_example_designer_resource_config_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_designer_resource_config_path(app_dir)
+
+
+def sdk_example_app_config_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    if not app_dir:
+        return ""
+    return project_app_config_path(app_dir)
+
+
 def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
     app_dir = sdk_example_app_dir(sdk_root, app_name)
     if not app_dir:
