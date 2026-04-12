@@ -143,6 +143,7 @@ from ..utils.scaffold import (
     project_config_dir,
     project_config_images_dir,
     project_config_layout_dir,
+    project_config_layout_xml_relpath,
     project_config_mockup_dir,
     project_config_path,
     project_config_resource_dir,
@@ -5670,7 +5671,7 @@ class MainWindow(QMainWindow):
         page = self.project.get_page_by_name(old_name)
         if page:
             was_current = self._current_page is not None and self._current_page.name == old_name
-            page.file_path = f"layout/{new_name}.xml"
+            page.file_path = project_config_layout_xml_relpath(new_name)
             self._record_pending_page_rename(old_name, new_name)
             # Update startup_page reference if needed
             if self.project.startup_page == old_name:

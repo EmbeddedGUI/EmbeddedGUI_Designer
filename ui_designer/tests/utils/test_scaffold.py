@@ -62,6 +62,7 @@ from ui_designer.utils.scaffold import (
     project_config_dir,
     project_config_images_dir,
     project_config_layout_dir,
+    project_config_layout_xml_relpath,
     project_config_mockup_dir,
     project_config_path,
     project_config_reference_frames_dir,
@@ -404,6 +405,7 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_config_layout_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/layout"
         )
+        assert project_config_layout_xml_relpath("main_page") == "layout/main_page.xml"
         assert os.path.normpath(project_layout_xml_path("D:/workspace/DemoApp", "main_page")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/layout/main_page.xml"
         )

@@ -349,6 +349,10 @@ def _layout_xml_filename(page_name: str) -> str:
     return f"{page_name}.xml"
 
 
+def project_config_layout_xml_relpath(page_name: str) -> str:
+    return f"layout/{_layout_xml_filename(page_name)}"
+
+
 def project_layout_xml_path(project_dir: str, page_name: str) -> str:
     return project_config_path(project_dir, "layout", _layout_xml_filename(page_name))
 
@@ -361,7 +365,7 @@ def sdk_example_layout_xml_path(sdk_root: str | None, app_name: str | None, page
 
 
 def project_layout_xml_relpath(page_name: str) -> str:
-    return f"{LAYOUT_DIR_RELPATH}/{_layout_xml_filename(page_name)}"
+    return f"{EGUIPROJECT_DIRNAME}/{project_config_layout_xml_relpath(page_name)}"
 
 
 def _normalize_project_copy_dir(path: str) -> str:
@@ -1412,7 +1416,7 @@ def build_page_model_with_root_widget(
         width=width,
         height=height,
     )
-    page = Page(file_path=f"layout/{page_name}.xml", root_widget=root)
+    page = Page(file_path=project_config_layout_xml_relpath(page_name), root_widget=root)
     return page, root
 
 
@@ -1436,7 +1440,7 @@ def build_page_model_from_root(
             width=screen_width,
             height=screen_height,
         )
-    return Page(file_path=f"layout/{page_name}.xml", root_widget=resolved_root)
+    return Page(file_path=project_config_layout_xml_relpath(page_name), root_widget=resolved_root)
 
 
 def build_page_model_from_root_with_widgets(

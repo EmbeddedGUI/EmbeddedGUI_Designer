@@ -7,6 +7,7 @@ The page name is derived from the filename — no separate 'name' attribute is s
 import os
 import xml.etree.ElementTree as ET
 
+from ..utils.scaffold import project_config_layout_xml_relpath
 from ..utils.xml_utils import element_to_xml_string
 from .widget_model import WidgetModel
 
@@ -179,7 +180,7 @@ class Page:
     @classmethod
     def create_default(cls, page_name, screen_width=240, screen_height=320):
         """Create a new page with a default root group container."""
-        file_path = f"layout/{page_name}.xml"
+        file_path = project_config_layout_xml_relpath(page_name)
         root = WidgetModel(
             "group", name="root_group",
             x=0, y=0, width=screen_width, height=screen_height,

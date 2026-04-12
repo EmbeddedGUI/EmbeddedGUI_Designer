@@ -35,6 +35,7 @@ from ..utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
     project_config_dir,
     project_config_images_dir,
+    project_config_layout_xml_relpath,
     project_config_resource_dir,
     project_file_path,
     project_generated_resource_dir,
@@ -173,7 +174,7 @@ class Project:
 
         page = Page.from_xml_string(
             source_page.to_xml_string(),
-            file_path=f"layout/{new_name}.xml",
+            file_path=project_config_layout_xml_relpath(new_name),
         )
         page.dirty = True
         self.add_page(page)
