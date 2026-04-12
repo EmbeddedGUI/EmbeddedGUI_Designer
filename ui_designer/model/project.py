@@ -196,72 +196,51 @@ class Project:
             return sdk_example_app_dir(self.sdk_root, self.app_name)
         return ""
 
+    def _project_app_path(self, resolver):
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return resolver(app_dir)
+
     def get_resource_dir(self):
         """Get the resource directory path (resource/).
 
         Used for the generation pipeline (generated output in resource/img/,
         resource/font/) and for property_panel to scan generated fonts.
         """
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_generated_resource_dir(app_dir)
+        return self._project_app_path(project_generated_resource_dir)
 
     def get_generated_img_dir(self):
         """Get the generated image output directory (resource/img/)."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_generated_img_dir(app_dir)
+        return self._project_app_path(project_generated_img_dir)
 
     def get_generated_font_dir(self):
         """Get the generated font output directory (resource/font/)."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_generated_font_dir(app_dir)
+        return self._project_app_path(project_generated_font_dir)
 
     def get_resource_src_dir(self):
         """Get the generated resource source directory (resource/src/)."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_resource_src_dir(app_dir)
+        return self._project_app_path(project_resource_src_dir)
 
     def get_user_resource_config_path(self):
         """Get the user-owned resource overlay config path."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_user_resource_config_path(app_dir)
+        return self._project_app_path(project_user_resource_config_path)
 
     def get_designer_resource_dir(self):
         """Get the designer-managed resource metadata directory path."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_designer_resource_dir(app_dir)
+        return self._project_app_path(project_designer_resource_dir)
 
     def get_eguiproject_dir(self):
         """Get the .eguiproject config directory path."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_config_dir(app_dir)
+        return self._project_app_path(project_config_dir)
 
     def get_eguiproject_layout_dir(self):
         """Get the .eguiproject/layout/ directory path."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_config_layout_dir(app_dir)
+        return self._project_app_path(project_config_layout_dir)
 
     def get_eguiproject_mockup_dir(self):
         """Get the .eguiproject/mockup/ directory path."""
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_config_mockup_dir(app_dir)
+        return self._project_app_path(project_config_mockup_dir)
 
     def get_eguiproject_resource_dir(self):
         """Get the .eguiproject/resources/ directory path.
@@ -269,20 +248,14 @@ class Project:
         This is the authoritative location for all resource files.
         Contains: resources.xml, images/, values*/, fonts, text files.
         """
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_config_resource_dir(app_dir)
+        return self._project_app_path(project_config_resource_dir)
 
     def get_eguiproject_images_dir(self):
         """Get the .eguiproject/resources/images/ directory path.
 
         Authoritative location for source image files.
         """
-        app_dir = self.get_app_dir()
-        if not app_dir:
-            return ""
-        return project_config_images_dir(app_dir)
+        return self._project_app_path(project_config_images_dir)
 
     # 鈹€鈹€ Widgets 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
