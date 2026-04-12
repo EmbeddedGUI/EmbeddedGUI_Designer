@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 import sys
-from types import SimpleNamespace
 
 import pytest
 
@@ -12,6 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
 from ui_designer.tests.codegen_fixtures import build_materialized_codegen_result
+from ui_designer.tests.namespace_fixtures import build_namespace_stub, build_project_stub
 from ui_designer.tests.process_fixtures import build_completed_process_result
 from ui_designer.model.workspace import sdk_runtime_check_output_dir
 from ui_designer.utils.scaffold import (
@@ -84,7 +84,7 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
 def test_figmamake_codegen_uses_shared_codegen_materializer(tmp_path, monkeypatch, capsys):
     app_dir = tmp_path / "sdk" / "example" / "DemoApp"
     app_dir.mkdir(parents=True)
-    fake_project = SimpleNamespace(pages=[object(), object(), object()])
+    fake_project = build_project_stub(pages=[object(), object(), object()])
     seen = {}
 
     monkeypatch.setattr(
@@ -174,7 +174,7 @@ def test_figmamake_stage_build_and_run_uses_shared_runtime_output_dir(tmp_path, 
     monkeypatch.setitem(
         sys.modules,
         "code_runtime_check",
-        SimpleNamespace(
+        build_namespace_stub(
             compile_app=lambda app_name: app_name == "DemoApp",
             capture_animation_frames=lambda app_name, rendered_dir, fps=0, duration=0, speed=0: (
                 seen.update(
@@ -236,8 +236,8 @@ def test_figmamake_stage_verify_writes_report_files_under_shared_project_config_
     monkeypatch.setitem(
         sys.modules,
         "figmamake_regression",
-        SimpleNamespace(
-            RegressionVerifier=lambda ref_dir, rendered_dir: SimpleNamespace(
+        build_namespace_stub(
+            RegressionVerifier=lambda ref_dir, rendered_dir: build_namespace_stub(
                 verify_all=lambda: {
                     "results": [{"name": "frame_000", "status": "PASS", "ssim": 0.99}],
                     "passed": 1,

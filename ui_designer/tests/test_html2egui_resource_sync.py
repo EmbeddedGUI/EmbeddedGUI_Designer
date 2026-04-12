@@ -3,7 +3,6 @@
 import json
 import os
 import sys
-from types import SimpleNamespace
 
 import pytest
 
@@ -11,6 +10,11 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 import html2egui_helper as h
 from ui_designer.model.workspace import sdk_example_app_dir
+from ui_designer.tests.namespace_fixtures import (
+    build_namespace_stub,
+    build_project_stub,
+    build_widget_stub,
+)
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
 from ui_designer.utils.scaffold import (
     project_config_layout_dir,
@@ -402,12 +406,12 @@ class TestHelperResourceSync:
         (tools_dir / "_generated_text_demo_16_4.ttf").write_bytes(b"BAD")
         (tools_dir / "kept.ttf").write_bytes(b"OK")
 
-        project = SimpleNamespace(
+        project = build_project_stub(
             pages=[
                 _FakePage(
                     [
-                        SimpleNamespace(properties={"font_file": "_generated_text_demo_16_4.ttf"}),
-                        SimpleNamespace(properties={"font_file": "kept.ttf"}),
+                        build_widget_stub(font_file="_generated_text_demo_16_4.ttf"),
+                        build_widget_stub(font_file="kept.ttf"),
                     ]
                 )
             ]
@@ -450,7 +454,7 @@ class TestHelperResourceSync:
             ),
         )
 
-        args = SimpleNamespace(
+        args = build_namespace_stub(
             input=str(html_path),
             output=None,
             app="DemoApp",
@@ -522,7 +526,7 @@ class TestHelperResourceSync:
         )
 
         h.cmd_figma2xml(
-            SimpleNamespace(
+            build_namespace_stub(
                 token="demo-token",
                 url=None,
                 file_key="demo-file",

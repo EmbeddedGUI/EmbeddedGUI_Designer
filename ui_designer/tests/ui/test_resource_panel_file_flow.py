@@ -1,10 +1,10 @@
 """Qt UI tests for ResourcePanel import dialog defaults."""
 
 import os
-from types import SimpleNamespace
 
 import pytest
 
+from ui_designer.tests.namespace_fixtures import build_overwrite_diff
 from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 
 if HAS_PYQT5:
@@ -3157,7 +3157,7 @@ class TestResourcePanelFileFlow:
                 return ("A", "B", "\u4E2D")
 
             def overwrite_diff(self):
-                return SimpleNamespace(existing_count=0, new_count=3, added_count=3, removed_count=0)
+                return build_overwrite_diff(new_count=3, added_count=3)
 
             def save_and_assign(self):
                 return True
@@ -3206,7 +3206,7 @@ class TestResourcePanelFileFlow:
                 return "A\nB\n"
 
             def overwrite_diff(self):
-                return SimpleNamespace(existing_count=0, new_count=2, added_count=2, removed_count=0)
+                return build_overwrite_diff(new_count=2, added_count=2)
 
             def save_and_assign(self):
                 return False
@@ -3270,7 +3270,7 @@ class TestResourcePanelFileFlow:
                 return "A\nB\n"
 
             def overwrite_diff(self):
-                return SimpleNamespace(existing_count=1, new_count=2, added_count=1, removed_count=0)
+                return build_overwrite_diff(existing_count=1, new_count=2, added_count=1)
 
             def save_and_assign(self):
                 return False
@@ -3328,7 +3328,7 @@ class TestResourcePanelFileFlow:
                 return "A\nB\n"
 
             def overwrite_diff(self):
-                return SimpleNamespace(existing_count=1, new_count=2, added_count=1, removed_count=0)
+                return build_overwrite_diff(existing_count=1, new_count=2, added_count=1)
 
             def save_and_assign(self):
                 return False
