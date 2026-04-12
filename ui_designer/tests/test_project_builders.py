@@ -78,11 +78,11 @@ class TestProjectBuilders:
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
 
-    def test_build_saved_test_project_reuses_empty_scaffold_save_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_reuses_shared_empty_build_save_helper_for_scaffolded_save(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "SharedScaffoldedSavedBuilderDemo"
         captured = {}
 
-        def fake_save_empty_project_with_designer_scaffold(
+        def fake_build_empty_project_model_and_save(
             app_name,
             project_dir_arg,
             screen_width=240,
@@ -101,12 +101,12 @@ class TestProjectBuilders:
                 sdk_root=kwargs.get("sdk_root", ""),
                 project_dir=project_dir_arg,
                 pages=kwargs.get("pages"),
-            )
+            ), {}
 
         monkeypatch.setattr(
             project_builders_module,
-            "save_empty_project_with_designer_scaffold",
-            fake_save_empty_project_with_designer_scaffold,
+            "build_empty_project_model_and_save",
+            fake_build_empty_project_model_and_save,
         )
 
         project = build_saved_test_project(
@@ -127,12 +127,14 @@ class TestProjectBuilders:
             "kwargs": {
                 "sdk_root": "D:/sdk",
                 "pages": ["main_page", "settings"],
+                "project_customizer": None,
+                "with_designer_scaffold": True,
                 "overwrite_scaffold": True,
                 "remove_legacy_designer_files": True,
             },
         }
 
-    def test_build_saved_test_project_forwards_project_customizer_to_empty_scaffold_helper(self, tmp_path, monkeypatch):
+    def test_build_saved_test_project_forwards_project_customizer_to_shared_empty_build_save_helper(self, tmp_path, monkeypatch):
         project_dir = tmp_path / "CustomizedSharedScaffoldedSavedBuilderDemo"
         captured = {}
 
@@ -140,7 +142,7 @@ class TestProjectBuilders:
             project.screen_width = 480
             project.screen_height = 272
 
-        def fake_save_empty_project_with_designer_scaffold(
+        def fake_build_empty_project_model_and_save(
             app_name,
             project_dir_arg,
             screen_width=240,
@@ -157,12 +159,12 @@ class TestProjectBuilders:
             )
             kwargs["project_customizer"](project)
             captured["project_customizer"] = kwargs["project_customizer"]
-            return project
+            return project, {}
 
         monkeypatch.setattr(
             project_builders_module,
-            "save_empty_project_with_designer_scaffold",
-            fake_save_empty_project_with_designer_scaffold,
+            "build_empty_project_model_and_save",
+            fake_build_empty_project_model_and_save,
         )
 
         project = build_saved_test_project(
@@ -245,6 +247,8 @@ class TestProjectBuilders:
                 "sdk_root": "D:/sdk",
                 "pages": ["main_page", "settings"],
                 "project_customizer": None,
+                "with_designer_scaffold": False,
+                "overwrite_scaffold": False,
                 "remove_legacy_designer_files": True,
             },
         }

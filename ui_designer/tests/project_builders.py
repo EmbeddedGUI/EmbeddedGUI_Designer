@@ -24,7 +24,6 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model_and_save,
     build_empty_project_model_with_root,
     require_project_page_root,
-    save_empty_project_with_designer_scaffold,
 )
 
 
@@ -480,22 +479,6 @@ def build_saved_test_project(
 ):
     """Build, optionally customize, and save a minimal test project to disk."""
     project_root = Path(project_dir)
-    if with_designer_scaffold:
-        scaffold_kwargs = {
-            "sdk_root": str(sdk_root or ""),
-            "pages": pages,
-            "overwrite_scaffold": overwrite_scaffold,
-            "remove_legacy_designer_files": True,
-        }
-        if project_customizer is not None:
-            scaffold_kwargs["project_customizer"] = project_customizer
-        return save_empty_project_with_designer_scaffold(
-            app_name,
-            str(project_root),
-            screen_width,
-            screen_height,
-            **scaffold_kwargs,
-        )
     project, _actions = build_empty_project_model_and_save(
         app_name,
         str(project_root),
@@ -504,6 +487,8 @@ def build_saved_test_project(
         sdk_root=sdk_root,
         pages=pages,
         project_customizer=project_customizer,
+        with_designer_scaffold=with_designer_scaffold,
+        overwrite_scaffold=overwrite_scaffold,
         remove_legacy_designer_files=True,
     )
     return project
