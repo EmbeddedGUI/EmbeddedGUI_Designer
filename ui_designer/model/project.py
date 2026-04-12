@@ -33,11 +33,14 @@ from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
 from ..utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
+    project_app_config_path,
+    project_build_mk_path,
     project_config_dir,
     project_config_images_dir,
     project_config_layout_dir,
     project_config_layout_xml_relpath,
     project_config_mockup_dir,
+    project_designer_dir,
     project_designer_resource_dir,
     project_config_resource_dir,
     project_file_path,
@@ -210,6 +213,24 @@ class Project:
         """
         return self._project_app_path(project_generated_resource_dir)
 
+    def get_project_file_path(self):
+        """Get the project metadata file path ({app_name}.egui)."""
+        return self._project_app_path(
+            lambda project_dir: project_file_path(project_dir, self.app_name)
+        )
+
+    def get_build_mk_path(self):
+        """Get the user-owned build.mk wrapper path."""
+        return self._project_app_path(project_build_mk_path)
+
+    def get_app_config_path(self):
+        """Get the user-owned app_egui_config.h wrapper path."""
+        return self._project_app_path(project_app_config_path)
+
+    def get_designer_dir(self):
+        """Get the designer-managed .designer/ directory path."""
+        return self._project_app_path(project_designer_dir)
+
     def get_generated_img_dir(self):
         """Get the generated image output directory (resource/img/)."""
         return self._project_app_path(project_generated_img_dir)
@@ -334,7 +355,7 @@ class Project:
             if _sdk_revision_text(fingerprint):
                 self.sdk_fingerprint = fingerprint
 
-        eui_path = project_file_path(project_dir, self.app_name)
+        eui_path = self.get_project_file_path()
         with open(eui_path, "w", encoding="utf-8") as f:
             f.write(self.to_xml_string(project_dir))
 

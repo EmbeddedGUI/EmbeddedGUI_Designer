@@ -20,11 +20,15 @@ from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
 from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
+    project_app_config_path,
+    project_build_mk_path,
     project_config_images_dir,
     project_config_layout_dir,
     project_config_mockup_dir,
+    project_designer_dir,
     project_designer_resource_dir,
     project_config_resource_dir,
+    project_file_path,
     project_generated_font_dir,
     project_generated_img_dir,
     project_resource_src_dir,
@@ -202,6 +206,30 @@ class TestPathHelpers:
 
         expected = os.path.join(normalize_path("/home/user/EmbeddedGUI"), "example", "TestApp", "resource")
         assert proj.get_resource_dir() == expected
+
+    def test_get_project_file_path(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_project_file_path() == project_file_path(proj.get_app_dir(), "TestApp")
+
+    def test_get_build_mk_path(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_build_mk_path() == project_build_mk_path(proj.get_app_dir())
+
+    def test_get_app_config_path(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_app_config_path() == project_app_config_path(proj.get_app_dir())
+
+    def test_get_designer_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_designer_dir() == project_designer_dir(proj.get_app_dir())
 
     def test_get_generated_img_dir(self):
         proj = Project(app_name="TestApp")

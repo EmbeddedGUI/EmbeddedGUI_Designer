@@ -129,7 +129,6 @@ from ..utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     BUILD_DESIGNER_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
-    DESIGNER_PROJECT_DIRNAME,
     RESOURCE_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
     bind_project_storage,
@@ -140,7 +139,6 @@ from ..utils.scaffold import (
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
-    project_config_dir,
     project_config_images_dir,
     project_config_layout_dir,
     project_config_layout_xml_relpath,
@@ -151,6 +149,7 @@ from ..utils.scaffold import (
     project_config_resource_dir,
     project_app_config_path,
     project_build_mk_path,
+    project_designer_dir,
     project_generated_resource_dir,
     project_designer_resource_dir,
     project_file_path,
@@ -2694,11 +2693,8 @@ class MainWindow(QMainWindow):
 
     def _persist_current_project_to_config(self):
         self._config.last_app = self.app_name or self._config.last_app
-        self._config.last_project_path = (
-            normalize_path(project_file_path(self._project_dir, self.app_name))
-            if self._project_dir
-            else ""
-        )
+        project_path = self._get_project_file_path()
+        self._config.last_project_path = normalize_path(project_path) if project_path else ""
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
         if self._config.last_project_path:
@@ -2728,7 +2724,8 @@ class MainWindow(QMainWindow):
 
     def _build_project_watch_snapshot(self):
         snapshot = {}
-        if not self._project_dir or not self.app_name:
+        project_file = self._get_project_file_path()
+        if not project_file:
             return snapshot
 
         def _add_path(path):
@@ -2758,13 +2755,11 @@ class MainWindow(QMainWindow):
             for name in entries:
                 _add_path(os.path.join(path, name))
 
-        project_file = project_file_path(self._project_dir, self.app_name)
-        eguiproject_dir = project_config_dir(self._project_dir)
         watch_roots = [
             project_file,
-            project_build_mk_path(self._project_dir),
-            project_app_config_path(self._project_dir),
-            os.path.join(self._project_dir, DESIGNER_PROJECT_DIRNAME),
+            self._get_build_mk_path(),
+            self._get_app_config_path(),
+            self._get_designer_dir(),
             legacy_build_designer_path(self._project_dir),
             legacy_app_config_designer_path(self._project_dir),
             self._get_user_resource_config_path(),
@@ -5027,6 +5022,13 @@ class MainWindow(QMainWindow):
         """
         return self._resolve_project_path("get_resource_dir", project_generated_resource_dir)
 
+    def _get_project_file_path(self):
+        """Compute the project metadata file path ({app_name}.egui)."""
+        return self._resolve_project_path(
+            "get_project_file_path",
+            lambda project_dir: project_file_path(project_dir, self.app_name),
+        )
+
     def _resolve_project_path(self, project_getter_name, fallback_resolver):
         if self.project:
             getter = getattr(self.project, project_getter_name, None)
@@ -5041,6 +5043,18 @@ class MainWindow(QMainWindow):
     def _get_resource_src_dir(self):
         """Compute the generated resource source directory (resource/src/)."""
         return self._resolve_project_path("get_resource_src_dir", project_resource_src_dir)
+
+    def _get_build_mk_path(self):
+        """Compute the user-owned build.mk wrapper path."""
+        return self._resolve_project_path("get_build_mk_path", project_build_mk_path)
+
+    def _get_app_config_path(self):
+        """Compute the user-owned app_egui_config.h wrapper path."""
+        return self._resolve_project_path("get_app_config_path", project_app_config_path)
+
+    def _get_designer_dir(self):
+        """Compute the designer-managed .designer/ directory path."""
+        return self._resolve_project_path("get_designer_dir", project_designer_dir)
 
     def _get_user_resource_config_path(self):
         """Compute the user-owned resource overlay config path."""

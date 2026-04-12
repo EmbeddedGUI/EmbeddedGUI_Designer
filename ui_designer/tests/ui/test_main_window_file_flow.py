@@ -145,6 +145,18 @@ def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
     from ui_designer.ui.main_window import MainWindow
 
     class _FakeProject:
+        def get_project_file_path(self):
+            return "D:/delegate/HelperDemo.egui"
+
+        def get_build_mk_path(self):
+            return "D:/delegate/build.mk"
+
+        def get_app_config_path(self):
+            return "D:/delegate/app_egui_config.h"
+
+        def get_designer_dir(self):
+            return "D:/delegate/.designer"
+
         def get_resource_dir(self):
             return "D:/demo/resource"
 
@@ -171,8 +183,13 @@ def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
 
     window = MainWindow("")
     window.project = _FakeProject()
-    window._project_dir = ""
+    window._project_dir = "D:/fallback"
+    window.app_name = "FallbackDemo"
 
+    assert window._get_project_file_path() == "D:/delegate/HelperDemo.egui"
+    assert window._get_build_mk_path() == "D:/delegate/build.mk"
+    assert window._get_app_config_path() == "D:/delegate/app_egui_config.h"
+    assert window._get_designer_dir() == "D:/delegate/.designer"
     assert window._get_resource_dir() == "D:/demo/resource"
     assert window._get_resource_src_dir() == "D:/demo/resource/src"
     assert window._get_user_resource_config_path() == "D:/demo/resource/src/app_resource_config.json"
@@ -181,6 +198,103 @@ def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
     assert window._get_eguiproject_mockup_dir() == "D:/demo/.eguiproject/mockup"
     assert window._get_eguiproject_resource_dir() == "D:/demo/.eguiproject/resources"
     assert window._get_eguiproject_images_dir() == "D:/demo/.eguiproject/resources/images"
+    _close_window(window)
+
+
+def test_persist_current_project_to_config_uses_project_file_helper(qapp, isolated_config, tmp_path):
+    from ui_designer.ui.main_window import MainWindow
+
+    delegated_project_file = tmp_path / "delegated" / "HelperDemo.egui"
+    delegated_project_file.parent.mkdir(parents=True)
+    delegated_project_file.write_text("<Project />\n", encoding="utf-8")
+
+    class _FakeProject:
+        def get_project_file_path(self):
+            return str(delegated_project_file)
+
+    window = MainWindow("")
+    window.project = _FakeProject()
+    window._project_dir = str(tmp_path / "fallback")
+    window.app_name = "HelperDemo"
+
+    window._persist_current_project_to_config()
+
+    assert isolated_config.last_project_path == os.path.normpath(os.path.abspath(delegated_project_file))
+    assert isolated_config.recent_projects[0]["project_path"] == os.path.normpath(os.path.abspath(delegated_project_file))
+    _close_window(window)
+
+
+def test_build_project_watch_snapshot_uses_project_level_path_helpers(
+    qapp, isolated_config, tmp_path, monkeypatch
+):
+    from ui_designer.ui.main_window import MainWindow
+
+    project_file = tmp_path / "delegated" / "WatchDemo.egui"
+    build_mk = tmp_path / "delegated" / "build.mk"
+    app_config = tmp_path / "delegated" / "app_egui_config.h"
+    designer_dir = tmp_path / "delegated" / ".designer"
+    user_resource_config = tmp_path / "delegated" / "resource" / "src" / "app_resource_config.json"
+    designer_resource_dir = tmp_path / "delegated" / "resource" / "src" / ".designer"
+    layout_dir = tmp_path / "delegated" / ".eguiproject" / "layout"
+    resource_dir = tmp_path / "delegated" / ".eguiproject" / "resources"
+    mockup_dir = tmp_path / "delegated" / ".eguiproject" / "mockup"
+
+    for path, content in (
+        (project_file, "<Project />\n"),
+        (build_mk, "include .designer/build_designer.mk\n"),
+        (app_config, '#include ".designer/app_egui_config_designer.h"\n'),
+        (user_resource_config, "{}\n"),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    for directory in (designer_dir, designer_resource_dir, layout_dir, resource_dir, mockup_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    class _FakeProject:
+        def get_project_file_path(self):
+            return str(project_file)
+
+        def get_build_mk_path(self):
+            return str(build_mk)
+
+        def get_app_config_path(self):
+            return str(app_config)
+
+        def get_designer_dir(self):
+            return str(designer_dir)
+
+        def get_user_resource_config_path(self):
+            return str(user_resource_config)
+
+        def get_designer_resource_dir(self):
+            return str(designer_resource_dir)
+
+        def get_eguiproject_layout_dir(self):
+            return str(layout_dir)
+
+        def get_eguiproject_resource_dir(self):
+            return str(resource_dir)
+
+        def get_eguiproject_mockup_dir(self):
+            return str(mockup_dir)
+
+    window = MainWindow("")
+    window.project = _FakeProject()
+    window._project_dir = str(tmp_path / "fallback")
+    window.app_name = "FallbackDemo"
+    monkeypatch.setattr("ui_designer.utils.header_parser.discover_widget_headers", lambda project_dir: [])
+
+    snapshot = window._build_project_watch_snapshot()
+
+    assert os.path.normpath(os.path.abspath(project_file)) in snapshot
+    assert os.path.normpath(os.path.abspath(build_mk)) in snapshot
+    assert os.path.normpath(os.path.abspath(app_config)) in snapshot
+    assert os.path.normpath(os.path.abspath(designer_dir)) in snapshot
+    assert os.path.normpath(os.path.abspath(user_resource_config)) in snapshot
+    assert os.path.normpath(os.path.abspath(designer_resource_dir)) in snapshot
+    assert os.path.normpath(os.path.abspath(layout_dir)) in snapshot
+    assert os.path.normpath(os.path.abspath(resource_dir)) in snapshot
+    assert os.path.normpath(os.path.abspath(mockup_dir)) in snapshot
     _close_window(window)
 
 
