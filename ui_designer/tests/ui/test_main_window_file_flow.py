@@ -9114,6 +9114,80 @@ class TestMainWindowFileFlow:
         assert window.project.get_page_by_name("summary_page") is not None
         _close_window(window)
 
+    def test_reload_project_from_disk_clears_auto_retry_block_when_preview_recovers(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _ProbeFailCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+            def precompile_async(self, callback):
+                raise AssertionError("precompile_async should not be called when preview target probe fails")
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ReloadRetryRecoveryDemo"
+        project = _create_project(project_dir, "ReloadRetryRecoveryDemo", sdk_root)
+        good_compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+
+        window = MainWindow(str(sdk_root))
+        compile_cycle_calls = []
+        recreate_calls = {"count": 0}
+        window._compile_timer.stop()
+        window._compile_timer.setInterval(0)
+        monkeypatch.setattr(window, "_start_compile_cycle", lambda *, force_rebuild=False: compile_cycle_calls.append(force_rebuild))
+
+        def _recreate_compiler():
+            recreate_calls["count"] += 1
+            if recreate_calls["count"] == 1:
+                window.compiler = _ProbeFailCompiler(project_dir)
+            else:
+                window.compiler = good_compiler
+
+        monkeypatch.setattr(window, "_recreate_compiler", _recreate_compiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        assert "main.exe" in window._auto_compile_retry_block_reason
+
+        assert window._reload_project_from_disk() is True
+        qapp.processEvents()
+
+        assert compile_cycle_calls == [False]
+        assert window._auto_compile_retry_block_reason == ""
+        _close_window(window)
+
     def test_page_navigator_is_populated_and_tracks_current_page(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

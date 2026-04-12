@@ -2633,16 +2633,17 @@ class MainWindow(QMainWindow):
             self._bump_async_generation()
             self._shutdown_async_activity()
             self._recreate_compiler()
-            preview_unavailable_reason = self._preview_unavailable_reason()
+            preview_unavailable_reason = self._sync_auto_compile_retry_block_for_preview_state(
+                clear_when_available=True,
+                preload_preview_error=True,
+            )
             if preview_unavailable_reason:
-                self._block_auto_compile_retry(preview_unavailable_reason)
                 self._switch_to_python_preview(preview_unavailable_reason)
                 editing_only_message = f"Editing-only mode: {preview_unavailable_reason}"
                 if status_message:
                     editing_only_message = f"{status_message} | {editing_only_message}"
                 self.statusBar().showMessage(editing_only_message)
             else:
-                self._clear_auto_compile_retry_block()
                 if self.auto_compile:
                     self._trigger_compile()
             self._update_compile_availability()
@@ -3026,6 +3027,32 @@ class MainWindow(QMainWindow):
     def _clear_auto_compile_retry_block(self):
         self._auto_compile_retry_block_reason = ""
 
+    def _preview_retry_block_reason_is_environmental(self, reason=""):
+        normalized = str(reason or "").strip()
+        if not normalized:
+            return False
+        lowered = normalized.lower()
+        missing_target = self._missing_make_target_name(normalized).lower()
+        return (
+            missing_target in {"main.exe", "main", "clean"}
+            or "preview build target unavailable" in lowered
+            or "sdk unavailable, compile preview disabled" in lowered
+            or "make not found" in lowered
+        )
+
+    def _sync_auto_compile_retry_block_for_preview_state(self, *, clear_when_available=False, preload_preview_error=False):
+        reason = self._preview_unavailable_reason()
+        if reason:
+            if preload_preview_error or self._is_auto_compile_retry_blocked():
+                self._block_auto_compile_retry(reason)
+        else:
+            should_clear = clear_when_available or self._preview_retry_block_reason_is_environmental(
+                self._auto_compile_retry_block_reason
+            )
+            if should_clear:
+                self._clear_auto_compile_retry_block()
+        return reason
+
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
         self._bump_async_generation()
@@ -3052,6 +3079,7 @@ class MainWindow(QMainWindow):
         self._pending_page_renames = {}
         self._clear_project_dirty()
         self._recreate_compiler()
+        self._sync_auto_compile_retry_block_for_preview_state()
         self._show_editor()
         self._clear_editor_state()
         self._update_sdk_status_label()
