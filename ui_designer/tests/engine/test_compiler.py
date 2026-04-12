@@ -295,34 +295,31 @@ class TestCompilerFastPath:
         assert "uicode.c" in engine._build_config.src_to_obj
 
     @patch("subprocess.run")
-    def test_force_rebuild_runs_make_clean_before_build(self, mock_run, tmp_path):
+    def test_force_rebuild_uses_always_make_build(self, mock_run, tmp_path):
         engine = self._make_engine(tmp_path)
         engine._build_config = self._make_config(tmp_path)
-        clean_result = MagicMock(returncode=0, stdout="clean ok\n", stderr="")
         make_result = MagicMock(returncode=0, stdout="build ok\n", stderr="")
         dryrun_result = MagicMock(returncode=0, stdout=MAKE_DRYRUN_OUTPUT, stderr="")
-        mock_run.side_effect = [clean_result, make_result, dryrun_result]
+        mock_run.side_effect = [make_result, dryrun_result]
 
         with patch("os.path.getmtime", return_value=1000.0):
             success, output = engine.compile(force_rebuild=True)
 
         assert success
-        assert mock_run.call_args_list[0][0][0][:2] == ["make", "clean"]
-        assert mock_run.call_args_list[1][0][0][:3] == ["make", "-j", "main.exe"]
-        assert "clean ok" in output
+        assert mock_run.call_args_list[0][0][0][:4] == ["make", "-B", "-j", "main.exe"]
         assert "build ok" in output
         assert engine._build_config is not None
 
     @patch("subprocess.run")
-    def test_force_rebuild_returns_clean_failure_without_build(self, mock_run, tmp_path):
+    def test_force_rebuild_returns_build_failure_output(self, mock_run, tmp_path):
         engine = self._make_engine(tmp_path)
         engine._build_config = self._make_config(tmp_path)
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="clean failed\n")
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="build failed\n")
 
         success, output = engine.compile(force_rebuild=True)
 
         assert not success
-        assert "clean failed" in output
+        assert "build failed" in output
         assert mock_run.call_count == 1
 
     def test_write_uicode_sets_changed(self, tmp_path):

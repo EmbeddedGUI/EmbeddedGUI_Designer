@@ -2844,6 +2844,13 @@ class MainWindow(QMainWindow):
         if not self._project_watch_timer.isActive():
             self._project_watch_timer.start()
 
+    def _sync_project_watch_snapshot_after_internal_write(self):
+        if self.project is None or not self._project_dir or self._external_reload_pending:
+            return
+        self._project_watch_snapshot = self._build_project_watch_snapshot()
+        if not self._project_watch_timer.isActive():
+            self._project_watch_timer.start()
+
     def _poll_project_files(self):
         if self.project is None or not self._project_dir:
             return
@@ -4987,6 +4994,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Precompile failed", 5000)
             self.debug_panel.log_error("Background precompile failed")
             self.debug_panel.log_compile_output(False, message)
+            _, guidance_message = self._compile_failure_feedback(message, force_rebuild=False)
+            if guidance_message:
+                self.debug_panel.log_info(guidance_message)
             self._show_bottom_panel("Debug Output")
 
     def _refresh_page_navigator(self):
@@ -5316,6 +5326,7 @@ class MainWindow(QMainWindow):
                 self._project_dir,
                 src_dir,
             )
+            self._sync_project_watch_snapshot_after_internal_write()
         except Exception as exc:
             self.debug_panel.log_error(f"Resource config generation failed: {exc}")
             if not silent:
@@ -7319,6 +7330,49 @@ class MainWindow(QMainWindow):
             return lines[1]
         return lines[0]
 
+    @staticmethod
+    def _missing_make_target_name(message):
+        match = re.search(r"No rule to make target ['`\"]?([^'`\"\r\n]+)", str(message or ""), flags=re.IGNORECASE)
+        if not match:
+            return ""
+        return match.group(1).rstrip("'.:;!, ")
+
+    @classmethod
+    def _compile_failure_feedback(cls, message, *, force_rebuild=False):
+        lowered = str(message or "").lower()
+        missing_target = cls._missing_make_target_name(message).lower()
+
+        if missing_target == "main.exe":
+            return (
+                "Preview build target 'main.exe' is unavailable, switched to Python fallback.",
+                "Build system does not define the required 'main.exe' preview target. Verify the SDK/designer "
+                "Makefile setup. Build > Clean All && Reconstruct cannot recover missing build targets.",
+            )
+        if missing_target == "clean":
+            return (
+                "Preview clean target 'clean' is unavailable, switched to Python fallback.",
+                "Build system does not define the 'clean' target. Verify the SDK/designer Makefile setup. "
+                "Build > Clean All && Reconstruct cannot recover missing build targets.",
+            )
+        if "make not found" in lowered:
+            return (
+                "Build tool 'make' is unavailable, switched to Python fallback.",
+                "The build tool 'make' was not found in PATH. Install or configure the required toolchain. "
+                "Build > Clean All && Reconstruct cannot recover missing build tools.",
+            )
+        if force_rebuild:
+            return (
+                "EGUI clean rebuild failed, switched to Python fallback (see Debug Output)",
+                "Clean rebuild did not recover the preview. If project-side generated files are corrupted, "
+                "try Build > Clean All && Reconstruct.",
+            )
+        return (
+            "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project first, "
+            "or Clean All && Reconstruct if the project files are corrupted.",
+            "Build failed. Use Build > Rebuild EGUI Project first. If that still fails, try "
+            "Build > Clean All && Reconstruct to rebuild from Designer source state.",
+        )
+
     def _start_compile_cycle(self, *, force_rebuild=False):
         """Execute compile or clean rebuild asynchronously."""
         if not self.project:
@@ -7423,12 +7477,10 @@ class MainWindow(QMainWindow):
             self.project.startup_page = original_startup
 
         self.debug_panel.log_info(f"Generated {len(files)} file(s): {', '.join(files.keys())}")
-        if force_rebuild:
-            self.debug_panel.log_cmd(
-                f"make clean APP={self.app_name} PORT=designer EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
-            )
+        make_prefix = "make -B -j" if force_rebuild else "make -j"
         self.debug_panel.log_cmd(
-            f"make -j main.exe APP={self.app_name} PORT=designer EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
+            f"{make_prefix} main.exe APP={self.app_name} PORT=designer "
+            f"EGUI_APP_ROOT_PATH={self.compiler.app_root_arg} COMPILE_DEBUG= COMPILE_OPT_LEVEL=-O0"
         )
 
         generation = self._async_generation
@@ -7483,21 +7535,10 @@ class MainWindow(QMainWindow):
             )
             self._block_auto_compile_retry(failure_summary)
             self._last_runtime_error_text = failure_summary
-            if force_rebuild:
-                self.statusBar().showMessage("EGUI clean rebuild failed, switched to Python fallback (see Debug Output)")
-                self.debug_panel.log_info(
-                    "Clean rebuild did not recover the preview. If project-side generated files are corrupted, "
-                    "try Build > Clean All && Reconstruct."
-                )
-            else:
-                self.statusBar().showMessage(
-                    "EXE build failed, switched to Python fallback. Use Build > Rebuild EGUI Project first, "
-                    "or Clean All && Reconstruct if the project files are corrupted."
-                )
-                self.debug_panel.log_info(
-                    "Build failed. Use Build > Rebuild EGUI Project first. If that still fails, try "
-                    "Build > Clean All && Reconstruct to rebuild from Designer source state."
-                )
+            status_message, guidance_message = self._compile_failure_feedback(message, force_rebuild=force_rebuild)
+            self.statusBar().showMessage(status_message)
+            if guidance_message:
+                self.debug_panel.log_info(guidance_message)
             if self.compiler is not None:
                 self.compiler.stop_exe()
             self._switch_to_python_preview(failure_summary)

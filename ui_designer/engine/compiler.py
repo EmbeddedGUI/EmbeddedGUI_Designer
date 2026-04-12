@@ -497,7 +497,7 @@ class CompilerEngine:
             changed_files = self._last_changed_files
 
         if force_rebuild:
-            return self._make_compile(clean=True)
+            return self._make_compile(force_rebuild=True)
 
         lib_path = os.path.join(self.project_root, "output", "libegui.a")
         can_fast = (
@@ -517,39 +517,13 @@ class CompilerEngine:
 
         return self._make_compile()
 
-    def _make_clean(self):
-        """Run ``make clean`` for the current app/port configuration."""
-        try:
-            result = subprocess.run(
-                ["make", "clean", f"APP={self.app_name}",
-                 "PORT=designer",
-                 f"EGUI_APP_ROOT_PATH={self.app_root_arg}",
-                 "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0"],
-                cwd=self.project_root,
-                capture_output=True, text=True, timeout=30,
-            )
-            output = result.stdout + result.stderr
-            if result.returncode != 0:
-                return False, output or "make clean failed"
-            return True, output
-        except subprocess.TimeoutExpired:
-            return False, "make clean timed out"
-        except FileNotFoundError:
-            return False, "make not found in PATH"
-
-    def _make_compile(self, clean=False):
+    def _make_compile(self, force_rebuild=False):
         """Full make-based compilation (slow path). Also refreshes BuildConfig."""
         if getattr(self, "_app_root_error", ""):
             return False, self._app_root_error
-        output_parts = []
-        if clean:
+        if force_rebuild:
             self._build_config = None
             self.stop_exe()
-            cleaned, clean_output = self._make_clean()
-            if clean_output:
-                output_parts.append(clean_output)
-            if not cleaned:
-                return False, "\n".join(part.rstrip() for part in output_parts if part).strip()
         # Delete stale output/main.exe to force re-link.  The exe is shared
         # across all apps, so switching apps (e.g. 240x320 → 320x480) can
         # leave a stale binary that make considers up-to-date.
@@ -561,18 +535,21 @@ class CompilerEngine:
             pass
 
         try:
-            result = subprocess.run(
-                ["make", "-j", "main.exe", f"APP={self.app_name}",
-                 "PORT=designer",
-                 f"EGUI_APP_ROOT_PATH={self.app_root_arg}",
-                 "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0"],
-                cwd=self.project_root,
-                capture_output=True, text=True, timeout=60,
+            args = ["make"]
+            if force_rebuild:
+                args.append("-B")
+            args.extend(
+                [
+                    "-j", "main.exe", f"APP={self.app_name}",
+                    "PORT=designer",
+                    f"EGUI_APP_ROOT_PATH={self.app_root_arg}",
+                    "COMPILE_DEBUG=", "COMPILE_OPT_LEVEL=-O0",
+                ]
             )
+            result = subprocess.run(args, cwd=self.project_root, capture_output=True, text=True, timeout=60)
             self._compile_count += 1
             success = result.returncode == 0
-            output_parts.append(result.stdout + result.stderr)
-            output = "\n".join(part.rstrip() for part in output_parts if part).strip()
+            output = (result.stdout + result.stderr).strip()
 
             # After successful make, extract build config for future fast compiles
             if success:

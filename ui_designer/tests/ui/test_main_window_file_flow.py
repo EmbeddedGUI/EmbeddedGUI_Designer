@@ -3788,6 +3788,38 @@ class TestMainWindowFileFlow:
         window._undo_manager.mark_all_saved()
         _close_window(window)
 
+    def test_compile_failure_missing_main_target_reports_makefile_issue(self, qapp, isolated_config, tmp_path, monkeypatch):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "MissingMainTargetDemo"
+        project = _create_project(project_dir, "MissingMainTargetDemo", sdk_root)
+        compiler = _AutoRetryCompiler(project_dir, exe_ready=True)
+        preview_reasons = []
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", compiler))
+        monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        window._on_compile_finished(
+            None,
+            window._async_generation,
+            False,
+            False,
+            "Compilation failed:\nmake: *** No rule to make target 'main.exe'.  Stop.",
+            None,
+        )
+
+        assert preview_reasons == ["make: *** No rule to make target 'main.exe'.  Stop."]
+        assert "main.exe" in window.statusBar().currentMessage()
+        assert "Clean All" not in window.statusBar().currentMessage()
+        assert "cannot recover missing build targets" in window.debug_panel._output.toPlainText()
+        window._undo_manager.mark_all_saved()
+        _close_window(window)
+
     def test_precompile_failure_blocks_auto_precompile_after_external_reload(
         self, qapp, isolated_config, tmp_path, monkeypatch
     ):
@@ -6681,6 +6713,45 @@ class TestMainWindowFileFlow:
 
         assert window._run_resource_generation(silent=True) is True
         assert user_config_path.read_text(encoding="utf-8") == '{\n    "img": [],\n    "font": []\n}\n'
+        _close_window(window)
+
+    def test_run_resource_generation_syncs_watch_snapshot_before_missing_generator_return(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        project_dir = tmp_path / "ResourceWatchSyncDemo"
+        project = _create_project(project_dir, "ResourceWatchSyncDemo", sdk_root)
+        designer_config = project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json"
+
+        window = MainWindow(str(sdk_root))
+        _disable_window_compile(window, _DisabledCompiler)
+
+        _open_project_window(window, project, project_dir, sdk_root)
+
+        def _fake_sync(*args, **kwargs):
+            designer_config.write_text('{"img":["updated"]}\n', encoding="utf-8")
+
+        reload_calls = []
+        monkeypatch.setattr(
+            "ui_designer.ui.main_window.sync_project_resources_and_generate_designer_resource_config",
+            _fake_sync,
+        )
+        monkeypatch.setattr(
+            window,
+            "_reload_project_from_disk",
+            lambda *args, **kwargs: reload_calls.append(kwargs) or True,
+        )
+
+        assert window._run_resource_generation(silent=True) is False
+
+        window._poll_project_files()
+
+        assert reload_calls == []
+        assert window._external_reload_pending is False
+        assert window._external_reload_changed_paths == []
         _close_window(window)
 
     def test_property_panel_callback_edit_updates_widget_and_dirty_state(self, qapp, isolated_config, tmp_path, monkeypatch):
