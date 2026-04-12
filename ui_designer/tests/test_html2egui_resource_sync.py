@@ -12,7 +12,14 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 import html2egui_helper as h
 from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
-from ui_designer.utils.scaffold import sdk_example_resource_images_dir, sdk_example_supported_text_path
+from ui_designer.utils.scaffold import (
+    project_config_layout_dir,
+    sdk_example_config_resource_dir,
+    sdk_example_generated_resource_dir,
+    sdk_example_resource_images_dir,
+    sdk_example_resource_src_dir,
+    sdk_example_supported_text_path,
+)
 from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, RESOURCE_SRC_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
 
 
@@ -36,25 +43,22 @@ class TestHelperResourceSync:
     def test_app_path_helpers_use_shared_project_layout(self, tmp_path):
         sdk_root = tmp_path / "sdk"
 
-        app_dir = h._get_app_dir(str(sdk_root), "DemoApp")
+        app_dir = sdk_example_app_dir(str(sdk_root), "DemoApp")
 
         assert app_dir == sdk_example_app_dir(str(sdk_root), "DemoApp")
-        assert h._get_app_config_dir(app_dir) == str(
-            sdk_root / "example" / "DemoApp" / ".eguiproject"
-        )
-        assert h._get_app_layout_dir(app_dir) == str(
+        assert project_config_layout_dir(app_dir) == str(
             sdk_root / "example" / "DemoApp" / ".eguiproject" / "layout"
         )
-        assert h._get_app_config_resource_dir(app_dir) == str(
+        assert sdk_example_config_resource_dir(str(sdk_root), "DemoApp") == str(
             sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources"
         )
-        assert h._get_app_resource_images_dir(app_dir) == str(
+        assert sdk_example_resource_images_dir(str(sdk_root), "DemoApp") == str(
             sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "images"
         )
-        assert h._get_app_generated_resource_dir(app_dir) == str(
+        assert sdk_example_generated_resource_dir(str(sdk_root), "DemoApp") == str(
             sdk_root / "example" / "DemoApp" / "resource"
         )
-        assert h._get_app_resource_src_dir(app_dir) == str(
+        assert sdk_example_resource_src_dir(str(sdk_root), "DemoApp") == str(
             sdk_root / "example" / "DemoApp" / "resource" / "src"
         )
 

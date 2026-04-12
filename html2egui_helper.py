@@ -58,22 +58,17 @@ from ui_designer.utils.scaffold import (
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
-    project_config_dir,
-    project_config_images_dir,
     project_config_layout_dir,
-    project_config_resource_dir,
-    project_generated_resource_dir,
-    project_resource_src_dir,
-    project_supported_text_path,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
+    sdk_example_config_resource_dir,
     sdk_example_designer_resource_config_path,
-    sdk_example_user_resource_config_path,
     sdk_example_generated_resource_dir,
     sdk_example_resource_images_dir,
     sdk_example_supported_text_path,
     sdk_example_resource_src_dir,
+    sdk_example_user_resource_config_path,
     sync_project_resources_and_generate_designer_resource_config,
 )
 
@@ -89,41 +84,6 @@ def _find_sdk_root():
         repo_root=str(REPO_ROOT),
         cli_flag="EMBEDDEDGUI_SDK_ROOT",
     )
-
-
-def _get_app_dir(sdk_root, app_name):
-    """Return the absolute app directory under the SDK example tree."""
-    return sdk_example_app_dir(sdk_root, app_name)
-
-
-def _get_app_config_dir(app_dir):
-    """Return the .eguiproject directory for an app."""
-    return project_config_dir(app_dir)
-
-
-def _get_app_layout_dir(app_dir):
-    """Return the app layout directory."""
-    return project_config_layout_dir(app_dir)
-
-
-def _get_app_config_resource_dir(app_dir):
-    """Return the authoritative .eguiproject resource directory."""
-    return project_config_resource_dir(app_dir)
-
-
-def _get_app_resource_images_dir(app_dir):
-    """Return the authoritative image source directory."""
-    return project_config_images_dir(app_dir)
-
-
-def _get_app_generated_resource_dir(app_dir):
-    """Return the generated resource directory."""
-    return project_generated_resource_dir(app_dir)
-
-
-def _get_app_resource_src_dir(app_dir):
-    f"""Return the {RESOURCE_SRC_DIR_RELPATH} directory used by generation scripts."""
-    return project_resource_src_dir(app_dir)
 
 
 def _helper_app_command(subcommand, app_name):
@@ -161,7 +121,7 @@ def _resolve_extract_text_output_path(sdk_root, *, output_path="", app_name=None
 def _resolve_existing_app_dir(app_name):
     """Resolve an existing app directory under the SDK example tree."""
     sdk_root = _find_sdk_root()
-    app_dir = _get_app_dir(sdk_root, app_name)
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
     if not os.path.isdir(app_dir):
         print(f"ERROR: App directory not found: {app_dir}")
         sys.exit(1)
@@ -263,7 +223,7 @@ def _write_figma_page_xml(
     scale=1.0,
 ):
     """Build and write a Figma-derived page XML into the app layout directory."""
-    layout_dir = _get_app_layout_dir(app_dir)
+    layout_dir = project_config_layout_dir(app_dir)
     os.makedirs(layout_dir, exist_ok=True)
 
     xml_path = os.path.join(layout_dir, f"{page_name}.xml")
@@ -282,7 +242,7 @@ def _write_figma_page_xml(
 
 def _ensure_app_scaffold_exists(sdk_root, app_name, width, height):
     """Ensure the target app directory exists by running scaffold when needed."""
-    app_dir = _get_app_dir(sdk_root, app_name)
+    app_dir = sdk_example_app_dir(sdk_root, app_name)
     created, _actions = ensure_conversion_project_scaffold_with_sdk_root(
         app_dir,
         app_name,
@@ -324,7 +284,7 @@ def _layout_edit_step(page_name="main_page", *, app_name=None):
 def cmd_scaffold(args):
     """Create UI Designer project directory structure and template files."""
     sdk_root = _find_sdk_root()
-    app_dir = _get_app_dir(sdk_root, args.app)
+    app_dir = sdk_example_app_dir(sdk_root, args.app)
 
     if os.path.exists(app_dir) and not args.force:
         print(f"ERROR: Directory already exists: {app_dir}")
@@ -841,8 +801,7 @@ def _sync_app_pngs_and_update_resource_config(
     synced_label="assets",
 ):
     f"""Sync exported PNGs into an app {RESOURCE_SRC_DIR_RELPATH}/ and update its overlay config."""
-    app_dir = _get_app_dir(sdk_root, app_name)
-    src_dir = _get_app_resource_src_dir(app_dir)
+    src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
     synced_filenames = _sync_exported_pngs(
         output_dir,
         src_dir,
@@ -1556,7 +1515,7 @@ def cmd_generate_code(args):
     print(f"Loaded project: {app_name} ({project.screen_width}x{project.screen_height})")
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 
-    src_dir = _get_app_resource_src_dir(app_dir)
+    src_dir = sdk_example_resource_src_dir(sdk_root, app_name)
     user_config_created, _designer_config_path = (
         sync_project_resources_and_generate_designer_resource_config(
             project,
@@ -1565,7 +1524,7 @@ def cmd_generate_code(args):
             before_generate=lambda _project_dir: _sync_font_files(project, sdk_root, src_dir),
         )
     )
-    if os.path.isdir(_get_app_config_resource_dir(app_dir)):
+    if os.path.isdir(sdk_example_config_resource_dir(sdk_root, app_name)):
         print(f"  Synced project resources to {os.path.dirname(RESOURCE_CONFIG_RELPATH)}/")
     if user_config_created:
         print(f"  Created: {RESOURCE_CONFIG_RELPATH}")
