@@ -21,6 +21,8 @@ from ui_designer.model.workspace import normalize_path
 from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
     project_config_images_dir,
+    project_config_layout_dir,
+    project_config_mockup_dir,
     project_config_resource_dir,
     project_generated_font_dir,
     project_generated_img_dir,
@@ -235,6 +237,18 @@ class TestPathHelpers:
         proj.sdk_root = "/home/user/EmbeddedGUI"
 
         assert proj.get_eguiproject_images_dir() == project_config_images_dir(proj.get_app_dir())
+
+    def test_get_eguiproject_layout_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_eguiproject_layout_dir() == project_config_layout_dir(proj.get_app_dir())
+
+    def test_get_eguiproject_mockup_dir(self):
+        proj = Project(app_name="TestApp")
+        proj.sdk_root = "/home/user/EmbeddedGUI"
+
+        assert proj.get_eguiproject_mockup_dir() == project_config_mockup_dir(proj.get_app_dir())
 
     def test_get_app_dir_prefers_project_dir(self):
         proj = Project(app_name="TestApp")

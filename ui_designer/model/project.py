@@ -35,7 +35,9 @@ from ..utils.scaffold import (
     RESOURCE_CATALOG_FILENAME,
     project_config_dir,
     project_config_images_dir,
+    project_config_layout_dir,
     project_config_layout_xml_relpath,
+    project_config_mockup_dir,
     project_config_resource_dir,
     project_file_path,
     project_generated_font_dir,
@@ -230,6 +232,20 @@ class Project:
         if not app_dir:
             return ""
         return project_config_dir(app_dir)
+
+    def get_eguiproject_layout_dir(self):
+        """Get the .eguiproject/layout/ directory path."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_config_layout_dir(app_dir)
+
+    def get_eguiproject_mockup_dir(self):
+        """Get the .eguiproject/mockup/ directory path."""
+        app_dir = self.get_app_dir()
+        if not app_dir:
+            return ""
+        return project_config_mockup_dir(app_dir)
 
     def get_eguiproject_resource_dir(self):
         """Get the .eguiproject/resources/ directory path.

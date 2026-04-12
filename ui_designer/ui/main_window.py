@@ -2769,9 +2769,9 @@ class MainWindow(QMainWindow):
             legacy_app_config_designer_path(self._project_dir),
             project_user_resource_config_path(self._project_dir),
             project_designer_resource_dir(self._project_dir),
-            project_config_layout_dir(self._project_dir),
-            project_config_resource_dir(self._project_dir),
-            project_config_mockup_dir(self._project_dir),
+            self.project.get_eguiproject_layout_dir() if self.project else project_config_layout_dir(self._project_dir),
+            self._get_eguiproject_resource_dir(),
+            self.project.get_eguiproject_mockup_dir() if self.project else project_config_mockup_dir(self._project_dir),
             WidgetRegistry.instance().app_local_plugin_dir(self._project_dir),
         ]
         for root in watch_roots:
@@ -4531,7 +4531,11 @@ class MainWindow(QMainWindow):
                 return mockup_dir
 
         if self._project_dir:
-            mockup_dir = project_config_mockup_dir(self._project_dir)
+            mockup_dir = (
+                self.project.get_eguiproject_mockup_dir()
+                if self.project
+                else project_config_mockup_dir(self._project_dir)
+            )
             if os.path.isdir(mockup_dir):
                 return normalize_path(mockup_dir)
             existing_dir = self._nearest_existing_directory(self._project_dir)
@@ -4783,7 +4787,11 @@ class MainWindow(QMainWindow):
             pixmap = pixmap.scaled(sw, sh, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
 
         # Copy image to .eguiproject/mockup/
-        mockup_dir = project_config_mockup_dir(self._project_dir)
+        mockup_dir = (
+            self.project.get_eguiproject_mockup_dir()
+            if self.project
+            else project_config_mockup_dir(self._project_dir)
+        )
         os.makedirs(mockup_dir, exist_ok=True)
         filename = os.path.basename(path)
         dest = project_config_mockup_path(self._project_dir, filename)
