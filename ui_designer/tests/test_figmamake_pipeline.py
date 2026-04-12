@@ -1,6 +1,7 @@
 """Tests for figmamake helper scripts using canonical sdk_root naming."""
 
 import os
+from pathlib import Path
 import sys
 
 import pytest
@@ -9,6 +10,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
+from ui_designer.utils.scaffold import project_resource_catalog_path
 
 
 class _FakeAnimExtractor:
@@ -57,7 +59,7 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
 
     egui_path = sdk_root / "example" / "DemoApp" / "DemoApp.egui"
     xml = egui_path.read_text(encoding="utf-8")
-    resources_xml_path = sdk_root / "example" / "DemoApp" / ".eguiproject" / "resources" / "resources.xml"
+    resources_xml_path = Path(project_resource_catalog_path(str(sdk_root / "example" / "DemoApp")))
     resources_xml = resources_xml_path.read_text(encoding="utf-8")
 
     assert result["pages"] == ["home_page"]

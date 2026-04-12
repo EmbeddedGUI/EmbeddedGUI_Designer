@@ -18,7 +18,7 @@ from ui_designer.model.project import Project
 from ui_designer.model.sdk_fingerprint import SdkFingerprint
 from ui_designer.model.widget_model import WidgetModel
 from ui_designer.model.workspace import normalize_path
-from ui_designer.utils.scaffold import require_page_root
+from ui_designer.utils.scaffold import RESOURCE_CATALOG_FILENAME, require_page_root, resource_catalog_path
 
 
 class TestProjectDefaults:
@@ -220,7 +220,7 @@ class TestResourceSync:
 
         (resources_dir / "kept.txt").write_text("abc\n", encoding="utf-8")
         (resources_dir / "_generated_text_demo_16_4.txt").write_text("designer\n", encoding="utf-8")
-        (resources_dir / "resources.xml").write_text("<resources />\n", encoding="utf-8")
+        Path(resource_catalog_path(str(resources_dir))).write_text("<resources />\n", encoding="utf-8")
         (images_dir / "icon.png").write_bytes(b"PNG")
         (images_dir / "_generated_text_preview.png").write_bytes(b"BAD")
 
@@ -232,7 +232,7 @@ class TestResourceSync:
         assert (target_src_dir / "icon.png").is_file()
         assert not (target_src_dir / "_generated_text_demo_16_4.txt").exists()
         assert not (target_src_dir / "_generated_text_preview.png").exists()
-        assert not (target_src_dir / "resources.xml").exists()
+        assert not (target_src_dir / RESOURCE_CATALOG_FILENAME).exists()
 
 
 class TestGetAllWidgets:

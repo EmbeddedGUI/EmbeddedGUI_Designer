@@ -1,6 +1,8 @@
 """Tests for destructive project reconstruction cleanup."""
 
 import os
+from pathlib import Path
+
 import pytest
 
 from ui_designer.model.project_cleaner import (
@@ -22,6 +24,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_FONT_DIR_RELPATH,
     RESOURCE_IMG_DIR_RELPATH,
     RESOURCE_SRC_DIR_RELPATH,
+    project_resource_catalog_path,
 )
 
 
@@ -61,7 +64,7 @@ class TestProjectCleaner:
 
         (project_dir / "CleanAllDemo.egui").write_text("<Project />\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "layout" / "main_page.xml").write_text("<Page />\n", encoding="utf-8")
-        (project_dir / ".eguiproject" / "resources" / "resources.xml").write_text("<resources />\n", encoding="utf-8")
+        Path(project_resource_catalog_path(str(project_dir))).write_text("<resources />\n", encoding="utf-8")
         (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").write_bytes(b"PNG")
         (project_dir / ".eguiproject" / "mockup" / "screen.png").write_bytes(b"PNG")
         (project_dir / ".eguiproject" / "release.json").write_text('{"schema_version": 1}\n', encoding="utf-8")
@@ -92,7 +95,7 @@ class TestProjectCleaner:
 
         assert (project_dir / "CleanAllDemo.egui").is_file()
         assert (project_dir / ".eguiproject" / "layout" / "main_page.xml").is_file()
-        assert (project_dir / ".eguiproject" / "resources" / "resources.xml").is_file()
+        assert Path(project_resource_catalog_path(str(project_dir))).is_file()
         assert (project_dir / ".eguiproject" / "resources" / "images" / "hero.png").is_file()
         assert (project_dir / ".eguiproject" / "mockup" / "screen.png").is_file()
         assert (project_dir / ".eguiproject" / "release.json").is_file()

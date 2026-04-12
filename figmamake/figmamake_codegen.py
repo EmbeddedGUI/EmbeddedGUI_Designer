@@ -34,15 +34,18 @@ from html2egui_helper import (
     _lucide_name_to_material,
     _extract_tw_color,
     _find_sdk_root,
-    _build_egui_project_xml,
     _get_app_dir,
     _get_app_layout_dir,
-    _get_app_config_resource_dir,
     _get_app_resource_images_dir,
     _get_app_resource_src_dir,
 )
 from figmamake_anim_extractor import AnimExtractor
-from ui_designer.model.resource_catalog import ResourceCatalog
+from ui_designer.utils.scaffold import (
+    build_empty_project_xml,
+    build_empty_resources_xml,
+    project_file_path,
+    project_resource_catalog_path,
+)
 from ui_designer.utils.xml_utils import write_xml_file
 
 
@@ -578,25 +581,23 @@ class FigmaMakeCodegen:
         # 4. Create .egui project file
         print(f"[4/5] Creating project file...")
         sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
-        project_xml = _build_egui_project_xml(
+        project_xml = build_empty_project_xml(
             app_name=self.app_name,
-            width=self.width,
-            height=self.height,
-            sdk_root=sdk_root_rel,
+            screen_width=self.width,
+            screen_height=self.height,
+            stored_sdk_root=sdk_root_rel,
             pages=page_names,
         )
-        egui_file = os.path.join(app_dir, f"{self.app_name}.egui")
+        egui_file = project_file_path(app_dir, self.app_name)
         with open(egui_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(project_xml)
         print(f"  Created: {self.app_name}.egui")
 
         # Write resources.xml
-        res_xml_path = os.path.join(
-            _get_app_config_resource_dir(app_dir), "resources.xml"
-        )
+        res_xml_path = project_resource_catalog_path(app_dir)
         if not os.path.exists(res_xml_path):
             with open(res_xml_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(ResourceCatalog().to_xml_string())
+                f.write(build_empty_resources_xml())
 
         # 5. Generate C code
         if skip_c_gen:

@@ -1088,7 +1088,7 @@ class TestCoreProjectScaffold:
         assert actions[RESOURCE_CATALOG_RELPATH] == "created"
         assert actions[".eguiproject/layout/main_page.xml"] == "unchanged"
         assert 'sdk_root="../../sdk/EmbeddedGUI"' in (project_dir / "CoreApp.egui").read_text(encoding="utf-8")
-        assert (project_dir / ".eguiproject" / "resources" / "resources.xml").is_file()
+        assert Path(project_resource_catalog_path(str(project_dir))).is_file()
         assert page_path.read_text(encoding="utf-8") == "<Page><Legacy /></Page>\n"
 
 

@@ -366,7 +366,7 @@ def cmd_scaffold(args):
         scaffold_actions.get(project_file_relpath(args.app), "unchanged"),
     )
     _print_scaffold_status(
-        "resources.xml",
+        os.path.basename(RESOURCE_CATALOG_RELPATH),
         scaffold_actions.get(RESOURCE_CATALOG_RELPATH, "unchanged"),
     )
 
