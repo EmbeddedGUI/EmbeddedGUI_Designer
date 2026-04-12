@@ -53,6 +53,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
     ensure_sdk_example_conversion_paths,
+    load_saved_project_model,
     materialize_saved_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
@@ -1506,8 +1507,7 @@ def cmd_generate_code(args):
         sys.exit(1)
 
     # Load project
-    from ui_designer.model.project import Project
-    project = Project.load(app_dir)
+    project = load_saved_project_model(app_dir)
     print(f"Loaded project: {app_name} ({project.screen_width}x{project.screen_height})")
     print(f"  Pages: {', '.join(p.name for p in project.pages)}")
 

@@ -128,6 +128,7 @@ from ui_designer.utils.scaffold import (
     materialize_generated_project_files,
     materialize_project_codegen_outputs,
     materialize_saved_project_codegen_outputs,
+    load_saved_project_model,
     prepare_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
@@ -2076,6 +2077,27 @@ class TestApplyDesignerProjectScaffold:
         assert [page.name for page in project.pages] == ["home", "detail"]
         assert "home_ext.h" in materialized.files
         assert "detail_ext.h" in materialized.files
+
+    def test_load_saved_project_model_loads_saved_project_from_directory(self, tmp_path):
+        project_dir = tmp_path / "LoadSavedHelperApp"
+        build_saved_project_model(
+            "LoadSavedHelperApp",
+            str(project_dir),
+            320,
+            240,
+            sdk_root="D:/sdk",
+            pages=["home", "detail"],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        project = load_saved_project_model(str(project_dir))
+
+        assert project.app_name == "LoadSavedHelperApp"
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert [page.name for page in project.pages] == ["home", "detail"]
 
     def test_materialize_saved_project_codegen_outputs_reuses_provided_project(self, tmp_path):
         project_dir = tmp_path / "MaterializeSavedProvidedHelperApp"

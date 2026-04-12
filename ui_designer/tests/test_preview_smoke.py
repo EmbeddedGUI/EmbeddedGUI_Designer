@@ -1,5 +1,6 @@
 """Tests for the UI Designer live preview smoke helpers."""
 
+import os
 from pathlib import Path
 
 from ui_designer_preview_smoke import (
@@ -8,6 +9,7 @@ from ui_designer_preview_smoke import (
     PAGE_NAME,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
+    build_materialized_smoke_project,
     build_main_page_user_source,
     build_smoke_project,
     default_work_dir_root,
@@ -60,6 +62,26 @@ class TestPreviewSmokeHelpers:
         assert '"Status: click ok"' in source
         assert '"Verified"' in source
         assert f"void {page.c_prefix}_user_init({page.c_struct_name} *page)" in source
+
+    def test_build_materialized_smoke_project_writes_scaffold_and_user_source(self, tmp_path):
+        project_dir = tmp_path / APP_NAME
+
+        project, page, meta, materialized = build_materialized_smoke_project(
+            "D:/sdk",
+            str(project_dir),
+        )
+
+        assert project.project_dir == str(project_dir)
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == PAGE_NAME
+        assert meta["status_region"] == (20, 62, 200, 28)
+        assert (project_dir / f"{APP_NAME}.egui").is_file()
+        assert (project_dir / ".designer" / f"{PAGE_NAME}.h").is_file()
+        assert (project_dir / ".designer" / f"{PAGE_NAME}_layout.c").is_file()
+        source = (project_dir / f"{PAGE_NAME}.c").read_text(encoding="utf-8")
+        assert "void smoke_on_action_button_click(egui_view_t *self)" in source
+        assert '"Status: click ok"' in source
+        assert "main_page_ext.h" in materialized.files
 
     def test_default_work_dir_root_uses_repo_temp_directory(self):
         assert default_work_dir_root() == DEFAULT_WORK_ROOT

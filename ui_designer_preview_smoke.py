@@ -13,6 +13,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR
@@ -22,7 +23,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from ui_designer.engine.compiler import CompilerEngine
 from ui_designer.model.page import Page
-from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root_for_path
@@ -34,8 +34,12 @@ from ui_designer.utils.runtime_temp import (
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
     build_saved_project_model_and_page_with_widgets_and_materialize_codegen,
+    load_saved_project_model,
     page_user_source_relpath,
 )
+
+if TYPE_CHECKING:
+    from ui_designer.model.project import Project
 
 
 SCREEN_WIDTH = 240
@@ -276,7 +280,7 @@ def default_work_dir_root() -> Path:
     return DEFAULT_WORK_ROOT
 
 
-def _build_and_materialize_smoke_project(
+def build_materialized_smoke_project(
     sdk_root: str,
     project_dir: str,
 ) -> tuple[
@@ -322,11 +326,11 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
 
     try:
         print_status(True, f"using EmbeddedGUI SDK: {resolved_sdk_root}")
-        project, page, meta, materialized = _build_and_materialize_smoke_project(
+        project, page, meta, materialized = build_materialized_smoke_project(
             resolved_sdk_root,
             str(app_dir),
         )
-        loaded = Project.load(str(app_dir))
+        loaded = load_saved_project_model(str(app_dir))
         if loaded.sdk_root != resolved_sdk_root:
             raise RuntimeError("saved project did not restore sdk_root correctly")
         print_status(True, f"created external workspace at {app_dir}")
