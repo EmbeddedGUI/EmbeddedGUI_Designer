@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
         self._compile_timer = QTimer(self)
         self._compile_timer.setSingleShot(True)
         self._compile_timer.setInterval(500)
-        self._compile_timer.timeout.connect(self._do_compile_and_run)
+        self._compile_timer.timeout.connect(self._run_auto_compile_cycle)
 
         # Timer to find and embed exe window after compile (legacy, kept for compat)
         self._embed_timer = QTimer(self)
@@ -7223,6 +7223,11 @@ class MainWindow(QMainWindow):
     def _do_compile_and_run(self):
         """Execute compile and run cycle (async, multi-file)."""
         self._clear_auto_compile_retry_block()
+        self._start_compile_cycle(force_rebuild=False)
+
+    def _run_auto_compile_cycle(self):
+        if self._is_auto_compile_retry_blocked():
+            return
         self._start_compile_cycle(force_rebuild=False)
 
     def _do_rebuild_egui_project(self):
