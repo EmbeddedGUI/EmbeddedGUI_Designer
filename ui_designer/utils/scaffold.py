@@ -566,6 +566,18 @@ def designer_page_layout_relpath(page_name: str) -> str:
     return designer_codegen_relpath(f"{page_name}_layout.c")
 
 
+def page_user_source_relpath(page_name: str) -> str:
+    return f"{page_name}.c"
+
+
+def page_ext_header_relpath(page_name: str) -> str:
+    return f"{page_name}_ext.h"
+
+
+def project_page_user_source_path(project_dir: str, page_name: str) -> str:
+    return os.path.join(project_dir, page_user_source_relpath(page_name)) if project_dir else ""
+
+
 def designer_codegen_legacy_root_relpath(relpath: str) -> str:
     normalized = str(relpath or "").replace("\\", "/").lstrip("/")
     prefix = f"{DESIGNER_PROJECT_DIRNAME}/"

@@ -152,6 +152,9 @@ from ..utils.scaffold import (
     project_generated_resource_dir,
     project_designer_resource_dir,
     project_file_path,
+    page_ext_header_relpath,
+    page_user_source_relpath,
+    project_page_user_source_path,
     project_orphaned_user_page_relpath,
     project_resource_src_dir,
     project_user_resource_config_path,
@@ -295,7 +298,7 @@ def delete_page_generated_files(project_dir, page_name):
         except OSError:
             pass
 
-    for suffix in (f"{page_name}.c", f"{page_name}_ext.h"):
+    for suffix in (page_user_source_relpath(page_name), page_ext_header_relpath(page_name)):
         src = _project_child_realpath(project_dir, suffix)
         if src is None:
             continue
@@ -5466,7 +5469,7 @@ class MainWindow(QMainWindow):
     def _page_user_source_path(self, page):
         if page is None or not self._project_dir:
             return ""
-        return os.path.join(self._project_dir, f"{page.name}.c")
+        return project_page_user_source_path(self._project_dir, page.name)
 
     def _generate_page_user_source_content(self, page):
         content = generate_page_user_source(page, self.project)
@@ -5789,8 +5792,14 @@ class MainWindow(QMainWindow):
                     pass
 
             for old_suffix, new_suffix in (
-                (f"{old_name}.c", f"{new_name}.c"),
-                (f"{old_name}_ext.h", f"{new_name}_ext.h"),
+                (
+                    page_user_source_relpath(old_name),
+                    page_user_source_relpath(new_name),
+                ),
+                (
+                    page_ext_header_relpath(old_name),
+                    page_ext_header_relpath(new_name),
+                ),
             ):
                 src = _project_child_realpath(output_dir, old_suffix)
                 dest = _project_child_realpath(output_dir, new_suffix)

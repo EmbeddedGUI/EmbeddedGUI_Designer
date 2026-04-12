@@ -85,6 +85,7 @@ from ui_designer.utils.scaffold import (
     project_generated_img_dir,
     project_generated_resource_dir,
     project_layout_xml_path,
+    project_page_user_source_path,
     project_orphaned_user_page_relpath,
     project_resource_catalog_path,
     project_resource_src_dir,
@@ -96,6 +97,8 @@ from ui_designer.utils.scaffold import (
     preferred_resource_source_dir,
     resource_images_dir,
     resource_source_path,
+    page_ext_header_relpath,
+    page_user_source_relpath,
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
@@ -526,6 +529,11 @@ class TestCoreProjectScaffold:
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"
+        )
+        assert page_user_source_relpath("main_page") == "main_page.c"
+        assert page_ext_header_relpath("main_page") == "main_page_ext.h"
+        assert os.path.normpath(project_page_user_source_path("D:/workspace/DemoApp", "main_page")) == os.path.normpath(
+            "D:/workspace/DemoApp/main_page.c"
         )
 
     def test_preferred_resource_source_dir_prefers_existing_images_subdir(self, tmp_path):
