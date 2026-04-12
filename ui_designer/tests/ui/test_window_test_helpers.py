@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from ui_designer.tests.ui.window_test_helpers import close_test_window, open_loaded_test_project
+from ui_designer.tests.ui.window_test_helpers import (
+    close_test_window,
+    disable_main_window_compile,
+    open_loaded_test_project,
+)
 
 
 class TestWindowTestHelpers:
@@ -62,3 +66,19 @@ class TestWindowTestHelpers:
                 "stop_rendering": True,
             }
         ]
+
+    def test_disable_main_window_compile_installs_disabled_compiler_factory(self):
+        class _Compiler:
+            pass
+
+        class _FakeWindow:
+            compiler = None
+
+        window = _FakeWindow()
+
+        returned = disable_main_window_compile(window, _Compiler)
+
+        assert returned is window
+        window._recreate_compiler()
+        assert isinstance(window.compiler, _Compiler)
+        assert window._trigger_compile() is None

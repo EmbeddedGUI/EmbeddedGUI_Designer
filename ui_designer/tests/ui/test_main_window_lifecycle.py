@@ -30,7 +30,7 @@ def test_main_window_close_smoke_with_active_timers():
         from ui_designer.ui.main_window import MainWindow
         from ui_designer.utils.scaffold import load_saved_project_model
         from ui_designer.utils.runtime_temp import create_repo_temp_workspace
-        from ui_designer.tests.ui.window_test_helpers import open_loaded_test_project
+        from ui_designer.tests.ui.window_test_helpers import disable_main_window_compile, open_loaded_test_project
 
 
         class DisabledCompiler:
@@ -65,8 +65,7 @@ def test_main_window_close_smoke_with_active_timers():
             for _ in range(12):
                 project = load_saved_project_model(str(sample_project_dir))
                 window = MainWindow(str(sample_sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                disable_main_window_compile(window, DisabledCompiler)
                 open_loaded_test_project(window, project, sample_project_dir, sample_sdk_root)
                 window.widget_tree.filter_edit.setText("main")
                 window._compile_timer.start(10)

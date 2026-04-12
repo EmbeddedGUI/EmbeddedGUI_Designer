@@ -16,6 +16,8 @@ if HAS_PYQT5:
     from PyQt5.QtWidgets import QScrollArea
 
 _skip_no_qt = skip_if_no_qt
+
+
 def _mouse_event(event_type, pos, *, button=Qt.LeftButton, buttons=Qt.LeftButton, modifiers=Qt.NoModifier):
     return QMouseEvent(event_type, QPointF(pos), button, buttons, modifiers)
 

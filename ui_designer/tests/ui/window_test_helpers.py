@@ -9,6 +9,12 @@ def close_test_window(window, *, stop_rendering=False):
     close_widget_safely(window, stop_rendering=stop_rendering)
 
 
+def disable_main_window_compile(window, compiler_factory):
+    window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", compiler_factory())
+    window._trigger_compile = lambda: None
+    return window
+
+
 def open_loaded_test_project(window, project, project_dir, sdk_root="", *, silent=True):
     window._open_loaded_project(
         project,

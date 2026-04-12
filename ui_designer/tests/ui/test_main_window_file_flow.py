@@ -32,6 +32,7 @@ from ui_designer.tests.qt_test_utils import HAS_PYQT5, skip_if_no_qt
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 from ui_designer.tests.ui.window_test_helpers import (
     close_test_window as _close_window,
+    disable_main_window_compile as _disable_window_compile,
     open_loaded_test_project as _open_project_window,
 )
 from ui_designer.utils.scaffold import (
@@ -746,8 +747,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "RenameSaveDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -793,8 +793,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "RenameConflictDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -1006,8 +1005,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1035,8 +1033,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1069,8 +1066,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1105,8 +1101,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([removable, locked], primary=removable, sync_tree=False, sync_preview=False)
@@ -1139,8 +1134,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1177,8 +1171,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([removable, locked], primary=removable, sync_tree=True, sync_preview=False)
@@ -1211,8 +1204,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         container_item = window.widget_tree._item_map[id(container)]
@@ -1247,8 +1239,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._clear_selection(sync_tree=True, sync_preview=False)
@@ -1332,8 +1323,7 @@ class TestMainWindowFileFlow:
                 )
 
                 window = MainWindow(str(sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                _disable_window_compile(window, DisabledCompiler)
 
                 _open_project_window(window, project, project_dir, sdk_root)
 
@@ -1395,8 +1385,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1436,8 +1425,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.widget_tree.QInputDialog.getText",
             lambda *args, **kwargs: ("field", True),
@@ -1474,8 +1462,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
@@ -1504,8 +1491,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
@@ -1535,8 +1521,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second], primary=first, sync_tree=False, sync_preview=False)
@@ -1570,8 +1555,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.QInputDialog.getItem",
             lambda *args, **kwargs: ("root_group / target_group (group)", True),
@@ -1611,8 +1595,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1668,8 +1651,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1727,8 +1709,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1789,8 +1770,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -1849,8 +1829,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1890,8 +1869,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1936,8 +1914,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -1985,8 +1962,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2035,8 +2011,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2095,8 +2070,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2138,8 +2112,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2186,8 +2159,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2235,8 +2207,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2278,8 +2249,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2334,8 +2304,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2382,8 +2351,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second], primary=first, sync_tree=True, sync_preview=False)
@@ -2416,8 +2384,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2471,8 +2438,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2511,8 +2477,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
 
@@ -2547,8 +2512,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second, third], primary=first, sync_tree=False, sync_preview=False)
@@ -2578,8 +2542,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second, third], primary=first, sync_tree=False, sync_preview=False)
@@ -2609,8 +2572,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([locked], primary=locked, sync_tree=False, sync_preview=False)
@@ -2637,8 +2599,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([locked], primary=locked, sync_tree=False, sync_preview=False)
@@ -2664,8 +2625,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([widget], primary=widget, sync_tree=False, sync_preview=False)
@@ -2693,8 +2653,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([widget], primary=widget, sync_tree=False, sync_preview=False)
@@ -3126,8 +3085,7 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: warnings.append(args[1:]))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._export_code()
@@ -3200,8 +3158,7 @@ class TestMainWindowFileFlow:
         warnings = []
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr("ui_designer.ui.main_window.QMessageBox.warning", lambda *args: warnings.append(args[1:]))
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -3233,8 +3190,7 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._export_code()
@@ -3267,8 +3223,7 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._export_code()
@@ -3295,8 +3250,7 @@ class TestMainWindowFileFlow:
         window = MainWindow(str(sdk_root))
         monkeypatch.setattr("ui_designer.ui.main_window.QFileDialog.getExistingDirectory", lambda *args, **kwargs: str(export_dir))
         monkeypatch.setattr(window, "_ensure_codegen_preflight", lambda *args, **kwargs: True)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._export_code()
@@ -3517,8 +3471,7 @@ class TestMainWindowFileFlow:
 
         window = MainWindow("")
         monkeypatch.setattr("ui_designer.ui.main_window.default_sdk_install_dir", lambda: str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, _load_project(project_dir), project_dir)
 
@@ -4760,8 +4713,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -5125,8 +5077,7 @@ class TestMainWindowFileFlow:
         assert actions["Delete"].toolTip() == "Delete the current selection (Del). Unavailable: select at least 1 widget."
         assert actions["Delete"].statusTip() == actions["Delete"].toolTip()
 
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
         loaded_widget = window._current_page.root_widget.children[0]
         window._set_selection([loaded_widget], primary=loaded_widget, sync_tree=True, sync_preview=True)
@@ -5167,8 +5118,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         assert window._align_left_action.toolTip() == (
@@ -5223,8 +5173,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         assert window._bring_front_action.toolTip() == (
@@ -5341,8 +5290,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         edit_action = next(action for action in window.menuBar().actions() if action.text() == "Edit")
         assert edit_action.toolTip() == (
@@ -5384,8 +5332,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "FileCategoryHintsDemo", sdk_root)
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
         assert file_action.toolTip() == (
@@ -5429,8 +5376,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
 
@@ -5461,8 +5407,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
 
@@ -5492,8 +5437,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "FileCategoryPendingReloadDemo", sdk_root)
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
 
@@ -5526,8 +5470,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         arrange_action = next(action for action in window.menuBar().actions() if action.text() == "Arrange")
         assert arrange_action.toolTip() == (
@@ -5572,8 +5515,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
+        _disable_window_compile(window, _DisabledCompiler)
 
         structure_action = next(action for action in window.menuBar().actions() if action.text() == "Structure")
         assert structure_action.toolTip() == (
@@ -5612,8 +5554,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -5924,8 +5865,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_startup_changed("detail_page")
@@ -5963,8 +5903,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "ReloadActionPendingClearDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         file_action = next(action for action in window.menuBar().actions() if action.text() == "File")
 
@@ -5993,8 +5932,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CloseHintDemo", sdk_root)
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         stack = window._undo_manager.get_stack(window._current_page.name)
@@ -6022,8 +5960,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._on_startup_changed("detail_page")
@@ -6071,8 +6008,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window.project_dock._duplicate_page("main_page")
@@ -6119,8 +6055,7 @@ class TestMainWindowFileFlow:
         (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr("ui_designer.ui.project_dock.QMessageBox.question", lambda *args, **kwargs: QMessageBox.Yes)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -6154,8 +6089,7 @@ class TestMainWindowFileFlow:
         (project_dir / "detail_page_ext.h").write_text("#define DETAIL_EXT 1\n", encoding="utf-8")
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_remove_page_tab", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -6186,8 +6120,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
         monkeypatch.setattr(window, "_remove_page_tab", lambda *args, **kwargs: None)
 
@@ -6224,8 +6157,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PageFieldsDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         assert window.page_fields_dock.objectName() == "page_fields_dock"
@@ -6275,8 +6207,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -6303,8 +6234,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PageFieldsCodeDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         opened = []
         monkeypatch.setattr(window, "_open_path_in_default_app", lambda path: opened.append(path) or True)
 
@@ -6330,8 +6260,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PageTimersDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         assert window.page_timers_dock.objectName() == "page_timers_dock"
@@ -6391,8 +6320,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -6424,8 +6352,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([card], primary=card, sync_tree=True, sync_preview=False)
@@ -6478,8 +6405,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -6586,8 +6512,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([slider], primary=slider, sync_tree=True, sync_preview=False)
@@ -6620,8 +6545,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         opened = []
         monkeypatch.setattr(window, "_open_path_in_default_app", lambda path: opened.append(path) or True)
 
@@ -6659,8 +6583,7 @@ class TestMainWindowFileFlow:
         save_project_model(project, str(project_dir))
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         refresh_calls = []
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: refresh_calls.append("refreshed"))
         monkeypatch.setattr(window, "_open_path_in_default_app", lambda path: True)
@@ -6699,8 +6622,7 @@ class TestMainWindowFileFlow:
         source_path.write_text(generate_page_user_source(page, project), encoding="utf-8")
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         refresh_calls = []
         monkeypatch.setattr(window, "_refresh_project_watch_snapshot", lambda: refresh_calls.append("refreshed"))
         monkeypatch.setattr(window, "_open_path_in_default_app", lambda path: True)
@@ -6735,8 +6657,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([first, second], primary=second, sync_tree=True, sync_preview=False)
@@ -6916,8 +6837,7 @@ class TestMainWindowFileFlow:
         save_project_model(project, str(project_dir))
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_xml_changed(xml_text)
@@ -6950,8 +6870,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         assert window._undo_manager.is_any_dirty() is False
@@ -6993,8 +6912,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = image_a
@@ -7041,8 +6959,7 @@ class TestMainWindowFileFlow:
         replacement_path.write_bytes(b"PNG")
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = image_a
@@ -7112,8 +7029,7 @@ class TestMainWindowFileFlow:
                 return {"star.png": str(replacement_path)}
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.resource_panel.QFileDialog.getOpenFileNames",
             lambda *args, **kwargs: ([str(replacement_path)], "Images (*.png *.bmp *.jpg *.jpeg)"),
@@ -7177,8 +7093,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.resource_panel.QInputDialog.getText",
             lambda *args, **kwargs: ("star_new.png", True),
@@ -7214,8 +7129,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -7246,8 +7160,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label
@@ -7277,8 +7190,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label
@@ -7355,8 +7267,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label
@@ -7392,8 +7303,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label
@@ -7435,8 +7345,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label_a
@@ -7469,8 +7378,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selected_widget = label
@@ -7511,8 +7419,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.res_panel, "_confirm_reference_impact", lambda *args: True)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -7557,8 +7464,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.resource_panel.QInputDialog.getText",
             lambda *args, **kwargs: ("salutation", True),
@@ -7648,8 +7554,7 @@ class TestMainWindowFileFlow:
                 )
 
                 window = MainWindow(str(sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                _disable_window_compile(window, DisabledCompiler)
 
                 def inspect_usage(*args):
                     window.res_panel.usage_activated.emit("detail_page", "subtitle")
@@ -7762,8 +7667,7 @@ class TestMainWindowFileFlow:
                 )
 
                 window = MainWindow(str(sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                _disable_window_compile(window, DisabledCompiler)
 
                 _open_project_window(window, project, project_dir, sdk_root)
                 assert window._current_page.name == "main_page"
@@ -7821,8 +7725,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -7868,8 +7771,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window.res_panel._usage_current_page_only.setChecked(True)
@@ -7896,8 +7798,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "WatchDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -7927,8 +7828,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "DirtyWatchDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._undo_manager.get_stack("main_page").push("<Page dirty='1' />")
@@ -7969,8 +7869,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_startup_changed("detail_page")
@@ -8013,8 +7912,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._switch_page("detail_page")
@@ -8059,8 +7957,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "CompileWaitWatchDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._compile_worker = _BusyWorker()
@@ -8099,8 +7996,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PrecompileWaitWatchDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._precompile_worker = _BusyWorker()
@@ -8135,8 +8031,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PendingDirtyReloadResumeDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._undo_manager.get_stack("main_page").push("<Page dirty='1' />")
@@ -8180,8 +8075,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PendingCompileReloadResumeDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._compile_worker = _BusyWorker()
@@ -8225,8 +8119,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PendingPrecompileReloadResumeDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._precompile_worker = _BusyWorker()
@@ -8266,8 +8159,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "SaveClearsPendingReloadDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -8302,8 +8194,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PendingReloadFailureRetryDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._compile_worker = _BusyWorker()
@@ -8352,8 +8243,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._compile_worker = _BusyWorker()
@@ -8399,8 +8289,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PendingReloadResolvedDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._compile_worker = _BusyWorker()
@@ -8444,8 +8333,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_startup_changed("detail_page")
@@ -8480,8 +8368,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_startup_changed("detail_page")
@@ -8514,8 +8401,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._on_startup_changed("detail_page")
@@ -8551,8 +8437,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -8582,8 +8467,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._switch_page("detail_page")
@@ -8619,8 +8503,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._switch_page("detail_page")
@@ -8662,8 +8545,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._switch_page("detail_page")
@@ -8705,8 +8587,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
 
         _open_project_window(window, project, project_dir, sdk_root)
@@ -8747,8 +8628,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._switch_page("detail_page")
@@ -8778,8 +8658,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -8917,8 +8796,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "NavigatorActionsDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -8949,8 +8827,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -9007,8 +8884,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "PageTabMetadataNoOpDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         if hasattr(window, "_page_tab_bar_metadata_snapshot"):
@@ -9050,8 +8926,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         menu, actions = window._build_page_tab_context_menu(0)
@@ -9110,8 +8985,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -9156,8 +9030,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selection_state.set_widgets([managed], primary=managed)
@@ -9202,8 +9075,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9239,8 +9111,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9289,8 +9160,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selection_state.set_widgets([managed], primary=managed)
@@ -9346,8 +9216,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selection_state.set_widgets([managed], primary=managed)
@@ -9391,8 +9260,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9404,8 +9272,7 @@ class TestMainWindowFileFlow:
         assert isolated_config.diagnostics_view == {"severity_filter": "warning"}
 
         restored = MainWindow(str(sdk_root))
-        monkeypatch.setattr(restored, "_recreate_compiler", lambda: setattr(restored, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(restored, "_trigger_compile", lambda: None)
+        _disable_window_compile(restored, _DisabledCompiler)
 
         _open_project_window(restored, project, project_dir, sdk_root)
         restored._update_diagnostics_panel()
@@ -9435,8 +9302,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9479,8 +9345,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9508,8 +9373,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9552,8 +9416,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9581,8 +9444,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9629,8 +9491,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9693,8 +9554,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def fake_set_selection(widgets=None, primary=None, sync_tree=True, sync_preview=True):
             window._selection_state.set_widgets(widgets or [], primary=primary)
@@ -9753,8 +9613,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._selection_state.set_widgets([managed], primary=managed)
@@ -9797,8 +9656,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9835,8 +9693,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9865,8 +9722,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "DiagnosticsCopyEmptyDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9900,8 +9756,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -9965,8 +9820,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10014,8 +9868,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10061,8 +9914,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10113,8 +9965,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10144,8 +9995,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "DiagnosticsCopyJsonEmptyDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10181,8 +10031,7 @@ class TestMainWindowFileFlow:
         export_path = tmp_path / "exports" / "diagnostics-summary"
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.QFileDialog.getSaveFileName",
             lambda *args, **kwargs: (str(export_path), "Text Files (*.txt)"),
@@ -10215,8 +10064,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "DiagnosticsExportEmptyDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def unexpected_get_save_file_name(*args, **kwargs):
             raise AssertionError("getSaveFileName should not be called without diagnostics")
@@ -10255,8 +10103,7 @@ class TestMainWindowFileFlow:
         export_path = tmp_path / "exports" / "diagnostics"
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.QFileDialog.getSaveFileName",
             lambda *args, **kwargs: (str(export_path), "JSON Files (*.json)"),
@@ -10308,8 +10155,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "DiagnosticsJsonEmptyDemo", sdk_root)
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         def unexpected_get_save_file_name(*args, **kwargs):
             raise AssertionError("getSaveFileName should not be called without diagnostics")
@@ -10345,8 +10191,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -10387,8 +10232,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10422,8 +10266,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         window._update_diagnostics_panel()
@@ -10505,8 +10348,7 @@ class TestMainWindowFileFlow:
                 )
 
                 window = MainWindow(str(sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                _disable_window_compile(window, DisabledCompiler)
 
                 _open_project_window(window, project, project_dir, sdk_root)
 
@@ -10609,8 +10451,7 @@ class TestMainWindowFileFlow:
                 )
 
                 window = MainWindow(str(sdk_root))
-                window._recreate_compiler = lambda _window=window: setattr(_window, "compiler", DisabledCompiler())
-                window._trigger_compile = lambda: None
+                _disable_window_compile(window, DisabledCompiler)
 
                 _open_project_window(window, project, project_dir, sdk_root)
 
@@ -11104,8 +10945,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         monkeypatch.setattr(window.preview_panel, "is_python_preview_active", lambda: False)
@@ -11208,8 +11048,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
         monkeypatch.setattr(window.preview_panel, "is_python_preview_active", lambda: False)
@@ -11464,8 +11303,7 @@ class TestMainWindowFileFlow:
             widgets=[label],
         )
 
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
 
         _open_project_window(window, project, project_dir, sdk_root)
 
@@ -11568,8 +11406,7 @@ class TestMainWindowFileFlow:
         project = _create_project(project_dir, "SaveHintDemo", sdk_root)
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         stack = window._undo_manager.get_stack(window._current_page.name)
@@ -11602,8 +11439,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow("")
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._on_startup_changed("detail_page")
@@ -11698,8 +11534,7 @@ class TestMainWindowFileFlow:
         assert window._workspace_context_card.toolTip() == "Open or create a project to start editing."
         assert window._workspace_context_card.accessibleName() == "Workspace context card: No project open."
 
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         design_summary = (
@@ -12101,8 +11936,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
         window._set_selection([container], primary=container, sync_tree=True, sync_preview=True)
 
@@ -12136,8 +11970,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._show_inspector_tab("animations")
@@ -12166,8 +11999,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._set_selection([label], primary=label, sync_tree=True, sync_preview=True)
@@ -12193,8 +12025,7 @@ class TestMainWindowFileFlow:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         before_count = len(window._current_page.root_widget.children)
@@ -12511,8 +12342,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._select_all_action.trigger()
@@ -12538,8 +12368,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -12569,8 +12398,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
         menu = window._build_preview_context_menu(first)
         labels = [action.text() for action in menu.actions() if action.text()]
@@ -12644,8 +12472,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         menu = window._build_preview_context_menu(first)
@@ -12705,8 +12532,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -12756,8 +12582,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -12803,8 +12628,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -12881,8 +12705,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -12961,8 +12784,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13006,8 +12828,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13074,8 +12895,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13134,8 +12954,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         def _select_actions(widget):
@@ -13293,8 +13112,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
         menu = window._build_preview_context_menu(None)
         labels = [action.text() for action in menu.actions() if action.text()]
@@ -13328,8 +13146,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         _open_project_window(window, project, project_dir, sdk_root)
 
         window._selection_state.set_widgets([], primary=None)
@@ -13398,8 +13215,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13444,8 +13260,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13503,8 +13318,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13557,8 +13371,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13612,8 +13425,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13681,8 +13493,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13768,8 +13579,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13845,8 +13655,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13904,8 +13713,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13944,8 +13752,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -13992,8 +13799,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14040,8 +13846,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14092,8 +13897,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14140,8 +13944,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14194,8 +13997,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14234,8 +14036,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14274,8 +14075,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14314,8 +14114,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14355,8 +14154,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14396,8 +14194,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14438,8 +14235,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14479,8 +14275,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14525,8 +14320,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14597,8 +14391,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14652,8 +14445,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14707,8 +14499,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14755,8 +14546,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14792,8 +14582,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14832,8 +14621,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
@@ -14873,8 +14661,7 @@ class TestMainWindowCanvasActions:
         )
 
         window = MainWindow(str(sdk_root))
-        monkeypatch.setattr(window, "_recreate_compiler", lambda: setattr(window, "compiler", _DisabledCompiler()))
-        monkeypatch.setattr(window, "_trigger_compile", lambda: None)
+        _disable_window_compile(window, _DisabledCompiler)
         monkeypatch.setattr(window.property_panel, "set_selection", lambda *args, **kwargs: None)
         monkeypatch.setattr(window.animations_panel, "set_selection", lambda *args, **kwargs: None)
         _open_project_window(window, project, project_dir, sdk_root)
