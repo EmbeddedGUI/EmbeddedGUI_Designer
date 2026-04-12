@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 from figmamake import figmamake2egui as pipeline
 from figmamake import figmamake_codegen as codegen_module
+from ui_designer.tests.codegen_fixtures import build_materialized_codegen_result
 from ui_designer.model.workspace import sdk_runtime_check_output_dir
 from ui_designer.utils.scaffold import (
     project_config_reference_frames_dir,
@@ -95,7 +96,7 @@ def test_figmamake_codegen_uses_shared_codegen_materializer(tmp_path, monkeypatc
                     "materialize_kwargs": kwargs,
                 }
             )
-            or (fake_project, SimpleNamespace(files={"main_page.c": "// generated\n"}))
+            or (fake_project, build_materialized_codegen_result({"main_page.c": "// generated\n"}))
         ),
     )
 

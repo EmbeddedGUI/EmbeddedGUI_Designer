@@ -19,6 +19,10 @@ from ui_designer.tests.project_builders import (
     build_saved_test_project_with_widgets as _create_project_with_widgets,
     build_saved_test_project_with_page_widgets as _create_project_with_page_widgets,
 )
+from ui_designer.tests.codegen_fixtures import (
+    build_fake_prepare_project_codegen_outputs as _fake_prepare_project_codegen_outputs,
+    build_fake_save_project_and_materialize_codegen as _fake_save_project_and_materialize_codegen,
+)
 from ui_designer.tests.page_builders import (
     build_test_page_only_with_widget as _build_test_page_only_with_widget,
     build_test_page_root_with_widgets as _build_test_page_root_with_widgets,
@@ -104,25 +108,6 @@ def _left_panel_tab_tooltip(window, panel_key):
 
 def _left_panel_tab_whats_this(window, panel_key):
     return window._left_panel_stack.tabWhatsThis(_left_panel_tab_index(window, panel_key))
-
-
-def _fake_save_project_and_materialize_codegen(filename, content):
-    def _materialize(project, output_dir, **kwargs):
-        save_project_model(
-            project,
-            output_dir,
-            with_designer_scaffold=True,
-            overwrite_scaffold=kwargs.get("overwrite", False),
-            remove_legacy_designer_files=kwargs.get("remove_legacy_designer_files", False),
-        )
-        output_path = Path(output_dir)
-        (output_path / filename).write_text(content, encoding="utf-8")
-        return SimpleNamespace(
-            files={filename: content},
-            all_generated_files={},
-        )
-
-    return _materialize
 
 
 def _menu_target_labels(menu):
@@ -3681,23 +3666,10 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_apply_pending_page_rename_outputs", rename_hook)
         monkeypatch.setattr(
             "ui_designer.ui.main_window.prepare_project_codegen_outputs",
-            lambda project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False: (
-                before_prepare(output_dir)
-                if callable(before_prepare)
-                else None
-            )
-            or generated.update(
-                {
-                    "project": project_obj,
-                    "output_dir": output_dir,
-                    "backup": backup,
-                    "before_prepare": before_prepare,
-                    "cleanup_legacy": cleanup_legacy,
-                }
-            )
-            or SimpleNamespace(
-                files={".designer/uicode.c": "// rebuild test\n"},
+            _fake_prepare_project_codegen_outputs(
+                {".designer/uicode.c": "// rebuild test\n"},
                 all_generated_files={".designer/uicode.c": ("// rebuild test\n", "generated_always")},
+                capture=generated,
             ),
         )
 
@@ -3784,8 +3756,8 @@ class TestMainWindowFileFlow:
         monkeypatch.setattr(window, "_switch_to_python_preview", lambda reason="": preview_reasons.append(reason))
         monkeypatch.setattr(
             "ui_designer.ui.main_window.prepare_project_codegen_outputs",
-            lambda project_obj, output_dir, backup=True, before_prepare=None, cleanup_legacy=False: SimpleNamespace(
-                files={".designer/uicode.c": "// rebuild button test\n"},
+            _fake_prepare_project_codegen_outputs(
+                {".designer/uicode.c": "// rebuild button test\n"},
                 all_generated_files={".designer/uicode.c": ("// rebuild button test\n", "generated_always")},
             ),
         )
