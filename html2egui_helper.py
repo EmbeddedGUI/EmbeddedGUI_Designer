@@ -51,7 +51,9 @@ from ui_designer.utils.scaffold import (
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
     project_config_dir,
+    project_generated_resource_dir,
     project_file_path,
+    project_resource_src_dir,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
@@ -99,12 +101,12 @@ def _get_app_resource_images_dir(app_dir):
 
 def _get_app_generated_resource_dir(app_dir):
     """Return the generated resource directory."""
-    return os.path.join(app_dir, "resource")
+    return project_generated_resource_dir(app_dir)
 
 
 def _get_app_resource_src_dir(app_dir):
     """Return the resource/src directory used by generation scripts."""
-    return os.path.join(_get_app_generated_resource_dir(app_dir), "src")
+    return project_resource_src_dir(app_dir)
 
 
 def _helper_app_command(subcommand, app_name):

@@ -131,7 +131,9 @@ from ..utils.scaffold import (
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
     project_config_dir,
+    project_generated_resource_dir,
     project_file_path,
+    project_resource_src_dir,
     read_app_config_dimensions,
     save_empty_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
@@ -2773,8 +2775,8 @@ class MainWindow(QMainWindow):
             os.path.join(self._project_dir, DESIGNER_PROJECT_DIRNAME),
             legacy_build_designer_path(self._project_dir),
             legacy_app_config_designer_path(self._project_dir),
-            os.path.join(self._project_dir, "resource", "src", APP_RESOURCE_CONFIG_FILENAME),
-            os.path.join(self._project_dir, "resource", "src", DESIGNER_RESOURCE_DIRNAME),
+            os.path.join(project_resource_src_dir(self._project_dir), APP_RESOURCE_CONFIG_FILENAME),
+            os.path.join(project_resource_src_dir(self._project_dir), DESIGNER_RESOURCE_DIRNAME),
             os.path.join(eguiproject_dir, "layout"),
             os.path.join(eguiproject_dir, "resources"),
             os.path.join(eguiproject_dir, "mockup"),
@@ -5036,7 +5038,7 @@ class MainWindow(QMainWindow):
         generated fonts in resource/font/.
         """
         if self._project_dir:
-            return os.path.join(self._project_dir, "resource")
+            return project_generated_resource_dir(self._project_dir)
         return ""
 
     def _get_eguiproject_resource_dir(self):
@@ -5254,7 +5256,7 @@ class MainWindow(QMainWindow):
 
         res_dir = self._get_resource_dir()
         eguiproject_res_dir = self._get_eguiproject_resource_dir()
-        src_dir = os.path.join(res_dir, "src") if res_dir else ""
+        src_dir = project_resource_src_dir(self._project_dir) if res_dir else ""
         if not res_dir or not eguiproject_res_dir or not os.path.isdir(eguiproject_res_dir):
             if not silent:
                 QMessageBox.warning(

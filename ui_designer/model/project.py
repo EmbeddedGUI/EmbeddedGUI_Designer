@@ -31,7 +31,12 @@ from .widget_model import WidgetModel
 from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
-from ..utils.scaffold import project_config_dir, project_file_path
+from ..utils.scaffold import (
+    project_config_dir,
+    project_file_path,
+    project_generated_resource_dir,
+    project_resource_src_dir,
+)
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
@@ -190,7 +195,7 @@ class Project:
         app_dir = self.get_app_dir()
         if not app_dir:
             return ""
-        return os.path.join(app_dir, "resource")
+        return project_generated_resource_dir(app_dir)
 
     def get_eguiproject_dir(self):
         """Get the .eguiproject config directory path."""
@@ -398,7 +403,7 @@ class Project:
         config_dir = project_config_dir(project_dir)
         eguiproject_res_dir = os.path.join(config_dir, "resources")
         images_dir = os.path.join(eguiproject_res_dir, "images")
-        target_src_dir = os.path.join(project_dir, "resource", "src")
+        target_src_dir = project_resource_src_dir(project_dir)
 
         if not os.path.isdir(eguiproject_res_dir):
             return

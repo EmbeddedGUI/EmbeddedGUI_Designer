@@ -51,6 +51,8 @@ from ui_designer.utils.scaffold import (
     normalize_scaffold_pages,
     project_config_dir,
     project_file_path,
+    project_generated_resource_dir,
+    project_resource_src_dir,
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
@@ -307,6 +309,12 @@ class TestCoreProjectScaffold:
     def test_scaffold_relpath_helpers_use_project_layout_conventions(self):
         assert os.path.normpath(project_config_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject"
+        )
+        assert os.path.normpath(project_generated_resource_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource"
+        )
+        assert os.path.normpath(project_resource_src_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/resource/src"
         )
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(

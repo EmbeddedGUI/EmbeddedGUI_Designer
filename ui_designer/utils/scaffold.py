@@ -176,6 +176,14 @@ def project_config_dir(project_dir: str) -> str:
     return os.path.join(project_dir, EGUIPROJECT_DIRNAME)
 
 
+def project_generated_resource_dir(project_dir: str) -> str:
+    return os.path.join(project_dir, "resource")
+
+
+def project_resource_src_dir(project_dir: str) -> str:
+    return os.path.join(project_generated_resource_dir(project_dir), "src")
+
+
 def project_file_relpath(app_name: str) -> str:
     return f"{app_name}.egui"
 
@@ -735,7 +743,7 @@ def sync_project_resources_and_generate_designer_resource_config(
 ):
     """Sync project resources into ``resource/src`` and regenerate resource configs."""
     project_dir = os.path.normpath(project_dir)
-    src_dir = os.path.normpath(src_dir or os.path.join(project_dir, "resource", "src"))
+    src_dir = os.path.normpath(src_dir or project_resource_src_dir(project_dir))
     project.sync_resources_to_src(project_dir)
     if callable(before_generate):
         before_generate(project_dir)
@@ -762,7 +770,7 @@ def sync_project_scaffold_sidecars(
     """
     project_dir = os.path.normpath(project_dir)
     designer_dir = project_designer_dir(project_dir)
-    resource_src_dir = os.path.join(project_dir, "resource", "src")
+    resource_src_dir = project_resource_src_dir(project_dir)
 
     os.makedirs(project_dir, exist_ok=True)
     os.makedirs(designer_dir, exist_ok=True)
