@@ -130,6 +130,7 @@ from ..utils.scaffold import (
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
+    project_config_dir,
     project_file_path,
     read_app_config_dimensions,
     save_empty_project_with_designer_scaffold,
@@ -2764,7 +2765,7 @@ class MainWindow(QMainWindow):
                 _add_path(os.path.join(path, name))
 
         project_file = project_file_path(self._project_dir, self.app_name)
-        eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
+        eguiproject_dir = project_config_dir(self._project_dir)
         watch_roots = [
             project_file,
             os.path.join(self._project_dir, "build.mk"),
@@ -4104,7 +4105,7 @@ class MainWindow(QMainWindow):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
         project_path = normalize_path(project_file_path(app_dir, app_name))
-        eguiproject_dir = os.path.join(app_dir, ".eguiproject")
+        eguiproject_dir = project_config_dir(app_dir)
 
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):
             QMessageBox.warning(
@@ -5045,7 +5046,7 @@ class MainWindow(QMainWindow):
         Used by the resource panel for browsing and importing.
         """
         if self._project_dir:
-            return os.path.join(self._project_dir, ".eguiproject", "resources")
+            return os.path.join(project_config_dir(self._project_dir), "resources")
         return ""
 
     def _get_eguiproject_images_dir(self):

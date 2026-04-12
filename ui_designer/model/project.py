@@ -31,6 +31,7 @@ from .widget_model import WidgetModel
 from .page import Page
 from .resource_catalog import ResourceCatalog
 from .string_resource import StringResourceCatalog
+from ..utils.scaffold import project_config_dir, project_file_path
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
 from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
@@ -196,7 +197,7 @@ class Project:
         app_dir = self.get_app_dir()
         if not app_dir:
             return ""
-        return os.path.join(app_dir, ".eguiproject")
+        return project_config_dir(app_dir)
 
     def get_eguiproject_resource_dir(self):
         """Get the .eguiproject/resources/ directory path.
@@ -271,7 +272,7 @@ class Project:
         project_dir = normalize_path(project_dir)
         self.project_dir = project_dir
         os.makedirs(project_dir, exist_ok=True)
-        eguiproject_dir = os.path.join(project_dir, ".eguiproject")
+        eguiproject_dir = project_config_dir(project_dir)
         os.makedirs(eguiproject_dir, exist_ok=True)
 
         # Save each page XML to .eguiproject/layout/
@@ -296,7 +297,7 @@ class Project:
             if _sdk_revision_text(fingerprint):
                 self.sdk_fingerprint = fingerprint
 
-        eui_path = os.path.join(project_dir, f"{self.app_name}.egui")
+        eui_path = project_file_path(project_dir, self.app_name)
         with open(eui_path, "w", encoding="utf-8") as f:
             f.write(self.to_xml_string(project_dir))
 
@@ -326,7 +327,7 @@ class Project:
             project_file = project_path
 
         project_dir = os.path.dirname(os.path.abspath(project_file))
-        config_dir = os.path.join(project_dir, ".eguiproject")
+        config_dir = project_config_dir(project_dir)
 
         from .widget_registry import WidgetRegistry
         WidgetRegistry.instance().load_app_local_widgets(project_dir)
@@ -394,7 +395,7 @@ class Project:
         live in the resources/ root.
         Only copies if source is newer or destination doesn't exist.
         """
-        config_dir = os.path.join(project_dir, ".eguiproject")
+        config_dir = project_config_dir(project_dir)
         eguiproject_res_dir = os.path.join(config_dir, "resources")
         images_dir = os.path.join(eguiproject_res_dir, "images")
         target_src_dir = os.path.join(project_dir, "resource", "src")
@@ -434,7 +435,7 @@ class Project:
     @classmethod
     def get_config_dir(cls, project_dir):
         """Get the .eguiproject config directory for a project."""
-        return os.path.join(project_dir, ".eguiproject")
+        return project_config_dir(project_dir)
 
 
 

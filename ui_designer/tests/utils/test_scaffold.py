@@ -49,6 +49,7 @@ from ui_designer.utils.scaffold import (
     require_page_root,
     require_project_page_root,
     normalize_scaffold_pages,
+    project_config_dir,
     project_file_path,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -304,6 +305,9 @@ class TestCoreProjectScaffold:
         assert normalize_scaffold_pages(["", " home ", " ", "detail"]) == ["home", "detail"]
 
     def test_scaffold_relpath_helpers_use_project_layout_conventions(self):
+        assert os.path.normpath(project_config_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject"
+        )
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
         assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/DemoApp.egui"

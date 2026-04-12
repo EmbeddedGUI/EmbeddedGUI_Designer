@@ -172,6 +172,10 @@ def project_designer_dir(project_dir: str) -> str:
     return os.path.join(project_dir, DESIGNER_PROJECT_DIRNAME)
 
 
+def project_config_dir(project_dir: str) -> str:
+    return os.path.join(project_dir, EGUIPROJECT_DIRNAME)
+
+
 def project_file_relpath(app_name: str) -> str:
     return f"{app_name}.egui"
 

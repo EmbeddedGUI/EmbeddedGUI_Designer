@@ -50,6 +50,7 @@ from ui_designer.utils.scaffold import (
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
+    project_config_dir,
     project_file_path,
     project_file_relpath,
     project_layout_xml_relpath,
@@ -78,7 +79,7 @@ def _get_app_dir(sdk_root, app_name):
 
 def _get_app_config_dir(app_dir):
     """Return the .eguiproject directory for an app."""
-    return os.path.join(app_dir, ".eguiproject")
+    return project_config_dir(app_dir)
 
 
 def _get_app_layout_dir(app_dir):
