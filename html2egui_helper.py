@@ -46,6 +46,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_CATALOG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_IMAGES_DIR_RELPATH,
+    RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
@@ -111,7 +112,7 @@ def _get_app_generated_resource_dir(app_dir):
 
 
 def _get_app_resource_src_dir(app_dir):
-    """Return the resource/src directory used by generation scripts."""
+    f"""Return the {RESOURCE_SRC_DIR_RELPATH} directory used by generation scripts."""
     return project_resource_src_dir(app_dir)
 
 
@@ -722,7 +723,7 @@ def _material_icon_codepoint(icon_name):
 
 
 def _sync_exported_pngs(output_dir, src_dir, filenames, *, reserved_label="asset"):
-    """Copy exported PNGs into resource/src/, skipping reserved filenames."""
+    f"""Copy exported PNGs into {RESOURCE_SRC_DIR_RELPATH}/, skipping reserved filenames."""
     import shutil
 
     os.makedirs(src_dir, exist_ok=True)
@@ -830,7 +831,7 @@ def _sync_app_pngs_and_update_resource_config(
     entry_label="image",
     synced_label="assets",
 ):
-    """Sync exported PNGs into an app resource/src/ and update its overlay config."""
+    f"""Sync exported PNGs into an app {RESOURCE_SRC_DIR_RELPATH}/ and update its overlay config."""
     app_dir = _get_app_dir(sdk_root, app_name)
     src_dir = _get_app_resource_src_dir(app_dir)
     synced_filenames = _sync_exported_pngs(
@@ -923,7 +924,7 @@ def cmd_export_icons(args):
 
     icon_filenames = [f"icon_{name}{suffix}.png" for name in icons]
 
-    # Sync PNGs to resource/src/ if using --app (designer workflow)
+    # Sync PNGs into the generated resource source directory if using --app.
     if app_name:
         synced_filenames, src_dir, created = _sync_app_pngs_and_update_resource_config(
             sdk_root,
@@ -1349,7 +1350,7 @@ def cmd_export_svgs(args):
 
     exported_filenames = [f"{prefix}{name}.png" for name in exported_names]
 
-    # Sync to resource/src/ if using --app
+    # Sync to the generated resource source directory if using --app.
     if app_name and exported_names:
         _synced_filenames, _src_dir, _created = _sync_app_pngs_and_update_resource_config(
             sdk_root,
@@ -1496,7 +1497,7 @@ def cmd_gen_resource(args):
 # ── Sub-command: generate-code ──────────────────────────────────
 
 def _sync_font_files(project, sdk_root, src_dir):
-    """Copy font files referenced by widgets to resource/src/."""
+    f"""Copy font files referenced by widgets to {RESOURCE_SRC_DIR_RELPATH}/."""
     import shutil
     font_files = set()
     for page in project.pages:
@@ -1525,7 +1526,7 @@ def _sync_font_files(project, sdk_root, src_dir):
         else:
             print(f"  WARNING: Font file not found: {fname}")
     if synced:
-        print(f"  {synced} font file(s) in resource/src/")
+        print(f"  {synced} font file(s) in {RESOURCE_SRC_DIR_RELPATH}/")
 
 
 def cmd_generate_code(args):

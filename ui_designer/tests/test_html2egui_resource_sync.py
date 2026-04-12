@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), ".."
 
 import html2egui_helper as h
 from ui_designer.utils.resource_config_overlay import make_empty_resource_config_content
-from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
+from ui_designer.utils.scaffold import RESOURCE_IMAGES_DIR_RELPATH, RESOURCE_SRC_DIR_RELPATH, SUPPORTED_TEXT_RELPATH
 
 
 class _FakePage:
@@ -377,7 +377,7 @@ class TestHelperResourceSync:
         assert saved["img"][0]["file"] == "icon_alarm.png"
         assert saved["img"][0]["format"] == "alpha"
 
-    def test_sync_font_files_skips_reserved_filename(self, tmp_path):
+    def test_sync_font_files_skips_reserved_filename(self, tmp_path, capsys):
         sdk_root = tmp_path / "sdk"
         tools_dir = sdk_root / "scripts" / "tools"
         tools_dir.mkdir(parents=True)
@@ -400,6 +400,7 @@ class TestHelperResourceSync:
 
         assert (src_dir / "kept.ttf").is_file()
         assert not (src_dir / "_generated_text_demo_16_4.ttf").exists()
+        assert f"1 font file(s) in {RESOURCE_SRC_DIR_RELPATH}/" in capsys.readouterr().out
 
     def test_export_svgs_skips_reserved_filename_when_syncing_to_project(self, tmp_path, monkeypatch):
         html_path = tmp_path / "demo.html"
