@@ -1682,7 +1682,11 @@ class MainWindow(QMainWindow):
         if self.project is not None and self._effective_preview_unavailable_reason():
             return "editing only"
         preview_running = bool(self.compiler is not None and self.compiler.is_preview_running()) if hasattr(self, "compiler") else False
-        return "running" if preview_running else "stopped"
+        if preview_running:
+            return "running"
+        if hasattr(self, "preview_panel") and self.preview_panel.is_python_preview_active():
+            return "python preview"
+        return "stopped"
 
     def _compile_action_context_summary(self):
         project_state = "open" if self.project is not None else "none"

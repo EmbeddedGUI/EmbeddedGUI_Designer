@@ -5932,6 +5932,25 @@ class TestMainWindowFileFlow:
             f"Preview: stopped. Source resources: available. Resource directory: {resources_dir}."
         )
 
+        window.preview_panel.is_python_preview_active = lambda: True
+        window._update_compile_availability()
+
+        assert actions["Build EXE && Run"].toolTip() == (
+            "Compile the current project and run the preview (F5). Project: open. SDK: valid. Preview: python preview."
+        )
+        assert actions["Rebuild EGUI Project"].toolTip() == (
+            "Clean and rebuild the whole EGUI project, then rerun the preview (Ctrl+F5). "
+            "Project: open. SDK: valid. Preview: python preview."
+        )
+        assert build_action.toolTip() == (
+            "Compile previews, generate resources, or reconstruct a project from Designer sources. "
+            "Project: open. SDK: valid. Compile: available. Recovery: available. Auto compile: on. "
+            f"Preview: python preview. Source resources: available. Resource directory: {resources_dir}."
+        )
+
+        window.preview_panel.is_python_preview_active = lambda: False
+        window._update_compile_availability()
+
         window.auto_compile_action.setChecked(False)
 
         assert build_action.toolTip() == (
