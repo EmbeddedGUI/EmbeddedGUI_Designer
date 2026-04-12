@@ -59,7 +59,11 @@ from ui_designer.utils.scaffold import (
     build_empty_project_model_and_save,
     build_empty_project_model_with_page_roots,
     build_saved_project_model,
+    build_saved_project_model_and_page_with_widgets_and_materialize_codegen,
+    build_saved_project_model_and_root_with_widgets_and_materialize_codegen,
+    build_saved_project_model_only_with_widgets_and_materialize_codegen,
     build_saved_project_model_with_page_widgets,
+    build_saved_project_model_with_widgets_and_materialize_codegen,
     build_saved_project_model_with_widgets,
     build_empty_project_model_with_root,
     build_empty_project_xml,
@@ -1400,6 +1404,103 @@ class TestCoreProjectScaffold:
         assert page.name == "home"
         assert [child.name for child in page.root_widget.children] == ["title"]
         assert (project_dir / "BuiltMaterializedPageHelperApp.egui").is_file()
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_project_model_with_widgets_and_materialize_codegen_returns_saved_result(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedMaterializedHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, root, materialized = build_saved_project_model_with_widgets_and_materialize_codegen(
+            "BuiltSavedMaterializedHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert root.children == [label]
+        assert (project_dir / "BuiltSavedMaterializedHelperApp.egui").is_file()
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_project_model_and_page_with_widgets_and_materialize_codegen_returns_project_page_and_outputs(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedMaterializedPageHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, page, materialized = build_saved_project_model_and_page_with_widgets_and_materialize_codegen(
+            "BuiltSavedMaterializedPageHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert [child.name for child in page.root_widget.children] == ["title"]
+        assert (project_dir / "BuiltSavedMaterializedPageHelperApp.egui").is_file()
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_project_model_and_root_with_widgets_and_materialize_codegen_returns_project_root_and_outputs(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedMaterializedRootHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, root, materialized = build_saved_project_model_and_root_with_widgets_and_materialize_codegen(
+            "BuiltSavedMaterializedRootHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert [child.name for child in root.children] == ["title"]
+        assert (project_dir / "BuiltSavedMaterializedRootHelperApp.egui").is_file()
+        assert "home_ext.h" in materialized.files
+
+    def test_build_saved_project_model_only_with_widgets_and_materialize_codegen_returns_project_and_outputs(self, tmp_path):
+        from ui_designer.model.widget_model import WidgetModel
+
+        project_dir = tmp_path / "BuiltSavedMaterializedProjectOnlyHelperApp"
+        label = WidgetModel("label", name="title", x=10, y=10, width=120, height=24)
+
+        project, materialized = build_saved_project_model_only_with_widgets_and_materialize_codegen(
+            "BuiltSavedMaterializedProjectOnlyHelperApp",
+            320,
+            240,
+            sdk_root="D:/sdk",
+            project_dir=str(project_dir),
+            page_name="home",
+            widgets=[label],
+            backup=False,
+        )
+
+        page, root = require_project_page_root(project, "home")
+
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert project.sdk_root == os.path.normpath("D:/sdk")
+        assert page.name == "home"
+        assert [child.name for child in root.children] == ["title"]
+        assert (project_dir / "BuiltSavedMaterializedProjectOnlyHelperApp.egui").is_file()
         assert "home_ext.h" in materialized.files
 
     def test_build_project_model_with_widgets_and_materialize_codegen_runs_before_save_hook_once_after_binding(self, tmp_path):

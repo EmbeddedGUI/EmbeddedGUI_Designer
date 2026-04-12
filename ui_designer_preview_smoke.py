@@ -33,7 +33,7 @@ from ui_designer.utils.runtime_temp import (
 )
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
-    build_project_model_and_page_with_widgets_and_materialize_codegen,
+    build_saved_project_model_and_page_with_widgets_and_materialize_codegen,
     page_user_source_relpath,
 )
 
@@ -285,9 +285,9 @@ def _build_and_materialize_smoke_project(
     dict[str, tuple[int, int, int, int] | tuple[int, int]],
     object,
 ]:
-    """Build the smoke project and materialize its generated outputs via the shared scaffold helper."""
+    """Build the smoke project and materialize its generated outputs via the shared saved scaffold helper."""
     widgets, page_customizer, meta = _build_smoke_project_inputs()
-    project, page, materialized = build_project_model_and_page_with_widgets_and_materialize_codegen(
+    project, page, materialized = build_saved_project_model_and_page_with_widgets_and_materialize_codegen(
         APP_NAME,
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
