@@ -151,6 +151,12 @@ def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
         def get_resource_src_dir(self):
             return "D:/demo/resource/src"
 
+        def get_eguiproject_layout_dir(self):
+            return "D:/demo/.eguiproject/layout"
+
+        def get_eguiproject_mockup_dir(self):
+            return "D:/demo/.eguiproject/mockup"
+
         def get_eguiproject_resource_dir(self):
             return "D:/demo/.eguiproject/resources"
 
@@ -163,6 +169,8 @@ def test_resource_path_helpers_delegate_to_project_paths(qapp, isolated_config):
 
     assert window._get_resource_dir() == "D:/demo/resource"
     assert window._get_resource_src_dir() == "D:/demo/resource/src"
+    assert window._get_eguiproject_layout_dir() == "D:/demo/.eguiproject/layout"
+    assert window._get_eguiproject_mockup_dir() == "D:/demo/.eguiproject/mockup"
     assert window._get_eguiproject_resource_dir() == "D:/demo/.eguiproject/resources"
     assert window._get_eguiproject_images_dir() == "D:/demo/.eguiproject/resources/images"
     _close_window(window)
