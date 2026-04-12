@@ -176,6 +176,10 @@ def project_file_relpath(app_name: str) -> str:
     return f"{app_name}.egui"
 
 
+def project_file_path(project_dir: str, app_name: str) -> str:
+    return os.path.join(project_dir, project_file_relpath(app_name))
+
+
 def project_layout_xml_relpath(page_name: str) -> str:
     return f"{LAYOUT_DIR_RELPATH}/{page_name}.xml"
 

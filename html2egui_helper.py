@@ -50,6 +50,7 @@ from ui_designer.utils.scaffold import (
     ensure_conversion_project_scaffold_with_sdk_root,
     materialize_project_codegen_outputs,
     normalize_scaffold_pages,
+    project_file_path,
     project_file_relpath,
     project_layout_xml_relpath,
     scaffold_conversion_project_with_sdk_root,
@@ -1524,7 +1525,7 @@ def cmd_generate_code(args):
     sdk_root, app_dir = _resolve_existing_app_dir(app_name)
 
     # Find .egui project file
-    egui_file = os.path.join(app_dir, f"{app_name}.egui")
+    egui_file = project_file_path(app_dir, app_name)
     if not os.path.isfile(egui_file):
         print(f"ERROR: Project file not found: {egui_file}")
         print("Run 'scaffold' first to create the project structure.")

@@ -23,6 +23,7 @@ from ui_designer.tests.qt_test_utils import HAS_PYQT5, close_widget_safely, skip
 from ui_designer.tests.sdk_builders import build_test_sdk_root as _create_sdk_root
 from ui_designer.utils.scaffold import (
     add_widget_children as _add_widget_children,
+    project_file_path,
     require_project_page_root,
     save_project_model,
 )
@@ -441,8 +442,8 @@ class TestMainWindowFileFlow:
         assert (project_dir / ".designer" / "app_egui_config_designer.h").is_file()
         assert (project_dir / "resource" / "src" / "app_resource_config.json").is_file()
         assert (project_dir / "resource" / "src" / ".designer" / "app_resource_config_designer.json").is_file()
-        assert isolated_config.last_project_path == os.path.join(str(project_dir), "SaveDemo.egui")
-        assert isolated_config.recent_projects[0]["project_path"] == os.path.join(str(project_dir), "SaveDemo.egui")
+        assert isolated_config.last_project_path == project_file_path(str(project_dir), "SaveDemo")
+        assert isolated_config.recent_projects[0]["project_path"] == project_file_path(str(project_dir), "SaveDemo")
         assert window._undo_manager.is_any_dirty() is False
         assert "Saved:" in window.statusBar().currentMessage()
         _close_window(window)

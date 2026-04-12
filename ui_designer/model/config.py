@@ -6,6 +6,7 @@ import json
 import os
 import sys
 
+from ..utils.scaffold import project_file_path
 from .workspace import infer_sdk_root_from_project_dir, is_valid_sdk_root, normalize_path, resolve_available_sdk_root
 
 
@@ -311,7 +312,7 @@ class DesignerConfig:
         if not app_dir:
             return ""
         app_name = app_name or self.last_app
-        return os.path.join(app_dir, f"{app_name}.egui")
+        return project_file_path(app_dir, app_name)
 
     def list_available_app_entries(self, sdk_root=None, include_unmanaged=False):
         """List all available app entries in the SDK ``example/`` directory."""
@@ -331,7 +332,7 @@ class DesignerConfig:
             if not os.path.isfile(os.path.join(app_path, "build.mk")):
                 continue
 
-            project_path = os.path.join(app_path, f"{name}.egui")
+            project_path = project_file_path(app_path, name)
             has_project = os.path.isfile(project_path)
             if not has_project and not include_unmanaged:
                 continue

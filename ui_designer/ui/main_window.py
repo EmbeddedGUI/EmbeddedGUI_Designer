@@ -130,6 +130,7 @@ from ..utils.scaffold import (
     legacy_build_designer_path,
     materialize_project_codegen_outputs,
     prepare_project_codegen_outputs,
+    project_file_path,
     read_app_config_dimensions,
     save_empty_project_with_designer_scaffold,
     save_project_and_materialize_codegen,
@@ -2658,7 +2659,11 @@ class MainWindow(QMainWindow):
 
     def _persist_current_project_to_config(self):
         self._config.last_app = self.app_name or self._config.last_app
-        self._config.last_project_path = normalize_path(os.path.join(self._project_dir, f"{self.app_name}.egui")) if self._project_dir else ""
+        self._config.last_project_path = (
+            normalize_path(project_file_path(self._project_dir, self.app_name))
+            if self._project_dir
+            else ""
+        )
         if self._has_valid_sdk_root():
             self._config.sdk_root = self.project_root
         if self._config.last_project_path:
@@ -2758,7 +2763,7 @@ class MainWindow(QMainWindow):
             for name in entries:
                 _add_path(os.path.join(path, name))
 
-        project_file = os.path.join(self._project_dir, f"{self.app_name}.egui")
+        project_file = project_file_path(self._project_dir, self.app_name)
         eguiproject_dir = os.path.join(self._project_dir, ".eguiproject")
         watch_roots = [
             project_file,
@@ -4098,7 +4103,7 @@ class MainWindow(QMainWindow):
     def _initialize_unmanaged_sdk_example(self, entry, sdk_root):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
-        project_path = normalize_path(os.path.join(app_dir, f"{app_name}.egui"))
+        project_path = normalize_path(project_file_path(app_dir, app_name))
         eguiproject_dir = os.path.join(app_dir, ".eguiproject")
 
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):

@@ -49,6 +49,7 @@ from ui_designer.utils.scaffold import (
     require_page_root,
     require_project_page_root,
     normalize_scaffold_pages,
+    project_file_path,
     project_file_relpath,
     project_layout_xml_relpath,
     cleanup_legacy_designer_codegen_files,
@@ -304,6 +305,9 @@ class TestCoreProjectScaffold:
 
     def test_scaffold_relpath_helpers_use_project_layout_conventions(self):
         assert project_file_relpath("DemoApp") == "DemoApp.egui"
+        assert os.path.normpath(project_file_path("D:/workspace/DemoApp", "DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/DemoApp.egui"
+        )
         assert project_layout_xml_relpath("main_page") == ".eguiproject/layout/main_page.xml"
         assert default_scaffold_circle_radius(320, 240) == 120
 
