@@ -12,7 +12,13 @@ import hashlib
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from .designer_bridge import DesignerBridge
-from ..model.workspace import compute_make_app_root_arg, normalize_path, sdk_output_path
+from ..model.workspace import (
+    compute_make_app_root_arg,
+    normalize_path,
+    sdk_output_executable_name,
+    sdk_output_executable_path,
+    sdk_output_path,
+)
 from ..utils.scaffold import (
     BUILD_DESIGNER_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
@@ -86,7 +92,7 @@ class BuildConfig:
                     basename = os.path.basename(src_path)
                     cfg.src_to_obj[basename] = (src_path, obj_path)
 
-            elif " -o output/main.exe " in line or " -o output\\main.exe " in line:
+            elif re.search(r"\s-o\s+output[\\/]+main(?:\.exe)?(?:\s|$)", line):
                 # Link command
                 cfg.link_cmd = line
 
@@ -224,8 +230,8 @@ class PrecompileWorker(QThread):
 class CompilerEngine:
     """Manages incremental compilation and exe process lifecycle.
 
-    Uses double-buffering: the exe always runs from a copy (designer_run_0.exe
-    or designer_run_1.exe) so that make can freely overwrite output/main.exe
+    Uses double-buffering: the exe always runs from a copy (designer_run_0(.exe)
+    or designer_run_1(.exe)) so that make can freely overwrite output/main(.exe)
     while the old preview is still running. This eliminates flash on recompile.
     """
 
@@ -259,7 +265,7 @@ class CompilerEngine:
         if sys.platform != "win32":
             return
 
-        exe_names = ["designer_run_0.exe", "designer_run_1.exe"]
+        exe_names = [sdk_output_executable_name(f"designer_run_{index}") for index in range(2)]
 
         try:
             # Try using taskkill command (always available on Windows)
@@ -294,11 +300,10 @@ class CompilerEngine:
 
     @property
     def exe_path(self):
-        return os.path.join(self.project_root, "output", "main.exe" if sys.platform == "win32" else "main")
+        return sdk_output_executable_path(self.project_root, "main")
 
     def _run_exe_path(self, index):
-        suffix = ".exe" if sys.platform == "win32" else ""
-        return os.path.join(self.project_root, "output", f"designer_run_{index}{suffix}")
+        return sdk_output_executable_path(self.project_root, f"designer_run_{index}")
 
     def _resolve_make_app_root_arg(self, app_root_arg):
         """Rewrite external app roots to an in-tree alias when needed.

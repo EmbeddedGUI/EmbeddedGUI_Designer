@@ -17,6 +17,14 @@ SDK_OUTPUT_DIRNAME = "output"
 SDK_RUNTIME_CHECK_OUTPUT_DIRNAME = "runtime_check_output"
 
 
+def sdk_output_executable_name(stem: str = "main") -> str:
+    """Return the platform-specific executable filename under ``output/``."""
+    stem = str(stem or "").strip()
+    if not stem:
+        return ""
+    return f"{stem}.exe" if sys.platform == "win32" else stem
+
+
 def normalize_path(path: str | None) -> str:
     """Return an absolute normalized path, or an empty string."""
     if not path:
@@ -337,6 +345,14 @@ def sdk_output_path(sdk_root: str | None, *parts: str) -> str:
     if not output_dir:
         return ""
     return normalize_path(os.path.join(output_dir, *parts))
+
+
+def sdk_output_executable_path(sdk_root: str | None, stem: str = "main") -> str:
+    """Return a platform-specific executable path under the SDK ``output`` directory."""
+    filename = sdk_output_executable_name(stem)
+    if not filename:
+        return ""
+    return sdk_output_path(sdk_root, filename)
 
 
 def sdk_runtime_check_output_dir(sdk_root: str | None, *parts: str) -> str:

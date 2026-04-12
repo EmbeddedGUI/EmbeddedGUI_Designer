@@ -20,6 +20,13 @@ gcc -DEGUI_APP=\\"HelloDesigner_1\\" -O0 -Wall -std=c99 -o output/main.exe outpu
 echo Building   : "output/main.exe"
 """
 
+MAKE_DRYRUN_OUTPUT_NO_EXE_SUFFIX = """\
+echo Compiling  : "example/HelloDesigner_1/main_page.c"
+gcc -DEGUI_APP=\\"HelloDesigner_1\\" -DEGUI_PORT=EGUI_PORT_TYPE_PC -O0 -Wall -std=c99 -Iexample/HelloDesigner_1 -Isrc -Iporting/designer -c example/HelloDesigner_1/main_page.c  -o output/obj/example/HelloDesigner_1/main_page.o
+echo Linking    : "output/main"
+gcc -DEGUI_APP=\\"HelloDesigner_1\\" -O0 -Wall -std=c99 -o output/main output/obj/example/HelloDesigner_1/main_page.o output/libegui.a -lpthread
+"""
+
 
 class TestBuildConfigExtract:
     def _make_result(self, stdout="", returncode=0):
@@ -62,6 +69,15 @@ class TestBuildConfigExtract:
         assert "output/main.exe" in cfg.link_cmd
         assert "libegui.a" in cfg.link_cmd
         assert "-lpthread" in cfg.link_cmd
+
+    @patch("subprocess.run")
+    @patch("os.path.getmtime", return_value=1000.0)
+    def test_extract_accepts_link_command_without_windows_exe_suffix(self, mock_mtime, mock_run):
+        mock_run.return_value = self._make_result(MAKE_DRYRUN_OUTPUT_NO_EXE_SUFFIX)
+        cfg = BuildConfig.extract("/project", "HelloDesigner_1", "example")
+
+        assert cfg is not None
+        assert "output/main" in cfg.link_cmd
 
     @patch("subprocess.run")
     @patch("os.path.getmtime", return_value=1000.0)
@@ -375,6 +391,14 @@ class TestCompilerRuntime:
         ready, err = engine.validate_preview()
         assert not ready
         assert "not running" in err
+
+    def test_executable_paths_use_shared_output_helpers(self, tmp_path):
+        engine = self._make_engine(tmp_path)
+        main_name = "main.exe" if os.name == "nt" else "main"
+        run_name = "designer_run_1.exe" if os.name == "nt" else "designer_run_1"
+
+        assert engine.exe_path == os.path.join(str(tmp_path), "output", main_name)
+        assert engine._run_exe_path(1) == os.path.join(str(tmp_path), "output", run_name)
 
     def test_validate_preview_accepts_correct_frame(self, tmp_path):
         engine = self._make_engine(tmp_path)

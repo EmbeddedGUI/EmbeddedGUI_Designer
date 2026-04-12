@@ -29,6 +29,8 @@ from ui_designer.model.workspace import (
     resolve_project_sdk_root,
     resolve_sdk_root_candidate,
     sdk_output_dir,
+    sdk_output_executable_name,
+    sdk_output_executable_path,
     sdk_output_path,
     sdk_resource_generator_path,
     sdk_runtime_check_output_dir,
@@ -78,11 +80,16 @@ class TestWorkspaceHelpers:
 
     def test_sdk_resource_generator_and_output_helpers(self, tmp_path):
         sdk_root = tmp_path / "sdk" / "EmbeddedGUI"
+        main_name = "main.exe" if os.name == "nt" else "main"
 
         assert sdk_resource_generator_path(str(sdk_root)) == normalize_path(
             str(sdk_root / "scripts" / "tools" / "app_resource_generate.py")
         )
         assert sdk_output_dir(str(sdk_root)) == normalize_path(str(sdk_root / "output"))
+        assert sdk_output_executable_name("main") == main_name
+        assert sdk_output_executable_path(str(sdk_root), "main") == normalize_path(
+            str(sdk_root / "output" / main_name)
+        )
         assert sdk_output_path(str(sdk_root), "app_egui_resource_merge.bin") == normalize_path(
             str(sdk_root / "output" / "app_egui_resource_merge.bin")
         )
@@ -91,6 +98,7 @@ class TestWorkspaceHelpers:
         )
         assert sdk_resource_generator_path("") == ""
         assert sdk_output_dir("") == ""
+        assert sdk_output_executable_path("", "main") == ""
         assert sdk_output_path("", "app_egui_resource_merge.bin") == ""
         assert sdk_runtime_check_output_dir("", "DemoApp") == ""
 
