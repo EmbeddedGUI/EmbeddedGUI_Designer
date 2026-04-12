@@ -4,8 +4,8 @@
 Orchestrates the full conversion:
   1. Parse TSX project structure (figmamake_parser)
   2. Extract animations (figmamake_anim_extractor)
-  3. Generate XML layout files with embedded animations
-  4. Create .egui project file
+  3. Apply the shared conversion scaffold in the SDK example app directory
+  4. Generate XML layout files with embedded animations
   5. Invoke existing code_generator to produce C files
 
 Usage:
@@ -38,14 +38,11 @@ from html2egui_helper import (
 from figmamake_anim_extractor import AnimExtractor
 from ui_designer.model.workspace import sdk_example_app_dir
 from ui_designer.utils.scaffold import (
-    build_empty_project_xml,
-    build_empty_resources_xml,
     sdk_example_layout_xml_path,
-    sdk_example_project_file_path,
-    sdk_example_resource_catalog_path,
     sdk_example_layout_dir,
     sdk_example_resource_images_dir,
     sdk_example_resource_src_dir,
+    scaffold_conversion_project_with_sdk_root,
 )
 from ui_designer.utils.xml_utils import write_xml_file
 
@@ -504,6 +501,18 @@ class FigmaMakeCodegen:
         print(f"  Found {len(discovery['pages'])} pages, "
               f"bg=#{root_bg}")
 
+        page_infos = [
+            page_info for page_info in discovery["pages"]
+            if os.path.isfile(page_info["file"])
+        ]
+        page_names = [
+            re.sub(r'(?<!^)(?=[A-Z])', '_', page_info["name"]).lower()
+            for page_info in page_infos
+        ]
+        if not page_names:
+            print("ERROR: No pages found.", file=sys.stderr)
+            sys.exit(1)
+
         # 2. Extract animations
         print(f"[2/5] Extracting animations...")
         anim_extractor = AnimExtractor()
@@ -517,8 +526,19 @@ class FigmaMakeCodegen:
             ext_count = len(anim_result["extensions_needed"])
             print(f"  WARNING: {ext_count} animations need framework extensions")
 
-        # 3. Generate XML layout files
-        print(f"[3/5] Generating XML layouts...")
+        print(f"[3/5] Applying shared conversion scaffold...")
+        scaffold_conversion_project_with_sdk_root(
+            app_dir,
+            self.app_name,
+            sdk_root,
+            self.width,
+            self.height,
+            pages=page_names,
+        )
+        print(f"  Prepared: {app_dir}")
+
+        # 4. Generate XML layout files
+        print(f"[4/5] Generating XML layouts...")
         layout_dir = sdk_example_layout_dir(sdk_root, self.app_name)
         images_dir = sdk_example_resource_images_dir(sdk_root, self.app_name)
         resource_src_dir = sdk_example_resource_src_dir(sdk_root, self.app_name)
@@ -526,16 +546,11 @@ class FigmaMakeCodegen:
         os.makedirs(images_dir, exist_ok=True)
         os.makedirs(resource_src_dir, exist_ok=True)
 
-        page_names = []
-        for page_info in discovery["pages"]:
+        for page_info in page_infos:
             page_file = page_info["file"]
-            if not os.path.isfile(page_file):
-                continue
-
             page_name = re.sub(
                 r'(?<!^)(?=[A-Z])', '_', page_info["name"]
             ).lower()
-            page_names.append(page_name)
 
             with open(page_file, "r", encoding="utf-8") as f:
                 tsx_content = f.read()
@@ -579,27 +594,6 @@ class FigmaMakeCodegen:
         if not page_names:
             print("ERROR: No pages generated.", file=sys.stderr)
             sys.exit(1)
-
-        # 4. Create .egui project file
-        print(f"[4/5] Creating project file...")
-        sdk_root_rel = os.path.relpath(sdk_root, app_dir).replace("\\", "/")
-        project_xml = build_empty_project_xml(
-            app_name=self.app_name,
-            screen_width=self.width,
-            screen_height=self.height,
-            stored_sdk_root=sdk_root_rel,
-            pages=page_names,
-        )
-        egui_file = sdk_example_project_file_path(sdk_root, self.app_name)
-        with open(egui_file, "w", encoding="utf-8", newline="\n") as f:
-            f.write(project_xml)
-        print(f"  Created: {self.app_name}.egui")
-
-        # Write resources.xml
-        res_xml_path = sdk_example_resource_catalog_path(sdk_root, self.app_name)
-        if not os.path.exists(res_xml_path):
-            with open(res_xml_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(build_empty_resources_xml())
 
         # 5. Generate C code
         if skip_c_gen:

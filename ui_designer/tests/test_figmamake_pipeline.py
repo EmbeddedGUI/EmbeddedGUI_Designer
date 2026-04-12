@@ -73,6 +73,8 @@ def test_figmamake_codegen_writes_project_with_canonical_sdk_root(tmp_path, monk
     assert 'sdk_root="../.."' in xml
     assert 'egui_root="' not in xml
     assert (sdk_root / "example" / "DemoApp" / ".eguiproject" / "layout" / "home_page.xml").is_file()
+    assert (sdk_root / "example" / "DemoApp" / "build.mk").is_file()
+    assert (sdk_root / "example" / "DemoApp" / ".designer" / "build_designer.mk").is_file()
     assert resources_xml.startswith('<?xml version="1.0" encoding="utf-8"?>\n')
     assert "<Resources" in resources_xml
 
