@@ -9,6 +9,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from ..utils.runtime_temp import repo_temp_dir
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SDK_SUBMODULE_PATH = Path("sdk") / "EmbeddedGUI"
@@ -16,7 +18,6 @@ LEGACY_STALE_DIR_NAMES = (
     ".pytest-tmp-codex",
     "tmpxtayw0f6",
 )
-TEMP_WORK_ROOT = Path("temp")
 TEMP_SCAN_MAX_DEPTH = 3
 
 
@@ -112,7 +113,7 @@ def _resolve_pytest_temp_root(repo_root: Path) -> Path:
 
             return Path(default_basetemp_root()).resolve()
         except Exception:
-            return (repo_root / TEMP_WORK_ROOT / "pytest").resolve()
+            return repo_temp_dir(repo_root, "pytest")
 
 
 def collect_runtime_paths(repo_root: str | Path = REPO_ROOT) -> dict[str, dict[str, object]]:
@@ -168,7 +169,7 @@ def inspect_problem_dirs(repo_root: str | Path = REPO_ROOT) -> list[dict[str, ob
         entry = _inspect_directory(path)
         if entry is not None:
             entries.append(entry)
-    entries.extend(_inspect_temp_work_dirs(resolved_repo_root / TEMP_WORK_ROOT))
+    entries.extend(_inspect_temp_work_dirs(repo_temp_dir(resolved_repo_root)))
     return entries
 
 

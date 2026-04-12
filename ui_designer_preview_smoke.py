@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -27,6 +26,7 @@ from ui_designer.model.project import Project
 from ui_designer.model.widget_model import AnimationModel, BackgroundModel, WidgetModel
 from ui_designer.model.widget_registry import WidgetRegistry
 from ui_designer.model.workspace import require_designer_sdk_root_for_path
+from ui_designer.utils.runtime_temp import create_temp_workspace, repo_temp_dir
 from ui_designer.utils.scaffold import (
     build_project_model_and_page_with_widgets,
     save_project_and_materialize_codegen,
@@ -42,7 +42,7 @@ ANIM_REGION = (20, 170, 180, 40)
 BUTTON_CENTER = (120, 130)
 BG_SAMPLE = (20, 20)
 CHIP_SAMPLE = (40, 180)
-DEFAULT_WORK_ROOT = REPO_ROOT / "temp" / "preview_smoke"
+DEFAULT_WORK_ROOT = repo_temp_dir(REPO_ROOT, "preview_smoke")
 
 
 def parse_args() -> argparse.Namespace:
@@ -272,8 +272,7 @@ def run_smoke(sdk_root: str = "", work_dir: str = "", keep_temp: bool = False) -
         cli_flag="--sdk-root",
     )
     project_parent = Path(work_dir).resolve() if work_dir else default_work_dir_root()
-    project_parent.mkdir(parents=True, exist_ok=True)
-    temp_root = Path(tempfile.mkdtemp(prefix="ui_designer_preview_smoke_", dir=str(project_parent)))
+    temp_root = create_temp_workspace(project_parent, "ui_designer_preview_smoke_")
     app_dir = temp_root / APP_NAME
     compiler: CompilerEngine | None = None
     preserve_workspace = keep_temp

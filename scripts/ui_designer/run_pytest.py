@@ -14,9 +14,14 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from ui_designer.utils.runtime_temp import repo_temp_dir
+
 DEFAULT_TEST_ROOT = REPO_ROOT / "ui_designer" / "tests"
 DEFAULT_PYTEST_CONFIG = REPO_ROOT / "ui_designer" / "pyproject.toml"
-DEFAULT_BASETEMP_ROOT = REPO_ROOT / "temp" / "pytest"
+DEFAULT_BASETEMP_ROOT = repo_temp_dir(REPO_ROOT, "pytest")
 CONFIG_DIR_ENV_VAR = "EMBEDDEDGUI_DESIGNER_CONFIG_DIR"
 
 
