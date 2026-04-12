@@ -127,6 +127,7 @@ from ui_designer.utils.scaffold import (
     copy_project_sidecar_files,
     materialize_generated_project_files,
     materialize_project_codegen_outputs,
+    materialize_saved_project_codegen_outputs,
     prepare_project_codegen_outputs,
     save_project_model,
     save_project_and_materialize_codegen,
@@ -2049,6 +2050,59 @@ class TestApplyDesignerProjectScaffold:
         assert hook_calls == [str(project_dir)]
         assert (project_dir / ".designer" / "home.h").is_file()
         assert "home.c" in materialized.files
+
+    def test_materialize_saved_project_codegen_outputs_loads_project_when_missing(self, tmp_path):
+        project_dir = tmp_path / "MaterializeSavedLoadHelperApp"
+        build_saved_project_model(
+            "MaterializeSavedLoadHelperApp",
+            str(project_dir),
+            320,
+            240,
+            sdk_root="D:/sdk",
+            pages=["home", "detail"],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+
+        project, materialized = materialize_saved_project_codegen_outputs(
+            str(project_dir),
+            backup=False,
+            newline="\n",
+        )
+
+        assert project.app_name == "MaterializeSavedLoadHelperApp"
+        assert project.project_dir == os.path.normpath(str(project_dir))
+        assert [page.name for page in project.pages] == ["home", "detail"]
+        assert "home_ext.h" in materialized.files
+        assert "detail_ext.h" in materialized.files
+
+    def test_materialize_saved_project_codegen_outputs_reuses_provided_project(self, tmp_path):
+        project_dir = tmp_path / "MaterializeSavedProvidedHelperApp"
+        project = build_saved_project_model(
+            "MaterializeSavedProvidedHelperApp",
+            str(project_dir),
+            320,
+            240,
+            sdk_root="D:/sdk",
+            pages=["home"],
+            with_designer_scaffold=True,
+            overwrite_scaffold=True,
+            remove_legacy_designer_files=True,
+        )
+        hook_calls = []
+
+        returned_project, materialized = materialize_saved_project_codegen_outputs(
+            "",
+            project=project,
+            backup=False,
+            newline="\n",
+            before_materialize=lambda output_dir: hook_calls.append(output_dir),
+        )
+
+        assert returned_project is project
+        assert hook_calls == [os.path.normpath(str(project_dir))]
+        assert "home_ext.h" in materialized.files
 
     def test_prepare_project_codegen_outputs_runs_before_prepare_hook_and_cleans_legacy(self, tmp_path):
         project_dir = tmp_path / "PrepareHookHelperApp"

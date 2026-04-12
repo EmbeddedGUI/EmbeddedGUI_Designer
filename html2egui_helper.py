@@ -53,7 +53,7 @@ from ui_designer.utils.scaffold import (
     RESOURCE_SRC_DIR_RELPATH,
     SUPPORTED_TEXT_RELPATH,
     ensure_sdk_example_conversion_paths,
-    materialize_project_codegen_outputs,
+    materialize_saved_project_codegen_outputs,
     normalize_scaffold_pages,
     project_file_relpath,
     project_layout_xml_path,
@@ -1527,9 +1527,9 @@ def cmd_generate_code(args):
     print(f"  Generated: {DESIGNER_RESOURCE_CONFIG_RELPATH}")
 
     # Generate C code
-    materialized = materialize_project_codegen_outputs(
-        project,
+    project, materialized = materialize_saved_project_codegen_outputs(
         app_dir,
+        project=project,
         backup=False,
         newline="\n",
     )

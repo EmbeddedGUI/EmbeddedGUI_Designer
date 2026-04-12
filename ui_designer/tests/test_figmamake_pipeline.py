@@ -85,25 +85,17 @@ def test_figmamake_codegen_uses_shared_codegen_materializer(tmp_path, monkeypatc
     fake_project = SimpleNamespace(pages=[object(), object(), object()])
     seen = {}
 
-    from ui_designer.model.project import Project
-
-    def fake_load(cls, project_path):
-        seen["load_path"] = project_path
-        return fake_project
-
-    monkeypatch.setattr(Project, "load", classmethod(fake_load))
     monkeypatch.setattr(
         codegen_module,
-        "materialize_project_codegen_outputs",
-        lambda project, output_dir, **kwargs: (
+        "materialize_saved_project_codegen_outputs",
+        lambda output_dir, **kwargs: (
             seen.update(
                 {
-                    "materialize_project": project,
                     "materialize_output_dir": output_dir,
                     "materialize_kwargs": kwargs,
                 }
             )
-            or SimpleNamespace(files={"main_page.c": "// generated\n"})
+            or (fake_project, SimpleNamespace(files={"main_page.c": "// generated\n"}))
         ),
     )
 
@@ -112,8 +104,6 @@ def test_figmamake_codegen_uses_shared_codegen_materializer(tmp_path, monkeypatc
         str(app_dir),
     )
 
-    assert seen["load_path"] == str(app_dir)
-    assert seen["materialize_project"] is fake_project
     assert seen["materialize_output_dir"] == str(app_dir)
     assert seen["materialize_kwargs"] == {"backup": False, "newline": "\n"}
     out = capsys.readouterr().out

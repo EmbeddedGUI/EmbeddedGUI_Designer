@@ -2647,6 +2647,33 @@ def materialize_project_codegen_outputs(
     )
 
 
+def materialize_saved_project_codegen_outputs(
+    project_dir,
+    *,
+    project=None,
+    backup=True,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Load a saved project model when needed, then materialize generated outputs."""
+    resolved_project = project
+    if resolved_project is None:
+        from ..model.project import Project
+
+        resolved_project = Project.load(project_dir)
+    resolved_project_dir = os.path.normpath(project_dir or resolved_project.project_dir)
+    materialized = materialize_project_codegen_outputs(
+        resolved_project,
+        resolved_project_dir,
+        backup=backup,
+        newline=newline,
+        backup_existing=backup_existing,
+        before_materialize=before_materialize,
+    )
+    return resolved_project, materialized
+
+
 def prepare_project_codegen_outputs(
     project,
     project_dir,
