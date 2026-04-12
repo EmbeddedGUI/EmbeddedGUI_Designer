@@ -7,12 +7,14 @@ import pytest
 from ui_designer.utils.scaffold import (
     APP_CONFIG_DESIGNER_RELPATH,
     APP_CONFIG_RELPATH,
+    BACKUP_DIR_RELPATH,
     BUILD_DESIGNER_RELPATH,
     BUILD_MK_RELPATH,
     DESIGNER_RESOURCE_CONFIG_RELPATH,
     DESIGNER_CODEGEN_STALE_STRING_RELPATHS,
     EGUIPROJECT_DIRNAME,
     MOCKUP_DIR_RELPATH,
+    ORPHANED_USER_CODE_DIR_RELPATH,
     REFERENCE_FRAMES_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
     REGRESSION_REPORT_RELPATH,
@@ -60,10 +62,13 @@ from ui_designer.utils.scaffold import (
     require_project_page_root,
     normalize_scaffold_pages,
     project_config_dir,
+    project_config_backup_dir,
     project_config_images_dir,
     project_config_layout_dir,
     project_config_layout_xml_relpath,
     project_config_mockup_dir,
+    project_config_orphaned_user_code_dir,
+    project_config_orphaned_user_page_dir,
     project_config_path,
     project_config_reference_frames_dir,
     project_config_regression_report_path,
@@ -76,6 +81,7 @@ from ui_designer.utils.scaffold import (
     project_file_path,
     project_generated_resource_dir,
     project_layout_xml_path,
+    project_orphaned_user_page_relpath,
     project_resource_catalog_path,
     project_resource_src_dir,
     project_supported_text_path,
@@ -412,6 +418,18 @@ class TestCoreProjectScaffold:
         assert os.path.normpath(project_config_mockup_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/mockup"
         )
+        assert os.path.normpath(project_config_backup_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/backup"
+        )
+        assert os.path.normpath(project_config_orphaned_user_code_dir("D:/workspace/DemoApp")) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/orphaned_user_code"
+        )
+        assert project_orphaned_user_page_relpath("main_page") == ".eguiproject/orphaned_user_code/main_page"
+        assert os.path.normpath(
+            project_config_orphaned_user_page_dir("D:/workspace/DemoApp", "main_page")
+        ) == os.path.normpath(
+            "D:/workspace/DemoApp/.eguiproject/orphaned_user_code/main_page"
+        )
         assert os.path.normpath(project_config_reference_frames_dir("D:/workspace/DemoApp")) == os.path.normpath(
             "D:/workspace/DemoApp/.eguiproject/reference_frames"
         )
@@ -470,6 +488,8 @@ class TestCoreProjectScaffold:
         assert RESOURCE_DIR_RELPATH == ".eguiproject/resources"
         assert RESOURCE_CATALOG_FILENAME == "resources.xml"
         assert MOCKUP_DIR_RELPATH == ".eguiproject/mockup"
+        assert BACKUP_DIR_RELPATH == ".eguiproject/backup"
+        assert ORPHANED_USER_CODE_DIR_RELPATH == ".eguiproject/orphaned_user_code"
         assert REFERENCE_FRAMES_DIR_RELPATH == ".eguiproject/reference_frames"
         assert RELEASE_CONFIG_RELPATH == ".eguiproject/release.json"
         assert REGRESSION_REPORT_RELPATH == ".eguiproject/regression_report.html"

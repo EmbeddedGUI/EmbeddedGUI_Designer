@@ -14,10 +14,12 @@ from ui_designer.model.project_cleaner import (
 from ui_designer.utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME
 from ui_designer.utils.scaffold import (
     APP_CONFIG_RELPATH,
+    BACKUP_DIR_RELPATH,
     BUILD_MK_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
     LAYOUT_DIR_RELPATH,
     MOCKUP_DIR_RELPATH,
+    ORPHANED_USER_CODE_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
@@ -46,6 +48,10 @@ class TestProjectCleaner:
         )
         assert (
             f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)"
+            in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
+        )
+        assert (
+            f"{BACKUP_DIR_RELPATH}, {ORPHANED_USER_CODE_DIR_RELPATH}, and other generated caches"
             in DESIGNER_RECONSTRUCT_DELETE_SUMMARY
         )
 

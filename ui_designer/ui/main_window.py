@@ -152,6 +152,7 @@ from ..utils.scaffold import (
     project_generated_resource_dir,
     project_designer_resource_dir,
     project_file_path,
+    project_orphaned_user_page_relpath,
     project_resource_src_dir,
     project_user_resource_config_path,
     read_app_config_dimensions,
@@ -242,7 +243,10 @@ def _archive_page_user_file(project_dir, page_name, src_path):
     if not os.path.isfile(src):
         return None
 
-    orphan_root = _project_child_realpath(project_dir, ".eguiproject", "orphaned_user_code", page_name)
+    orphan_root = _project_child_realpath(
+        project_dir,
+        project_orphaned_user_page_relpath(page_name),
+    )
     if orphan_root is None:
         return None
 

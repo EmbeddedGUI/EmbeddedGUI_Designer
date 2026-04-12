@@ -9,11 +9,13 @@ from dataclasses import dataclass, field
 from ..utils.resource_config_overlay import DESIGNER_RESOURCE_DIRNAME
 from ..utils.scaffold import (
     APP_CONFIG_RELPATH,
+    BACKUP_DIR_RELPATH,
     BUILD_MK_RELPATH,
     DESIGNER_PROJECT_DIRNAME,
     EGUIPROJECT_DIRNAME,
     LAYOUT_DIR_RELPATH,
     MOCKUP_DIR_RELPATH,
+    ORPHANED_USER_CODE_DIR_RELPATH,
     RELEASE_CONFIG_RELPATH,
     RESOURCE_CONFIG_RELPATH,
     RESOURCE_DIR_RELPATH,
@@ -41,7 +43,7 @@ DESIGNER_RECONSTRUCT_DELETE_SUMMARY = (
     f"{RESOURCE_IMG_DIR_RELPATH}, {RESOURCE_FONT_DIR_RELPATH}, and other synced/generated resource outputs",
     f"{RESOURCE_SRC_DIR_RELPATH}/{DESIGNER_RESOURCE_DIRNAME}/** designer-generated resource metadata",
     f"{DESIGNER_PROJECT_DIRNAME}/** generated code and scaffold files (legacy root designer files also removed)",
-    ".eguiproject/backup, orphaned_user_code, and other generated caches",
+    f"{BACKUP_DIR_RELPATH}, {ORPHANED_USER_CODE_DIR_RELPATH}, and other generated caches",
 )
 
 _PRESERVED_TOP_LEVEL_DIRS = {"widgets", "custom_widgets"}

@@ -44,6 +44,7 @@ from ..utils.scaffold import (
     materialize_generated_project_files,
     make_app_build_designer_mk_content,
     make_app_config_designer_h_content,
+    project_config_backup_dir,
 )
 
 
@@ -1898,7 +1899,7 @@ def _generate_all_files_preserved_from_manifest(project, output_dir, all_files, 
     result = {}
     pages_by_name = {page.name: page for page in project.pages}
 
-    backup_root = os.path.join(output_dir, ".eguiproject", "backup")
+    backup_root = project_config_backup_dir(output_dir)
 
     for filename, (content, category) in all_files.items():
         filepath = os.path.join(output_dir, filename)

@@ -34,6 +34,8 @@ REFERENCE_FRAMES_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/reference_frames"
 RELEASE_CONFIG_RELPATH = f"{EGUIPROJECT_DIRNAME}/release.json"
 REGRESSION_REPORT_RELPATH = f"{EGUIPROJECT_DIRNAME}/regression_report.html"
 REGRESSION_RESULTS_RELPATH = f"{EGUIPROJECT_DIRNAME}/regression_results.json"
+BACKUP_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/backup"
+ORPHANED_USER_CODE_DIR_RELPATH = f"{EGUIPROJECT_DIRNAME}/orphaned_user_code"
 RESOURCE_IMAGES_DIR_RELPATH = f"{RESOURCE_DIR_RELPATH}/images"
 RESOURCE_CATALOG_FILENAME = "resources.xml"
 RESOURCE_CATALOG_RELPATH = f"{RESOURCE_DIR_RELPATH}/{RESOURCE_CATALOG_FILENAME}"
@@ -252,6 +254,22 @@ def project_config_layout_dir(project_dir: str) -> str:
 
 def project_config_mockup_dir(project_dir: str) -> str:
     return project_config_path(project_dir, "mockup")
+
+
+def project_config_backup_dir(project_dir: str) -> str:
+    return project_config_path(project_dir, "backup")
+
+
+def project_config_orphaned_user_code_dir(project_dir: str) -> str:
+    return project_config_path(project_dir, "orphaned_user_code")
+
+
+def project_orphaned_user_page_relpath(page_name: str) -> str:
+    return f"{ORPHANED_USER_CODE_DIR_RELPATH}/{page_name}"
+
+
+def project_config_orphaned_user_page_dir(project_dir: str, page_name: str) -> str:
+    return os.path.join(project_dir, project_orphaned_user_page_relpath(page_name))
 
 
 def project_config_reference_frames_dir(project_dir: str) -> str:
@@ -577,10 +595,8 @@ def cleanup_legacy_designer_codegen_files(
         from ..generator.user_code_preserver import backup_file as _backup_file
 
         backup_file = _backup_file
-        backup_root = os.path.join(
-            os.path.realpath(os.path.normpath(str(project_dir or ""))),
-            EGUIPROJECT_DIRNAME,
-            "backup",
+        backup_root = project_config_backup_dir(
+            os.path.realpath(os.path.normpath(str(project_dir or "")))
         )
 
     removed = []
