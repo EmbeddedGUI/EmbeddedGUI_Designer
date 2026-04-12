@@ -6,7 +6,7 @@ import json
 import os
 import sys
 
-from ..utils.scaffold import project_build_mk_path
+from ..utils.scaffold import sdk_example_build_mk_path
 from .workspace import (
     infer_sdk_root_from_project_dir,
     is_valid_sdk_root,
@@ -335,7 +335,7 @@ class DesignerConfig:
             app_path = sdk_example_app_dir(sdk_root, name)
             if not os.path.isdir(app_path):
                 continue
-            if not os.path.isfile(project_build_mk_path(app_path)):
+            if not os.path.isfile(sdk_example_build_mk_path(sdk_root, name)):
                 continue
 
             project_path = sdk_example_project_path(sdk_root, name)
