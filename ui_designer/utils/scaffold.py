@@ -266,102 +266,67 @@ def project_config_regression_results_path(project_dir: str) -> str:
     return project_config_path(project_dir, "regression_results.json")
 
 
-def sdk_example_config_dir(sdk_root: str | None, app_name: str | None) -> str:
+def _sdk_example_path(sdk_root: str | None, app_name: str | None, resolver) -> str:
     app_dir = sdk_example_app_dir(sdk_root, app_name)
     if not app_dir:
         return ""
-    return project_config_dir(app_dir)
+    return resolver(app_dir)
+
+
+def sdk_example_config_dir(sdk_root: str | None, app_name: str | None) -> str:
+    return _sdk_example_path(sdk_root, app_name, project_config_dir)
 
 
 def sdk_example_layout_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_layout_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_layout_dir)
 
 
 def sdk_example_config_resource_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_resource_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_resource_dir)
 
 
 def sdk_example_resource_images_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_images_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_images_dir)
 
 
 def sdk_example_generated_resource_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_generated_resource_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_generated_resource_dir)
 
 
 def sdk_example_resource_src_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_resource_src_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_resource_src_dir)
 
 
 def sdk_example_supported_text_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_supported_text_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_supported_text_path)
 
 
 def sdk_example_resource_catalog_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_resource_catalog_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_resource_catalog_path)
 
 
 def sdk_example_user_resource_config_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_user_resource_config_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_user_resource_config_path)
 
 
 def sdk_example_designer_resource_config_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_designer_resource_config_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_designer_resource_config_path)
 
 
 def sdk_example_app_config_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_app_config_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_app_config_path)
 
 
 def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_reference_frames_dir(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_reference_frames_dir)
 
 
 def sdk_example_regression_report_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_regression_report_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_regression_report_path)
 
 
 def sdk_example_regression_results_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
-    if not app_dir:
-        return ""
-    return project_config_regression_results_path(app_dir)
+    return _sdk_example_path(sdk_root, app_name, project_config_regression_results_path)
 
 
 def project_file_relpath(app_name: str) -> str:
