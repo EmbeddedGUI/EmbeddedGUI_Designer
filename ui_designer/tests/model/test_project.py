@@ -329,6 +329,24 @@ class TestResourceSync:
         assert not (target_src_dir / "_generated_text_preview.png").exists()
         assert not (target_src_dir / RESOURCE_CATALOG_FILENAME).exists()
 
+    def test_sync_resources_to_src_uses_bound_project_dir_when_argument_omitted(self, tmp_path):
+        project_dir = tmp_path / "project"
+        resources_dir = project_dir / ".eguiproject" / "resources"
+        images_dir = resources_dir / "images"
+        images_dir.mkdir(parents=True)
+
+        (resources_dir / "font.ttf").write_bytes(b"TTF")
+        (images_dir / "icon.png").write_bytes(b"PNG")
+
+        proj = Project(app_name="BoundDemo")
+        proj.project_dir = normalize_path(str(project_dir))
+
+        proj.sync_resources_to_src()
+
+        target_src_dir = project_dir / "resource" / "src"
+        assert (target_src_dir / "font.ttf").read_bytes() == b"TTF"
+        assert (target_src_dir / "icon.png").read_bytes() == b"PNG"
+
 
 class TestGetAllWidgets:
     """Tests for get_all_widgets across multiple pages."""

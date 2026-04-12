@@ -199,11 +199,14 @@ class Project:
             return sdk_example_app_dir(self.sdk_root, self.app_name)
         return ""
 
-    def _project_app_path(self, resolver):
-        app_dir = self.get_app_dir()
-        if not app_dir:
+    def _resolve_project_dir_path(self, project_dir, resolver):
+        project_dir = normalize_path(project_dir or self.get_app_dir())
+        if not project_dir:
             return ""
-        return resolver(app_dir)
+        return resolver(project_dir)
+
+    def _project_app_path(self, resolver):
+        return self._resolve_project_dir_path("", resolver)
 
     def get_resource_dir(self):
         """Get the resource directory path (resource/).
@@ -445,7 +448,7 @@ class Project:
 
         return proj
 
-    def sync_resources_to_src(self, project_dir):
+    def sync_resources_to_src(self, project_dir=""):
         """Sync .eguiproject/resources/ 鈫?resource/src/ for the generation pipeline.
 
         Copies source files to resource/src/ so app_resource_generate.py can
@@ -453,12 +456,20 @@ class Project:
         live in the resources/ root.
         Only copies if source is newer or destination doesn't exist.
         """
-        project_dir = normalize_path(project_dir)
-        eguiproject_res_dir = project_config_resource_dir(project_dir)
-        images_dir = project_config_images_dir(project_dir)
-        target_src_dir = project_resource_src_dir(project_dir)
+        eguiproject_res_dir = self._resolve_project_dir_path(
+            project_dir,
+            project_config_resource_dir,
+        )
+        images_dir = self._resolve_project_dir_path(
+            project_dir,
+            project_config_images_dir,
+        )
+        target_src_dir = self._resolve_project_dir_path(
+            project_dir,
+            project_resource_src_dir,
+        )
 
-        if not os.path.isdir(eguiproject_res_dir):
+        if not eguiproject_res_dir or not target_src_dir or not os.path.isdir(eguiproject_res_dir):
             return
 
         os.makedirs(target_src_dir, exist_ok=True)
