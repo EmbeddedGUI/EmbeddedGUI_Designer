@@ -3147,19 +3147,21 @@ class MainWindow(QMainWindow):
             silent=silent,
         )
 
+        sdk_source = self._describe_sdk_source(project.sdk_root)
+        suffix = " | Project scaffold reset" if project_reset else ""
+        if sdk_source:
+            opened_status_message = f"Opened: {project_dir} | SDK: {sdk_source}{suffix}"
+        else:
+            opened_status_message = f"Opened: {project_dir}{suffix}"
         preview_unavailable_reason = self._preview_unavailable_reason()
         if preview_unavailable_reason:
             self._switch_to_python_preview(preview_unavailable_reason)
-            self.statusBar().showMessage(f"Opened project in editing-only mode: {preview_unavailable_reason}")
+            self.statusBar().showMessage(
+                self._status_message_with_editing_only_mode(opened_status_message, preview_unavailable_reason)
+            )
         else:
             self._trigger_compile()
-            sdk_source = self._describe_sdk_source(project.sdk_root)
-            if sdk_source:
-                suffix = " | Project scaffold reset" if project_reset else ""
-                self.statusBar().showMessage(f"Opened: {project_dir} | SDK: {sdk_source}{suffix}")
-            else:
-                suffix = " | Project scaffold reset" if project_reset else ""
-                self.statusBar().showMessage(f"Opened: {project_dir}{suffix}")
+            self.statusBar().showMessage(opened_status_message)
 
         if not project.sdk_root and not silent:
             QMessageBox.information(
