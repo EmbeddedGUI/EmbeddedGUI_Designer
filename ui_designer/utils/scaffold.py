@@ -371,6 +371,15 @@ def sdk_example_build_mk_path(sdk_root: str | None, app_name: str | None) -> str
     return _sdk_example_path(sdk_root, app_name, project_build_mk_path)
 
 
+def sdk_example_project_file_path(sdk_root: str | None, app_name: str | None) -> str:
+    app_name = str(app_name or "").strip()
+    return _sdk_example_path(
+        sdk_root,
+        app_name,
+        lambda project_dir: project_file_path(project_dir, app_name),
+    )
+
+
 def sdk_example_reference_frames_dir(sdk_root: str | None, app_name: str | None) -> str:
     return _sdk_example_path(sdk_root, app_name, project_config_reference_frames_dir)
 

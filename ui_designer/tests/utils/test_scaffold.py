@@ -126,6 +126,7 @@ from ui_designer.utils.scaffold import (
     sdk_example_designer_resource_config_path,
     sdk_example_app_config_path,
     sdk_example_build_mk_path,
+    sdk_example_project_file_path,
     sdk_example_regression_report_path,
     sdk_example_regression_results_path,
     sync_project_resources_and_generate_designer_resource_config,
@@ -575,6 +576,9 @@ class TestCoreProjectScaffold:
         )
         assert os.path.normpath(sdk_example_build_mk_path(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/build.mk"
+        )
+        assert os.path.normpath(sdk_example_project_file_path(sdk_root, "DemoApp")) == os.path.normpath(
+            "D:/sdk/EmbeddedGUI/example/DemoApp/DemoApp.egui"
         )
         assert os.path.normpath(sdk_example_reference_frames_dir(sdk_root, "DemoApp")) == os.path.normpath(
             "D:/sdk/EmbeddedGUI/example/DemoApp/.eguiproject/reference_frames"

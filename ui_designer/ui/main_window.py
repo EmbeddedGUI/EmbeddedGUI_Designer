@@ -76,7 +76,6 @@ from ..model.workspace import (
     resolve_sdk_root_candidate,
     sdk_output_dir,
     sdk_output_path,
-    sdk_example_project_path,
     sdk_resource_generator_path,
 )
 from ..model.resource_binding import assign_resource_to_widget
@@ -162,6 +161,7 @@ from ..utils.scaffold import (
     save_project_model,
     sdk_example_app_config_path,
     sdk_example_config_dir,
+    sdk_example_project_file_path,
     sync_project_resources_and_generate_designer_resource_config,
 )
 from .theme import apply_theme, theme_tokens
@@ -4092,7 +4092,7 @@ class MainWindow(QMainWindow):
     def _initialize_unmanaged_sdk_example(self, entry, sdk_root):
         app_name = entry.get("app_name", "")
         app_dir = normalize_path(entry.get("app_dir", ""))
-        project_path = sdk_example_project_path(sdk_root, app_name)
+        project_path = sdk_example_project_file_path(sdk_root, app_name)
         eguiproject_dir = sdk_example_config_dir(sdk_root, app_name)
 
         if os.path.exists(eguiproject_dir) and not os.path.isfile(project_path):
