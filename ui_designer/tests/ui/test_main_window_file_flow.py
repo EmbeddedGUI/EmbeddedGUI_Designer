@@ -1116,6 +1116,83 @@ class TestMainWindowFileFlow:
         assert "Created project: NoSdkDemo" in window.statusBar().currentMessage()
         _close_window(window)
 
+    def test_new_project_preserves_editing_only_reason_in_created_status(
+        self, qapp, isolated_config, tmp_path, monkeypatch
+    ):
+        from ui_designer.ui.main_window import MainWindow
+
+        class _PreviewIncompatibleCompiler:
+            app_root_arg = "example"
+
+            def __init__(self, app_dir):
+                self.app_dir = str(app_dir)
+
+            def can_build(self):
+                return True
+
+            def get_build_error(self):
+                return ""
+
+            def ensure_preview_build_available(self, force=False):
+                return False
+
+            def get_preview_build_error(self):
+                return "make: *** No rule to make target 'main.exe'.  Stop."
+
+            def set_screen_size(self, width, height):
+                return None
+
+            def is_preview_running(self):
+                return False
+
+            def is_exe_ready(self):
+                return False
+
+            def stop_exe(self):
+                return None
+
+            def cleanup(self):
+                return None
+
+        sdk_root = tmp_path / "sdk"
+        _create_sdk_root(sdk_root)
+        parent_dir = tmp_path / "workspace"
+        parent_dir.mkdir()
+
+        class FakeDialog:
+            Accepted = 1
+
+            def __init__(self, *args, **kwargs):
+                self.sdk_root = str(sdk_root)
+                self.parent_dir = str(parent_dir)
+                self.app_name = "CreatedEditingOnlyDemo"
+                self.screen_width = 240
+                self.screen_height = 320
+
+            def exec_(self):
+                return self.Accepted
+
+        window = MainWindow(str(sdk_root))
+        monkeypatch.setattr("ui_designer.ui.main_window.NewProjectDialog", FakeDialog)
+        monkeypatch.setattr(window, "_load_project_app_local_widgets", lambda *args, **kwargs: None)
+        monkeypatch.setattr(
+            window,
+            "_recreate_compiler",
+            lambda: setattr(
+                window,
+                "compiler",
+                _PreviewIncompatibleCompiler(parent_dir / "CreatedEditingOnlyDemo"),
+            ),
+        )
+
+        window._new_project()
+
+        message = window.statusBar().currentMessage()
+        assert "Created project: CreatedEditingOnlyDemo" in message
+        assert "Editing-only mode: make: *** No rule to make target 'main.exe'.  Stop." in message
+        assert "main.exe" in window._auto_compile_retry_block_reason
+        _close_window(window)
+
     def test_new_project_uses_current_project_parent_as_default_parent_dir(self, qapp, isolated_config, tmp_path, monkeypatch):
         from ui_designer.ui.main_window import MainWindow
 

@@ -2639,10 +2639,9 @@ class MainWindow(QMainWindow):
                 probe_preview_availability=True,
             )
             if preview_unavailable_reason:
-                editing_only_message = f"Editing-only mode: {preview_unavailable_reason}"
-                if status_message:
-                    editing_only_message = f"{status_message} | {editing_only_message}"
-                self.statusBar().showMessage(editing_only_message)
+                self.statusBar().showMessage(
+                    self._status_message_with_editing_only_mode(status_message, preview_unavailable_reason)
+                )
             else:
                 if self.auto_compile:
                     self._trigger_compile()
@@ -3078,6 +3077,15 @@ class MainWindow(QMainWindow):
         if reason:
             self._switch_to_python_preview(reason)
         return reason
+
+    @staticmethod
+    def _status_message_with_editing_only_mode(status_message, preview_unavailable_reason=""):
+        reason = str(preview_unavailable_reason or "").strip()
+        if not reason:
+            return status_message
+        if status_message:
+            return f"{status_message} | Editing-only mode: {reason}"
+        return f"Editing-only mode: {reason}"
 
     def _open_loaded_project(self, project, project_dir, preferred_sdk_root="", silent=False):
         project_dir = normalize_path(project_dir)
@@ -4663,7 +4671,12 @@ class MainWindow(QMainWindow):
         )
         self._clear_auto_compile_retry_block()
         self._open_loaded_project(project, project_dir, preferred_sdk_root=sdk_root)
-        self.statusBar().showMessage(f"Created project: {dialog.app_name}")
+        self.statusBar().showMessage(
+            self._status_message_with_editing_only_mode(
+                f"Created project: {dialog.app_name}",
+                self._preview_unavailable_reason(),
+            )
+        )
 
     def _open_project_path(self, path, preferred_sdk_root="", silent=False):
         path = normalize_path(path)
@@ -4744,10 +4757,12 @@ class MainWindow(QMainWindow):
         self._refresh_project_watch_snapshot()
         self._update_window_title()
         self._update_compile_availability()
-        status_message = f"Saved: {self._project_dir} ({len(files)} code file(s) updated)"
-        if preview_unavailable_reason:
-            status_message = f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
-        self.statusBar().showMessage(status_message)
+        self.statusBar().showMessage(
+            self._status_message_with_editing_only_mode(
+                f"Saved: {self._project_dir} ({len(files)} code file(s) updated)",
+                preview_unavailable_reason,
+            )
+        )
         return True
 
     def _save_project_as(self):
@@ -4788,10 +4803,12 @@ class MainWindow(QMainWindow):
         self._refresh_project_watch_snapshot()
         self._update_window_title()
         self._update_compile_availability()
-        status_message = f"Saved: {path} ({len(files)} code file(s) updated)"
-        if preview_unavailable_reason:
-            status_message = f"{status_message} | Editing-only mode: {preview_unavailable_reason}"
-        self.statusBar().showMessage(status_message)
+        self.statusBar().showMessage(
+            self._status_message_with_editing_only_mode(
+                f"Saved: {path} ({len(files)} code file(s) updated)",
+                preview_unavailable_reason,
+            )
+        )
         return True
 
     def _close_project(self):
