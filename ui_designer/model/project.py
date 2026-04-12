@@ -50,10 +50,11 @@ from ..utils.scaffold import (
     project_generated_resource_dir,
     project_resource_src_dir,
     project_user_resource_config_path,
+    sdk_example_paths,
 )
 from ..utils.resource_config_overlay import is_designer_resource_path
 from ..utils.xml_utils import element_to_xml_string
-from .workspace import normalize_path, resolve_project_sdk_root, sdk_example_app_dir, serialize_sdk_root
+from .workspace import normalize_path, resolve_project_sdk_root, serialize_sdk_root
 from .sdk_fingerprint import SdkFingerprint
 
 
@@ -197,7 +198,7 @@ class Project:
         if self.project_dir:
             return self.project_dir
         if self.sdk_root:
-            return sdk_example_app_dir(self.sdk_root, self.app_name)
+            return sdk_example_paths(self.sdk_root, self.app_name)["app_dir"]
         return ""
 
     def _resolve_project_dir_path(self, project_dir, resolver):

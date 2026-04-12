@@ -32,10 +32,10 @@ import time
 
 from ui_designer.model.workspace import (
     require_designer_sdk_root_for_path,
-    sdk_example_app_dir,
     sdk_runtime_check_output_dir,
 )
 from ui_designer.utils.scaffold import (
+    sdk_example_paths,
     sdk_example_reference_frames_dir,
     sdk_example_regression_report_path,
     sdk_example_regression_results_path,
@@ -247,7 +247,7 @@ def main():
     if args.convert_only:
         elapsed = time.time() - start_time
         print(f"\nConversion complete in {elapsed:.1f}s")
-        print(f"  App dir: {sdk_example_app_dir(sdk_root, args.app)}")
+        print(f"  App dir: {sdk_example_paths(sdk_root, args.app)['app_dir']}")
         sys.exit(0)
 
     # Stage 3: Build & Run

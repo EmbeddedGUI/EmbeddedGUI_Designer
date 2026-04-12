@@ -318,8 +318,14 @@ def project_config_regression_results_path(project_dir: str) -> str:
     return project_config_path(project_dir, "regression_results.json")
 
 
+def _sdk_example_name_and_dir(sdk_root: str | None, app_name: str | None) -> tuple[str, str]:
+    normalized_app_name = str(app_name or "").strip()
+    app_dir = sdk_example_app_dir(sdk_root, normalized_app_name)
+    return normalized_app_name, app_dir
+
+
 def _sdk_example_path(sdk_root: str | None, app_name: str | None, resolver) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    _normalized_app_name, app_dir = _sdk_example_name_and_dir(sdk_root, app_name)
     if not app_dir:
         return ""
     return resolver(app_dir)
@@ -382,18 +388,15 @@ def sdk_example_build_mk_path(sdk_root: str | None, app_name: str | None) -> str
 
 
 def sdk_example_project_file_path(sdk_root: str | None, app_name: str | None) -> str:
-    app_name = str(app_name or "").strip()
-    return _sdk_example_path(
-        sdk_root,
-        app_name,
-        lambda project_dir: project_file_path(project_dir, app_name),
-    )
+    normalized_app_name, app_dir = _sdk_example_name_and_dir(sdk_root, app_name)
+    if not app_dir or not normalized_app_name:
+        return ""
+    return project_file_path(app_dir, normalized_app_name)
 
 
 def sdk_example_paths(sdk_root: str | None, app_name: str | None) -> dict[str, str]:
     """Return the canonical SDK example app paths used across Designer helpers."""
-    normalized_app_name = str(app_name or "").strip()
-    app_dir = sdk_example_app_dir(sdk_root, normalized_app_name)
+    normalized_app_name, app_dir = _sdk_example_name_and_dir(sdk_root, app_name)
     if not app_dir or not normalized_app_name:
         return {
             "app_name": normalized_app_name,
@@ -454,7 +457,7 @@ def project_layout_xml_path(project_dir: str, page_name: str) -> str:
 
 
 def sdk_example_layout_xml_path(sdk_root: str | None, app_name: str | None, page_name: str) -> str:
-    app_dir = sdk_example_app_dir(sdk_root, app_name)
+    _normalized_app_name, app_dir = _sdk_example_name_and_dir(sdk_root, app_name)
     if not app_dir:
         return ""
     return project_layout_xml_path(app_dir, page_name)
