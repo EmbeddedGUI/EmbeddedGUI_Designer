@@ -1852,6 +1852,49 @@ def _save_built_project_model(
     )
 
 
+def _save_built_project_and_materialize_codegen(
+    project,
+    project_dir,
+    *,
+    sdk_root="",
+    before_save=None,
+    overwrite_scaffold=False,
+    color_depth=16,
+    circle_radius=None,
+    extra_config_macros=None,
+    refresh_designer_resource_config=None,
+    remove_legacy_designer_files=False,
+    backup=True,
+    extra_files=None,
+    newline=None,
+    backup_existing=False,
+    before_materialize=None,
+):
+    """Save a prebuilt project with Designer scaffold, then materialize generated outputs."""
+    _save_built_project_model(
+        project,
+        project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+        with_designer_scaffold=True,
+        overwrite_scaffold=overwrite_scaffold,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
+    )
+    return materialize_project_codegen_outputs(
+        project,
+        project_dir or project.project_dir,
+        backup=backup,
+        extra_files=extra_files,
+        newline=newline,
+        backup_existing=backup_existing,
+        before_materialize=before_materialize,
+    )
+
+
 def build_project_model_with_page_widgets_and_save(
     app_name,
     screen_width=240,
@@ -1998,9 +2041,17 @@ def build_project_model_with_widgets_and_materialize_codegen(
         resolved_extra_files.update(extra_files_builder(project, page, root) or {})
     if extra_files:
         resolved_extra_files.update(extra_files)
-    materialized = materialize_project_codegen_outputs(
+    materialized = _save_built_project_and_materialize_codegen(
         project,
-        project_dir or project.project_dir,
+        project_dir,
+        sdk_root=sdk_root,
+        before_save=before_save,
+        overwrite_scaffold=overwrite,
+        color_depth=color_depth,
+        circle_radius=circle_radius,
+        extra_config_macros=extra_config_macros,
+        refresh_designer_resource_config=refresh_designer_resource_config,
+        remove_legacy_designer_files=remove_legacy_designer_files,
         backup=backup,
         extra_files=resolved_extra_files or None,
         newline=newline,
@@ -2360,22 +2411,17 @@ def save_project_and_materialize_codegen(
     before_materialize=None,
 ):
     """Save a project with the shared scaffold policy, then materialize codegen outputs."""
-    _save_built_project_model(
+    return _save_built_project_and_materialize_codegen(
         project,
         project_dir,
         sdk_root=sdk_root,
         before_save=before_save,
-        with_designer_scaffold=True,
         overwrite_scaffold=overwrite,
         color_depth=color_depth,
         circle_radius=circle_radius,
         extra_config_macros=extra_config_macros,
         refresh_designer_resource_config=refresh_designer_resource_config,
         remove_legacy_designer_files=remove_legacy_designer_files,
-    )
-    return materialize_project_codegen_outputs(
-        project,
-        project_dir,
         backup=backup,
         extra_files=extra_files,
         newline=newline,
